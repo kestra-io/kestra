@@ -102,7 +102,7 @@
                             this.$http
                                 .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
                                 .then(response => {
-                                    this.dependenciesCount = response.data && response.data.nodes ? [...new Set(response.data.nodes.map(r => r.uid))].length - 1 : 0;
+                                    this.dependenciesCount = response.data && response.data.nodes ? [...new Set(response.data.nodes.map(r => r.uid))].length : 0;
                                 })
                         }
                     });

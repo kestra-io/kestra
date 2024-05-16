@@ -382,6 +382,8 @@
 
         window.removeEventListener("beforeunload", persistEditorWidth);
         persistEditorWidth();
+
+        store.commit("editor/closeTabs");
     });
 
     const stopTour = () => {
@@ -1016,7 +1018,7 @@
             id="editorWrapper"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            :style="`flex: 0 0 calc(${combinedEditor ? editorWidth : 100}% - 11px)`"
+            style="flex: 1"
         >
             <editor
                 ref="editorDomElement"
@@ -1035,7 +1037,7 @@
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div class="d-flex" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : {}">           
+        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 0 0 0%'">           
             <div
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"

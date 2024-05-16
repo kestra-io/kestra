@@ -104,44 +104,44 @@ public class PluginScanner {
         }
 
         final ServiceLoader<Plugin> sl = ServiceLoader.load(Plugin.class, classLoader);
-        sl.forEach(plugin -> {
-
-            if(plugin.getClass().isAnnotationPresent(Hidden.class)) {
-                return;
-            }
-
-            if (plugin instanceof Task task) {
-                log.debug("Loading Task plugin: '{}'", plugin.getClass());
-                tasks.add(task.getClass());
-            }
-            else if (plugin instanceof AbstractTrigger trigger) {
-                log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
-                triggers.add(trigger.getClass());
-            }
-            else if (plugin instanceof Condition condition) {
-                log.debug("Loading Condition plugin: '{}'", plugin.getClass());
-                conditions.add(condition.getClass());
-            }
-            else if (plugin instanceof StorageInterface storage) {
-                log.debug("Loading Storage plugin: '{}'", plugin.getClass());
-                storages.add(storage.getClass());
-            }
-            else if (plugin instanceof SecretPluginInterface storage) {
-                log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
-                secrets.add(storage.getClass());
-            }
-            else if (plugin instanceof TaskRunner runner) {
-                log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
-                taskRunners.add(runner.getClass());
-            }
-
-            if (plugin.getClass().isAnnotationPresent(io.kestra.core.models.annotations.Plugin.class)) {
-                String[] pluginAliases = plugin.getClass().getAnnotation(io.kestra.core.models.annotations.Plugin.class).aliases();
-                for (String alias:  pluginAliases) {
-                    aliases.put(alias, plugin.getClass());
+        try {
+            sl.forEach(plugin -> {
+                if (plugin.getClass().isAnnotationPresent(Hidden.class)) {
+                    return;
                 }
-            }
-        });
+
+                if (plugin instanceof Task task) {
+                    log.debug("Loading Task plugin: '{}'", plugin.getClass());
+                    tasks.add(task.getClass());
+                } else if (plugin instanceof AbstractTrigger trigger) {
+                    log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
+                    triggers.add(trigger.getClass());
+                } else if (plugin instanceof Condition condition) {
+                    log.debug("Loading Condition plugin: '{}'", plugin.getClass());
+                    conditions.add(condition.getClass());
+                } else if (plugin instanceof StorageInterface storage) {
+                    log.debug("Loading Storage plugin: '{}'", plugin.getClass());
+                    storages.add(storage.getClass());
+                } else if (plugin instanceof SecretPluginInterface storage) {
+                    log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
+                    secrets.add(storage.getClass());
+                } else if (plugin instanceof TaskRunner runner) {
+                    log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
+                    taskRunners.add(runner.getClass());
+                }
+
+                if (plugin.getClass().isAnnotationPresent(io.kestra.core.models.annotations.Plugin.class)) {
+                    String[] pluginAliases = plugin.getClass()
+                        .getAnnotation(io.kestra.core.models.annotations.Plugin.class)
+                        .aliases();
+                    for (String alias : pluginAliases) {
+                        aliases.put(alias, plugin.getClass());
+                    }
+                }
+            });
+        } catch (Throwable e) {
+            log.error("Unable to load plugin classes on '{}'", externalPlugin != null ? externalPlugin.getLocation() : "core", e);
+        }
 
         var guidesDirectory = classLoader.getResource("doc/guides");
         if (guidesDirectory != null) {

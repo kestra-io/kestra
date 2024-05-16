@@ -707,7 +707,7 @@
     };
 
     const save = async (e) => {
-        if (!currentTab.value.dirty) {
+        if (!currentTab?.value?.dirty) {
             return;
         }
         if (e) {

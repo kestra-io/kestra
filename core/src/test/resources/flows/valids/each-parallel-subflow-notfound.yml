@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     value:
       - value-1
       - value-2
     tasks:
       - id: subflow-not-exist
-        type: io.kestra.core.tasks.flows.Subflow
+        type: io.kestra.plugin.core.flow.Subflow
         flowId: "{{ taskrun.value }}"
         namespace: dev
         wait: true

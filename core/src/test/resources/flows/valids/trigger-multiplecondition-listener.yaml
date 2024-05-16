@@ -7,29 +7,29 @@ namespace: io.kestra.tests.trigger
 
 tasks:
   - id: only-listener
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "childs"
 
 triggers:
   - id: multiple-listen-flow
-    type: io.kestra.core.models.triggers.types.Flow
+    type: io.kestra.plugin.core.trigger.Flow
 #    inputs:
 #      from-parent: '{{ outputs.only.value }}'
     conditions:
       - id: multiple
-        type: io.kestra.core.models.conditions.types.MultipleCondition
+        type: io.kestra.plugin.core.condition.MultipleCondition
         window: P1D
         windowAdvance: P0D
         conditions:
           success:
-            type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+            type: io.kestra.plugin.core.condition.ExecutionStatusCondition
             in:
               - SUCCESS
           flow-a:
-            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            type: io.kestra.plugin.core.condition.ExecutionFlowCondition
             namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-a
           flow-b:
-            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+            type: io.kestra.plugin.core.condition.ExecutionFlowCondition
             namespace: io.kestra.tests.trigger
             flowId: trigger-multiplecondition-flow-b

@@ -4,9 +4,9 @@ namespace: io.kestra.cli
 # The list of tasks
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.debugs.Return
+  type: io.kestra.plugin.core.debug.Return
   format: "[[> lorem.txt]]"
 - id: t2
-  type: io.kestra.core.tasks.debugs.Return
+  type: io.kestra.plugin.core.debug.Return
   format: |
     [[> lorem-multiple.txt]]

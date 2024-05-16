@@ -3,14 +3,14 @@ namespace: io.kestra.tests
 
 tasks:
 - id: a
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "{{ task.id }}"
 - id: b
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "{{ task.id }}"
 - id: c
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "{{taskrun.attemptsCount == 1 ? 'ok' : ko}}"
 - id: d
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "{{ task.id }}"

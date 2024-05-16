@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: each
-    type: io.kestra.core.tasks.flows.ForEachItem
+    type: io.kestra.plugin.core.flow.ForEachItem
     items: "{{ inputs.file }}"
     batch:
       rows: 4
@@ -19,5 +19,5 @@ tasks:
       items: "{{ taskrun.items }}"
 
   - id: return
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ outputs.each_merge.subflowOutputs }}"

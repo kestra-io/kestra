@@ -8,7 +8,7 @@ inputs:
 listeners:
   - tasks:
       - id: parent-seq
-        type: io.kestra.core.tasks.flows.Switch
+        type: io.kestra.plugin.core.flow.Switch
         value: "{{inputs.string}}"
         cases:
           execution:
@@ -17,5 +17,5 @@ listeners:
 
 tasks:
   - id: first
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

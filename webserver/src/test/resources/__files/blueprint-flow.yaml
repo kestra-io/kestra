@@ -11,10 +11,10 @@ description: |
   You can generate a file on the bucket using the flow `extract-bigquery-table-to-gcs`
 tasks:
   - id: each
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     tasks:
       - id: subflow-etl-flow
-        type: io.kestra.core.tasks.flows.Subflow
+        type: io.kestra.plugin.core.flow.Subflow
         namespace: io.kestra.demo.google
         inputs:
           file: \"{{ taskrun.value | jq ('.uri') | first }}\"

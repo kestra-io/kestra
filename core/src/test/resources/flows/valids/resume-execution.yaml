@@ -3,12 +3,12 @@ namespace:  io.kestra.tests
 
 tasks:
   - id: parallel
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
     tasks:
       - id: pause
-        type: io.kestra.core.tasks.flows.Pause
+        type: io.kestra.plugin.core.flow.Pause
       - id: sequential
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: log
             type: io.kestra.core.tasks.test.Sleep

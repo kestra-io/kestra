@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: launch
-    type: io.kestra.core.tasks.flows.Subflow
+    type: io.kestra.plugin.core.flow.Subflow
     namespace: io.kestra.tests
     flowId: switch
     inputs:

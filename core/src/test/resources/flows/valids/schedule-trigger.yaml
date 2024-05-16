@@ -2,13 +2,13 @@ id: schedule-trigger
 namespace: io.kestra.tests.schedule
 tasks:
   - id: log
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: simple log
 
 triggers:
   - id: schedule-every-min
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "* * * * *"
   - id: schedule-5-min
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "*/5 * * * *"

@@ -3,33 +3,33 @@ namespace: io.kestra.tests
 tasks:
   - id: dag
     description: "my task"
-    type: io.kestra.core.tasks.flows.Dag
+    type: io.kestra.plugin.core.flow.Dag
     tasks:
       - task:
           id: task1
-          type: io.kestra.core.tasks.log.Log
+          type: io.kestra.plugin.core.log.Log
           message: "1 !"
       - task:
           id: task2
-          type: io.kestra.core.tasks.log.Log
+          type: io.kestra.plugin.core.log.Log
           message: "2 !"
         dependsOn:
           - taskX
       - task:
           id: task3
-          type: io.kestra.core.tasks.log.Log
+          type: io.kestra.plugin.core.log.Log
           message: "1 !"
         dependsOn:
           - task2
       - task:
           id: task4
-          type: io.kestra.core.tasks.log.Log
+          type: io.kestra.plugin.core.log.Log
           message: "1 !"
         dependsOn:
           - task2
       - task:
           id: task5
-          type: io.kestra.core.tasks.log.Log
+          type: io.kestra.plugin.core.log.Log
           message: "1 !"
         dependsOn:
           - task4

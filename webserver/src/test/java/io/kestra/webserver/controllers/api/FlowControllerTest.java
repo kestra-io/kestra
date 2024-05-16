@@ -96,7 +96,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object/tasks/not-json"), Task.class);
 
         assertThat(result.getId(), is("not-json"));
-        assertThat(result.getType(), is("io.kestra.core.tasks.debugs.Return"));
+        assertThat(result.getType(), is("io.kestra.plugin.core.debug.Return"));
     }
 
     @Test
@@ -721,11 +721,10 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.get(0).isOutdated(), is(true));
         assertThat(body.get(0).getDeprecationPaths(), hasSize(3));
         assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
-        assertThat(body.get(0).getWarnings().size(), is(3));
+        assertThat(body.get(0).getWarnings().size(), is(1));
         assertThat(body.get(0).getWarnings().get(0), containsString("The system namespace is reserved for background workflows"));
         assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), containsInAnyOrder("tasks[0]", "tasks[1]"));
-        assertThat(body.get(1).getWarnings().size(), is(2));
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))
         ));
@@ -738,7 +737,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         body = response.body();
         assertThat(body.size(), is(2));
         assertThat(body.get(0).getConstraints(), containsString("Unrecognized field \"unknownProp\""));
-        assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.core.tasks.debugs.UnknownTask"));
+        assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
     }
 
     private Flow generateFlow(String namespace, String inputName) {
@@ -792,7 +791,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +
-            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    type: io.kestra.plugin.core.debug.Return\n" +
             "    format: test\n" +
             "disabled: false\n" +
             "deleted: false", friendlyId,namespace, format);
@@ -807,7 +806,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             "    type: STRING\n" +
             "tasks:\n" +
             "  - id: test\n" +
-            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    type: io.kestra.plugin.core.debug.Return\n" +
             "    format: test\n" +
             "disabled: false\n" +
             "deleted: false", IdUtils.create(),namespace, format);

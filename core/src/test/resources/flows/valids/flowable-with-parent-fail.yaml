@@ -3,21 +3,21 @@ namespace: io.kestra.tests
 
 tasks:
   - id: vision
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     tasks:
       - id: metaseg_date
-        type: io.kestra.core.tasks.flows.EachParallel
+        type: io.kestra.plugin.core.flow.EachParallel
         tasks:
           - id: if
-            type: io.kestra.core.tasks.flows.If
+            type: io.kestra.plugin.core.flow.If
             condition: "{{parents[0].taskrun.value == 'CUMULATIVE' and {% for entry in json(taskrun.value) %}{{ entry.key }}{% endfor %}== 'NEW_MONTH'}}"
             then:
               - id: when-true
-                type: io.kestra.core.tasks.log.Log
+                type: io.kestra.plugin.core.log.Log
                 message: 'Condition was true'
             else:
               - id: when-false
-                type: io.kestra.core.tasks.log.Log
+                type: io.kestra.plugin.core.log.Log
                 message: 'Condition was false'
         value: "[{\"NEW_MONTH\":\"2018-01-01\"}]"
     value: "[\"MONTHLY\", \"CUMULATIVE\"]"

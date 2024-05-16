@@ -6,11 +6,11 @@ labels:
 
 tasks:
   - id: out
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{trigger | json }}"
 
 
 triggers:
   - id: webhook
-    type: io.kestra.core.models.triggers.types.Webhook
+    type: io.kestra.plugin.core.trigger.Webhook
     key: a-secret-key

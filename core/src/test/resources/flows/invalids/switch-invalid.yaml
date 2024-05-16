@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: impossible
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "{{inputs.string}}"
     cases: {}
     defaults: null

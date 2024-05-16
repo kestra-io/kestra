@@ -7,43 +7,43 @@ inputs:
 
 tasks:
   - id: first
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: 1-1-allow-failure
-        type: io.kestra.core.tasks.flows.AllowFailure
+        type: io.kestra.plugin.core.flow.AllowFailure
         tasks:
           - id: 1-1-1_seq
-            type: io.kestra.core.tasks.flows.Sequential
+            type: io.kestra.plugin.core.flow.Sequential
             tasks:
               - id: 1-1-1-1
-                type: io.kestra.core.tasks.debugs.Return
+                type: io.kestra.plugin.core.debug.Return
                 format: "{{task.id}} > {{taskrun.startDate}}"
               - id: ko
-                type: io.kestra.core.tasks.executions.Fail
+                type: io.kestra.plugin.core.execution.Fail
               - id: 1-1-1-3
-                type: io.kestra.core.tasks.debugs.Return
+                type: io.kestra.plugin.core.debug.Return
                 format: "{{task.id}} > {{taskrun.startDate}}"
         errors:
           - id: local-error
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "Error Trigger ! {{task.id}}"
       - id: 1-2-todo
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
   - id: switch
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "{{ inputs.crash is defined }}"
     cases:
       "true":
         - id: crash
-          type: io.kestra.core.tasks.executions.Fail
+          type: io.kestra.plugin.core.execution.Fail
     defaults:
       - id: last
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
 
 
 errors:
   - id: global-error
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "Error Trigger ! {{task.id}}"

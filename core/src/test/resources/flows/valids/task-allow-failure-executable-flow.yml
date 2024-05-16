@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: fail
-    type: io.kestra.core.tasks.flows.Subflow
+    type: io.kestra.plugin.core.flow.Subflow
     allowFailure: true
     namespace: io.kestra.tests
     flowId: for-each-item-subflow-failed
@@ -12,5 +12,5 @@ tasks:
     transmitFailed: true
     wait: true
   - id: log
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: I'm allowed

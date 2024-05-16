@@ -3,18 +3,18 @@ namespace: io.kestra.tests
 
 tasks:
   - id: workingDir
-    type: io.kestra.core.tasks.flows.WorkingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
     cache:
       ttl: PT5m
       patterns:
         - "*.txt"
     tasks:
       - id: exists
-        type: io.kestra.core.tasks.storages.LocalFiles
+        type: io.kestra.plugin.core.storage.LocalFiles
         outputs:
           - hello.txt
       - id: inputFiles
-        type: io.kestra.core.tasks.storages.LocalFiles
+        type: io.kestra.plugin.core.storage.LocalFiles
         inputs:
           hello.txt: |
             HELLO WORLD

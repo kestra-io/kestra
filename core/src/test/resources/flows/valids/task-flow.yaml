@@ -10,7 +10,7 @@ labels:
 
 tasks:
   - id: launch
-    type: io.kestra.core.tasks.flows.Subflow
+    type: io.kestra.plugin.core.flow.Subflow
     namespace: io.kestra.tests
     flowId: switch
     inputs:
@@ -25,5 +25,5 @@ tasks:
 
 triggers:
   - id: schedule
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 * * * *"

@@ -7,16 +7,16 @@ inputs:
 
 listeners:
   - conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:
           - FAILED
     tasks:
       - id: execution-failed-listener
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: "{{ task.id }}"
 
   - conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:
           - SUCCESS
     tasks:
@@ -25,13 +25,13 @@ listeners:
 
 tasks:
   - id: parent-seq
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "{{inputs.string}}"
     cases:
       OK:
         - id: ok
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       KO:
         - id: ko
-          type: io.kestra.core.tasks.executions.Fail
+          type: io.kestra.plugin.core.execution.Fail

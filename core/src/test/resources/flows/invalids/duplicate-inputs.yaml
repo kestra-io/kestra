@@ -10,5 +10,5 @@ inputs:
     type: STRING
 tasks:
   - id: taskOne
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "{{ inputs.first_input }}"

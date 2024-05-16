@@ -114,7 +114,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
             "For example, if you declare this use of template like this: \n" +
             "```yaml\n" +
             "  - id: 2-template\n" +
-            "    type: io.kestra.core.tasks.flows.Template\n" +
+            "    type: io.kestra.plugin.core.flow.Template\n" +
             "    namespace: io.kestra.tests\n" +
             "    templateId: template\n" +
             "    args:\n" +

@@ -3,4 +3,4 @@ namespace: io.kestra.tests.trigger
 
 tasks:
   - id: fail
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail

@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: fail
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail
     retry:
       behavior: CREATE_NEW_EXECUTION
       type: constant

@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 tasks:
   - id: out
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ trigger | json }}"
 
 triggers:
   - id: webhook
-    type: io.kestra.core.models.triggers.types.Webhook
+    type: io.kestra.plugin.core.trigger.Webhook
     key: webhookKey
     conditions:
-      - type: io.kestra.core.models.conditions.types.VariableCondition
+      - type: io.kestra.plugin.core.condition.VariableCondition
         expression: "{{trigger.body.hello == 'world'}}"

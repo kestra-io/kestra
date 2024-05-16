@@ -1,5 +1,5 @@
 id: my#flow
 namespace: MY$NAMESPACE
 tasks:
-- type: io.kestra.core.tasks.log.Log
+- type: io.kestra.plugin.core.log.Log
   message: "bla"

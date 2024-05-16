@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 tasks:
   - id: date
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{taskrun.startDate}}"
   - id: parent-seq
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "{{inputs.invalid}}"
     cases:
       FIRST:
         - id: t1
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}} > {{taskrun.startDate}}"

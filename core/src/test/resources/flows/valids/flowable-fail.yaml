@@ -6,8 +6,8 @@ tasks:
     type: io.kestra.core.tasks.test.BadSequential
     tasks:
       - id: log1
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: Log 1
       - id: log2
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: Log 2

@@ -1,12 +1,12 @@
 id: get-log-executionid
 namespace: io.kestra.tests
 tasks:
-  - type: io.kestra.core.tasks.debugs.Echo
+  - type: io.kestra.plugin.core.debug.Echo
     id: task-1
     format: task 1
-  - type: io.kestra.core.tasks.debugs.Echo
+  - type: io.kestra.plugin.core.debug.Echo
     id: task-2
     format: task 2
-  - type: io.kestra.core.tasks.log.Fetch
+  - type: io.kestra.plugin.core.log.Fetch
     id: get-log-task
     executionId: "{{execution.id}}"

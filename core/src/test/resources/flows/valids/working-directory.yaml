@@ -7,23 +7,23 @@ inputs:
 
 tasks:
   - id: worker
-    type: io.kestra.core.tasks.flows.WorkingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
     tasks:
       - id: first
-        type: io.kestra.core.tasks.storages.LocalFiles
+        type: io.kestra.plugin.core.storage.LocalFiles
         inputs:
           out/stay.txt: "{{ inputs.failed == 'true' ? ko: taskrun.id }}"
       - id: second
-        type: io.kestra.core.tasks.storages.LocalFiles
+        type: io.kestra.plugin.core.storage.LocalFiles
         outputs:
           - out/*
       - id: disabled
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         disabled: true
     errors:
       - id: error-t1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "Error Trigger ! {{task.id}}"
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ outputs.second.uris['out/stay.txt'] }}"

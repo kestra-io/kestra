@@ -3,18 +3,18 @@ namespace: io.kestra.tests
 
 tasks:
   - id: failed
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail
 
 errors:
   - id: t2
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: second {{task.id}}
 
   - id: t3
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: third {{task.id}}
     disabled: true
 
   - id: t4
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: fourth {{task.id}}

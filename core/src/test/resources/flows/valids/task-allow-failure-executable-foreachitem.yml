@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: each
-    type: io.kestra.core.tasks.flows.ForEachItem
+    type: io.kestra.plugin.core.flow.ForEachItem
     allowFailure: true
     items: "{{ inputs.file }}"
     batch:
@@ -19,5 +19,5 @@ tasks:
     inputs:
       items: "{{ taskrun.items }}"
   - id: log-allowed
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: I'm allowed

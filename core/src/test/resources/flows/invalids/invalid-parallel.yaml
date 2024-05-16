@@ -5,18 +5,18 @@ tasks:
 # https://github.com/micronaut-projects/micronaut-core/issues/9030
 #
 #  - id: "para1"
-#    type: io.kestra.core.tasks.flows.Parallel
+#    type: io.kestra.plugin.core.flow.Parallel
 #    tasks:
 #      -
 
   - id: "para2"
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
 
 
   - id: "para3"
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
     tasks: []
 
   - id: "para4"
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
     tasks: null

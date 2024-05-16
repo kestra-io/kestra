@@ -13,36 +13,36 @@ labels:
 
 tasks:
   - id: parent-seq
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "{{inputs.string}}"
     cases:
       FIRST:
         - id: t1
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       SECOND:
         - id: t2
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
         - id: t2_sub
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       THIRD:
         - id: t3
-          type: io.kestra.core.tasks.flows.Sequential
+          type: io.kestra.plugin.core.flow.Sequential
           tasks:
             - id: failed
-              type: io.kestra.core.tasks.executions.Fail
+              type: io.kestra.plugin.core.execution.Fail
           errors:
             - id: error-t1
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "Error Trigger ! {{task.id}}"
     defaults:
       - id: default
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{ inputs.def }} > {{taskrun.startDate}}"
 
 triggers:
   - id: schedule
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 * * * *"

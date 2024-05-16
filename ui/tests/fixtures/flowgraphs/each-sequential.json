@@ -13,16 +13,16 @@
       "type": "io.kestra.core.models.hierarchies.GraphClusterRoot",
       "task": {
         "id": "1_each",
-        "type": "io.kestra.core.tasks.flows.EachSequential",
+        "type": "io.kestra.plugin.core.flow.EachSequential",
         "tasks": [
           {
             "id": "1-1",
-            "type": "io.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.plugin.core.debug.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           },
           {
             "id": "1-2",
-            "type": "io.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.plugin.core.debug.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           }
         ],
@@ -35,16 +35,16 @@
       "type": "io.kestra.core.models.hierarchies.GraphClusterEnd",
       "task": {
         "id": "1_each",
-        "type": "io.kestra.core.tasks.flows.EachSequential",
+        "type": "io.kestra.plugin.core.flow.EachSequential",
         "tasks": [
           {
             "id": "1-1",
-            "type": "io.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.plugin.core.debug.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           },
           {
             "id": "1-2",
-            "type": "io.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.plugin.core.debug.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           }
         ],
@@ -57,7 +57,7 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "1-1",
-        "type": "io.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.plugin.core.debug.Return",
         "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
@@ -67,7 +67,7 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "1-2",
-        "type": "io.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.plugin.core.debug.Return",
         "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
@@ -77,7 +77,7 @@
       "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "2_end",
-        "type": "io.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.plugin.core.debug.Return",
         "format": "{{task.id}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
@@ -134,16 +134,16 @@
         "type": "io.kestra.core.models.hierarchies.GraphCluster",
         "task": {
           "id": "1_each",
-          "type": "io.kestra.core.tasks.flows.EachSequential",
+          "type": "io.kestra.plugin.core.flow.EachSequential",
           "tasks": [
             {
               "id": "1-1",
-              "type": "io.kestra.core.tasks.debugs.Return",
+              "type": "io.kestra.plugin.core.debug.Return",
               "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
             },
             {
               "id": "1-2",
-              "type": "io.kestra.core.tasks.debugs.Return",
+              "type": "io.kestra.plugin.core.debug.Return",
               "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
             }
           ],

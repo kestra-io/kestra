@@ -3,18 +3,18 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       - id: failed
-        type: io.kestra.core.tasks.flows.AllowFailure
+        type: io.kestra.plugin.core.flow.AllowFailure
         tasks:
           - id: 1-2
-            type: io.kestra.core.tasks.log.Log
+            type: io.kestra.plugin.core.log.Log
             message: "{{ parent.taskrun.value == 'value 1' ? 'ok' : ko }}"
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

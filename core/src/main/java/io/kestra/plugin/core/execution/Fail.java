@@ -75,13 +75,13 @@ import lombok.experimental.SuperBuilder;
                 "\n" +
                 "tasks:\n" +
                 "  - id: before\n" +
-                "    type: io.kestra.core.tasks.debugs.Echo\n" +
+                "    type: io.kestra.plugin.core.debug.Echo\n" +
                 "    format: I'm before the fail on condition \n" +
                 "  - id: fail\n" +
-                "    type: io.kestra.core.tasks.executions.Fail\n" +
+                "    type: io.kestra.plugin.core.execution.Fail\n" +
                 "    condition: '{{ inputs.param == \"fail\" }}'\n" +
                 "  - id: after\n" +
-                "    type: io.kestra.core.tasks.debugs.Echo\n" +
+                "    type: io.kestra.plugin.core.debug.Echo\n" +
                 "    format: I'm after the fail on condition "
             }
         )

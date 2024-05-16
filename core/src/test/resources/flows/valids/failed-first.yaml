@@ -3,8 +3,8 @@ namespace: io.kestra.tests
 
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.debugs.Return
+  type: io.kestra.plugin.core.debug.Return
   format: "{{missingVar}}"
 - id: t2
-  type: io.kestra.core.tasks.debugs.Return
+  type: io.kestra.plugin.core.debug.Return
   format: Never Happen

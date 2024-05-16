@@ -3,11 +3,11 @@ namespace: io.kestra.tests
 
 tasks:
   - id: flowable
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     retry:
       type: constant
       interval: PT2S
       maxAttempt: 3
     tasks:
       - id: child
-        type: io.kestra.core.tasks.executions.Fail
+        type: io.kestra.plugin.core.execution.Fail

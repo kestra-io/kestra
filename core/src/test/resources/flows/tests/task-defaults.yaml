@@ -25,9 +25,9 @@ tasks:
           type: io.kestra.core.runners.TaskDefaultsCaseTest$DefaultSequential3
           tasks:
           - id: ko
-            type: io.kestra.core.tasks.executions.Fail
+            type: io.kestra.plugin.core.execution.Fail
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
 
 errors:
@@ -41,5 +41,5 @@ errors:
             type: io.kestra.core.runners.TaskDefaultsCaseTest$DefaultSequential3
             tasks:
             - id: end
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{task.id}} > {{taskrun.startDate}}"

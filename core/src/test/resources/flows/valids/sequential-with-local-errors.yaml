@@ -3,27 +3,27 @@ namespace: io.kestra.tests
 
 tasks:
   - id: parent-seq
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: t1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
       - id: t2_seq
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: t2-t1
-            type: io.kestra.core.tasks.executions.Fail
+            type: io.kestra.plugin.core.execution.Fail
           - id: t2-t2
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: t2-t3
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}} > {{taskrun.id}}"
 
         errors:
           - id: error-t1
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "Error Trigger ! {{task.id}}"
           - id: error-t2
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "Error Trigger ! {{task.id}}"

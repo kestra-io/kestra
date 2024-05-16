@@ -3,11 +3,11 @@ namespace: io.kestra.tests
 
 tasks:
   - id: failStep
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail
     description: "This fails"
 
 errors:
   - id: errorHandler
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: I'm failing {{task.id}}
     level: INFO

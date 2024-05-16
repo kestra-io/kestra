@@ -3,23 +3,23 @@ namespace: io.kestra.tests
 
 tasks:
   - id: before
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: I'm before
 
   - id: sequential
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
     - id: close
-      type: io.kestra.core.tasks.log.Log
+      type: io.kestra.plugin.core.log.Log
       message: I'm close to fail
     - id: failStep
-      type: io.kestra.core.tasks.executions.Fail
+      type: io.kestra.plugin.core.execution.Fail
       description: "This fails"
     errors:
     - id: errorHandler
-      type: io.kestra.core.tasks.log.Log
+      type: io.kestra.plugin.core.log.Log
       message: I'm failing {{task.id}}
 
   - id: after
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: I'm after

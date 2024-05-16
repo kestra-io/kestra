@@ -36,7 +36,7 @@ class WorkerTaskRunningTest {
               },
               "task": {
                 "id": "log",
-                "type": "io.kestra.core.tasks.log.Log",
+                "type": "io.kestra.plugin.core.log.Log",
                 "message": "Row: {{trigger.row}}"
               },
               "runContext": {
@@ -47,7 +47,7 @@ class WorkerTaskRunningTest {
                   },
                   "task": {
                     "id": "log",
-                    "type": "io.kestra.core.tasks.log.Log"
+                    "type": "io.kestra.plugin.core.log.Log"
                   },
                   "taskrun": {
                     "id": "3RpDLNAPLhaiqkH5JSuIYw",

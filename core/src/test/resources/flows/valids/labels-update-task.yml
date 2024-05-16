@@ -16,19 +16,19 @@ inputs:
     type: STRING
 tasks:
   - id: from-render
-    type: io.kestra.core.tasks.executions.Labels
+    type: io.kestra.plugin.core.execution.Labels
     labels: "{{ inputs.labelsJson }}"
   - id: from-map
-    type: io.kestra.core.tasks.executions.Labels
+    type: io.kestra.plugin.core.execution.Labels
     labels:
       "{{ inputs.labelsMapKey }}": "{{ inputs.labelsMapValue }}"
   - id: from-list
-    type: io.kestra.core.tasks.executions.Labels
+    type: io.kestra.plugin.core.execution.Labels
     labels:
       - key: "{{ inputs.labelsListKey }}"
         value: "{{ inputs.labelsListValue }}"
   - id: override-labels
-    type: io.kestra.core.tasks.executions.Labels
+    type: io.kestra.plugin.core.execution.Labels
     labels:
       overriddenFlowLabelKey: "{{ flow.namespace ~ '.' ~ flow.id }}"
       overriddenExecutionLabelKey: "{{ taskrun.id }}"

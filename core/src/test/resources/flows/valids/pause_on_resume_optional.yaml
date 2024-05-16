@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: pause
-    type: io.kestra.core.tasks.flows.Pause
+    type: io.kestra.plugin.core.flow.Pause
     onResume:
       - id: asked
         type: STRING

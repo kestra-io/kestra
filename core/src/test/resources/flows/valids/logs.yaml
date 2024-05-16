@@ -6,30 +6,30 @@ labels:
   region: "Nord"
 
 taskDefaults:
-  - type: io.kestra.core.tasks.log.Log
+  - type: io.kestra.plugin.core.log.Log
     values:
       message: third {{flow.id}}
 
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: first {{task.id}}
   level: TRACE
 - id: t2
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: second {{task.type}}
   level: WARN
 - id: t3
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: third {{flow.id}}
   level: ERROR
 - id: t4
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: fourth {{task.id}}
   level: TRACE
   logLevel: INFO
 - id: t5
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message:
   - five first
   - five second

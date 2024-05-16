@@ -3,11 +3,11 @@ namespace: io.kestra.tests
 
 tasks:
   - id: workingDir
-    type: io.kestra.core.tasks.flows.WorkingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
     outputFiles:
       - output.txt
     tasks:
       - id: outputFiles
-        type: io.kestra.core.tasks.storages.LocalFiles
+        type: io.kestra.plugin.core.storage.LocalFiles
         inputs:
           output.txt: "Hello World"

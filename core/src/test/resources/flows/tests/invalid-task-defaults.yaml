@@ -2,13 +2,13 @@ id: invalid-task-defaults
 namespace: io.kestra.tests
 
 taskDefaults:
-  - type: io.kestra.core.tasks.log.Log
+  - type: io.kestra.plugin.core.log.Log
     values:
       level: WARN
       invalid: Default
 
 tasks:
   - id: first
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     level: WARN
     message: "Never happen"

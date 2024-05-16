@@ -3,10 +3,10 @@ namespace: io.kestra.tests
 
 tasks:
   - id: fail
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail
     retry:
       behavior: RETRY_FAILED_TASK
       type: constant
       maxDuration: PT15S
       interval: PT5S
-    
+

@@ -6,7 +6,7 @@ inputs:
     type: STRING
 tasks:
   - id: test
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: test
 disabled: false
 deleted: false

@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: flowable
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     value: [0, 1]
     retry:
       type: constant
@@ -11,4 +11,4 @@ tasks:
       maxAttempt: 3
     tasks:
       - id: child
-        type: io.kestra.core.tasks.executions.Fail
+        type: io.kestra.plugin.core.execution.Fail

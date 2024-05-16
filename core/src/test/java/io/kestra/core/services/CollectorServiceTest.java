@@ -30,7 +30,7 @@ class CollectorServiceTest {
 
         try (ApplicationContext applicationContext = Helpers.applicationContext(properties).start()) {
             CollectorService collectorService = applicationContext.getBean(CollectorService.class);
-            Usage metrics = collectorService.metrics();
+            Usage metrics = collectorService.metrics(true);
 
             assertThat(metrics.getUri(), is("https://mysuperhost.com/subpath"));
 

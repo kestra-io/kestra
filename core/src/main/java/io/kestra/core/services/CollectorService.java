@@ -89,19 +89,15 @@ public class CollectorService {
         return defaultUsage;
     }
 
-    public Usage metrics() {
-        return metrics(true);
-    }
-
-    private Usage metrics(boolean details) {
+    public Usage metrics(boolean details) {
         Usage.UsageBuilder<?, ?> builder = defaultUsage()
             .toBuilder()
             .uuid(IdUtils.create());
 
         if (details) {
             builder = builder
-            .flows(FlowUsage.of(flowRepository))
-            .executions(ExecutionUsage.of(executionRepository));
+                .flows(FlowUsage.of(flowRepository))
+                .executions(ExecutionUsage.of(executionRepository));
         }
         return builder.build();
     }

@@ -52,6 +52,11 @@ public class State {
         this.histories.add(new History(this.current, Instant.now()));
     }
 
+    public State(Type type, List<History> histories) {
+        this.current = type;
+        this.histories = histories;
+    }
+
     public static State of(Type state, List<History> histories) {
         State result = new State(state);
 
@@ -68,6 +73,13 @@ public class State {
         }
 
         return new State(state, this);
+    }
+
+    public State reset() {
+        return new State(
+            Type.CREATED,
+            List.of(this.histories.getFirst())
+        );
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

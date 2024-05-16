@@ -87,6 +87,23 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    public TaskRun replaceState(State newState) {
+        return new TaskRun(
+            this.tenantId,
+            this.id,
+            this.executionId,
+            this.namespace,
+            this.flowId,
+            this.taskId,
+            this.parentTaskRunId,
+            this.value,
+            this.attempts,
+            this.outputs,
+            newState,
+            this.iteration
+        );
+    }
+
     public TaskRun fail() {
         var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
         List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : this.attempts;
@@ -268,5 +285,18 @@ public class TaskRun implements TenantInterface {
         return this.nextRetryDate(retry) != null;
     }
 
+    public TaskRun incrementIteration() {
+        int ité = this.iteration == null ? 1 : this.iteration;
+        return this.toBuilder()
+            .iteration(ité + 1)
+            .build();
+    }
+
+    public TaskRun resetAttempts() {
+        return this.toBuilder()
+            .state(new State(State.Type.CREATED, List.of(this.state.getHistories().getFirst())))
+            .attempts(null)
+            .build();
+    }
 
 }

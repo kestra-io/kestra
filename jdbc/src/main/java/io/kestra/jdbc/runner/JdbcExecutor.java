@@ -863,7 +863,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
-                        Execution execution  = executionService.retryFlowable(executor.getExecution(), executionDelay.getTaskRunId());
+                        Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
                     }
                 } catch (Exception e) {
@@ -891,7 +891,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" +
                     taskRun.getTaskId() + "-" +
                     taskRun.getValue() + "-" +
-                    (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
+                    (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0)
+                    + taskRun.getIteration();
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
                     log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
@@ -905,7 +906,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private boolean deduplicateWorkerTask(Execution execution, ExecutorState executorState, TaskRun taskRun) {
         String deduplicationKey = taskRun.getId() +
-            (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0);
+            (taskRun.getAttempts() != null ? taskRun.getAttempts().size() : 0)
+            + taskRun.getIteration();
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {

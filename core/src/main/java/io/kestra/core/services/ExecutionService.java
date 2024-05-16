@@ -98,18 +98,26 @@ public class ExecutionService {
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
     }
 
-    public Execution retryFlowable(Execution execution, String flowableTaskRunId) {
+    public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
             .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
-                    return taskRun
-                        .withState(State.Type.RUNNING);
+                    // Keep only CREATED/RUNNING
+                    // To avoid having large history
+                    return taskRun.replaceState(
+                         new State(
+                            State.Type.RUNNING,
+                            taskRun.getState().getHistories().subList(0,2)
+                        )
+                    );
                 }
 
                 if (flowableTaskRunId.equals(taskRun.getParentTaskRunId())) {
-                    return taskRun.withState(State.Type.CREATED);
+                    // Clean attempts and only increment iteration
+                    // to avoid having large history
+                    return taskRun.resetAttempts().incrementIteration();
                 }
 
                 return taskRun;

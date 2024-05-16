@@ -477,6 +477,9 @@
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
         clearTimeout(timer.value);
+
+        if(!isFlow) return;
+
         return store
             .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
             .then((value) => {
@@ -704,7 +707,7 @@
     };
 
     const save = async (e) => {
-        if (!haveChange.value) {
+        if (!currentTab.value.dirty) {
             return;
         }
         if (e) {
@@ -734,7 +737,7 @@
         const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
-            onEdit(flowYaml.value).then((validation) => {
+            onEdit(flowYaml.value, true).then((validation) => {
                 if (validation.outdated && !props.isCreating) {
                     confirmOutdatedSaveDialog.value = true;
                     return;

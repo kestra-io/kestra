@@ -536,8 +536,7 @@ public class ExecutorService {
             }
             // WaitFor case
             else if (task instanceof WaitFor waitFor && taskRun.getState().isRunning()) {
-                TaskRun childTaskRun = waitFor.getChildTaskRun(executor.getExecution(), taskRun).orElse(null);
-                if (childTaskRun != null && childTaskRun.getState().isSuccess()) {
+                if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
                     TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), updatedTaskRun);
@@ -553,8 +552,10 @@ public class ExecutorService {
                             .state(State.Type.RUNNING)
                             .delayType(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
                             .build());
-                        Execution execution = executionService.pauseFlowable(executor.getExecution(), taskRun.getId(), newOutput);
+                        Execution execution = executionService.pauseFlowable(executor.getExecution(), updatedTaskRun);
                         executor.withExecution(execution, "pauseLoop");
+                    } else {
+                        executor.withExecution(executor.getExecution().withTaskRun(updatedTaskRun), "handleWaitFor");
                     }
                 }
             }

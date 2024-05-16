@@ -6,6 +6,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
 import jakarta.inject.Inject;
 
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,5 +42,21 @@ public class WaitForCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-no-success");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    public void waitforMultipleTasks() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-multiple-tasks");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Map<String,Object> values = (Map<String, Object>) execution.getTaskRunList().getLast().getOutputs().get("values");
+        assertThat(values.get("count"), is("4"));
+    }
+
+    public void waitforMultipleTasksFailed() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-multiple-tasks-failed");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().getLast().attemptNumber(), is(1));
     }
 }

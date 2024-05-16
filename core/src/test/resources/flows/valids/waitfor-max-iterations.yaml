@@ -7,9 +7,10 @@ tasks:
     condition: "{{ outputs.output_values.values.count != '10'}}"
     checkFrequency:
       maxIterations: 3
+      interval: PT0.2S
     failOnMaxReached: true
-    task:
-      id: output_values
-      type: io.kestra.plugin.core.output.OutputValues
-      values:
-        count: "{{ outputs.waitfor.iterationCount + 1 }}"
+    tasks:
+      - id: output_values
+        type: io.kestra.core.tasks.outputs.OutputValues
+        values:
+          count: "{{ outputs.waitfor.iterationCount + 1 }}"

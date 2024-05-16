@@ -5,8 +5,8 @@ tasks:
   - id: waitfor
     type: io.kestra.core.tasks.flows.WaitFor
     condition: "{{ outputs.output_values.values.count != '4'}}"
-    task:
-      id: output_values
-      type: io.kestra.plugin.core.output.OutputValues
-      values:
-        count: "{{ outputs.waitfor.iterationCount + 1 }}"
+    tasks:
+      - id: output_values
+        type: io.kestra.core.tasks.outputs.OutputValues
+        values:
+          count: "{{ outputs.waitfor.iterationCount + 1 }}"

@@ -1,15 +1,14 @@
-id: waitfor-max-duration
+id: waitfor-multiple-tasks
 namespace: io.kestra.tests
 
 tasks:
   - id: waitfor
     type: io.kestra.core.tasks.flows.WaitFor
-    condition: "{{ outputs.output_values.values.count != '-5'}}"
-    checkFrequency:
-      maxDuration: PT5S
-      interval: PT0.2S
-    failOnMaxReached: true
+    condition: "{{ outputs.output_values.values.count != '4'}}"
     tasks:
+      - id: echo
+        type: io.kestra.core.tasks.log.Log
+        message: "looping ..."
       - id: output_values
         type: io.kestra.core.tasks.outputs.OutputValues
         values:

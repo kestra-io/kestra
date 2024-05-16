@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -120,25 +119,9 @@ public class ExecutionService {
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
     }
 
-    public Execution pauseFlowable(Execution execution, String flowableTaskRunId, Output newOutput) {
-        List<TaskRun> newTaskRuns = execution
-            .getTaskRunList()
-            .stream()
-            .map(taskRun -> {
-                if (taskRun.getId().equals(flowableTaskRunId)) {
-                    var taskrunUpdated = taskRun
-                        .withState(State.Type.PAUSED);
-                    if (newOutput != null) {
-                        taskrunUpdated = taskrunUpdated.withOutputs(newOutput.toMap());
-                    }
-                    return taskrunUpdated;
-                }
+    public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
 
-                return taskRun;
-            })
-            .toList();
-
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.PAUSED);
+        return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
     }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {

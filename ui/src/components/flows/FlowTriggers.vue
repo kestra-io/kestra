@@ -35,7 +35,7 @@
             <template #default="scope">
                 <el-button
                     :icon="CalendarCollapseHorizontalOutline"
-                    v-if="scheduleClassName === scope.row.type && !scope.row.backfill && userCan(action.CREATE)"
+                    v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
                     :disabled="scope.row.disabled"
                     size="small"
@@ -43,7 +43,7 @@
                 >
                     {{ $t("backfill executions") }}
                 </el-button>
-                <template v-else-if="scheduleClassName === scope.row.type && userCan(action.UPDATE)">
+                <template v-else-if="isSchedule(scope.row.type) && userCan(action.UPDATE)">
                     <div class="backfill-cell">
                         <div class="progress-cell">
                             <el-progress
@@ -203,8 +203,6 @@
                 isOpen: false,
                 isBackfillOpen: false,
                 triggers: [],
-                // className to check to display the backfill button
-                scheduleClassName: "io.kestra.core.models.triggers.types.Schedule",
                 selectedTrigger: null,
                 backfill: {
                     start: null,
@@ -384,6 +382,9 @@
                 const totalDuration = endMoment.diff(startMoment);
                 const elapsedDuration = currentMoment.diff(startMoment);
                 return Math.round((elapsedDuration / totalDuration) * 100);
+            },
+            isSchedule(type) {
+                return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
             }
         }
     };

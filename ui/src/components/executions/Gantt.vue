@@ -58,7 +58,7 @@
                             @follow="forwardEvent('follow', $event)"
                             :target-execution="execution"
                             :target-flow="flow"
-                            :show-logs="taskTypeByTaskRunId[serie.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                            :show-logs="taskTypeByTaskRunId[serie.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[serie.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                         />
                     </td>
                 </tr>
@@ -87,7 +87,7 @@
                 duration: undefined,
                 usePartialSerie: true,
                 selectedTaskRuns: [],
-                taskTypesToExclude: ["io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
+                taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
             };
         },
         watch: {
@@ -134,7 +134,7 @@
                 return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
             },
             forEachItemsTaskRunIds() {
-                return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
+                return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.plugin.core.flow.ForEachItem" || taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
             },
             filteredSeries() {
                 return this.partialSeries

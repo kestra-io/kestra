@@ -5,7 +5,8 @@ tasks:
   - id: waitfor
     type: io.kestra.core.tasks.flows.WaitFor
     condition: "{{ outputs.output_values.values.count != '10'}}"
-    maxIterations: 3
+    checkFrequency:
+      maxIterations: 3
     failOnMaxReached: true
     task:
       id: output_values

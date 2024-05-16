@@ -18,6 +18,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -86,28 +87,17 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     private String condition;
 
     @Schema(
-        title = "Maximum count of iterations."
-    )
-    @Builder.Default
-    private Integer maxIterations = 100;
-
-    @Schema(
-        title = "Maximum duration of the task."
-    )
-    @Builder.Default
-    private Duration maxDuration = Duration.ofHours(1);
-
-    @Schema(
-        title = "Interval between each iteration."
-    )
-    @Builder.Default
-    private Duration interval = Duration.ofSeconds(1);
-
-    @Schema(
         title = "If true, the task will fail if the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
     private Boolean failOnMaxReached = false;
+
+    @Schema(
+        title = "Check frequency configuration."
+    )
+    @Builder.Default
+    @PluginProperty
+    private CheckFrequency checkFrequency = CheckFrequency.builder().build();
 
     @Override
     public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -155,7 +145,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             String continueLoop = runContext.render(this.condition);
             if (TruthUtils.isTruthy(continueLoop)) {
 
-                return Instant.now().plus(this.interval);
+                return Instant.now().plus(this.checkFrequency.interval);
             }
         }
 
@@ -170,13 +160,13 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             return false;
         }
 
-        if (this.maxIterations != null && childTaskRun.attemptNumber() >= this.maxIterations) {
+        if (this.checkFrequency.maxIterations != null && childTaskRun.attemptNumber() >= this.checkFrequency.maxIterations) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
 
-        if (this.maxDuration != null &&
-            childTaskRun.getAttempts().getFirst().getState().getStartDate().plus(this.maxDuration).isBefore(Instant.now())) {
+        if (this.checkFrequency.maxDuration != null &&
+            childTaskRun.getAttempts().getFirst().getState().getStartDate().plus(this.checkFrequency.maxDuration).isBefore(Instant.now())) {
             if (printLog) {logger.warn("Max duration reached");}
 
             return true;
@@ -237,5 +227,32 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Integer iterationCount;
+    }
+
+    @SuperBuilder(toBuilder = true)
+    @Introspected
+    @Getter
+    @NoArgsConstructor
+    public static class CheckFrequency {
+        @Schema(
+            title = "Maximum count of iterations."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Integer maxIterations = 100;
+
+        @Schema(
+            title = "Maximum duration of the task."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Duration maxDuration = Duration.ofHours(1);
+
+        @Schema(
+            title = "Interval between each iteration."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Duration interval = Duration.ofSeconds(1);
     }
 }

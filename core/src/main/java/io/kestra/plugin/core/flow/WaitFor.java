@@ -67,8 +67,7 @@ import java.util.stream.Stream;
                       format: "{{ outputs.waitFor.iterationCount }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.WaitFor"
+    }
 )
 public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Valid

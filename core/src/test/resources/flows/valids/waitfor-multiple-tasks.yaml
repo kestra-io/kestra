@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 tasks:
   - id: waitfor
-    type: io.kestra.core.tasks.flows.WaitFor
+    type: io.kestra.plugin.core.flow.WaitFor
     condition: "{{ outputs.output_values.values.count != '4'}}"
     tasks:
       - id: echo
         type: io.kestra.core.tasks.log.Log
         message: "looping ..."
       - id: output_values
-        type: io.kestra.core.tasks.outputs.OutputValues
+        type: io.kestra.plugin.core.output.OutputValues
         values:
           count: "{{ outputs.waitfor.iterationCount + 1 }}"

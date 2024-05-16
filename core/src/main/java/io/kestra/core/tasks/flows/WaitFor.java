@@ -62,7 +62,7 @@ import java.util.stream.Stream;
                     task:
                       id: return
                       type: io.kestra.core.tasks.debugs.Return
-                      format: "{{ outputs.waitfor.iterationCount }}"
+                      format: "{{ outputs.waitFor.iterationCount }}"
                 """
         )
 

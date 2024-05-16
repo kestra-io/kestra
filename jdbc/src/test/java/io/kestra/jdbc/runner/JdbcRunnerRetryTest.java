@@ -3,7 +3,7 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.tasks.flows.RetryCaseTest;
+import io.kestra.plugin.core.flow.RetryCaseTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;

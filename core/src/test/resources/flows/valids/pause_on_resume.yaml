@@ -12,7 +12,7 @@ tasks:
         required: false
 
   - id: last
-    type: io.kestra.core.tasks.outputs.OutputValues
+    type: io.kestra.plugin.core.output.OutputValues
     values:
       asked: "{{outputs.pause.onResume.asked}}"
       data: "{{outputs.pause.onResume.data}}"

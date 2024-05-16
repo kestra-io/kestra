@@ -1,6 +1,6 @@
 package io.kestra.core.models.triggers.multipleflows;
 
-import io.kestra.core.models.conditions.types.MultipleCondition;
+import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 
 import java.time.Duration;

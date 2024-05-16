@@ -2,7 +2,7 @@ package io.kestra.core.validations;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.IdUtils;
 

@@ -69,7 +69,7 @@ public class RunContext {
     private Optional<String> secretKey;
 
     /**
-     * Only used by {@link io.kestra.core.models.triggers.types.Flow}
+     * Only used by {@link io.kestra.plugin.core.trigger.Flow}
      *
      * @param applicationContext the current {@link ApplicationContext}
      * @param flow the current {@link Flow}
@@ -143,7 +143,7 @@ public class RunContext {
         );
         this.pluginConfiguration = Collections.emptyMap();
     }
-    
+
     private RunContext(final ApplicationContext context) {
         this.applicationContext = context;
         this.initBean(context);
@@ -177,7 +177,7 @@ public class RunContext {
         this.variables = this.variables(flow, task, execution, taskRun, null, decryptVariables);
         initStorage(taskRun);
     }
-    
+
     private void initStorage(TaskRun taskRun) {
         if (taskRun != null && this.storageInterface != null) {
             this.storage = new InternalStorage(
@@ -187,7 +187,7 @@ public class RunContext {
             );
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private void initLogger(TaskRun taskRun, Task task) {
         this.runContextLogger = new RunContextLogger(
@@ -510,9 +510,9 @@ public class RunContext {
     @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
         this.initBean(applicationContext);
-        
+
         final TaskRun taskRun = workerTask.getTaskRun();
-        
+
         final Map<String, Object> clone = new HashMap<>(this.variables);
         clone.remove("taskrun");
         clone.put("taskrun", this.variables(taskRun));
@@ -531,7 +531,7 @@ public class RunContext {
         }
 
         clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
-        
+
         final RunContext newContext = new RunContext(applicationContext);
         newContext.variables = ImmutableMap.copyOf(clone);
         newContext.temporaryDirectory = this.tempDir();
@@ -555,11 +555,11 @@ public class RunContext {
 
     public RunContext forWorkingDirectory(ApplicationContext applicationContext, WorkerTask workerTask) {
         RunContext newContext = forWorker(applicationContext, workerTask);
-        
+
         Map<String, Object> clone = new HashMap<>(newContext.variables);
 
         clone.put("workerTaskrun", clone.get("taskrun"));
-        
+
         newContext.variables = ImmutableMap.copyOf(clone);
 
         return newContext;

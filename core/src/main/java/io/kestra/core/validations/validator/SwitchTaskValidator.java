@@ -1,6 +1,6 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.tasks.flows.Switch;
+import io.kestra.plugin.core.flow.Switch;
 import io.kestra.core.validations.SwitchTaskValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;

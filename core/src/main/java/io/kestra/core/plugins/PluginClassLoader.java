@@ -26,6 +26,7 @@ public class PluginClassLoader extends URLClassLoader {
     // The default list of packages to delegate loading to parent classloader.
     private static Pattern DEFAULT_PACKAGES_TO_IGNORE = Pattern.compile("(?:"
         + "|io.kestra.core"
+        + "|io.kestra.plugin.core"
         + "|org.slf4j"
         + ")\\..*$");
 

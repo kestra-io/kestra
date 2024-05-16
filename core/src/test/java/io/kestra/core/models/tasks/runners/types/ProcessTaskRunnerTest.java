@@ -2,7 +2,7 @@ package io.kestra.core.models.tasks.runners.types;
 
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
 import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.models.tasks.runners.types.ProcessTaskRunner;
+import io.kestra.plugin.core.runner.ProcessTaskRunner;
 
 class ProcessTaskRunnerTest extends AbstractTaskRunnerTest {
 

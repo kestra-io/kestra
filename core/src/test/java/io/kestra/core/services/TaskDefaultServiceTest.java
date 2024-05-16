@@ -2,7 +2,7 @@ package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.conditions.types.VariableCondition;
+import io.kestra.plugin.core.condition.VariableCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.TaskDefault;
@@ -13,7 +13,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.models.triggers.types.Schedule;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.EqualsAndHashCode;

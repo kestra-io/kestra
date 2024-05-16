@@ -101,7 +101,7 @@ labels:
 
 tasks:
   - id: hello
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: Hello world!
     description: a *very* important task
     disabled: false
@@ -114,7 +114,7 @@ tasks:
       warningOnRetry: true # type: boolean, default is false
 
   - id: parallel
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
     concurrent: 3
     tasks:
       - id: task1
@@ -135,7 +135,7 @@ tasks:
 
 triggers:
   - id: schedule
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "*/15 * * * *"
     backfill:
       start: 2023-10-05T14:00:00Z
@@ -201,7 +201,7 @@ namespace: dev
 
 tasks:
   - id: hello_world
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: Hello World!
 ```
 

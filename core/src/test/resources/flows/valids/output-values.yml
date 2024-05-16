@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: return
-    type: io.kestra.core.tasks.outputs.OutputValues
+    type: io.kestra.plugin.core.output.OutputValues
     values:
       output1: xyz
       output2: abc

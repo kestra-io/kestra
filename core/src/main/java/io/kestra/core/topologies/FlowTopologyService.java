@@ -1,7 +1,6 @@
 package io.kestra.core.topologies;
 
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.conditions.types.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.Graph;
@@ -15,6 +14,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.condition.*;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -175,10 +175,10 @@ public class FlowTopologyService {
         Execution execution = Execution.newExecution(parent, (f, e) -> null, null);
 
         // keep only flow trigger
-        List<io.kestra.core.models.triggers.types.Flow> flowTriggers = triggers
+        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = triggers
             .stream()
-            .filter(t -> t instanceof io.kestra.core.models.triggers.types.Flow)
-            .map(t -> (io.kestra.core.models.triggers.types.Flow) t)
+            .filter(t -> t instanceof io.kestra.plugin.core.trigger.Flow)
+            .map(t -> (io.kestra.plugin.core.trigger.Flow) t)
             .toList();
 
         if (flowTriggers.isEmpty()) {

@@ -1,6 +1,6 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.tasks.flows.Dag;
+import io.kestra.plugin.core.flow.Dag;
 import io.kestra.core.validations.DagTaskValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;

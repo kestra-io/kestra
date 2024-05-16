@@ -1,7 +1,7 @@
 package io.kestra.core.models.tasks;
 
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.tasks.flows.Pause;
+import io.kestra.plugin.core.flow.Pause;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;

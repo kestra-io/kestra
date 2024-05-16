@@ -74,7 +74,7 @@ public class PluginScanner {
             long start = System.currentTimeMillis();
             Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
                 "X-Kestra-Title: core\n" +
-                "X-Kestra-Group: io.kestra.core.tasks\n",
+                "X-Kestra-Group: io.kestra.plugin.core\n",
                 StandardCharsets.UTF_8
             ));
 

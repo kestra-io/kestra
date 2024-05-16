@@ -6,6 +6,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
@@ -30,12 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -210,7 +207,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
 
         Flow retrievedFlow = flowRepository.findById(null, NAMESPACE, "task-flow").get();
         assertThat(retrievedFlow.getNamespace(), is(NAMESPACE));
-        assertThat(((io.kestra.core.tasks.flows.Subflow) retrievedFlow.getTasks().get(0)).getNamespace(), is(namespaceToExport));
+        assertThat(((Subflow) retrievedFlow.getTasks().get(0)).getNamespace(), is(namespaceToExport));
     }
 
     private void assertNamespaceFileContent(URI fileUri, String expectedContent) throws IOException {

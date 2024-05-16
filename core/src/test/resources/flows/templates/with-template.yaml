@@ -13,7 +13,7 @@ variables:
   var-2: '{{ var-1 }}'
 
 taskDefaults:
-  - type: io.kestra.core.tasks.log.Log
+  - type: io.kestra.plugin.core.log.Log
     values:
       level: "ERROR"
 

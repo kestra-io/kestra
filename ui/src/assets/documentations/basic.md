@@ -24,7 +24,7 @@ The table below describes all these properties in detail.
 | `listeners`                  | The list of listeners (deprecated).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `triggers`                   | The list of [triggers](https://kestra.io/docs/workflow-components/triggers) which automatically start a flow execution based on events, such as a scheduled date, a new file arrival, a new message in a queue, or the completion event of another flow's execution.                                                                                                                                                                                                                                                                                                                   |
 | `taskDefaults`               | The list of [default task values](https://kestra.io/docs/workflow-components/task-defaults), allowing you to avoid repeating the same properties on each task.                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `taskDefaults.[].type`       | The task type is a full qualified Java class name, i.e. the task name such as `io.kestra.core.tasks.log.Log`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `taskDefaults.[].type`       | The task type is a full qualified Java class name, i.e. the task name such as `io.kestra.plugin.core.log.Log`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `taskDefaults.[].forced`     | If set to `forced: true`, the `taskDefault` will take precedence over properties defined in the task (the default behavior is `forced: false`).                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `taskDefaults.[].values.xxx` | The task property that you want to be set as default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `disabled`                   | Set it to `true` to temporarily [disable](https://kestra.io/docs/workflow-components/disabled) any new executions of the flow. This is useful when you want to stop a flow from running (even manually) without deleting it. Once you set this property to true, nobody will be able to trigger any execution of that flow, whether from the UI or via an API call, until the flow is reenabled by setting this property back to `false` (default behavior) or by deleting this property.                                                                                              |
@@ -87,20 +87,20 @@ variables:
 
 tasks:
   - id: hello
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     description: this is a *task* documentation
     message: |
       The variables we used are {{ vars.first }} and {{ render(vars.second) }}.
       The input is {{ inputs.user }} and the task was started at {{ taskrun.startDate }} from flow {{ flow.id }}.
 
 taskDefaults:
-  - type: io.kestra.core.tasks.log.Log
+  - type: io.kestra.plugin.core.log.Log
     values:
       level: TRACE
 
 triggers:
   - id: monthly
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 9 1 * *" # every first day of the month at 9am
 ```
 

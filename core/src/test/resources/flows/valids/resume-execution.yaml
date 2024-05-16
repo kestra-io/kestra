@@ -14,4 +14,4 @@ tasks:
             type: io.kestra.core.tasks.test.Sleep
             duration: 100
           - id: resume
-            type: io.kestra.core.tasks.executions.Resume
+            type: io.kestra.plugin.core.execution.Resume

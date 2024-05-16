@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.flows.Sequential;
+import io.kestra.plugin.core.flow.Sequential;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

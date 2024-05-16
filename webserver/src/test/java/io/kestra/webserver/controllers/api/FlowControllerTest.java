@@ -12,8 +12,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.flows.Sequential;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
@@ -721,11 +721,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.get(0).isOutdated(), is(true));
         assertThat(body.get(0).getDeprecationPaths(), hasSize(3));
         assertThat(body.get(0).getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
-        assertThat(body.get(0).getWarnings().size(), is(1));
+        assertThat(body.get(0).getWarnings().size(), is(3));
         assertThat(body.get(0).getWarnings().get(0), containsString("The system namespace is reserved for background workflows"));
         assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), containsInAnyOrder("tasks[0]", "tasks[1]"));
-        assertThat(body.get(1).getWarnings(), empty());
+        assertThat(body.get(1).getWarnings().size(), is(2));
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", is(nullValue()))
         ));

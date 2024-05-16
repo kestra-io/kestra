@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.models.conditions.types.ExecutionFlowCondition;
-import io.kestra.core.models.conditions.types.MultipleCondition;
+import io.kestra.plugin.core.condition.ExecutionFlowCondition;
+import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 import org.junitpioneer.jupiter.RetryingTest;
 
@@ -160,7 +160,7 @@ public abstract class AbstractMultipleConditionStorageTest {
             .namespace(NAMESPACE)
             .id("multiple-flow")
             .revision(1)
-            .triggers(Collections.singletonList(io.kestra.core.models.triggers.types.Flow.builder()
+            .triggers(Collections.singletonList(io.kestra.plugin.core.trigger.Flow.builder()
                 .id("trigger-flow")
                 .conditions(Collections.singletonList(multipleCondition))
                 .build()))

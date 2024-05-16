@@ -2,7 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
-import io.kestra.core.tasks.debugs.Return;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;

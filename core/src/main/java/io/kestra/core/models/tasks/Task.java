@@ -7,7 +7,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Getter;

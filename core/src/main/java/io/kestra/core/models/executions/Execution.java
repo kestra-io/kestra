@@ -568,7 +568,7 @@ public class Execution implements DeletedInterface, TenantInterface {
      * {@code RUNNING} taskRun, on the lastAttempts.
      * If no Attempt is found, we create one (must be nominal case).
      * The executor will catch the {@code FAILED} taskRun emitted and will failed the execution.
-     * In the worst case, we FAILED the execution (only from {@link io.kestra.core.models.triggers.types.Flow}).
+     * In the worst case, we FAILED the execution (only from {@link io.kestra.plugin.core.trigger.Flow}).
      *
      * @param e the exception throw from Executor
      * @return a new execution with taskrun failed if possible or execution failed is other case

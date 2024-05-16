@@ -9,6 +9,6 @@ tasks:
     failOnMaxReached: true
     task:
       id: output_values
-      type: io.kestra.core.tasks.outputs.OutputValues
+      type: io.kestra.plugin.core.output.OutputValues
       values:
         count: "{{ outputs.waitfor.iterationCount + 1 }}"

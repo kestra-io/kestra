@@ -1037,7 +1037,7 @@
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 0 0 0%'">           
+        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">           
             <div
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"

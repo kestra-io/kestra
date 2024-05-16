@@ -105,7 +105,7 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
     public Usage usages() {
-        return collectorService.metrics();
+        return collectorService.metrics(true);
     }
 
     @Post(uri = "/api/v1{/tenant}/basicAuth")

@@ -2,6 +2,7 @@ package io.kestra.core.validations.validator;
 
 import com.cronutils.model.Cron;
 import io.kestra.core.validations.CronExpression;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -23,7 +24,7 @@ public class CronExpressionValidator implements ConstraintValidator<CronExpressi
         }
 
         try {
-            Cron parse = io.kestra.core.models.triggers.types.Schedule.CRON_PARSER.parse(value);
+            Cron parse = Schedule.CRON_PARSER.parse(value);
             parse.validate();
         } catch (IllegalArgumentException e) {
             context.disableDefaultConstraintViolation();

@@ -1,6 +1,6 @@
 package io.kestra.core.schedulers;
 
-import io.kestra.core.models.conditions.types.VariableCondition;
+import io.kestra.plugin.core.condition.VariableCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -9,7 +9,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
-import io.kestra.core.tasks.executions.Fail;
+import io.kestra.plugin.core.execution.Fail;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;

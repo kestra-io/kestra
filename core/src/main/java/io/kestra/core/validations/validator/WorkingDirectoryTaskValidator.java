@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.tasks.flows.WorkingDirectory;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;

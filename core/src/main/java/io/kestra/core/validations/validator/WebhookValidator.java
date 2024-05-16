@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.models.conditions.types.MultipleCondition;
-import io.kestra.core.models.triggers.types.Webhook;
+import io.kestra.plugin.core.condition.MultipleCondition;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.core.validations.WebhookValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;

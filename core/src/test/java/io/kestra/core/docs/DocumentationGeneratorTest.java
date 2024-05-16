@@ -1,15 +1,15 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.models.tasks.runners.types.ProcessTaskRunner;
+import io.kestra.plugin.core.runner.ProcessTaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.core.tasks.debugs.Echo;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.flows.Dag;
-import io.kestra.core.tasks.flows.Subflow;
-import io.kestra.core.tasks.states.Set;
+import io.kestra.plugin.core.debug.Echo;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Dag;
+import io.kestra.plugin.core.flow.Subflow;
+import io.kestra.plugin.core.state.Set;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;

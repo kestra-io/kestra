@@ -6,9 +6,8 @@ import io.kestra.core.docs.InputType;
 import io.kestra.core.docs.Plugin;
 import io.kestra.core.docs.PluginIcon;
 import io.kestra.core.models.annotations.PluginSubGroup;
-import io.kestra.core.plugins.DefaultPluginRegistry;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.tasks.log.Log;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.log.Log;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -102,7 +101,7 @@ class PluginControllerTest {
                 DocumentationWithSchema.class
             );
 
-            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.debugs.Return"));
+            assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.core.debug.Return"));
             assertThat(doc.getMarkdown(), containsString("Return a value for debugging purposes."));
             assertThat(doc.getMarkdown(), containsString("The templated string to render"));
             assertThat(doc.getMarkdown(), containsString("The generated string"));

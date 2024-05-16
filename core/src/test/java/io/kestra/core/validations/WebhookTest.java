@@ -1,7 +1,7 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.models.conditions.types.MultipleCondition;
-import io.kestra.core.models.triggers.types.Webhook;
+import io.kestra.plugin.core.condition.MultipleCondition;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.core.models.validations.ModelValidator;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;

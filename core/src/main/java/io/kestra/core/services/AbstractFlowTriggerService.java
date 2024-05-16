@@ -1,6 +1,6 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.conditions.types.MultipleCondition;
+import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -35,12 +35,12 @@ public abstract class AbstractFlowTriggerService {
             .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)));
     }
 
-    public Stream<io.kestra.core.models.triggers.types.Flow> flowTriggers(Flow flow) {
+    public Stream<io.kestra.plugin.core.trigger.Flow> flowTriggers(Flow flow) {
         return flow.getTriggers()
             .stream()
             .filter(Predicate.not(AbstractTrigger::isDisabled))
-            .filter(io.kestra.core.models.triggers.types.Flow.class::isInstance)
-            .map(io.kestra.core.models.triggers.types.Flow.class::cast);
+            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast);
     }
 
     public List<Execution> computeExecutionsFromFlowTriggers(Execution execution, List<Flow> allFlows, Optional<MultipleConditionStorageInterface> multipleConditionStorage) {
@@ -143,7 +143,7 @@ public abstract class AbstractFlowTriggerService {
     protected static class FlowWithFlowTriggerAndMultipleCondition {
         private final Flow flow;
         private final MultipleConditionWindow multipleConditionWindow;
-        private final io.kestra.core.models.triggers.types.Flow trigger;
+        private final io.kestra.plugin.core.trigger.Flow trigger;
         private final MultipleCondition multipleCondition;
     }
 
@@ -152,6 +152,6 @@ public abstract class AbstractFlowTriggerService {
     @ToString
     public static class FlowWithFlowTrigger {
         private final Flow flow;
-        private final io.kestra.core.models.triggers.types.Flow trigger;
+        private final io.kestra.plugin.core.trigger.Flow trigger;
     }
 }

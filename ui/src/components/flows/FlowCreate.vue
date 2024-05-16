@@ -64,8 +64,7 @@
             async setupFlow() {
                 if (this.$route.query.copy && this.flow){
                     this.source = this.flow.source;
-                }
-                if (this.$route.query.blueprintId) {
+                } else if (this.$route.query.blueprintId) {
                     this.source = await this.queryBlueprint(this.$route.query.blueprintId)
                 } else {
                     this.source = `id: myflow

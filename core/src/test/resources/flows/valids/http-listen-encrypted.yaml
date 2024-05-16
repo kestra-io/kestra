@@ -1,0 +1,15 @@
+id: http-listen-encrypted
+namespace: io.kestra.tests
+
+triggers:
+  - id: http
+    type: io.kestra.plugin.fs.http.Trigger
+    encryptBody: true
+    uri: https://api.chucknorris.io/jokes/random
+    responseCondition: "{{ json(response.body).id is not null }}"
+    interval: PT10S
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Kestra team wishes you a great day! 👋

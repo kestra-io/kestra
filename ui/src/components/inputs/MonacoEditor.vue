@@ -18,7 +18,7 @@
     import {yamlSchemas} from "override/utils/yamlSchemas";
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
-    import {uniqBy} from "lodash";
+    import uniqBy from "lodash/uniqBy";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {

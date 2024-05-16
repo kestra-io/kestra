@@ -298,7 +298,7 @@
             forEachItemExecutableByRootTaskId() {
                 return Object.fromEntries(
                     Object.entries(this.taskTypeAndTaskRunByTaskId)
-                        .filter(([, taskTypeAndTaskRun]) => taskTypeAndTaskRun[0] === "io.kestra.core.tasks.flows.ForEachItem")
+                        .filter(([, taskTypeAndTaskRun]) => taskTypeAndTaskRun[0] === "io.kestra.plugin.core.flow.ForEachItem" || taskTypeAndTaskRun[0] === "io.kestra.core.tasks.flows.ForEachItem")
                         .map(([taskId]) => [taskId, this.taskTypeAndTaskRunByTaskId?.[taskId + "_items"]?.[1]])
                 );
             }
@@ -340,7 +340,7 @@
             },
             shouldDisplayProgressBar(taskRun) {
                 return this.showProgressBar &&
-                    this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem" &&
+                    (this.taskType(taskRun) === "io.kestra.plugin.core.flow.ForEachItem" || this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem") &&
                     this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs?.iterations !== undefined &&
                     this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs?.numberOfBatches !== undefined;
             },

@@ -83,19 +83,19 @@ inputs:
 
 tasks:
   - id: send_data
-    type: io.kestra.plugin.fs.http.Request
+    type: io.kestra.plugin.core.http.Request
     uri: https://reqres.in/api/products
     method: POST
     contentType: application/json
     body: "{{ inputs.payload }}"
 
   - id: print_status
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: hello on {{ outputs.send_data.headers.date | first }}
 
 triggers:
   - id: daily
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 9 * * *"`;
                 }
             }

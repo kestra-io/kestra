@@ -636,6 +636,8 @@
 
 <style scoped lang="scss">
     .monaco-editor {
+        position: absolute;
+        width: 100%;
         height: 100%;
         outline: none;
     }

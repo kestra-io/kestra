@@ -186,12 +186,15 @@ public class TriggerController {
 
         Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), (current) -> {
             Trigger updated = null;
+            ZonedDateTime nextExecutionDate = null;
             try {
                 RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
                 ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
                 // We must set up the backfill before the update to calculate the next execution date
                 updated = current.initBackfill(newTrigger);
-                ZonedDateTime nextExecutionDate = ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(updated));
+                if (abstractTrigger instanceof PollingTriggerInterface) {
+                    nextExecutionDate = ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(updated));
+                }
                 updated = Trigger.update(current, newTrigger, nextExecutionDate);
             } catch (Exception e) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

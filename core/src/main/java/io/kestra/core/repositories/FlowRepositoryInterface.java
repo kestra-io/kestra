@@ -87,6 +87,8 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findByNamespace(String tenantId, String namespace);
 
+    List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix);
+
     List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);

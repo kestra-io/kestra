@@ -92,6 +92,38 @@ public class FlowService {
         return flowRepository.get().findByNamespaceWithSource(tenantId, namespace);
     }
 
+    public List<Flow> findAll(String tenantId) {
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        return flowRepository.get().findAll(tenantId);
+    }
+
+    public List<Flow> findByNamespace(String tenantId, String namespace) {
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        return flowRepository.get().findByNamespace(tenantId, namespace);
+    }
+
+    public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
+    }
+
+    public Flow delete(Flow flow) {
+        if (flowRepository.isEmpty()) {
+            throw NO_REPOSITORY_EXCEPTION;
+        }
+
+        return flowRepository.get().delete(flow);
+    }
+
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);
     }

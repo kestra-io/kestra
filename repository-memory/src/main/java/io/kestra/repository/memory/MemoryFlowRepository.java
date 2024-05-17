@@ -143,6 +143,16 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
+    public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        return flows.values()
+            .stream()
+            .filter(flow -> flow.getNamespace().equals(namespacePrefix) || flow.getNamespace().startsWith(namespacePrefix + "."))
+            .filter(flow -> (tenantId == null && flow.getTenantId() == null) || (tenantId != null && tenantId.equals(flow.getTenantId())))
+            .sorted(Comparator.comparingInt(Flow::getRevision))
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace) {
         return List.of();
     }

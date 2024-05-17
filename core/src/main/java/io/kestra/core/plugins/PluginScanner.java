@@ -110,24 +110,33 @@ public class PluginScanner {
                     return;
                 }
 
-                if (plugin instanceof Task task) {
-                    log.debug("Loading Task plugin: '{}'", plugin.getClass());
-                    tasks.add(task.getClass());
-                } else if (plugin instanceof AbstractTrigger trigger) {
-                    log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
-                    triggers.add(trigger.getClass());
-                } else if (plugin instanceof Condition condition) {
-                    log.debug("Loading Condition plugin: '{}'", plugin.getClass());
-                    conditions.add(condition.getClass());
-                } else if (plugin instanceof StorageInterface storage) {
-                    log.debug("Loading Storage plugin: '{}'", plugin.getClass());
-                    storages.add(storage.getClass());
-                } else if (plugin instanceof SecretPluginInterface storage) {
-                    log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
-                    secrets.add(storage.getClass());
-                } else if (plugin instanceof TaskRunner runner) {
-                    log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
-                    taskRunners.add(runner.getClass());
+                switch (plugin) {
+                    case Task task -> {
+                        log.debug("Loading Task plugin: '{}'", plugin.getClass());
+                        tasks.add(task.getClass());
+                    }
+                    case AbstractTrigger trigger -> {
+                        log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
+                        triggers.add(trigger.getClass());
+                    }
+                    case Condition condition -> {
+                        log.debug("Loading Condition plugin: '{}'", plugin.getClass());
+                        conditions.add(condition.getClass());
+                    }
+                    case StorageInterface storage -> {
+                        log.debug("Loading Storage plugin: '{}'", plugin.getClass());
+                        storages.add(storage.getClass());
+                    }
+                    case SecretPluginInterface storage -> {
+                        log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
+                        secrets.add(storage.getClass());
+                    }
+                    case TaskRunner runner -> {
+                        log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
+                        taskRunners.add(runner.getClass());
+                    }
+                    default -> {
+                    }
                 }
 
                 if (plugin.getClass().isAnnotationPresent(io.kestra.core.models.annotations.Plugin.class)) {
@@ -139,8 +148,9 @@ public class PluginScanner {
                     }
                 }
             });
-        } catch (Throwable e) {
-            log.error("Unable to load plugin classes on '{}'", externalPlugin != null ? externalPlugin.getLocation() : "core", e);
+        } catch (ServiceConfigurationError e) {
+            Object location = externalPlugin != null ? externalPlugin.getLocation() : "core";
+            log.error("Unable to load all plugin classes from '{}'. Cause: {}", location, e.getMessage());
         }
 
         var guidesDirectory = classLoader.getResource("doc/guides");

@@ -193,6 +193,11 @@ public abstract class JdbcRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
+    @Test
+    void multipleConditionTriggerFailed() throws Exception {
+        multipleConditionTriggerCaseTest.failed();
+    }
+
     @RetryingTest(5)
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);

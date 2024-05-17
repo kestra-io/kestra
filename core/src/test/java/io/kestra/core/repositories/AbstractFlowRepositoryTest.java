@@ -251,6 +251,18 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespacePrefix() {
+        List<Flow> save = flowRepository.findByNamespacePrefix(null, "io.kestra.tests");
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+
+        save = flowRepository.findByNamespace(null, "io.kestra.tests2");
+        assertThat((long) save.size(), is(1L));
+
+        save = flowRepository.findByNamespace(null, "io.kestra.tests.minimal.bis");
+        assertThat((long) save.size(), is(1L));
+    }
+
+    @Test
     void findByNamespaceWithSource() {
         Flow flow = builder()
             .revision(3)

@@ -707,7 +707,7 @@
     };
 
     const save = async (e) => {
-        if (!currentTab?.value?.dirty) {
+        if (!currentTab?.value?.dirty && !props.isCreating) {
             return;
         }
         if (e) {
@@ -1021,7 +1021,7 @@
             id="editorWrapper"
             v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
             :class="combinedEditor ? 'editor-combined' : ''"
-            style="flex: 1"
+            style="flex: 1;"
         >
             <editor
                 ref="editorDomElement"

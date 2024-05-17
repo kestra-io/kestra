@@ -20,17 +20,11 @@ public class WorkerTriggerThread extends AbstractWorkerTriggerThread {
     }
 
     @Override
-    public void run() {
-        Thread.currentThread().setContextClassLoader(this.pollingTrigger.getClass().getClassLoader());
-
-        try {
-            this.evaluate = this.pollingTrigger.evaluate(
-                workerTrigger.getConditionContext().withRunContext(runContext),
-                workerTrigger.getTriggerContext()
-            );
-            taskState = SUCCESS;
-        } catch (Exception e) {
-            this.exceptionHandler(this, e);
-        }
+    public void doRun() throws Exception {
+        this.evaluate = this.pollingTrigger.evaluate(
+            workerTrigger.getConditionContext().withRunContext(runContext),
+            workerTrigger.getTriggerContext()
+        );
+        taskState = SUCCESS;
     }
 }

@@ -46,6 +46,7 @@ import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -745,35 +746,40 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private boolean waitForTasksCompletion(final Duration timeout) {
+        final Instant deadline = Instant.now().plus(timeout);
+
+        final List<AbstractWorkerThread> threads;
+        synchronized (this) {
+            // copy to avoid concurrent modification exception on iteration.
+            threads = new ArrayList<>(this.workerThreadReferences);
+        }
+
+        // signals all worker tasks and triggers of the shutdown.
+        threads.forEach(AbstractWorkerThread::signalStop);
+
         // start shutdown
         new Thread(
             () -> {
                 try {
                     this.executorService.shutdown();
-                    this.executorService.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+                    long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
+
+                    // wait for all realtime triggers to cleanly stop.
+                    awaitForRealtimeTriggers(threads, Duration.ofMillis(remaining));
+
+                    // wait for remaining tasks termination.
+                    remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
+                    if (remaining > 0) {
+                        this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
+                    }
                 } catch (InterruptedException e) {
-                    log.error("Fail to shutdown the worker", e);
+                    log.error("Failed to shutdown the worker. Thread was interrupted");
                 }
             },
             "worker-shutdown"
         ).start();
 
-        // interrupt RealtimeThread since never ending
-        this.workerThreadReferences
-            .stream()
-            .filter(t -> t instanceof WorkerTriggerRealtimeThread)
-            .map(t -> (WorkerTriggerRealtimeThread) t)
-            .forEach(t -> {
-                t.interrupt();
-
-                logService.logTrigger(
-                    t.getWorkerTrigger().getTriggerContext(),
-                    t.getWorkerTrigger().getConditionContext().getRunContext().logger(),
-                    Level.INFO,
-                    "Type {} interrupted",
-                    t.getWorkerTrigger().getTrigger().getType()
-                );
-            });
 
         // wait for task completion
         final AtomicBoolean cleanShutdown = new AtomicBoolean(false);
@@ -799,6 +805,31 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         // cleanup
         return cleanShutdown.get();
+    }
+
+    private void awaitForRealtimeTriggers(final List<AbstractWorkerThread> threads,
+                                          final Duration timeout) {
+        final Instant deadline = Instant.now().plus(timeout);
+        for (AbstractWorkerThread thread : threads) {
+            if (thread instanceof WorkerTriggerRealtimeThread t) {
+                long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
+
+                if (!t.awaitStop(Duration.ofMillis(remaining))) {
+                    final String type = t.getWorkerTrigger().getTrigger().getType();
+                    log.debug("Failed to stop trigger '{}' before timeout elapsed.", type);
+                    // As a last resort, we try to stop the trigger via Thread.interrupt.
+                    // If the trigger doesn't respond to interrupts, it may never terminate.
+                    t.interrupt();
+                    logService.logTrigger(
+                        t.getWorkerTrigger().getTriggerContext(),
+                        t.getWorkerTrigger().getConditionContext().getRunContext().logger(),
+                        Level.INFO,
+                        "Type {} interrupted",
+                        type
+                    );
+                }
+            }
+        }
     }
 
     private void closeQueue() {

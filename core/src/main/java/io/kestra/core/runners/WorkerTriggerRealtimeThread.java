@@ -27,21 +27,12 @@ public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
     }
 
     @Override
-    public void run() {
-        Thread.currentThread().setContextClassLoader(this.streamingTrigger.getClass().getClassLoader());
-
-        Publisher<Execution> evaluate;
-        try {
-            evaluate = streamingTrigger.evaluate(
-                workerTrigger.getConditionContext().withRunContext(runContext),
-                workerTrigger.getTriggerContext()
-            );
-            taskState = SUCCESS;
-        } catch (Exception e) {
-            this.exceptionHandler(this, e);
-            return;
-        }
-
+    public void doRun() throws Exception {
+        Publisher<Execution> evaluate = streamingTrigger.evaluate(
+            workerTrigger.getConditionContext().withRunContext(runContext),
+            workerTrigger.getTriggerContext()
+        );
+        taskState = SUCCESS;
         Flux.from(evaluate)
             .onBackpressureBuffer()
             .doOnError(onError)

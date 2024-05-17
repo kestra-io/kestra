@@ -1,5 +1,10 @@
 package io.kestra.core.models.triggers;
 
-public interface WorkerTriggerInterface {
+import io.kestra.core.models.WorkerJobLifecycle;
+
+/**
+ * Interface for triggers that are executed by a Worker.
+ */
+public interface WorkerTriggerInterface extends WorkerJobLifecycle {
 
 }

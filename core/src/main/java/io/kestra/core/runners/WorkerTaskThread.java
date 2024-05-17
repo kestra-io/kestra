@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -23,10 +24,19 @@ public class WorkerTaskThread extends AbstractWorkerThread {
     Output taskOutput;
 
     public WorkerTaskThread(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
-        super(runContext, task.getClass().getName());
+        super(runContext, task.getClass().getName(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;
         this.metricRegistry = metricRegistry;
+    }
+
+    @Override
+    public void signalStop() {
+        try {
+            task.stop();
+        } catch (Exception e) {
+            logger.warn("Error while stopping task: '{}'", getType(), e);
+        }
     }
 
     @Override
@@ -41,9 +51,7 @@ public class WorkerTaskThread extends AbstractWorkerThread {
     }
 
     @Override
-    public void run() {
-        Thread.currentThread().setContextClassLoader(this.task.getClass().getClassLoader());
-
+    public void doRun() throws Exception {
         final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
         try {
             if (workerTaskTimeout != null) {
@@ -75,8 +83,6 @@ public class WorkerTaskThread extends AbstractWorkerThread {
         } catch (dev.failsafe.TimeoutExceededException e) {
             kill(false);
             this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout));
-        } catch (Exception e) {
-            this.exceptionHandler(this, e);
         }
     }
 }

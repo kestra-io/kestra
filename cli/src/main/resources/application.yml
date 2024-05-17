@@ -114,6 +114,9 @@ flyway:
       out-of-order: true
 
 kestra:
+  tutorial-flows:
+    # Automatically loads all tutorial flows at startup.
+    enabled: true
   retries:
     attempts: 5
     multiplier: 2.0

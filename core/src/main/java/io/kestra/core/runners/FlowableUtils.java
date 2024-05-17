@@ -124,7 +124,13 @@ public class FlowableUtils {
         // last success, find next
         Optional<TaskRun> lastTerminated = execution.findLastTerminated(taskRuns);
         if (lastTerminated.isPresent()) {
-            return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
+            int lastIndex = taskRuns.indexOf(lastTerminated.get());
+
+            if (currentTasks.size() > lastIndex + 1) {
+                return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRun(execution));
+            } else {
+                return Collections.singletonList(currentTasks.get(0).toNextTaskRun(execution));
+            }
         }
 
         return Collections.emptyList();

@@ -18,6 +18,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,8 +67,7 @@ import java.util.stream.Stream;
                       format: "{{ outputs.waitFor.iterationCount }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.WaitFor"
+    }
 )
 public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Valid
@@ -75,7 +76,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Valid
     @PluginProperty
     @NotNull
-    private Task task;
+    private List<Task> tasks;
 
     @NotNull
     @PluginProperty(dynamic = true)
@@ -86,28 +87,17 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     private String condition;
 
     @Schema(
-        title = "Maximum count of iterations."
-    )
-    @Builder.Default
-    private Integer maxIterations = 100;
-
-    @Schema(
-        title = "Maximum duration of the task."
-    )
-    @Builder.Default
-    private Duration maxDuration = Duration.ofHours(1);
-
-    @Schema(
-        title = "Interval between each iteration."
-    )
-    @Builder.Default
-    private Duration interval = Duration.ofSeconds(1);
-
-    @Schema(
         title = "If true, the task will fail if the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
     private Boolean failOnMaxReached = false;
+
+    @Schema(
+        title = "Check frequency configuration."
+    )
+    @Builder.Default
+    @PluginProperty
+    private CheckFrequency checkFrequency = CheckFrequency.builder().build();
 
     @Override
     public AbstractGraph tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -115,7 +105,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            List.of(task),
+            tasks,
             this.errors,
             taskRun,
             execution
@@ -128,7 +118,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     public List<Task> allChildTasks() {
         return Stream
             .concat(
-                Stream.of(task),
+                tasks.stream(),
                 this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
             .collect(Collectors.toList());
@@ -136,7 +126,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(List.of(task), parentTaskRun);
+        return FlowableUtils.resolveTasks(tasks, parentTaskRun);
     }
 
     @Override
@@ -155,7 +145,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             String continueLoop = runContext.render(this.condition);
             if (TruthUtils.isTruthy(continueLoop)) {
 
-                return Instant.now().plus(this.interval);
+                return Instant.now().plus(this.checkFrequency.interval);
             }
         }
 
@@ -163,20 +153,21 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     }
 
     private boolean reachedMaximums(RunContext runContext, Execution execution, TaskRun parentTaskRun, Boolean printLog) {
-        TaskRun childTaskRun = this.getChildTaskRun(execution, parentTaskRun).orElse(null);
         Logger logger = runContext.logger();
 
-        if (childTaskRun == null) {
+        if (!this.childTaskRunExecuted(execution, parentTaskRun)) {
             return false;
         }
 
-        if (this.maxIterations != null && childTaskRun.attemptNumber() >= this.maxIterations) {
+        Integer iterationCount = (Integer) parentTaskRun.getOutputs().get("iterationCount");
+        if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount >= this.checkFrequency.maxIterations) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
 
-        if (this.maxDuration != null &&
-            childTaskRun.getAttempts().getFirst().getState().getStartDate().plus(this.maxDuration).isBefore(Instant.now())) {
+        Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
+        if (this.checkFrequency.maxDuration != null &&
+            creationDate != null && creationDate.plus(this.checkFrequency.maxDuration).isBefore(Instant.now())) {
             if (printLog) {logger.warn("Max duration reached");}
 
             return true;
@@ -187,12 +178,12 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        TaskRun childTaskRun = this.getChildTaskRun(execution, parentTaskRun).orElse(null);
-        if (childTaskRun != null && nextExecutionDate(runContext, execution, parentTaskRun) != null) {
+        boolean childTaskExecuted = this.childTaskRunExecuted(execution, parentTaskRun);
+        if (childTaskExecuted && nextExecutionDate(runContext, execution, parentTaskRun) != null) {
             return Optional.of(State.Type.RUNNING);
         }
 
-        if (childTaskRun != null && this.reachedMaximums(runContext, execution, parentTaskRun, true) && this.failOnMaxReached) {
+        if (childTaskExecuted && this.reachedMaximums(runContext, execution, parentTaskRun, true) && this.failOnMaxReached) {
             return Optional.of(State.Type.FAILED);
         }
 
@@ -217,10 +208,28 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             .findFirst();
     }
 
+    public boolean childTaskRunExecuted(Execution execution, TaskRun parentTaskRun) {
+        if (execution.getTaskRunList() == null) {
+            return false;
+        }
+        return execution
+            .getTaskRunList()
+            .stream()
+            .filter(t -> t.getParentTaskRunId() != null
+                && t.getParentTaskRunId().equals(parentTaskRun.getId()) && t.getState().isSuccess()
+                && t.getState().isTerminated()
+            ).count() == tasks.size();
+
+    }
+
     @Override
     public WaitFor.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
+       Map<String, Object> outputs = (Map<String, Object>) runContext.getVariables().get("outputs");
+        if (outputs != null && outputs.get(this.id) != null) {
+            return Output.builder().iterationCount((Integer) ((Map<String, Object>) outputs.get(this.id)).get("iterationCount")).build();
+        }
         return WaitFor.Output.builder()
-            .iterationCount(0)
+            .iterationCount(1)
             .build();
     }
 
@@ -237,5 +246,32 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Integer iterationCount;
+    }
+
+    @SuperBuilder(toBuilder = true)
+    @Introspected
+    @Getter
+    @NoArgsConstructor
+    public static class CheckFrequency {
+        @Schema(
+            title = "Maximum count of iterations."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Integer maxIterations = 100;
+
+        @Schema(
+            title = "Maximum duration of the task."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Duration maxDuration = Duration.ofHours(1);
+
+        @Schema(
+            title = "Interval between each iteration."
+        )
+        @Builder.Default
+        @PluginProperty
+        private Duration interval = Duration.ofSeconds(1);
     }
 }

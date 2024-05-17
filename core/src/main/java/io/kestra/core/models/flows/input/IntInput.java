@@ -3,13 +3,12 @@ package io.kestra.core.models.flows.input;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
-import jakarta.validation.ConstraintViolationException;
-
 @SuperBuilder
 @Getter
 @NoArgsConstructor

@@ -346,4 +346,14 @@ public abstract class JdbcRunnerTest {
     void waitforNoSuccess() throws TimeoutException {
         waitForTestCaseTest.waitforNoSuccess();
     }
+
+    @Test
+    void waitforMultipleTasks() throws TimeoutException {
+        waitForTestCaseTest.waitforMultipleTasks();
+    }
+
+    @Test
+    void waitforMultipleTasksFailed() throws TimeoutException {
+        waitForTestCaseTest.waitforMultipleTasksFailed();
+    }
 }

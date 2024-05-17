@@ -23,9 +23,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginModule;
-import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -37,10 +35,8 @@ import java.util.TimeZone;
 
 public final class JacksonMapper {
     public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
-
-    private static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
-
-    private static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
+    public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
+    public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
 
     private JacksonMapper() {}
 

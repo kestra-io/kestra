@@ -71,5 +71,8 @@ class JsonFilterTest {
         assertThat(render, containsString("\"string\":\"string\""));
         assertThat(render, startsWith("{"));
         assertThat(render, endsWith("}"));
+
+        render = variableRenderer.render("{{ {\"empty_object\":{}} | json }}", Map.of());
+        assertThat(render, is("{\"empty_object\":{}}"));
     }
 }

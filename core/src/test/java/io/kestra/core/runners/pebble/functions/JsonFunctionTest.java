@@ -26,5 +26,8 @@ class JsonFunctionTest {
 
         render = variableRenderer.render("{{ json('[1, 2, 3]')[0] }}", Map.of());
         assertThat(render, is("1"));
+
+        render = variableRenderer.render("{{ json('{\"empty_object\":{}}') }}", Map.of());
+        assertThat(render, is("{\"empty_object\":{}}"));
     }
 }

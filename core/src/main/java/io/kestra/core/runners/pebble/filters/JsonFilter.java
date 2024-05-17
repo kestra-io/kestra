@@ -2,11 +2,7 @@ package io.kestra.core.runners.pebble.filters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.kestra.core.serializers.JacksonMapper;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -16,12 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class JsonFilter implements Filter {
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        .registerModule(new JavaTimeModule())
-        .registerModule(new Jdk8Module())
-        .registerModule(new ParameterNamesModule())
-        .registerModules(new GuavaModule());
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Override
     public List<String> getArgumentNames() {

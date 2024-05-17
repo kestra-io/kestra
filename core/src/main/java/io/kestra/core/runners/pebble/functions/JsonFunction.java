@@ -1,20 +1,18 @@
 package io.kestra.core.runners.pebble.functions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import io.kestra.core.runners.pebble.AbstractDate;
 
 import java.util.List;
 import java.util.Map;
 
 public class JsonFunction implements Function {
-    final static ObjectMapper MAPPER = new ObjectMapper();
-    private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {};
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     public List<String> getArgumentNames() {
         return List.of("json");
@@ -33,7 +31,7 @@ public class JsonFunction implements Function {
         String json = (String) args.get("json");;
 
         try {
-            return MAPPER.readValue(json, TYPE_REFERENCE);
+            return MAPPER.readValue(json, JacksonMapper.OBJECT_TYPE_REFERENCE);
         } catch (JsonProcessingException e) {
             throw new PebbleException(null, "Invalid json: " + e.getMessage(), lineNumber, self.getName());
         }

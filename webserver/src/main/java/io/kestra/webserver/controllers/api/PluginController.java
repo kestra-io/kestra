@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
@@ -12,10 +13,14 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -49,23 +54,26 @@ public class PluginController {
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
     public HttpResponse<Map<String, Object>> schemas(
-        @Parameter(description = "The schema needed") @PathVariable SchemaType type
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type,
+        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") boolean arrayOf
     ) {
         return HttpResponse.ok()
-            .body(this.schemasCache(type))
+            .body(this.schemasCache(type, arrayOf))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 
     @Cacheable("default")
-    protected Map<String, Object> schemasCache(SchemaType type) {
+    protected Map<String, Object> schemasCache(SchemaType type, boolean arrayOf) {
         if (type == SchemaType.flow) {
-            return jsonSchemaGenerator.schemas(Flow.class);
+            return jsonSchemaGenerator.schemas(Flow.class, arrayOf);
         } else if (type == SchemaType.template) {
-            return jsonSchemaGenerator.schemas(Template.class);
+            return jsonSchemaGenerator.schemas(Template.class, arrayOf);
         } else if (type == SchemaType.task) {
-            return jsonSchemaGenerator.schemas(Task.class);
+            return jsonSchemaGenerator.schemas(Task.class, arrayOf);
         } else if (type == SchemaType.trigger) {
-            return jsonSchemaGenerator.schemas(AbstractTrigger.class);
+            return jsonSchemaGenerator.schemas(AbstractTrigger.class, arrayOf);
+        } else if (type == SchemaType.taskdefault) {
+            return jsonSchemaGenerator.schemas(TaskDefault.class, arrayOf);
         } else {
             throw new IllegalArgumentException("Invalid type " + type);
         }

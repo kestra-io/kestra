@@ -8,7 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = {TaskDefaultValidator.class})
+@Constraint(validatedBy = TaskDefaultValidator.class)
 public @interface TaskDefaultValidation {
     String message() default "invalid taskDefault";
     Class<?>[] groups() default {};

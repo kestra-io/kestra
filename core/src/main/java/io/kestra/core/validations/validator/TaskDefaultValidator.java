@@ -32,6 +32,10 @@ public class TaskDefaultValidator implements ConstraintValidator<TaskDefaultVali
             return false;
         }
 
+        if (value.getType() == null) {
+            violations.add("No type provided");
+        }
+
         // Check if the "values" map is empty
         for (Map.Entry<String, Object> entry : value.getValues().entrySet()) {
             if (entry.getValue() == null) {

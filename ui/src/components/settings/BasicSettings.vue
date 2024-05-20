@@ -155,14 +155,16 @@
             </template>
         </Block>
 
-        <Block :heading="$t('settings.blocks.export.label')" last>
+        <Block :heading="$t('settings.blocks.export.label')" v-if="canReadFlows || canReadTemplates" last>
             <template #content>
                 <Row>
-                    <Column v-if="canReadFlows || canReadTemplates">
-                        <el-button v-if="canReadFlows" :icon="Download" size="large" @click="exportFlows()">
+                    <Column>
+                        <el-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
                             {{ $t("settings.blocks.export.fields.flows") }}
-                        </el-button>
-                        <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled">
+                        </el-button>                   
+                    </Column>
+                    <Column>
+                        <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
                         </el-button>                    
                     </Column>

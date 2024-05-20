@@ -2,7 +2,7 @@ dependencies {
 
     api group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
     api group: 'jakarta.validation', name: 'jakarta.validation-api', version: '3.0.2'
-    api group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.21'
+    api group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.2.22'
 
     // Jackson
     api platform(group: 'com.fasterxml.jackson', name:'jackson-bom', version: jacksonVersion)

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
@@ -245,6 +246,7 @@ public class RunContext {
         return triggerExecutionId;
     }
 
+    @JsonInclude
     public Map<String, Object> getVariables() {
         return variables;
     }

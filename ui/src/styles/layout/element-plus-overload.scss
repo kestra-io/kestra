@@ -203,7 +203,11 @@
 }
 
 .el-input-number__increase, .el-input-number__decrease {
-    background: var(--bs-primary);
+    background: var(--bs-gray-600);
+}
+
+.el-input-number__increase:hover, .el-input-number__decrease:hover {
+    color: var(--bs-white);
 }
 
 .el-input-file {

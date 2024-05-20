@@ -7,8 +7,6 @@
 </template>
 
 <script setup lang="ts">
-    import {defineProps} from "vue";
-
     defineProps({
         heading: {type: String, required: true},
         last: {type: Boolean, default: false},

@@ -4,5 +4,6 @@ public enum SchemaType {
     flow,
     template,
     task,
-    trigger
+    trigger,
+    taskdefault
 }

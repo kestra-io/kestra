@@ -59,7 +59,7 @@ public class DeserializationIssuesCaseTest {
               },
               "task": {
                 "id": "hello",
-                "type": "io.kestra.core.tasks.log.Log"
+                "type": "io.kestra.plugin.core.log.Log"
               },
               "taskrun": {
                 "id": "5PGRX6ve2cztrRSIbfGphO",
@@ -97,7 +97,7 @@ public class DeserializationIssuesCaseTest {
               "tasks": [
                 {
                   "id": "hello",
-                  "type": "io.kestra.core.tasks.log.Log",
+                  "type": "io.kestra.plugin.core.log.Log",
                   "message": "Kestra team wishes you a great day! 👋"
                 }
               ],

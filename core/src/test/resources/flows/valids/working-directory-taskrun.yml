@@ -3,12 +3,12 @@ namespace: io.kestra.tests
 
 tasks:
   - id: parallel
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     value: ["1"]
     tasks:
       - id: workingDir
-        type: io.kestra.core.tasks.flows.WorkingDirectory
+        type: io.kestra.plugin.core.flow.WorkingDirectory
         tasks:
           - id: log-taskrun
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format:  "{{ taskrun.value }}"

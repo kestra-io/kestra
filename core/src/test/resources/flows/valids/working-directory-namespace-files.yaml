@@ -3,10 +3,10 @@ namespace: io.kestra.tests
 
 tasks:
   - id: allow
-    type: io.kestra.core.tasks.flows.AllowFailure
+    type: io.kestra.plugin.core.flow.AllowFailure
     tasks:
       - id: worker
-        type: io.kestra.core.tasks.flows.WorkingDirectory
+        type: io.kestra.plugin.core.flow.WorkingDirectory
         namespaceFiles:
           enabled: true
           exclude:

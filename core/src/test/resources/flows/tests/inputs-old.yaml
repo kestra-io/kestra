@@ -5,5 +5,5 @@ inputs:
     type: STRING
 tasks:
   - id: date
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{taskrun.startDate}}"

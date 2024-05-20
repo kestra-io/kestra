@@ -6,8 +6,8 @@
         "title": "GCS Trigger",
         "description": "GCS trigger flow",
         "includedTasks": [
-          "io.kestra.core.tasks.flows.EachParallel",
-          "io.kestra.core.tasks.flows.Flow",
+          "io.kestra.plugin.core.flow.EachParallel",
+          "io.kestra.plugin.core.flow.Flow",
           "io.kestra.plugin.gcp.gcs.Trigger"
         ],
         "tags": ["3", "2"],

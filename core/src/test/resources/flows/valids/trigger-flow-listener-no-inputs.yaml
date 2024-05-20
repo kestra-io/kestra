@@ -4,25 +4,25 @@ revision: 1
 
 tasks:
   - id: only-no-input
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "v1: {{trigger.executionId}}"
 
 triggers:
   - id: listen-flow
-    type: io.kestra.core.models.triggers.types.Flow
+    type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:
           - SUCCESS
-      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger
         flowId: trigger-flow
   - id: listen-flow-failed
-    type: io.kestra.core.models.triggers.types.Flow
+    type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:
           - FAILED
-      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger
         flowId: other-flow

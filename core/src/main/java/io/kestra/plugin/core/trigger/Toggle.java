@@ -60,7 +60,7 @@ import java.util.Optional;
                               trigger: schedule
                               enabled: false
                           - id: log
-                            type: io.kestra.core.tasks.log.Log
+                            type: io.kestra.plugin.core.log.Log
                             message: Hello World
 
                         triggers:

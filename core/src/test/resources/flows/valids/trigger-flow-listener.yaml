@@ -7,18 +7,18 @@ inputs:
 
 tasks:
   - id: only-listener
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "childs: {{inputs['from-parent']}}"
 
 triggers:
   - id: listen-flow
-    type: io.kestra.core.models.triggers.types.Flow
+    type: io.kestra.plugin.core.trigger.Flow
     inputs:
       from-parent: '{{ outputs.only.value }}'
     conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:
           - SUCCESS
-      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger
         flowId: trigger-flow

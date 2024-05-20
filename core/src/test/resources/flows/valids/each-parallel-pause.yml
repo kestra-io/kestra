@@ -3,13 +3,13 @@ namespace: io.kestra.tests
 
 tasks:
   - id: each
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     value: ["toto", "tata", "titi"]
     tasks:
       - id: pause
-        type: io.kestra.core.tasks.flows.Pause
+        type: io.kestra.plugin.core.flow.Pause
         delay: PT1S
         tasks:
           - id: log
-            type: io.kestra.core.tasks.log.Log
+            type: io.kestra.plugin.core.log.Log
             message: Hello World

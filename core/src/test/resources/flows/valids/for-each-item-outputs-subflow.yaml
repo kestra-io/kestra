@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: return
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ read(inputs.items) }}"
 
 outputs:

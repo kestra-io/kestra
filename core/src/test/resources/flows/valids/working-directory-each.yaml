@@ -3,31 +3,31 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["s1"]'
     tasks:
     - id: 1-1_each
-      type: io.kestra.core.tasks.flows.EachSequential
+      type: io.kestra.plugin.core.flow.EachSequential
       value: '["s2"]'
       tasks:
         - id: 1-1-1_each
-          type: io.kestra.core.tasks.flows.EachSequential
+          type: io.kestra.plugin.core.flow.EachSequential
           value: '["s3"]'
           tasks:
             - id: 1-1-1-1_return
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
             - id: worker
-              type: io.kestra.core.tasks.flows.WorkingDirectory
+              type: io.kestra.plugin.core.flow.WorkingDirectory
               tasks:
               - id: first
-                type: io.kestra.core.tasks.storages.LocalFiles
+                type: io.kestra.plugin.core.storage.LocalFiles
                 inputs:
                   out/stay.txt: "{{ taskrun.id }}"
               - id: second
-                type: io.kestra.core.tasks.storages.LocalFiles
+                type: io.kestra.plugin.core.storage.LocalFiles
                 outputs:
                   - out/*
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ outputs.second.s1.s2.s3.uris['out/stay.txt'] }}"

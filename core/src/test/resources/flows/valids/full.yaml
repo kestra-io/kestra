@@ -14,15 +14,15 @@ labels:
 
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "{{ task.id }}"
 
 - id: t2
-  type: io.kestra.core.tasks.debugs.Return
+  type: io.kestra.plugin.core.debug.Return
   format: second {{ labels.key1 }}
 
 - id: t3
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: third all optional args {{ outputs.t2.value }}
   timeout: PT60M
   retry:
@@ -31,36 +31,36 @@ tasks:
     interval: PT15M
 #
 - id: t5
-  type: io.kestra.core.tasks.flows.Parallel
+  type: io.kestra.plugin.core.flow.Parallel
   concurrent: 3
   tasks:
   - id: t5-t1
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "t5-t1 {{execution.id}}"
   - id: t5-t2
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "t5-t2 {{execution.id}}"
   - id: t5-t3
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "t4-t3 {{execution.id}}"
   - id: t5-t4
-    type: io.kestra.core.tasks.flows.Parallel
+    type: io.kestra.plugin.core.flow.Parallel
     tasks:
       - id: t5-t4-t1
-        type: io.kestra.core.tasks.flows.Parallel
+        type: io.kestra.plugin.core.flow.Parallel
         tasks:
         - id: t5-t4-t1-t1
-          type: io.kestra.core.tasks.flows.Parallel
+          type: io.kestra.plugin.core.flow.Parallel
           tasks:
           - id: t5-t4-t1-t1-t1
-            type: io.kestra.core.tasks.flows.Parallel
+            type: io.kestra.plugin.core.flow.Parallel
             tasks:
             - id: t5-t4-t1-t1-t1-last
-              type: io.kestra.core.tasks.log.Log
+              type: io.kestra.plugin.core.log.Log
               message: "t5-t5-t1-t1-t1-last : {{execution.id}}"
 
 
 - id: last
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "last"
 

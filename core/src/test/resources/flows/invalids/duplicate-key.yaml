@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: bad-task
-    type: "io.kestra.core.tasks.states.Set"
+    type: "io.kestra.plugin.core.state.Set"
     data:
       variables.tf: |
         test

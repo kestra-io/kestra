@@ -155,7 +155,7 @@ import jakarta.validation.constraints.NotNull;
                 "",
                 "tasks:",
                 "  - id: working-directory",
-                "    type: io.kestra.core.tasks.flows.WorkingDirectory",
+                "    type: io.kestra.plugin.core.flow.WorkingDirectory",
                 "    tasks:",
                 "      - id: first",
                 "        type: io.kestra.plugin.scripts.shell.Commands",
@@ -176,7 +176,7 @@ import jakarta.validation.constraints.NotNull;
                 namespace: dev
                 tasks:
                   - id: working-dir
-                    type: io.kestra.core.tasks.flows.WorkingDirectory
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
                     cache:
                       patterns:
                         - node_modules/**

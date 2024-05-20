@@ -52,7 +52,7 @@ public class TemplatedTask extends Task implements RunnableTask<Output> {
         try {
             Task task = OBJECT_MAPPER.readValue(taskSpec, Task.class);
             if (task instanceof TemplatedTask) {
-                throw new IllegalArgumentException("The templated task cannot be of type 'io.kestra.core.tasks.templating.TemplatedTask'");
+                throw new IllegalArgumentException("The templated task cannot be of type 'io.kestra.plugin.core.templating.TemplatedTask'");
             }
             if (task instanceof RunnableTask<?> runnableTask) {
                 return runnableTask.run(runContext);

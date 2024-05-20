@@ -3,6 +3,6 @@ namespace: io.kestra.tests
 
 tasks:
   - id: template
-    type: io.kestra.core.tasks.flows.Template
+    type: io.kestra.plugin.core.flow.Template
     namespace: io.kestra.tests
     templateId: invalid

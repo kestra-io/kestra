@@ -18,7 +18,7 @@ class WorkerTaskTest {
             {
               "task": {
                 "id": "log",
-                "type": "io.kestra.core.tasks.log.Log",
+                "type": "io.kestra.plugin.core.log.Log",
                 "message": "{{taskrun.value}}"
               },
               "taskRun": {
@@ -53,7 +53,7 @@ class WorkerTaskTest {
                   },
                   "task": {
                     "id": "log",
-                    "type": "io.kestra.core.tasks.log.Log"
+                    "type": "io.kestra.plugin.core.log.Log"
                   },
                   "outputs": {
                     "query-top-ten": {

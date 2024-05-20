@@ -7,4 +7,4 @@ inputs:
 
 tasks:
   - id: per-item
-    type: io.kestra.core.tasks.executions.Fail
+    type: io.kestra.plugin.core.execution.Fail

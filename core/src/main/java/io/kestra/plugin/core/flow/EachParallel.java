@@ -37,9 +37,9 @@ import java.util.Optional;
         "The task list will be executed in parallel for each item. For example, if you have a list with 3 elements and 2 tasks defined in the list of `tasks`, all " +
         "6 tasks will be computed in parallel without any order guarantee.\n\n" +
         "If you want to execute a group of sequential tasks for each value in parallel, you can wrap the list of `tasks` " +
-        "with the [Sequential task](https://kestra.io/plugins/core/tasks/flows/io.kestra.core.tasks.flows.sequential).\n" +
+        "with the [Sequential task](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.sequential).\n" +
         "If your list of values is large, you can limit the number of concurrent tasks using the `concurrent` property.\n\n" +
-        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flows/io.kestra.core.tasks.flows.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. " +
+        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. " +
         "This allows better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."
 )
 @Plugin(
@@ -52,11 +52,11 @@ import java.util.Optional;
                 "",
                 "tasks:",
                 "  - id: each-parallel",
-                "    type: io.kestra.core.tasks.flows.EachParallel",
+                "    type: io.kestra.plugin.core.flow.EachParallel",
                 "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
                 "    tasks:",
                 "      - id: each-value",
-                "        type: io.kestra.core.tasks.debugs.Return",
+                "        type: io.kestra.plugin.core.debug.Return",
                 "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),
@@ -68,14 +68,14 @@ import java.util.Optional;
                 "",
                 "tasks:",
                 "  - id: each-parallel",
-                "    type: io.kestra.core.tasks.flows.EachParallel",
+                "    type: io.kestra.plugin.core.flow.EachParallel",
                 "    value: ",
                 "      - value 1",
                 "      - value 2",
                 "      - value 3",
                 "    tasks:",
                 "      - id: each-value",
-                "        type: io.kestra.core.tasks.debugs.Return",
+                "        type: io.kestra.plugin.core.debug.Return",
                 "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
         ),

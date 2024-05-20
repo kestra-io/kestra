@@ -3,15 +3,15 @@ namespace: io.kestra.tests
 
 tasks:
 - id: t1
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: first {{task.id}}
   level: TRACE
 - id: t2
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: second {{task.type}}
   level: WARN
   disabled: true
 - id: t3
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: third {{flow.id}}
   level: ERROR

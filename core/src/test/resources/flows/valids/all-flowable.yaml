@@ -4,86 +4,86 @@ namespace: io.kestra.tests
 tasks:
   # Each
   - id: 1-each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-each-1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.value}}"
       - id: 1-each-2
-        type: io.kestra.core.tasks.flows.EachSequential
+        type: io.kestra.plugin.core.flow.EachSequential
         value: '["a", "b"]'
         tasks:
           - id: 1-each-2-1
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}} > {{taskrun.value}}"
     errors:
       - id: 1-each-seq-error
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: 1-each-seq-error-1
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "error {{task.id}} > {{taskrun.value}}"
 
 
   # Simple task
   - id: 2-simple-task
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}}"
 
   # Sequential
   - id: 3-sequential
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: 3-sequential-1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}}"
       - id: 3-sequential-2
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: 3-sequential-2-1
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}}"
           - id: 3-sequential-2-2
-            type: io.kestra.core.tasks.flows.Sequential
+            type: io.kestra.plugin.core.flow.Sequential
             tasks:
               - id: 3-sequential-2-2-1
-                type: io.kestra.core.tasks.debugs.Return
+                type: io.kestra.plugin.core.debug.Return
                 format: "{{task.id}}"
           - id: 3-sequential-2-3
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}}"
       - id: 3-sequential-3
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}}"
     errors:
       - id: 3-sequential-local-errors
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}}"
 
   # Switch
   - id: 4-switch
-    type: io.kestra.core.tasks.flows.Switch
+    type: io.kestra.plugin.core.flow.Switch
     value: "FIRST"
     cases:
       FIRST:
         - id: 4-sequential-case-1
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}}  > {{taskrun.value}}"
       SECOND:
         - id: 4-sequential-case-2
-          type: io.kestra.core.tasks.debugs.Return
+          type: io.kestra.plugin.core.debug.Return
           format: "{{task.id}}  > {{taskrun.value}}"
     defaults:
       - id: 4-sequential-default
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}}  > {{taskrun.value}}"
 
 # Global Errors
 errors:
   - id: error-1st
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "Error Trigger ! {{task.id}}"
   - id: error-2nd
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "Error Trigger ! {{task.id}}"

@@ -19,14 +19,14 @@ taskDefaults:
 
 tasks:
   - id: 1-return
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
   - id: 2-template
-    type: io.kestra.core.tasks.flows.Template
+    type: io.kestra.plugin.core.flow.Template
     namespace: io.kestra.tests
     templateId: template
     args:
       my-forward: "{{ inputs['with-string'] }}"
   - id: 3-end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

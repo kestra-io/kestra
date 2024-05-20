@@ -3,4 +3,4 @@ namespace: io.kestra.tests
 
 tasks:
   - id: impossible
-    type: io.kestra.core.tasks.flows.WorkingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory

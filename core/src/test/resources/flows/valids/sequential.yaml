@@ -3,35 +3,35 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1-seq
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: 1-1
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
       - id: 1-2
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.id}}"
       - id: 1-3_seq
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: 1-3-1
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: 1-3-2_seq
-            type: io.kestra.core.tasks.flows.Sequential
+            type: io.kestra.plugin.core.flow.Sequential
             tasks:
               - id: 1-3-2-1
-                type: io.kestra.core.tasks.debugs.Return
+                type: io.kestra.plugin.core.debug.Return
                 format: "{{task.id}} > {{taskrun.startDate}}"
               - id: 1-3-2-2_end
-                type: io.kestra.core.tasks.debugs.Return
+                type: io.kestra.plugin.core.debug.Return
                 format: "{{task.id}} > {{taskrun.id}}"
           - id: 1-3-3_end
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{task.id}} > {{taskrun.id}}"
       - id: 1-4_end
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

@@ -3,12 +3,12 @@ namespace: io.kestra.tests
 
 tasks:
   - id: date
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{taskrun.startDate}}"
 
 triggers:
   - id: monthly
-    type: io.kestra.core.models.triggers.types.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: 0 0 1 * *
     backfill:
       start: 2020-01-01T00:00:00+02:00

@@ -3,17 +3,17 @@ namespace: io.kestra.tests
 
 tasks:
   - id: pause
-    type: io.kestra.core.tasks.flows.Pause
+    type: io.kestra.plugin.core.flow.Pause
     tasks:
       - id: subtask
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: "trigger after manual restart"
   - id: last
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
 
 errors:
   - id: failed-echo
-    type: io.kestra.core.tasks.debugs.Echo
+    type: io.kestra.plugin.core.debug.Echo
     description: "Log the error"
     format: I'm failing {{task.id}}

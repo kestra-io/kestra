@@ -3,15 +3,15 @@ namespace: io.kestra.tests
 
 tasks:
   - id: impossible
-    type: io.kestra.core.tasks.flows.WorkingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
     tasks:
       - id: log
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: Hello World
       - id: pause
-        type: io.kestra.core.tasks.flows.Pause
+        type: io.kestra.plugin.core.flow.Pause
         delay: PT5S
         tasks:
           - id: log-pause
-            type: io.kestra.core.tasks.log.Log
+            type: io.kestra.plugin.core.log.Log
             message: Hello World

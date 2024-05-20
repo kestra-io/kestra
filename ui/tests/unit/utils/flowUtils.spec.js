@@ -9,7 +9,7 @@ describe("FlowUtils", () => {
         let findTaskById = FlowUtils.findTaskById(flow, "1-2");
 
         expect(findTaskById.id).toBe("1-2");
-        expect(findTaskById.type).toBe("io.kestra.core.tasks.log.Log");
+        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log");
     })
 
     it("extractTask from a flowable flow", () => {
@@ -17,7 +17,7 @@ describe("FlowUtils", () => {
         let findTaskById = FlowUtils.findTaskById(flow, "1-2");
 
         expect(findTaskById.id).toBe("1-2");
-        expect(findTaskById.type).toBe("io.kestra.core.tasks.log.Log");
+        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log");
     })
 
     it("extractTask from a flowable flow", () => {

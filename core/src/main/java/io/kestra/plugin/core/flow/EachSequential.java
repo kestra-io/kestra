@@ -54,18 +54,18 @@ import java.util.Optional;
 
                 tasks:
                   - id: each_sequential
-                    type: io.kestra.core.tasks.flows.EachSequential
+                    type: io.kestra.plugin.core.flow.EachSequential
                     value: ["value 1", "value 2", "value 3"]
                     tasks:
                       - id: before_if
-                        type: io.kestra.core.tasks.debugs.Return
+                        type: io.kestra.plugin.core.debug.Return
                         format: 'Before if {{ taskrun.value }}'
                       - id: if
-                        type: io.kestra.core.tasks.flows.If
+                        type: io.kestra.plugin.core.flow.If
                         condition: '{{ taskrun.value == "value 2" }}'
                         then:
                           - id: after_if
-                            type: io.kestra.core.tasks.debugs.Return
+                            type: io.kestra.plugin.core.debug.Return
                             format: 'After if {{ parent.taskrun.value }}'"""
         ),
         @Example(

@@ -2,46 +2,46 @@ id: test-current-output
 namespace: io.kestra.tests
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["v11", "v12"]'
     tasks:
       - id: 1-1_each
-        type: io.kestra.core.tasks.flows.EachSequential
+        type: io.kestra.plugin.core.flow.EachSequential
         value: '["v21", "v22"]'
         tasks:
           - id: 1-1-1_each
-            type: io.kestra.core.tasks.flows.EachSequential
+            type: io.kestra.plugin.core.flow.EachSequential
             value: '["v31", "v32"]'
             tasks:
             - id: 1-1-1_output
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               format: "{{ parents[1].taskrun.value }}-{{ parents[0].taskrun.value }}-{{ taskrun.value }}"
             - id: 1-1-1_return
-              type: io.kestra.core.tasks.debugs.Return
+              type: io.kestra.plugin.core.debug.Return
               #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
               format: "return-{{ currentEachOutput(outputs['1-1-1_output']).value }}"
   - id: 2_each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["v41", "v42"]'
     tasks:
       - id: 2-1_output
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{ taskrun.value }}"
       - id: 2-1_return
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         #format: "return-{{ outputs['1-1-1_output'][taskrun.value].value }}"
         format: "return-{{ currentEachOutput(outputs['2-1_output']).value }}"
   - id: 2_sequential
-    type: io.kestra.core.tasks.flows.Sequential
+    type: io.kestra.plugin.core.flow.Sequential
     tasks:
       - id: 2-1_sequential
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: 2-1-1_output
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "{{ taskrun.id }}"
           - id: 2-1-1_return
-            type: io.kestra.core.tasks.debugs.Return
+            type: io.kestra.plugin.core.debug.Return
             format: "return-{{ outputs['2-1-1_output'].value }}"
 
 

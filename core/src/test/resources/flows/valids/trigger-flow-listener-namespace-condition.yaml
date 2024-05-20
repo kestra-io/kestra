@@ -7,12 +7,12 @@ inputs:
 
 tasks:
   - id: only-listener
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "simple return"
 
 triggers:
   - id: listen-flow
-    type: io.kestra.core.models.triggers.types.Flow
+    type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.core.models.conditions.types.ExecutionNamespaceCondition
+      - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition
         namespace: io.kestra.tests.trigger

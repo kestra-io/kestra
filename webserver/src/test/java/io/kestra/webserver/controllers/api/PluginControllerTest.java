@@ -133,11 +133,11 @@ class PluginControllerTest {
             ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL());
 
             DocumentationWithSchema doc = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/plugins/io.kestra.core.tasks.states.Set"),
+                HttpRequest.GET("/api/v1/plugins/io.kestra.plugin.core.state.Set"),
                 DocumentationWithSchema.class
             );
 
-            assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.states.Set"));
+            assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.core.state.Set"));
             assertThat(doc.getMarkdown(), containsString("::: warning\n"));
         });
     }

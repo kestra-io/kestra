@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
 - id: not-retry-and-no-warning
-  type: io.kestra.core.tasks.log.Log
+  type: io.kestra.plugin.core.log.Log
   message: "foo"
   retry:
     type: constant
@@ -14,5 +14,5 @@ tasks:
 
 errors:
   - id: never-happen
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: Never {{task.id}}

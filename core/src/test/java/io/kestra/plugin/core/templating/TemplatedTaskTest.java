@@ -24,7 +24,7 @@ class TemplatedTaskTest {
 
     @Test
     void templatedType() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of("type", "io.kestra.core.tasks.debugs.Return"));
+        RunContext runContext = runContextFactory.of(Map.of("type", "io.kestra.plugin.core.debug.Return"));
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
@@ -47,7 +47,7 @@ class TemplatedTaskTest {
             .id("template")
             .type(TemplatedTask.class.getName())
             .spec("""
-                type: io.kestra.core.tasks.flows.Pause
+                type: io.kestra.plugin.core.flow.Pause
                 delay: PT10S""")
             .build();
 
@@ -62,12 +62,12 @@ class TemplatedTaskTest {
             .id("template")
             .type(TemplatedTask.class.getName())
             .spec("""
-                type: io.kestra.core.tasks.templating.TemplatedTask
+                type: io.kestra.plugin.core.templating.TemplatedTask
                 spec: whatever""")
             .build();
 
         var exception = assertThrows(IllegalArgumentException.class, () -> templatedTask.run(runContext));
-        assertThat(exception.getMessage(), is("The templated task cannot be of type 'io.kestra.core.tasks.templating.TemplatedTask'"));
+        assertThat(exception.getMessage(), is("The templated task cannot be of type 'io.kestra.plugin.core.templating.TemplatedTask'"));
     }
 
 }

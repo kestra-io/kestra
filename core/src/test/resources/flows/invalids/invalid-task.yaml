@@ -4,16 +4,16 @@ namespace: io.kestra.tests
 listeners:
   - tasks:
       - id: date1
-        type: io.kestra.core.tasks.debugs.MissingOne
+        type: io.kestra.plugin.core.debug.MissingOne
         format: "{{taskrun.startDate}}"
 
 tasks:
   - id: date2
-    type: io.kestra.core.tasks.debugs.MissingTwo
+    type: io.kestra.plugin.core.debug.MissingTwo
     format: "{{taskrun.startDate}}"
 
 
 errors:
   - id: date3
-    type: io.kestra.core.tasks.debugs.MissingThree
+    type: io.kestra.plugin.core.debug.MissingThree
     format: "{{taskrun.startDate}}"

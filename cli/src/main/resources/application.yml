@@ -188,15 +188,15 @@ kestra:
       central:
         url: https://repo.maven.apache.org/maven2/
     configurations:
-      - type: io.kestra.core.tasks.flows.Subflow
+      - type: io.kestra.plugin.core.flow.Subflow
         values:
           outputs:
             enabled: true # backward-compatibility with version prior to v0.15.0
-      - type: io.kestra.core.tasks.flows.Flow
+      - type: io.kestra.plugin.core.flow.Flow
         values:
           outputs:
             enabled: true # backward-compatibility with version prior to v0.15.0
-      - type: io.kestra.core.models.triggers.types.Schedule
+      - type: io.kestra.plugin.core.trigger.Schedule
         values:
           recoverMissedSchedules: ALL
   variables:

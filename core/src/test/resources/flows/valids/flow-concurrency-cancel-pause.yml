@@ -7,9 +7,9 @@ concurrency:
 
 tasks:
   - id: pause
-    type: io.kestra.core.tasks.flows.Pause
+    type: io.kestra.plugin.core.flow.Pause
     delay: PT1S
     tasks:
       - id: post-pause
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: Post-pause

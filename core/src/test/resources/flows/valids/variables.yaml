@@ -8,11 +8,11 @@ variables:
 
 tasks:
   - id: variable
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{render(vars.third)}}"
   - id: env
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{envs.test1}} {{envs.test2}}"
   - id: global
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{globals.string}} {{globals.int}} {{globals.bool}} {{globals.nested.int}}"

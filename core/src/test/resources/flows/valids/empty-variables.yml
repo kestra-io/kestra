@@ -9,11 +9,11 @@ inputs:
 
 tasks:
   - id: log-not-existing-output
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "{{ outputs.not_existing ?? '' }}" # previously this failed on 'outputs' variable didn't exist
   - id: log-empty-input
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "{{ inputs['emptyKey']['foo'] }}"
   - id: log-empty-sub-object-input
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "{{ inputs.emptySubObject.json.someEmptyObject }}"

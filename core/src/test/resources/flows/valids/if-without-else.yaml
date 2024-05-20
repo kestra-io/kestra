@@ -7,9 +7,9 @@ inputs:
 
 tasks:
   - id: if
-    type: io.kestra.core.tasks.flows.If
+    type: io.kestra.plugin.core.flow.If
     condition: "{{inputs.param}}"
     then:
       - id: when-true
-        type: io.kestra.core.tasks.log.Log
+        type: io.kestra.plugin.core.log.Log
         message: 'Condition was true'

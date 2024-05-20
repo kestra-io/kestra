@@ -4,13 +4,13 @@ namespace: io.kestra.tests
 listeners:
   - tasks:
       - id: ko
-        type: io.kestra.core.tasks.executions.Fail
+        type: io.kestra.plugin.core.execution.Fail
   - tasks:
       - id: l2
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
 
 tasks:
   - id: first
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

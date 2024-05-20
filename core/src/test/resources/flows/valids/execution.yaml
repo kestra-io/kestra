@@ -2,5 +2,5 @@ id: execution-start-date
 namespace: io.kestra.tests
 tasks:
   - id: hello
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{ execution.startDate }}"

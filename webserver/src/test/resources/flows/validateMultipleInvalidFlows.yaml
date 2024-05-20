@@ -2,7 +2,7 @@ id: "first_flow"
 namespace: "validation"
 tasks:
   - id: task_one
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.plugin.core.log.Log
     message: "strange---string"
     unknownProp: unknownValue
 
@@ -12,7 +12,7 @@ id: "second_flow"
 namespace: "validation"
 tasks:
   - id: task-two
-    type: io.kestra.core.tasks.debugs.UnknownTask
+    type: io.kestra.plugin.core.debug.UnknownTask
   - id: task-three
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: strangestring---

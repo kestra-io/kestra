@@ -6,5 +6,5 @@ tasks:
     type: io.kestra.core.tasks.test.Encrypted
     format: "Hello World"
   - id: return
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{outputs.hello.value}}"

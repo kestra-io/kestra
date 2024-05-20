@@ -7,24 +7,24 @@ inputs:
 
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachParallel
+    type: io.kestra.plugin.core.flow.EachParallel
     value: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 2-1_seq
-        type: io.kestra.core.tasks.flows.Sequential
+        type: io.kestra.plugin.core.flow.Sequential
         tasks:
           - id: 2-1-1_t1
-            type: io.kestra.core.tasks.log.Log
+            type: io.kestra.plugin.core.log.Log
             message: "{{ (inputs.failed ?? 'NONE') == 'FIRST' ? ko : '0'}}"
           - id: 2-1-2_t2
-            type: io.kestra.core.tasks.flows.EachParallel
+            type: io.kestra.plugin.core.flow.EachParallel
             value: '["value a", "value b", "value c"]'
             tasks:
               - id: 2-1-2-1_t1
-                type: io.kestra.core.tasks.log.Log
+                type: io.kestra.plugin.core.log.Log
                 message: "{{ (inputs.failed ?? 'NONE') == 'SECOND' ? ko : '0'}}"
 
   - id: 2_end
-    type: io.kestra.core.tasks.debugs.Return
+    type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
 

@@ -359,7 +359,7 @@
                         "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
                         "  # " + this.$t("onboarding-flow.taskLog3") + "\n" +
                         "- id: hello" + "\n" +
-                        "  type: io.kestra.core.tasks.log.Log" + "\n" +
+                        "  type: io.kestra.plugin.core.log.Log" + "\n" +
                         "  message: Hey there, {{ inputs.user }}!",
                     "\n  # " + this.$t("onboarding-flow.taskAPI") + "\n" +
                         "- id: api" + "\n" +
@@ -394,7 +394,7 @@
                         "triggers:" + "\n" +
                         "  # " + this.$t("onboarding-flow.triggerSchedule1") + "\n" +
                         "- id: everyMinute" + "\n" +
-                        "  type: io.kestra.core.models.triggers.types.Schedule" + "\n" +
+                        "  type: io.kestra.plugin.core.trigger.Schedule" + "\n" +
                         "  cron: \"*/1 * * * *\"" + "\n" +
                         "  inputs:" + "\n" +
                         "    name: Kestra pro user"

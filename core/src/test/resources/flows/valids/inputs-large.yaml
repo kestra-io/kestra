@@ -7,9 +7,9 @@ inputs:
 
 tasks:
   - id: 1_each
-    type: io.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.plugin.core.flow.EachSequential
     value: '["1", "2", "3", "4", "5", "6", "7", "8", "9"]'
     tasks:
     - id: string
-      type: io.kestra.core.tasks.debugs.Return
+      type: io.kestra.plugin.core.debug.Return
       format: "{{inputs.string}}"

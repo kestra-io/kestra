@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.plugin.core.condition.VariableCondition;
 import io.kestra.core.models.executions.Execution;
@@ -160,6 +161,28 @@ class TaskDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(2));
     }
 
+    @Test
+    void alias() {
+        DefaultTester task = DefaultTester.builder()
+            .id("test")
+            .type(DefaultTester.class.getName())
+            .set(666)
+            .build();
+
+        Flow flow = Flow.builder()
+            .tasks(Collections.singletonList(task))
+            .taskDefaults(List.of(
+                new TaskDefault("io.kestra.core.services.DefaultTesterAlias", false, ImmutableMap.of(
+                    "value", 1
+                ))
+            ))
+            .build();
+
+        Flow injected = taskDefaultService.injectDefaults(flow);
+
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode
@@ -184,6 +207,7 @@ class TaskDefaultServiceTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
+    @Plugin(aliases = "io.kestra.core.services.DefaultTesterAlias")
     public static class DefaultTester extends Task implements RunnableTask<VoidOutput> {
         private Collections property;
 

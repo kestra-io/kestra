@@ -3,11 +3,13 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
@@ -42,6 +44,9 @@ public class TaskDefaultService {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     @Nullable
     protected QueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private PluginRegistry pluginRegistry;
 
     /**
      * @param flow the flow to extract default
@@ -99,6 +104,7 @@ public class TaskDefaultService {
         Map<String, Object> flowAsMap = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);
+        addAliases(allDefaults);
         Map<Boolean, List<TaskDefault>> allDefaultsGroup = allDefaults
             .stream()
             .collect(Collectors.groupingBy(TaskDefault::isForced, Collectors.toList()));
@@ -128,6 +134,18 @@ public class TaskDefaultService {
         }
 
         return yamlFlowParser.parse(flowAsMap, Flow.class, false);
+    }
+
+    private void addAliases(List<TaskDefault> allDefaults) {
+        List<TaskDefault> aliasedTaskDefault = allDefaults.stream()
+            .map(taskDefault -> {
+                Class<? extends Plugin> classByIdentifier = pluginRegistry.findClassByIdentifier(taskDefault.getType());
+                return classByIdentifier != null && !taskDefault.getType().equals(classByIdentifier.getTypeName()) ? taskDefault.toBuilder().type(classByIdentifier.getTypeName()).build() : null;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        allDefaults.addAll(aliasedTaskDefault);
     }
 
     private Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {

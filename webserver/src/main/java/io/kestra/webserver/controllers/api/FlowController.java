@@ -19,7 +19,7 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
@@ -66,7 +66,7 @@ public class FlowController {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -252,7 +252,7 @@ public class FlowController {
     }
 
     protected FlowWithSource doCreate(Flow flow, String source) {
-        return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
+        return flowRepository.create(flow, source, pluginDefaultService.injectDefaults(flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -368,7 +368,7 @@ public class FlowController {
                 Flow flow = flowWithSource.toFlow();
                 Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, flow.getId());
                 if (existingFlow.isPresent()) {
-                    return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), taskDefaultService.injectDefaults(flow));
+                    return flowRepository.update(flow, existingFlow.get(), flowWithSource.getSource(), pluginDefaultService.injectDefaults(flow));
                 } else {
                     return this.doCreate(flow, flowWithSource.getSource());
                 }
@@ -413,7 +413,7 @@ public class FlowController {
     }
 
     protected FlowWithSource update(Flow current, Flow previous, String source) {
-        return flowRepository.update(current, previous, source, taskDefaultService.injectDefaults(current));
+        return flowRepository.update(current, previous, source, pluginDefaultService.injectDefaults(current));
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}")
@@ -438,7 +438,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow, flow.generateSource(), taskDefaultService.injectDefaults(newValue)).toFlow());
+            return HttpResponse.ok(flowRepository.update(newValue, flow, flow.generateSource(), pluginDefaultService.injectDefaults(newValue)).toFlow());
         } catch (InternalException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
@@ -517,7 +517,7 @@ public class FlowController {
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 
-                    modelValidator.validate(taskDefaultService.injectDefaults(flowParse));
+                    modelValidator.validate(pluginDefaultService.injectDefaults(flowParse));
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 } catch (RuntimeException re) {
@@ -767,7 +767,7 @@ public class FlowController {
                     flowUpdated,
                     flow,
                     flowUpdated.getSource(),
-                    taskDefaultService.injectDefaults(flowUpdated)
+                    pluginDefaultService.injectDefaults(flowUpdated)
                 );
             })
             .toList();
@@ -788,7 +788,7 @@ public class FlowController {
                     flowUpdated,
                     flow,
                     flowUpdated.getSource(),
-                    taskDefaultService.injectDefaults(flowUpdated)
+                    pluginDefaultService.injectDefaults(flowUpdated)
                 );
             })
             .toList();

@@ -3,7 +3,7 @@ package io.kestra.webserver.services;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.annotation.WebServerEnabled;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintItem;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintTagItem;
@@ -39,7 +39,7 @@ public class FlowAutoLoaderService {
     protected FlowRepositoryInterface repository;
 
     @Inject
-    protected TaskDefaultService taskDefaultService;
+    protected PluginDefaultService pluginDefaultService;
 
     @Inject
     @Client("api")
@@ -87,7 +87,7 @@ public class FlowAutoLoaderService {
                 .map(HttpResponse::body)
                 .map(source -> {
                     Flow flow = yamlFlowParser.parse(source, Flow.class);
-                    repository.create(flow, source, taskDefaultService.injectDefaults(flow));
+                    repository.create(flow, source, pluginDefaultService.injectDefaults(flow));
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;
                 })

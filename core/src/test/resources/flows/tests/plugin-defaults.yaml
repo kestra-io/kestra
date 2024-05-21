@@ -1,0 +1,45 @@
+id: plugin-defaults
+namespace: io.kestra.tests
+
+pluginDefaults:
+  - type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential1
+    values:
+      def: "1"
+
+  - type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential2
+    values:
+      def: "2"
+
+  - type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential3
+    values:
+      def: "3"
+
+tasks:
+  - id: first
+    type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential1
+    tasks:
+    - id: second
+      type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential2
+      tasks:
+        - id: third
+          type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential3
+          tasks:
+          - id: ko
+            type: io.kestra.plugin.core.execution.Fail
+  - id: 2_end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"
+
+errors:
+  - id: err-first
+    type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential1
+    tasks:
+      - id: err-second
+        type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential2
+        tasks:
+          - id: err-third
+            type: io.kestra.core.runners.PluginDefaultsCaseTest$DefaultSequential3
+            tasks:
+            - id: end
+              type: io.kestra.plugin.core.debug.Return
+              format: "{{task.id}} > {{taskrun.startDate}}"

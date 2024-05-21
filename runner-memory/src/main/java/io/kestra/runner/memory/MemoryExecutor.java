@@ -63,7 +63,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private QueueInterface<LogEntry> logQueue;
 
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     @Inject
     private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
@@ -146,7 +146,7 @@ public class MemoryExecutor implements ExecutorInterface {
             }
         }
 
-        return taskDefaultService.injectDefaults(flow, execution);
+        return pluginDefaultService.injectDefaults(flow, execution);
     }
 
     private void handleExecution(ExecutionState state) {

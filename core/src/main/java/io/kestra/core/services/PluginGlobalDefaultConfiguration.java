@@ -6,9 +6,8 @@ import lombok.Getter;
 
 import java.util.List;
 
-// We need to keep it for the old task defaults even if it's deprecated
-@ConfigurationProperties(value = "kestra.tasks")
+@ConfigurationProperties(value = "kestra.plugins", includes = "defaults")
 @Getter
-public class TaskGlobalDefaultConfiguration {
+public class PluginGlobalDefaultConfiguration {
     List<PluginDefault> defaults;
 }

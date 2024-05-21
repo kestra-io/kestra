@@ -3,8 +3,8 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
@@ -44,7 +44,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             .build();
 
         return createFlow(Collections.singletonList(schedule), List.of(
-            TaskDefault.builder()
+            PluginDefault.builder()
                 .type(UnitTest.class.getName())
                 .values(Map.of("defaultInjected", "done"))
                 .build()

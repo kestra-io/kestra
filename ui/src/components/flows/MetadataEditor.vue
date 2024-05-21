@@ -123,15 +123,15 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>taskDefaults</code>
+                <code>pluginDefaults</code>
             </template>
             <editor
-                :model-value="newMetadata.taskDefaults"
+                :model-value="newMetadata.pluginDefaults"
                 :navbar="false"
                 :full-height="false"
                 :input="true"
                 lang="yaml"
-                @update:model-value="(value) => newMetadata.taskDefaults = value"
+                @update:model-value="(value) => newMetadata.pluginDefaults = value"
             />
         </el-form-item>
         <el-form-item>
@@ -200,7 +200,7 @@
                     inputs: [],
                     variables: [["", undefined]],
                     concurrency: {},
-                    taskDefaults: "",
+                    pluginDefaults: "",
                     outputs: "",
                     disabled: false
                 },
@@ -227,7 +227,7 @@
                 this.newMetadata.inputs = this.metadata.inputs || []
                 this.newMetadata.variables = this.metadata.variables ? Object.entries(toRaw(this.metadata.variables)) : [["", undefined]]
                 this.newMetadata.concurrency = this.metadata.concurrency || {}
-                this.newMetadata.taskDefaults = yamlUtils.stringify(this.metadata.taskDefaults) || ""
+                this.newMetadata.pluginDefaults = yamlUtils.stringify(this.metadata.pluginDefaults) || ""
                 this.newMetadata.outputs = yamlUtils.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
                 this.newMetadata.retry = yamlUtils.stringify(this.metadata.retry) || ""
@@ -285,7 +285,7 @@
         computed: {
             ...mapState("plugin", ["inputSchema", "inputsType"]),
             cleanMetadata() {
-                const taskDefaults = yamlUtils.parse(this.newMetadata.taskDefaults);
+                const pluginDefaults = yamlUtils.parse(this.newMetadata.pluginDefaults);
                 const outputs = yamlUtils.parse(this.newMetadata.outputs);
                 const retry = yamlUtils.parse(this.newMetadata.retry);
                 const metadata = {
@@ -297,7 +297,7 @@
                     inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
-                    taskDefaults: taskDefaults,
+                    pluginDefaults: pluginDefaults,
                     outputs: outputs,
                     disabled: this.newMetadata.disabled
                 }

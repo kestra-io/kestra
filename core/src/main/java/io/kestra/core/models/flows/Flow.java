@@ -87,7 +87,21 @@ public class Flow extends AbstractFlow {
     List<AbstractTrigger> triggers;
 
     @Valid
-    List<TaskDefault> taskDefaults;
+    List<PluginDefault> pluginDefaults;
+
+    @Valid
+    List<PluginDefault> taskDefaults;
+
+    @Deprecated
+    public void setTaskDefaults(List<PluginDefault> taskDefaults) {
+        this.pluginDefaults = taskDefaults;
+        this.taskDefaults = taskDefaults;
+    }
+
+    @Deprecated
+    public List<PluginDefault> getTaskDefaults() {
+        return this.taskDefaults;
+    }
 
     @Valid
     Concurrency concurrency;
@@ -155,7 +169,7 @@ public class Flow extends AbstractFlow {
         return Stream.of(
                 Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
                 allTasks().map(Task::getType),
-                Optional.ofNullable(taskDefaults).orElse(Collections.emptyList()).stream().map(TaskDefault::getType)
+                Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
             ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }

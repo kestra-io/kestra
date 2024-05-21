@@ -179,7 +179,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution result = triggerInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(result.getTaskRunList().size(), is(12));
+        assertThat(result.getTaskRunList().size(), is(13));
     }
 
     @Test
@@ -538,7 +538,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList(), hasSize(12));
+        assertThat(execution.getTaskRunList(), hasSize(13));
 
         String path = (String) execution.getInputs().get("file");
 
@@ -573,7 +573,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void filePreview() throws TimeoutException {
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList(), hasSize(12));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(13));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -599,7 +599,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList(), hasSize(12));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(13));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

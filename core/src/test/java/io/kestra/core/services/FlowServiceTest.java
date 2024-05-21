@@ -1,8 +1,10 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +24,8 @@ import static org.hamcrest.Matchers.*;
 class FlowServiceTest {
     @Inject
     private FlowService flowService;
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     private static Flow create(String flowId, String taskId, Integer revision) {
         return create(null, flowId, taskId, revision);
@@ -38,6 +43,74 @@ class FlowServiceTest {
                 .format("test")
                 .build()))
             .build();
+    }
+
+    @Test
+    void importFlow() {
+        String source = """
+            id: import
+            namespace: some.namespace
+            tasks:
+            - id: task
+              type: io.kestra.plugin.core.log.Log
+              message: Hello""";
+        Flow importFlow = flowService.importFlow("my-tenant", source);
+
+        assertThat(importFlow.getId(), is("import"));
+        assertThat(importFlow.getNamespace(), is("some.namespace"));
+        assertThat(importFlow.getRevision(), is(1));
+        assertThat(importFlow.getTasks().size(), is(1));
+        assertThat(importFlow.getTasks().get(0).getId(), is("task"));
+
+        Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
+        assertThat(fromDb.isPresent(), is(true));
+        assertThat(fromDb.get().getRevision(), is(1));
+        assertThat(fromDb.get().getSource(), is(source));
+
+        source = source.replace("id: task", "id: replaced_task");
+        importFlow = flowService.importFlow("my-tenant", source);
+        assertThat(importFlow.getRevision(), is(2));
+        assertThat(importFlow.getTasks().size(), is(1));
+        assertThat(importFlow.getTasks().get(0).getId(), is("replaced_task"));
+
+        fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
+        assertThat(fromDb.isPresent(), is(true));
+        assertThat(fromDb.get().getRevision(), is(2));
+        assertThat(fromDb.get().getSource(), is(source));
+    }
+
+    @Test
+    void importFlow_DryRun() {
+        String oldSource = """
+            id: import_dry
+            namespace: some.namespace
+            tasks:
+            - id: task
+              type: io.kestra.plugin.core.log.Log
+              message: Hello""";
+        Flow importFlow = flowService.importFlow("my-tenant", oldSource);
+
+        assertThat(importFlow.getId(), is("import_dry"));
+        assertThat(importFlow.getNamespace(), is("some.namespace"));
+        assertThat(importFlow.getRevision(), is(1));
+        assertThat(importFlow.getTasks().size(), is(1));
+        assertThat(importFlow.getTasks().get(0).getId(), is("task"));
+
+        Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
+        assertThat(fromDb.isPresent(), is(true));
+        assertThat(fromDb.get().getRevision(), is(1));
+        assertThat(fromDb.get().getSource(), is(oldSource));
+
+        String newSource = oldSource.replace("id: task", "id: replaced_task");
+        importFlow = flowService.importFlow("my-tenant", newSource, true);
+        assertThat(importFlow.getRevision(), is(2));
+        assertThat(importFlow.getTasks().size(), is(1));
+        assertThat(importFlow.getTasks().get(0).getId(), is("replaced_task"));
+
+        fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
+        assertThat(fromDb.isPresent(), is(true));
+        assertThat(fromDb.get().getRevision(), is(1));
+        assertThat(fromDb.get().getSource(), is(oldSource));
     }
 
     @Test

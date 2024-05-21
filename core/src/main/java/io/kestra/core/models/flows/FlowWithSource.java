@@ -53,7 +53,7 @@ public class FlowWithSource extends Flow {
         return source.replaceFirst("(?m)^revision: \\d+\n?","");
     }
 
-    public boolean isUpdatable(Flow flow, String flowSource) {
+    public boolean equals(Flow flow, String flowSource) {
         return this.equalsWithoutRevision(flow) &&
             this.source.equals(cleanupSource(flowSource));
     }

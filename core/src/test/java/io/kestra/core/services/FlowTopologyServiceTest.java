@@ -3,7 +3,7 @@ package io.kestra.core.services;
 import io.kestra.plugin.core.condition.ExecutionFlowCondition;
 import io.kestra.plugin.core.condition.ExecutionStatusCondition;
 import io.kestra.plugin.core.condition.MultipleCondition;
-import io.kestra.plugin.core.condition.VariableCondition;
+import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowRelation;
@@ -156,7 +156,7 @@ class FlowTopologyServiceTest {
                                 "filtered", ExecutionStatusCondition.builder()
                                     .in(List.of(State.Type.SUCCESS))
                                     .build(),
-                                "variables", VariableCondition.builder()
+                                "variables", ExpressionCondition.builder()
                                     .expression("{{ true }}")
                                     .build()
                             ))

@@ -1,6 +1,6 @@
 package io.kestra.core.schedulers;
 
-import io.kestra.plugin.core.condition.VariableCondition;
+import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
@@ -463,8 +463,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "failedEvaluation", false)
             .conditions(
                 List.of(
-                    VariableCondition.builder()
-                        .type(VariableCondition.class.getName())
+                    ExpressionCondition.builder()
+                        .type(ExpressionCondition.class.getName())
                         .expression("{{ trigger.date | date() < now() }}")
                         .build()
                 )

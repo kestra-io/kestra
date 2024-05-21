@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.PluginDefault;
-import io.kestra.plugin.core.condition.VariableCondition;
+import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -53,8 +53,8 @@ class PluginDefaultServiceTest {
                 DefaultTriggerTester.builder()
                     .id("trigger")
                     .type(DefaultTriggerTester.class.getName())
-                    .conditions(List.of(VariableCondition.builder()
-                        .type(VariableCondition.class.getName())
+                    .conditions(List.of(ExpressionCondition.builder()
+                        .type(ExpressionCondition.class.getName())
                         .build())
                     )
                     .build()
@@ -69,7 +69,7 @@ class PluginDefaultServiceTest {
                 new PluginDefault(DefaultTriggerTester.class.getName(), false, ImmutableMap.of(
                     "set", 123
                 )),
-                new PluginDefault(VariableCondition.class.getName(), false, ImmutableMap.of(
+                new PluginDefault(ExpressionCondition.class.getName(), false, ImmutableMap.of(
                     "expression", "{{ test }}"
                 ))
             ))
@@ -87,7 +87,7 @@ class PluginDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
         assertThat(((DefaultTriggerTester) injected.getTriggers().get(0)).getSet(), is(123));
-        assertThat(((VariableCondition) injected.getTriggers().get(0).getConditions().get(0)).getExpression(), is("{{ test }}"));
+        assertThat(((ExpressionCondition) injected.getTriggers().get(0).getConditions().get(0)).getExpression(), is("{{ test }}"));
     }
 
     @Test
@@ -133,8 +133,8 @@ class PluginDefaultServiceTest {
                 DefaultTriggerTester.builder()
                     .id("trigger")
                     .type(DefaultTriggerTester.class.getName())
-                    .conditions(List.of(VariableCondition.builder()
-                        .type(VariableCondition.class.getName())
+                    .conditions(List.of(ExpressionCondition.builder()
+                        .type(ExpressionCondition.class.getName())
                         .build())
                     )
                     .build()

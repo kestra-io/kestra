@@ -890,6 +890,20 @@ public class RunContext {
         return tempFile;
     }
 
+    public Path file(String filename) throws IOException {
+        return this.file(null, filename);
+    }
+
+    public Path file(byte[] content, String filename) throws IOException {
+        Path file = Files.createFile(this.tempDir().resolve(filename));
+
+        if (content != null) {
+            Files.write(file, content);
+        }
+
+        return file;
+    }
+
     /**
      * Get the file extension including the '.' to be used with the various methods that took a suffix.
      * @param fileName the name of the file

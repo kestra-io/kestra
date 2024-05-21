@@ -13,6 +13,8 @@ export default defineConfig({
     resolve: {
         alias: {
             "override": path.resolve(__dirname, "src/override/"),
+            "assets": path.resolve(__dirname, "src/assets/"),
+            "utils": path.resolve(__dirname, "src/utils/"),
         },
     },
     plugins: [

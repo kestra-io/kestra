@@ -6,6 +6,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -17,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -52,7 +54,7 @@ class DownloadTest {
 
         assertThat(
             IOUtils.toString(this.storageInterface.get(null, output.getUri()), StandardCharsets.UTF_8),
-            is(IOUtils.toString(new URL(FILE).openStream(), StandardCharsets.UTF_8))
+            is(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8))
         );
         assertThat(output.getUri().toString(), endsWith(".db"));
     }
@@ -118,6 +120,24 @@ class DownloadTest {
         assertThat(exception.getMessage(), is("Internal Server Error"));
     }
 
+    @Test
+    void contentDisposition() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(embeddedServer.getURI() + "/content-disposition")
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+    }
+
     @Controller()
     public static class SlackWebController {
         @Get("500")
@@ -128,6 +148,12 @@ class DownloadTest {
         @Get("204")
         public HttpResponse<Void> noContent() {
             return HttpResponse.noContent();
+        }
+
+        @Get("content-disposition")
+        public HttpResponse<byte[]> contentDisposition() {
+            return HttpResponse.ok("Hello World".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"filename.jpg\"");
         }
     }
 }

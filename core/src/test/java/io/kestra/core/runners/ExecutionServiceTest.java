@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     FlowRepositoryInterface flowRepository;
 
     @Inject
-    TaskDefaultService taskDefaultService;
+    PluginDefaultService pluginDefaultService;
 
     @Test
     void restartSimple() throws Exception {
@@ -65,7 +65,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
                     .build()
             ),
             JacksonMapper.ofYaml().writeValueAsString(flow),
-            taskDefaultService.injectDefaults(flow)
+            pluginDefaultService.injectDefaults(flow)
         );
 
 

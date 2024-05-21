@@ -1,6 +1,6 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.validations.TaskDefaultValidation;
+import io.kestra.core.validations.PluginDefaultValidation;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,8 +13,8 @@ import java.util.Map;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @Introspected
-@TaskDefaultValidation
-public class TaskDefault {
+@PluginDefaultValidation
+public class PluginDefault {
     @NotNull
     private final String type;
 

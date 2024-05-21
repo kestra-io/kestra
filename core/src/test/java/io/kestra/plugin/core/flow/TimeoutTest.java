@@ -8,7 +8,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -30,7 +30,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
     FlowRepositoryInterface flowRepository;
 
     @Inject
-    TaskDefaultService taskDefaultService;
+    PluginDefaultService pluginDefaultService;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -53,7 +53,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
+        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
 
         Execution execution = runnerUtils.runOne(flow.getTenantId(), flow.getNamespace(), flow.getId());
 

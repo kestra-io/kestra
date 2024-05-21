@@ -3,10 +3,10 @@ package io.kestra.core.services;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.plugin.core.condition.VariableCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -36,9 +36,9 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class TaskDefaultServiceTest {
+class PluginDefaultServiceTest {
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     @Test
     public void injectFlowAndGlobals() {
@@ -60,22 +60,22 @@ class TaskDefaultServiceTest {
                     .build()
             ))
             .tasks(Collections.singletonList(task))
-            .taskDefaults(List.of(
-                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
+            .pluginDefaults(List.of(
+                new PluginDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
                     "value", 1,
                     "set", 123,
                     "arrays", Collections.singletonList(1)
                 )),
-                new TaskDefault(DefaultTriggerTester.class.getName(), false, ImmutableMap.of(
+                new PluginDefault(DefaultTriggerTester.class.getName(), false, ImmutableMap.of(
                     "set", 123
                 )),
-                new TaskDefault(VariableCondition.class.getName(), false, ImmutableMap.of(
+                new PluginDefault(VariableCondition.class.getName(), false, ImmutableMap.of(
                     "expression", "{{ test }}"
                 ))
             ))
             .build();
 
-        Flow injected = taskDefaultService.injectDefaults(flow);
+        Flow injected = pluginDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
@@ -100,14 +100,14 @@ class TaskDefaultServiceTest {
 
         Flow flow = Flow.builder()
             .tasks(Collections.singletonList(task))
-            .taskDefaults(List.of(
-                new TaskDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
+            .pluginDefaults(List.of(
+                new PluginDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
                     "set", 123
                 )),
-                new TaskDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
+                new PluginDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
                     "set", 789
                 )),
-                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
+                new PluginDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
                     "value", 1,
                     "set", 456,
                     "arrays", Collections.singletonList(1)
@@ -115,7 +115,7 @@ class TaskDefaultServiceTest {
             ))
             .build();
 
-        Flow injected = taskDefaultService.injectDefaults(flow);
+        Flow injected = pluginDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(123));
     }
@@ -140,22 +140,22 @@ class TaskDefaultServiceTest {
                     .build()
             ))
             .tasks(Collections.singletonList(task))
-            .taskDefaults(List.of(
-                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
+            .pluginDefaults(List.of(
+                new PluginDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
                     "set", 789
                 )),
-                new TaskDefault("io.kestra.core.services.", false, ImmutableMap.of(
+                new PluginDefault("io.kestra.core.services.", false, ImmutableMap.of(
                     "value", 2,
                     "set", 456,
                     "arrays", Collections.singletonList(1)
                 )),
-                new TaskDefault("io.kestra.core.services2.", false, ImmutableMap.of(
+                new PluginDefault("io.kestra.core.services2.", false, ImmutableMap.of(
                     "value", 3
                 ))
             ))
             .build();
 
-        Flow injected = taskDefaultService.injectDefaults(flow);
+        Flow injected = pluginDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(2));
@@ -171,14 +171,14 @@ class TaskDefaultServiceTest {
 
         Flow flow = Flow.builder()
             .tasks(Collections.singletonList(task))
-            .taskDefaults(List.of(
-                new TaskDefault("io.kestra.core.services.DefaultTesterAlias", false, ImmutableMap.of(
+            .pluginDefaults(List.of(
+                new PluginDefault("io.kestra.core.services.DefaultTesterAlias", false, ImmutableMap.of(
                     "value", 1
                 ))
             ))
             .build();
 
-        Flow injected = taskDefaultService.injectDefaults(flow);
+        Flow injected = pluginDefaultService.injectDefaults(flow);
 
         assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
     }

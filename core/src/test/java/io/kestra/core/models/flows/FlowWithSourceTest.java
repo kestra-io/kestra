@@ -108,8 +108,8 @@ class FlowWithSourceTest {
             .triggers(List.of(
                 Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
             ))
-            .taskDefaults(List.of(
-                TaskDefault.builder()
+            .pluginDefaults(List.of(
+                PluginDefault.builder()
                     .type(Log.class.getName())
                     .forced(true)
                     .values(Map.of(

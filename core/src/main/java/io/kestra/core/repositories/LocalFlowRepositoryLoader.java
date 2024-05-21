@@ -3,7 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class LocalFlowRepositoryLoader {
     private ModelValidator modelValidator;
 
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     public void load(URL basePath) throws IOException, URISyntaxException {
         URI uri = basePath.toURI();

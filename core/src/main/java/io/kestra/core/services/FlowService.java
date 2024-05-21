@@ -57,7 +57,7 @@ public class FlowService {
     YamlFlowParser yamlFlowParser;
 
     @Inject
-    TaskDefaultService taskDefaultService;
+    PluginDefaultService pluginDefaultService;
 
     @Inject
     ApplicationContext applicationContext;
@@ -80,8 +80,8 @@ public class FlowService {
         FlowRepositoryInterface flowRepository = this.flowRepository.get();
         return flowRepository
             .findById(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId())
-            .map(previous -> flowRepository.update(withTenant, previous, source, taskDefaultService.injectDefaults(withTenant)))
-            .orElseGet(() -> flowRepository.create(withTenant, source, taskDefaultService.injectDefaults(withTenant)));
+            .map(previous -> flowRepository.update(withTenant, previous, source, pluginDefaultService.injectDefaults(withTenant)))
+            .orElseGet(() -> flowRepository.create(withTenant, source, pluginDefaultService.injectDefaults(withTenant)));
     }
 
     public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {

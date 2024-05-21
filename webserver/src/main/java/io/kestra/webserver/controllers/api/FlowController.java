@@ -562,6 +562,50 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_JSON)
+    @Operation(tags = {"Flows"}, summary = "Validate task")
+    public ValidateConstraintViolation validateTask(
+        @Parameter(description = "Task") @Body Task task
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            modelValidator.validate(task);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the task", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the task: " + re.getMessage());
+        }
+        return validateConstraintViolationBuilder.build();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/trigger", consumes = MediaType.APPLICATION_JSON)
+    @Operation(tags = {"Flows"}, summary = "Validate trigger")
+    public ValidateConstraintViolation validateTrigger(
+        @Parameter(description = "Trigger") @Body AbstractTrigger trigger
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            modelValidator.validate(trigger);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the trigger", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the trigger: " + re.getMessage());
+        }
+        return validateConstraintViolationBuilder.build();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public ValidateConstraintViolation validateTask(

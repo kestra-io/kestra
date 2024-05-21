@@ -6,6 +6,7 @@ import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.webserver.services.FlowAutoLoaderService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
@@ -171,7 +172,17 @@ abstract public class AbstractCommand implements Callable<Integer> {
                 } else {
                     log.info("Server Running: {}", server.getURL());
                 }
+
+                if (isFlowAutoLoadEnabled()) {
+                    applicationContext
+                        .findBean(FlowAutoLoaderService.class)
+                        .ifPresent(FlowAutoLoaderService::load);
+                }
             });
+    }
+
+    public boolean isFlowAutoLoadEnabled() {
+        return false;
     }
 
     protected void shutdownHook(Rethrow.RunnableChecked<Exception> run) {

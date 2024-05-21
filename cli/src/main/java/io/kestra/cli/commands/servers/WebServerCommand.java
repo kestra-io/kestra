@@ -8,6 +8,7 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 import java.util.Map;
 
@@ -19,6 +20,15 @@ import java.util.Map;
 public class WebServerCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
+
+    @Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
+    boolean tutorialsDisabled = false;
+
+
+    @Override
+    public boolean isFlowAutoLoadEnabled() {
+        return !tutorialsDisabled;
+    }
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {

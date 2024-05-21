@@ -45,6 +45,14 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipFlows = Collections.emptyList();
 
+    @CommandLine.Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
+    boolean tutorialsDisabled = false;
+
+    @Override
+    public boolean isFlowAutoLoadEnabled() {
+        return !tutorialsDisabled;
+    }
+
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(

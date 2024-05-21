@@ -2,7 +2,7 @@ package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.Label;
-import io.kestra.plugin.core.condition.VariableCondition;
+import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -102,7 +102,7 @@ class FlowWithSourceTest {
             ))
             .listeners(List.of(
                 Listener.builder()
-                    .conditions(List.of(VariableCondition.builder().expression("true").build()))
+                    .conditions(List.of(ExpressionCondition.builder().expression("true").build()))
                     .build()
             ))
             .triggers(List.of(

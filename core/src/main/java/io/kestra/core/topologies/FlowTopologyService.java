@@ -223,7 +223,7 @@ public class FlowTopologyService {
     protected boolean isMandatoryMultipleCondition(Condition condition) {
         return Stream
             .of(
-                VariableCondition.class
+                ExpressionCondition.class
             )
             .anyMatch(aClass -> condition.getClass().isAssignableFrom(aClass));
     }

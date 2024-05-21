@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class VariableConditionTest {
+class ExpressionConditionTest {
     @Inject
     ConditionService conditionService;
 
@@ -23,7 +23,7 @@ class VariableConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
-        VariableCondition build = VariableCondition.builder()
+        ExpressionCondition build = ExpressionCondition.builder()
             .expression("{{ flow.id }}")
             .build();
 
@@ -37,7 +37,7 @@ class VariableConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
-        VariableCondition build = VariableCondition.builder()
+        ExpressionCondition build = ExpressionCondition.builder()
             .expression("{{ unknown is defined }}")
             .build();
 

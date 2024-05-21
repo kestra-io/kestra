@@ -420,6 +420,10 @@
         width: 100%;
     }
 
+    .el-dialog__body .el-form {
+        width: 100%;
+    }
+
     .ks-editor {
         display: flex;
 

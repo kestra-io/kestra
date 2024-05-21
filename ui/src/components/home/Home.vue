@@ -22,13 +22,12 @@
                         @update:model-value="onNamespaceSelect"
                     />
                 </el-form-item>
-                <el-form-item
-                    class="date-range"
-                >
+                <el-form-item>
                     <date-range
                         :start-date="startDate"
                         :end-date="endDate"
                         @update:model-value="onDateChange($event)"
+                        class="w-auto"
                     />
                 </el-form-item>
             </collapse>

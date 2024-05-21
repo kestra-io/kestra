@@ -532,9 +532,9 @@ public class RunContext {
             clone.put("taskrun", taskrun);
         }
 
-        clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
-
         final RunContext newContext = new RunContext(applicationContext);
+        clone.put("addSecretConsumer", (Consumer<String>) s -> newContext.runContextLogger.usedSecret(s));
+
         newContext.variables = ImmutableMap.copyOf(clone);
         newContext.temporaryDirectory = this.tempDir();
         newContext.initLogger(taskRun, workerTask.getTask());

@@ -69,6 +69,10 @@ public class FlowService {
     private String systemFlowNamespace;
 
     public FlowWithSource importFlow(String tenantId, String source) {
+        return this.importFlow(tenantId, source, false);
+    }
+
+    public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) {
         Flow withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
             .tenantId(tenantId)
             .build();
@@ -78,8 +82,21 @@ public class FlowService {
         }
 
         FlowRepositoryInterface flowRepository = this.flowRepository.get();
-        return flowRepository
-            .findById(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId())
+        Optional<FlowWithSource> flowWithSource = flowRepository
+            .findByIdWithSource(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId(), Optional.empty(), true);
+        if (dryRun) {
+            return flowWithSource
+                .map(previous -> {
+                    if (previous.equals(withTenant, source) && !previous.isDeleted()) {
+                        return previous;
+                    } else {
+                        return FlowWithSource.of(withTenant.toBuilder().revision(previous.getRevision() + 1).build(), source);
+                    }
+                })
+                .orElseGet(() -> FlowWithSource.of(withTenant, source).toBuilder().revision(1).build());
+        }
+
+        return flowWithSource
             .map(previous -> flowRepository.update(withTenant, previous, source, pluginDefaultService.injectDefaults(withTenant)))
             .orElseGet(() -> flowRepository.create(withTenant, source, pluginDefaultService.injectDefaults(withTenant)));
     }

@@ -92,13 +92,22 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public Optional<FlowWithSource> findByIdWithSource(String tenantId, String namespace, String id, Optional<Integer> revision, Boolean allowDeleted) {
-        Optional<Flow> flow = findById(tenantId, namespace, id, revision);
-        Optional<String> sourceCode = findSourceById(tenantId, namespace, id);
-        if (flow.isPresent() && sourceCode.isPresent()) {
-            return Optional.of(FlowWithSource.of(flow.get(), FlowService.cleanupSource(sourceCode.get())));
+        FlowWithSource[] revisions = findRevisions(tenantId, namespace, id)
+            .stream()
+            .filter(flow -> flow.getRevision().equals(revision.orElse(flow.getRevision())))
+            .toArray(FlowWithSource[]::new);
+        if (revisions.length == 0) {
+            return Optional.empty();
         }
 
-        return Optional.empty();
+        FlowWithSource lastRevision = revisions[revisions.length - 1];
+        if (!allowDeleted && lastRevision.isDeleted()) {
+            return Optional.empty();
+        }
+
+        Optional<String> sourceCode = findSourceById(tenantId, namespace, id);
+        return sourceCode.map(s -> lastRevision.toBuilder().source(FlowService.cleanupSource(s)).build());
+
     }
 
     @Override

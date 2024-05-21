@@ -263,8 +263,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         result = this.eval(execution, "{{ missing }}", 21);
         assertThat(result.getResult(), is(nullValue()));
-        assertThat(result.getError(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
-        assertThat(result.getStackTrace(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
+        assertThat(result.getError(), containsString("Unable to find `missing` used in the expression `{{ missing }}` at line 1"));
+        assertThat(result.getStackTrace(), containsString("Unable to find `missing` used in the expression `{{ missing }}` at line 1"));
     }
 
     @Test

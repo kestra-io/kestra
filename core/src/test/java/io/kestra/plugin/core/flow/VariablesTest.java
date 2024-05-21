@@ -49,7 +49,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry ->
             Objects.equals(logEntry.getTaskRunId(), execution.getTaskRunList().get(1).getId()) &&
-                logEntry.getMessage().contains("Missing variable: 'inputs' on '{{inputs.invalid}}'")
+                logEntry.getMessage().contains("Unable to find `inputs` used in the expression `{{inputs.invalid}}`")
         );
         assertThat(matchingLog, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

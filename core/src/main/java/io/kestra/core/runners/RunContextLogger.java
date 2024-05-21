@@ -12,9 +12,9 @@ import ch.qos.logback.core.AppenderBase;
 import com.cronutils.utils.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.utils.IdUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -95,7 +95,7 @@ public class RunContextLogger {
 
         List<LogEntry> result = new ArrayList<>(logEntry(event, event.getFormattedMessage(), null, logEntry));
 
-        if (Throwables.getCausalChain(throwable).size() > 1) {
+        if (Throwables.getCausalChain(throwable).size() > 1 && !(throwable instanceof IllegalVariableEvaluationException)) {
             result.addAll(logEntry(
                 event,
                 Throwables

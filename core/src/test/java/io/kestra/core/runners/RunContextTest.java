@@ -172,6 +172,15 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void files() throws IOException {
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.file("folder/file.txt");
+
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
+        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt"), is(true));
+    }
+
+    @Test
     void largeInput() throws IOException, InterruptedException {
         RunContext runContext = runContextFactory.of();
         Path path = runContext.tempFile();

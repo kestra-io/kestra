@@ -1,19 +1,23 @@
 package io.kestra.core.models.validations;
 
+import io.kestra.core.models.flows.input.FloatInput;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Path;
 import jakarta.validation.metadata.ConstraintDescriptor;
 
+import java.util.Set;
+
 @Getter
 public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
-    private String message;
-    private T rootBean;
-    private Class<T> rootBeanClass;
-    private Object leafBean;
-    private Path propertyPath;
-    private Object invalidValue;
+    private final String message;
+    private final T rootBean;
+    private final Class<T> rootBeanClass;
+    private final Object leafBean;
+    private final Path propertyPath;
+    private final Object invalidValue;
 
     private ManualConstraintViolation(
         String message,
@@ -46,6 +50,22 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
             new ManualPath(new ManualPropertyNode(propertyPath)),
             invalidValue
         );
+    }
+
+    public static <T> ConstraintViolationException toConstraintViolationException(
+        String message,
+        T object,
+        Class<T> cls,
+        String propertyPath,
+        Object invalidValue
+    ) {
+        return new ConstraintViolationException(Set.of(of(
+            message,
+            object,
+            cls,
+            propertyPath,
+            invalidValue
+        )));
     }
 
     public String getMessageTemplate() {

@@ -30,7 +30,11 @@ public enum Type {
     }
 
     @SuppressWarnings("unchecked")
-    public Class<? extends Input<?>> cls() throws ClassNotFoundException {
-        return (Class<? extends Input<?>>) Class.forName(this.clsName);
+    public Class<? extends Input<?>> cls() {
+        try {
+            return (Class<? extends Input<?>>) Class.forName(this.clsName);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

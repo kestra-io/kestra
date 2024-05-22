@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Set;
 import java.util.regex.Pattern;
 
 @SuperBuilder
@@ -24,15 +23,14 @@ public class SecretInput extends Input<String> {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (validator != null && ! Pattern.matches(validator, input)) {
-            throw new ConstraintViolationException("Invalid input '" + input + "', it must match the pattern '" + validator + "'",
-                Set.of(ManualConstraintViolation.of(
-                    "Invalid input",
-                    this,
-                    SecretInput.class,
-                    getId(),
-                    input
-                )));
+        if (validator != null && !Pattern.matches(validator, input)) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "it must match the pattern `" + validator + "`",
+                this,
+                SecretInput.class,
+                getId(),
+                input
+            );
         }
     }
 }

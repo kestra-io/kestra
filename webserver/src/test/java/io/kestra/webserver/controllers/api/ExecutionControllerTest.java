@@ -101,8 +101,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("instant", "2019-10-06T18:27:49Z")
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
         .put("secret", "secret")
-        .put("array", """
-            ["s1", "s2", "s3"]""")
+        .put("array", "[1, 2, 3]")
         .put("json", "{}")
         .build();
 
@@ -143,8 +142,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
             .addPart("secret", "secret")
-            .addPart("array", """
-            ["s1", "s2", "s3"]""")
+            .addPart("array", "[1, 2, 3]")
             .addPart("json", "{}")
             .build();
     }
@@ -593,8 +591,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("instant", "2019-10-06T18:27:49Z")
             .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
             .put("secret", "secret")
-            .put("array", """
-            ["s1", "s2", "s3"]""")
+            .put("array", "[1, 2, 3]")
             .put("json", "{}")
             .build();
 

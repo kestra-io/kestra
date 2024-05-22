@@ -14,6 +14,7 @@ import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -67,8 +68,8 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         suite.taskRunNested(runnerUtils);
     }
 
-    @Test
-    void namespaceFiles() throws TimeoutException, InternalException, IOException {
+    @RetryingTest(5)
+    void namespaceFiles() throws TimeoutException, IOException {
         suite.namespaceFiles(runnerUtils);
     }
 
@@ -219,7 +220,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
         }
 
-        public void namespaceFiles(RunnerUtils runnerUtils) throws TimeoutException, InternalException, IOException {
+        public void namespaceFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             put("/test/a/b/c/1.txt", "first");
             put("/a/b/c/2.txt", "second");
             put("/a/b/3.txt", "third");

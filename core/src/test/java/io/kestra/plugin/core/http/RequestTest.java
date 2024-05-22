@@ -18,6 +18,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -105,7 +106,7 @@ class RequestTest {
         }
     }
 
-    @Test
+    @RetryingTest(5)
     void selfSigned() throws Exception {
         final String url = "https://self-signed.badssl.com/";
 

@@ -1,9 +1,7 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
@@ -19,6 +17,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -27,12 +26,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -152,7 +149,7 @@ public class FlowInputOutput {
         final List<Input<?>> inputs,
         final Execution execution,
         final Map<String, Object> in
-    ) {
+    ) throws ConstraintViolationException {
         if (inputs == null) {
             return ImmutableMap.of();
         }
@@ -167,7 +164,10 @@ public class FlowInputOutput {
                 }
 
                 if (input.getRequired() && current == null) {
-                    throw new MissingRequiredArgument("Missing required input value '" + input.getId() + "'");
+                    throw input.toConstraintViolationException(
+                        "missing required input",
+                        current
+                    );
                 }
 
                 if (!input.getRequired() && current == null) {
@@ -177,9 +177,19 @@ public class FlowInputOutput {
                     ));
                 }
 
-                var parsedInput = parseData(execution, input, current);
-                parsedInput.ifPresent(parsed -> input.validate(parsed.getValue()));
-                return parsedInput;
+                try {
+                    var parsedInput = parseData(execution, input, current);
+                    parsedInput.ifPresent(parsed -> input.validate(parsed.getValue()));
+                    return parsedInput;
+                } catch (ConstraintViolationException e) {
+                    if (e.getConstraintViolations().size() == 1) {
+                        throw input.toConstraintViolationException(List.copyOf(e.getConstraintViolations()).getFirst().getMessage(), current);
+                    } else {
+                        throw input.toConstraintViolationException(e.getMessage(), current);
+                    }
+                } catch (Exception e) {
+                    throw input.toConstraintViolationException(e instanceof IllegalArgumentException ? e.getMessage() : e.toString(), current);
+                }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -201,16 +211,20 @@ public class FlowInputOutput {
             .stream()
             .map(output -> {
                 Object current = in == null ? null : in.get(output.getId());
-                return parseData(execution, output, current)
-                    .map(entry -> {
-                        if (output.getType().equals(Type.SECRET)) {
-                            return new AbstractMap.SimpleEntry<>(
-                                entry.getKey(),
-                                EncryptedString.from(entry.getValue().toString())
-                            );
-                        }
-                        return entry;
-                    });
+                try {
+                    return parseData(execution, output, current)
+                        .map(entry -> {
+                            if (output.getType().equals(Type.SECRET)) {
+                                return new AbstractMap.SimpleEntry<>(
+                                    entry.getKey(),
+                                    EncryptedString.from(entry.getValue().toString())
+                                );
+                            }
+                            return entry;
+                        });
+                } catch (Exception e) {
+                    throw output.toConstraintViolationException(e.getMessage(), current);
+                }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -224,64 +238,37 @@ public class FlowInputOutput {
         final Execution execution,
         final Data data,
         final Object current
-    ) {
+    ) throws Exception {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
 
         final Type elementType = data instanceof ArrayInput arrayInput ? arrayInput.getItemType() : null;
+
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
             parseType(execution, data.getType(), data.getId(), elementType, current)
         ));
     }
 
-    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) {
-        return switch (type) {
-            case ENUM, STRING -> current;
-            case SECRET -> {
-                try {
+    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
+        try {
+            return switch (type) {
+                case ENUM, STRING -> current;
+                case SECRET -> {
                     if (secretKey == null) {
-                        throw new MissingRequiredArgument("Unable to use a SECRET input/output as encryption is not configured");
+                        throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
                     yield EncryptionService.encrypt(secretKey, (String) current);
-                } catch (GeneralSecurityException e) {
-                    throw new MissingRequiredArgument("Invalid SECRET format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-            }
-            case INT -> current instanceof Integer ? current : Integer.valueOf((String) current);
-            case FLOAT -> current instanceof Float ? current : Float.valueOf((String) current);
-            case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
-            case DATETIME -> {
-                try {
-                    yield Instant.parse(((String) current));
-                } catch (DateTimeParseException e) {
-                    throw new MissingRequiredArgument("Invalid DATETIME format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
-                }
-            }
-            case DATE -> {
-                try {
-                   yield LocalDate.parse(((String) current));
-                } catch (DateTimeParseException e) {
-                    throw new MissingRequiredArgument("Invalid DATE format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
-                }
-            }
-            case TIME -> {
-                try {
-                    yield LocalTime.parse(((String) current));
-                } catch (DateTimeParseException e) {
-                    throw new MissingRequiredArgument("Invalid TIME format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
-                }
-            }
-            case DURATION -> {
-                try {
-                    yield Duration.parse(((String) current));
-                } catch (DateTimeParseException e) {
-                    throw new MissingRequiredArgument("Invalid DURATION format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
-                }
-            }
-            case FILE -> {
-                try {
+                case INT -> current instanceof Integer ? current : Integer.valueOf((String) current);
+                case FLOAT -> current instanceof Float ? current : Float.valueOf((String) current);
+                case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
+                case DATETIME -> Instant.parse(((String) current));
+                case DATE -> LocalDate.parse(((String) current));
+                case TIME -> LocalTime.parse(((String) current));
+                case DURATION -> Duration.parse(((String) current));
+                case FILE -> {
                     URI uri = URI.create(((String) current).replace(File.separator, "/"));
 
                     if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
@@ -289,41 +276,39 @@ public class FlowInputOutput {
                     } else {
                         yield storageInterface.from(execution, id, new File(((String) current)));
                     }
-                } catch (Exception e) {
-                    throw new MissingRequiredArgument("Invalid FILE format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-            }
-            case JSON -> {
-                try {
-                    yield  JacksonMapper.toObject(((String) current));
-                } catch (JsonProcessingException e) {
-                    throw new MissingRequiredArgument("Invalid JSON format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
+                case JSON -> JacksonMapper.toObject(((String) current));
+                case URI -> {
+                    Matcher matcher = URI_PATTERN.matcher((String) current);
+                    if (matcher.matches()) {
+                        yield current;
+                    } else {
+                        throw new IllegalArgumentException("Expected `URI` but received `" + current + "`");
+                    }
                 }
-            }
-            case URI -> {
-                Matcher matcher = URI_PATTERN.matcher((String) current);
-                if (matcher.matches()) {
-                    yield current;
-                } else {
-                    throw new MissingRequiredArgument("Invalid URI format for '" + id + "' for '" + current + "'");
-                }
-            }
-            case ARRAY -> {
-                try {
+                case ARRAY -> {
                     if (elementType != null) {
                         // recursively parse the elements only once
                         yield JacksonMapper.toList(((String) current))
                             .stream()
-                            .map(element -> parseType(execution, elementType, id, null, element))
+                            .map(throwFunction(element -> {
+                                try {
+                                    return parseType(execution, elementType, id, null, element);
+                                } catch (Throwable e) {
+                                    throw new IllegalArgumentException("Unable to parse array element as `" + elementType + "` on `" + element + "`", e);
+                                }
+                            }))
                             .toList();
                     } else {
                         yield JacksonMapper.toList(((String) current));
                     }
-                } catch (JsonProcessingException e) {
-                    throw new MissingRequiredArgument("Invalid JSON format for '" + id + "' for '" + current + "' with error " + e.getMessage(), e);
                 }
-            }
-        };
+            };
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception("Expected `" + type + "` but received `" + current + "` with errors:\n```\n" + e.getMessage() + "\n```");
+        }
     }
 
     @SuppressWarnings("unchecked")

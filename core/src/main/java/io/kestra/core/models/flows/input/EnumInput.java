@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 @SuperBuilder
 @Getter
@@ -27,14 +25,13 @@ public class EnumInput extends Input<String> {
     @Override
     public void validate(String input) throws ConstraintViolationException {
         if (!values.contains(input)) {
-            throw new ConstraintViolationException("Invalid input '" + input + "', it must match the values '" + values + "'",
-                Set.of(ManualConstraintViolation.of(
-                    "Invalid input",
-                    this,
-                    EnumInput.class,
-                    getId(),
-                    input
-                )));
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "it must match the values `" + values + "`",
+                this,
+                EnumInput.class,
+                getId(),
+                input
+            );
         }
     }
 }

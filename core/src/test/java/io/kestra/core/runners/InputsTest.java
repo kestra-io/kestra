@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -56,8 +55,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("validatedFloat", "0.42")
         .put("validatedTime", "11:27:49")
         .put("secret", "secret")
-        .put("array", """
-            ["s1", "s2", "s3"]""")
+        .put("array", "[1, 2, 3]")
         .build();
 
     @Inject
@@ -85,9 +83,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void missingRequired() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            typedInputs(new HashMap<>());
-        });
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(new HashMap<>()));
+
+        assertThat(e.getMessage(), containsString("Invalid input for `string`, missing required input, but received `null`"));
     }
 
     @Test
@@ -133,7 +131,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("secret"), not("secret")); // secret inputs are encrypted
         assertThat(typeds.get("array"), instanceOf(List.class));
         assertThat((List<String>)typeds.get("array"), hasSize(3));
-        assertThat((List<String>)typeds.get("array"), contains("s1", "s2", "s3"));
+        assertThat((List<String>)typeds.get("array"), contains(1, 2, 3));
     }
 
     @Test
@@ -163,17 +161,17 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(13));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
-            (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
+            (String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value"),
             matchesRegex("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml")
         );
         // secret inputs are decrypted to be used as task properties
         assertThat(
-            (String) execution.findTaskRunsByTaskId("secret").get(0).getOutputs().get("value"),
+            (String) execution.findTaskRunsByTaskId("secret").getFirst().getOutputs().get("value"),
             is("secret")
         );
         // null inputs are serialized
         assertThat(
-            (String) execution.findTaskRunsByTaskId("optional").get(0).getOutputs().get("value"),
+            (String) execution.findTaskRunsByTaskId("optional").getFirst().getOutputs().get("value"),
             emptyString()
         );
     }
@@ -183,125 +181,99 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("validatedString", "foo");
 
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(map);
-        });
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), is("Invalid input 'foo', it must match the pattern 'A\\d+'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedString`, it must match the pattern"));
     }
 
     @Test
     void inputValidatedIntegerBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedInt", "9");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input '9', it must be more than '10'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedInt`, it must be more than `10`, but received `9`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedInt", "21");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input '21', it must be less than '20'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedInt`, it must be less than `20`, but received `21`"));
     }
 
     @Test
     void inputValidatedDateBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDate", "2022-01-01");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input '2022-01-01', it must be after '2023-01-01'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDate`, it must be after `2023-01-01`, but received `2022-01-01`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDate", "2024-01-01");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input '2024-01-01', it must be before '2023-12-31'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDate`, it must be before `2023-12-31`, but received `2024-01-01`"));
     }
 
     @Test
     void inputValidatedDateTimeBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDateTime", "2022-01-01T00:00:00Z");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input '2022-01-01T00:00:00Z', it must be after '2023-01-01T00:00:00Z'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDateTime`, it must be after `2023-01-01T00:00:00Z`, but received `2022-01-01T00:00:00Z`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDateTime", "2024-01-01T00:00:00Z");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input '2024-01-01T00:00:00Z', it must be before '2023-12-31T23:59:59Z'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDateTime`, it must be before `2023-12-31T23:59:59Z`"));
     }
 
     @Test
     void inputValidatedDurationBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDuration", "PT1S");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input 'PT1S', it must be more than 'PT10S'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDuration`, It must be more than `PT10S`, but received `PT1S`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDuration", "PT30S");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input 'PT30S', it must be less than 'PT20S'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedDuration`, It must be less than `PT20S`, but received `PT30S`"));
     }
 
     @Test
     void inputValidatedFloatBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedFloat", "0.01");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input '0.01', it must be more than '0.1'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedFloat`, it must be more than `0.1`, but received `0.01`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedFloat", "1.01");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input '1.01', it must be less than '0.5'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedFloat`, it must be less than `0.5`, but received `1.01`"));
     }
 
     @Test
     void inputValidatedTimeBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedTime", "00:00:01");
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMin);
-        });
-        assertThat(e.getMessage(), is("Invalid input '00:00:01', it must be after '01:00'"));
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedTime`, it must be after `01:00`, but received `00:00:01`"));
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedTime", "14:00:00");
 
-        e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(mapMax);
-        });
+        e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), is("Invalid input '14:00', it must be before '11:59:59'"));
+        assertThat(e.getMessage(), containsString("Invalid input for `validatedTime`, it must be before `11:59:59`, but received `14:00:00`"));
     }
 
     @Test
@@ -309,11 +281,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
 
-        MissingRequiredArgument e = assertThrows(MissingRequiredArgument.class, () -> {
-            Map<String, Object> typeds = typedInputs(map);
-        });
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), containsString("Invalid URI format"));
+        assertThat(e.getMessage(), containsString("Invalid input for `uri`, Expected `URI` but received `http:/bla`, but received `http:/bla`"));
     }
 
     @Test
@@ -321,11 +291,19 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("enum", "INVALID");
 
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> {
-            Map<String, Object> typeds = typedInputs(map);
-        });
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), is("Invalid input 'INVALID', it must match the values '[ENUM_VALUE, OTHER_ONE]'"));
+        assertThat(e.getMessage(), is("enum: Invalid input for `enum`, it must match the values `[ENUM_VALUE, OTHER_ONE]`, but received `INVALID`"));
+    }
+
+    @Test
+    void inputArrayFailed() {
+        HashMap<String, Object> map = new HashMap<>(inputs);
+        map.put("array", "[\"s1\", \"s2\"]");
+
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
+
+        assertThat(e.getMessage(), containsString("Invalid input for `array`, Unable to parse array element as `INT` on `s1`, but received `[\"s1\", \"s2\"]`"));
     }
 
     @Test

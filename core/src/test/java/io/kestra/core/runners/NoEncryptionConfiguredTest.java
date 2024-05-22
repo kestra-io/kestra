@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -11,6 +10,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -65,6 +65,6 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
             .flowId(flow.getId())
             .build();
 
-        assertThrows(MissingRequiredArgument.class, () -> runnerUtils.typedInputs(flow, execution, InputsTest.inputs));
+        assertThrows(ConstraintViolationException.class, () -> runnerUtils.typedInputs(flow, execution, InputsTest.inputs));
     }
 }

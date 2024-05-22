@@ -94,7 +94,7 @@ inputs:
   type: SECRET
 - name: array
   type: ARRAY
-  itemType: STRING
+  itemType: INT
 
 tasks:
 - id: string

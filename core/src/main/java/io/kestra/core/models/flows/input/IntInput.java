@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Set;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
@@ -22,25 +21,23 @@ public class IntInput extends Input<Integer> {
     @Override
     public void validate(Integer input) throws ConstraintViolationException {
         if (min != null && input.compareTo(min) < 0) {
-            throw new ConstraintViolationException("Invalid input '" + input + "', it must be more than '" + min + "'",
-                Set.of(ManualConstraintViolation.of(
-                    "Invalid input",
-                    this,
-                    IntInput.class,
-                    getId(),
-                    input
-                )));
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "it must be more than `" + min + "`",
+                this,
+                IntInput.class,
+                getId(),
+                input
+            );
         }
 
         if (max != null && input.compareTo(max) > 0) {
-            throw new ConstraintViolationException("Invalid input '" + input + "', it must be less than '" + max + "'",
-                Set.of(ManualConstraintViolation.of(
-                    "Invalid input",
-                    this,
-                    IntInput.class,
-                    getId(),
-                    input
-                )));
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "it must be less than `" + max + "`",
+                this,
+                IntInput.class,
+                getId(),
+                input
+            );
         }
     }
 }

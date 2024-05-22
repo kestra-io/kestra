@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;

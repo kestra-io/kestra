@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
-import io.kestra.core.exceptions.MissingRequiredArgument;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -23,6 +22,7 @@ import io.netty.handler.codec.http.multipart.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -239,12 +239,12 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
 
-            MissingRequiredArgument e = assertThrows(
-                MissingRequiredArgument.class,
+            ConstraintViolationException e = assertThrows(
+                ConstraintViolationException.class,
                 () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty())
             );
 
-            assertThat(e.getMessage(), containsString("required input value 'asked'"));
+            assertThat(e.getMessage(), containsString("Invalid input for `asked`, missing required input, but received `null`"));
         }
 
         @SuppressWarnings("unchecked")

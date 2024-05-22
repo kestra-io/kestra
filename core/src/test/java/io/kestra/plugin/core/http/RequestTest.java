@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -115,6 +116,9 @@ class RequestTest {
             .type(RequestTest.class.getName())
             .uri(url)
             .allowFailed(true)
+            .options(HttpInterface.RequestOptions.builder()
+                .readTimeout(Duration.ofSeconds(30))
+                .build())
             .sslOptions(AbstractHttp.SslOptions.builder().insecureTrustAllCertificates(true).build())
             .build();
 

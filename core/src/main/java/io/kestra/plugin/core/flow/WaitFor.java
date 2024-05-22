@@ -40,31 +40,30 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a specific task repeatedly until the expected condition is met.",
+    title = "Run a list of tasks repeatedly until the expected condition is met.",
     description = """
-        Use this task if your downstream processing requires waiting for a specific HTTP response or a job to finish.
-        You can access the task output in the `condition`.
-
-        The `condition` is always checked after the task execution.
+        Use this task if your workflow requires blocking calls polling for a job to finish or for some external API to return a specific HTTP response.
+        
+        You can access the outputs of the nested tasks in the `condition` property. The `condition` is evaluated after all nested task runs finish.
         """
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "Wait for a task to return a specific output",
+            title = "Run a task until it returns a specific value. Note how you don't need to take care of incrementing the iteration count. The task will loop and keep track of the iteration outputs behind the scenes — you only need to specify the exit condition for the loop.",
             code = """
-                id: exampleFlow
+                id: example
                 namespace: myteam
 
                 tasks:
-                  - id: waitFor
+                  - id: loop
                     type: io.kestra.plugin.core.flow.WaitFor
                     condition: "{{ outputs.return.value != '4' }}"
-                    task:
-                      id: return
-                      type: io.kestra.plugin.core.debug.Return
-                      format: "{{ outputs.waitFor.iterationCount }}"
+                    tasks:
+                      - id: return
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "{{ outputs.loop.iterationCount }}"
                 """
         )
     }
@@ -81,19 +80,19 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The condition to execute again the task that must be a boolean.",
-        description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
+        title = "The condition expression that should evaluate to `true` or `false`.",
+        description = "Boolean coercion allows 0, -0, null and '' to evaluate to false; all other values will evaluate to true."
     )
     private String condition;
 
     @Schema(
-        title = "If true, the task will fail if the `maxIterations` or `maxDuration` are reached."
+        title = "If set to `true`, the task run will end in a failed state once the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
     private Boolean failOnMaxReached = false;
 
     @Schema(
-        title = "Check frequency configuration."
+        title = "Check the frequency configuration."
     )
     @Builder.Default
     @PluginProperty

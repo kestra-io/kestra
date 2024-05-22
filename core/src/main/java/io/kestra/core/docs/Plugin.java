@@ -46,7 +46,7 @@ public class Plugin {
         plugin.longDescription = registeredPlugin.longDescription();
         plugin.version = registeredPlugin.version();
         plugin.guides = registeredPlugin.getGuides();
-        plugin.aliases = registeredPlugin.getAliases().keySet().stream().toList();
+        plugin.aliases = registeredPlugin.getAliases().values().stream().map(Map.Entry::getKey).toList();
         plugin.manifest = registeredPlugin
             .getManifest()
             .getMainAttributes()

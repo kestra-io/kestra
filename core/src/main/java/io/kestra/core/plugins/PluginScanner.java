@@ -19,6 +19,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -182,7 +183,10 @@ public class PluginScanner {
             .secrets(secrets)
             .taskRunners(taskRunners)
             .guides(guides)
-            .aliases(aliases)
+            .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
+                e -> e.getKey().toLowerCase(),
+                Function.identity()
+            )))
             .build();
     }
 

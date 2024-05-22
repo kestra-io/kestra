@@ -247,7 +247,7 @@ public class PluginController {
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
 
         Class baseCls = registeredPlugin.baseClass(className);
-        if(registeredPlugin.getAliases().containsKey(className)) {
+        if(registeredPlugin.getAliases().containsKey(className.toLowerCase())) {
             return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls, className);
         } else {
             return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);

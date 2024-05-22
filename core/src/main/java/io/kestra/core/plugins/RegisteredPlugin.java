@@ -37,7 +37,8 @@ public class RegisteredPlugin {
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner>> taskRunners;
     private final List<String> guides;
-    private final Map<String, Class<?>> aliases;
+    // Map<lowercasealias, <Alias, Class>>
+    private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
     public boolean isValid() {
         return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
@@ -46,7 +47,7 @@ public class RegisteredPlugin {
     public boolean hasClass(String cls) {
         return allClass()
             .stream()
-            .anyMatch(r -> r.getName().equals(cls)) || aliases.containsKey(cls);
+            .anyMatch(r -> r.getName().equals(cls)) || aliases.containsKey(cls.toLowerCase());
     }
 
     @SuppressWarnings("rawtypes")
@@ -55,7 +56,7 @@ public class RegisteredPlugin {
             .stream()
             .filter(r -> r.getName().equals(cls))
             .findFirst()
-            .or(() -> Optional.ofNullable(aliases.get(cls)));
+            .or(() -> Optional.ofNullable(aliases.get(cls.toLowerCase()).getValue()));
     }
 
     @SuppressWarnings("rawtypes")
@@ -84,9 +85,9 @@ public class RegisteredPlugin {
             return TaskRunner.class;
         }
 
-        if(this.getAliases().containsKey(cls)) {
+        if(this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
-            return baseClass(this.getAliases().get(cls).getName());
+            return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
         }
 
         throw new IllegalArgumentException("Unable to find base class from '" + cls + "'");
@@ -279,7 +280,10 @@ public class RegisteredPlugin {
 
         if (!this.getAliases().isEmpty()) {
             b.append("[Aliases: ");
-            b.append(this.getAliases());
+            b.append(this.getAliases().values().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue
+            )));
             b.append("] ");
         }
 

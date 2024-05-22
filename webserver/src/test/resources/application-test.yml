@@ -6,6 +6,11 @@ micronaut:
         mapping: /ui/**
 
   http:
+    client:
+      read-idle-timeout: 60s
+      connect-timeout: 30s
+      read-timeout: 60s
+      http-version: HTTP_1_1
     services:
       api:
         url: http://localhost:28181

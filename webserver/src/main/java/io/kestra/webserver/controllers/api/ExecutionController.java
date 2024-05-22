@@ -44,6 +44,7 @@ import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -87,6 +88,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -516,8 +518,9 @@ public class ExecutionController {
     @Post(uri = "/trigger/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
+    @SingleResult
     @Deprecated
-    public Execution trigger(
+    public Publisher<Execution> trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @Nullable @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
@@ -532,7 +535,8 @@ public class ExecutionController {
     @Post(uri = "/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Create a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
-    public Execution create(
+    @SingleResult
+    public Publisher<Execution> create(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
@@ -540,57 +544,56 @@ public class ExecutionController {
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
-        if (find.isEmpty()) {
-            return null;
-        }
+        return Mono.<Execution>create(
+            sink -> {
+                Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
+                if (find.isEmpty()) {
+                    sink.success();
+                    return;
+                }
 
-        Flow found = find.get();
-        if (found.isDisabled()) {
-            throw new IllegalStateException("Cannot execute disabled flow");
-        }
+                Flow found = find.get();
+                if (found.isDisabled()) {
+                    sink.error(new IllegalStateException("Cannot execute disabled flow"));
+                    return;
+                }
 
-        if (found instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-        }
+                if (found instanceof FlowWithException fwe) {
+                    sink.error(new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException()));
+                    return;
+                }
 
-        Execution current = Execution.newExecution(
-            found,
-            throwBiFunction((flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputs)),
-            parseLabels(labels)
-        );
+                try {
+                    Execution current = Execution.newExecution(
+                        found,
+                        throwBiFunction((flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputs)),
+                        parseLabels(labels)
+                    );
 
-        executionQueue.emit(current);
-        eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
+                    executionQueue.emit(current);
+                    eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
 
-        if (!wait) {
-            return current;
-        }
+                    if (!wait) {
+                        sink.success(current);
+                    } else {
+                        Runnable receive = this.executionQueue.receive(either -> {
+                            if (either.isRight()) {
+                                log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
+                                sink.success();
+                            }
 
-        AtomicReference<Runnable> cancel = new AtomicReference<>();
-
-        return Mono
-            .<Execution>create(emitter -> {
-                Runnable receive = this.executionQueue.receive(either -> {
-                    if (either.isRight()) {
-                        log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
-                        return;
+                            Execution item = either.getLeft();
+                            if (item.getId().equals(current.getId()) && this.isStopFollow(found, item)) {
+                                sink.success(item);
+                            }
+                        });
+                        sink.onDispose(() -> receive.run());
                     }
-
-                    Execution item = either.getLeft();
-                    if (item.getId().equals(current.getId()) && this.isStopFollow(found, item)) {
-                        emitter.success(item);
-                    }
-                });
-
-                cancel.set(receive);
-            })
-            .doFinally((signalType) -> {
-                if (cancel.get() != null) {
-                    cancel.get().run();
+                } catch (IOException e) {
+                    sink.error(new RuntimeException(e));
                 }
             })
-            .block();
+            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast()); // need to consume the inputs in case of error;
     }
 
     private List<Label> parseLabels(List<String> labels) {
@@ -949,31 +952,39 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
-    @SuppressWarnings("unchecked")
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
-    public HttpResponse<?> resume(
+    @SingleResult
+    public Publisher<HttpResponse<?>> resume(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
     ) throws Exception {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (maybeExecution.isEmpty()) {
-            return HttpResponse.notFound();
-        }
+        return Mono.<HttpResponse<?>>create(sink -> {
+            Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (maybeExecution.isEmpty()) {
+                sink.success(HttpResponse.notFound());
+                return;
+            }
 
-        var execution = maybeExecution.get();
-        if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution is not paused, can't resume it");
-        }
+            var execution = maybeExecution.get();
+            if (!execution.getState().isPaused()) {
+                sink.error(new IllegalStateException("Execution is not paused, can't resume it"));
+                return;
+            }
 
-        var flow = flowRepository.findByExecutionWithoutAcl(execution);
+            var flow = flowRepository.findByExecutionWithoutAcl(execution);
 
-        Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, inputs);
-        this.executionQueue.emit(resumeExecution);
-        return HttpResponse.noContent();
+            try {
+                Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, inputs);
+                this.executionQueue.emit(resumeExecution);
+                sink.success(HttpResponse.noContent());
+            } catch (Exception e) {
+                sink.error(new RuntimeException(e));
+            }
+        }).doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast()); // need to consume the inputs in case of error
     }
 
     @ExecuteOn(TaskExecutors.IO)

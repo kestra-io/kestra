@@ -11,10 +11,10 @@
 </script>
 
 <style scoped lang="scss">
-$width: 50%;
+$background: #2f3342;
 
 .secondary {
-    width: $width;
     padding: 1rem 2rem;
+    background: $background;
 }
 </style>

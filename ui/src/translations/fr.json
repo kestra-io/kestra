@@ -712,6 +712,46 @@
         }
       }
     },
+    "onboarding": {
+      "next": "Suivant",
+      "previous": "Précédent",
+      "skip": "Passer le tutoriel",
+      "steps": {
+        "0": {
+          "title": "Bienvenue chez Kestra!",
+          "content": "Nous sommes ravis de vous avoir ici.<br />Créons votre premier flux.",
+          "primary": "Allons-y!"
+        },
+        "1": {
+          "title": "Choisissez un cas d'utilisation<br />et nous vous montrerons comment faire!",
+          "primary": "Suivant"
+        },
+        "2": {
+          "title": "Éditeur de code",
+          "content": "Votre flux est écrit en YAML avec autocomplétion et validation de la syntaxe. Si simple!",
+          "primary": "Suivant"
+        },
+        "3": {
+          "title": "Vue topologique",
+          "content": "La vue de dépendance se met à jour en temps réel. Essayez d'ajouter une nouvelle tâche et voyez!",
+          "primary": "Suivant"
+        },
+        "4": {
+          "title": "Il est temps de l'exécuter.",
+          "content": "\"Exécuter\" pour lancer votre flux."
+        },
+        "5": {
+          "title": "Confirmez et lancez!",
+          "content": "\"Exécuter\" et voyez votre flux en action."
+        },
+        "6": {
+          "title": "Vous êtes prêt!",
+          "content": "Consultez les onglets Logs et Outputs pour suivre la progression de votre exécution.<br /><br />Ensuite, rendez-vous sur la page Flows pour explorer d'autres cas d'utilisation.",
+          "primary": "Créer un nouveau flux",
+          "secondary": "Explorer d'autres flux"
+        }
+      }
+    },
     "enable concurrency": "Activer la concurrence"
   }
 }

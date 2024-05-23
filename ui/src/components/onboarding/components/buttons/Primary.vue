@@ -13,12 +13,10 @@
 </script>
 
 <style scoped lang="scss">
-$width: 50%;
 $height: 50px;
 $full: 100%;
 
 .primary {
-    width: $width;
     padding: 1rem 2rem;
 }
 

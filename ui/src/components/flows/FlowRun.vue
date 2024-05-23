@@ -53,7 +53,6 @@
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
-    import {pageFromRoute} from "../../utils/eventsRouter";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
 
@@ -81,7 +80,6 @@
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
-            ...mapState("core", ["guidedProperties"]),
             ...mapState("execution", ["flow", "execution"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
@@ -119,9 +117,6 @@
                     });
             },
             onSubmit(formRef) {
-                if (this.$tours["guidedTour"].isRunning.value) {
-                    this.finishTour();
-                }
                 if (formRef) {
                     formRef.validate((valid) => {
                         if (!valid) {
@@ -135,44 +130,12 @@
                             namespace: this.flow.namespace,
                             labels: this.executionLabels
                                 .filter(label => label.key && label.value)
-                                .map(label => `${label.key}:${label.value}`)
+                                .map(label => `${label.key}:${label.value}`),
+                            nextStep: true
                         })
                         this.$emit("executionTrigger");
                     });
                 }
-            },
-            finishTour() {
-                this.$store.dispatch("api/events", {
-                    type: "ONBOARDING",
-                    onboarding: {
-                        step: this.$tours["guidedTour"].currentStep._value,
-                        action: "execute",
-                    },
-                    page: pageFromRoute(this.$router.currentRoute.value)
-                });
-
-                this.$store.dispatch("api/events", {
-                    type: "ONBOARDING",
-                    onboarding: {
-                        step: this.$tours["guidedTour"].currentStep._value,
-                        action: "finish",
-                    },
-                    page: pageFromRoute(this.$router.currentRoute.value)
-                });
-
-                localStorage.setItem("tourDoneOrSkip", "true");
-
-                this.$store.commit("core/setGuidedProperties", {
-                    tourStarted: false,
-                    flowSource: undefined,
-                    saveFlow: false,
-                    executeFlow: false,
-                    validateInputs: false,
-                    monacoRange: undefined,
-                    monacoDisableRange: undefined
-                });
-
-                return this.$tours["guidedTour"].finish();
             },
 
             state(input) {
@@ -199,14 +162,6 @@
             executionLabels: {
                 handler() {
                     this.$emit("updateLabels", this.executionLabels);
-                },
-                deep: true
-            },
-            guidedProperties: {
-                handler() {
-                    if (this.guidedProperties.validateInputs) {
-                        this.onSubmit(this.$refs.form);
-                    }
                 },
                 deep: true
             }

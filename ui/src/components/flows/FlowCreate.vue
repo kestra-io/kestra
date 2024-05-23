@@ -16,7 +16,6 @@
             :next-revision="1"
         />
     </section>
-    <div id="guided-right" />
 </template>
 
 <script>
@@ -41,15 +40,7 @@
         created() {
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {
-                    tourStarted: false,
-                    flowSource: undefined,
-                    saveFlow: false,
-                    executeFlow: false,
-                    validateInputs: false,
-                    monacoRange: undefined,
-                    monacoDisableRange: undefined
-                });
+                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
                 this.$tours["guidedTour"].start();
             }
             this.setupFlow()

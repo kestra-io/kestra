@@ -1,5 +1,5 @@
 <template>
-    <el-card shadow="never" v-if="execution && flow">
+    <el-card id="gantt" shadow="never" v-if="execution && flow">
         <table>
             <thead>
                 <tr>

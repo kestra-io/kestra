@@ -85,9 +85,14 @@ export const executeTask = (submitor, flow, values, options) => {
                     })
                 }
             }
+
+            if(options.nextStep) submitor.$tours["guidedTour"].nextStep();
+
             return response.data;
         })
         .then((execution) => {
-            submitor.$toast().success(submitor.$t("triggered done", {name: execution.id}));
+            if(!options.nextStep){
+                submitor.$toast().success(submitor.$t("triggered done", {name: execution.id}));
+            }
         })
 }

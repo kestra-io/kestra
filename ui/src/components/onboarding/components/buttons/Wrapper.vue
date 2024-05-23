@@ -12,13 +12,14 @@
 </script>
 
 <style scoped lang="scss">
-$width: 300px;
+$width: 100%;
+$max-width: 300px;
 
 .buttons {
     display: inline-flex;
     justify-content: end;
     width: $width;
-    margin: 2rem;
+    max-width: $max-width;
 
     &.center {
         justify-content: center;
@@ -26,6 +27,8 @@ $width: 300px;
 }
 
 .absolute {
+    z-index: 9999;
+    margin: 2rem;
     position: absolute;
     bottom: 0;
     right: 0;

@@ -1,9 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button id="execute-button" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
+        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
@@ -91,7 +91,8 @@
         },
         methods: {
             onClick() {
-                if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow) {
+                if (this.$tours["guidedTour"].isRunning.value) {
+                    this.$tours["guidedTour"].nextStep();
                     this.$store.dispatch("api/events", {
                         type: "ONBOARDING",
                         onboarding: {
@@ -100,7 +101,7 @@
                         },
                         page: pageFromRoute(this.$router.currentRoute.value)
                     });
-                    this.$tours["guidedTour"].nextStep();
+                    this.isOpen = !this.isOpen;
                     return;
                 } else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;

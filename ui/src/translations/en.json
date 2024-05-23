@@ -397,11 +397,14 @@
     "onboarding-content": {
       "step1": {
         "title": "Welcome to Kestra!",
-        "content": "Kestra uses a declarative interface to create a language-agnostic workflow definition in a YAML file format. Follow the next steps to create your first workflow."
+        "content": "We're thrilled to have you here.<br />Let's create your first flow.",
+        "action": "Let's go!"
       },
       "step2": {
-        "title": "This is the built-in code editor",
-        "content": "You can edit your flow directly here from the UI. To add comments to your code, use <code>#</code>. Kestra provides autocompletion for all workflow components, including tasks, triggers and inputs. Start typing and use the keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> to leverage the autocompletion feature."
+        "title": "Choose a use-case<br />and we'll show you how it's done!",
+        "content": "You can edit your flow directly here from the UI. To add comments to your code, use <code>#</code>. Kestra provides autocompletion for all workflow components, including tasks, triggers and inputs. Start typing and use the keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> to leverage the autocompletion feature.",
+        "action": "Next"
+
       },
       "step3": {
         "title": "Let's write your first flow!",
@@ -466,6 +469,7 @@
       "triggerSchedule1": "Here we use the 'Schedule' trigger to run the flow every minute."
     },
     "Skip tour": "Skip tour",
+    "Skip tutorial": "Skip Tutorial",
     "Next step": "Next step",
     "Previous step": "Previous step",
     "Finish": "Finish",
@@ -733,6 +737,46 @@
             "flows": "Export All Flows",
             "templates": "Export All Templates"
           }
+        }
+      }
+    },
+    "onboarding": {
+      "next": "Next",
+      "previous": "Previous",
+      "skip": "Skip Tutorial",
+      "steps": {
+        "0": {
+          "title": "Welcome to Kestra!",
+          "content": "We're thrilled to have you here.<br />Let's create your first flow.",
+          "primary": "Let's go!"
+        },
+        "1": {
+          "title": "Choose a use-case<br />and we'll show you how it's done!",
+          "primary": "Next"
+        },
+        "2": {
+          "title": "Code Editor",
+          "content": "Your flow is written in YAML with autocompletion and syntax validation. So simple!",
+          "primary": "Next"
+        },
+        "3": {
+          "title": "Topology View",
+          "content": "The dependency view is updating in real time. Try adding a new task and see!",
+          "primary": "Next"
+        },
+        "4": {
+          "title": "It's time to run it.",
+          "content": "\"Execute\" to launch your flow."
+        },
+        "5": {
+          "title": "Confirm and launch!",
+          "content": "\"Execute\" and see your flow in action."
+        },
+        "6": {
+          "title": "You’re all set!",
+          "content": "Check the Logs and Outputs tabs to track your execution progress.<br /><br />Then, head over to the Flows page to explore other use cases.",
+          "primary": "Create a new flow",
+          "secondary": "Explore other Flows"
         }
       }
     },

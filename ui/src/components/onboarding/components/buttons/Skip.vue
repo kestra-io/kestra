@@ -1,5 +1,5 @@
 <template>
-    <el-button>
+    <el-button class="skip">
         {{ $t("onboarding.skip") }}
         <el-icon class="el-icon--right">
             <ChevronRight />
@@ -10,3 +10,11 @@
 <script setup lang="ts">
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 </script>
+
+<style scoped lang="scss">
+$background: #2f3342;
+
+.skip {
+    background: $background;
+}
+</style>

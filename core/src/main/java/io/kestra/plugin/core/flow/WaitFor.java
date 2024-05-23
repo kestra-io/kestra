@@ -69,6 +69,8 @@ import java.util.stream.Stream;
     }
 )
 public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
+    int INITIAL_LOOP_VALUE = 1;
+
     @Valid
     protected List<Task> errors;
 
@@ -228,7 +230,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             return Output.builder().iterationCount((Integer) ((Map<String, Object>) outputs.get(this.id)).get("iterationCount")).build();
         }
         return WaitFor.Output.builder()
-            .iterationCount(1)
+            .iterationCount(INITIAL_LOOP_VALUE)
             .build();
     }
 

@@ -56,9 +56,9 @@ public class VariableRenderer {
     public static IllegalVariableEvaluationException properPebbleException(PebbleException e) {
         if (e instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
-                "Missing variable: '" + current.getAttributeName() +
-                    "' on '" + current.getFileName() +
-                    "' at line " + current.getLineNumber(),
+                "Unable to find `" + current.getAttributeName() +
+                    "` used in the expression `" + current.getFileName() +
+                    "` at line " + current.getLineNumber(),
                 e
             );
         }

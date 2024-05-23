@@ -3,7 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
@@ -72,8 +72,8 @@ public class PluginController {
             return jsonSchemaGenerator.schemas(Task.class, arrayOf);
         } else if (type == SchemaType.trigger) {
             return jsonSchemaGenerator.schemas(AbstractTrigger.class, arrayOf);
-        } else if (type == SchemaType.taskdefault) {
-            return jsonSchemaGenerator.schemas(TaskDefault.class, arrayOf);
+        } else if (type == SchemaType.plugindefault) {
+            return jsonSchemaGenerator.schemas(PluginDefault.class, arrayOf);
         } else {
             throw new IllegalArgumentException("Invalid type " + type);
         }

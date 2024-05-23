@@ -32,10 +32,10 @@ class TaskGlobalDefaultConfigurationTest {
 
 
         try (ApplicationContext ctx = ApplicationContext.run(kestra, Environment.CLI, Environment.TEST)) {
-            TaskGlobalDefaultConfiguration taskGlobalDefaultConfiguration = ctx.getBean(TaskGlobalDefaultConfiguration.class);
+            TaskGlobalDefaultConfiguration taskDefaultGlobalConfiguration = ctx.getBean(TaskGlobalDefaultConfiguration.class);
 
             assertThat(
-                ((Map<String, String>) taskGlobalDefaultConfiguration.getDefaults()
+                ((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
                     .get(0)
                     .getValues()
                     .get("env")).keySet(),

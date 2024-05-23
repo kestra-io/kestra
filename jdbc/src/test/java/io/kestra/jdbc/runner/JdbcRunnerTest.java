@@ -58,7 +58,7 @@ public abstract class JdbcRunnerTest {
     private MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
 
     @Inject
-    private TaskDefaultsCaseTest taskDefaultsCaseTest;
+    private PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
     private FlowCaseTest flowCaseTest;
@@ -205,8 +205,8 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
-        taskDefaultsCaseTest.taskDefaults();
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
+        pluginDefaultsCaseTest.taskDefaults();
     }
 
     @RetryingTest(5)

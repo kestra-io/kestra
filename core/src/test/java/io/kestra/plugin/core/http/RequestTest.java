@@ -18,6 +18,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -26,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -105,7 +107,7 @@ class RequestTest {
         }
     }
 
-    @Test
+    @RetryingTest(5)
     void selfSigned() throws Exception {
         final String url = "https://self-signed.badssl.com/";
 
@@ -114,6 +116,9 @@ class RequestTest {
             .type(RequestTest.class.getName())
             .uri(url)
             .allowFailed(true)
+            .options(HttpInterface.RequestOptions.builder()
+                .readTimeout(Duration.ofSeconds(30))
+                .build())
             .sslOptions(AbstractHttp.SslOptions.builder().insecureTrustAllCertificates(true).build())
             .build();
 

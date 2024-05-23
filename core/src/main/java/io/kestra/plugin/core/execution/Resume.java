@@ -32,7 +32,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Resume a paused execution."
+    title = "Resume a paused execution. By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."
 )
 @Plugin(
     examples = {
@@ -45,7 +45,7 @@ import java.util.Map;
 )
 public class Resume  extends Task implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Filter for a specific namespace in case `executionId` is set."
+        title = "Filter for a specific namespace in case `executionId` is set. In case you wonder why `executionId` is not enough — we require specifying the namespace to make permissions explicit. The Enterprise Edition of Kestra allows you to resume executions from another namespaces only if the permissions allow it. Check the [Allowed Namespaces](https://kestra.io/docs/enterprise/allowed-namespaces) documentation for more details."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
@@ -59,8 +59,11 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Filter for a specific execution.",
         description = """
-            If not set, the task will use the ID of the current execution.
-            If set, it will try to locate the execution on the current flow unless the `namespace` and `flowId` properties are set."""
+            If you explicitly define an `executionId`, Kestra will use that specific ID.
+            
+            If another `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
+            
+            If `executionId` is not set, the task will use the ID of the current execution."""
     )
     @PluginProperty(dynamic = true)
     private String executionId;
@@ -85,7 +88,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
         Flow flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
         Map<String, Object> renderedInputs = inputs != null ? runContext.render(inputs) : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, null);
+        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs);
         executionQueue.emit(resumed);
 
         return null;

@@ -131,7 +131,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withEnv(this.getEnv())
             .withWarningOnStdErr(this.getWarningOnStdErr())
             .withRunnerType(this.taskRunner == null ? this.getRunner() : null)
-            .withContainerImage(this.getContainerImage())
+            .withContainerImage(runContext.render(this.getContainerImage()))
             .withTaskRunner(this.taskRunner)
             .withDockerOptions(this.injectDefaults(getDocker()))
             .withNamespaceFiles(this.namespaceFiles)
@@ -168,7 +168,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         // errexit option may be unsupported by non-shell interpreter.
         return List.of("set -e");
     }
-    
+
     /** {@inheritDoc} **/
     @Override
     public void kill() {

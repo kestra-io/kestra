@@ -60,7 +60,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         Logger logger = runContext.logger();
         URI from = new URI(runContext.render(this.uri));
 
-        File tempFile = runContext.tempFile(extension(from)).toFile();
+        File tempFile = runContext.tempFile(filenameFromURI(from)).toFile();
 
         // output
         Output.OutputBuilder builder = Output.builder();
@@ -99,7 +99,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             }
 
             if (builder.headers != null && builder.headers.containsKey("Content-Length")) {
-                long length = Long.parseLong(builder.headers.get("Content-Length").get(0));
+                long length = Long.parseLong(builder.headers.get("Content-Length").getFirst());
                 if (length != size) {
                     throw new IllegalStateException("Invalid size, got " + size + ", expected " + length);
                 }
@@ -118,7 +118,13 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                 }
             }
 
-            builder.uri(runContext.storage().putFile(tempFile));
+            String filename = null;
+            if (builder.headers != null && builder.headers.containsKey("Content-Disposition")) {
+                String contentDisposition = builder.headers.get("Content-Disposition").getFirst();
+                filename = filenameFromHeader(runContext, contentDisposition);
+            }
+
+            builder.uri(runContext.storage().putFile(tempFile, filename));
 
             logger.debug("File '{}' downloaded to '{}'", from, builder.uri);
 
@@ -126,7 +132,30 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         }
     }
 
-    private String extension(URI uri) {
+    // Note: this is a naive basic implementation that may bot cover all possible use cases.
+    // If this is not enough, we should find some helper method somewhere to cover all possible rules of the Content-Disposition header.
+    private String filenameFromHeader(RunContext runContext, String contentDisposition) {
+        try {
+            String[] parts = contentDisposition.split(" ");
+            String filename = null;
+            for (String part : parts) {
+                if (part.startsWith("filename")) {
+                    filename = part.substring(part.lastIndexOf('=') + 2, part.length() - 1);
+                }
+                if (part.startsWith("filename*")) {
+                    // following https://datatracker.ietf.org/doc/html/rfc5987 the filename* should be <ENCODING>'(lang)'<filename>
+                    filename = part.substring(part.lastIndexOf('\'') + 2, part.length() - 1);
+                }
+            }
+            return filename;
+        } catch (Exception e) {
+            // if we cannot parse the Content-Disposition header, we return null
+            runContext.logger().debug("Unable to parse the Content-Disposition header: {}", contentDisposition, e);
+            return null;
+        }
+    }
+
+    private String filenameFromURI(URI uri) {
         String path = uri.getPath();
         if (path == null) {
             return null;

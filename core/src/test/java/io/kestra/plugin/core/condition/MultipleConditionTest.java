@@ -31,7 +31,7 @@ class MultipleConditionTest {
                 "first", ExecutionStatusCondition.builder()
                     .in(Collections.singletonList(State.Type.SUCCESS))
                     .build(),
-                "second", VariableCondition.builder()
+                "second", ExpressionCondition.builder()
                     .expression("{{ flow.id }}")
                     .build()
             ))

@@ -31,12 +31,12 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @Singleton
-public class TaskDefaultsCaseTest {
+public class PluginDefaultsCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
 
     public void taskDefaults() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-defaults", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
 

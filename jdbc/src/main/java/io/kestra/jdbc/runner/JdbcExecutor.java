@@ -27,7 +27,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.plugin.core.flow.ForEachItem;
 import io.kestra.plugin.core.flow.Template;
@@ -108,7 +108,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     @Inject
     private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
@@ -816,7 +816,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
         }
 
-        return taskDefaultService.injectDefaults(flow, execution);
+        return pluginDefaultService.injectDefaults(flow, execution);
     }
 
     /**

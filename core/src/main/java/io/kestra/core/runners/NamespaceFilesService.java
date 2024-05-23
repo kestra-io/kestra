@@ -66,7 +66,7 @@ public class NamespaceFilesService {
         return list;
     }
 
-    private URI uri(String namespace, @Nullable URI path) {
+    public URI uri(String namespace, @Nullable URI path) {
         return URI.create(StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(path)
             .map(URI::getPath)
             .orElse("")
@@ -90,12 +90,12 @@ public class NamespaceFilesService {
         return storageInterface.delete(tenantId, this.uri(namespace, path));
     }
 
-    public void createFile(String tenantId, String namespace, URI path, InputStream inputStream) throws IOException {
-        storageInterface.put(tenantId, this.uri(namespace, path), inputStream);
+    public URI createFile(String tenantId, String namespace, URI path, InputStream inputStream) throws IOException {
+        return storageInterface.put(tenantId, this.uri(namespace, path), inputStream);
     }
 
-    public void createDirectory(String tenantId, String namespace, URI path) throws IOException {
-        storageInterface.createDirectory(tenantId, this.uri(namespace, path));
+    public URI createDirectory(String tenantId, String namespace, URI path) throws IOException {
+        return storageInterface.createDirectory(tenantId, this.uri(namespace, path));
     }
 
     private static boolean match(List<String> patterns, String file) {

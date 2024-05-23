@@ -25,7 +25,11 @@
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator>
-                <expression>return message.contains("outOfOrder mode is active. Migration of schema");</expression>
+                <expression>
+                    return message.contains("outOfOrder mode is active. Migration of schema") ||
+                    message.contains("Database version is older than what dialect POSTGRES supports") ||
+                    message.contains("Failed to bind as java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService is unsupported.");
+                </expression>
             </evaluator>
             <OnMismatch>NEUTRAL</OnMismatch>
             <OnMatch>DENY</OnMatch>

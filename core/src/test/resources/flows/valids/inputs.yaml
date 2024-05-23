@@ -100,6 +100,9 @@ tasks:
 - id: string
   type: io.kestra.plugin.core.debug.Return
   format: "{{inputs.string}}"
+- id: optional
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.optional}}"
 - id: int
   type: io.kestra.plugin.core.debug.Return
   format: "{{inputs.int}}"

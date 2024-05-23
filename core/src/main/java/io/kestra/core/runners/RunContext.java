@@ -16,9 +16,9 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
-import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -532,9 +533,9 @@ public class RunContext {
             clone.put("taskrun", taskrun);
         }
 
-        clone.put("addSecretConsumer", (Consumer<String>) s -> runContextLogger.usedSecret(s));
-
         final RunContext newContext = new RunContext(applicationContext);
+        clone.put("addSecretConsumer", (Consumer<String>) s -> newContext.runContextLogger.usedSecret(s));
+
         newContext.variables = ImmutableMap.copyOf(clone);
         newContext.temporaryDirectory = this.tempDir();
         newContext.initLogger(taskRun, workerTask.getTask());
@@ -888,6 +889,22 @@ public class RunContext {
         }
 
         return tempFile;
+    }
+
+    public Path file(String filename) throws IOException {
+        return this.file(null, filename);
+    }
+
+    public Path file(byte[] content, String filename) throws IOException {
+        Path newFilePath = this.resolve(Path.of(filename));
+        Files.createDirectories(newFilePath.getParent());
+        Path file = Files.createFile(newFilePath);
+
+        if (content != null) {
+            Files.write(file, content);
+        }
+
+        return file;
     }
 
     /**

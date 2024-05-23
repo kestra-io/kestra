@@ -3,11 +3,13 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
@@ -15,9 +17,12 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.N;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -26,14 +31,19 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 
 @Singleton
-public class TaskDefaultService {
+@Slf4j
+public class PluginDefaultService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Nullable
     @Inject
-    protected TaskGlobalDefaultConfiguration globalDefault;
+    protected TaskGlobalDefaultConfiguration taskGlobalDefault;
+
+    @Nullable
+    @Inject
+    protected PluginGlobalDefaultConfiguration pluginGlobalDefault;
 
     @Inject
     protected YamlFlowParser yamlFlowParser;
@@ -43,28 +53,40 @@ public class TaskDefaultService {
     @Nullable
     protected QueueInterface<LogEntry> logQueue;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    private AtomicBoolean warnOnce = new AtomicBoolean(false);
+
     /**
      * @param flow the flow to extract default
-     * @return list of {@code TaskDefault} order by most important first
+     * @return list of {@code PluginDefault} ordered by most important first
      */
-    protected List<TaskDefault> mergeAllDefaults(Flow flow) {
-        List<TaskDefault> list = new ArrayList<>();
+    protected List<PluginDefault> mergeAllDefaults(Flow flow) {
+        List<PluginDefault> list = new ArrayList<>();
 
-        if (globalDefault != null && globalDefault.getDefaults() != null) {
-            list.addAll(globalDefault.getDefaults());
+        if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
+            if (warnOnce.compareAndSet(false, true)) {
+                log.warn("Global Task Defaults are deprecated, please use Global Plugin Defaults instead via the 'kestra.plugins.defaults' property.");
+            }
+            list.addAll(taskGlobalDefault.getDefaults());
         }
 
-        if (flow.getTaskDefaults() != null) {
-            list.addAll(flow.getTaskDefaults());
+        if (pluginGlobalDefault != null && pluginGlobalDefault.getDefaults() != null) {
+            list.addAll(pluginGlobalDefault.getDefaults());
+        }
+
+        if (flow.getPluginDefaults() != null) {
+            list.addAll(flow.getPluginDefaults());
         }
 
         return list;
     }
 
-    private Map<String, List<TaskDefault>> taskDefaultsToMap(List<TaskDefault> taskDefaults) {
-        return taskDefaults
+    private Map<String, List<PluginDefault>> pluginDefaultsToMap(List<PluginDefault> pluginDefaults) {
+        return pluginDefaults
             .stream()
-            .collect(Collectors.groupingBy(TaskDefault::getType));
+            .collect(Collectors.groupingBy(PluginDefault::getType));
     }
 
     public Flow injectDefaults(Flow flow, Execution execution) {
@@ -98,20 +120,21 @@ public class TaskDefaultService {
 
         Map<String, Object> flowAsMap = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
-        List<TaskDefault> allDefaults = mergeAllDefaults(flow);
-        Map<Boolean, List<TaskDefault>> allDefaultsGroup = allDefaults
+        List<PluginDefault> allDefaults = mergeAllDefaults(flow);
+        addAliases(allDefaults);
+        Map<Boolean, List<PluginDefault>> allDefaultsGroup = allDefaults
             .stream()
-            .collect(Collectors.groupingBy(TaskDefault::isForced, Collectors.toList()));
+            .collect(Collectors.groupingBy(PluginDefault::isForced, Collectors.toList()));
 
         // non forced
-        Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
+        Map<String, List<PluginDefault>> defaults = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
 
-        // forced task default need to be reverse, lower win
-        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, Collections.emptyList())));
+        // forced plugin default need to be reverse, lower win
+        Map<String, List<PluginDefault>> forced = pluginDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, Collections.emptyList())));
 
-        Object taskDefaults = flowAsMap.get("taskDefaults");
-        if (taskDefaults != null) {
-            flowAsMap.remove("taskDefaults");
+        Object pluginDefaults = flowAsMap.get("pluginDefaults");
+        if (pluginDefaults != null) {
+            flowAsMap.remove("pluginDefaults");
         }
 
         // we apply default and overwrite with forced
@@ -123,14 +146,26 @@ public class TaskDefaultService {
             flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced);
         }
 
-        if (taskDefaults != null) {
-            flowAsMap.put("taskDefaults", taskDefaults);
+        if (pluginDefaults != null) {
+            flowAsMap.put("pluginDefaults", pluginDefaults);
         }
 
         return yamlFlowParser.parse(flowAsMap, Flow.class, false);
     }
 
-    private Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {
+    private void addAliases(List<PluginDefault> allDefaults) {
+        List<PluginDefault> aliasedPluginDefault = allDefaults.stream()
+            .map(pluginDefault -> {
+                Class<? extends Plugin> classByIdentifier = pluginRegistry.findClassByIdentifier(pluginDefault.getType());
+                return classByIdentifier != null && !pluginDefault.getType().equals(classByIdentifier.getTypeName()) ? pluginDefault.toBuilder().type(classByIdentifier.getTypeName()).build() : null;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        allDefaults.addAll(aliasedPluginDefault);
+    }
+
+    private Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults) {
         if (object instanceof Map<?, ?> value) {
             if (value.containsKey("type")) {
                 value = defaults(value, defaults);
@@ -155,29 +190,29 @@ public class TaskDefaultService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<?, ?> defaults(Map<?, ?> task, Map<String, List<TaskDefault>> defaults) {
-        Object type = task.get("type");
-        if (!(type instanceof String taskType)) {
-            return task;
+    private Map<?, ?> defaults(Map<?, ?> plugin, Map<String, List<PluginDefault>> defaults) {
+        Object type = plugin.get("type");
+        if (!(type instanceof String pluginType)) {
+            return plugin;
         }
 
-        List<TaskDefault> matching = defaults.entrySet()
+        List<PluginDefault> matching = defaults.entrySet()
             .stream()
-            .filter(e -> e.getKey().equals(taskType) || taskType.startsWith(e.getKey()))
+            .filter(e -> e.getKey().equals(pluginType) || pluginType.startsWith(e.getKey()))
             .flatMap(e -> e.getValue().stream())
             .toList();
 
         if (matching.isEmpty()) {
-            return task;
+            return plugin;
         }
 
-        Map<String, Object> result = (Map<String, Object>) task;
+        Map<String, Object> result = (Map<String, Object>) plugin;
 
-        for (TaskDefault taskDefault : matching) {
-            if (taskDefault.isForced()) {
-                result = MapUtils.merge(result, taskDefault.getValues());
+        for (PluginDefault pluginDefault : matching) {
+            if (pluginDefault.isForced()) {
+                result = MapUtils.merge(result, pluginDefault.getValues());
             } else {
-                result = MapUtils.merge(taskDefault.getValues(), result);
+                result = MapUtils.merge(pluginDefault.getValues(), result);
             }
         }
 

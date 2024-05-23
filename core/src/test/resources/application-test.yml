@@ -26,7 +26,7 @@ kestra:
         int: 2
   tasks:
     defaults:
-    - type: io.kestra.core.services.TaskDefaultServiceTest$DefaultTester
+    - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
       values:
         doubleValue: 19
         arrays:

@@ -30,7 +30,7 @@ public class FlowWithSource extends Flow {
             .errors(this.errors)
             .listeners(this.listeners)
             .triggers(this.triggers)
-            .taskDefaults(this.taskDefaults)
+            .pluginDefaults(this.pluginDefaults)
             .disabled(this.disabled)
             .deleted(this.deleted)
             .concurrency(this.concurrency)
@@ -53,7 +53,7 @@ public class FlowWithSource extends Flow {
         return source.replaceFirst("(?m)^revision: \\d+\n?","");
     }
 
-    public boolean isUpdatable(Flow flow, String flowSource) {
+    public boolean equals(Flow flow, String flowSource) {
         return this.equalsWithoutRevision(flow) &&
             this.source.equals(cleanupSource(flowSource));
     }
@@ -73,7 +73,7 @@ public class FlowWithSource extends Flow {
             .errors(flow.errors)
             .listeners(flow.listeners)
             .triggers(flow.triggers)
-            .taskDefaults(flow.taskDefaults)
+            .pluginDefaults(flow.pluginDefaults)
             .disabled(flow.disabled)
             .deleted(flow.deleted)
             .source(source)

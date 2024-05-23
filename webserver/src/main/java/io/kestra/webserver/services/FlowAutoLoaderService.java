@@ -3,9 +3,8 @@ package io.kestra.webserver.services;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.annotation.WebServerEnabled;
-import io.kestra.webserver.controllers.api.BlueprintController;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintItem;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintTagItem;
 import io.kestra.webserver.responses.PagedResults;
@@ -16,20 +15,14 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.runtime.event.annotation.EventListener;
-import io.micronaut.runtime.server.event.ServerStartupEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
@@ -46,7 +39,7 @@ public class FlowAutoLoaderService {
     protected FlowRepositoryInterface repository;
 
     @Inject
-    protected TaskDefaultService taskDefaultService;
+    protected PluginDefaultService pluginDefaultService;
 
     @Inject
     @Client("api")
@@ -55,13 +48,8 @@ public class FlowAutoLoaderService {
     @Inject
     private YamlFlowParser yamlFlowParser;
 
-    @EventListener
-    public void onStartupEvent(final ServerStartupEvent event) {
-        load();
-    }
-
     @SuppressWarnings("unchecked")
-    protected void load() {
+    public void load() {
         // Gets the tag ID for 'Getting Started'.
         try {
             Optional<String> optionalTagId = Mono.from(httpClient
@@ -99,7 +87,7 @@ public class FlowAutoLoaderService {
                 .map(HttpResponse::body)
                 .map(source -> {
                     Flow flow = yamlFlowParser.parse(source, Flow.class);
-                    repository.create(flow, source, taskDefaultService.injectDefaults(flow));
+                    repository.create(flow, source, pluginDefaultService.injectDefaults(flow));
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;
                 })

@@ -486,7 +486,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         // flow exists, return it
         Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().isUpdatable(flow, flowSource)) {
+        if (exists.isPresent() && exists.get().equals(flow, flowSource)) {
             return exists.get();
         }
 

@@ -14,7 +14,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
     values = cleanInputs(inputsList, values);
 
     const formData = new FormData();
-
     for (let input of inputsList || []) {
         const inputName = input.id;
         const inputValue = values[inputName];
@@ -30,7 +29,7 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             } else if (input.type === "FILE") {
                 if(typeof(inputValue) === "string"){
                     formData.append(inputName, inputValue);
-                }else {
+                } else if (inputValue !== null) {
                     formData.append("files", inputValue, inputName);
                 }
             } else {
@@ -45,7 +44,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             return;
         }
     }
-
     return formData;
 }
 

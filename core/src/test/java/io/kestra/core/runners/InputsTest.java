@@ -160,7 +160,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(12));
+        assertThat(execution.getTaskRunList(), hasSize(13));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
             (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
@@ -170,6 +170,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(
             (String) execution.findTaskRunsByTaskId("secret").get(0).getOutputs().get("value"),
             is("secret")
+        );
+        // null inputs are serialized
+        assertThat(
+            (String) execution.findTaskRunsByTaskId("optional").get(0).getOutputs().get("value"),
+            emptyString()
         );
     }
 
@@ -347,7 +352,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(12));
+        assertThat(execution.getTaskRunList(), hasSize(13));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         assertThat(execution.getInputs().get("json"), instanceOf(Map.class));

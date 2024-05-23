@@ -22,7 +22,6 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -68,7 +67,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
-    TaskDefaultsCaseTest taskDefaultsCaseTest;
+    PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
     RunContextFactory runContextFactory;
@@ -160,8 +159,8 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
-        taskDefaultsCaseTest.taskDefaults();
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
+        pluginDefaultsCaseTest.taskDefaults();
     }
 
     @Test
@@ -170,6 +169,15 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         Path path = runContext.tempFile();
 
         assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
+    }
+
+    @Test
+    void files() throws IOException {
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.file("folder/file.txt");
+
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
+        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt"), is(true));
     }
 
     @Test

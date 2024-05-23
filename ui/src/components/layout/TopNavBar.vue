@@ -92,7 +92,7 @@
     </nav>
 </template>
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import Auth from "override/components/auth/Auth.vue";
     import News from "./News.vue";
     import HelpBox from "vue-material-design-icons/HelpBox.vue";
@@ -131,6 +131,7 @@
         },
         computed: {
             ...mapState("api", ["version"]),
+            ...mapGetters("core", ["guidedProperties"]),
             displayNavBar() {
                 return this.$route?.name !== "welcome";
             }
@@ -138,20 +139,9 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {
-                    tourStarted: false,
-                    flowSource: undefined,
-                    saveFlow: false,
-                    executeFlow: false,
-                    validateInputs: false,
-                    monacoRange: undefined,
-                    monacoDisableRange: undefined
-                });
+                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
 
-                this.$router
-                    .push({name: "flows/create"}).then(() => {
-                        this.$tours["guidedTour"].start();
-                    })
+                this.$tours["guidedTour"].start();
             }
         }
     };

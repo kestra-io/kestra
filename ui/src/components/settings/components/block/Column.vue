@@ -17,7 +17,7 @@
 
     const props = defineProps({
         overrides: {type: Object, default: () => {}},
-        label: {type: [String, undefined], default: undefined},
+        label: {type: String, default: undefined},
     });
 
     const layout = computed(() => {

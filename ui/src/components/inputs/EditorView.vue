@@ -31,7 +31,6 @@
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import Editor from "./Editor.vue";
     import yamlUtils from "../../utils/yamlUtils";
-    import {pageFromRoute} from "../../utils/eventsRouter";
     import {SECTIONS} from "../../utils/constants.js";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
@@ -226,6 +225,14 @@
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
 
+    const onboarding = computed(() => store.state.editor.onboarding);
+    watch(onboarding, (started) => {
+        if(!started) return;
+
+        editorWidth.value = 50;
+        switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
+    });
+
     const toggleExplorer = ref(null);
     const explorerVisible = computed(() => store.state.editor.explorerVisible);
     const toggleExplorerVisibility = () => {
@@ -388,27 +395,8 @@
 
     const stopTour = () => {
         tours["guidedTour"].stop();
-        store.commit("core/setGuidedProperties", {
-            ...props.guidedProperties,
-            tourStarted: false,
-        });
+        store.commit("core/setGuidedProperties", {tourStarted: false});
     };
-
-    watch(
-        () => props.guidedProperties,
-        async () => {
-            if (localStorage.getItem("tourDoneOrSkip") !== "true") {
-                if (props.guidedProperties.source !== undefined) {
-                    haveChange.value = true;
-                    flowYaml.value = props.guidedProperties.source;
-                    updatedFromEditor.value = true;
-                }
-                if (props.guidedProperties.saveFlow) {
-                    await save();
-                }
-            }
-        }
-    );
 
     const isAllowedEdit = () => {
         return (
@@ -718,22 +706,7 @@
                 e.preventDefault();
             }
         }
-        if (
-            tours["guidedTour"].isRunning.value &&
-            !props.guidedProperties.saveFlow
-        ) {
-            store.dispatch("api/events", {
-                type: "ONBOARDING",
-                onboarding: {
-                    step: tours["guidedTour"].currentStep._value,
-                    action: "next",
-                },
-                page: pageFromRoute(router.currentRoute.value),
-            });
-            tours["guidedTour"].nextStep();
-            return;
-        }
-
+     
         const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {

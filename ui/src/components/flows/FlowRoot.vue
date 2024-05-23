@@ -6,7 +6,9 @@
                     <Alert class="text-warning me-2" />Deleted:&nbsp;
                 </template>
                 <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
-                <span :class="{'body-color': deleted}">{{ routeInfo.title }}</span>
+                <span :class="{'body-color': deleted}">{{
+                    routeInfo.title
+                }}</span>
             </template>
             <template #additional-right v-if="displayButtons()">
                 <ul>
@@ -15,8 +17,18 @@
                             {{ $t("restore") }}
                         </el-button>
                     </li>
-                    <li v-if="isAllowedEdit && !deleted && activeTabName() !== 'editor'">
-                        <el-button :icon="Pencil" @click="editFlow" :disabled="deleted">
+                    <li
+                        v-if="
+                            isAllowedEdit &&
+                                !deleted &&
+                                activeTabName() !== 'editor'
+                        "
+                    >
+                        <el-button
+                            :icon="Pencil"
+                            @click="editFlow"
+                            :disabled="deleted"
+                        >
                             {{ $t("edit flow") }}
                         </el-button>
                     </li>
@@ -31,7 +43,12 @@
                 </ul>
             </template>
         </top-nav-bar>
-        <tabs @expand-subflow="updateExpandedSubflows" route-name="flows/update" ref="currentTab" :tabs="tabs" />
+        <tabs
+            @expand-subflow="updateExpandedSubflows"
+            route-name="flows/update"
+            ref="currentTab"
+            :tabs="tabs"
+        />
     </template>
 </template>
 
@@ -67,7 +84,7 @@
         components: {
             TriggerFlow,
             Tabs,
-            TopNavBar
+            TopNavBar,
         },
         data() {
             return {
@@ -75,37 +92,70 @@
                 previousFlow: undefined,
                 dependenciesCount: undefined,
                 expandedSubflows: [],
-                deleted: false
+                deleted: false,
             };
         },
         watch: {
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
-                    this.load()
+                    this.load();
                 }
-            }
+            },
+            guidedProperties: {
+                deep: true,
+                immediate: true,
+                handler: function (newValue) {
+                    if (newValue?.manuallyContinue) {
+                        setTimeout(() => {
+                            this.$tours["guidedTour"].nextStep();
+                            this.$store.commit("core/setGuidedProperties", {
+                                manuallyContinue: false,
+                            });
+                        }, 500);
+                    }
+                },
+            },
         },
         created() {
             this.load();
         },
         methods: {
             load() {
-                if ((this.flow === undefined || this.previousFlow !== this.flowKey())) {
+                if (
+                    this.flow === undefined ||
+                    this.previousFlow !== this.flowKey()
+                ) {
                     const query = {...this.$route.query, allowDeleted: true};
-                    return this.$store.dispatch("flow/loadFlow", {...this.$route.params, ...query}).then(() => {
-                        if (this.flow) {
-                            this.deleted = this.flow.deleted;
-                            this.previousFlow = this.flowKey();
-                            this.$store.dispatch("flow/loadGraph", {
-                                flow: this.flow
-                            });
-                            this.$http
-                                .get(`${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
-                                .then(response => {
-                                    this.dependenciesCount = response.data && response.data.nodes ? [...new Set(response.data.nodes.map(r => r.uid))].length : 0;
-                                })
-                        }
-                    });
+                    return this.$store
+                        .dispatch("flow/loadFlow", {
+                            ...this.$route.params,
+                            ...query,
+                        })
+                        .then(() => {
+                            if (this.flow) {
+                                this.deleted = this.flow.deleted;
+                                this.previousFlow = this.flowKey();
+                                this.$store.dispatch("flow/loadGraph", {
+                                    flow: this.flow,
+                                });
+                                this.$http
+                                    .get(
+                                        `${apiUrl(this.$store)}/flows/${this.flow.namespace}/${this.flow.id}/dependencies`,
+                                    )
+                                    .then((response) => {
+                                        this.dependenciesCount =
+                                            response.data && response.data.nodes
+                                                ? [
+                                                    ...new Set(
+                                                        response.data.nodes.map(
+                                                            (r) => r.uid,
+                                                        ),
+                                                    ),
+                                                ].length
+                                                : 0;
+                                    });
+                            }
+                        });
                 }
             },
             flowKey() {
@@ -119,8 +169,8 @@
                         title: this.$t("topology"),
                         props: {
                             isReadOnly: true,
-                            expandedSubflows: this.expandedSubflows
-                        }
+                            expandedSubflows: this.expandedSubflows,
+                        },
                     },
                 ];
 
@@ -131,12 +181,20 @@
                         {
                             name: undefined,
                             component: Overview,
-                            title: this.$t("overview")
+                            title: this.$t("overview"),
                         },
-                    ].concat(tabs)
+                    ].concat(tabs);
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.EXECUTION,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "executions",
                         component: FlowExecutions,
@@ -144,7 +202,15 @@
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "editor",
                         component: FlowEditor,
@@ -152,51 +218,91 @@
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit
+                            isReadOnly: this.deleted || !this.isAllowedEdit,
                         },
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "revisions",
                         component: FlowRevisions,
                         containerClass: "container full-height",
-                        title: this.$t("revisions")
+                        title: this.$t("revisions"),
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "triggers",
                         component: FlowTriggers,
                         title: this.$t("triggers"),
-                        disabled: !this.flow.triggers
+                        disabled: !this.flow.triggers,
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.EXECUTION,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "logs",
                         component: FlowLogs,
-                        title: this.$t("logs")
+                        title: this.$t("logs"),
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.EXECUTION,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "metrics",
                         component: FlowMetrics,
-                        title: this.$t("metrics")
+                        title: this.$t("metrics"),
                     });
                 }
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                if (
+                    this.user &&
+                    this.flow &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.READ,
+                        this.flow.namespace,
+                    )
+                ) {
                     tabs.push({
                         name: "dependencies",
                         component: FlowDependencies,
                         title: this.$t("dependencies"),
-                        count: this.dependenciesCount
-                    })
+                        count: this.dependenciesCount,
+                    });
                 }
                 return tabs;
             },
@@ -213,29 +319,34 @@
             },
             editFlow() {
                 this.$router.push({
-                    name: "flows/update", params: {
+                    name: "flows/update",
+                    params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
                         tab: "editor",
-                        tenant: this.$route.params.tenant
-                    }
-                })
+                        tenant: this.$route.params.tenant,
+                    },
+                });
             },
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
             },
             restoreFlow() {
-                this.$store.dispatch("flow/createFlow", {flow: yamlUtils.deleteMetadata(this.flow.source, "deleted")})
+                this.$store
+                    .dispatch("flow/createFlow", {
+                        flow: yamlUtils.deleteMetadata(this.flow.source, "deleted"),
+                    })
                     .then((response) => {
                         this.$toast().saved(response.id);
                         this.$store.dispatch("core/isUnsaved", false);
                         this.$router.go();
-                    })
-            }
+                    });
+            },
         },
         computed: {
             ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
+            ...mapState("core", ["guidedProperties"]),
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -243,19 +354,19 @@
                         {
                             label: this.$t("flows"),
                             link: {
-                                name: "flows/list"
-                            }
+                                name: "flows/list",
+                            },
                         },
                         {
                             label: this.$route.params.namespace,
                             link: {
                                 name: "flows/list",
                                 query: {
-                                    namespace: this.$route.params.namespace
-                                }
-                            }
-                        }
-                    ]
+                                    namespace: this.$route.params.namespace,
+                                },
+                            },
+                        },
+                    ],
                 };
             },
             tabs() {
@@ -265,30 +376,38 @@
                 return this.user !== undefined && this.flow !== undefined;
             },
             isAllowedEdit() {
-                if(!this.flow || !this.user) {
+                if (!this.flow || !this.user) {
                     return false;
                 }
 
-                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
+                return this.user.isAllowed(
+                    permission.FLOW,
+                    action.UPDATE,
+                    this.flow.namespace,
+                );
             },
             canExecute() {
                 if (this.flow) {
-                    return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+                    return this.user.isAllowed(
+                        permission.EXECUTION,
+                        action.CREATE,
+                        this.flow.namespace,
+                    );
                 }
                 return false;
-            }
+            },
         },
         unmounted() {
-            this.$store.commit("flow/setFlow", undefined)
-            this.$store.commit("flow/setFlowGraph", undefined)
-        }
+            this.$store.commit("flow/setFlow", undefined);
+            this.$store.commit("flow/setFlowGraph", undefined);
+        },
     };
 </script>
 <style lang="scss" scoped>
-    .gray-700 {
-        color: var(--bs-secondary-color);
-    }
-    .body-color {
-        color: var(--bs-body-color);
-    }
+.gray-700 {
+    color: var(--bs-secondary-color);
+}
+.body-color {
+    color: var(--bs-body-color);
+}
 </style>

@@ -6,12 +6,8 @@ export default {
         unsavedChange: false,
         guidedProperties: {
             tourStarted: false,
-            flowSource: undefined,
-            saveFlow: false,
-            executeFlow: false,
-            validateInputs: false,
-            monacoRange: undefined,
-            monacoDisableRange: undefined,
+            manuallyContinue: false,
+            template: undefined,
         },
         monacoYamlConfigured: false,
         autocompletionSource: undefined
@@ -38,7 +34,7 @@ export default {
             state.unsavedChange = unsavedChange
         },
         setGuidedProperties(state, guidedProperties) {
-            state.guidedProperties = guidedProperties
+            state.guidedProperties = {...state.guidedProperties, ...guidedProperties}
         },
         setMonacoYamlConfigured(state, monacoYamlConfigured) {
             state.monacoYamlConfigured = monacoYamlConfigured

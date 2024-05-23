@@ -63,88 +63,82 @@ import jakarta.validation.constraints.NotNull;
         "The `WorkingDirectory` task allows reusing the same file system's working directory across multiple tasks " +
         "so that multiple sequential tasks can use output files from previous tasks without having to use the `outputs.taskId.outputName` syntax. " +
         "Note that the `WorkingDirectory` only works with runnable tasks because those tasks are executed directly on the Worker. " +
-        "This means that using flowable tasks such as the `Parallel` task within the `WorkingDirectory` task will not work. " +
-        "The `WorkingDirectory` task requires Kestra>=0.9.0."
+        "This means that using flowable tasks such as the `Parallel` task within the `WorkingDirectory` task will not work. "
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "Clone a git repository into the Working Directory and run a Python script.",
-            code = {
-                "id: gitPython",
-                "namespace: dev",
-                "",
-                "tasks:",
-                "  - id: wdir",
-                "    type: io.kestra.plugin.core.flow.WorkingDirectory",
-                "    tasks:",
-                "      - id: cloneRepository",
-                "        type: io.kestra.plugin.git.Clone",
-                "        url: https://github.com/kestra-io/examples",
-                "        branch: main",
-                "      - id: python",
-                "        type: io.kestra.plugin.scripts.python.Commands",
-                "        docker:",
-                "          image: ghcr.io/kestra-io/pydata:latest",
-                "        commands:",
-                "          - python scripts/etl_script.py"
-            }
+            title = "Clone a Git repository into the Working Directory and run a Python script in a Docker container.",
+            code = """
+                id: gitPython
+                namespace: dev
+
+                tasks:
+                  - id: wdir
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    tasks:
+                      - id: cloneRepository
+                        type: io.kestra.plugin.git.Clone
+                        url: https://github.com/kestra-io/examples
+                        branch: main
+                        
+                      - id: python
+                        type: io.kestra.plugin.scripts.python.Commands
+                        taskRunner:
+                          type: io.kestra.plugin.scripts.runner.docker.Docker
+                        containerImage: ghcr.io/kestra-io/pydata:latest
+                        commands:
+                          - python scripts/etl_script.py"""
         ),
         @Example(
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
-                id: apiJSONtoMongoDB
-                namespace: dev
+id: apiJSONtoMongoDB
+namespace: dev
 
-                tasks:
-                - id: wdir
-                    type: io.kestra.plugin.core.flow.WorkingDirectory
-                    tasks:
-                    - id: demoSQL
-                        type: io.kestra.plugin.core.storage.LocalFiles
-                        inputs:
-                        query.sql: |
-                            SELECT sum(total) as total, avg(quantity) as avg_quantity
-                            FROM sales;
+tasks:
+- id: wdir
+  type: io.kestra.plugin.core.flow.WorkingDirectory
+  outputFiles:
+    - output.json
+  inputFiles:
+    query.sql: |
+      SELECT sum(total) as total, avg(quantity) as avg_quantity
+      FROM sales;
+  tasks:
+    - id: inlineScript
+      type: io.kestra.plugin.scripts.python.Script
+      taskRunner: 
+        type: io.kestra.plugin.scripts.runner.docker.Docker
+      containerImage: python:3.11-slim
+      beforeCommands:
+        - pip install requests kestra > /dev/null
+      warningOnStdErr: false
+      script: |
+        import requests
+        import json
+        from kestra import Kestra
 
-                    - id: inlineScript
-                        type: io.kestra.plugin.scripts.python.Script
-                        runner: DOCKER
-                        docker:
-                        image: python:3.11-slim
-                        beforeCommands:
-                        - pip install requests kestra > /dev/null
-                        warningOnStdErr: false
-                        script: |
-                        import requests
-                        import json
-                        from kestra import Kestra
+        with open('query.sql', 'r') as input_file:
+            sql = input_file.read()
 
-                        with open('query.sql', 'r') as input_file:
-                            sql = input_file.read()
+        response = requests.get('https://api.github.com')
+        data = response.json()
 
-                        response = requests.get('https://api.github.com')
-                        data = response.json()
+        with open('output.json', 'w') as output_file:
+            json.dump(data, output_file)
 
-                        with open('output.json', 'w') as output_file:
-                            json.dump(data, output_file)
+        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
-
-                    - id: jsonFiles
-                        type: io.kestra.plugin.core.storage.LocalFiles
-                        outputs:
-                        - output.json
-
-                - id: loadToMongoDB
-                    type: io.kestra.plugin.mongodb.Load
-                    connection:
-                    uri: mongodb://host.docker.internal:27017/
-                    database: local
-                    collection: github
-                    from: "{{ outputs.jsonFiles.uris['output.json'] }}"
+- id: loadToMongoDB
+  type: io.kestra.plugin.mongodb.Load
+  connection:
+    uri: mongodb://host.docker.internal:27017/
+  database: local
+  collection: github
+  from: "{{ outputs.wdir.uris['output.json'] }}"
                 """
         ),
         @Example(

@@ -6,6 +6,7 @@ export default {
         unsavedChange: false,
         guidedProperties: {
             tourStarted: false,
+            manuallyContinue: false,
             template: undefined,
         },
         monacoYamlConfigured: false,

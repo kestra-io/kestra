@@ -24,11 +24,12 @@
                             alt="Kestra"
                             class="animation"
                         >
-                        <div
-                            v-if="currentStep(tour).title"
-                            v-html="currentStep(tour).title"
-                            class="title"
-                        />
+                        <div v-if="currentStep(tour).title" class="title">
+                            <div v-if="currentStep(tour).icon">
+                                <img :src="currentStep(tour).icon">
+                            </div>
+                            <span v-html="currentStep(tour).title" />
+                        </div>
                     </template>
                     <template #content>
                         <div v-if="tour.currentStep === 1" class="flows">
@@ -70,7 +71,7 @@
                             <Secondary
                                 v-if="currentStep(tour).secondary"
                                 :label="currentStep(tour).secondary"
-                                @click="restartTour()"
+                                @click="exploreOther(tour.currentStep)"
                             />
                             <Primary
                                 v-if="currentStep(tour).primary"
@@ -83,21 +84,21 @@
                                 @click="
                                     tour.isLast
                                         ? finishTour(tour.currentStep)
-                                        : nextStep(tour.currentStep)
+                                        : nextStep(tour)
                                 "
                             />
                         </Wrapper>
 
                         <Teleport to="body">
-                            <Wrapper absolute>
+                            <Wrapper left>
+                                <Skip @click="skipTour(tour.currentStep)" />
+                            </Wrapper>
+                            <Wrapper right>
                                 <Previous
                                     v-if="!tour.isFirst && !tour.isLast"
                                     @click="previousStep(tour.currentStep)"
                                 />
-                                <Skip
-                                    v-if="!tour.isLast"
-                                    @click="skipTour(tour.currentStep)"
-                                />
+                                <Next @click="nextStep(tour)" />
                             </Wrapper>
                         </Teleport>
                     </template>
@@ -119,14 +120,21 @@
     import Secondary from "./components/buttons/Secondary.vue";
     import Primary from "./components/buttons/Primary.vue";
 
-    import Previous from "./components/buttons/Previous.vue";
     import Skip from "./components/buttons/Skip.vue";
+
+    import Previous from "./components/buttons/Previous.vue";
+    import Next from "./components/buttons/Next.vue";
 
     import {apiUrl} from "override/utils/route";
     import {pageFromRoute} from "utils/eventsRouter";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Animation from "assets/onboarding/animation.gif";
+
+    import LightningBolt from "assets/onboarding/icons/lightning-bolt.svg";
+    import ArrowLeft from "assets/onboarding/icons/arrow-left.svg";
+    import ArrowTop from "assets/onboarding/icons/arrow-top.svg";
+    import ArrowRight from "assets/onboarding/icons/arrow-right.svg";
 
     const router = useRouter();
     const store = useStore();
@@ -190,6 +198,19 @@
         {
             ...properties(1, false),
             fullscreen: true,
+            nextStep: () => {
+                router.push({
+                    name: "flows/update",
+                    params: {
+                        namespace: "tutorial",
+                        id: flows.value[activeFlow.value].id,
+                        tab: "editor",
+                    },
+                });
+                store.commit("core/setGuidedProperties", {
+                    manuallyContinue: true,
+                });
+            },
             before: () => {
                 store.commit("editor/updateOnboarding"),
                 store.commit("core/setGuidedProperties", {
@@ -202,30 +223,21 @@
         },
         {
             ...properties(2),
+            icon: ArrowLeft,
             target: "#editorWrapper",
             highlightElement: "#editorWrapper",
             params: {...STEP_OPTIONS, placement: "right"},
-            before: () => {
-                router.push({
-                    name: "flows/update",
-                    params: {
-                        namespace: "tutorial",
-                        id: flows.value[activeFlow.value].id,
-                        tab: "editor",
-                    },
-                });
-
-                wait(1);
-            },
         },
         {
             ...properties(3),
+            icon: ArrowRight,
             target: ".combined-right-view.topology-display",
             highlightElement: ".combined-right-view.topology-display",
             params: {...STEP_OPTIONS, placement: "left"},
         },
         {
             ...properties(4, true, false),
+            icon: ArrowTop,
             condensed: true,
             target: "#execute-button",
             highlightElement: ".top-bar",
@@ -233,6 +245,7 @@
         },
         {
             ...properties(5, true, false),
+            icon: ArrowTop,
             condensed: true,
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
@@ -244,6 +257,7 @@
         },
         {
             ...properties(6, true, true, true),
+            icon: LightningBolt,
             target: "#gantt",
             highlightElement: "#gantt",
             params: {
@@ -255,9 +269,11 @@
     ];
 
     const currentStep = (tour) => tour.steps[tour.currentStep];
-    const nextStep = (current) => {
-        dispatchEvent(current, "next");
-        TOURS[TOUR_NAME].nextStep();
+    const nextStep = (tour) => {
+        dispatchEvent(tour.currentStep, "next");
+
+        const nextStep = currentStep(tour).nextStep;
+        !nextStep ? TOURS[TOUR_NAME].nextStep() : nextStep();
     };
     const previousStep = (current) => {
         dispatchEvent(current, "previous");
@@ -276,9 +292,10 @@
 
         router.push({name: "flows/create"});
     };
-    const restartTour = () => {
-        dispatchEvent(-1, "restart");
-        TOURS[TOUR_NAME].start();
+    const exploreOther = (current) => {
+        finishTour(current);
+        dispatchEvent(current, "explore");
+        router.push({name: "flows/list", query: {namespace: "tutorial"}});
     };
 
     onMounted(() => {
@@ -361,6 +378,11 @@ $flow-image-size-container: 36px;
         font-size: 2rem;
         font-weight: bold;
         color: $white;
+
+        & div {
+            height: 2rem;
+            margin-bottom: 1rem;
+        }
     }
 
     & .v-step__content {

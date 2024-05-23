@@ -1,0 +1,9 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+	<title>arrow-left-thick-svg</title>
+	<style>
+		.s0 { fill: #9470ff } 
+	</style>
+	<g id="arrow-left-thick">
+		<path id="Vector" class="s0" d="m23.2 10v4h-9l3.5 3.5-2.4 2.4-8-7.9 8-7.9 2.4 2.4-3.5 3.5z"/>
+	</g>
+</svg>

@@ -44,7 +44,7 @@ public class WorkerTaskThread extends AbstractWorkerThread {
         try {
             task.kill();
         } catch (Exception e) {
-            logger.warn("Error while killing task: '{}'", e.getMessage(), e);
+            logger.warn("Error while killing task: '{}'", getType(), e);
         } finally {
             super.kill(markAsKilled); //interrupt
         }

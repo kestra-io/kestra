@@ -20,4 +20,15 @@ public abstract class AbstractWorkerTriggerThread extends AbstractWorkerThread {
             logger.warn("Error while stopping trigger: '{}'", getType(), e);
         }
     }
+
+    @Override
+    protected void kill(final boolean markAsKilled) {
+        try {
+            ((WorkerTriggerInterface)workerTrigger.getTrigger()).kill();
+        } catch (Exception e) {
+            logger.warn("Error while killing trigger: '{}'", getType(), e);
+        } finally {
+            super.kill(markAsKilled); //interrupt
+        }
+    }
 }

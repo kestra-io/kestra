@@ -171,14 +171,14 @@
                 return this.aggregateValues(this.usages.flows?.triggerTypeCount);
             },
             executionsPerDay() {
-                return (this.usages.executions.dailyExecutionsCount ?? [])
+                return (this.usages.executions?.dailyExecutionsCount ?? [])
                     .filter(item => item.groupBy === "day");
             },
             executionsOverTwoDays() {
                 return this.aggregateValuesFromListWithGetter(this.executionsPerDay, item => item.duration.count ?? 0);
             },
             taskrunsPerDay() {
-                return this.usages.executions.dailyTaskrunsCount?.filter(item => item.groupBy === "day");
+                return this.usages.executions?.dailyTaskrunsCount?.filter(item => item.groupBy === "day");
             },
             taskrunsOverTwoDays() {
                 if (!this.configs?.isTaskRunEnabled) {

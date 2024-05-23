@@ -41,17 +41,19 @@
                                 @click="activeFlow = flowIndex"
                             >
                                 <p class="title mb-2">
-                                    {{ flow.id.label }}
+                                    {{ flow.description }}
                                 </p>
                                 <div>
                                     <div
-                                        v-for="(icon, iconIndex) in flow.icons"
-                                        :key="`flow__${flowIndex}__icon__${iconIndex}`"
+                                        v-for="(task, taskIndex) in flow.tasks"
+                                        :key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         class="image me-1"
                                     >
-                                        <img
-                                            :src="getIcon({extension: icon})"
-                                        >
+                                        <TaskIcon
+                                            :cls="task.type"
+                                            :icons="icons"
+                                            only-icon
+                                        />
                                     </div>
                                 </div>
                             </el-button>
@@ -106,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance, onMounted, ref} from "vue";
+    import {computed, getCurrentInstance, onMounted, ref} from "vue";
 
     import {useRouter} from "vue-router";
     import {useStore} from "vuex";
@@ -123,11 +125,14 @@
     import {apiUrl} from "override/utils/route";
     import {pageFromRoute} from "utils/eventsRouter";
 
-    import {getIcon} from "utils/icons";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Animation from "assets/onboarding/animation.gif";
 
     const router = useRouter();
     const store = useStore();
+
+    const icons = computed(() => store.state.plugin.icons);
+
     const {t} = useI18n({useScope: "global"});
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
@@ -186,11 +191,21 @@
             ...properties(1, false),
             fullscreen: true,
             before: () => {
+                store.commit("editor/updateOnboarding"),
                 store.commit("core/setGuidedProperties", {
                     tourStarted: true,
                     template: flows.value[activeFlow.value].id,
                 });
 
+                wait(1);
+            },
+        },
+        {
+            ...properties(2),
+            target: "#editorWrapper",
+            highlightElement: "#editorWrapper",
+            params: {...STEP_OPTIONS, placement: "right"},
+            before: () => {
                 router.push({
                     name: "flows/update",
                     params: {
@@ -199,14 +214,9 @@
                         tab: "editor",
                     },
                 });
+
+                wait(1);
             },
-        },
-        {
-            ...properties(2),
-            target: "#editorWrapper",
-            highlightElement: "#editorWrapper",
-            params: {...STEP_OPTIONS, placement: "right"},
-            before: () => store.commit("editor/updateOnboarding"),
         },
         {
             ...properties(3),
@@ -290,9 +300,8 @@ $white: #ffffff;
 $step-max-width: 380px;
 $last-step-max-width: 460px;
 $animation-width: 415px;
-$flow-card-width: 300px;
+$flow-card-width: 360px;
 $flow-image-size-container: 36px;
-$flow-image-size: 20px;
 
 .fullscreen {
     z-index: 9998 !important;
@@ -404,11 +413,7 @@ $flow-image-size: 20px;
                 height: $flow-image-size-container;
                 border: 1px solid $border-color;
                 border-radius: 8px;
-
-                & img {
-                    width: $flow-image-size;
-                    height: $flow-image-size;
-                }
+                padding: 4px;
             }
         }
     }

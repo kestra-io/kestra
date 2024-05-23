@@ -126,15 +126,15 @@
     import Next from "./components/buttons/Next.vue";
 
     import {apiUrl} from "override/utils/route";
-    import {pageFromRoute} from "utils/eventsRouter";
+    import {pageFromRoute} from "../../utils/eventsRouter";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
-    import Animation from "assets/onboarding/animation.gif";
+    import Animation from "../../assets/onboarding/animation.gif";
 
-    import LightningBolt from "assets/onboarding/icons/lightning-bolt.svg";
-    import ArrowLeft from "assets/onboarding/icons/arrow-left.svg";
-    import ArrowTop from "assets/onboarding/icons/arrow-top.svg";
-    import ArrowRight from "assets/onboarding/icons/arrow-right.svg";
+    import LightningBolt from "../../assets/onboarding/icons/lightning-bolt.svg";
+    import ArrowLeft from "../../assets/onboarding/icons/arrow-left.svg";
+    import ArrowTop from "../../assets/onboarding/icons/arrow-top.svg";
+    import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
 
     const router = useRouter();
     const store = useStore();

@@ -116,7 +116,7 @@ import java.util.stream.Stream;
                         defaults: Well-deserved vacation
 
                   - id: approve
-                    type: io.kestra.plugin.fs.http.Request
+                    type: io.kestra.plugin.core.http.Request
                     uri: https://reqres.in/api/products
                     method: POST
                     contentType: application/json

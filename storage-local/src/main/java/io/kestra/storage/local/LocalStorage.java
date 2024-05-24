@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
@@ -28,6 +30,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Setter
 @NoArgsConstructor
 public class LocalStorage implements StorageInterface {
+    private static final Logger log = LoggerFactory.getLogger(LocalStorage.class);
 
     @PluginProperty
     @NotNull
@@ -82,6 +85,7 @@ public class LocalStorage implements StorageInterface {
             // This can happen for concurrent deletion while traversing folders so we skip in such case
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                log.warn("Failed to visit file " + file + " while searching all by prefix for path " + prefix.getPath(), exc);
                 return FileVisitResult.SKIP_SUBTREE;
             }
         });

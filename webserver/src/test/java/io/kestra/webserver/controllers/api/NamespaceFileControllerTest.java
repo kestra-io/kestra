@@ -227,10 +227,25 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void delete() throws IOException {
-        storageInterface.createDirectory(null, toNamespacedStorageUri("namespace", URI.create("/test")));
-        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/test", null));
-        boolean res = storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
-        assertThat(res, is(false));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")), new ByteArrayInputStream("Hello".getBytes()));
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folder/file.txt", null));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt"))), is(false));
+        // Zombie folders are deleted, but not the root folder
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folder"))), is(false));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file1.txt")), new ByteArrayInputStream("Hello".getBytes()));
+        storageInterface.put(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file2.txt")), new ByteArrayInputStream("Hello".getBytes()));
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folderWithMultipleFiles/file1.txt", null));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file1.txt"))), is(false));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file2.txt"))), is(true));
+        // Since there is still one file in the folder, it should not be deleted
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles"))), is(true));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folderWithMultipleFiles", null));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/"))), is(false));
+        assertThat(storageInterface.exists(null, toNamespacedStorageUri(NAMESPACE, null)), is(true));
     }
 
     @Test

@@ -240,7 +240,31 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         ensureWritableNamespaceFile(path);
 
-        storageInterface.delete(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
+        String pathWithoutScheme = path.getPath();
+        List<String> allNamespaceFilesPaths = new ArrayList<>(storageInterface.allByPrefix(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null), true).stream()
+            .map(this.toNamespacedStorageUri(namespace, null)::relativize)
+            .map(uri -> "/" + uri.getPath())
+            .toList());
+
+        if (allNamespaceFilesPaths.contains(pathWithoutScheme + "/")) {
+            // the given path to delete is a directory
+            pathWithoutScheme = pathWithoutScheme + "/";
+        }
+
+        while (!pathWithoutScheme.equals("/")) {
+            String parentFolder = pathWithoutScheme.substring(0, pathWithoutScheme.lastIndexOf('/') + 1);
+            if (parentFolder.equals("/")) {
+                break;
+            }
+            List<String> filesInParentFolder = allNamespaceFilesPaths.stream().filter(p -> p.length() > parentFolder.length() && p.startsWith(parentFolder)).toList();
+            // there is more than one file in this folder so we stop the cascade deletion there
+            if (filesInParentFolder.size() > 1) {
+                break;
+            }
+            allNamespaceFilesPaths.removeIf(filesInParentFolder::contains);
+            pathWithoutScheme = parentFolder.endsWith("/") ? parentFolder.substring(0, parentFolder.length() - 1) : parentFolder;
+        }
+        storageInterface.delete(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, URI.create(pathWithoutScheme)));
     }
 
     private void forbiddenPathsGuard(URI path) {

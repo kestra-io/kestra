@@ -14,7 +14,7 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -63,22 +63,33 @@ public class LocalStorage implements StorageInterface {
     @Override
     public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getPath(tenantId, prefix);
-        try (Stream<Path> walk = Files.walk(fsPath)) {
-            return walk.sorted(Comparator.reverseOrder())
-                .filter(path -> includeDirectories || !Files.isDirectory(path))
-                .map(path -> {
-                    Path relativePath = fsPath.relativize(path);
-                    return relativePath + (Files.isDirectory(path) && !relativePath.toString().isEmpty() ? "/" : "");
-                })
-                .filter(Predicate.not(String::isEmpty))
-                .map(path -> {
-                    String prefixPath = prefix.getPath();
-                    return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
-                })
-                .toList();
-        } catch (NoSuchFileException e) {
-            return Collections.emptyList();
-        }
+        List<Path> paths = new ArrayList<>();
+        Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                paths.add(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            // This can happen for concurrent deletion while traversing folders so we skip in such case
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+        });
+
+        return paths.stream().sorted(Comparator.reverseOrder())
+            .filter(path -> includeDirectories || !Files.isDirectory(path))
+            .map(path -> {
+                Path relativePath = fsPath.relativize(path);
+                return relativePath + (Files.isDirectory(path) && !relativePath.toString().isEmpty() ? "/" : "");
+            })
+            .filter(Predicate.not(String::isEmpty))
+            .map(path -> {
+                String prefixPath = prefix.getPath();
+                return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
+            })
+            .toList();
     }
 
     @Override
@@ -108,8 +119,8 @@ public class LocalStorage implements StorageInterface {
     public URI put(String tenantId, URI uri, InputStream data) throws IOException {
         File file = getPath(tenantId, uri).toFile();
         File parent = file.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) {
-            throw new RuntimeException("Cannot create directory: " + parent.getAbsolutePath());
+        if (!parent.exists()) {
+            parent.mkdirs();
         }
 
         try (data; OutputStream outStream = new FileOutputStream(file)) {

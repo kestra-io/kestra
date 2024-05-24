@@ -63,11 +63,19 @@ public class LocalStorage implements StorageInterface {
     @Override
     public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getPath(tenantId, prefix);
-        List<Path> paths = new ArrayList<>();
+        List<URI> uris = new ArrayList<>();
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
             @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                if (includeDirectories) {
+                    uris.add(URI.create(dir + "/"));
+                }
+                return super.preVisitDirectory(dir, attrs);
+            }
+
+            @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                paths.add(file);
+                uris.add(URI.create(file.toString()));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -78,12 +86,10 @@ public class LocalStorage implements StorageInterface {
             }
         });
 
-        return paths.stream().sorted(Comparator.reverseOrder())
-            .filter(path -> includeDirectories || !Files.isDirectory(path))
-            .map(path -> {
-                Path relativePath = fsPath.relativize(path);
-                return relativePath + (Files.isDirectory(path) && !relativePath.toString().isEmpty() ? "/" : "");
-            })
+        URI fsPathUri = URI.create(fsPath.toString());
+        return uris.stream().sorted(Comparator.reverseOrder())
+            .map(fsPathUri::relativize)
+            .map(URI::getPath)
             .filter(Predicate.not(String::isEmpty))
             .map(path -> {
                 String prefixPath = prefix.getPath();

@@ -68,7 +68,12 @@
                 </div>
             </template>
             <div v-if="isVisible(plugin)" class="plugin-card" @click="openGroup(plugin)">
-                <task-icon class="size" :only-icon="true" :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group" :icons="icons" />
+                <task-icon
+                    class="size"
+                    :only-icon="true"
+                    :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
+                    :icons="icons"
+                />
                 <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
             </div>
         </el-tooltip>
@@ -144,11 +149,17 @@
         },
         methods: {
             openGroup(plugin) {
-                if (plugin.tasks.length > 0) {
-                    this.openPlugin(plugin.tasks[0])
-                }
+                this.openPlugin(
+                    plugin.tasks?.[0] ??
+                        plugin.triggers?.[0] ??
+                        plugin.conditions?.[0] ??
+                        plugin.taskRunners?.[0]
+                )
             },
             openPlugin(cls) {
+                if (!cls) {
+                    return;
+                }
                 this.$router.push({name: "plugins/view", params: {cls: cls}})
             },
             isVisible(plugin) {

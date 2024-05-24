@@ -184,12 +184,23 @@ class FlowServiceTest {
 
     @Test
     void warnings() {
-        Flow flow = create("test", "test", 1).toBuilder().namespace("system").build();
+        Flow flow = create("test", "test", 1).toBuilder()
+            .namespace("system")
+            .triggers(List.of(
+                io.kestra.plugin.core.trigger.Flow.builder()
+                    .id("flow-trigger")
+                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                    .build()
+            ))
+            .build();
 
         List<String> warnings = flowService.warnings(flow);
 
-        assertThat(warnings.size(), is(1));
-        assertThat(warnings.get(0), containsString("The system namespace is reserved for background workflows"));
+        assertThat(warnings.size(), is(2));
+        assertThat(warnings, containsInAnyOrder(
+            "The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.",
+            "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the conditions property to the Flow trigger."
+        ));
     }
 
     @Test

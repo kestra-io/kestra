@@ -150,10 +150,30 @@ public class FlowService {
     }
 
     public List<String> warnings(Flow flow) {
-        if (flow != null && flow.getNamespace() != null && flow.getNamespace().equals(systemFlowNamespace)) {
-            return List.of("The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.");
+        if (flow == null) {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+
+        List<String> warnings = new ArrayList<>();
+        if (flow.getNamespace() != null && flow.getNamespace().equals(systemFlowNamespace)) {
+            warnings.add("The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.");
+        }
+
+        List<AbstractTrigger> triggers = flow.getTriggers();
+        if (
+            triggers != null &&
+                triggers.stream().anyMatch(trigger -> {
+                    if (trigger instanceof io.kestra.plugin.core.trigger.Flow flowTrigger) {
+                        return Optional.ofNullable(flowTrigger.getConditions()).map(List::isEmpty).orElse(true);
+                    }
+
+                    return false;
+                    })
+        ) {
+            warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the conditions property to the Flow trigger.");
+        }
+
+        return warnings;
     }
 
     public List<Relocation> relocations(String flowSource) {

@@ -13,8 +13,17 @@
 
 <style scoped lang="scss">
 $background: #2f3342;
+$color: #cac5da;
 
 .next {
     background: $background;
+
+    html.light & {
+        color: $color;
+
+        &:hover {
+            color: $background;
+        }
+    }
 }
 </style>

@@ -38,7 +38,7 @@ $max-width: 300px;
 .right {
     z-index: 9999;
     margin: 2rem;
-    position: absolute;
+    position: fixed;
     bottom: 0;
 }
 

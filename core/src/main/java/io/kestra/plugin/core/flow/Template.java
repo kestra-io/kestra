@@ -53,6 +53,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Schema(
     title = "Include a reusable template inside a flow."
 )
+@Deprecated
 @Plugin(
     examples = {
         @Example(

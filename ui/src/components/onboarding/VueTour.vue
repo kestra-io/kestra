@@ -53,6 +53,8 @@
                                         <TaskIcon
                                             :cls="task.type"
                                             :icons="icons"
+                                            :color="ICON_COLOR"
+                                            only-icon
                                         />
                                     </div>
                                 </div>
@@ -153,6 +155,8 @@
     const TOUR_NAME = "guidedTour";
     const TOUR_OPTIONS = {highlight: true, useKeyboardNavigation: false};
     const TOURS = getCurrentInstance()?.appContext.config.globalProperties.$tours;
+
+    const ICON_COLOR = "#cac5da";
 
     const STEP_OPTIONS = {
         modifiers: [

@@ -39,6 +39,7 @@
     "is deprecated": "est déprécié(e)",
     "success": "Succès",
     "save": "Enregistrer",
+    "save task": "Enregistrer la tâche",
     "saved": "Enregistrement réussi",
     "saved done": "<em>{name}</em> est enregistré avec succès",
     "multiple saved done": "{name} ont été enregistré(e)s",
@@ -670,7 +671,7 @@
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux.",
       "search": "Cherchez à travers +{count} plugins"
     },
-    "no inputs": "Ce flow n'a pas d'entrée.",    
+    "no inputs": "Ce flow n'a pas d'entrée.",
     "settings": {
       "label": "Paramètres",
       "blocks": {

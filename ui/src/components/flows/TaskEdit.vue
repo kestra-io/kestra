@@ -24,7 +24,7 @@
                         :disabled="errors"
                         type="primary"
                     >
-                        {{ $t("save") }}
+                        {{ $t("save task") }}
                     </el-button>
                     <el-alert
                         show-icon

@@ -10,8 +10,17 @@
 
 <style scoped lang="scss">
 $background: #2f3342;
+$color: #cac5da;
 
 .previous {
     background: $background;
+
+    html.light & {
+        color: $color;
+
+        &:hover {
+            color: $background;
+        }
+    }
 }
 </style>

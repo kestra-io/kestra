@@ -53,7 +53,6 @@
                                         <TaskIcon
                                             :cls="task.type"
                                             :icons="icons"
-                                            only-icon
                                         />
                                     </div>
                                 </div>
@@ -188,12 +187,28 @@
     });
     const wait = (time) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
+
+    const toggleScroll = (enabled = true) => {
+        const wrapper = document.getElementById("app");
+        enabled
+            ? wrapper.classList.remove("no-scroll")
+            : wrapper.classList.add("no-scroll");
+    };
+
     const steps = [
         {
             ...properties(0),
             fullscreen: true,
-            before: () =>
-                store.commit("core/setGuidedProperties", {tourStarted: true}),
+            before: () => {
+                toggleScroll(false);
+
+                store.commit("core/setGuidedProperties", {
+                    tourStarted: true,
+                    fullscreen: true,
+                });
+
+                wait(1);
+            },
         },
         {
             ...properties(1, false),
@@ -227,6 +242,10 @@
             target: "#editorWrapper",
             highlightElement: "#editorWrapper",
             params: {...STEP_OPTIONS, placement: "right"},
+            before: () => {
+                toggleScroll();
+                wait(1);
+            },
         },
         {
             ...properties(3),
@@ -280,11 +299,15 @@
         TOURS[TOUR_NAME].previousStep();
     };
     const skipTour = (current) => {
+        toggleScroll();
+
         updateStatus();
         dispatchEvent(current, "skip");
         TOURS[TOUR_NAME].stop();
     };
     const finishTour = (current) => {
+        toggleScroll();
+
         updateStatus();
         dispatchEvent(current, "finish");
         dispatchEvent(current, "executed");
@@ -320,6 +343,10 @@ $animation-width: 415px;
 $flow-card-width: 360px;
 $flow-image-size-container: 36px;
 
+.no-scroll {
+    overflow: hidden;
+}
+
 .fullscreen {
     z-index: 9998 !important;
     max-width: 100% !important;
@@ -354,6 +381,7 @@ $flow-image-size-container: 36px;
             url("../../assets/onboarding/background.webp") no-repeat center;
         background-blend-mode: normal;
         background-size: contain;
+        border-radius: 0px;
     }
 
     &:not(.fullscreen) {
@@ -441,7 +469,8 @@ $flow-image-size-container: 36px;
     }
 }
 
-body.v-tour--active .absolute.buttons * {
+body.v-tour--active .left.buttons *,
+body.v-tour--active .right.buttons * {
     pointer-events: auto;
 }
 

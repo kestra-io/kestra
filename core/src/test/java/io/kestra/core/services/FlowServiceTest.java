@@ -19,6 +19,8 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
 class FlowServiceTest {
@@ -255,5 +257,25 @@ class FlowServiceTest {
             .build();
 
         assertThat(flowService.deprecationPaths(flow), containsInAnyOrder("inputs[1].name", "tasks[0]"));
+    }
+
+    @Test
+    void isAllowedNamespace() {
+        assertTrue(flowService.isAllowedNamespace("tenant", "namespace", "fromTenant", "fromNamespace"));
+    }
+
+    @Test
+    void checkAllowedNamespace() {
+        flowService.checkAllowedNamespace("tenant", "namespace", "fromTenant", "fromNamespace");
+    }
+
+    @Test
+    void areAllowedAllNamespaces() {
+        assertTrue(flowService.areAllowedAllNamespaces("tenant", "fromTenant", "fromNamespace"));
+    }
+
+    @Test
+    void checkAllowedAllNamespaces() {
+        flowService.checkAllowedAllNamespaces("tenant", "fromTenant", "fromNamespace");
     }
 }

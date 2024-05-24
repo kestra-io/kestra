@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -99,21 +100,27 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Builder.Default
     private boolean purgeStorage = true;
 
-    @SuppressWarnings("unchecked")
     @Override
     public Purge.Output run(RunContext runContext) throws Exception {
         ExecutionService executionService = runContext.getApplicationContext().getBean(ExecutionService.class);
+        FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
 
-        Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
+        // validate that this namespace is authorized on the target namespace / all namespaces
+        var flowInfo = runContext.flowInfo();
+        if (namespace == null){
+            flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
+        } else if (!runContext.render(namespace).equals(flowInfo.namespace())) {
+            flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace), flowInfo.tenantId(), flowInfo.namespace());
+        }
 
         ExecutionService.PurgeResult purgeResult = executionService.purge(
             purgeExecution,
             purgeLog,
             purgeMetric,
             purgeStorage,
-            flowVars.get("tenantId"),
-            namespace,
-            flowId,
+            flowInfo.tenantId(),
+            runContext.render(namespace),
+            runContext.render(flowId),
             ZonedDateTime.parse(runContext.render(endDate)),
             states
         );

@@ -517,7 +517,7 @@
     "can not save": "Can not save",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
     "readonly property": "Read-only property",
-    "namespace and id readonly": "Namespace and id are read-only. They were reinitialized to their initial value.",
+    "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
     "avg": "Average",
     "sum": "Sum",
     "min": "Min",

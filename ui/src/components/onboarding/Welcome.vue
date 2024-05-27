@@ -70,18 +70,18 @@
 
 <style scoped lang="scss">
     .main {
-        margin-left: 5em;
-        margin-right: 5em;
-        margin-top: 10em;
+        margin: 3rem 1rem 1rem;
 
         @media (min-width: 768px) {
-            margin-left: 8em;
-            margin-right: 8em;
+            margin: 3rem 2rem 1rem;
         }
 
-        @media (min-width: 1200px) {
-            margin-left: 13em;
-            margin-right: 13em;
+        @media (min-width: 992px) {
+            margin: 3rem 3rem 1rem;
+        }
+
+        @media (min-width: 1920px) {
+            margin: 3rem 10rem 1rem;
         }
     }
 

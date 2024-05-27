@@ -766,8 +766,7 @@
                         extension: extension
                     });
 
-                    const folder = path.split("/");
-                    this.dialog.folder = folder[folder.length - 2] ?? undefined;
+                    this.dialog.folder = path.substring(0, path.lastIndexOf("/"));
                 }
 
                 if (!this.dialog.folder) {
@@ -776,23 +775,20 @@
                 } else {
                     const SELF = this;
                     (function pushItemToFolder(basePath = "", array) {
-                        for (let i = 0; i < array.length; i++) {
-                            const item = array[i];
+                        for (const item of array) {
                             const folderPath = `${basePath}${item.fileName}`;
-                            if (
-                                folderPath === SELF.dialog.folder &&
-                                Array.isArray(item.children)
-                            ) {
-                                item.children.push(NEW);
-                                item.children = SELF.sorted(item.children);
+                            
+                            if (folderPath === SELF.dialog.folder && Array.isArray(item.children)) {
+                                item.children = SELF.sorted([...item.children, NEW]);
                                 return true; // Return true if the folder is found and item is pushed
-                            } else if (Array.isArray(item.children)) {
-                                if (pushItemToFolder(`${folderPath}/`, item.children)) {
-                                    return true; // Return true if the folder is found and item is pushed in recursive call
-                                }
+                            }
+                            
+                            if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children)) {
+                                return true; // Return true if the folder is found and item is pushed in recursive call
                             }
                         }
-                        return false; // Return false if the folder is not found
+                        
+                        return false;
                     })(undefined, this.items);
                 }
 

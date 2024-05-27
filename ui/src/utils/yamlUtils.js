@@ -1,5 +1,5 @@
 import JsYaml from "js-yaml";
-import yaml, {Document, YAMLMap, isSeq, isMap, Pair, Scalar, YAMLSeq, LineCounter} from "yaml";
+import yaml, {Document, YAMLMap, isSeq, isMap, Pair, Scalar, YAMLSeq, LineCounter, isPair} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 import {SECTIONS} from "./constants.js";
 
@@ -20,6 +20,18 @@ export default class YamlUtils {
             noCompatMode: true,
             quotingType: "\"",
         });
+    }
+
+    static pairsToMap(pairs) {
+        const map = new YAMLMap();
+        if (!isPair(pairs?.[0])) {
+            return map;
+        }
+
+        pairs.forEach(pair => {
+            map.add(pair);
+        });
+        return map;
     }
 
     static parse(item) {
@@ -188,7 +200,7 @@ export default class YamlUtils {
                     if (map.items) {
                         for (const item of map.items) {
                             if (item.key.value === fieldName) {
-                                const fieldValue = item.value?.value;
+                                const fieldValue = item.value?.value ?? item.value?.items;
                                 maps.push({[fieldName]: fieldValue, range: map.range});
                             }
                         }
@@ -233,6 +245,10 @@ export default class YamlUtils {
         });
 
         return maps;
+    }
+
+    static extractAllTaskIds(source) {
+        return this.extractFieldFromMaps(source, "id", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks"].includes(e.key?.value)))
     }
 
     static extractAllTypes(source) {

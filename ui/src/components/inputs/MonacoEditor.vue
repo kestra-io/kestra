@@ -444,6 +444,16 @@
             tillCursorContent(lineContent, position) {
                 return lineContent.substring(0, position.column - 1);
             },
+            tasks(source) {
+                const tasksFromTasksProp = YamlUtils.extractFieldFromMaps(source, "tasks")
+                    .flatMap(allTasks => allTasks.tasks);
+                const tasksFromTaskProp = YamlUtils.extractFieldFromMaps(source, "task")
+                    .map(task => task.task)
+                    .flatMap(task => YamlUtils.pairsToMap(task) ?? [])
+
+                return [...tasksFromTasksProp, ...tasksFromTaskProp]
+                    .filter(task => typeof task?.get === "function" && task?.get("id"));
+            },
             async autocompletion(
                 source,
                 lineContent,
@@ -459,7 +469,7 @@
                     autocompletions = flowAsJs?.inputs?.map(input => input.id);
                     break;
                 case "outputs":
-                    autocompletions = flowAsJs?.tasks?.map(task => task.id);
+                    autocompletions = this.tasks(source).map(task => task.get("id"));
                     break;
                 case "labels":
                     autocompletions = Object.keys(flowAsJs?.labels ?? {});
@@ -479,7 +489,7 @@
                 default: {
                     let match = field.match(/^outputs\.([^.]+)$/);
                     if (match) {
-                        autocompletions = await this.outputsFor(match[1], flowAsJs);
+                        autocompletions = await this.outputsFor(match[1], source);
                     }
                 }
                 }
@@ -504,13 +514,15 @@
                         }
                     }) ?? [];
             },
-            async outputsFor(taskId, flowAsJs) {
-                const task = flowAsJs?.tasks?.find(task => task.id === taskId);
-                if (!task?.type) {
+            async outputsFor(taskId, source) {
+                const taskType = this.tasks(source).filter(task => task.get("id") === taskId)
+                    .map(task => task.get("type"))
+                    ?.[0];
+                if (!taskType) {
                     return [];
                 }
 
-                const pluginDoc = await this.$store.dispatch("plugin/load", {cls: task.type, commit: false});
+                const pluginDoc = await this.$store.dispatch("plugin/load", {cls: taskType, commit: false});
 
                 return Object.entries(pluginDoc?.schema?.outputs?.properties ?? {})
                     .map(([propName, propInfo]) => propName + (propInfo.type === "object" ? "." : ""));

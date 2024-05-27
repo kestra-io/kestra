@@ -921,7 +921,7 @@ public class RunContext {
         try {
             this.cleanTemporaryDirectory();
         } catch (IOException ex) {
-            logger().warn("Unable to cleanup worker task", ex);
+            new RunContextLogger().logger().warn("Unable to cleanup worker task", ex);
         }
     }
 

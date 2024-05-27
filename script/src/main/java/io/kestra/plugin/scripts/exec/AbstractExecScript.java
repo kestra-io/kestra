@@ -80,7 +80,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Builder.Default
     @Schema(
         title = "Fail the task on the first command with a non-zero status.",
-        description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified."
+        description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified." +
+            "\nYou can also disable it if your interpreter does not support the `set -e`option."
     )
     @PluginProperty
     protected Boolean failFast = true;

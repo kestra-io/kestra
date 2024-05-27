@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
+
 /**
  * Base class for all task runners.
  */
@@ -38,12 +40,12 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     private transient Map<String, String> env;
-    
+
     @JsonIgnore
     @Builder.Default
     @Getter(AccessLevel.NONE)
     private AtomicReference<Runnable> killable = new AtomicReference<>();
-    
+
     @JsonIgnore
     @Builder.Default
     @Getter(AccessLevel.PROTECTED)
@@ -112,9 +114,9 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
             return relativePath;
         }
 
-        return workingDir + "/" + relativePath;
+        return windowsToUnixPath(workingDir + "/" + relativePath);
     }
-    
+
     /** {@inheritDoc} **/
     @Override
     public void kill() {
@@ -125,7 +127,7 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
             }
         }
     }
-    
+
     /**
      * Registers a runnable to be invoked when this {@link TaskRunner} is killed.
      * The passed {@link Runnable} can be used to dispose any resource or process started by the {@link TaskRunner}.

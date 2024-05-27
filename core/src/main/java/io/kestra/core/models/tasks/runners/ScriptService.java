@@ -8,6 +8,7 @@ import io.kestra.core.utils.Slugify;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import javax.annotation.Nullable;
 import java.io.FileOutputStream;
@@ -148,7 +149,7 @@ public final class ScriptService {
                     ListUtils.emptyOnNull(beforeCommands).stream(),
                     commands.stream()
                 )
-                .collect(Collectors.joining(System.lineSeparator()))
+                .collect(Collectors.joining(getSeparator()))
         );
 
         return commandsArgs;
@@ -236,5 +237,12 @@ public final class ScriptService {
         // we add a suffix of 5 chars, this should be enough as it's the standard k8s way
         String suffix = RandomStringUtils.randomAlphanumeric(5).toLowerCase();
         return normalized + "-" + suffix;
+    }
+
+    private static String getSeparator() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return "\n";
+        }
+        return System.lineSeparator();
     }
 }

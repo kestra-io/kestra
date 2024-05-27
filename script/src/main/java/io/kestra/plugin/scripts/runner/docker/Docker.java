@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
 @SuperBuilder
 @ToString
@@ -411,7 +412,7 @@ public class Docker extends TaskRunner {
         }
         boolean volumesEnabled = volumeEnabledConfig.orElse(Boolean.FALSE);
 
-        Path workingDirectory = taskCommands.getWorkingDirectory();
+        Path workingDirectory = Path.of(windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
         String image = runContext.render(this.image, additionalVars);
 
         CreateContainerCmd container = dockerClient.createContainerCmd(image);
@@ -427,15 +428,16 @@ public class Docker extends TaskRunner {
         );
 
         if (workingDirectory != null) {
-            container.withWorkingDir(workingDirectory.toFile().getAbsolutePath());
+            container.withWorkingDir(windowsToUnixPath(workingDirectory.toFile().toString()));
         }
 
         List<Bind> binds = new ArrayList<>();
 
         if (workingDirectory != null) {
+            String bindPath = windowsToUnixPath(workingDirectory.toString());
             binds.add(new Bind(
-                workingDirectory.toAbsolutePath().toString(),
-                new Volume(workingDirectory.toAbsolutePath().toString()),
+                bindPath,
+                new Volume(bindPath),
                 AccessMode.rw
             ));
         }

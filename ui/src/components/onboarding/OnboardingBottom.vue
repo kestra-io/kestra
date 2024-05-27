@@ -5,7 +5,7 @@
             :key="card.title"
             :xs="24"
             :sm="12"
-            :md="8"
+            :md="12"
             :lg="6"
             :xl="6"
             class="pb-4"

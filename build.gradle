@@ -88,7 +88,7 @@ allprojects {
 
             // ugly bug on google cloud plugins
             force("com.google.protobuf:protobuf-java:3.25.3")
-            force("com.google.protobuf:protobuf-java-util:3.25.3")
+            force("com.google.protobuf:protobuf-java-util:4.27.0")
 
             // ugly bug for elastic plugins
             force("org.apache.httpcomponents:httpclient:4.5.14")

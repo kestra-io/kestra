@@ -574,7 +574,10 @@
           "hide": "Masquer les fichiers de l'espace de noms"
       },
       "filter": "Filtrer",
-      "no_items": "Aucun élément",
+      "no_items": {
+        "heading": "Il n'y a aucun fichier ici!",
+        "paragraph": "Créez ou importez vos fichiers pour commencer."
+      },
       "tree": {
           "expand": "Développer tous les dossiers",
           "collapse": "Réduire tous les dossiers"

@@ -134,7 +134,9 @@
         >
             <template #empty>
                 <div class="m-5 empty">
-                    {{ $t("namespace files.no_items") }}
+                    <img :src="FileExplorerEmpty">
+                    <h3>{{ $t("namespace files.no_items.heading") }}</h3>
+                    <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
@@ -337,6 +339,8 @@
 
     import Utils from "../../utils/utils";
 
+    import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
+
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
@@ -370,6 +374,7 @@
         },
         data() {
             return {
+                FileExplorerEmpty,
                 namespace: undefined,
                 filter: "",
                 dialog: {...DIALOG_DEFAULTS},
@@ -958,9 +963,28 @@
         border-right: 1px solid var(--bs-border-color);
 
         .empty {
-            text-align: center;
-            color: $secondary;
-            font-size: $font-size-xs;
+            position: relative;
+            top: 100px;
+            text-align: center;   
+            color: white;
+
+            html.light & {
+                color: $tertiary;
+            }
+          
+            & img {
+                margin-bottom: 2rem;   
+            }
+
+            & h3 {
+                font-size: var(--font-size-lg);
+                font-weight: 500;         
+                margin-bottom: .5rem;   
+            }
+
+            & p {
+                font-size: var(--font-size-sm);
+            }
         }
 
         :deep(.el-button):not(.el-dialog .el-button) {

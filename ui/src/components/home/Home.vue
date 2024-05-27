@@ -23,12 +23,13 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <date-range
-                        :start-date="startDate"
-                        :end-date="endDate"
-                        @update:model-value="onDateChange($event)"
-                        class="w-auto"
+                    <date-filter
+                        @update:is-relative="onDateFilterTypeChange"
+                        @update:filter-value="updateQuery"
                     />
+                </el-form-item>
+                <el-form-item>
+                    <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
                 </el-form-item>
             </collapse>
 
@@ -131,6 +132,7 @@
 
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
+    import RefreshButton from "../layout/RefreshButton.vue";
 </script>
 
 <script>
@@ -151,14 +153,14 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
-    import DateRange from "../layout/DateRange.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
+    import DateFilter from "../executions/date-select/DateFilter.vue";
     import HomeStartup from "override/mixins/homeStartup"
 
     export default {
         mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
-            DateRange,
+            DateFilter,
             OnboardingBottom,
             Collapse,
             StateGlobalChart,
@@ -186,8 +188,7 @@
             }
         },
         created() {
-            this.loadStats();
-            this.haveExecutions();
+            this.load();
         },
         watch: {
             $route(newValue, oldValue) {
@@ -196,8 +197,7 @@
                 }
             },
             flowId() {
-                this.loadStats();
-                this.haveExecutions();
+                this.load();
             }
         },
         data() {
@@ -210,16 +210,22 @@
                 executionCounts: undefined,
                 alls: undefined,
                 namespacesStats: undefined,
-                namespaceRestricted: !!this.namespace
+                namespaceRestricted: !!this.namespace,
+                refreshDates: false,
+                canAutoRefresh: false
             };
         },
         methods: {
+            onDateFilterTypeChange(event) {
+                this.canAutoRefresh = event;
+            },
             loadQuery(base, stats) {
                 let queryFilter = _cloneDeep(this.$route.query);
 
                 if (stats) {
                     delete queryFilter["startDate"];
                     delete queryFilter["endDate"];
+                    delete queryFilter["timeRange"];
                 }
 
                 if (this.selectedNamespace) {
@@ -231,6 +237,10 @@
                 }
 
                 return _merge(base, queryFilter)
+            },
+            load() {
+                this.loadStats();
+                this.haveExecutions();
             },
             haveExecutions() {
                 let params = {
@@ -250,6 +260,7 @@
                     });
             },
             loadStats() {
+                this.refreshDates = !this.refreshDates;
                 this.dailyReady = false;
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
@@ -311,19 +322,17 @@
                     });
                 }
             },
-            onDateChange(dates) {
-                if(dates.startDate && dates.endDate) {
-                    this.$router.push({
-                        query: {...this.$route.query, ...{startDate: dates.startDate, endDate: dates.endDate}}
-                    });
-                } else {
-                    let query = _cloneDeep(this.$route.query);
-                    delete query["startDate"];
-                    delete query["endDate"];
-                    this.$router.push({
-                        query: {...query}
-                    });
+            updateQuery(queryParam) {
+                let query = {...this.$route.query};
+                for (const [key, value] of Object.entries(queryParam)) {
+                    if (value === undefined || value === "" || value === null) {
+                        delete query[key]
+                    } else {
+                        query[key] = value;
+                    }
                 }
+
+                this.$router.push({query: query}).then(this.load);
             }
         },
         computed: {
@@ -363,11 +372,23 @@
                 return this.namespace || this.$route.query.namespace;
             },
             endDate() {
-                return this.$route.query.endDate ? this.$route.query.endDate : this.$moment().toISOString(true);
+                if (this.$route.query.endDate) {
+                    return this.$route.query.endDate;
+                }
+                return undefined;
             },
             startDate() {
-                return this.$route.query.startDate ? this.$route.query.startDate : this.$moment(this.endDate)
-                    .add(-30, "days").toISOString(true);
+                // This allow to force refresh this computed property especially when using timeRange
+                this.refreshDates;
+                if (this.$route.query.startDate) {
+                    return this.$route.query.startDate;
+                }
+                if (this.$route.query.timeRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
+                }
+
+                // the default is PT30D
+                return this.$moment().subtract(30, "days").toISOString(true);
             },
             isAllowedTrigger() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);

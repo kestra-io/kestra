@@ -706,7 +706,7 @@
                 e.preventDefault();
             }
         }
-     
+
         const isFlow = currentTab?.value?.extension === undefined;
 
         if (isFlow) {
@@ -1004,8 +1004,8 @@
                 schema-type="flow"
                 :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                 :extension="currentTab?.extension"
-                @update:model-value="editorUpdate($event)"
-                @cursor="updatePluginDocumentation($event)"
+                @update:model-value="editorUpdate"
+                @cursor="updatePluginDocumentation"
                 :creating="isCreating"
                 @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                 :read-only="isReadOnly"
@@ -1013,7 +1013,7 @@
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">           
+        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">
             <div
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"
@@ -1048,13 +1048,13 @@
                     {{ $t("unable to generate graph") }}
                 </el-alert>
             </div>
-            
+
             <PluginDocumentation
                 v-if="viewType === editorViewTypes.SOURCE_DOC"
                 class="plugin-doc combined-right-view enhance-readability"
             />
         </div>
-    
+
         <drawer
             v-if="isNewErrorOpen"
             v-model="isNewErrorOpen"
@@ -1063,7 +1063,7 @@
             <el-form label-position="top">
                 <task-editor
                     :section="SECTIONS.TASKS"
-                    @update:model-value="onUpdateNewError($event)"
+                    @update:model-value="onUpdateNewError"
                 />
             </el-form>
             <template #footer>
@@ -1086,7 +1086,7 @@
             <el-form label-position="top">
                 <task-editor
                     :section="SECTIONS.TRIGGERS"
-                    @update:model-value="onUpdateNewTrigger($event)"
+                    @update:model-value="onUpdateNewTrigger"
                 />
             </el-form>
             <template #footer>
@@ -1109,7 +1109,7 @@
             <el-form label-position="top">
                 <metadata-editor
                     :metadata="getFlowMetadata()"
-                    @update:model-value="onUpdateMetadata($event)"
+                    @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
                 />
             </el-form>

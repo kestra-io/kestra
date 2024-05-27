@@ -3,7 +3,7 @@
         :value="timeRange"
         :options="timeFilterPresets"
         :tooltip="$t('relative start date')"
-        @change="onChangeRange($event)"
+        @change="onChangeRange"
     />
 </template>
 

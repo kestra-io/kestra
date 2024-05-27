@@ -4,7 +4,7 @@
             ref="search"
             class="flex-shrink-0"
             v-model="filter"
-            @select="goTo($event)"
+            @select="goTo"
             :fetch-suggestions="search"
             popper-class="global-search-popper"
             :placeholder="$t('jump to...')"

@@ -36,7 +36,7 @@
                 :query="query"
                 :label="label"
                 @clicked="() => isDrawerOpen = false"
-                @deleted="removeSavedFilter($event)"
+                @deleted="removeSavedFilter"
             />
 
             <template #footer>

@@ -8,7 +8,7 @@
                     :persistent="false"
                     :placeholder="$t('task')"
                     clearable
-                    @update:model-value="updateQuery('task', $event)"
+                    @update:model-value="updateQuery({'task': $event})"
                 >
                     <el-option
                         v-for="item in tasksWithMetrics"
@@ -27,7 +27,7 @@
                     :clearable="true"
                     :persistent="false"
                     :placeholder="$t('metric')"
-                    @update:model-value="updateQuery('metric',$event)"
+                    @update:model-value="updateQuery({'metric': $event})"
                 >
                     <el-option
                         v-for="item in metrics"
@@ -46,7 +46,7 @@
                     :clearable="true"
                     :persistent="false"
                     :placeholder="$t('aggregation')"
-                    @update:model-value="updateQuery('aggregation',$event)"
+                    @update:model-value="updateQuery({'aggregation': $event})"
                 >
                     <el-option
                         v-for="item in ['sum','avg','min','max']"
@@ -57,11 +57,13 @@
                 </el-select>
             </el-form-item>
             <el-form-item>
-                <date-range
-                    :start-date="$route.query.startDate"
-                    :end-date="$route.query.endDate"
-                    @update:model-value="onDateChange($event)"
+                <date-filter
+                    @update:is-relative="onDateFilterTypeChange"
+                    @update:filter-value="updateQuery"
                 />
+            </el-form-item>
+            <el-form-item>
+                <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
             </el-form-item>
         </collapse>
     </nav>
@@ -95,17 +97,19 @@
     import {Bar} from "vue-chartjs";
     import {mapState} from "vuex";
     import moment from "moment";
-    import DateRange from "../layout/DateRange.vue";
     import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
     import {cssVariable} from "../../utils/global";
     import Collapse from "../layout/Collapse.vue";
+    import DateFilter from "../executions/date-select/DateFilter.vue";
+    import RefreshButton from "../layout/RefreshButton.vue";
 
     export default {
         name: "FlowMetrics",
         components: {
             Collapse,
             Bar,
-            DateRange,
+            DateFilter,
+            RefreshButton
         },
         created() {
             this.loadMetrics();
@@ -187,22 +191,53 @@
             },
             display() {
                 return this.$route.query.metric && this.$route.query.aggregation;
+            },
+            endDate() {
+                if (this.$route.query.endDate) {
+                    return this.$route.query.endDate;
+                }
+                return undefined;
+            },
+            startDate() {
+                // This allow to force refresh this computed property especially when using timeRange
+                this.refreshDates;
+                if (this.$route.query.startDate) {
+                    return this.$route.query.startDate;
+                }
+                if (this.$route.query.timeRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
+                }
+
+                // the default is PT30D
+                return this.$moment().subtract(30, "days").toISOString(true);
             }
         },
         data() {
             return {
                 tooltipContent: undefined,
                 isLoading: false,
+                canAutoRefresh: false,
+                refreshDates: false
             }
         },
         methods: {
+            onDateFilterTypeChange(event) {
+                this.canAutoRefresh = event;
+            },
+            loadQuery(base) {
+                return {
+                    ...base,
+                    startDate: this.startDate,
+                    endDate: this.endDate
+                }
+            },
             loadMetrics() {
                 this.$store.dispatch("flow/loadTasksWithMetrics",{...this.$route.params})
                 this.$store
-                    .dispatch(this.$route.query.task ? "flow/loadTaskMetrics" : "flow/loadFlowMetrics", {
+                    .dispatch(this.$route.query.task ? "flow/loadTaskMetrics" : "flow/loadFlowMetrics", this.loadQuery({
                         ...this.$route.params,
-                        taskId: this.$route.query.task
-                    })
+                        taskId: this.$route.query.task,
+                    }))
                     .then(() => {
                         if (this.metrics.length > 0) {
                             if (this.$route.query.metric && !this.metrics.includes(this.$route.query.metric)) {
@@ -220,47 +255,38 @@
                 this.isLoading = true;
 
                 if (this.display) {
-                    this.$store.dispatch(this.$route.query.task ? "flow/loadTaskAggregatedMetrics" : "flow/loadFlowAggregatedMetrics", {
+                    this.$store.dispatch(this.$route.query.task ? "flow/loadTaskAggregatedMetrics" : "flow/loadFlowAggregatedMetrics", this.loadQuery({
                         ...this.$route.params,
                         ...this.$route.query,
                         metric: this.$route.query.metric,
                         aggregate: this.$route.query.aggregation,
                         taskId: this.$route.query.task
-                    })
+                    }))
                 } else {
                     this.$store.commit("flow/setAggregatedMetric", undefined)
                 }
                 this.isLoading = false;
             },
-            onDateChange(keyOrObject) {
+            updateQuery(queryParam) {
                 let query = {...this.$route.query};
-                for (const [key, value] of Object.entries(keyOrObject)) {
+                for (const [key, value] of Object.entries(queryParam)) {
                     if (value === undefined || value === "" || value === null) {
                         delete query[key]
                     } else {
                         query[key] = value;
                     }
                 }
-                this.$router.push({query: query}).then(_ => {
-                    this.loadAggregatedMetrics();
-                })
-            },
-            updateQuery(key, value) {
-                let query = {...this.$route.query};
-                if (value === undefined || value === "" || value === null) {
-                    delete query[key]
-                } else {
-                    query[key] = value;
-                }
 
-                this.$router.push({query: query}).then(_ => {
-                    if (key === "task") {
-                        this.loadMetrics();
-                    } else {
-                        this.loadAggregatedMetrics();
-                    }
-                })
+                this.$router.push({query: query}).then(this.load);
             },
+            load() {
+                if (!this.$route.query.metric) {
+                    this.loadMetrics();
+                } else {
+                    this.refreshDates = !this.refreshDates;
+                    this.loadAggregatedMetrics();
+                }
+            }
         }
     }
 </script>

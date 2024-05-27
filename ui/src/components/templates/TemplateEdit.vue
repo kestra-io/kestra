@@ -18,7 +18,7 @@
     </top-nav-bar>
     <templates-deprecated />
     <section class="container d-flex flex-fill">
-        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
+        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
     </section>
 </template>
 

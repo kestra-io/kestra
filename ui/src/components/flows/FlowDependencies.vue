@@ -189,7 +189,7 @@
                     @expand-dependencies="expand"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
-                    @open-link="openFlow($event)"
+                    @open-link="openFlow"
                 />
             </template>
 

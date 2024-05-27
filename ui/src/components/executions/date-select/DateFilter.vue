@@ -15,12 +15,12 @@
         v-if="selectedFilterType === filterType.ABSOLUTE"
         :start-date="startDate"
         :end-date="endDate"
-        @update:model-value="onAbsFilterChange($event)"
+        @update:model-value="onAbsFilterChange"
     />
     <relative-date-select
         v-if="selectedFilterType === filterType.RELATIVE"
         :time-range="timeRange"
-        @update:model-value="onRelFilterChange($event)"
+        @update:model-value="onRelFilterChange"
     />
 </template>
 

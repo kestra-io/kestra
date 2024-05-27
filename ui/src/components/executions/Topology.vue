@@ -13,7 +13,7 @@
                 is-read-only
                 @follow="forwardEvent('follow', $event)"
                 view-type="topology"
-                @expand-subflow="onExpandSubflow($event)"
+                @expand-subflow="onExpandSubflow"
             />
             <el-alert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}

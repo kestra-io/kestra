@@ -106,7 +106,7 @@
         </el-form-item>
         <el-switch
             :model-value="showConcurrency"
-            @update:model-value="updateConcurrency($event)"
+            @update:model-value="updateConcurrency"
             :active-text="$t('enable concurrency')"
         />
         <el-form-item v-if="concurrencySchema">

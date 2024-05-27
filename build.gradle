@@ -113,7 +113,7 @@ allprojects {
             force("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:" + jacksonVersion)
 
             // issue with the Docker lib having a too old version for the k8s extension
-            force("org.apache.commons:commons-compress:1.26.1")
+            force("org.apache.commons:commons-compress:1.26.2")
         }
     }
 

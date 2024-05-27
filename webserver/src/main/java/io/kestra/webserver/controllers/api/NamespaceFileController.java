@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
@@ -23,11 +22,15 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 
 @Slf4j
 @Validated
@@ -242,7 +245,7 @@ public class NamespaceFileController {
 
         String pathWithoutScheme = path.getPath();
         List<String> allNamespaceFilesPaths = new ArrayList<>(storageInterface.allByPrefix(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null), true).stream()
-            .map(this.toNamespacedStorageUri(namespace, null)::relativize)
+            .map(toNamespacedStorageUri(namespace, null)::relativize)
             .map(uri -> "/" + uri.getPath())
             .toList());
 
@@ -275,10 +278,6 @@ public class NamespaceFileController {
         if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
             throw new IllegalArgumentException("Forbidden path: " + path.getPath());
         }
-    }
-
-    private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
-        return URI.create("kestra://" + StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
     }
 
     private void ensureWritableNamespaceFile(URI path) {

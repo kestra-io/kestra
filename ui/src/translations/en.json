@@ -602,7 +602,10 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
-      "no_items": "No items",
+      "no_items": {
+        "heading": "There are no files here!",
+        "paragraph": "Create or import your files to get started."
+      },
       "tree": {
         "expand": "Expand all folders",
         "collapse": "Collapse all folders"

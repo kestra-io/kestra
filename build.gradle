@@ -61,115 +61,81 @@ dependencies {
  * Dependencies
  **********************************************************************************************************************/
 allprojects {
-    group "io.kestra"
+    if (it.name != 'platform') {
+        group "io.kestra"
 
-    sourceCompatibility = 21
-    targetCompatibility = 21
+        sourceCompatibility = 21
+        targetCompatibility = 21
 
-    repositories {
-        mavenCentral()
-    }
-
-    // micronaut
-    apply plugin: "java"
-    apply plugin: "java-library"
-    apply plugin: "idea"
-    apply plugin: "jacoco"
-
-    configurations {
-        developmentOnly // for dependencies that are needed for development only
-        micronaut
-    }
-
-    //
-    configurations.all {
-        resolutionStrategy {
-            force("org.slf4j:slf4j-api:$slf4jVersion")
-
-            // ugly bug on google cloud plugins
-            force("com.google.protobuf:protobuf-java:3.25.3")
-            force("com.google.protobuf:protobuf-java-util:3.25.3")
-
-            // ugly bug for elastic plugins
-            force("org.apache.httpcomponents:httpclient:4.5.14")
-
-            // ugly bug on crypto plugin
-            force('org.bouncycastle:bcprov-jdk18on:1.78.1')
-            force('org.bouncycastle:bcpg-jdk18on:1.78.1')
-
-            // ugly bug for jackson
-            force("com.fasterxml.jackson:jackson-bom:" + jacksonVersion)
-            force("com.fasterxml.jackson.core:jackson-bom:" + jacksonVersion)
-            force("com.fasterxml.jackson.core:jackson-core:" + jacksonVersion)
-            force("com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion)
-            force("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:" + jacksonVersion)
-            force("com.fasterxml.jackson.module:jackson-module-parameter-names:" + jacksonVersion)
-            force("com.fasterxml.jackson.datatype:jackson-datatype-guava:" + jacksonVersion)
-            force("com.fasterxml.jackson.core:jackson-annotations:" + jacksonVersion)
-            force("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:" + jacksonVersion)
-            force("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:" + jacksonVersion)
-            force("com.fasterxml.jackson.dataformat:jackson-dataformat-ion:" + jacksonVersion)
-            force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:" + jacksonVersion)
-            force("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:" + jacksonVersion)
-
-            // issue with the Docker lib having a too old version for the k8s extension
-            force("org.apache.commons:commons-compress:1.26.2")
+        repositories {
+            mavenCentral()
         }
-    }
-
-
-    // dependencies
-    dependencies {
-        // lombok
-        annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        compileOnly 'org.projectlombok:lombok:' + lombokVersion
 
         // micronaut
-        annotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        annotationProcessor "io.micronaut:micronaut-inject-java"
-        annotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+        apply plugin: "java"
+        apply plugin: "java-library"
+        apply plugin: "idea"
+        apply plugin: "jacoco"
 
-        implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        micronaut "io.micronaut:micronaut-inject"
-        micronaut "io.micronaut.validation:micronaut-validation"
-        micronaut "io.micronaut.beanvalidation:micronaut-hibernate-validator"
-        micronaut "io.micronaut:micronaut-runtime"
-        micronaut "io.micronaut:micronaut-retry"
-        micronaut "io.micronaut:micronaut-jackson-databind"
-        micronaut "io.micronaut.data:micronaut-data-model"
-        micronaut "io.micronaut:micronaut-management"
-        micronaut "io.micrometer:micrometer-core"
-        micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-        micronaut "io.micronaut:micronaut-http-client"
-        micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
+        configurations {
+            developmentOnly // for dependencies that are needed for development only
+            micronaut
+        }
 
-        // logs
-        implementation "org.slf4j:slf4j-api"
-        implementation "ch.qos.logback:logback-classic"
-        implementation "org.codehaus.janino:janino:3.1.12"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.23.1'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
-        implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
+        // dependencies
+        dependencies {
+            // Platform
+            annotationProcessor enforcedPlatform(project(":platform"))
+            implementation enforcedPlatform(project(":platform"))
+            api enforcedPlatform(project(":platform"))
+            micronaut enforcedPlatform(project(":platform"))
 
-        // jackson
-        implementation platform(group: 'com.fasterxml.jackson', name:'jackson-bom', version: jacksonVersion)
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+            // lombok
+            annotationProcessor "org.projectlombok:lombok"
+            compileOnly 'org.projectlombok:lombok'
 
-        // kestra
-        implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
+            // micronaut
+            annotationProcessor "io.micronaut:micronaut-inject-java"
+            annotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+            micronaut "io.micronaut:micronaut-inject"
+            micronaut "io.micronaut.validation:micronaut-validation"
+            micronaut "io.micronaut.beanvalidation:micronaut-hibernate-validator"
+            micronaut "io.micronaut:micronaut-runtime"
+            micronaut "io.micronaut:micronaut-retry"
+            micronaut "io.micronaut:micronaut-jackson-databind"
+            micronaut "io.micronaut.data:micronaut-data-model"
+            micronaut "io.micronaut:micronaut-management"
+            micronaut "io.micrometer:micrometer-core"
+            micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
+            micronaut "io.micronaut:micronaut-http-client"
+            micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
 
-        // exposed utils
-        api platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        api group: 'com.google.guava', name: 'guava', version: '33.2.1-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.16.1'
-        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
-        api "io.swagger.core.v3:swagger-annotations"
+            // logs
+            implementation "org.slf4j:slf4j-api"
+            implementation "ch.qos.logback:logback-classic"
+            implementation "org.codehaus.janino:janino"
+            implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j'
+            implementation group: 'org.slf4j', name: 'jul-to-slf4j'
+            implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
+            implementation group: 'org.fusesource.jansi', name: 'jansi'
+
+            // jackson
+            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
+            implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
+            implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
+            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
+            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
+
+            // kestra
+            implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
+            implementation group: 'net.thisptr', name: 'jackson-jq'
+
+            // exposed utils
+            api group: 'com.google.guava', name: 'guava'
+            api group: 'commons-io', name: 'commons-io'
+            api group: 'org.apache.commons', name: 'commons-lang3'
+            api "io.swagger.core.v3:swagger-annotations"
+        }
     }
 }
 
@@ -177,62 +143,65 @@ allprojects {
  * Test
  **********************************************************************************************************************/
 subprojects {
-    apply plugin: "com.adarshr.test-logger"
+    if (it.name != 'platform') {
+        apply plugin: "com.adarshr.test-logger"
 
-    sourceCompatibility = 21
-    targetCompatibility = 21
+        sourceCompatibility = 21
+        targetCompatibility = 21
 
-    dependencies {
-        // lombok
-        testAnnotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
+        dependencies {
+            // Platform
+            testAnnotationProcessor enforcedPlatform(project(":platform"))
+            testImplementation enforcedPlatform(project(":platform"))
 
-        // micronaut
-        testAnnotationProcessor platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-        testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+            // lombok
+            testAnnotationProcessor "org.projectlombok:lombok:"
+            testCompileOnly 'org.projectlombok:lombok'
 
-        testImplementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        testImplementation "io.micronaut.test:micronaut-test-junit5"
+            // micronaut
+            testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+            testAnnotationProcessor "io.micronaut.validation:micronaut-validation-processor"
+            testImplementation "io.micronaut.test:micronaut-test-junit5"
 
-        testImplementation "org.junit.jupiter:junit-jupiter-engine"
-        testImplementation "org.junit.jupiter:junit-jupiter-params"
-        testImplementation "org.junit-pioneer:junit-pioneer:2.2.0"
-        testImplementation 'org.mockito:mockito-junit-jupiter'
+            testImplementation "org.junit.jupiter:junit-jupiter-engine"
+            testImplementation "org.junit.jupiter:junit-jupiter-params"
+            testImplementation "org.junit-pioneer:junit-pioneer"
+            testImplementation 'org.mockito:mockito-junit-jupiter'
 
-        // hamcrest
-        testImplementation 'org.hamcrest:hamcrest:2.2'
-        testImplementation 'org.hamcrest:hamcrest-library:2.2'
-        testImplementation group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
-    }
+            // hamcrest
+            testImplementation 'org.hamcrest:hamcrest'
+            testImplementation 'org.hamcrest:hamcrest-library'
+            testImplementation 'org.exparity:hamcrest-date'
+        }
 
-    test {
-        useJUnitPlatform()
+        test {
+            useJUnitPlatform()
 
-        maxHeapSize = "4048m"
+            maxHeapSize = "4048m"
 
-        // configure en_US default locale for tests
-        systemProperty 'user.language', 'en'
-        systemProperty 'user.country', 'US'
+            // configure en_US default locale for tests
+            systemProperty 'user.language', 'en'
+            systemProperty 'user.country', 'US'
 
-        environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
-        environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
-        environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
-        environment 'SECRET_NON_B64_SECRET', "some secret value"
-        environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
-        environment 'KESTRA_TEST1', "true"
-        environment 'KESTRA_TEST2', "Pass by env"
-    }
+            environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+            environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
+            environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
+            environment 'SECRET_NON_B64_SECRET', "some secret value"
+            environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
+            environment 'KESTRA_TEST1', "true"
+            environment 'KESTRA_TEST2', "Pass by env"
+        }
 
-    testlogger {
-        theme 'mocha-parallel'
-        showExceptions true
-        showFullStackTraces true
-        showCauses true
-        slowThreshold 2000
-        showStandardStreams true
-        showPassedStandardStreams false
-        showSkippedStandardStreams true
+        testlogger {
+            theme 'mocha-parallel'
+            showExceptions true
+            showFullStackTraces true
+            showCauses true
+            slowThreshold 2000
+            showStandardStreams true
+            showPassedStandardStreams false
+            showSkippedStandardStreams true
+        }
     }
 }
 
@@ -240,24 +209,26 @@ subprojects {
  * Allure Reports
  **********************************************************************************************************************/
 subprojects {
-    dependencies {
-        testImplementation platform("io.qameta.allure:allure-bom:2.27.0")
-        testImplementation "io.qameta.allure:allure-junit5"
-    }
-
-    configurations {
-        agent {
-            canBeResolved = true
-            canBeConsumed = true
+    if (it.name != 'platform') {
+        dependencies {
+            testImplementation platform("io.qameta.allure:allure-bom")
+            testImplementation "io.qameta.allure:allure-junit5"
         }
-    }
 
-    dependencies {
-        agent "org.aspectj:aspectjweaver:1.9.22.1"
-    }
+        configurations {
+            agent {
+                canBeResolved = true
+                canBeConsumed = true
+            }
+        }
 
-    test {
-        jvmArgs = [ "-javaagent:${configurations.agent.singleFile}" ]
+        dependencies {
+            agent "org.aspectj:aspectjweaver:1.9.22.1"
+        }
+
+        test {
+            jvmArgs = ["-javaagent:${configurations.agent.singleFile}"]
+        }
     }
 }
 
@@ -265,19 +236,17 @@ subprojects {
  * Jacoco
  **********************************************************************************************************************/
 subprojects {
-    apply plugin: 'jacoco'
+    if (it.name != 'platform') {
+        apply plugin: 'jacoco'
 
-    test {
-        finalizedBy jacocoTestReport
+        test {
+            finalizedBy jacocoTestReport
+        }
+
+        jacocoTestReport {
+            dependsOn test
+        }
     }
-}
-
-dependencies {
-    jacocoAggregation subprojects
-}
-
-tasks.named('testCodeCoverageReport') {
-    dependsOn = subprojects.test
 }
 
 tasks.named('check') {
@@ -486,6 +455,9 @@ subprojects {
 
                     artifact shadowJar
                     artifact executableJar
+                } else if (project.name.contains('platform')){
+                    groupId project.group
+                    artifactId project.name
                 } else {
                     from components.java
 
@@ -504,6 +476,11 @@ subprojects {
         // only sign JARs that we publish to Sonatype
         required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
         sign publishing.publications.sonatypePublication
+    }
+
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        // Suppression this validaton error as we want to enfore the Kestra platform
+        suppressedValidationErrors.add('enforced-platform')
     }
 }
 

@@ -9,18 +9,18 @@ dependencies {
     implementation "io.micronaut:micronaut-http-server-netty"
 
     // logs
-    implementation 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
-    implementation 'ch.qos.logback.contrib:logback-jackson:0.1.5'
+    implementation 'ch.qos.logback.contrib:logback-json-classic'
+    implementation 'ch.qos.logback.contrib:logback-jackson'
 
     // plugins
-    implementation 'org.eclipse.aether:aether-api:1.1.0'
-    implementation 'org.eclipse.aether:aether-spi:1.1.0'
-    implementation 'org.eclipse.aether:aether-util:1.1.0'
-    implementation 'org.eclipse.aether:aether-impl:1.1.0'
-    implementation 'org.eclipse.aether:aether-connector-basic:1.1.0'
-    implementation 'org.eclipse.aether:aether-transport-file:1.1.0'
-    implementation 'org.eclipse.aether:aether-transport-http:1.1.0'
-    implementation('org.apache.maven:maven-aether-provider:3.3.9') {
+    implementation 'org.eclipse.aether:aether-api'
+    implementation 'org.eclipse.aether:aether-spi'
+    implementation 'org.eclipse.aether:aether-util'
+    implementation 'org.eclipse.aether:aether-impl'
+    implementation 'org.eclipse.aether:aether-connector-basic'
+    implementation 'org.eclipse.aether:aether-transport-file'
+    implementation 'org.eclipse.aether:aether-transport-http'
+    implementation('org.apache.maven:maven-aether-provider') {
         // sisu dependency injector is not used
         exclude group: 'org.eclipse.sisu'
     }

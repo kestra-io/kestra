@@ -3,10 +3,9 @@ dependencies {
     implementation project(':core')
     annotationProcessor project(':processor')
 
-    implementation platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     implementation 'io.micronaut:micronaut-context'
 
-    implementation ('com.github.docker-java:docker-java:3.3.6') {
+    implementation ('com.github.docker-java:docker-java') {
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
     }

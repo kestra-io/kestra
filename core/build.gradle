@@ -19,31 +19,32 @@ dependencies {
     annotationProcessor project(':processor')
 
     // serializers
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'
 
     // reactor
     api "io.projectreactor:reactor-core"
 
     // micronaut
+    api "io.micronaut.data:micronaut-data-model"
     implementation "io.micronaut:micronaut-http-server-netty"
 
     // utils
-    implementation 'com.github.oshi:oshi-core:6.6.1'
-    implementation 'io.pebbletemplates:pebble:3.2.2'
-    implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
-    implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.29.0'
-    implementation group: 'de.focus-shift', name: 'jollyday-jaxb', version: '0.29.0'
-    implementation 'nl.basjes.gitignore:gitignore-reader:1.6.0'
-    implementation group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
+    implementation 'com.github.oshi:oshi-core'
+    implementation 'io.pebbletemplates:pebble'
+    implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder'
+    implementation group: 'de.focus-shift', name: 'jollyday-core'
+    implementation group: 'de.focus-shift', name: 'jollyday-jaxb'
+    implementation 'nl.basjes.gitignore:gitignore-reader'
+    implementation group: 'dev.failsafe', name: 'failsafe'
 
     // scheduler
-    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
+    implementation group: 'com.cronutils', name: 'cron-utils'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.35.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: '4.35.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.35.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.35.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2'
 
     // test
     testAnnotationProcessor project(':processor')

@@ -28,7 +28,7 @@ dependencies {
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
-    testImplementation("com.github.tomakehurst:wiremock-jre8:3.0.1")
+    testImplementation("com.github.tomakehurst:wiremock-jre8")
 
     testImplementation project(':jdbc')
     testImplementation project(':jdbc').sourceSets.test.output

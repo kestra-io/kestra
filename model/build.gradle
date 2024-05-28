@@ -1,4 +1,5 @@
 dependencies {
+    api platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
     api 'jakarta.annotation:jakarta.annotation-api'
     api 'jakarta.validation:jakarta.validation-api'
     api 'io.swagger.core.v3:swagger-annotations'

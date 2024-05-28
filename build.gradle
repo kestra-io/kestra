@@ -165,6 +165,7 @@ allprojects {
         implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20240207'
 
         // exposed utils
+        api platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
         api group: 'com.google.guava', name: 'guava', version: '33.2.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.16.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'

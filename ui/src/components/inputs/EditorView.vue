@@ -17,8 +17,7 @@
     import Close from "vue-material-design-icons/Close.vue";
     import CircleMedium from "vue-material-design-icons/CircleMedium.vue";
 
-    import KestraLogo from "../../assets/icon.svg";
-    import {getVSIFileIcon} from "file-extension-icon-js";
+    import TypeIcon from "../utils/icons/Type.vue"
 
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -250,17 +249,6 @@
     };
     const closeTab = (tab, index) => {
         store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
-    };
-    const getIcon = (name) => {
-        if (!name) return;
-
-        // Returning logo for files without extension
-        if (name.split(".").length < 2) return KestraLogo;
-
-        // Making sure icon is correct for 'yml' files
-        if (name.endsWith(".yml")) name = name.replace(/\.yml$/, ".yaml");
-
-        return getVSIFileIcon(name);
     };
 
     const persistViewType = (value) => {
@@ -928,7 +916,7 @@
                 @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
             >
-                <img :src="getIcon(tab.name)" :alt="tab.extension" width="18">
+                <TypeIcon :name="tab.name" />
                 <el-tooltip
                     effect="light"
                     v-if="tab.path"

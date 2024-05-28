@@ -1263,7 +1263,7 @@
 
     .tabs {
         flex: 1;
-        overflow-x: auto;
+        width: 100px;
         white-space: nowrap;
 
         .tab-active {

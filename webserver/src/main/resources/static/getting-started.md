@@ -1,6 +1,6 @@
 Welcome to the Code Editor!
 
-The embedded Visual Studio Code IDE lets you easily add custom scripts, queries, and configuration files along with your flow YAML configuration files.
+The Embedded Code Editor lets you easily add custom scripts, queries, and configuration files along with your flow YAML configuration files.
 
 Get started by selecting a namespace. If you type a name of a namespace that doesn't exist yet, Kestra will create it for you at runtime.
 

@@ -329,6 +329,7 @@ public abstract class JdbcRunnerTest {
     void dynamicTask() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
 
+        assertThat(execution.getTaskRunList().size(), is(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 

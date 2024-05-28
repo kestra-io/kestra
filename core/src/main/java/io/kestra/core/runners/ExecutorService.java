@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.WaitFor;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -861,7 +862,7 @@ public class ExecutorService {
         ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
 
         // declared dynamic tasks
-        if (workerTaskResult.getDynamicTaskRuns() != null) {
+        if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {
             taskRuns.addAll(workerTaskResult.getDynamicTaskRuns());
         }
 

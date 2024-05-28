@@ -42,7 +42,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -63,7 +62,7 @@ public class RunContext {
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private RunContextLogger runContextLogger;
-    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
+    private List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
     protected transient Path temporaryDirectory;
     private String triggerExecutionId;
     private Storage storage;
@@ -538,6 +537,7 @@ public class RunContext {
 
         newContext.variables = ImmutableMap.copyOf(clone);
         newContext.temporaryDirectory = this.tempDir();
+        newContext.dynamicWorkerTaskResult = this.dynamicWorkerResults();
         newContext.initLogger(taskRun, workerTask.getTask());
         newContext.initStorage(taskRun);
         newContext.initPluginConfiguration(applicationContext, workerTask.getTask().getType());

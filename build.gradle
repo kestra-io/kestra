@@ -94,8 +94,8 @@ allprojects {
             force("org.apache.httpcomponents:httpclient:4.5.14")
 
             // ugly bug on crypto plugin
-            force('org.bouncycastle:bcprov-jdk18on:1.78')
-            force('org.bouncycastle:bcpg-jdk18on:1.78')
+            force('org.bouncycastle:bcprov-jdk18on:1.78.1')
+            force('org.bouncycastle:bcpg-jdk18on:1.78.1')
 
             // ugly bug for jackson
             force("com.fasterxml.jackson:jackson-bom:" + jacksonVersion)
@@ -113,7 +113,7 @@ allprojects {
             force("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:" + jacksonVersion)
 
             // issue with the Docker lib having a too old version for the k8s extension
-            force("org.apache.commons:commons-compress:1.26.1")
+            force("org.apache.commons:commons-compress:1.26.2")
         }
     }
 
@@ -153,11 +153,12 @@ allprojects {
         implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: jacksonVersion
+        implementation platform(group: 'com.fasterxml.jackson', name:'jackson-bom', version: jacksonVersion)
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'

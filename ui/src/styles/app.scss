@@ -85,6 +85,10 @@ main {
     }
 }
 
+.el-icon.el-select__caret.el-select__icon {
+    font-size: 1.1rem;
+}
+
 // status
 @each $key, $value in global-var.$colors {
     .bg-#{$key} {

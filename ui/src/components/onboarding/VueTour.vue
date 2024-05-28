@@ -46,12 +46,12 @@
                                 </p>
                                 <div>
                                     <div
-                                        v-for="(task, taskIndex) in flow.tasks"
+                                        v-for="(task, taskIndex) in allTasks(flow.tasks)"
                                         :key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         class="image me-1"
                                     >
                                         <TaskIcon
-                                            :cls="task.type"
+                                            :cls="task"
                                             :icons="icons"
                                             :color="ICON_COLOR"
                                             only-icon
@@ -183,6 +183,29 @@
     const activeFlow = ref(0);
     const flows = ref([]);
 
+    const allTasks = (tasks) => {
+        const uniqueTypes = new Set();
+
+        const collectTypes = (task) => {
+            if (task && typeof task === "object") {
+                if (task.type) {
+                    uniqueTypes.add(task.type);
+                }
+                for (const key in task) {
+                    if (Object.prototype.hasOwnProperty.call(task, key)) {
+                        collectTypes(task[key]);
+                    }
+                }
+            }
+        };
+
+        tasks.forEach(task => {
+            collectTypes(task);
+        });
+
+        return Array.from(uniqueTypes);
+    };
+
     const properties = (step, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
         ...(c ? {content: t(`onboarding.steps.${step}.content`)} : {}),
@@ -195,8 +218,8 @@
     const toggleScroll = (enabled = true) => {
         const wrapper = document.getElementById("app");
         enabled
-            ? wrapper.classList.remove("no-scroll")
-            : wrapper.classList.add("no-scroll");
+            ? wrapper?.classList.remove("no-scroll")
+            : wrapper?.classList.add("no-scroll");
     };
 
     const steps = [

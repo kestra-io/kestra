@@ -148,13 +148,7 @@
                 >
                     <el-row justify="space-between" class="w-100">
                         <el-col class="w-100">
-                            <span class="me-2">
-                                <img
-                                    :src="getIcon(!data.leaf, data.fileName)"
-                                    :alt="data.extension"
-                                    width="18"
-                                >
-                            </span>
+                            <TypeIcon :name="data.fileName" :folder="!data.leaf" class="me-2" />
                             <span class="filename"> {{ data.fileName }}</span>
                         </el-col>
                     </el-row>
@@ -347,7 +341,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
 
-    import {getVSIFileIcon, getVSIFolderIcon} from "file-extension-icon-js";
+    import TypeIcon from "../utils/icons/Type.vue"
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -370,7 +364,8 @@
             FilePlus,
             FolderPlus,
             PlusBox,
-            FolderDownloadOutline
+            FolderDownloadOutline,
+            TypeIcon
         },
         data() {
             return {
@@ -510,18 +505,6 @@
                 })
 
                 this.filter = "";
-            },
-            getIcon(isFolder, name) {
-                if (isFolder) return getVSIFolderIcon("folder");
-
-                if (!name) return;
-
-                // Making sure icon is correct for 'yml' files
-                if (name.endsWith(".yml")) {
-                    name = name.replace(/\.yml$/, ".yaml");
-                }
-
-                return getVSIFileIcon(name);
             },
             toggleDropdown(reference) {
                 if (this.dropdownRef) {

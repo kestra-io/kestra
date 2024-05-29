@@ -13,6 +13,7 @@ import lombok.extern.jackson.Jacksonized;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,7 +75,7 @@ public class FlowUsage {
     protected static Map<String, Long> taskRunnerTypeCount(List<Flow> allFlows) {
         return allFlows
             .stream()
-            .flatMap(f -> f.allTasks())
+            .flatMap(Flow::allTasks)
             .filter(t -> {
                 try {
                     return t.getClass().getMethod("getTaskRunner") != null;
@@ -90,7 +91,7 @@ public class FlowUsage {
                     return null;
                 }
             })
-            .filter(t -> t != null)
+            .filter(Objects::nonNull)
             .collect(Collectors.groupingBy(f -> f, Collectors.counting()));
     }
 }

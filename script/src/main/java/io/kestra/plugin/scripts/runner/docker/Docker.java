@@ -66,7 +66,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                   - id: shell
                     type: io.kestra.plugin.scripts.shell.Commands
                     taskRunner:
-                      type: io.kestra.plugin.scripts.runner.docker.DockerTaskRunner
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
                     commands:
                     - echo "Hello World\"""",
             full = true

@@ -37,7 +37,7 @@ public abstract class FilesService {
 
          inputFiles
              .forEach(throwBiConsumer((fileName, input) -> {
-                 var file = new File(runContext.tempDir().toString(), fileName);
+                 var file = new File(runContext.tempDir().toString(), runContext.render(fileName, additionalVars));
 
                  if (!file.getParentFile().exists()) {
                      //noinspection ResultOfMethodCallIgnored

@@ -27,8 +27,9 @@ import jakarta.validation.constraints.NotNull;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
-    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
+    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
@@ -90,13 +91,13 @@ abstract public class PluginUtilsService {
     @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
-            return (Map<String, String>) inputFiles;
+            return runContext.renderMap((Map<String, String>) inputFiles);
         } else if (inputFiles instanceof String) {
-            final TypeReference<Map<String, String>> reference = new TypeReference<>() {};
+
 
             return JacksonMapper.ofJson(false).readValue(
                 runContext.render((String) inputFiles, additionalVars),
-                reference
+                MAP_TYPE_REFERENCE
             );
         } else {
             throw new IllegalVariableEvaluationException("Invalid `files` properties with type '" + (inputFiles != null ? inputFiles.getClass() : "null") + "'");

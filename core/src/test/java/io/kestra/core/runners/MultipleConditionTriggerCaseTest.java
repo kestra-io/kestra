@@ -20,6 +20,7 @@ import jakarta.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class MultipleConditionTriggerCaseTest {
@@ -87,7 +88,7 @@ public class MultipleConditionTriggerCaseTest {
     }
 
     public void failed() throws InterruptedException, TimeoutException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(2);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
 
         executionQueue.receive(either -> {
@@ -108,7 +109,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         // wait a little to be sure that the trigger is not launching execution
-        countDownLatch.await(1, TimeUnit.SECONDS);
+        Thread.sleep(1000);
         assertThat(ended.size(), is(1));
 
         // second one
@@ -117,7 +118,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         // trigger was not done
-        countDownLatch.await(10, TimeUnit.SECONDS);
+        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         assertThat(ended.size(), is(2));
     }
 }

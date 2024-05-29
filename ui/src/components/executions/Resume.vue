@@ -126,7 +126,7 @@
                 return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : [];
             },
             needInputs() {
-                return this.inputsList.length > 0;
+                return this.inputsList?.length > 0;
             }
         },
     };

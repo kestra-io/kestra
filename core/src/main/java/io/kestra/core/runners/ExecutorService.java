@@ -545,7 +545,7 @@ public class ExecutorService {
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
                     if (next.isEmpty()) {
                         return executor;
-                    } else if (nextDate != null && !next.isEmpty()) {
+                    } else if (nextDate != null) {
                         executionDelays.add(ExecutionDelay.builder()
                             .taskRunId(taskRun.getId())
                             .executionId(executor.getExecution().getId())

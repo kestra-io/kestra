@@ -43,7 +43,7 @@ import java.util.stream.Stream;
     title = "Run a list of tasks repeatedly until the expected condition is met.",
     description = """
         Use this task if your workflow requires blocking calls polling for a job to finish or for some external API to return a specific HTTP response.
-        
+
         You can access the outputs of the nested tasks in the `condition` property. The `condition` is evaluated after all nested task runs finish.
         """
 )
@@ -59,7 +59,7 @@ import java.util.stream.Stream;
                 tasks:
                   - id: loop
                     type: io.kestra.plugin.core.flow.WaitFor
-                    condition: "{{ outputs.return.value != '4' }}"
+                    condition: "{{ outputs.return.value == '4' }}"
                     tasks:
                       - id: return
                         type: io.kestra.plugin.core.debug.Return
@@ -69,7 +69,7 @@ import java.util.stream.Stream;
     }
 )
 public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
-    int INITIAL_LOOP_VALUE = 1;
+    private static final int INITIAL_LOOP_VALUE = 1;
 
     @Valid
     protected List<Task> errors;
@@ -91,6 +91,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
         title = "If set to `true`, the task run will end in a failed state once the `maxIterations` or `maxDuration` are reached."
     )
     @Builder.Default
+    @PluginProperty
     private Boolean failOnMaxReached = false;
 
     @Schema(
@@ -144,8 +145,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     public Instant nextExecutionDate(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!this.reachedMaximums(runContext, execution, parentTaskRun, false)) {
             String continueLoop = runContext.render(this.condition);
-            if (TruthUtils.isTruthy(continueLoop)) {
-
+            if (!TruthUtils.isTruthy(continueLoop)) {
                 return Instant.now().plus(this.checkFrequency.interval);
             }
         }
@@ -181,7 +181,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         boolean childTaskExecuted = this.childTaskRunExecuted(execution, parentTaskRun);
         if (childTaskExecuted && nextExecutionDate(runContext, execution, parentTaskRun) != null) {
-            return Optional.of(State.Type.RUNNING);
+            return Optional.empty();
         }
 
         if (childTaskExecuted && this.reachedMaximums(runContext, execution, parentTaskRun, true) && this.failOnMaxReached) {

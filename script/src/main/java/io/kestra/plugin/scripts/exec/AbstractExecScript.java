@@ -4,6 +4,7 @@ import com.google.common.annotations.Beta;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.runners.TargetOS;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
@@ -101,6 +102,12 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Deprecated
     private Boolean outputDirectory;
 
+    @Schema(
+        title = "The target operating system where the script will run."
+    )
+    @Builder.Default
+    public TargetOS targetOS = TargetOS.AUTO;
+
     abstract public DockerOptions getDocker();
 
     @Schema(
@@ -139,7 +146,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)
             .withEnableOutputDirectory(this.getOutputDirectory())
-            .withTimeout(this.getTimeout());
+            .withTimeout(this.getTimeout())
+            .withTargetOS(this.targetOS);
     }
 
     protected List<String> getBeforeCommandsWithOptions() {

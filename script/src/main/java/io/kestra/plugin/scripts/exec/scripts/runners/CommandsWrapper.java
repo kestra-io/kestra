@@ -9,6 +9,7 @@ import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.scripts.exec.AbstractExecScript;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
@@ -75,6 +76,9 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private Duration timeout;
 
+    @With
+    private TargetOS targetOS;
+
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
         this.workingDirectory = runContext.tempDir();
@@ -101,7 +105,8 @@ public class CommandsWrapper implements TaskCommands {
             inputFiles,
             outputFiles,
             enableOutputDirectory,
-            timeout
+            timeout,
+            targetOS
         );
     }
 

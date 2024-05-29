@@ -8,7 +8,6 @@ import io.kestra.core.utils.Slugify;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 
 import javax.annotation.Nullable;
 import java.io.FileOutputStream;
@@ -103,11 +102,12 @@ public final class ScriptService {
         RunContext runContext,
         List<String> commands
     ) throws IOException, IllegalVariableEvaluationException {
-        return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, (ignored, file) -> {}, false);
+        return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, (ignored, file) -> {
+        }, false);
     }
 
     private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {
-        try(InputStream inputStream = runContext.storage().getFile(URI.create(uri))) {
+        try (InputStream inputStream = runContext.storage().getFile(URI.create(uri))) {
             Path path = runContext.tempFile();
 
             IOUtils.copyLarge(inputStream, new FileOutputStream(path.toFile()));
@@ -137,11 +137,20 @@ public final class ScriptService {
         return uploaded;
     }
 
+
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command) {
-        return scriptCommands(interpreter, beforeCommands, List.of(command));
+        return scriptCommands(interpreter, beforeCommands, List.of(command), TargetOS.LINUX);
     }
 
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, List<String> commands) {
+        return scriptCommands(interpreter, beforeCommands, commands, TargetOS.LINUX);
+    }
+
+    public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command, TargetOS targetOS) {
+        return scriptCommands(interpreter, beforeCommands, List.of(command), targetOS);
+    }
+
+    public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, List<String> commands, TargetOS targetOS) {
         ArrayList<String> commandsArgs = new ArrayList<>(interpreter);
         commandsArgs.add(
             Stream
@@ -149,7 +158,7 @@ public final class ScriptService {
                     ListUtils.emptyOnNull(beforeCommands).stream(),
                     commands.stream()
                 )
-                .collect(Collectors.joining(getSeparator()))
+                .collect(Collectors.joining(targetOS.getLineSeparator()))
         );
 
         return commandsArgs;
@@ -237,12 +246,5 @@ public final class ScriptService {
         // we add a suffix of 5 chars, this should be enough as it's the standard k8s way
         String suffix = RandomStringUtils.randomAlphanumeric(5).toLowerCase();
         return normalized + "-" + suffix;
-    }
-
-    private static String getSeparator() {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            return "\n";
-        }
-        return System.lineSeparator();
     }
 }

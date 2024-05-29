@@ -412,7 +412,7 @@ public class Docker extends TaskRunner {
         }
         boolean volumesEnabled = volumeEnabledConfig.orElse(Boolean.FALSE);
 
-        Path workingDirectory = Path.of(windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
+        Path workingDirectory = taskCommands.getWorkingDirectory();
         String image = runContext.render(this.image, additionalVars);
 
         CreateContainerCmd container = dockerClient.createContainerCmd(image);
@@ -428,7 +428,7 @@ public class Docker extends TaskRunner {
         );
 
         if (workingDirectory != null) {
-            container.withWorkingDir(windowsToUnixPath(workingDirectory.toFile().toString()));
+            container.withWorkingDir(windowsToUnixPath(workingDirectory.toAbsolutePath().toString()));
         }
 
         List<Bind> binds = new ArrayList<>();
@@ -521,6 +521,7 @@ public class Docker extends TaskRunner {
         if (this.getNetworkMode() != null) {
             hostConfig.withNetworkMode(runContext.render(this.getNetworkMode(), additionalVars));
         }
+
 
         return container
             .withHostConfig(hostConfig)

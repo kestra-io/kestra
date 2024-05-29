@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+
 /**
  * Interface for the commands passed to a TaskRunner.
  */
@@ -30,4 +31,6 @@ public interface TaskCommands {
     }
 
     Duration getTimeout();
+
+    TargetOS getTargetOS();
 }

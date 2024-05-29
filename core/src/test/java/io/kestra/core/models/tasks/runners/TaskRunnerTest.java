@@ -151,6 +151,11 @@ public class TaskRunnerTest {
         }
 
         @Override
+        public TargetOS getTargetOS() {
+            return null;
+        }
+
+        @Override
         public Map<String, Object> getAdditionalVars() {
             return Map.of(
                 SCRIPT_COMMANDS_ADDITIONAL_VAR_KEY, SCRIPT_COMMANDS_ADDITIONAL_VAR_VALUE,

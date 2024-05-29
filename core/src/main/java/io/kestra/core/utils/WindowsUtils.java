@@ -1,9 +1,16 @@
 package io.kestra.core.utils;
 
+import java.util.regex.Matcher;
+
 public class WindowsUtils {
 
     public static String windowsToUnixPath(String path){
-        String unixPath = path.replace("\\", "/").replace(":", "");
+        Matcher matcher = java.util.regex.Pattern.compile("([A-Za-z]:)").matcher(path);
+        String unixPath = matcher.replaceAll(m -> m.group().toLowerCase());
+
+        unixPath = unixPath
+            .replace("\\", "/")
+            .replace(":", "");
         if (!unixPath.startsWith("/")) {
             unixPath = "/" + unixPath;
         }

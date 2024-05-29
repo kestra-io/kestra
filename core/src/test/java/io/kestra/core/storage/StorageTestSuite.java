@@ -331,11 +331,11 @@ public abstract class StorageTestSuite {
 
         URI with = new URI(withTenant);
         assertTrue(storageInterface.exists(tenantId, with));
-        assertFalse(storageInterface.exists(nullTenant, with));
+        assertFalse(storageInterface.exists(null, with));
 
         URI without = new URI(nullTenant);
-        assertTrue(storageInterface.exists(null, without));
         assertFalse(storageInterface.exists(tenantId, without));
+        assertTrue(storageInterface.exists(null, without));
 
     }
 

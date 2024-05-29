@@ -46,7 +46,9 @@
                                 </p>
                                 <div>
                                     <div
-                                        v-for="(task, taskIndex) in allTasks(flow.tasks)"
+                                        v-for="(task, taskIndex) in allTasks(
+                                            flow.tasks,
+                                        )"
                                         :key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         class="image me-1"
                                     >
@@ -99,7 +101,14 @@
                                     v-if="!tour.isFirst && !tour.isLast"
                                     @click="previousStep(tour.currentStep)"
                                 />
-                                <Next @click="nextStep(tour)" />
+                                <Next
+                                    v-if="!tour.isLast && !currentStep(tour).hideNext"
+                                    @click="nextStep(tour)"
+                                />
+                                <Finish
+                                    v-if="tour.isLast"
+                                    @click="finishTour(tour.currentStep, false)"
+                                />
                             </Wrapper>
                         </Teleport>
                     </template>
@@ -125,6 +134,8 @@
 
     import Previous from "./components/buttons/Previous.vue";
     import Next from "./components/buttons/Next.vue";
+
+    import Finish from "./components/buttons/Finish.vue";
 
     import {apiUrl} from "override/utils/route";
     import {pageFromRoute} from "../../utils/eventsRouter";
@@ -199,7 +210,7 @@
             }
         };
 
-        tasks.forEach(task => {
+        tasks.forEach((task) => {
             collectTypes(task);
         });
 
@@ -285,6 +296,7 @@
             ...properties(4, true, false),
             icon: ArrowTop,
             condensed: true,
+            hideNext: true,
             target: "#execute-button",
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
@@ -293,6 +305,7 @@
             ...properties(5, true, false),
             icon: ArrowTop,
             condensed: true,
+            hideNext: true,
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {
@@ -332,7 +345,7 @@
         dispatchEvent(current, "skip");
         TOURS[TOUR_NAME].stop();
     };
-    const finishTour = (current) => {
+    const finishTour = (current, push = true) => {
         toggleScroll();
 
         updateStatus();
@@ -340,7 +353,7 @@
         dispatchEvent(current, "executed");
         TOURS[TOUR_NAME].finish();
 
-        router.push({name: "flows/create"});
+        if (push) router.push({name: "flows/create"});
     };
     const exploreOther = (current) => {
         finishTour(current);

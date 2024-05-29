@@ -747,6 +747,7 @@
     "onboarding": {
       "next": "Next",
       "previous": "Previous",
+      "finish": "Finish",
       "skip": "Skip Tutorial",
       "steps": {
         "0": {

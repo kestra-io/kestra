@@ -102,11 +102,11 @@
                                     @click="previousStep(tour.currentStep)"
                                 />
                                 <Next
-                                    v-if="!tour.isLast"
+                                    v-if="!tour.isLast && !currentStep(tour).hideNext"
                                     @click="nextStep(tour)"
                                 />
                                 <Finish
-                                    v-else
+                                    v-if="tour.isLast"
                                     @click="finishTour(tour.currentStep, false)"
                                 />
                             </Wrapper>
@@ -296,6 +296,7 @@
             ...properties(4, true, false),
             icon: ArrowTop,
             condensed: true,
+            hideNext: true,
             target: "#execute-button",
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
@@ -304,6 +305,7 @@
             ...properties(5, true, false),
             icon: ArrowTop,
             condensed: true,
+            hideNext: true,
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {

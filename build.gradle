@@ -506,10 +506,9 @@ release {
     tagCommitMessage = 'tag version'
     newVersionCommitMessage = 'update snapshot version'
     tagTemplate = 'v${version}'
-    pushReleaseVersionBranch = 'master'
     buildTasks = ['classes']
 
     git {
-        requireBranch.set('release')
+        requireBranch.set('develop')
     }
 }

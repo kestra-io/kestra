@@ -24,7 +24,11 @@
                             alt="Kestra"
                             class="animation"
                         >
-                        <div v-if="currentStep(tour).title" class="title">
+                        <div
+                            v-if="currentStep(tour).title"
+                            class="title"
+                            :class="{dark: currentStep(tour).keepDark}"
+                        >
                             <div v-if="currentStep(tour).icon">
                                 <img :src="currentStep(tour).icon">
                             </div>
@@ -32,7 +36,13 @@
                         </div>
                     </template>
                     <template #content>
-                        <div v-if="tour.currentStep === 1" class="flows">
+                        <div
+                            v-if="tour.isFirst"
+                            v-html="currentStep(tour).content"
+                            class="v-step__content"
+                            :class="{dark: currentStep(tour).keepDark}"
+                        />
+                        <div v-if="tour.currentStep === 1" class="flows dark">
                             <el-button
                                 v-for="(flow, flowIndex) in flows"
                                 :key="`flow__${flowIndex}`"
@@ -55,7 +65,7 @@
                                         <TaskIcon
                                             :cls="task"
                                             :icons="icons"
-                                            :color="ICON_COLOR"
+                                            :variable="ICON_COLOR"
                                             only-icon
                                         />
                                     </div>
@@ -101,13 +111,6 @@
                                     v-if="!tour.isFirst && !tour.isLast"
                                     @click="previousStep(tour.currentStep)"
                                 />
-                                <Next
-                                    v-if="
-                                        !tour.isLast &&
-                                            !currentStep(tour).hideNext
-                                    "
-                                    @click="nextStep(tour)"
-                                />
                                 <Finish
                                     v-if="tour.isLast"
                                     @click="finishTour(tour.currentStep, false)"
@@ -136,7 +139,6 @@
     import Skip from "./components/buttons/Skip.vue";
 
     import Previous from "./components/buttons/Previous.vue";
-    import Next from "./components/buttons/Next.vue";
 
     import Finish from "./components/buttons/Finish.vue";
 
@@ -170,7 +172,13 @@
     const TOUR_OPTIONS = {highlight: true, useKeyboardNavigation: false};
     const TOURS = getCurrentInstance()?.appContext.config.globalProperties.$tours;
 
-    const ICON_COLOR = "#cac5da";
+    const DARK_MODE = computed(
+        () =>
+            document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0,
+    );
+    const ICON_COLOR = computed(() => {
+        return DARK_MODE.value ? "--card-bg" : "--bs-heading-color";
+    });
 
     const STEP_OPTIONS = {
         modifiers: [
@@ -199,23 +207,26 @@
 
     const allTasks = (tasks) => {
         const uniqueTypes = new Set();
+        const dockerBuild = "io.kestra.plugin.docker.Build";
+        const dockerRun = "io.kestra.plugin.docker.Run";
 
         const collectTypes = (task) => {
             if (task && typeof task === "object") {
-                if (task.type) {
-                    uniqueTypes.add(task.type);
-                }
-                for (const key in task) {
-                    if (Object.prototype.hasOwnProperty.call(task, key)) {
-                        collectTypes(task[key]);
+                const {type} = task;
+                if (type) {
+                    if (
+                        (type === dockerBuild && uniqueTypes.has(dockerRun)) ||
+                        (type === dockerRun && uniqueTypes.has(dockerBuild))
+                    ) {
+                        return;
                     }
+                    uniqueTypes.add(type);
                 }
+                Object.values(task).forEach(collectTypes);
             }
         };
 
-        tasks.forEach((task) => {
-            collectTypes(task);
-        });
+        tasks.forEach(collectTypes);
 
         return Array.from(uniqueTypes);
     };
@@ -256,6 +267,7 @@
         {
             ...properties(0),
             fullscreen: true,
+            keepDark: true,
             before: () => {
                 toggleScroll(false);
 
@@ -270,6 +282,7 @@
         {
             ...properties(1, false),
             fullscreen: true,
+            keepDark: true,
             nextStep: () => {
                 router.push({
                     name: "flows/update",
@@ -395,6 +408,9 @@
 </script>
 
 <style lang="scss">
+$background: var(--card-bg);
+$color: var(--bs-heading-color);
+
 $background-primary: #1c1e27;
 $background-secondary: #2f3342;
 $border-color: #404559;
@@ -449,7 +465,7 @@ $flow-image-size-container: 36px;
     }
 
     &:not(.fullscreen) {
-        background: $background-secondary;
+        background: $background;
         border: 1px solid $border-color-active;
         border-radius: 8px;
     }
@@ -464,12 +480,16 @@ $flow-image-size-container: 36px;
     }
 
     & div.title {
+        &.dark {
+            color: $white;
+        }
+
         margin-bottom: 2rem;
         text-align: center;
         line-height: 3rem;
         font-size: 2rem;
-        font-weight: bold;
-        color: $white;
+        font-weight: 500;
+        color: $color;
 
         & div {
             height: 2rem;
@@ -478,12 +498,16 @@ $flow-image-size-container: 36px;
     }
 
     & .v-step__content {
+        &.dark {
+            color: $white;
+        }
+
         border: none;
         margin-bottom: 2rem;
         text-align: center;
         line-height: 2rem;
         font-size: 1.2rem;
-        color: $white;
+        color: $color;
     }
 
     & div.flows {
@@ -504,22 +528,27 @@ $flow-image-size-container: 36px;
             margin: 0;
             padding: 1rem;
             width: $flow-card-width;
-            background-color: $background-secondary;
+            background-color: $background;
             border: 1px solid $border-color;
 
             &.active {
                 border: 1px solid $border-color-active;
+                background-color: rgba(202, 197, 218, 0.9);
+
+                html.dark & {
+                    background-color: rgba(202, 197, 218, 0.3);
+                }
             }
 
             & .title {
                 line-height: 2rem;
                 font-size: 1.2rem;
                 font-weight: 500;
-                color: $white;
+                color: $color;
             }
 
             & .image {
-                background: $background-primary;
+                background: $background;
                 display: inline-flex;
                 justify-content: center;
                 align-items: center;

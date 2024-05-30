@@ -12,6 +12,10 @@
     });
 </script>
 
+<style lang="scss">
+@import url("./buttons.scss");
+</style>
+
 <style scoped lang="scss">
 $width: 100%;
 $max-width: 300px;

@@ -589,6 +589,8 @@
                         }
                     }
                 });
+
+                setTimeout(() => monaco.editor.remeasureFonts(), 1)
                 this.$emit("editorDidMount", this.editor);
             },
             async changeTab(pathOrName, valueSupplier, useModelCache = true) {

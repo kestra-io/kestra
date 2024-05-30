@@ -3,7 +3,7 @@
         <el-button id="execute-button" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
+        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
@@ -127,6 +127,12 @@
                 this.isSelectFlowOpen = false;
                 this.localFlow = undefined;
                 this.localNamespace = undefined;
+            },
+            beforeClose(done){
+                if(this.guidedProperties.tourStarted) return;
+                   
+                this.reset();
+                done()
             }
         },
         computed: {

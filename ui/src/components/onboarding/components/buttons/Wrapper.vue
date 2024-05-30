@@ -12,8 +12,8 @@
     });
 </script>
 
-<style lang="scss">
-@import url("./buttons.scss");
+<style scoped lang="scss">
+    @import url("./buttons.scss");
 </style>
 
 <style scoped lang="scss">

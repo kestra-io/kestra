@@ -4,11 +4,11 @@ $active: #8405ff;
 $height: 50px;
 $full: 100%;
 
-.main {
+:deep(.main) {
     padding: 1rem 2rem;
 }
 
-.alternative {
+:deep(.alternative) {
     background: $background;
 
     &:hover {
@@ -18,10 +18,10 @@ $full: 100%;
     }
 }
 
-.high {
+:deep(.high) {
     height: $height;
 }
 
-.full {
+:deep(.full) {
     width: $full;
 }

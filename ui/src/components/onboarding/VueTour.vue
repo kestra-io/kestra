@@ -30,7 +30,10 @@
                             :class="{dark: currentStep(tour).keepDark}"
                         >
                             <div v-if="currentStep(tour).icon">
-                                <img :src="currentStep(tour).icon">
+                                <img
+                                    :src="currentStep(tour).icon"
+                                    :class="{jump: currentStep(tour).jump}"
+                                >
                             </div>
                             <span v-html="currentStep(tour).title" />
                         </div>
@@ -329,6 +332,7 @@
             icon: ArrowTop,
             condensed: true,
             hideNext: true,
+            jump: true,
             target: "#execute-button",
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
@@ -484,6 +488,22 @@ $flow-image-size-container: 36px;
             color: $white;
         }
 
+        @keyframes jump {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        & img.jump {
+            animation: jump 2s infinite;
+        }
+
         margin-bottom: 2rem;
         text-align: center;
         line-height: 3rem;
@@ -531,7 +551,8 @@ $flow-image-size-container: 36px;
             background-color: $background;
             border: 1px solid $border-color;
 
-            &.active, &:hover {
+            &.active,
+            &:hover {
                 border: 1px solid $border-color-active;
                 background-color: rgba(202, 197, 218, 0.9);
 

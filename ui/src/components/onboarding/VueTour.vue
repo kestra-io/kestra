@@ -531,7 +531,7 @@ $flow-image-size-container: 36px;
             background-color: $background;
             border: 1px solid $border-color;
 
-            &.active {
+            &.active, &:hover {
                 border: 1px solid $border-color-active;
                 background-color: rgba(202, 197, 218, 0.9);
 

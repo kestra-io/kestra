@@ -103,7 +103,7 @@
                         </Wrapper>
 
                         <Teleport to="body">
-                            <Wrapper left>
+                            <Wrapper v-if="!tour.isLast" left>
                                 <Skip @click="skipTour(tour.currentStep)" />
                             </Wrapper>
                             <Wrapper right>
@@ -230,6 +230,22 @@
 
         return Array.from(uniqueTypes);
     };
+    const offset = computed(() => {
+        switch (flows.value[activeFlow.value].id) {
+        case "business_processes":
+        case "data_engineering_pipeline":
+            return 94;
+        case "business_automation":
+            return 134;
+        case "dwh_and_analytics":
+        case "file_processing":
+        case "infrastructure_automation":
+        case "microservices_and_apis":
+            return 174;
+        default:
+            return 134;
+        }
+    });
 
     const properties = (step, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
@@ -336,7 +352,12 @@
             target: "#gantt",
             highlightElement: "#gantt",
             params: {
-                modifiers: [{name: "offset", options: {offset: () => [0, 60]}}],
+                modifiers: [
+                    {
+                        name: "offset",
+                        options: {offset: () => [0, offset.value]},
+                    },
+                ],
                 placement: "bottom",
             },
             before: () => wait(1),

@@ -93,7 +93,7 @@
                         </Wrapper>
 
                         <Teleport to="body">
-                            <Wrapper left>
+                            <Wrapper v-if="!tour.isLast" left>
                                 <Skip @click="skipTour(tour.currentStep)" />
                             </Wrapper>
                             <Wrapper right>

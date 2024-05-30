@@ -74,6 +74,17 @@ public interface ServiceInstanceRepositoryInterface {
     List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states);
 
     /**
+     * Finds all service instances created between the given dates.
+     *
+     * @param type The service type.
+     * @param from The date from (inclusive)
+     * @param to The date to (exclusive)
+     *
+     * @return the list of {@link ServiceInstance}.
+     */
+    List<ServiceInstance> findAllInstancesBetween(final Service.ServiceType type, final Instant from, final Instant to);
+
+    /**
      * Attempt to transition the state of a given service to given new state.
      * This method may not update the service if the transition is not valid.
      *

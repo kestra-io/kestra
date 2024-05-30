@@ -20,11 +20,10 @@ public class ExecutionUsage {
     private final List<DailyExecutionStatistics> dailyExecutionsCount;
     private final List<DailyExecutionStatistics> dailyTaskRunsCount;
 
-    public static ExecutionUsage of(String tenantId, ExecutionRepositoryInterface executionRepository) {
-        ZonedDateTime startDate = ZonedDateTime.now()
-            .toLocalDate()
-            .atStartOfDay(ZoneId.systemDefault())
-            .minusDays(1);
+    public static ExecutionUsage of(final String tenantId,
+                                    final ExecutionRepositoryInterface executionRepository,
+                                    final ZonedDateTime from,
+                                    final ZonedDateTime to) {
 
         List<DailyExecutionStatistics> dailyTaskRunsCount = null;
 
@@ -34,8 +33,8 @@ public class ExecutionUsage {
                 tenantId,
                 null,
                 null,
-                startDate,
-                ZonedDateTime.now(),
+                from,
+                to,
                 DateUtils.GroupType.DAY,
                 true
             );
@@ -49,8 +48,8 @@ public class ExecutionUsage {
                 tenantId,
                 null,
                 null,
-                startDate,
-                ZonedDateTime.now(),
+                from,
+                to,
                 DateUtils.GroupType.DAY,
                 false
             ))
@@ -58,35 +57,29 @@ public class ExecutionUsage {
             .build();
     }
 
-    public static ExecutionUsage of(ExecutionRepositoryInterface executionRepository) {
-        ZonedDateTime startDate = ZonedDateTime.now()
-            .toLocalDate()
-            .atStartOfDay(ZoneId.systemDefault())
-            .minusDays(1);
-
+    public static ExecutionUsage of(final ExecutionRepositoryInterface repository,
+                                    final ZonedDateTime from,
+                                    final ZonedDateTime to) {
         List<DailyExecutionStatistics> dailyTaskRunsCount = null;
-
         try {
-            dailyTaskRunsCount = executionRepository.dailyStatisticsForAllTenants(
+            dailyTaskRunsCount = repository.dailyStatisticsForAllTenants(
                 null,
                 null,
                 null,
-                startDate,
-                ZonedDateTime.now(),
+                from,
+                to,
                 DateUtils.GroupType.DAY,
                 true
             );
-        } catch (UnsupportedOperationException ignored) {
-
-        }
+        } catch (UnsupportedOperationException ignored) {}
 
         return ExecutionUsage.builder()
-            .dailyExecutionsCount(executionRepository.dailyStatisticsForAllTenants(
+            .dailyExecutionsCount(repository.dailyStatisticsForAllTenants(
                 null,
                 null,
                 null,
-                startDate,
-                ZonedDateTime.now(),
+                from,
+                to,
                 DateUtils.GroupType.DAY,
                 false
             ))

@@ -7,7 +7,9 @@ import io.kestra.core.server.ServiceInstance;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,5 +78,11 @@ public class MemoryServiceInstanceRepository implements ServiceInstanceRepositor
             }
         }
         return instancesInStates;
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public List<ServiceInstance> findAllInstancesBetween(Service.ServiceType type, Instant from, Instant to) {
+        return Collections.emptyList();
     }
 }

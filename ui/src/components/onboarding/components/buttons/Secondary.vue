@@ -1,5 +1,5 @@
 <template>
-    <el-button class="secondary">
+    <el-button class="main alternative">
         {{ label }}
     </el-button>
 </template>
@@ -9,21 +9,3 @@
         label: {type: String, required: true},
     });
 </script>
-
-<style scoped lang="scss">
-$background: #2f3342;
-$color: #cac5da;
-
-.secondary {
-    padding: 1rem 2rem;
-    background: $background;
-
-    html.light & {
-        color: $color;
-
-        &:hover {
-            color: $background;
-        }
-    }
-}
-</style>

@@ -1,0 +1,20 @@
+$background: var(--card-bg);
+$color: var(--bs-heading-color);
+$height: 50px;
+$full: 100%;
+
+.main {
+    padding: 1rem 2rem;
+}
+
+.alternative {
+    background: $background;
+}
+
+.high {
+    height: $height;
+}
+
+.full {
+    width: $full;
+}

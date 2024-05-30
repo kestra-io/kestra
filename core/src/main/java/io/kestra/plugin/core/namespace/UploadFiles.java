@@ -22,11 +22,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 
@@ -146,9 +148,9 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             });
 
             // check for file in current tempDir that match regexs
-            List<Pattern> patterns = regexs.stream().map(Pattern::compile).toList();
+            List<PathMatcher> patterns = regexs.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + reg)).toList();
             for (File file : Objects.requireNonNull(runContext.tempDir().toFile().listFiles())) {
-                if (patterns.stream().anyMatch(p -> p.matcher(file.toURI().getPath()).find())) {
+                if (patterns.stream().anyMatch(p -> p.matches(Path.of(file.toURI().getPath())))) {
                     String newFilePath = buildPath(renderedDestination, file.getName());
                     storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
                 }

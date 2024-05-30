@@ -21,10 +21,12 @@ import org.slf4j.Logger;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 
@@ -82,12 +84,12 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI baseNamespaceFilesUri = toNamespacedStorageUri(renderedNamespace, null);
 
-        List<Pattern> patterns = files.stream().map(Pattern::compile).toList();
+        List<PathMatcher> patterns = files.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + reg)).toList();
 
         Map<String, URI> downloaded = new HashMap<>();
 
         storageInterface.allByPrefix(flowInfo.tenantId(), baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
-            if (patterns.stream().anyMatch(p -> p.matcher(uri.getPath()).find())) {
+            if (patterns.stream().anyMatch(p -> p.matches(Path.of(uri.getPath())))) {
                 try (InputStream inputStream = storageInterface.get(flowInfo.tenantId(), uri)) {
                     String filename = uri.toString().split("/_files/")[1];
                     downloaded.put(filename, runContext.storage().putFile(inputStream, filename));

@@ -42,7 +42,7 @@ public class DownloadFilesTest {
         DownloadFiles downloadFiles = DownloadFiles.builder()
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
-            .files(List.of("test1"))
+            .files(List.of("**test1*"))
             .namespace("{{ inputs.namespace }}")
             .build();
 

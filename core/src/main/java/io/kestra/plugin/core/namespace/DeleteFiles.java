@@ -19,10 +19,12 @@ import org.codehaus.commons.nullanalysis.NotNull;
 import org.slf4j.Logger;
 
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 
@@ -80,10 +82,10 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
         URI baseNamespaceFilesUri = toNamespacedStorageUri(renderedNamespace, null);
 
-        List<Pattern> patterns = runContext.render(files).stream().map(Pattern::compile).toList();
+        List<PathMatcher> patterns = files.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + reg)).toList();
         AtomicInteger count = new AtomicInteger();
         storageInterface.allByPrefix(flowInfo.tenantId(), baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
-            if (patterns.stream().anyMatch(p -> p.matcher(uri.getPath()).find())) {
+            if (patterns.stream().anyMatch(p -> p.matches(Path.of(uri.getPath())))) {
                 storageInterface.delete(flowInfo.tenantId(), uri);
                 logger.debug(String.format("Deleted %s", uri));
                 count.getAndIncrement();

@@ -43,10 +43,10 @@ public class DownloadFilesTest {
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
             .files(List.of("test1"))
-            .namespace(namespace)
+            .namespace("{{ inputs.namespace }}")
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, ImmutableMap.of("namespace", namespace));
 
         DownloadFiles.Output output = downloadFiles.run(runContext);
 

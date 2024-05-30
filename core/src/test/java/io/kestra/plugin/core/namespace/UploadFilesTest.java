@@ -78,11 +78,11 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .files(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(namespace)
+            .namespace("{{ inputs.namespace }}")
             .destination("/folder")
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile,  ImmutableMap.of("namespace", namespace));
         uploadFile.run(runContext);
 
         List<URI> namespaceFiles = namespaceFilesService.recursiveList(null, namespace, URI.create(""));

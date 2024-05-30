@@ -42,10 +42,10 @@ public class DeleteFilesTest {
             .id(DeleteFiles.class.getSimpleName())
             .type(DeleteFiles.class.getName())
             .files(List.of("test1"))
-            .namespace(namespace)
+            .namespace("{{ inputs.namespace }}")
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles,  ImmutableMap.of("namespace", namespace));
 
         DeleteFiles.Output output = deleteFiles.run(runContext);
 

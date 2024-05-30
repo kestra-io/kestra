@@ -2,6 +2,7 @@ package io.kestra.plugin.core.namespace;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -58,6 +59,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     @Schema(
         title = "The namespace where you want to apply the action."
     )
+    @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
@@ -65,18 +67,20 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         title = "A list of files from the given namespace.",
         description = "Must be a specific uri for upload, but can be an uri or a regex for delete and download."
     )
+    @PluginProperty(dynamic = true)
     private List<String> files;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
+        String renderedNamespace = runContext.render(namespace);
         // Check if namespace is allowed
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(flowInfo.tenantId(), this.namespace, flowInfo.tenantId(), flowInfo.namespace());
+        flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
 
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
-        URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
+        URI baseNamespaceFilesUri = toNamespacedStorageUri(renderedNamespace, null);
 
         List<Pattern> patterns = files.stream().map(Pattern::compile).toList();
 

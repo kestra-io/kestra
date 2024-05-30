@@ -3,6 +3,7 @@ package io.kestra.plugin.core.namespace;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -81,6 +82,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Schema(
         title = "The namespace where the file will be upload."
     )
+    @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
@@ -90,18 +92,20 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                     "Can also be a Map where you can give a specific destination path for a specific URI, useful if you need to rename a file.",
         anyOf = {List.class, Map.class}
     )
+    @PluginProperty(dynamic = true)
     private Object files;
 
     @Schema(
         title = "The destination folder.",
         description = "Required when providing a list of files."
     )
+    @PluginProperty(dynamic = true)
     private String destination;
 
     @Builder.Default
 
     @Schema(
-        title = "Action to execute when upload a file that already exists.",
+        title = "Action to execute when uploading a file that already exists.",
         description = "Can be OVERWRITE, ERROR or SKIP."
     )
     private ConflictAction conflict = ConflictAction.OVERWRITE;
@@ -109,15 +113,17 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Override
     public UploadFiles.Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
+        String renderedNamespace = runContext.render(namespace);
+        String renderedDestination = runContext.render(destination);
         // Check if namespace is allowed
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(flowInfo.tenantId(), this.namespace, flowInfo.tenantId(), flowInfo.namespace());
+        flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
 
         StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
 
         if (files instanceof List filesList) {
-            if (destination == null) {
+            if (renderedDestination == null) {
                 throw new RuntimeException("Destination must be set when providing a List for the `files` property.");
             }
             filesList = runContext.render((List<String>) filesList);
@@ -129,9 +135,9 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                 if (storageInterface.exists(flowInfo.tenantId(), URI.create(path))) {
                     String newFilePath = null;
                     try {
-                        newFilePath = buildPath(this.destination, storageInterface.getAttributes(flowInfo.tenantId(), URI.create(path)).getFileName());
-                        storeNewFile(logger, storageInterface, flowInfo.tenantId(), newFilePath, storageInterface.get(flowInfo.tenantId(), URI.create(path)));
-                    } catch (IOException e) {
+                        newFilePath = buildPath(renderedDestination, storageInterface.getAttributes(flowInfo.tenantId(), URI.create(path)).getFileName());
+                        storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, storageInterface.get(flowInfo.tenantId(), URI.create(path)));
+                    } catch (IOException | IllegalVariableEvaluationException e) {
                         throw new RuntimeException(e);
                     }
                 } else {
@@ -143,8 +149,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             List<Pattern> patterns = regexs.stream().map(Pattern::compile).toList();
             for (File file : Objects.requireNonNull(runContext.tempDir().toFile().listFiles())) {
                 if (patterns.stream().anyMatch(p -> p.matcher(file.toURI().getPath()).find())) {
-                    String newFilePath = buildPath(this.destination, file.getName());
-                    storeNewFile(logger, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
+                    String newFilePath = buildPath(renderedDestination, file.getName());
+                    storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
                 }
             }
         } else if (files instanceof Map map) {
@@ -155,8 +161,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                     URI toUpload = URI.create(valueString);
                     if (storageInterface.exists(flowInfo.tenantId(), toUpload)) {
                         try {
-                            storeNewFile(logger, storageInterface, flowInfo.tenantId(), keyString, storageInterface.get(flowInfo.tenantId(), toUpload));
-                        } catch (IOException e) {
+                            storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), keyString, storageInterface.get(flowInfo.tenantId(), toUpload));
+                        } catch (IOException | IllegalVariableEvaluationException e) {
                             throw new RuntimeException(e);
                         }
                     }
@@ -176,9 +182,10 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         return String.join("/", destination, filename);
     }
 
-    private void storeNewFile(Logger logger, StorageInterface storageInterface, String tenantId, String filePath, InputStream fileContent) throws IOException {
+    private void storeNewFile(Logger logger, RunContext runContext, StorageInterface storageInterface, String tenantId, String filePath, InputStream fileContent) throws IOException, IllegalVariableEvaluationException {
+        String renderedNamespace = runContext.render(namespace);
         URI newFileURI = toNamespacedStorageUri(
-            namespace,
+            renderedNamespace,
             URI.create(filePath)
         );
         if (!conflict.equals(ConflictAction.OVERWRITE) && storageInterface.exists(tenantId, newFileURI)) {

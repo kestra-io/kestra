@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref} from "vue";
+    import {computed, getCurrentInstance, onMounted, ref, watch} from "vue";
 
     import {useRouter} from "vue-router";
     import {useStore} from "vuex";
@@ -164,7 +164,7 @@
     const dispatchEvent = (step, action) =>
         store.dispatch("api/events", {
             type: "ONBOARDING",
-            onboarding: {step, action},
+            onboarding: {step, action, template: store.getters["core/guidedProperties"].template},
             page: pageFromRoute(router.currentRoute.value),
         });
 
@@ -246,6 +246,12 @@
             return 134;
         }
     });
+
+    watch(activeFlow, async (newValue) => {
+        store.commit("core/setGuidedProperties", {
+            template: flows.value[newValue].id,
+        });
+    })
 
     const properties = (step, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),

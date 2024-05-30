@@ -98,6 +98,7 @@
                         onboarding: {
                             step: this.$tours["guidedTour"].currentStep._value,
                             action: "next",
+                            template: this.guidedProperties.template
                         },
                         page: pageFromRoute(this.$router.currentRoute.value)
                     });

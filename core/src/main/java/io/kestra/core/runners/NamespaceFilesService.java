@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
-import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.annotation.Nullable;
@@ -9,18 +8,20 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.*;
-import java.util.ArrayList;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Singleton
@@ -110,6 +111,10 @@ public class NamespaceFilesService {
 
     public InputStream content(String tenantId, String namespace, URI path) throws IOException {
         return storageInterface.get(tenantId, uri(namespace, path));
+    }
+
+    public static URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
+        return URI.create("kestra://" + StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
     }
 
     private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {

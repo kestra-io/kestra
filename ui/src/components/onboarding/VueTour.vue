@@ -167,7 +167,11 @@
     const dispatchEvent = (step, action) =>
         store.dispatch("api/events", {
             type: "ONBOARDING",
-            onboarding: {step, action, template: store.getters["core/guidedProperties"].template},
+            onboarding: {
+                step,
+                action,
+                template: store.getters["core/guidedProperties"].template,
+            },
             page: pageFromRoute(router.currentRoute.value),
         });
 
@@ -254,7 +258,7 @@
         store.commit("core/setGuidedProperties", {
             template: flows.value[newValue].id,
         });
-    })
+    });
 
     const properties = (step, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
@@ -348,6 +352,7 @@
             icon: ArrowTop,
             condensed: true,
             hideNext: true,
+            jump: true,
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {
@@ -390,6 +395,9 @@
 
         updateStatus();
         dispatchEvent(current, "skip");
+
+        store.commit("core/setGuidedProperties", {tourStarted: false});
+
         TOURS[TOUR_NAME].stop();
     };
     const finishTour = (current, push = true) => {
@@ -398,6 +406,9 @@
         updateStatus();
         dispatchEvent(current, "finish");
         dispatchEvent(current, "executed");
+
+        store.commit("core/setGuidedProperties", {tourStarted: false});
+
         TOURS[TOUR_NAME].finish();
 
         if (push) router.push({name: "flows/create"});
@@ -595,6 +606,7 @@ body.v-tour--active .right.buttons * {
 }
 
 .v-tour__target--highlighted {
+    z-index: 1040 !important; // To go over side menu
     box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.75) !important;
     border: 1px solid $border-color-active;
 }

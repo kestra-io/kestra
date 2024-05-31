@@ -2,10 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -185,6 +182,9 @@ public class TriggerController {
         }
 
         Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), (current) -> {
+            if (abstractTrigger instanceof RealtimeTriggerInterface && !newTrigger.getDisabled().equals(current.getDisabled())) {
+                throw new IllegalArgumentException("Realtime triggers can not be disabled through the API, please edit the trigger from the flow.");
+            }
             Trigger updated = null;
             ZonedDateTime nextExecutionDate = null;
             try {

@@ -20,6 +20,7 @@ export default class Markdown {
             ],
             langs: [
                 import("shiki/langs/yaml.mjs"),
+                import("shiki/langs/python.mjs"),            
             ],
             loadWasm: import("shiki/wasm")
         })

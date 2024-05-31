@@ -179,12 +179,8 @@
     const TOUR_OPTIONS = {highlight: true, useKeyboardNavigation: false};
     const TOURS = getCurrentInstance()?.appContext.config.globalProperties.$tours;
 
-    const DARK_MODE = computed(
-        () =>
-            document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0,
-    );
     const ICON_COLOR = computed(() => {
-        return DARK_MODE.value ? "--card-bg" : "--bs-heading-color";
+        return document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0 ? "--bs-heading-color" : undefined;
     });
 
     const STEP_OPTIONS = {

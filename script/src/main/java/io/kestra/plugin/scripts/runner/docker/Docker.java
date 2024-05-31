@@ -208,6 +208,7 @@ public class Docker extends TaskRunner {
         }
 
         return Docker.builder()
+            .type(Docker.class.getName())
             .host(dockerOptions.getHost())
             .config(dockerOptions.getConfig())
             .credentials(dockerOptions.getCredentials())

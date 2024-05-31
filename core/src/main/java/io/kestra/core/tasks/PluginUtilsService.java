@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
@@ -21,8 +22,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -91,7 +90,9 @@ abstract public class PluginUtilsService {
     @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
-            return runContext.renderMap((Map<String, String>) inputFiles);
+            Map<String, String> castedInputFiles = (Map<String, String>) ((Map<?, ?>) inputFiles);
+            castedInputFiles.values().removeIf(Objects::isNull);
+            return runContext.renderMap(castedInputFiles);
         } else if (inputFiles instanceof String) {
 
 

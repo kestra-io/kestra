@@ -161,7 +161,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
         }
 
         Integer iterationCount = (Integer) parentTaskRun.getOutputs().get("iterationCount");
-        if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount >= this.checkFrequency.maxIterations) {
+        if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount > this.checkFrequency.maxIterations) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }

@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.runners.TargetOS;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
+import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
@@ -17,6 +18,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,6 +176,10 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
      * @return   list of commands;
      */
     protected List<String> getExitOnErrorCommands() {
+        // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
+        if (targetOS.equals(TargetOS.WINDOWS) || targetOS.equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this.taskRunner instanceof Process) {
+            return List.of("");
+        }
         // errexit option may be unsupported by non-shell interpreter.
         return List.of("set -e");
     }

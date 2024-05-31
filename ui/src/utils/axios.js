@@ -71,7 +71,7 @@ export default (callback, store, router) => {
         response => {
             return response
         }, errorResponse => {
-            if (errorResponse?.code === "ERR_BAD_RESPONSE") {
+            if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,
                     content: errorResponse,
@@ -123,6 +123,7 @@ export default (callback, store, router) => {
             }
 
             if (errorResponse.response.data) {
+                console.log("heret", errorResponse.response.data)
                 store.dispatch("core/showMessage", {
                     response: errorResponse.response,
                     content: errorResponse.response.data,

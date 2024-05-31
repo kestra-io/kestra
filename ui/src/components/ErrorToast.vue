@@ -80,7 +80,7 @@
                     type: this.message.variant,
                     duration: 0,
                     dangerouslyUseHTMLString: true,
-                    customClass: "error-notification" + (this.items.length > 0 ? " large" : "")
+                    customClass: "error-notification large"
                 });
             });
 

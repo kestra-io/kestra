@@ -30,7 +30,7 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" native-type="submit" :disabled="flow.disabled || haveBadLabels">
+                        <el-button :icon="Flash" class="flow-run-trigger-button" :class="{'onboarding-glow': guidedProperties.tourStarted}" @click="onSubmit($refs.form)" type="primary" native-type="submit" :disabled="flow.disabled || haveBadLabels">
                             {{ $t('launch execution') }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
@@ -81,6 +81,7 @@
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
             ...mapState("execution", ["flow", "execution"]),
+            ...mapState("core", ["guidedProperties"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -185,6 +186,19 @@
             border: 0;
             font-size: var(--el-font-size-extra-small);
             background: transparent;
+        }
+    }
+
+    .onboarding-glow {
+        animation: glowAnimation 1s infinite alternate;
+    }
+
+    @keyframes glowAnimation {
+        0% {
+            box-shadow: 0px 0px 0px 0px #8405FF;
+        }
+        100% {
+            box-shadow: 0px 0px 50px 2px #8405FF;
         }
     }
 </style>

@@ -31,13 +31,14 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
+import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
     title = "Upload one or multiple files to your namespace files.",
-    description = "Files can be upload using a regex or a specific path and can also be renamed."
+    description = "Files can be upload using a regex using glob pattern or a specific path and can also be renamed."
 )
 @Plugin(
     examples = {
@@ -50,14 +51,14 @@ import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUr
                 "",
                 "inputs:",
                 "    - id: file",
-                "    type: FILE",
+                "      type: FILE",
                 "",
                 "tasks:",
-                    "    - id: upload-map",
-                    "    type: io.kestra.plugin.core.namespace.UploadFiles",
-                    "    files:",
-                    "    \"/upload_map/input.txt\": \"{{ inputs.file }}\"",
-                    "    namespace: io.kestra.tests"
+                "    - id: upload-map",
+                "      type: io.kestra.plugin.core.namespace.UploadFiles",
+                "      files:",
+                "       \"/upload_map/input.txt\": \"{{ inputs.file }}\"",
+                "      namespace: io.kestra.tests"
             }
         ),
         @Example(
@@ -67,14 +68,18 @@ import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUr
                 "id: namespace-file-upload",
                 "namespace: io.kestra.tests",
                 "",
+                "inputs:",
+                "    - id: file",
+                "      type: FILE",
+                "",
                 "tasks:",
                 "    - id: upload-list",
-                "    type: io.kestra.plugin.core.namespace.UploadFiles",
-                "    destination: \"/upload_list\"",
-                "    files:",
-                "    - \"{{ inputs.file }}\"",
-                "        - hell",
-                "    namespace: tutorial"
+                "      type: io.kestra.plugin.core.namespace.UploadFiles",
+                "      destination: \"/upload_list\"",
+                "      files:",
+                "       - \"{{ inputs.file }}\"",
+                "       - hell",
+                "      namespace: tutorial"
             }
         )
     }
@@ -90,8 +95,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @NotNull
     @Schema(
         title = "A list of files from the given namespace.",
-        description = "Can be a list of String, containing both a regex or a URI. Providing a list required to specify a `destination`.\n" +
-                    "Can also be a Map where you can give a specific destination path for a specific URI, useful if you need to rename a file.",
+        description = " This can be a list of String, where each string can be either a regex using glob pattern or an URI. Providing a list required to specify a `destination` as it will be the folder where files will be stored.\n" +
+                    "This can also be a Map where you can give a specific destination path for a URI, useful if you need to rename a file or put into different folders.",
         anyOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
@@ -163,7 +168,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                     URI toUpload = URI.create(valueString);
                     if (storageInterface.exists(flowInfo.tenantId(), toUpload)) {
                         try {
-                            storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), keyString, storageInterface.get(flowInfo.tenantId(), toUpload));
+                            storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), checkLeadingSlash(keyString), storageInterface.get(flowInfo.tenantId(), toUpload));
                         } catch (IOException | IllegalVariableEvaluationException e) {
                             throw new RuntimeException(e);
                         }
@@ -178,10 +183,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     }
 
     private String buildPath(String destination, String filename) {
-        if (!destination.startsWith("/")) {
-            return "/" + String.join("/", destination, filename);
-        }
-        return String.join("/", destination, filename);
+        return checkLeadingSlash(String.join("/", destination, filename));
     }
 
     private void storeNewFile(Logger logger, RunContext runContext, StorageInterface storageInterface, String tenantId, String filePath, InputStream fileContent) throws IOException, IllegalVariableEvaluationException {
@@ -190,7 +192,9 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             renderedNamespace,
             URI.create(filePath)
         );
-        if (!conflict.equals(ConflictAction.OVERWRITE) && storageInterface.exists(tenantId, newFileURI)) {
+
+        boolean fileExists = storageInterface.exists(tenantId, newFileURI);
+        if (!conflict.equals(ConflictAction.OVERWRITE) && fileExists) {
             if (conflict.equals(ConflictAction.ERROR)) {
                 throw new IOException(String.format("File %s already exists and conflict is set to %s", filePath, ConflictAction.ERROR));
             }
@@ -203,7 +207,11 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             newFileURI,
             fileContent
         );
-        logger.debug(String.format("File %s created", filePath));
+        if (fileExists) {
+            logger.debug(String.format("File %s overwritten", filePath));
+        } else {
+            logger.debug(String.format("File %s created", filePath));
+        }
     }
 
     @Builder

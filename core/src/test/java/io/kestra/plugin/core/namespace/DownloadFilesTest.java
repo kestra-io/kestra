@@ -42,7 +42,7 @@ public class DownloadFilesTest {
         DownloadFiles downloadFiles = DownloadFiles.builder()
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
-            .files(List.of("**test1*"))
+            .files(List.of("**test1.txt"))
             .namespace("{{ inputs.namespace }}")
             .build();
 
@@ -51,7 +51,7 @@ public class DownloadFilesTest {
         DownloadFiles.Output output = downloadFiles.run(runContext);
 
         assertThat(output.getFiles().size(), is(1));
-        assertThat(output.getFiles().get("a/b/test1.txt"), notNullValue());
+        assertThat(output.getFiles().get("/a/b/test1.txt"), notNullValue());
 
     }
 

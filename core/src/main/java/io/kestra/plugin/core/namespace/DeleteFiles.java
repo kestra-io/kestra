@@ -6,11 +6,12 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Rethrow;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
+import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 
 @SuperBuilder
 @Getter
@@ -40,15 +41,32 @@ import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUr
             title = "Delete namespace files.",
             full = true,
             code = {
-                "id: namespace-file-delete",
-                "namespace: io.kestra.tests",
-                "",
-                "tasks:",
-                    "    - id: delete",
-                    "    type: io.kestra.plugin.core.namespace.DeleteFiles",
-                    "    namespace: tutorial",
-                    "    files:",
-                    "    - \\.upl"
+                """
+                id: namespace-file-delete
+                namespace: io.kestra.tests
+                tasks:
+                    - id: delete
+                      type: io.kestra.plugin.core.namespace.DeleteFiles
+                      namespace: tutorial
+                      files:
+                      - **.upl
+                """
+            }
+        ),
+        @Example(
+            title = "Delete all namespace files.",
+            full = true,
+            code = {
+                """
+                id: namespace-file-delete
+                namespace: io.kestra.tests
+                tasks:
+                    - id: delete
+                      type: io.kestra.plugin.core.namespace.DeleteFiles
+                      namespace: tutorial
+                      files:
+                      - **"
+                """
             }
         )
     }
@@ -62,12 +80,14 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
     private String namespace;
 
     @NotNull
+    @NotEmpty
     @Schema(
-        title = "A list of files from the given namespace.",
-        description = "Must be a specific uri for upload, but can be an uri or a regex for delete and download."
+        title = "A file or list of files from the given namespace.",
+        description = "String or List of String, each string can either be a regex using glob pattern or a URI.",
+        anyOf = {List.class, String.class}
     )
     @PluginProperty(dynamic = true)
-    private List<String> files;
+    private Object files;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -79,14 +99,23 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
         flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
 
         // Access to files
-        StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
-        URI baseNamespaceFilesUri = toNamespacedStorageUri(renderedNamespace, null);
+        NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
 
-        List<PathMatcher> patterns = files.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + reg)).toList();
+        List<String> renderedFiles;
+        if (files instanceof String filesString) {
+            renderedFiles = List.of(runContext.render(filesString));
+        } else if (files instanceof List<?> filesList) {
+            renderedFiles = runContext.render((List<String>) filesList);
+        } else {
+            throw new IllegalArgumentException("Files must be a String or a list of String");
+        }
+
+        List<PathMatcher> patterns = renderedFiles.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + checkLeadingSlash(reg))).toList();
         AtomicInteger count = new AtomicInteger();
-        storageInterface.allByPrefix(flowInfo.tenantId(), baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
+
+        namespaceFilesService.recursiveList(flowInfo.tenantId(), renderedNamespace, null).forEach(Rethrow.throwConsumer(uri -> {
             if (patterns.stream().anyMatch(p -> p.matches(Path.of(uri.getPath())))) {
-                storageInterface.delete(flowInfo.tenantId(), uri);
+                namespaceFilesService.delete(flowInfo.tenantId(), renderedNamespace, uri);
                 logger.debug(String.format("Deleted %s", uri));
                 count.getAndIncrement();
             }

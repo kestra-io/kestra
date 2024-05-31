@@ -1,9 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button id="execute-button" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button id="execute-button" :class="{'onboarding-glow': guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
+        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
@@ -98,6 +98,7 @@
                         onboarding: {
                             step: this.$tours["guidedTour"].currentStep._value,
                             action: "next",
+                            template: this.guidedProperties.template
                         },
                         page: pageFromRoute(this.$router.currentRoute.value)
                     });
@@ -127,6 +128,12 @@
                 this.isSelectFlowOpen = false;
                 this.localFlow = undefined;
                 this.localNamespace = undefined;
+            },
+            beforeClose(done){
+                if(this.guidedProperties.tourStarted) return;
+                   
+                this.reset();
+                done()
             }
         },
         computed: {
@@ -202,5 +209,18 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
+    }
+
+    .onboarding-glow {
+        animation: glowAnimation 1s infinite alternate;
+    }
+
+    @keyframes glowAnimation {
+        0% {
+            box-shadow: 0px 0px 0px 0px #8405FF;
+        }
+        100% {
+            box-shadow: 0px 0px 50px 2px #8405FF;
+        }
     }
 </style>

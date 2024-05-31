@@ -1,5 +1,5 @@
 <template>
-    <el-button type="primary" :class="{high, full}" class="primary">
+    <el-button type="primary" :class="{high, full}" class="main">
         {{ label }}
     </el-button>
 </template>
@@ -11,20 +11,3 @@
         full: {type: Boolean, required: false},
     });
 </script>
-
-<style scoped lang="scss">
-$height: 50px;
-$full: 100%;
-
-.primary {
-    padding: 1rem 2rem;
-}
-
-.high {
-    height: $height;
-}
-
-.full {
-    width: $full;
-}
-</style>

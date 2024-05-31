@@ -108,9 +108,7 @@
                     if (newValue?.manuallyContinue) {
                         setTimeout(() => {
                             this.$tours["guidedTour"].nextStep();
-                            this.$store.commit("core/setGuidedProperties", {
-                                manuallyContinue: false,
-                            });
+                            this.$store.commit("core/setGuidedProperties", {manuallyContinue: false});
                         }, 500);
                     }
                 },

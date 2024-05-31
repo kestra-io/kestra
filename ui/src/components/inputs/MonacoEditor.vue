@@ -218,6 +218,46 @@
                     }
                 })
 
+                this.pebbleAutocompletion = monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+                    triggerCharacters: ["{"],
+                    provideCompletionItems(model, position) {
+                        const lineContent = _this.lineContent(model, position);
+                        const tillCursorContent = _this.tillCursorContent(lineContent, position);
+                        const match = tillCursorContent.match(/\{\{ *(?:.*~ ?)?$/);
+                        if (!match) {
+                            return noSuggestions;
+                        }
+
+                        const suggestionFor = (label) => ({
+                            kind: monaco.languages.CompletionItemKind.Property,
+                            label,
+                            insertText: label,
+                            range: {
+                                startLineNumber: position.lineNumber,
+                                endLineNumber: position.lineNumber,
+                                startColumn: position.column,
+                                endColumn: position.column
+                            }
+                        });
+                        return {
+                            suggestions: [
+                                suggestionFor("outputs"),
+                                suggestionFor("inputs"),
+                                suggestionFor("vars"),
+                                suggestionFor("flow"),
+                                suggestionFor("execution"),
+                                suggestionFor("trigger"),
+                                suggestionFor("task"),
+                                suggestionFor("taskrun"),
+                                suggestionFor("labels"),
+                                suggestionFor("envs"),
+                                suggestionFor("globals"),
+                                suggestionFor("parents")
+                            ]
+                        };
+                    }
+                });
+
                 this.nestedFieldAutocompletionProvider = monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
                     triggerCharacters: ["."],
                     async provideCompletionItems(model, position) {
@@ -244,7 +284,7 @@
 
                         const indexOfFieldToComplete = match.index + match[1].length;
                         return {
-                            suggestions: await _this.autocompletion(
+                            suggestions: await _this.autocompletionForField(
                                 _this.autocompletionSource,
                                 lineContent,
                                 match[2],
@@ -454,7 +494,7 @@
                 return [...tasksFromTasksProp, ...tasksFromTaskProp]
                     .filter(task => typeof task?.get === "function" && task?.get("id"));
             },
-            async autocompletion(
+            async autocompletionForField(
                 source,
                 lineContent,
                 field,
@@ -475,7 +515,7 @@
                     autocompletions = Object.keys(flowAsJs?.labels ?? {});
                     break;
                 case "flow":
-                    autocompletions = ["id", "namespace", "revision"];
+                    autocompletions = ["id", "namespace", "revision", "tenantId"];
                     break;
                 case "execution":
                     autocompletions = ["id", "startDate", "originalId"];
@@ -485,6 +525,9 @@
                     break;
                 case "trigger":
                     autocompletions = await this.triggerVars(flowAsJs);
+                    break;
+                case "task":
+                    autocompletions = ["id", "type"];
                     break;
                 default: {
                     let match = field.match(/^outputs\.([^.]+)$/);
@@ -524,8 +567,7 @@
 
                 const pluginDoc = await this.$store.dispatch("plugin/load", {cls: taskType, commit: false});
 
-                return Object.entries(pluginDoc?.schema?.outputs?.properties ?? {})
-                    .map(([propName, propInfo]) => propName + (propInfo.type === "object" ? "." : ""));
+                return Object.keys(pluginDoc?.schema?.outputs?.properties ?? {});
             },
             async triggerVars(flowAsJs) {
                 const fetchTriggerVarsByType = await Promise.all(
@@ -631,6 +673,7 @@
             },
             destroy: function () {
                 this.subflowAutocompletionProvider?.dispose();
+                this.pebbleAutocompletion?.dispose();
                 this.nestedFieldAutocompletionProvider?.dispose();
                 this.editor?.getModel()?.dispose?.();
                 this.editor?.dispose?.();

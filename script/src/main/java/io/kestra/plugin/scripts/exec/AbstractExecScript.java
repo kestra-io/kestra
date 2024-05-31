@@ -4,6 +4,7 @@ import com.google.common.annotations.Beta;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.runners.TargetOS;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
@@ -80,7 +81,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Builder.Default
     @Schema(
         title = "Fail the task on the first command with a non-zero status.",
-        description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified."
+        description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified." +
+            "\nYou can also disable it if your interpreter does not support the `set -e`option."
     )
     @PluginProperty
     protected Boolean failFast = true;
@@ -99,6 +101,12 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     )
     @Deprecated
     private Boolean outputDirectory;
+
+    @Schema(
+        title = "The target operating system where the script will run."
+    )
+    @Builder.Default
+    public TargetOS targetOS = TargetOS.AUTO;
 
     abstract public DockerOptions getDocker();
 
@@ -138,7 +146,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)
             .withEnableOutputDirectory(this.getOutputDirectory())
-            .withTimeout(this.getTimeout());
+            .withTimeout(this.getTimeout())
+            .withTargetOS(this.targetOS);
     }
 
     protected List<String> getBeforeCommandsWithOptions() {

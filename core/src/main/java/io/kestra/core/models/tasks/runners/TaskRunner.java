@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.runners.RunContext;
+import io.kestra.plugin.core.runner.Process;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -13,10 +14,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.SystemUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
 /**
  * Base class for all task runners.
@@ -38,12 +44,12 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     private transient Map<String, String> env;
-    
+
     @JsonIgnore
     @Builder.Default
     @Getter(AccessLevel.NONE)
     private AtomicReference<Runnable> killable = new AtomicReference<>();
-    
+
     @JsonIgnore
     @Builder.Default
     @Getter(AccessLevel.PROTECTED)
@@ -106,15 +112,24 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
         return new HashMap<>();
     }
 
-    public String toAbsolutePath(RunContext runContext, TaskCommands taskCommands, String relativePath) throws IllegalVariableEvaluationException {
+    public String toAbsolutePath(RunContext runContext, TaskCommands taskCommands, String relativePath, TargetOS targetOS) throws IllegalVariableEvaluationException {
         Object workingDir = this.additionalVars(runContext, taskCommands).get(ScriptService.VAR_WORKING_DIR);
         if (workingDir == null) {
+
             return relativePath;
         }
+        // Case Target is Windows
+        if (targetOS.equals(TargetOS.WINDOWS) ||
+            // Case Target is AUTO and System is Windows while using Process runner
+            targetOS.equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this instanceof Process
+        ) {
 
-        return workingDir + "/" + relativePath;
+            return (workingDir + "/" + relativePath).replace("\\", "/");
+        }
+
+        return windowsToUnixPath(workingDir + "/" + relativePath);
     }
-    
+
     /** {@inheritDoc} **/
     @Override
     public void kill() {
@@ -125,7 +140,7 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
             }
         }
     }
-    
+
     /**
      * Registers a runnable to be invoked when this {@link TaskRunner} is killed.
      * The passed {@link Runnable} can be used to dispose any resource or process started by the {@link TaskRunner}.

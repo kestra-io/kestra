@@ -106,8 +106,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 .select(VALUE)
                 .from(table())
                 .where(TYPE.eq(type.name()))
-                .and(CREATED_AT.ge(from))
-                .and(UPDATED_AT.lt(to));
+                .and(CREATED_AT.lt(to))
+                .and(UPDATED_AT.ge(from));
 
             return this.jdbcRepository.fetch(query);
         });

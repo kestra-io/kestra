@@ -158,7 +158,7 @@ public final class ScriptService {
                     ListUtils.emptyOnNull(beforeCommands).stream(),
                     commands.stream()
                 )
-                .collect(Collectors.joining(targetOS.getLineSeparator()))
+                .collect(Collectors.joining(targetOS.lineSeparator))
         );
 
         return commandsArgs;

@@ -179,12 +179,8 @@
     const TOUR_OPTIONS = {highlight: true, useKeyboardNavigation: false};
     const TOURS = getCurrentInstance()?.appContext.config.globalProperties.$tours;
 
-    const DARK_MODE = computed(
-        () =>
-            document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0,
-    );
     const ICON_COLOR = computed(() => {
-        return DARK_MODE.value ? "--card-bg" : "--bs-heading-color";
+        return document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0 ? "--bs-heading-color" : undefined;
     });
 
     const STEP_OPTIONS = {
@@ -592,9 +588,13 @@ $flow-image-size-container: 36px;
                 align-items: center;
                 width: $flow-image-size-container;
                 height: $flow-image-size-container;
-                border: 1px solid $border-color;
+                border: 1px solid #e6e5f6;
                 border-radius: 8px;
                 padding: 4px;
+
+                html.dark & {
+                    border: 1px solid $border-color;
+                }
             }
         }
     }

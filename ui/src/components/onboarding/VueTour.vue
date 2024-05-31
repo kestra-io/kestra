@@ -592,9 +592,13 @@ $flow-image-size-container: 36px;
                 align-items: center;
                 width: $flow-image-size-container;
                 height: $flow-image-size-container;
-                border: 1px solid $border-color;
+                border: 1px solid #e6e5f6;
                 border-radius: 8px;
                 padding: 4px;
+
+                html.dark & {
+                    border: 1px solid $border-color;
+                }
             }
         }
     }

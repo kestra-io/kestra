@@ -2,7 +2,10 @@
     <div class="line font-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
         <div class="log-content d-inline-block">
-            <div class="header" :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}">
+            <div
+                class="header"
+                :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
+            >
                 <span class="header-badge">
                     {{ $filters.date(log.timestamp, "iso") }}
                 </span>
@@ -25,9 +28,15 @@
 <script>
     import Convert from "ansi-to-html"
     import xss from "xss";
+
     let convert = new Convert();
 
     export default {
+        data() {
+            return {
+                subflow: null
+            }
+        },
         props: {
             log: {
                 type: Object,
@@ -44,6 +53,10 @@
             excludeMetas: {
                 type: Array,
                 default: () => [],
+            },
+            subflowId: {
+                type: String,
+                default: null
             }
         },
         computed: {
@@ -63,11 +76,13 @@
                     if (this.log[key] && !excludes.includes(key)) {
                         let meta = {key, value: this.log[key]};
                         if (key === "executionId") {
-                            meta["router"] = {name: "executions/update", params: {
-                                namespace: this.log["namespace"],
-                                flowId: this.log["flowId"],
-                                id: this.log[key]
-                            }};
+                            meta["router"] = {
+                                name: "executions/update", params: {
+                                    namespace: this.log["namespace"],
+                                    flowId: this.log["flowId"],
+                                    id: this.log[key]
+                                }
+                            };
                         }
 
                         if (key === "namespace") {
@@ -76,7 +91,10 @@
 
 
                         if (key === "flowId") {
-                            meta["router"] = {name: "flows/update", params: {namespace: this.log["namespace"], id: this.log[key]}};
+                            meta["router"] = {
+                                name: "flows/update",
+                                params: {namespace: this.log["namespace"], id: this.log[key]}
+                            };
                         }
 
                         metaWithValue.push(meta);
@@ -110,9 +128,29 @@
                     /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
                     "$1<a href='$2' target='_blank'>$2</a>$3"
                 );
+
+                if (this.subflowId && this.subflow) {
+                    const href = this.$router.resolve({name: "executions/update", params: {id: this.subflowId, namespace: this.subflow.namespace, flowId: this.subflow.id}}).href;
+                    logMessage = logMessage.replace(
+                        new RegExp(this.subflowId, "g"),
+                        `<a href="${href}" target="_blank">${this.subflowId}</a>`
+                    )
+                }
                 return logMessage;
             }
         },
+        mounted() {
+            if (this.subflowId) {
+                this.$store.dispatch("execution/loadFlowForExecutionByExecutionId",
+                                     {
+                                         id: this.subflowId,
+                                         notStore: true
+                                     }
+                ).then(flow => {
+                    this.subflow = flow
+                })
+            }
+        }
     };
 </script>
 <style scoped lang="scss">
@@ -163,7 +201,7 @@
                 font-family: var(--bs-font-sans-serif);
                 user-select: none;
 
-                &::after{
+                &::after {
                     content: ":";
                 }
             }

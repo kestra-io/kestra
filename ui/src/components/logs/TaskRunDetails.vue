@@ -44,6 +44,7 @@
                                     :level="level"
                                     :log="item"
                                     :exclude-metas="excludeMetas"
+                                    :subflow-id="isSubflow(currentTaskRun)"
                                     v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <TaskRunDetails

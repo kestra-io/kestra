@@ -234,7 +234,10 @@ export default {
         loadFlowForExecutionByExecutionId({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}/flow`)
                 .then(response => {
-                    commit("setFlow", response.data)
+                    if (options.notStore !== true) {
+                        commit("setFlow", response.data)
+                    }
+                    return response.data
                 });
         },
         loadGraph({commit}, options) {

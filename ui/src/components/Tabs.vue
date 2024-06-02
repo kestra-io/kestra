@@ -5,12 +5,14 @@
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
-            :disabled="tab.disabled"
+            :disabled="tab.disabled || tab.locked"
         >
             <template #label>
-                <component :is="embedActiveTab ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
-                    {{ tab.title }}
-                    <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
+                    <enterprise-tooltip :disabled="tab.locked" :term="tab.name">
+                        {{ tab.title }}
+                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                    </enterprise-tooltip>
                 </component>
             </template>
         </el-tab-pane>
@@ -35,9 +37,10 @@
     import {mapState, mapMutations} from "vuex";
 
     import EditorSidebar from "./inputs/EditorSidebar.vue";
+    import EnterpriseTooltip from "./EnterpriseTooltip.vue";
 
     export default {
-        components: {EditorSidebar},
+        components: {EditorSidebar, EnterpriseTooltip},
         props: {
             tabs: {
                 type: Array,
@@ -99,7 +102,7 @@
 
                 document.onmousemove = function onMouseMove(e) {
                     let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.changeExplorerWidth(percent)               
+                    SELF.changeExplorerWidth(percent)
                 };
 
                 document.onmouseup = () => {

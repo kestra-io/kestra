@@ -757,6 +757,11 @@
         }
       }
     },
-    "enable concurrency": "Activer la concurrence"
+    "enable concurrency": "Activer la concurrence",
+    "auditlogs": "Journaux d'audit",
+    "ee-tooltip": {
+      "features-blocked": "Cette fonctionnalité est uniquement disponible dans l'édition Enterprise.",
+      "button": "Contactez-nous"
+    }
   }
 }

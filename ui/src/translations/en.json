@@ -785,6 +785,11 @@
         }
       }
     },
-    "enable concurrency": "Enable concurrency"
+    "enable concurrency": "Enable concurrency",
+    "auditlogs": "Audit Logs",
+    "ee-tooltip": {
+      "features-blocked": "This feature is only available in the Enterprise Edition.",
+      "button": "Talk to us"
+    }
   }
 }

@@ -1,48 +1,6 @@
 <template>
     <template v-if="ready">
-        <top-nav-bar :breadcrumb="routeInfo.breadcrumb">
-            <template #title>
-                <template v-if="deleted">
-                    <Alert class="text-warning me-2" />Deleted:&nbsp;
-                </template>
-                <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
-                <span :class="{'body-color': deleted}">{{
-                    routeInfo.title
-                }}</span>
-            </template>
-            <template #additional-right v-if="displayButtons()">
-                <ul>
-                    <li v-if="deleted">
-                        <el-button :icon="BackupRestore" @click="restoreFlow()">
-                            {{ $t("restore") }}
-                        </el-button>
-                    </li>
-                    <li
-                        v-if="
-                            isAllowedEdit &&
-                                !deleted &&
-                                activeTabName() !== 'editor'
-                        "
-                    >
-                        <el-button
-                            :icon="Pencil"
-                            @click="editFlow"
-                            :disabled="deleted"
-                        >
-                            {{ $t("edit flow") }}
-                        </el-button>
-                    </li>
-                    <li v-if="flow && !deleted">
-                        <trigger-flow
-                            type="primary"
-                            :disabled="flow.disabled"
-                            :flow-id="flow.id"
-                            :namespace="flow.namespace"
-                        />
-                    </li>
-                </ul>
-            </template>
-        </top-nav-bar>
+        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName" />
         <tabs
             @expand-subflow="updateExpandedSubflows"
             route-name="flows/update"
@@ -52,39 +10,29 @@
     </template>
 </template>
 
-<script setup>
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
-    import Alert from "vue-material-design-icons/Alert.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-</script>
-
 <script>
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
-    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import {apiUrl} from "override/utils/route";
-    import yamlUtils from "../../utils/yamlUtils";
+    import FlowRootTopBar from "./FlowRootTopBar.vue";
 
     export default {
         mixins: [RouteContext],
         components: {
-            TriggerFlow,
             Tabs,
-            TopNavBar,
+            FlowRootTopBar,
         },
         data() {
             return {
@@ -302,43 +250,17 @@
                         count: this.dependenciesCount,
                     });
                 }
-                return tabs;
-            },
-            activeTabName() {
-                if (this.$refs.currentTab) {
-                    return this.$refs.currentTab.activeTab.name || "home";
-                }
 
-                return null;
-            },
-            displayButtons() {
-                const name = this.activeTabName();
-                return name != null && this.canExecute;
-            },
-            editFlow() {
-                this.$router.push({
-                    name: "flows/update",
-                    params: {
-                        namespace: this.flow.namespace,
-                        id: this.flow.id,
-                        tab: "editor",
-                        tenant: this.$route.params.tenant,
-                    },
+                tabs.push(                    {
+                    name: "auditlogs",
+                    title: this.$t("auditlogs"),
+                    locked: true
                 });
+
+                return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
-            },
-            restoreFlow() {
-                this.$store
-                    .dispatch("flow/createFlow", {
-                        flow: yamlUtils.deleteMetadata(this.flow.source, "deleted"),
-                    })
-                    .then((response) => {
-                        this.$toast().saved(response.id);
-                        this.$store.dispatch("core/isUnsaved", false);
-                        this.$router.go();
-                    });
             },
         },
         computed: {
@@ -370,6 +292,13 @@
             tabs() {
                 return this.getTabs();
             },
+            activeTabName() {
+                if (this.$refs.currentTab) {
+                    return this.$refs.currentTab.activeTab.name || "home";
+                }
+
+                return null;
+            },
             ready() {
                 return this.user !== undefined && this.flow !== undefined;
             },
@@ -383,16 +312,6 @@
                     action.UPDATE,
                     this.flow.namespace,
                 );
-            },
-            canExecute() {
-                if (this.flow) {
-                    return this.user.isAllowed(
-                        permission.EXECUTION,
-                        action.CREATE,
-                        this.flow.namespace,
-                    );
-                }
-                return false;
             },
         },
         unmounted() {

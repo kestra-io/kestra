@@ -757,6 +757,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // signals all worker tasks and triggers of the shutdown.
         threads.forEach(AbstractWorkerThread::signalStop);
 
+        AtomicReference<ServiceState> shutdownState = new AtomicReference<>();
         // start shutdown
         new Thread(
             () -> {
@@ -768,13 +769,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     // wait for all realtime triggers to cleanly stop.
                     awaitForRealtimeTriggers(threads, Duration.ofMillis(remaining));
 
-                    // wait for remaining tasks termination.
-                    remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
-                    if (remaining > 0) {
-                        this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
+                    boolean gracefullyShutdown = this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
+                    if (!gracefullyShutdown) {
+                        log.warn("Worker still has some pending threads after `terminationGracePeriod`. Forcing shutdown now.");
+                        this.executorService.shutdownNow();
                     }
+
+                    shutdownState.set(gracefullyShutdown ? TERMINATED_GRACEFULLY : TERMINATED_FORCED);
                 } catch (InterruptedException e) {
                     log.error("Failed to shutdown the worker. Thread was interrupted");
+                    shutdownState.set(TERMINATED_FORCED);
                 }
             },
             "worker-shutdown"
@@ -782,15 +786,14 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
 
         // wait for task completion
-        final AtomicBoolean cleanShutdown = new AtomicBoolean(false);
         Await.until(
             () -> {
-                if (this.executorService.isTerminated() || this.workerThreadReferences.isEmpty()) {
+                ServiceState serviceState = shutdownState.get();
+                if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
                     log.info("All working threads are terminated.");
 
                     // we ensure that last produce message are send
                     closeQueue();
-                    cleanShutdown.set(true);
                     return true;
                 }
 
@@ -803,8 +806,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             Duration.ofSeconds(1)
         );
 
-        // cleanup
-        return cleanShutdown.get();
+        return shutdownState.get() == TERMINATED_GRACEFULLY;
     }
 
     private void awaitForRealtimeTriggers(final List<AbstractWorkerThread> threads,

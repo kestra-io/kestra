@@ -1,7 +1,6 @@
 package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.tasks.PluginUtilsService;
 
 /**
  * Default implementation of an @{link {@link AbstractLogConsumer}}

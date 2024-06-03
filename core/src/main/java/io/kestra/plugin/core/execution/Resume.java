@@ -15,7 +15,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.tasks.PluginUtilsService;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -60,9 +60,9 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         title = "Filter for a specific execution.",
         description = """
             If you explicitly define an `executionId`, Kestra will use that specific ID.
-            
+
             If another `namespace` and `flowId` properties are set, Kestra will look for a paused execution for that corresponding flow.
-            
+
             If `executionId` is not set, the task will use the ID of the current execution."""
     )
     @PluginProperty(dynamic = true)

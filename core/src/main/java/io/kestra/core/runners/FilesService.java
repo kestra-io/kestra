@@ -1,7 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.tasks.PluginUtilsService;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.core.utils.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

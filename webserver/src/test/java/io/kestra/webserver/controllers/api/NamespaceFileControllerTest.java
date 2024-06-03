@@ -60,7 +60,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     public void init() throws IOException {
         storageInterface.delete(null, toNamespacedStorageUri(NAMESPACE, null));
 
-        flowRepository.findAll(null)
+        flowRepository.findAllWithSource(null)
             .forEach(flowRepository::delete);
 
         super.setup();

@@ -264,8 +264,9 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Flow updateTask(String taskId, Task newValue) throws InternalException {
         Task task = this.findTaskByTaskId(taskId);
+        Flow flow = this instanceof FlowWithSource ? ((FlowWithSource) this).toFlow() : this;
 
-        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(this, JacksonMapper.MAP_TYPE_REFERENCE);
+        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
         return NON_DEFAULT_OBJECT_MAPPER.convertValue(
             recursiveUpdate(map, task, newValue),
@@ -345,7 +346,7 @@ public class Flow extends AbstractFlow implements HasUID {
             ));
         }
 
-        if (violations.size() > 0) {
+        if (!violations.isEmpty()) {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();
@@ -361,5 +362,9 @@ public class Flow extends AbstractFlow implements HasUID {
             .revision(this.revision + 1)
             .deleted(true)
             .build();
+    }
+
+    public FlowWithSource withSource(String source) {
+        return FlowWithSource.of(this, source);
     }
 }

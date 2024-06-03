@@ -214,7 +214,7 @@ public class ExecutionController {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
             .map(throwFunction(execution -> {
-                Optional<Flow> flow = flowRepository.findByIdWithoutAcl(
+                Optional<FlowWithSource> flow = flowRepository.findByIdWithSourceWithoutAcl(
                     execution.getTenantId(),
                     execution.getNamespace(),
                     execution.getFlowId(),

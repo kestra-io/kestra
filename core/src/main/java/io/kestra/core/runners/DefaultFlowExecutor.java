@@ -1,6 +1,6 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import jakarta.inject.Singleton;
@@ -15,7 +15,7 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
     private final FlowRepositoryInterface flowRepository;
 
     @Setter
-    private List<Flow> allFlows;
+    private List<FlowWithSource> allFlows;
 
     public DefaultFlowExecutor(FlowListenersInterface flowListeners, FlowRepositoryInterface flowRepository) {
         this.flowRepository = flowRepository;
@@ -24,13 +24,13 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
     }
 
     @Override
-    public Collection<Flow> allLastVersion() {
+    public Collection<FlowWithSource> allLastVersion() {
         return this.allFlows;
     }
 
     @Override
-    public Optional<Flow> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
-        Optional<Flow> find = this.allFlows
+    public Optional<FlowWithSource> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        Optional<FlowWithSource> find = this.allFlows
             .stream()
             .filter(flow -> ((flow.getTenantId() == null && tenantId == null) || flow.getTenantId().equals(tenantId)) &&
                 flow.getNamespace().equals(namespace) &&
@@ -42,7 +42,7 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
         if (find.isPresent()) {
             return find;
         } else {
-            return flowRepository.findById(tenantId, namespace, id, revision);
+            return flowRepository.findByIdWithSource(tenantId, namespace, id, revision);
         }
     }
 

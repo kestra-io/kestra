@@ -4,7 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -87,8 +87,8 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Singleton
     @Named(QueueFactoryInterface.FLOW_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<Flow> flow() {
-        return new MysqlQueue<>(Flow.class, applicationContext);
+    public QueueInterface<FlowWithSource> flow() {
+        return new MysqlQueue<>(FlowWithSource.class, applicationContext);
     }
 
     @Override

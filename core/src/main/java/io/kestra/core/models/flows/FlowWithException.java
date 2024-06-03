@@ -31,6 +31,7 @@ public class FlowWithException extends FlowWithSource {
                 .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
+                .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)
                 .build();
             return Optional.of(flow);
         }

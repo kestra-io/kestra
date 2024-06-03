@@ -64,6 +64,24 @@ public interface FlowRepositoryInterface {
         }
     }
 
+    default FlowWithSource findByExecutionWithSource(Execution execution) {
+        Optional<FlowWithSource> find = this.findByIdWithSource(
+            execution.getTenantId(),
+            execution.getNamespace(),
+            execution.getFlowId(),
+            Optional.of(execution.getFlowRevision())
+        );
+
+        if (find.isEmpty()) {
+            throw new IllegalStateException("Unable to find flow '" + execution.getNamespace() + "." +
+                execution.getFlowId() + "' with revision " + execution.getFlowRevision() + " on execution " +
+                execution.getId()
+            );
+        } else {
+            return find.get();
+        }
+    }
+
     default Optional<Flow> findById(String tenantId, String namespace, String id) {
         return this.findById(tenantId, namespace, id, Optional.empty(), false);
     }
@@ -78,11 +96,19 @@ public interface FlowRepositoryInterface {
         return this.findByIdWithSource(tenantId, namespace, id, Optional.empty(), false);
     }
 
+    Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
+
     List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
 
     Integer lastRevision(String tenantId, String namespace, String id);
 
     List<Flow> findAll(String tenantId);
+
+    List<FlowWithSource> findAllWithSource(String tenantId);
+
+    List<Flow> findAllForAllTenants();
+
+    List<FlowWithSource> findAllWithSourceForAllTenants();
 
     /**
      * Counts the total number of flows.
@@ -99,12 +125,6 @@ public interface FlowRepositoryInterface {
      * @return The count.
      */
     int countForNamespace(@Nullable  String tenantId, @Nullable String namespace);
-
-    List<FlowWithSource> findAllWithSource(String tenantId);
-
-    List<Flow> findAllForAllTenants();
-
-    List<FlowWithSource> findAllWithSourceForAllTenants();
 
     List<Flow> findByNamespace(String tenantId, String namespace);
 
@@ -153,5 +173,5 @@ public interface FlowRepositoryInterface {
 
     FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException;
 
-    Flow delete(Flow flow);
+    FlowWithSource delete(FlowWithSource flow);
 }

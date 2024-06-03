@@ -59,6 +59,13 @@ public class FlowWithSource extends Flow {
             this.source.equals(cleanupSource(flowSource));
     }
 
+    public FlowWithSource toDeleted() {
+        return this.toBuilder()
+            .revision(this.revision + 1)
+            .deleted(true)
+            .build();
+    }
+
     @SuppressWarnings("deprecation")
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
@@ -80,6 +87,7 @@ public class FlowWithSource extends Flow {
             .deleted(flow.deleted)
             .source(source)
             .concurrency(flow.concurrency)
+            .retry(flow.retry)
             .build();
     }
 }

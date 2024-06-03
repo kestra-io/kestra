@@ -19,8 +19,10 @@ import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.test.TaskWithAlias;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
@@ -37,6 +39,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -84,6 +87,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private PluginConfigurations pluginConfigurations;
 
     @Test
     void logs() throws TimeoutException {
@@ -344,6 +350,20 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null).getMessage(), is("john ******** doe"));
+    }
+
+    @Test
+    void shouldResolvePluginConfigurationGivenAlias() {
+        // Given
+        RunContext context = new RunContext(applicationContext, Map.of());
+        context.initPluginConfiguration(applicationContext, TaskWithAlias.class, new TaskWithAlias().getType());
+
+        // When
+        Optional<String> result = context.pluginConfiguration("prop0");
+        
+        // Then
+        String expected = (String) pluginConfigurations.getConfigurationByPluginType("io.kestra.core.runners.test.task.Alias").get("prop0");
+        Assertions.assertEquals(Optional.of(expected), result);
     }
 
 

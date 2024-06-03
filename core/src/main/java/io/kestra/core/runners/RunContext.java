@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -104,7 +105,7 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(taskRun, task);
         this.initContext(flow, task, execution, taskRun, decryptVariables);
-        this.initPluginConfiguration(applicationContext, task.getType());
+        this.initPluginConfiguration(applicationContext, task.getClass(), task.getType());
     }
 
     /**
@@ -116,7 +117,7 @@ public class RunContext {
         this.initBean(applicationContext);
         this.initLogger(flow, trigger);
         this.variables = this.variables(flow, null, null, null, trigger);
-        this.initPluginConfiguration(applicationContext, trigger.getType());
+        this.initPluginConfiguration(applicationContext, trigger.getClass(), trigger.getType());
     }
 
     /**
@@ -150,9 +151,23 @@ public class RunContext {
         this.initBean(context);
     }
 
-    private void initPluginConfiguration(ApplicationContext applicationContext, String plugin) {
+    @VisibleForTesting
+    void initPluginConfiguration(ApplicationContext applicationContext, Class<? extends Plugin> plugin, String type) {
         this.pluginConfiguration = applicationContext.findBean(PluginConfigurations.class)
-            .map(pluginConfigurations -> pluginConfigurations.getConfigurationByPluginType(plugin))
+            .map(pluginConfigurations -> {
+                Map<String, Object> configuration = pluginConfigurations.getConfigurationByPluginType(type);
+                if (configuration.isEmpty()) {
+                    // let's check if the plugin-configuration was provided using type alias.
+                    Set<String> aliases = Plugin.getAliases(plugin);
+                    for (String alias: aliases) {
+                        configuration = pluginConfigurations.getConfigurationByPluginType(alias);
+                        if (!configuration.isEmpty()) {
+                            break; // non-empty configuration was found for a plugin alias.
+                        }
+                    }
+                }
+                return configuration;
+            })
             .map(Collections::unmodifiableMap)
             .orElseThrow();
     }
@@ -505,7 +520,7 @@ public class RunContext {
             context,
             storageInterface
         );
-        this.initPluginConfiguration(applicationContext, trigger.getType());
+        this.initPluginConfiguration(applicationContext, trigger.getClass(), trigger.getType());
         return this;
     }
 
@@ -540,7 +555,7 @@ public class RunContext {
         newContext.dynamicWorkerTaskResult = this.dynamicWorkerResults();
         newContext.initLogger(taskRun, workerTask.getTask());
         newContext.initStorage(taskRun);
-        newContext.initPluginConfiguration(applicationContext, workerTask.getTask().getType());
+        newContext.initPluginConfiguration(applicationContext, workerTask.getTask().getClass(), workerTask.getTask().getType());
         return newContext;
     }
 
@@ -569,7 +584,7 @@ public class RunContext {
     }
 
     public RunContext forTaskRunner(TaskRunner taskRunner) {
-        this.initPluginConfiguration(applicationContext, taskRunner.getType());
+        this.initPluginConfiguration(applicationContext, taskRunner.getClass(), taskRunner.getType());
 
         return this;
     }

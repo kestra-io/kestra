@@ -57,3 +57,6 @@ kestra:
       - type: io.kestra.plugin.core.trigger.Schedule
         values:
           recoverMissedSchedules: ALL
+      - type: io.kestra.core.runners.test.task.Alias
+        values:
+          prop0: value0

@@ -34,6 +34,7 @@
                                 <HelpBox class="align-middle" /> {{ $t("live help") }}
                             </a>
                             <a
+                                v-if="tourEnabled"
                                 @click="restartGuidedTour"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
@@ -132,8 +133,13 @@
         computed: {
             ...mapState("api", ["version"]),
             ...mapGetters("core", ["guidedProperties"]),
+            ...mapGetters("auth", ["user"]),
             displayNavBar() {
                 return this.$route?.name !== "welcome";
+            },
+            tourEnabled(){
+                // Temporary solution to not showing the tour menu item for EE
+                return !Object.keys(this.user).length
             }
         },
         methods: {

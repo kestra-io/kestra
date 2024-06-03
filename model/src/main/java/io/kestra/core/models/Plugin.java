@@ -3,8 +3,13 @@ package io.kestra.core.models;
 import io.kestra.core.models.annotations.Plugin.Id;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Top-level interface for the Kestra plugins.
@@ -19,6 +24,21 @@ public interface Plugin {
     @NotNull
     default String getType() {
         return this.getClass().getCanonicalName();
+    }
+
+    /**
+     * Static helper method to get the aliases of a given plugin.
+     *
+     * @param plugin    The plugin type.
+     * @return  {@code true} if the plugin is internal.
+     */
+    static Set<String> getAliases(final Class<?> plugin) {
+        io.kestra.core.models.annotations.Plugin annotation = plugin.getAnnotation(io.kestra.core.models.annotations.Plugin.class);
+       return Optional.ofNullable(annotation)
+            .map(io.kestra.core.models.annotations.Plugin::aliases)
+            .stream()
+            .flatMap(Arrays::stream)
+            .collect(Collectors.toSet());
     }
 
     /**

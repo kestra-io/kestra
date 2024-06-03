@@ -140,14 +140,7 @@ public class PluginScanner {
                     }
                 }
 
-                if (plugin.getClass().isAnnotationPresent(io.kestra.core.models.annotations.Plugin.class)) {
-                    String[] pluginAliases = plugin.getClass()
-                        .getAnnotation(io.kestra.core.models.annotations.Plugin.class)
-                        .aliases();
-                    for (String alias : pluginAliases) {
-                        aliases.put(alias, plugin.getClass());
-                    }
-                }
+                Plugin.getAliases(plugin.getClass()).forEach(alias -> aliases.put(alias, plugin.getClass()));
             });
         } catch (ServiceConfigurationError e) {
             Object location = externalPlugin != null ? externalPlugin.getLocation() : "core";

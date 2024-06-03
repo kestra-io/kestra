@@ -8,7 +8,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.tasks.PluginUtilsService;
+import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

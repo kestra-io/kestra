@@ -14,6 +14,7 @@ import jakarta.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -25,7 +26,7 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
         return logs
             .stream()
-            .filter(logEntry -> logEntry.getExecutionId().equals(executionId) && logEntry.getLevel().equals(minLevel))
+            .filter(logEntry -> Objects.equals(logEntry.getExecutionId(), executionId) && Objects.equals(logEntry.getLevel(), minLevel))
             .filter(logEntry -> (tenantId == null && logEntry.getTenantId() == null) || (tenantId != null && tenantId.equals(logEntry.getTenantId())))
             .collect(Collectors.toList());
     }

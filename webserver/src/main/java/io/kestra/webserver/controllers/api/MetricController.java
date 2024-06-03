@@ -11,7 +11,6 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
@@ -26,6 +25,8 @@ import jakarta.inject.Named;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
 @Controller("/api/v1/metrics")
@@ -104,6 +105,8 @@ public class MetricController {
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
+        validateTimeline(startDate, endDate);
+
         return metricsRepository.aggregateByFlowId(
             tenantService.resolveTenant(),
             namespace,
@@ -128,6 +131,8 @@ public class MetricController {
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
+        validateTimeline(startDate, endDate);
+
         return metricsRepository.aggregateByFlowId(
             tenantService.resolveTenant(),
             namespace,

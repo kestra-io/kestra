@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.DateUtils.validateTimeline;
+
 @Validated
 @Controller("/api/v1/")
 @Requires(beans = LogRepositoryInterface.class)
@@ -60,6 +62,8 @@ public class LogController {
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
+        validateTimeline(startDate, endDate);
+
         return PagedResults.of(
             logRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace, flowId, minLevel, startDate, endDate)
         );

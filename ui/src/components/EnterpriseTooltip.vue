@@ -1,6 +1,6 @@
 <template>
     <el-tooltip :persistent="false" :focus-on-show="true" popper-class="ee-tooltip" :disabled="!disabled" :placement="placement">
-        <template #content>
+        <template #content v-if="link">
             <p>{{ $t("ee-tooltip.features-blocked") }}</p>
 
             <a
@@ -45,7 +45,7 @@
             },
             term: {
                 type: String,
-                required: true
+                default: undefined
             },
         },
         computed: {

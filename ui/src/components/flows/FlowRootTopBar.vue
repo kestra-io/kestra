@@ -73,16 +73,26 @@
             },
             activeTabName: {
                 type: String,
-                default: undefined
+                required: true
             }
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapState("auth", ["user"]),
+            canExecute() {
+                if (this.flow) {
+                    return this.user.isAllowed(
+                        permission.EXECUTION,
+                        action.CREATE,
+                        this.flow.namespace,
+                    );
+                }
+                return false;
+            }
         },
         methods: {
             displayButtons() {
-                const name = this.activeTabName;
-                return name != null && this.canExecute;
+                return this.activeTabName && this.canExecute;
             },
             editFlow() {
                 this.$router.push({
@@ -105,17 +115,7 @@
                         this.$store.dispatch("core/isUnsaved", false);
                         this.$router.go();
                     });
-            },
-            canExecute() {
-                if (this.flow) {
-                    return this.user.isAllowed(
-                        permission.EXECUTION,
-                        action.CREATE,
-                        this.flow.namespace,
-                    );
-                }
-                return false;
-            },
+            }
         },
     };
 </script>

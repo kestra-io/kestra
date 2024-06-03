@@ -3,7 +3,7 @@
         <span ref="slotContainer" class="d-none">
             <slot />
         </span>
-        <enterprise-tooltip :disabled="true" :term="term" content="left-menu">
+        <enterprise-tooltip v-if="term" :disabled="true" :term="term" content="left-menu">
             <slot />
         </enterprise-tooltip>
     </div>
@@ -49,7 +49,7 @@
     })
 
     const slotContainer = ref(null)
-    const term = ref("undefined")
+    const term = ref()
 
     onMounted(() => {
         if (slotContainer?.value?.innerText) {

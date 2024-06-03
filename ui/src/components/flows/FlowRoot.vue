@@ -1,6 +1,6 @@
 <template>
     <template v-if="ready">
-        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName" />
+        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
         <tabs
             @expand-subflow="updateExpandedSubflows"
             route-name="flows/update"
@@ -262,6 +262,9 @@
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
             },
+            activeTabName() {
+                return this.$refs.currentTab?.activeTab?.name ?? "home";
+            }
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -291,13 +294,6 @@
             },
             tabs() {
                 return this.getTabs();
-            },
-            activeTabName() {
-                if (this.$refs.currentTab) {
-                    return this.$refs.currentTab.activeTab.name || "home";
-                }
-
-                return null;
             },
             ready() {
                 return this.user !== undefined && this.flow !== undefined;

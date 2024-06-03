@@ -65,17 +65,21 @@ class WorkerTest {
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
+        Runnable stopReceive = workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
-        workerTaskQueue.emit(workerTask(1000));
+        try {
+            workerTaskQueue.emit(workerTask(1000));
 
-        Await.until(
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
-            Duration.ofMillis(100),
-            Duration.ofMinutes(1)
-        );
+            Await.until(
+                () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
+                Duration.ofMillis(100),
+                Duration.ofMinutes(1)
+            );
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+            assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+        } finally {
+            stopReceive.run();
+        }
     }
 
     @Test
@@ -90,99 +94,108 @@ class WorkerTest {
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
+        Runnable stopReceive = workerTaskResultQueue.receive(either -> workerTaskResult.set(either.getLeft()));
 
-        Pause pause = Pause.builder()
-            .type(Pause.class.getName())
-            .delay(Duration.ofSeconds(1))
-            .id("unit-test")
-            .build();
+        try {
+            Pause pause = Pause.builder()
+                .type(Pause.class.getName())
+                .delay(Duration.ofSeconds(1))
+                .id("unit-test")
+                .build();
 
-        WorkingDirectory theWorkerTask = WorkingDirectory.builder()
-            .type(WorkingDirectory.class.getName())
-            .id("worker-unit-test")
-            .tasks(List.of(pause))
-            .build();
+            WorkingDirectory theWorkerTask = WorkingDirectory.builder()
+                .type(WorkingDirectory.class.getName())
+                .id("worker-unit-test")
+                .tasks(List.of(pause))
+                .build();
 
-        Flow flow = Flow.builder()
-            .id(IdUtils.create())
-            .namespace("io.kestra.unit-test")
-            .tasks(Collections.singletonList(theWorkerTask))
-            .build();
+            Flow flow = Flow.builder()
+                .id(IdUtils.create())
+                .namespace("io.kestra.unit-test")
+                .tasks(Collections.singletonList(theWorkerTask))
+                .build();
 
-        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+            Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ResolvedTask resolvedTask = ResolvedTask.of(pause);
+            ResolvedTask resolvedTask = ResolvedTask.of(pause);
 
-        WorkerTask workerTask = WorkerTask.builder()
-            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
-            .task(theWorkerTask)
-            .taskRun(TaskRun.of(execution, resolvedTask))
-            .build();
+            WorkerTask workerTask = WorkerTask.builder()
+                .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+                .task(theWorkerTask)
+                .taskRun(TaskRun.of(execution, resolvedTask))
+                .build();
 
-        workerTaskQueue.emit(workerTask);
+            workerTaskQueue.emit(workerTask);
 
-        Await.until(
-            throwSupplier(() -> {
-                WorkerTaskResult taskResult = workerTaskResult.get();
-                return "WorkerTaskResult was " + (taskResult == null ? null : JacksonMapper.ofJson().writeValueAsString(taskResult));
-            }),
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isFailed(),
-            Duration.ofMillis(100),
-            Duration.ofMinutes(1)
-        );
+            Await.until(
+                throwSupplier(() -> {
+                    WorkerTaskResult taskResult = workerTaskResult.get();
+                    return "WorkerTaskResult was " + (taskResult == null ? null : JacksonMapper.ofJson().writeValueAsString(taskResult));
+                }),
+                () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isFailed(),
+                Duration.ofMillis(100),
+                Duration.ofMinutes(1)
+            );
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+            assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+        } finally {
+            stopReceive.run();
+        }
     }
 
     @Test
     void killed() throws InterruptedException, TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
+        Runnable stopReceiveLogs = workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
 
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
-        workerTaskResultQueue.receive(either -> workerTaskResult.add(either.getLeft()));
+        Runnable stopReceiveResults = workerTaskResultQueue.receive(either -> workerTaskResult.add(either.getLeft()));
 
-        WorkerTask workerTask = workerTask(999000);
+        try {
+            WorkerTask workerTask = workerTask(999000);
 
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
+            workerTaskQueue.emit(workerTask);
+            workerTaskQueue.emit(workerTask);
+            workerTaskQueue.emit(workerTask);
+            workerTaskQueue.emit(workerTask);
 
-        WorkerTask notKilled = workerTask(2000);
-        workerTaskQueue.emit(notKilled);
+            WorkerTask notKilled = workerTask(2000);
+            workerTaskQueue.emit(notKilled);
 
-        Thread.sleep(500);
+            Thread.sleep(500);
 
-        executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
+            executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
-        Await.until(
-            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5,
-            Duration.ofMillis(100),
-            Duration.ofMinutes(1)
-        );
+            Await.until(
+                () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5,
+                Duration.ofMillis(100),
+                Duration.ofMinutes(1)
+            );
 
-        WorkerTaskResult oneKilled = workerTaskResult.stream()
-            .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
-            .findFirst()
-            .orElseThrow();
-        assertThat(oneKilled.getTaskRun().getState().getHistories().size(), is(3));
-        assertThat(oneKilled.getTaskRun().getState().getCurrent(), is(State.Type.KILLED));
+            WorkerTaskResult oneKilled = workerTaskResult.stream()
+                .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
+                .findFirst()
+                .orElseThrow();
+            assertThat(oneKilled.getTaskRun().getState().getHistories().size(), is(3));
+            assertThat(oneKilled.getTaskRun().getState().getCurrent(), is(State.Type.KILLED));
 
-        WorkerTaskResult oneNotKilled = workerTaskResult.stream()
-            .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
-            .findFirst()
-            .orElseThrow();
-        assertThat(oneNotKilled.getTaskRun().getState().getHistories().size(), is(3));
-        assertThat(oneNotKilled.getTaskRun().getState().getCurrent(), is(State.Type.SUCCESS));
+            WorkerTaskResult oneNotKilled = workerTaskResult.stream()
+                .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
+                .findFirst()
+                .orElseThrow();
+            assertThat(oneNotKilled.getTaskRun().getState().getHistories().size(), is(3));
+            assertThat(oneNotKilled.getTaskRun().getState().getCurrent(), is(State.Type.SUCCESS));
 
-        // child process is stopped and we never received 3 logs
-        Thread.sleep(1000);
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
+            // child process is stopped and we never received 3 logs
+            Thread.sleep(1000);
+            assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
+        } finally {
+            stopReceiveLogs.run();
+            stopReceiveResults.run();
+        }
     }
 
     @Test

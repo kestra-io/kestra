@@ -92,7 +92,7 @@ abstract public class PluginUtilsService {
         if (inputFiles instanceof Map) {
             Map<String, String> castedInputFiles = (Map<String, String>) ((Map<?, ?>) inputFiles);
             castedInputFiles.values().removeIf(Objects::isNull);
-            return runContext.renderMap(castedInputFiles);
+            return runContext.renderMap(castedInputFiles, additionalVars);
         } else if (inputFiles instanceof String) {
 
 

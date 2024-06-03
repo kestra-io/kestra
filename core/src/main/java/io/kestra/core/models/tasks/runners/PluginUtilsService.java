@@ -91,8 +91,13 @@ abstract public class PluginUtilsService {
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
         if (inputFiles instanceof Map) {
             Map<String, String> castedInputFiles = (Map<String, String>) ((Map<?, ?>) inputFiles);
-            castedInputFiles.values().removeIf(Objects::isNull);
-            return runContext.renderMap(castedInputFiles, additionalVars);
+            Map<String, String> nullFilteredInputFiles = new HashMap<>();
+            castedInputFiles.forEach((key, val) -> {
+                if (val != null) {
+                    nullFilteredInputFiles.put(key, val);
+                }
+            });
+            return runContext.renderMap(nullFilteredInputFiles, additionalVars);
         } else if (inputFiles instanceof String) {
 
 

@@ -50,7 +50,12 @@
         },
         computed: {
             link() {
-                let link = "https://kestra.io/demo?utm_source=app&utm_content=ee-tooltip&utm_term=" + this.term;
+
+                let link = "https://kestra.io/demo?utm_source=app&utm_content=ee-tooltip";
+
+                if (this.term) {
+                    link = link + "&utm_term=" + this.term;
+                }
 
                 if (this.content) {
                     link = link + "&utm_content=" + this.content;

@@ -166,7 +166,7 @@ allprojects {
 
         // exposed utils
         api platform("io.micronaut.platform:micronaut-platform:$micronautVersion")
-        api group: 'com.google.guava', name: 'guava', version: '33.2.0-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.2.1-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.16.1'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
         api "io.swagger.core.v3:swagger-annotations"

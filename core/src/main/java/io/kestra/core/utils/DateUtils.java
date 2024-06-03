@@ -2,11 +2,7 @@ package io.kestra.core.utils;
 
 import io.kestra.core.exceptions.InternalException;
 
-import java.time.DateTimeException;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.OffsetTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Locale;
 
 public class DateUtils {
@@ -82,6 +78,14 @@ public class DateUtils {
 
         public int getValue() {
             return value;
+        }
+    }
+
+    public static void validateTimeline(ZonedDateTime startDate, ZonedDateTime endDate) {
+        if (startDate != null && endDate != null) {
+            if (startDate.isAfter(endDate)) {
+                throw new IllegalArgumentException("Start date must be before End Date");
+            }
         }
     }
 }

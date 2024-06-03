@@ -10,7 +10,6 @@ import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
-import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
@@ -23,6 +22,8 @@ import jakarta.inject.Inject;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Controller("/api/v1/taskruns")
 @Requires(property = "kestra.repository.type", value = "elasticsearch")
@@ -50,6 +51,8 @@ public class TaskRunController {
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) {
+        validateTimeline(startDate, endDate);
+
         return PagedResults.of(executionRepository.findTaskRun(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,

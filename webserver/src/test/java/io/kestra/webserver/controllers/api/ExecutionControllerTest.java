@@ -54,6 +54,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static io.micronaut.http.HttpRequest.GET;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,7 +110,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     void getNotFound() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/exec_id_not_found"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/exec_id_not_found"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
@@ -186,7 +187,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // Get the triggered execution by execution id
         Execution foundExecution = client.retrieve(
-            HttpRequest.GET("/api/v1/executions/" + result.getId()),
+            GET("/api/v1/executions/" + result.getId()),
             Execution.class
         ).block();
 
@@ -201,7 +202,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         String flowId = "minimal-bis";
 
         PagedResults<Execution> executionsBefore = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
+            GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)
         );
 
@@ -212,7 +213,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // Wait for execution indexation
         Await.until(() -> executionRepositoryInterface.findByFlowId(null, namespace, flowId, Pageable.from(1)).size() == 1);
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
+            GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
             Argument.of(PagedResults.class, Execution.class)
         );
 
@@ -541,14 +542,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         String path = (String) execution.getInputs().get("file");
 
         String file = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path),
+            GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path),
             String.class
         );
 
         assertThat(file, is("hello"));
 
         FileMetas metas = client.retrieve(
-            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
+            GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
             FileMetas.class
         ).block();
 
@@ -557,7 +558,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         String newExecutionId = IdUtils.create();
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
+            GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
                 newExecutionId
             )),
             String.class
@@ -576,7 +577,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
         String defaultFile = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + defaultExecution.getId() + "/file/preview?path=" + defaultPath),
+            GET("/api/v1/executions/" + defaultExecution.getId() + "/file/preview?path=" + defaultPath),
             String.class
         );
 
@@ -601,14 +602,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 
         String latin1File = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=ISO-8859-1"),
+            GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=ISO-8859-1"),
             String.class
         );
 
         assertThat(latin1File, containsString("Düsseldorf"));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=foo"),
+            GET("/api/v1/executions/" + latin1Execution.getId() + "/file/preview?path=" + latin1Path + "&encoding=foo"),
             String.class
         ));
 
@@ -662,8 +663,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution.getTrigger().getVariables().get("body"), is("bla"));
 
         execution = client.toBlocking().retrieve(
-            HttpRequest
-                .GET("/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key),
+            GET("/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key),
             Execution.class
         );
         assertThat(execution.getTrigger().getVariables().get("body"), is(nullValue()));
@@ -683,8 +683,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .GET(
+            GET(
                     "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
                 ),
             Execution.class
@@ -698,8 +697,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
     void webhookDynamicKeyFromASecret() {
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .GET(
+            GET(
                     "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
                 ),
             Execution.class
@@ -751,7 +749,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the execution is no more paused
         Thread.sleep(100);
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused(), is(false));
     }
@@ -782,7 +780,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the execution is no more paused
         Thread.sleep(100);
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused(), is(false));
 
@@ -812,11 +810,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the executions are no more paused
         Thread.sleep(100);
         Execution resumedExecution1 = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            GET("/api/v1/executions/" + pausedExecution1.getId()),
             Execution.class
         );
         Execution resumedExecution2 = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            GET("/api/v1/executions/" + pausedExecution2.getId()),
             Execution.class
         );
         assertThat(resumedExecution1.getState().isPaused(), is(false));
@@ -851,11 +849,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the executions are no more paused
         Thread.sleep(100);
         Execution resumedExecution1 = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution1.getId()),
+            GET("/api/v1/executions/" + pausedExecution1.getId()),
             Execution.class
         );
         Execution resumedExecution2 = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution2.getId()),
+            GET("/api/v1/executions/" + pausedExecution2.getId()),
             Execution.class
         );
         assertThat(resumedExecution1.getState().isPaused(), is(false));
@@ -880,7 +878,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution2.getState().isTerminated(), is(true));
 
         PagedResults<?> executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+            GET("/api/v1/executions/search"), PagedResults.class
         );
         assertThat(executions.getTotal(), is(2L));
 
@@ -895,7 +893,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(replayResponse.getCount(), is(2));
 
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+            GET("/api/v1/executions/search"), PagedResults.class
         );
         assertThat(executions.getTotal(), is(4L));
     }
@@ -909,7 +907,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(execution2.getState().isTerminated(), is(true));
 
         PagedResults<?> executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+            GET("/api/v1/executions/search"), PagedResults.class
         );
         assertThat(executions.getTotal(), is(2L));
 
@@ -921,7 +919,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(resumeResponse.getCount(), is(2));
 
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+            GET("/api/v1/executions/search"), PagedResults.class
         );
         assertThat(executions.getTotal(), is(4L));
     }
@@ -940,7 +938,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the execution is no more paused
         Thread.sleep(100);
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + pausedExecution.getId()),
+            GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
         assertThat(execution.getState().isPaused(), is(false));
     }
@@ -948,7 +946,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void find() {
         PagedResults<?> executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search"), PagedResults.class
+            GET("/api/v1/executions/search"), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(0L));
@@ -957,28 +955,28 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search?page=1&size=25&labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            GET("/api/v1/executions/search?page=1&size=25&labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&timeRange=PT12H"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&timeRange=PT12H"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
 
         executions = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/search?timeRange=PT12H"), PagedResults.class
+            GET("/api/v1/executions/search?timeRange=PT12H"), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
 
         e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/search?timeRange=P1Y"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?timeRange=P1Y"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
@@ -1024,7 +1022,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // retrieve the execution from the API and check that the task has been set to killed
         Thread.sleep(500);
         Execution execution = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + runningExecution.getId()),
+            GET("/api/v1/executions/" + runningExecution.getId()),
             Execution.class);
         assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
         assertThat(execution.getTaskRunList().size(), is(1));
@@ -1150,7 +1148,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void getFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/flows/io.kestra.tests/full"),
+            GET("/api/v1/executions/flows/io.kestra.tests/full"),
             FlowForExecution.class
         );
 
@@ -1171,7 +1169,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         FlowForExecution result = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/flow"),
+            GET("/api/v1/executions/" + execution.getId() + "/flow"),
             FlowForExecution.class
         );
 
@@ -1183,7 +1181,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void getDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/namespaces"),
+            GET("/api/v1/executions/namespaces"),
             Argument.of(List.class, String.class)
         );
 
@@ -1193,11 +1191,21 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void getFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
+            GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
             Argument.of(List.class, FlowForExecution.class)
         );
 
         assertThat(result.size(), greaterThan(100));
+    }
+
+    @Test
+    void badDate() {
+
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(GET("/api/v1/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+        assertThat(exception.getStatus().getCode(), is(422));
+        assertThat(exception.getMessage(),is("Illegal argument: Start date must be before End Date"));
+
     }
 
 }

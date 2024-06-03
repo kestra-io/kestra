@@ -130,12 +130,12 @@ jobs:
         uses: robinraju/release-downloader@v1.10
         with:
           tag: ${{steps.vars.outputs.tag}}
-          fileName: exe
-          out-file-path: build
+          fileName: 'kestra-*'
+          out-file-path: build/executable
 
       - name: Copy exe to image
         run: |
-          cp build/exe docker/app/kestra && chmod +x docker/app/kestra
+          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 
       # Vars
       - name: Set image name

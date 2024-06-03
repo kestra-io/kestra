@@ -787,8 +787,11 @@
     },
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
+    "iam": "IAM",
+    "tenant": "Tenant",
+    "tenants": "Tenants",
     "ee-tooltip": {
-      "features-blocked": "This feature is only available in the Enterprise Edition.",
+      "features-blocked": "This feature requires Enterprise Edition.",
       "button": "Talk to us"
     }
   }

@@ -759,8 +759,11 @@
     },
     "enable concurrency": "Activer la concurrence",
     "auditlogs": "Journaux d'audit",
+    "iam": "IAM",
+    "tenant": "Tenant",
+    "tenants": "Tenants",
     "ee-tooltip": {
-      "features-blocked": "Cette fonctionnalité est uniquement disponible dans l'édition Enterprise.",
+      "features-blocked": "Cette fonctionnalité nécessite l'édition Enterprise.",
       "button": "Contactez-nous"
     }
   }

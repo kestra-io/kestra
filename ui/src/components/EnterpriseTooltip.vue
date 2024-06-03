@@ -13,7 +13,7 @@
             </a>
         </template>
         <template #default>
-            <span ref="slot-container" class="vsm--badge_default">
+            <span ref="slot-container">
                 <slot />
                 <lock v-if="disabled" />
             </span>
@@ -39,6 +39,10 @@
                 type: Boolean,
                 default: false
             },
+            content: {
+                type: String,
+                default: undefined
+            },
             term: {
                 type: String,
                 required: true
@@ -46,7 +50,13 @@
         },
         computed: {
             link() {
-                return "https://kestra.io/demo?utm_source=app&utm_content=ee-tooltip&utm_term=" + this.term;
+                let link = "https://kestra.io/demo?utm_source=app&utm_content=ee-tooltip&utm_term=" + this.term;
+
+                if (this.content) {
+                    link = link + "&utm_content=" + this.content;
+                }
+
+                return link;
             }
         }
     };

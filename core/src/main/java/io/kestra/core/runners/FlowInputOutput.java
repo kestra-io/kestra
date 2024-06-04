@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.ArrayInput;
+import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -85,7 +86,9 @@ public class FlowInputOutput {
             .subscribeOn(Schedulers.boundedElastic())
             .map(throwFunction(input -> {
                 if (input instanceof CompletedFileUpload fileUpload) {
-                    File tempFile = File.createTempFile(fileUpload.getFilename() + "_", ".upl");
+                    String fileExtension = inputs.stream().filter(flowInput -> flowInput instanceof FileInput && flowInput.getId().equals(fileUpload.getFilename())).map(flowInput -> ((FileInput) flowInput).getExtension()).findFirst().orElse(".upl");
+                    fileExtension = fileExtension.startsWith(".") ? fileExtension : "." + fileExtension;
+                    File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
                     try (var inputStream = fileUpload.getInputStream();
                          var outputStream = new FileOutputStream(tempFile)) {
                         long transferredBytes = inputStream.transferTo(outputStream);

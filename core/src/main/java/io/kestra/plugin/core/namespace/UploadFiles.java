@@ -138,10 +138,10 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             });
 
             // check for file in current tempDir that match regexs
-            List<PathMatcher> patterns = regexs.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + reg)).toList();
-            for (File file : Objects.requireNonNull(runContext.tempDir().toFile().listFiles())) {
+            List<PathMatcher> patterns = regexs.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + runContext.tempDir().toString() + checkLeadingSlash(reg))).toList();
+            for (File file : Objects.requireNonNull(listFilesRecursively(runContext.tempDir().toFile()))) {
                 if (patterns.stream().anyMatch(p -> p.matches(Path.of(file.toURI().getPath())))) {
-                    String newFilePath = buildPath(renderedDestination, file.getName());
+                    String newFilePath = buildPath(renderedDestination, file.getPath().replace(runContext.tempDir().toString(), ""));
                     storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
                 }
             }
@@ -198,6 +198,24 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             logger.debug(String.format("File %s created", filePath));
         }
     }
+
+    private List<File> listFilesRecursively(File directory) throws IOException {
+        List<File> files = new ArrayList<>();
+        if (directory == null || !directory.isDirectory()) {
+            return files; // Handle invalid directory or not a directory
+        }
+
+        for (File file : directory.listFiles()) {
+            if (file.isFile()) {
+                files.add(file);
+            } else {
+                // Recursively call for subdirectories
+                files.addAll(listFilesRecursively(file));
+            }
+        }
+        return files;
+    }
+
 
     @Builder
     @Getter

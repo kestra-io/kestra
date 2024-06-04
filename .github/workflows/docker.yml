@@ -11,14 +11,6 @@ on:
         options:
           - "true"
           - "false"
-      skip-test:
-        description: 'Skip test'
-        required: false
-        type: string
-        default: "false"
-        options:
-          - "true"
-          - "false"
       plugin-version:
         description: 'Plugin version'
         required: false
@@ -126,6 +118,8 @@ jobs:
             packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
             python-libs: kestra
     steps:
+      - uses: actions/checkout@v4
+
       # Vars
       - name: Set image name
         id: vars
@@ -180,7 +174,7 @@ jobs:
       - name: Retag to latest
         if: github.event.inputs.retag-latest == 'true'
         run: |
-          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{1}', matrix.image.name) }}
+          regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
 
   end:
     runs-on: ubuntu-latest

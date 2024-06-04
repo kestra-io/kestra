@@ -11,7 +11,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Rethrow;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -84,7 +83,6 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     private String namespace;
 
     @NotNull
-    @NotEmpty
     @Schema(
         title = "A file or a list of files from the given namespace.",
         description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",
@@ -93,11 +91,19 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     @PluginProperty(dynamic = true)
     private Object files;
 
+    @Schema(
+        title = "The folder where the downloaded files will be stored"
+    )
+    @PluginProperty(dynamic = true)
+    @Builder.Default
+    private String destination = "";
+
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
         String renderedNamespace = runContext.render(namespace);
+        String renderedDestination = runContext.render(destination);
         // Check if namespace is allowed
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
@@ -120,7 +126,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         namespaceFilesService.recursiveList(flowInfo.tenantId(), renderedNamespace, null).forEach(Rethrow.throwConsumer(uri -> {
             if (patterns.stream().anyMatch(p -> p.matches(Path.of(uri.getPath())))) {
                 try (InputStream inputStream = namespaceFilesService.content(flowInfo.tenantId(), renderedNamespace, uri)) {
-                    downloaded.put(uri.getPath(), runContext.storage().putFile(inputStream, uri.getPath()));
+                    downloaded.put(uri.getPath(), runContext.storage().putFile(inputStream, destination + uri.getPath()));
                     logger.debug(String.format("Downloaded %s", uri));
                 }
             }

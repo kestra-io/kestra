@@ -80,7 +80,6 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
     private String namespace;
 
     @NotNull
-    @NotEmpty
     @Schema(
         title = "A file or a list of files from the given namespace.",
         description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",

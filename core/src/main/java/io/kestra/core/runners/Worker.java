@@ -126,6 +126,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
+    private final List<Runnable> receiveCancellations = new ArrayList<>();
+
     /**
      * Creates a new {@link Worker} instance.
      *
@@ -171,7 +173,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Override
     public void run() {
         setState(ServiceState.RUNNING);
-        this.executionKilledQueue.receive(executionKilled -> {
+        this.receiveCancellations.addFirst(this.executionKilledQueue.receive(executionKilled -> {
             if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
             }
@@ -202,9 +204,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         .forEach(AbstractWorkerThread::kill);
                 }
             }
-        });
+        }));
 
-        this.workerJobQueue.receive(
+        this.receiveCancellations.addFirst(this.workerJobQueue.receive(
             this.workerGroup,
             Worker.class,
             either -> {
@@ -223,7 +225,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     }
                 });
             }
-        );
+        ));
     }
 
     private void setState(final ServiceState state) {
@@ -732,6 +734,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             terminatedGracefully = waitForTasksCompletion(timeout);
         } else {
             log.info("Terminating now and skip waiting for tasks completions.");
+            this.receiveCancellations.forEach(Runnable::run);
             this.executorService.shutdownNow();
             closeQueue();
             terminatedGracefully = false;
@@ -762,6 +765,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         new Thread(
             () -> {
                 try {
+                    this.receiveCancellations.forEach(Runnable::run);
                     this.executorService.shutdown();
 
                     long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
@@ -845,6 +849,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void shutdown() {
+        this.receiveCancellations.forEach(Runnable::run);
         this.executorService.shutdownNow();
     }
 

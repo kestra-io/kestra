@@ -53,6 +53,7 @@ import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -178,6 +179,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
+    private final List<Runnable> receiveCancellations = new ArrayList<>();
+
     /**
      * Creates a new {@link JdbcExecutor} instance. Both constructor and field injection are used
      * to force Micronaut to respect order when invoking pre-destroy order.
@@ -208,10 +211,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 
-        this.executionQueue.receive(Executor.class, this::executionQueue);
-        this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue);
-        this.killQueue.receive(Executor.class, this::killQueue);
-        this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue);
+        this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
+        this.receiveCancellations.addFirst(this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue));
+        this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
+        this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
 
         ScheduledFuture<?> scheduledDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -239,7 +242,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         );
         scheduledDelayExceptionThread.start();
 
-        flowQueue.receive(
+        this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,
             either -> {
                 Flow flow;
@@ -271,7 +274,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         .collect(Collectors.toList())
                 );
             }
-        );
+        ));
         setState(ServiceState.RUNNING);
     }
 
@@ -957,6 +960,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             setState(ServiceState.TERMINATING);
+            this.receiveCancellations.forEach(Runnable::run);
             scheduledDelay.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
 

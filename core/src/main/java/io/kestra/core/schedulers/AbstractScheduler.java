@@ -90,6 +90,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
     private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
+    protected final List<Runnable> receiveCancellations = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -200,7 +201,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         });
 
         // listen to WorkerTriggerResult from worker triggers
-        this.workerTriggerResultQueue.receive(
+        this.receiveCancellations.add(this.workerTriggerResultQueue.receive(
             null,
             Scheduler.class,
             either -> {
@@ -227,7 +228,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
                 }
             }
-        );
+        ));
         setState(ServiceState.RUNNING);
     }
 
@@ -799,6 +800,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             } catch (Exception e) {
                 log.error("Unexpected error while terminating scheduler.", e);
             }
+            this.receiveCancellations.forEach(Runnable::run);
             this.scheduleExecutor.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
 

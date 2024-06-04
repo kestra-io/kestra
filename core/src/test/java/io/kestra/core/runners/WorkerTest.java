@@ -75,6 +75,7 @@ class WorkerTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
+        worker.shutdown();
 
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
     }
@@ -133,6 +134,7 @@ class WorkerTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
+        worker.shutdown();
 
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
     }
@@ -184,6 +186,7 @@ class WorkerTest {
 
         // child process is stopped and we never received 3 logs
         Thread.sleep(1000);
+        worker.shutdown();
         assertThat(receiveLogs.toStream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
     }
 

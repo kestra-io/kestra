@@ -82,14 +82,14 @@ class TriggerTest {
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(1);
 
-        // scheduler
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
+        // scheduler
         try (
-                AbstractScheduler scheduler = new DefaultScheduler(
-                        this.applicationContext,
-                        this.flowListenersService,
-                        this.triggerState
-                );
+            AbstractScheduler scheduler = new DefaultScheduler(
+                this.applicationContext,
+                this.flowListenersService,
+                this.triggerState
+            );
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
@@ -107,6 +107,7 @@ class TriggerTest {
             repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen-encrypted.yaml")));
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
+            worker.shutdown();
             receive.blockLast();
         }
     }

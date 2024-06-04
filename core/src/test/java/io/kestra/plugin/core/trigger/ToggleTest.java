@@ -7,14 +7,15 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -39,11 +40,9 @@ class ToggleTest extends AbstractMemoryRunnerTest {
             .build();
         triggerRepository.save(trigger);
 
-        AtomicReference<Trigger> triggerRef = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        triggerQueue.receive(either -> {
+        Flux<Trigger> receive = TestsUtils.receive(triggerQueue, either -> {
             if (either.isLeft()) {
-                triggerRef.set(either.getLeft());
                 countDownLatch.countDown();
             }
         });
@@ -55,7 +54,8 @@ class ToggleTest extends AbstractMemoryRunnerTest {
 
         countDownLatch.await(10, TimeUnit.SECONDS);
         assertThat(countDownLatch.getCount(), is(0L));
-        assertThat(triggerRef.get(), notNullValue());
-        assertThat(triggerRef.get().getDisabled(), is(false));
+        Trigger lastTrigger = receive.blockLast();
+        assertThat(lastTrigger, notNullValue());
+        assertThat(lastTrigger.getDisabled(), is(false));
     }
 }

@@ -42,6 +42,7 @@ import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
@@ -95,7 +96,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void logs() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
-        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
 
@@ -117,13 +118,14 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(matchingLog.getMessage(), is("third logs"));
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(3).getId()));
+        receive.blockLast();
         assertThat(matchingLog, nullValue());
     }
 
     @Test
     void inputsLarge() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
         char[] chars = new char[1024 * 11];
         Arrays.fill(chars, 'a');
@@ -144,6 +146,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
 
         List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 1);
+        receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
         assertThat(logEntries.get(0).getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
@@ -329,7 +332,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void secretTrigger() throws IllegalVariableEvaluationException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         LogTrigger trigger = LogTrigger.builder()
             .type(SleepTrigger.class.getName())
@@ -346,9 +349,10 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             .build();
 
         RunContext runContext = mockedTrigger.getKey().getRunContext().forWorker(applicationContext, workerTrigger);
-        Optional<Execution> evaluate = trigger.evaluate(mockedTrigger.getKey().withRunContext(runContext), mockedTrigger.getValue());
+        trigger.evaluate(mockedTrigger.getKey().withRunContext(runContext), mockedTrigger.getValue());
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
+        receive.blockLast();
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null).getMessage(), is("john ******** doe"));
     }
 
@@ -360,7 +364,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         // When
         Optional<String> result = context.pluginConfiguration("prop0");
-        
+
         // Then
         String expected = (String) pluginConfigurations.getConfigurationByPluginType("io.kestra.core.runners.test.task.Alias").get("prop0");
         Assertions.assertEquals(Optional.of(expected), result);

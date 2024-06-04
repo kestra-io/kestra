@@ -10,15 +10,16 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -55,12 +56,10 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     void thread() throws Exception {
         Flow flow = createThreadFlow();
         CountDownLatch queueCount = new CountDownLatch(2);
-        AtomicReference<Execution> last = new AtomicReference<>();
 
         // wait for execution
-        Runnable assertionStop = executionQueue.receive(SchedulerThreadTest.class, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerThreadTest.class, either -> {
             Execution execution = either.getLeft();
-            last.set(execution);
 
             assertThat(execution.getFlowId(), is(flow.getId()));
 
@@ -91,14 +90,13 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             worker.run();
             scheduler.run();
             boolean sawSuccessExecution = queueCount.await(1, TimeUnit.MINUTES);
-            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+            Execution last = receive.blockLast();
 
-            assertThat("Countdown latch returned " + sawSuccessExecution, last.get(), notNullValue());
-            assertThat(last.get().getTrigger().getVariables().get("defaultInjected"), is("done"));
-            assertThat(last.get().getTrigger().getVariables().get("counter"), is(3));
-            assertThat(last.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-            assertThat(last.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+            assertThat("Countdown latch returned " + sawSuccessExecution, last, notNullValue());
+            assertThat(last.getTrigger().getVariables().get("defaultInjected"), is("done"));
+            assertThat(last.getTrigger().getVariables().get("counter"), is(3));
+            assertThat(last.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+            assertThat(last.getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

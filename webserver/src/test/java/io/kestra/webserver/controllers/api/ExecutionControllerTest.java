@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -40,6 +41,7 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
+import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -991,7 +993,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // listen to the execution queue
         CountDownLatch killingLatch = new CountDownLatch(1);
         CountDownLatch killedLatch = new CountDownLatch(1);
-        executionQueue.receive(e -> {
+        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, e -> {
             if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLING) {
                 killingLatch.countDown();
             }
@@ -1002,7 +1004,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // listen to the executionkilled queue
         CountDownLatch executionKilledLatch = new CountDownLatch(1);
-        killQueue.receive(e -> {
+        Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killQueue, e -> {
             if (((ExecutionKilledExecution) e.getLeft()).getExecutionId().equals(runningExecution.getId())) {
                 executionKilledLatch.countDown();
             }
@@ -1016,8 +1018,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         // check that the execution has been set to killing then killed
         assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
         assertTrue(killedLatch.await(10, TimeUnit.SECONDS));
+        receiveExecutions.blockLast();
+
         //check that an executionkilled message has been sent
         assertTrue(executionKilledLatch.await(10, TimeUnit.SECONDS));
+        receiveKilled.blockLast();
 
         // retrieve the execution from the API and check that the task has been set to killed
         Thread.sleep(500);

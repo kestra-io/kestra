@@ -69,7 +69,7 @@
                                 <Slack class="align-middle" /> {{ $t("join community") }}
                             </a>
                             <a
-                                href="https://kestra.io/contact-us?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/demo?utm_source=app&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >

@@ -6,9 +6,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.List;
@@ -226,7 +228,7 @@ public class DeserializationIssuesCaseTest {
 
     public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
-        workerTaskResultQueue.receive(either -> {
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
             if (either != null) {
                 workerTaskResult.set(either.getLeft());
             }
@@ -239,6 +241,7 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
+        receive.blockLast();
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(2));
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().get(0).getState(), is(State.Type.CREATED));
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.FAILED));
@@ -246,7 +249,7 @@ public class DeserializationIssuesCaseTest {
 
     public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
-        workerTriggerResultQueue.receive(either -> {
+        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, either -> {
             if (either != null) {
                 workerTriggerResult.set(either.getLeft());
             }
@@ -259,6 +262,7 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
+        receive.blockLast();
         assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
     }
 

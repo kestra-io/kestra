@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -15,6 +16,7 @@ import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -111,7 +113,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(either -> {
+            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
@@ -126,7 +128,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
-            Runnable logStop = logQueue.receive(e -> {
+            Flux<LogEntry> receiveLogs = TestsUtils.receive(logQueue, e -> {
                 if (e.getLeft().getMessage().contains("Unknown time-zone ID: Asia/Delhi")) {
                     invalidLogCount.countDown();
                 }
@@ -136,8 +138,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             queueCount.await(1, TimeUnit.MINUTES);
             invalidLogCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
-            logStop.run();
+            receiveExecutions.blockLast();
+            receiveLogs.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(invalidLogCount.getCount(), is(0L));
@@ -205,7 +207,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();
@@ -214,8 +216,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);
-            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+            receive.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
@@ -251,7 +252,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();
@@ -261,7 +262,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             queueCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+            receive.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
@@ -429,7 +430,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
@@ -444,8 +445,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             scheduler.run();
 
             queueCount.await(1, TimeUnit.MINUTES);
-            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+            receive.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
 
@@ -490,7 +490,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -502,7 +502,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             queueCount.await(1, TimeUnit.MINUTES);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+            receive.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
         } catch (Exception e) {

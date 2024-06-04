@@ -15,9 +15,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -52,7 +54,7 @@ public class FlowCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("switch") && execution.getState().getCurrent().isTerminated()) {
                 countDownLatch.countDown();
@@ -71,6 +73,7 @@ public class FlowCaseTest {
         );
 
         countDownLatch.await(1, TimeUnit.MINUTES);
+        receive.blockLast();
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));

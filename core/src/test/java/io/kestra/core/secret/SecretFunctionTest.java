@@ -11,9 +11,9 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,13 +40,14 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = ".*")
     void getSecret() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().get(0).getOutputs().get("value"), is("secretValue"));
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong"));
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getTaskId() != null && logEntry.getTaskId().equals("log-secret"));
+        receive.blockLast();
         assertThat(matchingLog.getMessage(), containsString("***"));
     }
 

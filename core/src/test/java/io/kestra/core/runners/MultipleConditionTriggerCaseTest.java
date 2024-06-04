@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -42,7 +44,7 @@ public class MultipleConditionTriggerCaseTest {
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
         Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger", "trigger-multiplecondition-listener").orElseThrow();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             synchronized (ended) {
                 if (execution.getState().getCurrent() == State.Type.SUCCESS && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
@@ -70,6 +72,7 @@ public class MultipleConditionTriggerCaseTest {
 
         // trigger is done
         countDownLatch.await(10, TimeUnit.SECONDS);
+        receive.blockLast();
         assertThat(ended.size(), is(3));
 
         Execution triggerExecution = ended.entrySet()
@@ -91,7 +94,7 @@ public class MultipleConditionTriggerCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             synchronized (ended) {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent().isTerminated() && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
@@ -119,6 +122,7 @@ public class MultipleConditionTriggerCaseTest {
 
         // trigger was not done
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        receive.blockLast();
         assertThat(ended.size(), is(2));
     }
 }

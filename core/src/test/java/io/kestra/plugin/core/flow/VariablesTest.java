@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,7 +41,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     @Test
     void invalidVars() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables-invalid");
 
@@ -51,6 +52,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
             Objects.equals(logEntry.getTaskRunId(), execution.getTaskRunList().get(1).getId()) &&
                 logEntry.getMessage().contains("Unable to find `inputs` used in the expression `{{inputs.invalid}}`")
         );
+        receive.blockLast();
         assertThat(matchingLog, notNullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }

@@ -6,11 +6,13 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import reactor.core.publisher.Flux;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -58,7 +60,7 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
                 countDownLatch.countDown();
@@ -74,6 +76,7 @@ public class ForEachItemCaseTest {
 
         // we should have triggered 3 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        receive.blockLast();
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(4));
@@ -99,7 +102,7 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow")) {
                 log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
@@ -135,6 +138,7 @@ public class ForEachItemCaseTest {
 
         // wait for the 3 flows to ends
         assertThat("Remaining count was " + countDownLatch.getCount(), countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        receive.blockLast();
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -147,7 +151,7 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-failed") && execution.getState().getCurrent().isTerminated()) {
                 countDownLatch.countDown();
@@ -163,6 +167,7 @@ public class ForEachItemCaseTest {
 
         // we should have triggered 3 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        receive.blockLast();
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -188,7 +193,7 @@ public class ForEachItemCaseTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
-        executionQueue.receive(either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-outputs-subflow") && execution.getState().getCurrent().isTerminated()) {
                 countDownLatch.countDown();
@@ -204,6 +209,7 @@ public class ForEachItemCaseTest {
 
         // we should have triggered 3 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        receive.blockLast();
 
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(5));

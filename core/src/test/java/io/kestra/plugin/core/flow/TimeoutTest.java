@@ -15,6 +15,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -39,7 +40,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
     @Test
     void timeout() throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -59,6 +60,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
+        receive.blockLast();
         assertThat(matchingLogs.size(), is(2));
     }
 }

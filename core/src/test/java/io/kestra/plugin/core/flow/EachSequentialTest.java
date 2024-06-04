@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -91,13 +92,14 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
     public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        receive.blockLast();
         assertThat(matchingLog, notNullValue());
     }
 

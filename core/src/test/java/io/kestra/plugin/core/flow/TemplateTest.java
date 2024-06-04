@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -55,7 +56,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
             "flows/templates/with-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
 
         Execution execution = runnerUtils.runOne(
@@ -73,6 +74,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
+        receive.blockLast();
         assertThat(matchingLog, notNullValue());
     }
 
@@ -87,13 +89,14 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
             "flows/templates/with-failed-template.yaml")));
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
+        receive.blockLast();
         assertThat(matchingLog, notNullValue());
     }
 

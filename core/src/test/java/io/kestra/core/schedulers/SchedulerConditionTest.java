@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -12,6 +13,7 @@ import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
@@ -82,7 +84,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             triggerState);
              Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
             // wait for execution
-            Runnable assertionStop = executionQueue.receive(SchedulerConditionTest.class, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerConditionTest.class, either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
@@ -97,8 +99,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
             scheduler.run();
             queueCount.await(15, TimeUnit.SECONDS);
-            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
+
+            receive.blockLast();
 
             assertThat(queueCount.getCount(), is(0L));
         }

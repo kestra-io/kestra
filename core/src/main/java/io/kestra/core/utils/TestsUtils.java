@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -12,10 +13,12 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +27,11 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -173,5 +179,67 @@ abstract public class TestsUtils {
         TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
 
         return runContextFactory.of(flow, task, execution, taskRun);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue) {
+        return TestsUtils.receive(queue, null);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue, Consumer<Either<T, DeserializationException>> consumer) {
+        return TestsUtils.receive(queue, null, null, consumer, null);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
+        return TestsUtils.receive(queue, null, queueType, consumer, null);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue, String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
+        return TestsUtils.receive(queue, consumerGroup, queueType, consumer, null);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue, String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {
+        return TestsUtils.receive(queue, consumerGroup, null, consumer, null);
+    }
+
+    public static <T> Flux<T> receive(QueueInterface<T> queue, String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, Duration timeout) {
+        List<T> elements = new CopyOnWriteArrayList<>();
+        AtomicReference<DeserializationException> exceptionRef = new AtomicReference<>();
+        Consumer<Either<T, DeserializationException>> eitherConsumer = (either) -> {
+            if (either.isLeft()) {
+                elements.add(either.getLeft());
+            } else {
+                exceptionRef.set(either.getRight());
+            }
+
+            if (consumer != null) {
+                consumer.accept(either);
+            }
+        };
+        Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer) : queue.receive(consumerGroup, queueType, eitherConsumer);
+
+        AtomicBoolean isCancelled = new AtomicBoolean(false);
+        Flux<T> flux = Flux.<T>create(sink -> {
+            DeserializationException exception = exceptionRef.get();
+            if (exception == null) {
+                elements.forEach(sink::next);
+                sink.complete();
+            } else {
+                sink.error(exception);
+            }
+        }).doFinally(signalType -> {
+            isCancelled.set(true);
+            receiveCancellation.run();
+        });
+
+        new Thread(() -> {
+            try {
+                Await.until(isCancelled::get, null, Optional.ofNullable(timeout).orElse(Duration.ofSeconds(30)));
+            } catch (TimeoutException e) {
+                // If the receive hasn't been stopped after the given timeout (which means no subscription was done), we stop it
+                receiveCancellation.run();
+            }
+        }).start();
+
+        return flux;
     }
 }

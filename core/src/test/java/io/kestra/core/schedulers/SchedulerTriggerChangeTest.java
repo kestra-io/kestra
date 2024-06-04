@@ -22,13 +22,13 @@ import jakarta.inject.Named;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -77,24 +77,20 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     void run() throws Exception {
         CountDownLatch executionQueueCount = new CountDownLatch(1);
         CountDownLatch executionKilledCount = new CountDownLatch(1);
-        AtomicReference<Execution> lastExecution = new AtomicReference<>();
-        AtomicReference<ExecutionKilledTrigger> lastKilled = new AtomicReference<>();
 
         // wait for execution
-        Runnable executionQueueStop = executionQueue.receive(SchedulerThreadTest.class, either -> {
-            lastExecution.set(either.getLeft());
+        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, SchedulerThreadTest.class, either -> {
             executionQueueCount.countDown();
         });
 
         // wait for killed
-        Runnable killedQueueStop = killedQueue.receive(SchedulerThreadTest.class, either -> {
-            lastKilled.set((ExecutionKilledTrigger) either.getLeft());
+        Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killedQueue, SchedulerThreadTest.class, either -> {
             executionKilledCount.countDown();
         });
 
         // wait for execution
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Runnable workerTriggerQueueStop = logsQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receiveLogs = TestsUtils.receive(logsQueue, either -> logs.add(either.getLeft()));
 
         // scheduler
         try (
@@ -131,7 +127,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
             // wait for the killed
             executionKilledCount.await(1, TimeUnit.MINUTES);
-            assertThat(lastKilled.get().getTriggerId(), is("sleep"));
+            assertThat(((ExecutionKilledTrigger) receiveKilled.blockLast()).getTriggerId(), is("sleep"));
 
             // the trigger is restarted
             Await.until(() -> STARTED_COUNT == 2, Duration.ofMillis(100), Duration.ofSeconds(30));
@@ -139,15 +135,12 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             // the new trigger create an execution
             boolean sawSuccessExecution = executionQueueCount.await(1, TimeUnit.MINUTES);
             assertThat(sawSuccessExecution, is(true));
-            assertThat(lastExecution.get().getTrigger().getVariables().get("sleep"), is(Duration.ofMillis(1).toString()));
+            assertThat(receiveExecutions.blockLast().getTrigger().getVariables().get("sleep"), is(Duration.ofMillis(1).toString()));
 
             // log the sleep interrupted
             LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("sleep interrupted"));
+            receiveLogs.blockLast();
             assertThat(matchingLog.getTriggerId(), is("sleep"));
-
-            executionQueueStop.run();
-            workerTriggerQueueStop.run();
-            killedQueueStop.run();;
         }
     }
 

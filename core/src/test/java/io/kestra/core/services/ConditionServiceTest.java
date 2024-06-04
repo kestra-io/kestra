@@ -18,6 +18,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,7 +68,7 @@ class ConditionServiceTest {
     @Test
     void exception() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logQueue.receive(either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Flow flow = TestsUtils.mockFlow();
         Schedule schedule = Schedule.builder().id("unit").type(Schedule.class.getName()).cron("0 0 1 * *").build();
@@ -85,6 +86,7 @@ class ConditionServiceTest {
         conditionService.valid(flow, conditions, conditionContext);
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
+        receive.blockLast();
         assertThat(matchingLog, notNullValue());
     }
 }

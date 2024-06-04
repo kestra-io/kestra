@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Indexer;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -12,11 +13,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -34,7 +35,7 @@ abstract public class JdbcQueueTest {
     void noGroup() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.receive(either -> {
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, either -> {
             Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
@@ -46,6 +47,7 @@ abstract public class JdbcQueueTest {
         flowQueue.emit(builder("io.kestra.f1"));
 
         countDownLatch.await(5, TimeUnit.SECONDS);
+        receive.blockLast();
 
         assertThat(countDownLatch.getCount(), is(0L));
     }
@@ -54,7 +56,7 @@ abstract public class JdbcQueueTest {
     void withGroup() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        flowQueue.receive("consumer_group", either -> {
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, "consumer_group", either -> {
             Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit("consumer_group", builder("io.kestra.f2"));
@@ -66,6 +68,7 @@ abstract public class JdbcQueueTest {
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
         countDownLatch.await(5, TimeUnit.SECONDS);
+        receive.blockLast();
 
         assertThat(countDownLatch.getCount(), is(0L));
     }
@@ -75,31 +78,25 @@ abstract public class JdbcQueueTest {
         // first one
         flowQueue.emit(builder("io.kestra.f1"));
 
-        AtomicReference<String> namespace = new AtomicReference<>();
-
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.receive(Indexer.class, either -> {
-            Flow flow = either.getLeft();
-            namespace.set(flow.getNamespace());
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
             countDownLatch.countDown();
         });
 
         countDownLatch.await(5, TimeUnit.SECONDS);
 
-        assertThat(namespace.get(), is("io.kestra.f1"));
+        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
 
         // second one only
         flowQueue.emit(builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        flowQueue.receive(Indexer.class, either -> {
-            Flow flow = either.getLeft();
-            namespace.set(flow.getNamespace());
+        receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
             countDownLatch2.countDown();
         });
         countDownLatch2.await(5, TimeUnit.SECONDS);
 
-        assertThat(namespace.get(), is("io.kestra.f2"));
+        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
     }
 
     @Test
@@ -107,31 +104,25 @@ abstract public class JdbcQueueTest {
         // first one
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
-        AtomicReference<String> namespace = new AtomicReference<>();
-
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.receive("consumer_group", Indexer.class, either -> {
-            Flow flow = either.getLeft();
-            namespace.set(flow.getNamespace());
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
             countDownLatch.countDown();
         });
 
         countDownLatch.await(5, TimeUnit.SECONDS);
 
-        assertThat(namespace.get(), is("io.kestra.f1"));
+        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
 
         // second one only
         flowQueue.emit("consumer_group", builder("io.kestra.f2"));
 
         CountDownLatch countDownLatch2 = new CountDownLatch(1);
-        flowQueue.receive("consumer_group", Indexer.class, either -> {
-            Flow flow = either.getLeft();
-            namespace.set(flow.getNamespace());
+        receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
             countDownLatch2.countDown();
         });
         countDownLatch2.await(5, TimeUnit.SECONDS);
 
-        assertThat(namespace.get(), is("io.kestra.f2"));
+        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
     }
 
     private static Flow builder(String namespace) {

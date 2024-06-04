@@ -125,6 +125,14 @@ jobs:
             packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
             python-libs: kestra
     steps:
+      # Vars
+      - name: Set image name
+        id: vars
+        run: |
+          TAG=${GITHUB_REF#refs/*/}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
+          
       # Download release
       - name: Download release
         uses: robinraju/release-downloader@v1.10
@@ -136,14 +144,6 @@ jobs:
       - name: Copy exe to image
         run: |
           cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-
-      # Vars
-      - name: Set image name
-        id: vars
-        run: |
-          TAG=${GITHUB_REF#refs/*/}
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
 
       # Docker setup
       - name: Set up QEMU

@@ -7,6 +7,7 @@ on:
         description: 'Retag latest Docker images'
         required: true
         type: string
+        default: "true"
         options:
           - "true"
           - "false"
@@ -132,7 +133,7 @@ jobs:
           TAG=${GITHUB_REF#refs/*/}
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
-          
+
       # Download release
       - name: Download release
         uses: robinraju/release-downloader@v1.10

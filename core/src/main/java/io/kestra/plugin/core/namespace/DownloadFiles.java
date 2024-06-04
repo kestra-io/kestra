@@ -36,39 +36,40 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download one or multiple files from your namespace files."
+    title = "Download one or multiple files from your namespace files.",
+    description = "Use a regex glob pattern or a file path to download files from your namespace files. This can be useful to share code between projects and teams, which is located in different namespaces."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Download namespace files.",
+            title = "Download a namespace file.",
             full = true,
             code = {
                 """
-                id: namespace-file-download
-                namespace: io.kestra.tests
+                id: download_file
+                namespace: dev
                 tasks:
-                    - id: download
-                      type: io.kestra.plugin.core.namespace.DownloadFiles
-                      namespace: tutorial
-                      files:
-                      - **input.txt"
+                  - id: download
+                    type: io.kestra.plugin.core.namespace.DownloadFiles
+                    namespace: tutorial
+                    files:
+                      - "**input.txt"
                 """
             }
         ),
         @Example(
-            title = "Download all namespace files.",
+            title = "Download all namespace files from a specific namespace.",
             full = true,
             code = {
                 """
-                id: namespace-file-download
-                namespace: io.kestra.tests
+                id: download_all_files
+                namespace: dev
                 tasks:
-                    - id: download
-                      type: io.kestra.plugin.core.namespace.DownloadFiles
-                      namespace: tutorial
-                      files:
-                      - **"
+                  - id: download
+                    type: io.kestra.plugin.core.namespace.DownloadFiles
+                    namespace: tutorial
+                    files:
+                      - "**"
                 """
             }
         )
@@ -77,7 +78,7 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Output> {
     @NotNull
     @Schema(
-        title = "The namespace where you want to apply the action."
+        title = "The namespace from which you want to download files."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
@@ -85,8 +86,8 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     @NotNull
     @NotEmpty
     @Schema(
-        title = "A file or list of files from the given namespace.",
-        description = "String or List of String, each string can either be a regex using glob pattern or a URI.",
+        title = "A file or a list of files from the given namespace.",
+        description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",
         anyOf = {List.class, String.class}
     )
     @PluginProperty(dynamic = true)
@@ -110,7 +111,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         } else if (files instanceof List<?> filesList) {
             renderedFiles = runContext.render((List<String>) filesList);
         } else {
-            throw new IllegalArgumentException("Files must be a String or a list of String");
+            throw new IllegalArgumentException("The files property must be a string or a list of strings");
         }
 
         List<PathMatcher> patterns = renderedFiles.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + checkLeadingSlash(reg))).toList();
@@ -133,7 +134,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "Downloaded files.",
-            description = "Return a map containing the file path as a key and the URI as a value."
+            description = "The task returns a map containing the file path as a key and the file URI as a value."
         )
         private final Map<String, URI> files;
     }

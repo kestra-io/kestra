@@ -38,34 +38,34 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 @Plugin(
     examples = {
         @Example(
-            title = "Delete namespace files.",
+            title = "Delete namespace files that match a specific regex glob pattern.",
             full = true,
             code = {
                 """
-                id: namespace-file-delete
-                namespace: io.kestra.tests
+                id: delete_files
+                namespace: dev
                 tasks:
-                    - id: delete
-                      type: io.kestra.plugin.core.namespace.DeleteFiles
-                      namespace: tutorial
-                      files:
-                      - **.upl
+                  - id: delete
+                    type: io.kestra.plugin.core.namespace.DeleteFiles
+                    namespace: tutorial
+                    files:
+                      - "**.upl"
                 """
             }
         ),
         @Example(
-            title = "Delete all namespace files.",
+            title = "Delete all namespace files from a specific namespace.",
             full = true,
             code = {
                 """
-                id: namespace-file-delete
-                namespace: io.kestra.tests
+                id: delete_all_files
+                namespace: dev
                 tasks:
-                    - id: delete
-                      type: io.kestra.plugin.core.namespace.DeleteFiles
-                      namespace: tutorial
-                      files:
-                      - **"
+                  - id: delete
+                    type: io.kestra.plugin.core.namespace.DeleteFiles
+                    namespace: tutorial
+                    files:
+                      - "**"
                 """
             }
         )
@@ -74,7 +74,7 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output> {
     @NotNull
     @Schema(
-        title = "The namespace where you want to apply the action."
+        title = "The namespace from which the files should be deleted."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
@@ -82,8 +82,8 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
     @NotNull
     @NotEmpty
     @Schema(
-        title = "A file or list of files from the given namespace.",
-        description = "String or List of String, each string can either be a regex using glob pattern or a URI.",
+        title = "A file or a list of files from the given namespace.",
+        description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",
         anyOf = {List.class, String.class}
     )
     @PluginProperty(dynamic = true)

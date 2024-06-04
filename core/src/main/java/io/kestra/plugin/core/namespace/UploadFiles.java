@@ -37,66 +37,51 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Upload one or multiple files to your namespace files.",
-    description = "Files can be upload using a regex using glob pattern or a specific path and can also be renamed."
+    title = "Upload one or multiple files to a specific namespace.",
+    description = "Use a regex glob pattern or a file path to upload files as Namespace Files. When using a map with the desired file name as key and file path as value, you can also rename or relocate files."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Upload namespace file using a Map as input files",
+            title = "Upload a custom Python script to the `dev` namespace and execute it",
             full = true,
-            code = {
-                "id: namespace-file-upload",
-                "namespace: io.kestra.tests",
-                "",
-                "inputs:",
-                "    - id: file",
-                "      type: FILE",
-                "",
-                "tasks:",
-                "    - id: upload-map",
-                "      type: io.kestra.plugin.core.namespace.UploadFiles",
-                "      files:",
-                "       \"/upload_map/input.txt\": \"{{ inputs.file }}\"",
-                "      namespace: io.kestra.tests"
-            }
-        ),
-        @Example(
-            title = "Upload namespace file using a List of String as input files",
-            full = true,
-            code = {
-                "id: namespace-file-upload",
-                "namespace: io.kestra.tests",
-                "",
-                "inputs:",
-                "    - id: file",
-                "      type: FILE",
-                "",
-                "tasks:",
-                "    - id: upload-list",
-                "      type: io.kestra.plugin.core.namespace.UploadFiles",
-                "      destination: \"/upload_list\"",
-                "      files:",
-                "       - \"{{ inputs.file }}\"",
-                "       - hell",
-                "      namespace: tutorial"
-            }
+            code = """
+id: upload_inputfile
+namespace: dev
+
+inputs:
+  - id: my_python_script
+    type: FILE
+
+tasks:
+  - id: upload_and_rename
+    type: io.kestra.plugin.core.namespace.UploadFiles
+    files:
+      /scripts/main.py: "{{ inputs.my_python_script }}"
+    namespace: dev
+
+  - id: python
+    type: io.kestra.plugin.scripts.python.Commands
+    namespaceFiles:
+      enabled: true
+    commands:
+      - python scripts/main.py"""
         )
     }
 )
 public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output> {
     @NotNull
     @Schema(
-        title = "The namespace where the file will be upload."
+        title = "The namespace to which the files will be uploaded."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "A list of files from the given namespace.",
-        description = " This can be a list of String, where each string can be either a regex using glob pattern or an URI. Providing a list required to specify a `destination` as it will be the folder where files will be stored.\n" +
-                    "This can also be a Map where you can give a specific destination path for a URI, useful if you need to rename a file or put into different folders.",
+        title = "A list of files.",
+        description = "This can be a list of strings, where each string can be either a regex glob pattern or a file path. Providing a list requires specifying a `destination` where files will be stored.\n" +
+                    "This can also be a map where you can provide a specific destination path for a URI, which can be useful if you need to rename a file or move it to a different folder.",
         anyOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
@@ -112,8 +97,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Builder.Default
 
     @Schema(
-        title = "Action to execute when uploading a file that already exists.",
-        description = "Can be OVERWRITE, ERROR or SKIP."
+        title = "Which action to take when uploading a file that already exists.",
+        description = "Can be one of the following OVERWRITE, ERROR or SKIP."
     )
     private ConflictAction conflict = ConflictAction.OVERWRITE;
 

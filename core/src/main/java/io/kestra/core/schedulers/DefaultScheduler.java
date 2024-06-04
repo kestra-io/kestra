@@ -51,7 +51,7 @@ public class DefaultScheduler extends AbstractScheduler {
         QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
 
-        executionQueue.receive(either -> {
+        this.receiveCancellations.addFirst(executionQueue.receive(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize and execution: {}", either.getRight().getMessage());
                 return;
@@ -68,9 +68,9 @@ public class DefaultScheduler extends AbstractScheduler {
                     triggerState.update(Trigger.of(execution, trigger));
                 }
             }
-        });
+        }));
 
-        triggerQueue.receive(either -> {
+        this.receiveCancellations.addFirst(triggerQueue.receive(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize a trigger: {}", either.getRight().getMessage());
                 return;
@@ -80,7 +80,7 @@ public class DefaultScheduler extends AbstractScheduler {
             if (trigger != null && trigger.getExecutionId() != null) {
                 this.watchingTrigger.put(trigger.getExecutionId(), trigger);
             }
-        });
+        }));
 
         super.run();
     }

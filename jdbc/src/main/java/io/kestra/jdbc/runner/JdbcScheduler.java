@@ -58,7 +58,7 @@ public class JdbcScheduler extends AbstractScheduler {
     public void run() {
         super.run();
 
-        executionQueue.receive(
+        this.receiveCancellations.addFirst(executionQueue.receive(
             Scheduler.class,
             either -> {
                 if (either.isRight()) {
@@ -87,7 +87,7 @@ public class JdbcScheduler extends AbstractScheduler {
                     }
                 }
             }
-        );
+        ));
 
         // remove trigger on flow update
         this.flowListeners.listen((flow, previous) -> {

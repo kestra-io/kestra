@@ -12,24 +12,24 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class H2WorkerJobQueue implements WorkerJobQueueInterface {
-    private final JdbcWorkerJobQueueService jdbcworkerjobQueueService;
+    private final JdbcWorkerJobQueueService jdbcWorkerJobQueueService;
 
     public H2WorkerJobQueue(ApplicationContext applicationContext) {
-        this.jdbcworkerjobQueueService = applicationContext.getBean(JdbcWorkerJobQueueService.class);
+        this.jdbcWorkerJobQueueService = applicationContext.getBean(JdbcWorkerJobQueueService.class);
     }
 
     @Override
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
-        return jdbcworkerjobQueueService.receive(consumerGroup, queueType, consumer);
+        return jdbcWorkerJobQueueService.receive(consumerGroup, queueType, consumer);
     }
 
     @Override
     public void pause() {
-        jdbcworkerjobQueueService.pause();
+        jdbcWorkerJobQueueService.pause();
     }
 
     @Override
     public void close() {
-        jdbcworkerjobQueueService.close();
+        jdbcWorkerJobQueueService.close();
     }
 }

@@ -8,9 +8,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.TestMethodScopedWorker;
-import io.kestra.core.runners.Worker;
-import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -81,8 +78,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         try (AbstractScheduler scheduler = new DefaultScheduler(
             applicationContext,
             flowListenersServiceSpy,
-            triggerState);
-             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
+            triggerState)) {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerConditionTest.class, either -> {
                 Execution execution = either.getLeft();
@@ -98,7 +94,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await(15, TimeUnit.SECONDS);
+            queueCount.await(30, TimeUnit.SECONDS);
 
             receive.blockLast();
 

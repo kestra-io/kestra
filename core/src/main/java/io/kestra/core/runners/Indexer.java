@@ -14,6 +14,9 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.micronaut.context.annotation.Requires;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -31,6 +34,7 @@ public class Indexer implements IndexerInterface {
     private final MetricRepositoryInterface metricRepository;
     private final QueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
+    private final List<Runnable> receiveCancellations = new ArrayList<>();
 
     @Inject
     public Indexer(
@@ -59,7 +63,7 @@ public class Indexer implements IndexerInterface {
     }
 
     protected <T> void send(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
-        queueInterface.receive(Indexer.class, either -> {
+        this.receiveCancellations.addFirst(queueInterface.receive(Indexer.class, either -> {
             if (either.isRight()) {
                 log.error("unable to deserialize an item: {}", either.getRight().getMessage());
                 return;
@@ -73,11 +77,12 @@ public class Indexer implements IndexerInterface {
                 saveRepositoryInterface.save(item);
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", item.getClass().getName()).increment();
             });
-        });
+        }));
     }
 
     @Override
     public void close() throws IOException {
+        this.receiveCancellations.forEach(Runnable::run);
         this.executionQueue.close();
         this.logQueue.close();
         this.metricQueue.close();

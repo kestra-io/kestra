@@ -183,17 +183,17 @@ export default {
             }
         },
         save() {
-            if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
+            if (this.$tours["guidedTour"]?.isRunning?.value && !this.guidedProperties.saveFlow) {
                 this.$store.dispatch("api/events", {
                     type: "ONBOARDING",
                     onboarding: {
-                        step: this.$tours["guidedTour"].currentStep._value,
+                        step: this.$tours["guidedTour"]?.currentStep?._value,
                         action: "next",
                         template: this.guidedProperties.template
                     },
                     page: pageFromRoute(this.$router.currentRoute.value)
                 });
-                this.$tours["guidedTour"].nextStep();
+                this.$tours["guidedTour"]?.nextStep();
                 return;
             }
 

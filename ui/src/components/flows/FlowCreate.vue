@@ -41,7 +41,7 @@
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
-                this.$tours["guidedTour"].start();
+                this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
         },

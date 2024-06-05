@@ -219,7 +219,8 @@
                 if (type) {
                     if (
                         (type === dockerBuild && uniqueTypes.has(dockerRun)) ||
-                        (type === dockerRun && uniqueTypes.has(dockerBuild))
+                        (type === dockerRun && uniqueTypes.has(dockerBuild)) ||
+                        type === "io.kestra.plugin.scripts.runner.docker.Docker"
                     ) {
                         return;
                     }

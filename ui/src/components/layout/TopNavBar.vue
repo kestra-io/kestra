@@ -48,12 +48,6 @@
                             >
                                 <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
                             </a>
-                            <router-link
-                                :to="{name: 'plugins/list'}"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <GoogleCirclesExtended class="align-middle" /> {{ $t("plugins.names") }}
-                            </router-link>
                             <a
                                 href="https://github.com/kestra-io/kestra/issues"
                                 target="_blank"
@@ -98,7 +92,6 @@
     import News from "./News.vue";
     import HelpBox from "vue-material-design-icons/HelpBox.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
-    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import Slack from "vue-material-design-icons/Slack.vue";
     import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
@@ -112,7 +105,6 @@
             News,
             HelpBox,
             BookMultipleOutline,
-            GoogleCirclesExtended,
             Github,
             Slack,
             EmailHeartOutline,

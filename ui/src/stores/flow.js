@@ -37,7 +37,7 @@ export default {
             }).then(response => {
                 commit("setFlows", response.data.results)
                 commit("setTotal", response.data.total)
-                commit("setOverallTotal", response.data.total)
+                commit("setOverallTotal", response.data.results.filter(f => f.namespace !== "tutorial").length)
 
                 return response.data;
             })

@@ -91,12 +91,12 @@
         },
         methods: {
             onClick() {
-                if (this.$tours["guidedTour"].isRunning.value) {
-                    this.$tours["guidedTour"].nextStep();
+                if (this.$tours["guidedTour"]?.isRunning?.value) {
+                    this.$tours["guidedTour"]?.nextStep();
                     this.$store.dispatch("api/events", {
                         type: "ONBOARDING",
                         onboarding: {
-                            step: this.$tours["guidedTour"].currentStep._value,
+                            step: this.$tours["guidedTour"]?.currentStep?._value,
                             action: "next",
                             template: this.guidedProperties.template
                         },

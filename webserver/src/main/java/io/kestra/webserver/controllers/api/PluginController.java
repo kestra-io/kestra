@@ -167,6 +167,13 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> pluginGroupIcons() {
+        Map<String, PluginIcon> icons = loadPluginsIcon();
+
+        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Cacheable("default")
+    protected Map<String, PluginIcon> loadPluginsIcon() {
         Map<String, PluginIcon> icons = new HashMap<>();
 
         pluginRegistry.plugins().stream()
@@ -182,7 +189,7 @@ public class PluginController {
                 });
             });
 
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return icons;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

@@ -6,7 +6,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,7 @@ class SubflowTest {
     public static final String EXECUTION_ID = "executionId";
 
     @Mock
-    private RunContext runContext;
+    private DefaultRunContext runContext;
 
     @Mock
     private ApplicationContext applicationContext;

@@ -6,7 +6,6 @@ import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import lombok.Getter;
 
 import java.time.Duration;

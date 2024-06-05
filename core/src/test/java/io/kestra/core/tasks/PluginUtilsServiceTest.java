@@ -2,8 +2,7 @@ package io.kestra.core.tasks;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
-import io.kestra.core.runners.RunContext;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -22,8 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 public class PluginUtilsServiceTest {
+
     @Inject
-    private ApplicationContext applicationContext;
+    private RunContextFactory runContextFactory;
 
     @Test
     void outputFiles() throws IOException {
@@ -49,7 +49,7 @@ public class PluginUtilsServiceTest {
                 "id", "execution"
             )
         );
-        var runContext = new RunContext(applicationContext, variables);
+        var runContext = runContextFactory.of(variables);
 
         var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, null, null, null);
         assertThat(executionInfo.namespace(), is("namespace"));

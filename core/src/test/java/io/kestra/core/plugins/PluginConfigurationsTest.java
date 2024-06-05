@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.runners.test.TaskWithAlias;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -39,5 +40,21 @@ class PluginConfigurationsTest {
             "prop2", "v2",
             "prop3", "v3"
         ), result);
+    }
+
+    @Test
+    void shouldGetConfigurationForAlias() {
+        // Given
+        Map<String, Object> config = Map.of(
+            "prop1", "v1",
+            "prop2", "v1",
+            "prop3", "v1"
+        );
+        PluginConfigurations configurations = new PluginConfigurations(List.of(
+            new PluginConfiguration(0, "io.kestra.core.runners.test.task.Alias", config)
+        ));
+
+        Map<String, Object> result = configurations.getConfigurationByPluginTypeOrAliases(new TaskWithAlias().getType(), TaskWithAlias.class);
+        Assertions.assertEquals(config, result);
     }
 }

@@ -15,6 +15,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.RetryUtils;
@@ -397,7 +398,7 @@ public class Docker extends TaskRunner {
         Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
         if (volumeEnabledConfig.isEmpty()) {
             // check the legacy property and emit a warning if used
-            Optional<Boolean> property = runContext.getApplicationContext().getProperty(
+            Optional<Boolean> property = ((DefaultRunContext)runContext).getApplicationContext().getProperty(
                 LEGACY_VOLUME_ENABLED_CONFIG,
                 Boolean.class
             );

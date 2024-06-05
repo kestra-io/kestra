@@ -15,12 +15,13 @@ public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
     Consumer<Execution> onNext;
 
     public WorkerTriggerRealtimeThread(
+        RunContext runContext,
         WorkerTrigger workerTrigger,
         RealtimeTriggerInterface realtimeTrigger,
         Consumer<? super Throwable> onError,
         Consumer<Execution> onNext
     ) {
-        super(workerTrigger.getConditionContext().getRunContext(), realtimeTrigger.getClass().getName(), workerTrigger);
+        super(runContext, realtimeTrigger.getClass().getName(), workerTrigger);
         this.streamingTrigger = realtimeTrigger;
         this.onError = onError;
         this.onNext = onNext;

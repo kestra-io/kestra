@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
@@ -16,7 +17,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -102,8 +102,8 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
 
     @Override
     public Purge.Output run(RunContext runContext) throws Exception {
-        ExecutionService executionService = runContext.getApplicationContext().getBean(ExecutionService.class);
-        FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
+        ExecutionService executionService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionService.class);
+        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();

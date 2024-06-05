@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
@@ -203,7 +204,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         if (subflowOutputs != null) {
             try {
                 Map<String, Object> outputs = runContext.render(subflowOutputs);
-                FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
+                FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
                 if (flow.getOutputs() != null && flowInputOutput != null) {
                     outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
                 }

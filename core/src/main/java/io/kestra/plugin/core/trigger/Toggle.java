@@ -12,7 +12,9 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -106,7 +108,8 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
         String realTrigger = runContext.render(trigger);
 
         // verify that the target flow exists, and the current execution is authorized to access it
-        FlowExecutorInterface flowExecutor = runContext.getApplicationContext().getBean(FlowExecutorInterface.class);
+        final ApplicationContext applicationContext = ((DefaultRunContext) runContext).getApplicationContext();
+        FlowExecutorInterface flowExecutor = applicationContext.getBean(FlowExecutorInterface.class);
         flowExecutor.findByIdFromTask(
             runContext.tenantId(),
             realNamespace,
@@ -126,12 +129,12 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
             .flowId(realFlowId)
             .triggerId(realTrigger)
             .build();
-        TriggerRepositoryInterface triggerRepository = runContext.getApplicationContext().getBean(TriggerRepositoryInterface.class);
+        TriggerRepositoryInterface triggerRepository = applicationContext.getBean(TriggerRepositoryInterface.class);
         Trigger currentTrigger = triggerRepository.findLast(triggerContext).orElseThrow(() -> new IllegalArgumentException("Unable to find trigger " + realTrigger + " for the flow " + realNamespace + "." + realFlowId));
         currentTrigger = currentTrigger.toBuilder().disabled(!enabled).build();
 
         // update the trigger by emitting inside the queue
-        QueueInterface<Trigger> triggerQueue = runContext.getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
+        QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         triggerQueue.emit(currentTrigger);
 
         return null;

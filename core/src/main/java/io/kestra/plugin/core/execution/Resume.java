@@ -13,9 +13,11 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -78,10 +80,11 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
     public VoidOutput run(RunContext runContext) throws Exception {
         var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, this.namespace, this.flowId, this.executionId);
 
-        ExecutionService executionService = runContext.getApplicationContext().getBean(ExecutionService.class);
-        ExecutionRepositoryInterface executionRepository = runContext.getApplicationContext().getBean(ExecutionRepositoryInterface.class);
-        FlowExecutorInterface flowExecutor = runContext.getApplicationContext().getBean(FlowExecutorInterface.class);
-        QueueInterface<Execution> executionQueue = runContext.getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        ApplicationContext applicationContext = ((DefaultRunContext)runContext).getApplicationContext();
+        ExecutionService executionService = applicationContext.getBean(ExecutionService.class);
+        ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
+        FlowExecutorInterface flowExecutor = applicationContext.getBean(FlowExecutorInterface.class);
+        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
 
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));

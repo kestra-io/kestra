@@ -18,6 +18,7 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
@@ -412,7 +413,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         // add inputs and inject defaults
         if (!inputs.isEmpty()) {
-            FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class);
+            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
             execution = execution.withInputs(flowInputOutput.typedInputs(conditionContext.getFlow(), execution, inputs));
         }
 
@@ -573,7 +574,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
         if (conditions != null) {
-            ConditionService conditionService = conditionContext.getRunContext().getApplicationContext().getBean(ConditionService.class);
+            ConditionService conditionService = ((DefaultRunContext)conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
             return conditionService.isValid(
                 conditions.stream().filter(c -> c instanceof ScheduleCondition).map(c -> (ScheduleCondition) c).toList(),
                 conditionContext

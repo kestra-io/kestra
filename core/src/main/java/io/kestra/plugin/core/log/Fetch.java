@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
@@ -90,7 +91,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     public Output run(RunContext runContext) throws Exception {
         var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, this.namespace, this.flowId, this.executionId);
 
-        LogRepositoryInterface logRepository = runContext.getApplicationContext().getBean(LogRepositoryInterface.class);
+        LogRepositoryInterface logRepository = ((DefaultRunContext)runContext).getApplicationContext().getBean(LogRepositoryInterface.class);
 
         File tempFile = runContext.tempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();

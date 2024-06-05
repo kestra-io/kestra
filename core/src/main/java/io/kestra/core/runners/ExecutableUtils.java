@@ -93,7 +93,7 @@ public final class ExecutableUtils {
             "flowRevision", currentFlow.getRevision()
         );
 
-        FlowInputOutput flowInputOutput = runContext.getApplicationContext().getBean(FlowInputOutput.class);
+        FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
         Execution execution = Execution
             .newExecution(
                 flow,

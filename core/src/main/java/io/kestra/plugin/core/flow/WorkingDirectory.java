@@ -17,6 +17,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FilesService;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
@@ -82,7 +83,7 @@ import jakarta.validation.constraints.NotNull;
                         type: io.kestra.plugin.git.Clone
                         url: https://github.com/kestra-io/examples
                         branch: main
-                        
+
                       - id: python
                         type: io.kestra.plugin.scripts.python.Commands
                         taskRunner:
@@ -110,7 +111,7 @@ tasks:
   tasks:
     - id: inlineScript
       type: io.kestra.plugin.scripts.python.Script
-      taskRunner: 
+      taskRunner:
         type: io.kestra.plugin.scripts.runner.docker.Docker
       containerImage: python:3.11-slim
       beforeCommands:
@@ -271,7 +272,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.namespaceFiles != null ) {
-            NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
+            NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
             namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.tempDir(), this.namespaceFiles);
         }
 

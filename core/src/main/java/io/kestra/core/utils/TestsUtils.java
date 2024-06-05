@@ -215,7 +215,7 @@ abstract public class TestsUtils {
                 consumer.accept(either);
             }
         };
-        Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer) : queue.receive(consumerGroup, queueType, eitherConsumer);
+        Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
 
         AtomicBoolean isCancelled = new AtomicBoolean(false);
         Flux<T> flux = Flux.<T>create(sink -> {

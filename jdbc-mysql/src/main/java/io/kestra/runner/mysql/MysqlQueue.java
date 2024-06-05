@@ -15,7 +15,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate) {
         var select = ctx.select(
                 AbstractJdbcRepository.field("value"),
                 AbstractJdbcRepository.field("offset")
@@ -33,17 +33,22 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
-        return select
+        var limitSelect = select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(configuration.getPollSize())
-            .forUpdate()
-            .skipLocked()
+            .limit(configuration.getPollSize());
+        ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
+
+        if (forUpdate) {
+            configuredSelect = limitSelect.forUpdate().skipLocked();
+        }
+
+        return configuredSelect
             .fetchMany()
             .get(0);
     }
 
     @Override
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate) {
         var select = ctx
             .select(
                 AbstractJdbcRepository.field("value"),
@@ -63,10 +68,16 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
         }
 
-        return select.orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(configuration.getPollSize())
-            .forUpdate()
-            .skipLocked()
+        var limitSelect = select
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
+            .limit(configuration.getPollSize());
+        ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
+
+        if (forUpdate) {
+            configuredSelect = limitSelect.forUpdate().skipLocked();
+        }
+
+        return configuredSelect
             .fetchMany()
             .get(0);
     }

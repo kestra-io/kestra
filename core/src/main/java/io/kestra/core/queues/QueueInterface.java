@@ -29,13 +29,21 @@ public interface QueueInterface<T> extends Closeable {
         return receive((String) null, consumer);
     }
 
-    Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer);
+    default Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {
+        return receive(consumerGroup, consumer, true);
+    }
+
+    Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate);
 
     default Runnable receive(Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
         return receive(null, queueType, consumer);
     }
 
-    Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer);
+    default Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
+        return receive(consumerGroup, queueType, consumer, true);
+    }
+
+    Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate);
 
     void pause();
 }

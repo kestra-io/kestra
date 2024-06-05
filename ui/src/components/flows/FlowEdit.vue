@@ -67,7 +67,7 @@
         },
         methods: {
             stopTour() {
-                this.$tours["guidedTour"].stop();
+                this.$tours["guidedTour"]?.stop();
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
             },
         },
@@ -79,7 +79,7 @@
                 if (!this.guidedProperties.tourStarted
                     && localStorage.getItem("tourDoneOrSkip") !== "true"
                     && this.total === 0) {
-                    this.$tours["guidedTour"].start();
+                    this.$tours["guidedTour"]?.start();
                 }
             }, 200)
             window.addEventListener("popstate", () => {

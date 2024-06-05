@@ -84,7 +84,7 @@ export const executeTask = (submitor, flow, values, options) => {
                 }
             }
 
-            if(options.nextStep) submitor.$tours["guidedTour"].nextStep();
+            if(options.nextStep) submitor.$tours["guidedTour"]?.nextStep();
 
             return response.data;
         })

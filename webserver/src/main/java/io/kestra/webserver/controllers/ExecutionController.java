@@ -247,11 +247,9 @@ public class ExecutionController {
 
         Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
-        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
-
         try {
             return EvalResult.builder()
-                .result(runContext.render(expression))
+                .result(runContextRender(flow, task, execution, taskRun, expression))
                 .build();
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
@@ -259,6 +257,10 @@ public class ExecutionController {
                 .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
+    }
+
+    protected String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
+        return runContextFactory.of(flow, task, execution, taskRun, false).render(expression);
     }
 
     @SuperBuilder

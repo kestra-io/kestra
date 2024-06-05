@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
@@ -214,7 +215,7 @@ abstract public class PluginUtilsService {
                 realNamespace = runContext.render(namespace);
                 realFlowId = runContext.render(flowId);
                 // validate that the flow exists: a.k.a access is authorized by this namespace
-                FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
+                FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
                 flowService.checkAllowedNamespace(flowInfo.tenantId(), realNamespace, flowInfo.tenantId(), flowInfo.namespace());
             } else if (namespace != null || flowId != null) {
                 throw new IllegalArgumentException("Both `namespace` and `flowId` must be set when `executionId` is set.");

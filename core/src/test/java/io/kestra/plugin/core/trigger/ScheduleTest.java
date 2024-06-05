@@ -2,6 +2,8 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.plugin.core.condition.DateTimeBetweenCondition;
 import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
 import io.kestra.core.models.executions.Execution;
@@ -33,8 +35,12 @@ import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 class ScheduleTest {
+
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    RunContextInitializer runContextInitializer;
 
     @Test
     void failed() throws Exception {
@@ -371,7 +377,7 @@ class ScheduleTest {
             .build();
 
         return ConditionContext.builder()
-            .runContext(runContextFactory.of().forScheduler(triggerContext, trigger))
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
             .flow(flow)
             .build();
     }

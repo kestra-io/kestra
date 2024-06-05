@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,7 +44,7 @@ public class Size extends Task implements RunnableTask<Size.Output> {
 
     @Override
     public Size.Output run(RunContext runContext) throws Exception {
-        StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
+        StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri));
 
         Long size = storageInterface.getAttributes(runContext.tenantId(), render).getSize();

@@ -9,11 +9,9 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.ListUtils;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -45,12 +43,6 @@ public class FlowService {
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Inject
-    RunContextFactory runContextFactory;
-
-    @Inject
-    ConditionService conditionService;
-
-    @Inject
     Optional<FlowRepositoryInterface> flowRepository;
 
     @Inject
@@ -58,9 +50,6 @@ public class FlowService {
 
     @Inject
     PluginDefaultService pluginDefaultService;
-
-    @Inject
-    ApplicationContext applicationContext;
 
     @Inject
     PluginRegistry pluginRegistry;

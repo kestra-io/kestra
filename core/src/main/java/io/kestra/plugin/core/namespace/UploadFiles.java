@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.StorageInterface;
@@ -110,10 +111,10 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         String renderedDestination = runContext.render(destination);
         // Check if namespace is allowed
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
+        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
         flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
 
-        StorageInterface storageInterface = runContext.getApplicationContext().getBean(StorageInterface.class);
+        StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
 
         if (files instanceof List filesList) {
             if (renderedDestination == null) {

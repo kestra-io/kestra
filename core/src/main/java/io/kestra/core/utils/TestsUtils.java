@@ -15,6 +15,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
@@ -164,7 +165,7 @@ abstract public class TestsUtils {
 
         return new AbstractMap.SimpleEntry<>(
             ConditionContext.builder()
-                .runContext(runContextFactory.of(flow, trigger).forScheduler(triggerContext, trigger))
+                .runContext(runContextFactory.initializer().forScheduler((DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger))
                 .flow(flow)
                 .build(),
             triggerContext

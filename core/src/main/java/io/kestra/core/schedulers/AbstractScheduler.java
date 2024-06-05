@@ -65,6 +65,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private QueueInterface<ExecutionKilled> executionKilledQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
+    private final RunContextInitializer runContextInitializer;
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
     private final PluginDefaultService pluginDefaultService;
@@ -106,6 +107,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        this.runContextInitializer = applicationContext.getBean(RunContextInitializer.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
@@ -686,9 +688,11 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             ));
 
             // mutability dirty hack that forces the creation of a new triggerExecutionId
-            flowWithWorkerTrigger.getConditionContext().getRunContext().forScheduler(
+            DefaultRunContext runContext = (DefaultRunContext) flowWithWorkerTrigger.getConditionContext().getRunContext();
+            runContextInitializer.forScheduler(
+                runContext,
                 flowWithWorkerTrigger.getTriggerContext(),
-                flowWithTrigger.getAbstractTrigger()
+                flowWithWorkerTrigger.getAbstractTrigger()
             );
 
             Optional<Execution> evaluate = ((Schedule) flowWithWorkerTrigger.getWorkerTrigger()).evaluate(

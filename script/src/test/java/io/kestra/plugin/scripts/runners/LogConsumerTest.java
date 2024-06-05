@@ -43,7 +43,7 @@ public class LogConsumerTest {
                 return "type";
             }
         };
-        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+       RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
         String outputValue = "a".repeat(10000);
         TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(List.of(
             "/bin/sh", "-c",

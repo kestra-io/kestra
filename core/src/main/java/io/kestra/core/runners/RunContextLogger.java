@@ -21,9 +21,10 @@ import org.slf4j.MDC;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class RunContextLogger {
+public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private static final int MAX_MESSAGE_LENGTH = 1024*10;
 
     private final String loggerName;
@@ -162,6 +163,11 @@ public class RunContextLogger {
         }
 
         return this.logger;
+    }
+
+    @Override
+    public org.slf4j.Logger get() {
+        return logger();
     }
 
     @Slf4j

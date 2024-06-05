@@ -14,8 +14,8 @@ public class WorkerTriggerThread extends AbstractWorkerTriggerThread {
     @Getter
     Optional<Execution> evaluate;
 
-    public WorkerTriggerThread(WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger) {
-        super(workerTrigger.getConditionContext().getRunContext(), pollingTrigger.getClass().getName(), workerTrigger);
+    public WorkerTriggerThread(RunContext runContext, WorkerTrigger workerTrigger, PollingTriggerInterface pollingTrigger) {
+        super(runContext, pollingTrigger.getClass().getName(), workerTrigger);
         this.pollingTrigger = pollingTrigger;
     }
 

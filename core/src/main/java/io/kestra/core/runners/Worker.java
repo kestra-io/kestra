@@ -99,6 +99,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Inject
     private LogService logService;
 
+    @Inject
+    private RunContextInitializer runContextInitializer;
+
+    @Inject
+    private RunContextLoggerFactory runContextLoggerFactory;
+
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
     @Getter
@@ -262,11 +268,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
 
-            final RunContext workingDirectoryRunContext = workerTask
-                .getRunContext()
-                .forWorkingDirectory(applicationContext, workerTask);
+            DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(((DefaultRunContext) workerTask.getRunContext()), workerTask);
+            final RunContext workingDirectoryRunContext = runContext.clone();
 
-            RunContext runContext = workingDirectoryRunContext;
             try {
                 // preExecuteTasks
                 try {
@@ -287,7 +291,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContext.forWorkingDirectoryTask(currentTask)
+                        runContextInitializer.forPlugin(runContext, currentTask)
                     );
 
                     // all tasks will be handled immediately by the worker
@@ -297,7 +301,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         break;
                     }
 
-                    runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
+                    // create the next RunContext populated with the previous WorkerTaskResult
+                    runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
                 }
 
                 // postExecuteTasks
@@ -315,13 +320,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
         }
-    }
-
-
-    private RunContext initRunContextForTrigger(WorkerTrigger workerTrigger) {
-        return workerTrigger.getConditionContext()
-            .getRunContext()
-            .forWorker(this.applicationContext, workerTrigger);
     }
 
     private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<Execution> evaluate) {
@@ -389,19 +387,20 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
+                    DefaultRunContext runContext = (DefaultRunContext)workerTrigger.getConditionContext().getRunContext();
+                    runContextInitializer.forWorker(runContext, workerTrigger);
                     try {
-                        RunContext runContext = this.initRunContextForTrigger(workerTrigger);
 
                         logService.logTrigger(
                             workerTrigger.getTriggerContext(),
-                            workerTrigger.getConditionContext().getRunContext().logger(),
+                            runContext.logger(),
                             Level.INFO,
                             "Type {} started",
                             workerTrigger.getTrigger().getType()
                         );
 
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            WorkerTriggerThread workerThread = new WorkerTriggerThread(workerTrigger, pollingTrigger);
+                            WorkerTriggerThread workerThread = new WorkerTriggerThread(runContext, workerTrigger, pollingTrigger);
                             io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
                             if (workerThread.getException() != null || !state.equals(SUCCESS)) {
@@ -413,6 +412,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             }
                         } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
                             WorkerTriggerRealtimeThread workerThread = new WorkerTriggerRealtimeThread(
+                                runContext,
                                 workerTrigger,
                                 streamingTrigger,
                                 throwable -> this.handleTriggerError(workerTrigger, throwable),
@@ -431,7 +431,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
                         logService.logTrigger(
                             workerTrigger.getTriggerContext(),
-                            workerTrigger.getConditionContext().getRunContext().logger(),
+                            runContext.logger(),
                             Level.INFO,
                             "Type {} completed in {}",
                             workerTrigger.getTrigger().getType(),
@@ -548,11 +548,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } catch (QueueException e) {
             finalWorkerTask = workerTask.fail();
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
-            RunContext runContext = workerTask
-                .getRunContext()
-                .forWorker(this.applicationContext, workerTask);
-
-            runContext.logger().error("Exception while trying to emit the worker task result to the queue", e);
+            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
+            contextLogger.logger().error("Exception while trying to emit the worker task result to the queue", e);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } finally {
@@ -599,9 +596,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
-        RunContext runContext = workerTask
-            .getRunContext()
-            .forWorker(this.applicationContext, workerTask);
+        DefaultRunContext runContext = (DefaultRunContext) workerTask.getRunContext();
+        runContextInitializer.forWorker(runContext, workerTask);
 
         Logger logger = runContext.logger();
 

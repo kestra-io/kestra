@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
@@ -106,10 +107,10 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
         String renderedDestination = runContext.render(destination);
         // Check if namespace is allowed
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        FlowService flowService = runContext.getApplicationContext().getBean(FlowService.class);
+        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
         flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
 
-        NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
+        NamespaceFilesService namespaceFilesService =  ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
 
         List<String> renderedFiles;
         if (files instanceof String filesString) {

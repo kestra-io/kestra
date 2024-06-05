@@ -1,17 +1,19 @@
 package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.plugins.PluginModule;
-import io.micronaut.context.annotation.*;
+import io.micronaut.context.annotation.BootstrapContextCompatible;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Secondary;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jackson.JacksonConfiguration;
-
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 /**
- *  Custom Micronaut ObjectMapperFactory to add the PluginModule.
+ * Custom Micronaut ObjectMapperFactory to add the PluginModule.
  */
 @Factory
 @BootstrapContextCompatible

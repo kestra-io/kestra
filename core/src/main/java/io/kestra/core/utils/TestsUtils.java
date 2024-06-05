@@ -233,7 +233,7 @@ abstract public class TestsUtils {
 
         new Thread(() -> {
             try {
-                Await.until(isCancelled::get, null, Optional.ofNullable(timeout).orElse(Duration.ofSeconds(30)));
+                Await.until(isCancelled::get, null, Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)));
             } catch (TimeoutException e) {
                 // If the receive hasn't been stopped after the given timeout (which means no subscription was done), we stop it
                 receiveCancellation.run();

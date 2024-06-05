@@ -136,14 +136,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         );
     }
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset);
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
+        return this.receiveFetch(ctx, consumerGroup, offset, true);
+    }
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType);
+    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate);
+
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
+        return this.receiveFetch(ctx, consumerGroup, queueType, true);
+    }
+
+    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate);
 
     abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     @Override
-    public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer) {
+    public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
@@ -163,7 +171,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get());
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
                 if (!result.isEmpty()) {
                     List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
@@ -181,14 +189,15 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer) {
+    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
         return this.receiveImpl(
             consumerGroup,
             queueType,
             (dslContext, eithers) -> {
                 eithers.forEach(consumer);
             },
-            false
+            false,
+            forUpdate
         );
     }
 
@@ -197,6 +206,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             consumerGroup,
             queueType,
             consumer,
+            true,
             true
         );
     }
@@ -205,7 +215,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         String consumerGroup,
         Class<?> queueType,
         BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer,
-        Boolean inTransaction
+        Boolean inTransaction,
+        boolean forUpdate
     ) {
         String queueName = queueName(queueType);
 
@@ -213,7 +224,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
                 if (!result.isEmpty()) {
                     if (inTransaction) {

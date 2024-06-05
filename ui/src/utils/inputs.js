@@ -14,6 +14,8 @@ export default class Inputs {
             res = JSON.stringify(res).toString()
         } else if (type === "BOOLEAN" && type === undefined){
             res = "undefined";
+        } else if (type === "STRING" && Array.isArray(res)){
+            res = res.toString();
         }
         return res;
     }

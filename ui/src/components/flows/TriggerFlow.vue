@@ -131,7 +131,7 @@
             },
             beforeClose(done){
                 if(this.guidedProperties.tourStarted) return;
-                   
+
                 this.reset();
                 done()
             }

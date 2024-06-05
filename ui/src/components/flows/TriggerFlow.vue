@@ -91,7 +91,7 @@
         },
         methods: {
             onClick() {
-                if (this.$tours["guidedTour"].isRunning.value) {
+                if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"].nextStep();
                     this.$store.dispatch("api/events", {
                         type: "ONBOARDING",
@@ -131,7 +131,7 @@
             },
             beforeClose(done){
                 if(this.guidedProperties.tourStarted) return;
-                   
+
                 this.reset();
                 done()
             }

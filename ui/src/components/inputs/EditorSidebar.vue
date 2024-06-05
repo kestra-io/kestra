@@ -385,7 +385,7 @@
         },
         computed: {
             ...mapState({
-                flows: (state) => state.flow.flows,
+                flow: (state) => state.flow.flow,
                 explorerVisible: (state) => state.editor.explorerVisible,
             }),
             folders() {
@@ -765,17 +765,17 @@
                     (function pushItemToFolder(basePath = "", array) {
                         for (const item of array) {
                             const folderPath = `${basePath}${item.fileName}`;
-                            
+
                             if (folderPath === SELF.dialog.folder && Array.isArray(item.children)) {
                                 item.children = SELF.sorted([...item.children, NEW]);
                                 return true; // Return true if the folder is found and item is pushed
                             }
-                            
+
                             if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children)) {
                                 return true; // Return true if the folder is found and item is pushed in recursive call
                             }
                         }
-                        
+
                         return false;
                     })(undefined, this.items);
                 }
@@ -883,9 +883,9 @@
             },
         },
         watch: {
-            flows: {
+            flow: {
                 handler(flow) {
-                    if (flow && flow.length) {
+                    if (flow) {
                         this.changeOpenedTabs({
                             action: "open",
                             name: "Flow",
@@ -948,21 +948,21 @@
         .empty {
             position: relative;
             top: 100px;
-            text-align: center;   
+            text-align: center;
             color: white;
 
             html.light & {
                 color: $tertiary;
             }
-          
+
             & img {
-                margin-bottom: 2rem;   
+                margin-bottom: 2rem;
             }
 
             & h3 {
                 font-size: var(--font-size-lg);
-                font-weight: 500;         
-                margin-bottom: .5rem;   
+                font-weight: 500;
+                margin-bottom: .5rem;
             }
 
             & p {

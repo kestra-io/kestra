@@ -3,8 +3,8 @@ configurations {
 }
 
 dependencies {
-    implementation project(":core")
-
-    testImplementation project(':core').sourceSets.test.output
-    testImplementation project(':runner-memory')
+    testImplementation project(":core")
+    implementation("io.micronaut.flyway:micronaut-flyway")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation project(":jdbc-h2")
 }

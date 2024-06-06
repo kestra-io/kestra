@@ -6,8 +6,6 @@ import io.micronaut.context.annotation.Replaces;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-
 @Singleton
 @Replaces(Indexer.class)
 @JdbcRunnerEnabled
@@ -17,7 +15,22 @@ public class JdbcIndexer implements IndexerInterface {
     }
 
     @Override
-    public void close() throws IOException {
+    public String getId() {
+        return "";
+    }
+
+    @Override
+    public ServiceType getType() {
+        return null;
+    }
+
+    @Override
+    public ServiceState getState() {
+        return ServiceState.RUNNING;
+    }
+
+    @Override
+    public void close() {
 
     }
 }

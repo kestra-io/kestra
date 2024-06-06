@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PACKAGE, ElementType.TYPE})
-@Requires(property = "kestra.repository.type", value = "h2")
+@Requires(property = "kestra.repository.type", pattern = "h2|memory")
 @DefaultImplementation
 public @interface H2RepositoryEnabled {
 }

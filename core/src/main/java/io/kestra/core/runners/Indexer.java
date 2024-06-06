@@ -11,11 +11,13 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Requires;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -35,6 +37,9 @@ public class Indexer implements IndexerInterface {
     private final QueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
     private final List<Runnable> receiveCancellations = new ArrayList<>();
+
+    private final String id = IdUtils.create();
+    private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
     @Inject
     public Indexer(
@@ -80,11 +85,31 @@ public class Indexer implements IndexerInterface {
         }));
     }
 
+    /** {@inheritDoc} **/
     @Override
-    public void close() throws IOException {
+    public String getId() {
+        return id;
+    }
+    /** {@inheritDoc} **/
+    @Override
+    public ServiceType getType() {
+        return ServiceType.INDEXER;
+    }
+    /** {@inheritDoc} **/
+    @Override
+    public ServiceState getState() {
+        return state.get();
+    }
+
+    @Override
+    public void close() {
         this.receiveCancellations.forEach(Runnable::run);
-        this.executionQueue.close();
-        this.logQueue.close();
-        this.metricQueue.close();
+        try {
+            this.executionQueue.close();
+            this.logQueue.close();
+            this.metricQueue.close();
+        } catch (IOException e) {
+            log.error("Failed to close the queue", e);
+        }
     }
 }

@@ -7,7 +7,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.runner.memory.MemoryRunner;
+import io.kestra.core.runners.StandAloneRunner;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -71,7 +71,7 @@ public class FlowTestCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        MemoryRunner runner = applicationContext.getBean(MemoryRunner.class);
+        StandAloneRunner runner = applicationContext.getBean(StandAloneRunner.class);
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);

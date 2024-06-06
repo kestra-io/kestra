@@ -167,11 +167,11 @@ public class RunnerUtils {
     public Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
-        Runnable cancel = this.executionQueue.receive(current -> {
+        Runnable cancel = this.executionQueue.receive(null, current -> {
             if (predicate.test(current.getLeft())) {
                 receive.set(current.getLeft());
             }
-        });
+        }, false);
 
         executionEmitter.run();
 

@@ -1,6 +1,10 @@
 <template>
-    <el-tooltip :persistent="false" :focus-on-show="true" popper-class="ee-tooltip" :disabled="!disabled" :placement="placement">
+    <el-tooltip :visible="visible" :persistent="false" :focus-on-show="true" popper-class="ee-tooltip" :disabled="!disabled" :placement="placement">
         <template #content v-if="link">
+            <el-button circle class="ee-tooltip-close" @click="changeVisibility(false)">
+                <Close />
+            </el-button>
+
             <p>{{ $t("ee-tooltip.features-blocked") }}</p>
 
             <a
@@ -13,7 +17,7 @@
             </a>
         </template>
         <template #default>
-            <span ref="slot-container">
+            <span ref="slot-container" class="cursor-pointer" @mouseenter.once="changeVisibility()" @mouseleave.once="changeVisibility(false)" @click="changeVisibility()">
                 <slot />
                 <lock v-if="disabled" />
             </span>
@@ -22,10 +26,11 @@
 </template>
 
 <script>
+    import Close from "vue-material-design-icons/Close.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
 
     export default {
-        components: {Lock},
+        components: {Close, Lock},
         props: {
             top: {
                 type: Boolean,
@@ -47,6 +52,16 @@
                 type: String,
                 default: undefined
             },
+        },
+        data() {
+            return {
+                visible: false,
+            }
+        },
+        methods: {
+            changeVisibility(visible = true) {
+                this.visible = visible
+            }
         },
         computed: {
             link() {
@@ -83,5 +98,13 @@
     :deep(.material-design-icon) > .material-design-icon__svg {
         bottom: -0.125em;
     }
+
+    .ee-tooltip-close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            border: none;
+            margin: 0.5rem;
+        }
 </style>
 

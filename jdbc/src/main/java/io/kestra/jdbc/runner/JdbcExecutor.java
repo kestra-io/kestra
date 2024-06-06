@@ -41,6 +41,7 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -191,7 +192,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
      * @param eventPublisher             The {@link ApplicationEventPublisher}.
      */
     @Inject
-    public JdbcExecutor(final JdbcServiceLivenessCoordinator serviceLivenessCoordinator,
+    public JdbcExecutor(@Nullable final JdbcServiceLivenessCoordinator serviceLivenessCoordinator,
                         final FlowRepositoryInterface flowRepository,
                         final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
                         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
@@ -205,7 +206,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Override
     public void run() {
         setState(ServiceState.CREATED);
-        serviceLivenessCoordinator.setExecutor(this);
+        if (serviceLivenessCoordinator != null) {
+            serviceLivenessCoordinator.setExecutor(this);
+        }
         flowListeners.run();
         flowListeners.listen(flows -> this.allFlows = flows);
 

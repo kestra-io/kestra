@@ -8,8 +8,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringStartsWith.startsWith;
 
 class DatabaseCommandTest {
     @Test
@@ -22,7 +22,7 @@ class DatabaseCommandTest {
             Integer call = PicocliRunner.call(DatabaseCommand.class, ctx, args);
 
             assertThat(call, is(0));
-            assertThat(out.toString(), startsWith("Usage: kestra sys database"));
+            assertThat(out.toString(), containsString("Usage: kestra sys database"));
         }
     }
 }

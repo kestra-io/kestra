@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest implements TestPropertyProvider {
 

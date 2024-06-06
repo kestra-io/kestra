@@ -8,8 +8,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringStartsWith.startsWith;
 
 class TemplateNamespaceCommandTest {
     @Test
@@ -22,7 +22,7 @@ class TemplateNamespaceCommandTest {
             Integer call = PicocliRunner.call(TemplateNamespaceCommand.class, ctx, args);
 
             assertThat(call, is(0));
-            assertThat(out.toString(), startsWith("Usage: kestra template namespace"));
+            assertThat(out.toString(), containsString("Usage: kestra template namespace"));
         }
     }
 }

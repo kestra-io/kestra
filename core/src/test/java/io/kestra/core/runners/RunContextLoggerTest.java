@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest
+@MicronautTest(transactional = false)
 class RunContextLoggerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)

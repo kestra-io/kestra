@@ -770,18 +770,20 @@
                                 "</code></li>"
                         )
                         .join("\n");
-
-                    warning =
-                        "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                        "<div class=\"el-alert__content\">\n" +
-                        "<p class=\"el-alert__description\">\n" +
-                        t("dependencies delete flow") +
-                        "<ul>\n" +
-                        deps +
-                        "</ul>\n" +
-                        "</p>\n" +
-                        "</div>\n" +
-                        "</div>";
+                        
+                    if(deps.length){                    
+                        warning =
+                            "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                            "<div class=\"el-alert__content\">\n" +
+                            "<p class=\"el-alert__description\">\n" +
+                            t("dependencies delete flow") +
+                            "<ul>\n" +
+                            deps +
+                            "</ul>\n" +
+                            "</p>\n" +
+                            "</div>\n" +
+                            "</div>";
+                    }
                 }
 
                 return t("delete confirm", {name: metadata.id}) + warning;

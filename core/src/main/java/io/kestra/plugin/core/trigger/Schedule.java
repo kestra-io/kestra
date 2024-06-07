@@ -48,7 +48,8 @@ import java.util.stream.Stream;
     title = "Schedule a flow based on a CRON expression.",
     description = "You can add multiple schedule(s) to a flow.\n" +
         "The scheduler keeps track of the last scheduled date, allowing you to easily backfill missed executions.\n" +
-        "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date."
+        "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date.\n" +
+        "By default, Schedules will use UTC. If you need a different timezone, use the `timezone` property to update it."
 )
 @Plugin(
     examples = {

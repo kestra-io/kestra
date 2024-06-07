@@ -24,11 +24,6 @@ public class MysqlWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void pause() {
-        jdbcworkerjobQueueService.pause();
-    }
-
-    @Override
     public void close() {
         jdbcworkerjobQueueService.close();
     }

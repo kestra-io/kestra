@@ -28,11 +28,6 @@ public class MemoryWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void pause() {
-
-    }
-
-    @Override
     public void close() {
 
     }

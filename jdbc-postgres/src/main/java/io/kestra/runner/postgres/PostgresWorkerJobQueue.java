@@ -24,11 +24,6 @@ public class PostgresWorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void pause() {
-        jdbcWorkerJobQueueService.pause();
-    }
-
-    @Override
     public void close() {
         jdbcWorkerJobQueueService.close();
     }

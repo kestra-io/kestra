@@ -14,17 +14,19 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Closeable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Singleton
 @Slf4j
-public class JdbcWorkerJobQueueService {
+public class JdbcWorkerJobQueueService implements Closeable {
     private final JdbcQueue<WorkerJob> workerTaskQueue;
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
-
     private final ServiceRegistry serviceRegistry;
-
-    private Runnable queueStop;
+    private final AtomicReference<Runnable> disposable = new AtomicReference<>();
+    private final AtomicBoolean isStopped = new AtomicBoolean(false);
 
     @SuppressWarnings("unchecked")
     public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
@@ -38,7 +40,7 @@ public class JdbcWorkerJobQueueService {
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
 
-        this.queueStop = workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
+        this.disposable.set(workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
 
             Worker worker = serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER).unwrap();
 
@@ -81,25 +83,22 @@ public class JdbcWorkerJobQueueService {
             });
 
             eithers.forEach(consumer);
-        });
+        }));
 
-        return this.queueStop;
+        return this.disposable.get();
     }
 
-    public void pause() {
-        this.stopQueue();
-    }
-
-    private void stopQueue() {
-        synchronized (this) {
-            if (this.queueStop != null) {
-                this.queueStop.run();
-                this.queueStop = null;
-            }
-        }
-    }
-
+    /** {@inheritDoc **/
+    @Override
     public void close() {
-        this.stopQueue();
+        if (!isStopped.compareAndSet(true, false)) {
+            return;
+        }
+
+        Runnable runnable = this.disposable.get();
+        if (runnable != null) {
+            runnable.run();
+            this.disposable.set(null);
+        }
     }
 }

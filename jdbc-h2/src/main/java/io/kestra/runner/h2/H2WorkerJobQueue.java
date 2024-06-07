@@ -24,11 +24,6 @@ public class H2WorkerJobQueue implements WorkerJobQueueInterface {
     }
 
     @Override
-    public void pause() {
-        jdbcWorkerJobQueueService.pause();
-    }
-
-    @Override
     public void close() {
         jdbcWorkerJobQueueService.close();
     }

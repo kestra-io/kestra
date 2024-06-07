@@ -17,7 +17,7 @@
             </a>
         </template>
         <template #default>
-            <span ref="slot-container" class="cursor-pointer" @mouseenter.once="changeVisibility()" @mouseleave.once="changeVisibility(false)" @click="changeVisibility()">
+            <span ref="slot-container" class="cursor-pointer" @click="changeVisibility()">
                 <slot />
                 <lock v-if="disabled" />
             </span>

@@ -588,6 +588,13 @@
     "advanced configuration": "Advanced configuration",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
+    "triggers_state": {
+      "state": "State",
+      "options": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      }
+    },
     "trigger filter": {
       "title": "Filter children executions",
       "options": {

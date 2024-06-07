@@ -19,6 +19,16 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-select v-model="state" clearable :placeholder="$t('triggers_state.state')">
+                            <el-option
+                                v-for="(s, index) in states"
+                                :key="index"
+                                :label="s.label"
+                                :value="s.value"
+                            />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
                         <refresh-button class="float-right" @refresh="load(onDataLoaded)" />
                     </el-form-item>
                 </template>
@@ -190,7 +200,12 @@
             return {
                 triggers: undefined,
                 total: undefined,
-                triggerToUnlock: undefined
+                triggerToUnlock: undefined,
+                state: undefined,
+                states: [
+                    {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
+                    {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
+                ]
             };
         },
         methods: {
@@ -255,7 +270,7 @@
                 }
             },
             triggersMerged() {
-                return this.triggers.map(triggers => {
+                const all = this.triggers.map(triggers => {
                     return {
                         ...triggers?.abstractTrigger,
                         ...triggers.triggerContext,
@@ -264,6 +279,11 @@
                         missingSource: !triggers.abstractTrigger
                     }
                 })
+
+                if(!this.state) return all;
+
+                const disabled = this.state === "DISABLED" ? true : false;
+                return all.filter(trigger => trigger.disabled === disabled);
             }
         }
     };

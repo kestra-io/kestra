@@ -560,6 +560,13 @@
     "encoding": "Encodage",
     "all executions": "Toutes les exécutions",
     "trigger execution id": "Id parent",
+    "triggers_state": {
+      "state": "État",
+      "options": {
+        "enabled": "Activé",
+        "disabled": "Désactivé"
+      }
+    },
     "trigger filter": {
       "title": "Filtrer les enfants",
       "options": {

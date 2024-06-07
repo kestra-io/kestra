@@ -13,6 +13,7 @@ import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -79,12 +80,12 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
         CountDownLatch executionKilledCount = new CountDownLatch(1);
 
         // wait for execution
-        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, SchedulerThreadTest.class, either -> {
+        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, either -> {
             executionQueueCount.countDown();
         });
 
         // wait for killed
-        Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killedQueue, SchedulerThreadTest.class, either -> {
+        Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killedQueue, either -> {
             executionKilledCount.countDown();
         });
 
@@ -94,10 +95,9 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
         // scheduler
         try (
-            AbstractScheduler scheduler = new DefaultScheduler(
+            AbstractScheduler scheduler = new JdbcScheduler(
                 applicationContext,
-                flowListenersService,
-                triggerState
+                flowListenersService
             );
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {

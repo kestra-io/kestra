@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
@@ -48,7 +49,6 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
             // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
             String workerID = UUID.randomUUID().toString();
             Worker worker = applicationContext.createBean(Worker.class, workerID, workerThread, null);
-            servers.add(worker);
             applicationContext.registerSingleton(worker); //
             poolExecutor.execute(worker);
             servers.add(worker);
@@ -67,7 +67,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         }
 
         try {
-            Await.until(() -> servers.stream().allMatch(s -> s.getState().isRunning()), null, Duration.ofMinutes(30));
+            Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, Duration.ofMinutes(30));
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }

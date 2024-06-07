@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -65,10 +66,9 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     }
 
     protected AbstractScheduler scheduler(FlowListeners flowListenersServiceSpy) {
-        return new DefaultScheduler(
+        return new JdbcScheduler(
             applicationContext,
-            flowListenersServiceSpy,
-            triggerState
+            flowListenersServiceSpy
         );
     }
 

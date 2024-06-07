@@ -2,7 +2,7 @@ package io.kestra.core.validations;
 
 import io.kestra.core.models.validations.ModelValidator;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class JsonStringTest {
     @Inject
     private ModelValidator modelValidator;

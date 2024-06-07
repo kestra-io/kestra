@@ -6,7 +6,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Disabled;
@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest(rebuildContext = true)
+@KestraTest(rebuildContext = true)
 @Property(name="kestra.server-type", value="WORKER")
 class ReadFileFunctionTest {
     @Inject

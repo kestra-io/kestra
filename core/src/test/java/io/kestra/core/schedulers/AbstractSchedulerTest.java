@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -15,7 +16,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.*;
@@ -24,9 +25,10 @@ import lombok.experimental.SuperBuilder;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-@MicronautTest(transactional = false, rebuildContext = true) // rebuild context to lower possible flaky tests
+@KestraTest(rebuildContext = true) // rebuild context to lower possible flaky tests
 abstract public class AbstractSchedulerTest {
     @Inject
     protected ApplicationContext applicationContext;
@@ -34,6 +36,25 @@ abstract public class AbstractSchedulerTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    public static Flow createThreadFlow() {
+        return createThreadFlow(null);
+    }
+
+    public static Flow createThreadFlow(String workerGroup) {
+        UnitTest schedule = UnitTest.builder()
+            .id("sleep")
+            .type(UnitTest.class.getName())
+            .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup))
+            .build();
+
+        return createFlow(Collections.singletonList(schedule), List.of(
+            PluginDefault.builder()
+                .type(UnitTest.class.getName())
+                .values(Map.of("defaultInjected", "done"))
+                .build()
+        ));
+    }
 
     protected static Flow createFlow(List<AbstractTrigger> triggers) {
         return createFlow(triggers, null);

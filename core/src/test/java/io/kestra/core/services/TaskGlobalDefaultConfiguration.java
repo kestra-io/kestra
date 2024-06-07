@@ -2,7 +2,7 @@ package io.kestra.core.services;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class TaskGlobalDefaultConfigurationTest {
     @SuppressWarnings("unchecked")
     @Test

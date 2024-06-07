@@ -16,7 +16,7 @@ import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import lombok.Builder;
@@ -37,7 +37,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest
+@KestraTest
 class JsonSchemaGeneratorTest {
 
 

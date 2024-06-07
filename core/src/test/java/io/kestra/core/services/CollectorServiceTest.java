@@ -7,8 +7,9 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ import jakarta.validation.ConstraintViolationException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest
+@KestraTest
 class CollectorServiceTest {
     @Test
     public void metrics() throws URISyntaxException {
@@ -46,14 +47,17 @@ class CollectorServiceTest {
             assertThat(metrics.getConfigurations().getRepositoryType(), is("memory"));
             assertThat(metrics.getConfigurations().getQueueType(), is("memory"));
             assertThat(metrics.getExecutions(), notNullValue());
-            assertThat(metrics.getExecutions().getDailyExecutionsCount().size(), is(0));
-            assertThat(metrics.getExecutions().getDailyTaskRunsCount().size(), is(0));
+            // 1 per hour
+            assertThat(metrics.getExecutions().getDailyExecutionsCount().size(), greaterThan(0));
+            // no task runs as it's an empty instance
+            assertThat(metrics.getExecutions().getDailyTaskRunsCount(), nullValue());
             assertThat(metrics.getInstanceUuid(), is(TestSettingRepository.instanceUuid));
         }
     }
 
     @Singleton
     @Requires(property = "kestra.unittest")
+    @Primary
     public static class TestSettingRepository implements SettingRepositoryInterface {
         public static Object instanceUuid = null;
 

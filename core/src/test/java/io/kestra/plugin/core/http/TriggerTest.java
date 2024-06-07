@@ -6,13 +6,13 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.schedulers.AbstractScheduler;
-import io.kestra.core.schedulers.DefaultScheduler;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest
+@KestraTest
 class TriggerTest {
     @Inject
     private ApplicationContext applicationContext;
@@ -50,17 +50,16 @@ class TriggerTest {
 
         // scheduler
         try (
-                AbstractScheduler scheduler = new DefaultScheduler(
+                AbstractScheduler scheduler = new JdbcScheduler(
                         this.applicationContext,
-                        this.flowListenersService,
-                        this.triggerState
+                        this.flowListenersService
                 );
                 Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, TriggerTest.class, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
                 if (execution.getLeft().getFlowId().equals("http-listen")) {
                     last.set(execution.getLeft());
 
@@ -85,16 +84,15 @@ class TriggerTest {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         // scheduler
         try (
-            AbstractScheduler scheduler = new DefaultScheduler(
+            AbstractScheduler scheduler = new JdbcScheduler(
                 this.applicationContext,
-                this.flowListenersService,
-                this.triggerState
+                this.flowListenersService
             );
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, TriggerTest.class, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
                 if (execution.getLeft().getFlowId().equals("http-listen-encrypted")) {
                     last.set(execution.getLeft());
 

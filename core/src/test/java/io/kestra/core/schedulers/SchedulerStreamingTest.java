@@ -13,6 +13,7 @@ import io.kestra.core.runners.Worker;
 import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import jakarta.inject.Inject;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -55,7 +56,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
 
     private void run(Flow flow, CountDownLatch queueCount, Consumer<List<Execution>> consumer) throws Exception {
         // wait for execution
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerStreamingTest.class, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             queueCount.countDown();
         });
 
@@ -68,10 +69,9 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
 
         // scheduler
         try (
-            AbstractScheduler scheduler = new DefaultScheduler(
+            AbstractScheduler scheduler = new JdbcScheduler(
                 applicationContext,
-                flowListenersServiceSpy,
-                triggerState
+                flowListenersServiceSpy
             );
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {

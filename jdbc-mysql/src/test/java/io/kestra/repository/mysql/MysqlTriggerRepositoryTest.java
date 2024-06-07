@@ -1,7 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepositoryTest;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 
 public class MysqlTriggerRepositoryTest extends AbstractJdbcTriggerRepositoryTest {
 

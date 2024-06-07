@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest(transactional = false)
+@KestraTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest implements TestPropertyProvider {
 

@@ -11,6 +11,7 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Requires;
 
@@ -19,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -40,6 +43,7 @@ public class Indexer implements IndexerInterface {
 
     private final String id = IdUtils.create();
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
+    private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
     @Inject
     public Indexer(
@@ -49,7 +53,8 @@ public class Indexer implements IndexerInterface {
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
         @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
-        MetricRegistry metricRegistry
+        MetricRegistry metricRegistry,
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher
     ) {
         this.executionRepository = executionRepository;
         this.executionQueue = executionQueue;
@@ -58,6 +63,8 @@ public class Indexer implements IndexerInterface {
         this.metricRepository = metricRepositor;
         this.metricQueue = metricQueue;
         this.metricRegistry = metricRegistry;
+        this.eventPublisher = eventPublisher;
+        setState(ServiceState.CREATED);
     }
 
     @Override
@@ -65,6 +72,7 @@ public class Indexer implements IndexerInterface {
         this.send(executionQueue, executionRepository);
         this.send(logQueue, logRepository);
         this.send(metricQueue, metricRepository);
+        setState(ServiceState.RUNNING);
     }
 
     protected <T> void send(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
@@ -85,6 +93,11 @@ public class Indexer implements IndexerInterface {
         }));
     }
 
+    protected void setState(final ServiceState state) {
+        this.state.set(state);
+        this.eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
+    }
+
     /** {@inheritDoc} **/
     @Override
     public String getId() {
@@ -101,15 +114,19 @@ public class Indexer implements IndexerInterface {
         return state.get();
     }
 
+    @PreDestroy
     @Override
     public void close() {
+        setState(ServiceState.TERMINATING);
         this.receiveCancellations.forEach(Runnable::run);
         try {
             this.executionQueue.close();
             this.logQueue.close();
             this.metricQueue.close();
+            setState(ServiceState.TERMINATED_GRACEFULLY);
         } catch (IOException e) {
             log.error("Failed to close the queue", e);
+            setState(ServiceState.TERMINATED_FORCED);
         }
     }
 }

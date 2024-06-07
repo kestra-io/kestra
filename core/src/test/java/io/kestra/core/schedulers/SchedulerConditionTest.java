@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -75,12 +76,12 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .flows();
 
         // scheduler
-        try (AbstractScheduler scheduler = new DefaultScheduler(
+        try (AbstractScheduler scheduler = new JdbcScheduler(
             applicationContext,
-            flowListenersServiceSpy,
-            triggerState)) {
+            flowListenersServiceSpy
+        )) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerConditionTest.class, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));

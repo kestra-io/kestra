@@ -1,7 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import io.kestra.plugin.core.condition.ExecutionFlowCondition;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest(transactional = false)
+@KestraTest
 public abstract class AbstractMultipleConditionStorageTest {
     private static final String NAMESPACE = "io.kestra.unit";
 

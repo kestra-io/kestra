@@ -50,12 +50,9 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     @Inject
     private JdbcTestUtils jdbcTestUtils;
 
-    @Inject
-    private StandAloneRunner runner;
-
-
+    @Override
     @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
+    protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 

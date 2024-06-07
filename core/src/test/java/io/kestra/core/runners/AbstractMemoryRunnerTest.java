@@ -1,6 +1,6 @@
 package io.kestra.core.runners;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-@MicronautTest(transactional = false)
+@KestraTest
 abstract public class AbstractMemoryRunnerTest {
     @Inject
     protected StandAloneRunner runner;

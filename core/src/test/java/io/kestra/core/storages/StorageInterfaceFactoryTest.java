@@ -3,7 +3,7 @@ package io.kestra.core.storages;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.storage.local.LocalStorage;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-@MicronautTest
+@KestraTest
 class StorageInterfaceFactoryTest {
 
     DefaultPluginRegistry registry = DefaultPluginRegistry.getOrCreate();

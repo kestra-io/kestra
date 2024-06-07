@@ -11,6 +11,7 @@ import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -33,32 +34,13 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
 
-    public static Flow createThreadFlow() {
-        return createThreadFlow(null);
-    }
-
-    public static Flow createThreadFlow(String workerGroup) {
-        UnitTest schedule = UnitTest.builder()
-            .id("sleep")
-            .type(UnitTest.class.getName())
-            .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup))
-            .build();
-
-        return createFlow(Collections.singletonList(schedule), List.of(
-            PluginDefault.builder()
-                .type(UnitTest.class.getName())
-                .values(Map.of("defaultInjected", "done"))
-                .build()
-        ));
-    }
-
     @Test
     void thread() throws Exception {
         Flow flow = createThreadFlow();
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // wait for execution
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, SchedulerThreadTest.class, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
 
             assertThat(execution.getFlowId(), is(flow.getId()));
@@ -79,10 +61,9 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
         // scheduler
         try (
-            AbstractScheduler scheduler = new DefaultScheduler(
+            AbstractScheduler scheduler = new JdbcScheduler(
                 applicationContext,
-                flowListenersServiceSpy,
-                triggerState
+                flowListenersServiceSpy
             );
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {

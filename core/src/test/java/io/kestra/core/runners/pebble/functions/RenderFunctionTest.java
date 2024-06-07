@@ -2,7 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import java.time.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@MicronautTest
+@KestraTest
 class RenderFunctionTest {
     @Inject
     VariableRenderer variableRenderer;

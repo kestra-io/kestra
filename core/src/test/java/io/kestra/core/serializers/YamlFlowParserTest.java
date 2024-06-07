@@ -10,7 +10,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.TestsUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@KestraTest
 class YamlFlowParserTest {
     private static ObjectMapper mapper = JacksonMapper.ofJson();
 

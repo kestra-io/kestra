@@ -1,7 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.services.PluginDefaultService;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import lombok.SneakyThrows;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -18,7 +18,7 @@ import jakarta.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest(transactional = false)
+@KestraTest
 abstract public class FlowListenersTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;

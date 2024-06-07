@@ -205,15 +205,7 @@ export default {
             return this.$http.get(`${apiUrl(this)}/executions/${options.executionId}/file/preview`, {
                 params: options
             }).then(response => {
-                let data = {...response.data}
-
-                // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
-                if(data.extension === "ion") {
-                    const content = typeof data.content[0] === "string" ? data.content[0] : data.content
-                    data = {...data, type: "TEXT", content}
-                }
-
-                commit("setFilePreview", data)
+                commit("setFilePreview", response.data)
             })
         },
         setLabels(_, options) {

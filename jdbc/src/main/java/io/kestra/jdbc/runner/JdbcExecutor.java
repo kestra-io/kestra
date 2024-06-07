@@ -436,10 +436,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 subflowExecutionDedup
                     .forEach(subflowExecution -> {
-                        String log = "Create new execution for flow '" +
-                            subflowExecution.getExecution()
-                                .getNamespace() + "'.'" + subflowExecution.getExecution().getFlowId() +
-                            "' with id '" + subflowExecution.getExecution().getId() + "'";
+                        Execution subExecution = subflowExecution.getExecution();
+                        String log = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
 
                         JdbcExecutor.log.info(log);
 

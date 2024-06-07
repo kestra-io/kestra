@@ -2,7 +2,10 @@
     <div class="line font-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
         <div class="log-content d-inline-block">
-            <div class="header" :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}">
+            <div
+                class="header"
+                :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
+            >
                 <span class="header-badge">
                     {{ $filters.date(log.timestamp, "iso") }}
                 </span>
@@ -18,16 +21,22 @@
                     </span>
                 </span>
             </div>
-            <span class="message" v-html="message" />
+            <v-runtime-template :template="markdownRenderer" />
         </div>
     </div>
 </template>
 <script>
     import Convert from "ansi-to-html"
     import xss from "xss";
+    import Markdown from "../../utils/markdown";
+    import VRuntimeTemplate from "vue3-runtime-template";
+
     let convert = new Convert();
 
     export default {
+        components:{
+            VRuntimeTemplate
+        },
         props: {
             log: {
                 type: Object,
@@ -46,6 +55,14 @@
                 default: () => [],
             }
         },
+        data() {
+            return {
+                markdownRenderer: undefined
+            }
+        },
+        async created() {
+            this.markdownRenderer = await this.renderMarkdown();
+        },
         computed: {
             metaWithValue() {
                 const metaWithValue = [];
@@ -63,11 +80,13 @@
                     if (this.log[key] && !excludes.includes(key)) {
                         let meta = {key, value: this.log[key]};
                         if (key === "executionId") {
-                            meta["router"] = {name: "executions/update", params: {
-                                namespace: this.log["namespace"],
-                                flowId: this.log["flowId"],
-                                id: this.log[key]
-                            }};
+                            meta["router"] = {
+                                name: "executions/update", params: {
+                                    namespace: this.log["namespace"],
+                                    flowId: this.log["flowId"],
+                                    id: this.log[key]
+                                }
+                            };
                         }
 
                         if (key === "namespace") {
@@ -76,7 +95,10 @@
 
 
                         if (key === "flowId") {
-                            meta["router"] = {name: "flows/update", params: {namespace: this.log["namespace"], id: this.log[key]}};
+                            meta["router"] = {
+                                name: "flows/update",
+                                params: {namespace: this.log["namespace"], id: this.log[key]}
+                            };
                         }
 
                         metaWithValue.push(meta);
@@ -112,6 +134,11 @@
                 );
                 return logMessage;
             }
+        },
+        methods: {
+            async renderMarkdown() {
+                return await Markdown.render(this.message);
+            },
         },
     };
 </script>
@@ -163,7 +190,7 @@
                 font-family: var(--bs-font-sans-serif);
                 user-select: none;
 
-                &::after{
+                &::after {
                     content: ":";
                 }
             }

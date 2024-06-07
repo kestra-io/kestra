@@ -39,18 +39,26 @@
                 @update:model-value="onChange"
                 show-password
             />
-            <el-input-number
-                v-if="input.type === 'INT'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
-                :step="1"
-            />
-            <el-input-number
-                v-if="input.type === 'FLOAT'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
-                :step="0.001"
-            />
+            <span v-if="input.type === 'INT'">
+                <el-input-number
+                    v-model="inputs[input.id]"
+                    @update:model-value="onChange"
+                    :min="input.min"
+                    :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                    :step="1"
+                />
+                <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+            </span>
+            <span v-if="input.type === 'FLOAT'">
+                <el-input-number
+                    v-model="inputs[input.id]"
+                    @update:model-value="onChange"
+                    :min="input.min"
+                    :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                    :step="0.001"
+                />
+                <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+            </span>
             <el-radio-group
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputs[input.id]"
@@ -182,6 +190,18 @@
                 this.inputs[input.id] = e.target.files[0];
                 this.onChange();
             },
+            numberHint(input){
+                const {min, max} = input;
+
+                if (min !== undefined && max !== undefined) {
+                    if(min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`;
+                    return `Minimum value is ${min}, maximum value is ${max}.`;
+                } else if (min !== undefined) {
+                    return `Minimum value is ${min}.`;
+                } else if (max !== undefined) {
+                    return `Maximum value is ${max}.`;
+                } else return false;
+            }
         },
         watch: {
             inputs: {
@@ -199,5 +219,8 @@
 </script>
 
 <style scoped lang="scss">
-
+.hint {
+    font-size: var(--font-size-xs);
+    color: var(--bs-gray-700);
+}
 </style>

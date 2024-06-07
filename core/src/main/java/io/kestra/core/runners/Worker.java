@@ -727,7 +727,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         setState(ServiceState.TERMINATING);
-        workerJobQueue.pause();
+
+        try {
+            // close the WorkerJob queue to stop receiving new JobTask execution.
+            workerJobQueue.close();
+        } catch (IOException e) {
+            log.error("Failed to close the WorkerJobQueue");
+        }
 
         final boolean terminatedGracefully;
         if (!skipGracefulTermination.get()) {

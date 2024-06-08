@@ -234,6 +234,26 @@ subprojects {
         showPassedStandardStreams false
         showSkippedStandardStreams true
     }
+
+    dependencies {
+        testImplementation platform("io.qameta.allure:allure-bom:2.27.0")
+        testImplementation "io.qameta.allure:allure-junit5"
+    }
+
+    configurations {
+        agent {
+            canBeResolved = true
+            canBeConsumed = true
+        }
+    }
+
+    dependencies {
+        agent "org.aspectj:aspectjweaver:1.9.22.1"
+    }
+
+    test {
+        jvmArgs = [ "-javaagent:${configurations.agent.singleFile}" ]
+    }
 }
 
 /**********************************************************************************************************************\

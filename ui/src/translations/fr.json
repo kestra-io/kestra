@@ -688,6 +688,7 @@
         "configuration": {
           "label": "Configuration Principale",
           "fields": {
+            "language": "Langue",
             "default_namespace": "Espace de noms par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut",
             "log_display": "Affichage des journaux par défaut",
@@ -708,8 +709,8 @@
         },
         "localization": {
           "label": "Paramètres de Date et d'Heure",
+          "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre",
           "fields": {
-            "language": "Langue",
             "time_zone": "Fuseau Horaire",
             "date_format": "Format de Date"
           }

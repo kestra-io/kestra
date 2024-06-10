@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest(rebuildContext = true)
+@KestraTest
 class EncryptDecryptFunctionTest {
     @Inject
     private VariableRenderer variableRenderer;

@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest(rebuildContext = true)
+@KestraTest
 @Property(name="kestra.server-type", value="WORKER")
 class ReadFileFunctionTest {
     @Inject

@@ -137,7 +137,12 @@
         },
         methods: {
             async renderMarkdown() {
-                return await Markdown.render(this.message);
+                let markdown = await Markdown.render(this.message);
+
+                // Avoid rendering non-existent properties in the template by VRuntimeTemplate
+                markdown = markdown.replace(/{{/g, "&#123;&#123;").replace(/}}/g, "&#125;&#125;");
+
+                return markdown
             },
         },
     };

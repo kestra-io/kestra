@@ -73,7 +73,10 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         try {
             Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);
         } catch (TimeoutException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
+                    .map(Service::getClass)
+                    .toList() + " not started in time");
         }
     }
 

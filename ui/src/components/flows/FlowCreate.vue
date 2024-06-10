@@ -60,34 +60,10 @@
                 } else {
                     this.source = `id: myflow
 namespace: company.myteam
-description: Save and Execute the flow
-
-labels:
-  env: dev
-  project: myproject
-
-inputs:
-  - id: payload
-    type: JSON
-    defaults: |-
-      [{"name": "kestra", "rating": "best in class"}]
-
 tasks:
-  - id: send_data
-    type: io.kestra.plugin.core.http.Request
-    uri: https://reqres.in/api/products
-    method: POST
-    contentType: application/json
-    body: "{{ inputs.payload }}"
-
-  - id: print_status
+  - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: hello on {{ outputs.send_data.headers.date | first }}
-
-triggers:
-  - id: daily
-    type: io.kestra.plugin.core.trigger.Schedule
-    cron: "0 9 * * *"`;
+    message: Hello World! 🚀`;
                 }
             }
         },

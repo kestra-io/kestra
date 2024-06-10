@@ -5,7 +5,7 @@
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #content>
                 <Row>
-                    <Column :label="$t('settings.blocks.localization.fields.language')">
+                    <Column :label="$t('settings.blocks.configuration.fields.language')">
                         <el-select :model-value="lang" @update:model-value="onLang">
                             <el-option
                                 v-for="item in langOptions"
@@ -124,7 +124,7 @@
             </template>
         </Block>
 
-        <Block :heading="$t('settings.blocks.localization.label')">
+        <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">

@@ -27,16 +27,6 @@ public class MemoryWorkerTriggerResultQueue implements WorkerTriggerResultQueueI
     }
 
     @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void cleanup() {
-
-    }
-
-    @Override
     public void close() {
 
     }

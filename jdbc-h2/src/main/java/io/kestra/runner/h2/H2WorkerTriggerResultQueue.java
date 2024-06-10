@@ -26,16 +26,6 @@ public class H2WorkerTriggerResultQueue extends H2Queue<WorkerTriggerResult> imp
     }
 
     @Override
-    public void pause() {
-        jdbcWorkerTriggerResultQueueService.pause();
-    }
-
-    @Override
-    public void cleanup() {
-        jdbcWorkerTriggerResultQueueService.cleanup();
-    }
-
-    @Override
     public void close() throws IOException {
         super.close();
         jdbcWorkerTriggerResultQueueService.close();

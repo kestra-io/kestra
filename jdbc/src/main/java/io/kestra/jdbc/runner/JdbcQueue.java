@@ -61,7 +61,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
 
-    protected volatile boolean isShutdown = false;
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
@@ -264,7 +264,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         AtomicReference<ZonedDateTime> lastPoll = new AtomicReference<>(ZonedDateTime.now());
 
         poolExecutor.execute(() -> {
-            while (running.get() && !this.isShutdown) {
+            while (running.get() && !this.isClosed.get()) {
                 try {
                     Integer count = runnable.get();
                     if (count > 0) {
@@ -289,9 +289,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             }
         });
 
-        return () -> {
-            running.set(false);
-        };
+        return () -> running.set(false);
     }
 
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
@@ -310,14 +308,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .forEach(consumer);
     }
 
-    @Override
-    public void pause() {
-        this.isShutdown = true;
-    }
 
     @Override
     public void close() throws IOException {
-        this.isShutdown = true;
+        if (!this.isClosed.compareAndSet(false, true)) {
+            return;
+        }
         poolExecutor.shutdown();
     }
 

@@ -26,16 +26,6 @@ public class MysqlWorkerTriggerResultQueue extends MysqlQueue<WorkerTriggerResul
     }
 
     @Override
-    public void pause() {
-        jdbcWorkerTriggerResultQueueService.pause();
-    }
-
-    @Override
-    public void cleanup() {
-        jdbcWorkerTriggerResultQueueService.cleanup();
-    }
-
-    @Override
     public void close() throws IOException {
         super.close();
         jdbcWorkerTriggerResultQueueService.close();

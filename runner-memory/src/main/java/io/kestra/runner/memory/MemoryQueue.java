@@ -132,11 +132,6 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         };
     }
 
-    @Override
-    public void pause() {
-
-    }
-
     public int getSubscribersCount() {
         return this.queues
             .values()

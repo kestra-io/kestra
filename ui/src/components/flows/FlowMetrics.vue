@@ -98,7 +98,7 @@
     import {mapState} from "vuex";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
-    import {cssVariable} from "../../utils/global";
+    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
     import Collapse from "../layout/Collapse.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue";

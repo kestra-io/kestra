@@ -10,8 +10,7 @@ import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue
 import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue";
 import Refresh from "vue-material-design-icons/Refresh.vue";
 import Cancel from "vue-material-design-icons/Cancel.vue";
-import {cssVariable} from "./global"
-
+import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
 const STATE = Object.freeze({
     CREATED: {

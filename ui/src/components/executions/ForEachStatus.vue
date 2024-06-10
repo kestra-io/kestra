@@ -28,7 +28,7 @@
     </div>
 </template>
 <script>
-    import {cssVariable} from "../../utils/global"
+    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
     import State from "../../utils/state";
     import throttle from "lodash/throttle"
 

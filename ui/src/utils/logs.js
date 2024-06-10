@@ -1,5 +1,5 @@
 import _mapValues from "lodash/mapValues";
-import {cssVariable} from "./global";
+import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
 const LEVELS = Object.freeze({
     ERROR: {

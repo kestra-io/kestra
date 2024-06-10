@@ -6,6 +6,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Setter;
@@ -33,6 +34,9 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
     @Inject
     private ApplicationContext applicationContext;
+
+    @Value("${kestra.server.standalone.running.timeout:PT1M}")
+    private Duration runningTimeout;
 
     private final List<Service> servers = new ArrayList<>();
 
@@ -67,7 +71,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         }
 
         try {
-            Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, Duration.ofMinutes(30));
+            Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }

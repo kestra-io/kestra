@@ -47,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
+// If some counts are wrong in this test it means that one of the tests is not properly deleting what it created
 @KestraTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractFlowRepositoryTest {

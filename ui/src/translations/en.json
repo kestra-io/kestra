@@ -709,6 +709,7 @@
         "configuration": {
           "label": "Main Configuration",
           "fields": {
+            "language": "Language",
             "default_namespace": "Default Namespace",
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
@@ -729,8 +730,8 @@
         },
         "localization": {
           "label": "Date and Time Settings",
+          "note": "Note that this setting is used for displaying date and time properties in the UI. To schedule your flows in a timezone different than UTC, make sure to set the timezone property on the Schedule trigger in your flow code or your plugin defaults.",
           "fields": {
-            "language": "Language",
             "time_zone": "Time Zone",
             "date_format": "Date Format"
           }

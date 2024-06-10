@@ -11,9 +11,6 @@ import java.util.function.Consumer;
  * Required for the QueueFactory, to have common interface with JDBC & Kafka
  */
 public interface WorkerTriggerResultQueueInterface extends Closeable {
+
     Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer);
-
-    void pause();
-
-    void cleanup();
 }

@@ -8,7 +8,6 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.WorkerTriggerResult;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
@@ -18,16 +17,24 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Closeable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Singleton
 @Slf4j
-public class JdbcWorkerTriggerResultQueueService {
+public class JdbcWorkerTriggerResultQueueService implements Closeable {
     private final static ObjectMapper MAPPER = JdbcMapper.of();
 
     private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
+
     @Inject
     private AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
+    private final AtomicReference<Runnable> disposable = new AtomicReference<>();
+
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
     private Runnable queueStop;
 
     @SuppressWarnings("unchecked")
@@ -38,7 +45,7 @@ public class JdbcWorkerTriggerResultQueueService {
     }
 
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
-        this.queueStop = workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
+        disposable.set(workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
             eithers.forEach(either -> {
                 if (either.isRight()) {
                     log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
@@ -58,26 +65,21 @@ public class JdbcWorkerTriggerResultQueueService {
             });
 
             eithers.forEach(consumer);
-        });
-        return this.queueStop;
+        }));
+        return disposable.get();
     }
 
-    public void pause() {
-        this.stopQueue();
-    }
-
-    private void stopQueue() {
-        synchronized (this) {
-            if (this.queueStop != null) {
-                this.queueStop.run();
-                this.queueStop = null;
-            }
-        }
-    }
-
-    public void cleanup() { }
-
+    /** {@inheritDoc **/
+    @Override
     public void close() {
-        this.stopQueue();
+        if (!isClosed.compareAndSet(false, true)) {
+            return;
+        }
+
+        Runnable runnable = this.disposable.get();
+        if (runnable != null) {
+            runnable.run();
+            this.disposable.set(null);
+        }
     }
 }

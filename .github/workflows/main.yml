@@ -223,6 +223,8 @@ jobs:
               io.kestra.plugin:plugin-databricks:$PLUGIN_VERSION
               io.kestra.plugin:plugin-dataform:$PLUGIN_VERSION
               io.kestra.plugin:plugin-dbt:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-debezium-db2:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-debezium-mongodb:$PLUGIN_VERSION
               io.kestra.plugin:plugin-debezium-mysql:$PLUGIN_VERSION
               io.kestra.plugin:plugin-debezium-postgres:$PLUGIN_VERSION
               io.kestra.plugin:plugin-debezium-sqlserver:$PLUGIN_VERSION

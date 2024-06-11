@@ -151,7 +151,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()))
             .withTaskRunner(this.taskRunner)
-            .withDockerOptions(getDocker() != null ? this.injectDefaults(getDocker()) : null)
+            .withDockerOptions(this.docker != null ? this.injectDefaults(this.docker) : null)
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)

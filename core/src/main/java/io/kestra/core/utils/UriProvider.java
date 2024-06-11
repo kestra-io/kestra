@@ -51,4 +51,8 @@ public class UriProvider {
             flow.getNamespace() + "/" +
             flow.getId());
     }
+
+    public URI resetPasswordUrl(String token) {
+        return this.build("/ui/login/reset-password?token=" + token);
+    }
 }

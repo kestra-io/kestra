@@ -11,6 +11,7 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.io.FileMatchers.anExistingFile;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -154,8 +154,15 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
                 storageContext
                 , storageInterface
             );
-            URI fileURI = URI.create("kestra:" + storageContext.getContextStorageURI() + "/input.txt");
-            assertThat(new String(storage.getFile(fileURI).readAllBytes()), is("Hello World"));
+
+            TaskRun taskRun = execution.getTaskRunList().get(1);
+            Map<String, Object> outputs = taskRun.getOutputs();
+            assertThat(outputs, hasKey("uris"));
+
+            URI uri = URI.create(((Map<String, String>) outputs.get("uris")).get("input.txt"));
+
+            assertTrue(uri.toString().endsWith("input.txt"));
+            assertThat(new String(storage.getFile(uri).readAllBytes()), is("Hello World"));
         }
 
         @SuppressWarnings("unchecked")

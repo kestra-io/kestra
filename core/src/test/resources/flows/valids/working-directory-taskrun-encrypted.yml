@@ -1,0 +1,13 @@
+id: working-directory-taskrun-encrypted
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDir
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: encrypted
+        type: io.kestra.core.tasks.test.Encrypted
+        format: "Hello World"
+      - id: decrypted
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{outputs.encrypted.value}}"

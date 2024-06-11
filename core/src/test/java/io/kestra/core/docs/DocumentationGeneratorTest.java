@@ -171,6 +171,5 @@ class DocumentationGeneratorTest {
 
         assertThat(render, containsString("title: Process"));
         assertThat(render, containsString("Task runner that executes a task as a subprocess on the Kestra host."));
-        assertThat(render, containsString("This plugin is currently in beta"));
     }
 }

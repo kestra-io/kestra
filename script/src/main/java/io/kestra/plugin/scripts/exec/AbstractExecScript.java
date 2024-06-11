@@ -1,6 +1,5 @@
 package io.kestra.plugin.scripts.exec;
 
-import com.google.common.annotations.Beta;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.*;
@@ -12,6 +11,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -30,23 +30,25 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 public abstract class AbstractExecScript extends Task implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
-    @Builder.Default
     @Schema(
-        title = "The task runner to use — by default, Kestra runs all scripts in `DOCKER`.",
-        description = "Only used if the `taskRunner` property is not set"
+        title = "Deprecated - use the 'taskRunner' property instead.",
+        description = "Only used if the `taskRunner` property is not set",
+        deprecated = true
     )
     @PluginProperty
-    @NotNull
-    protected RunnerType runner = RunnerType.DOCKER;
+    @Deprecated
+    protected RunnerType runner;
 
     @Schema(
         title = "The task runner to use.",
         description = "Task runners are provided by plugins, each have their own properties."
     )
     @PluginProperty
-    @Beta
+    @Builder.Default
     @Valid
-    protected TaskRunner taskRunner;
+    protected TaskRunner taskRunner = Docker.builder()
+        .type(Docker.class.getName())
+        .build();
 
     @Schema(
         title = "A list of commands that will run before the `commands`, allowing to set up the environment e.g. `pip install -r requirements.txt`."
@@ -108,9 +110,15 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         title = "The target operating system where the script will run."
     )
     @Builder.Default
-    public TargetOS targetOS = TargetOS.AUTO;
+    protected TargetOS targetOS = TargetOS.AUTO;
 
-    abstract public DockerOptions getDocker();
+    @Schema(
+        title = "Deprecated - use the 'taskRunner' property instead.",
+        description = "Only used if the `taskRunner` property is not set",
+        deprecated = true
+    )
+    @Deprecated
+    protected DockerOptions docker;
 
     @Schema(
         title = "The task runner container image, only used if the task runner is container-based."
@@ -140,10 +148,10 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         return new CommandsWrapper(runContext)
             .withEnv(this.getEnv())
             .withWarningOnStdErr(this.getWarningOnStdErr())
-            .withRunnerType(this.taskRunner == null ? this.getRunner() : null)
+            .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()))
             .withTaskRunner(this.taskRunner)
-            .withDockerOptions(this.injectDefaults(getDocker()))
+            .withDockerOptions(getDocker() != null ? this.injectDefaults(getDocker()) : null)
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)

@@ -178,11 +178,16 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     public TaskRunner getTaskRunner() {
-        if (taskRunner == null) {
-            taskRunner = switch (runnerType) {
-                case DOCKER -> Docker.from(this.dockerOptions);
+        if (runnerType != null) {
+            return switch (runnerType) {
+                case DOCKER -> Docker.from(dockerOptions);
                 case PROCESS -> new Process();
             };
+        }
+
+        // special case to take into account the deprecated dockerOptions if set
+        if (taskRunner instanceof Docker && dockerOptions != null) {
+            return Docker.from(dockerOptions);
         }
 
         return taskRunner;

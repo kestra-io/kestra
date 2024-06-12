@@ -141,8 +141,8 @@
             </template>
             <template #default="{data, node}">
                 <el-dropdown
-                    :ref="`dropdown__${data.fileName}`"
-                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.fileName}`)"
+                    :ref="`dropdown__${data.id}`"
+                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.id}`)"
                     trigger="contextmenu"
                     class="w-100"
                 >

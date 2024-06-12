@@ -310,6 +310,14 @@
         "title": "Page not found",
         "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>",
         "flow or execution": "The flow or execution you are looking for does not exist."
+      },
+      "401": {
+        "title": "Unauthorized",
+        "content": "You need to be authenticated to access this page."
+      },
+      "403": {
+        "title": "Access denied",
+        "content": "You don't have the required permissions to access this page."
       }
     },
     "copy logs": "Copy logs",

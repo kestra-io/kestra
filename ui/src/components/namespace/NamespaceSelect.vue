@@ -21,6 +21,8 @@
 <script>
     import {mapState} from "vuex";
     import _uniqBy from "lodash/uniqBy";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         props: {
@@ -43,14 +45,17 @@
         },
         emits: ["update:modelValue"],
         created() {
-            this.$store
-                .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
-                .then(() => {
-                    this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces);
-                });
+            if (this.user && this.user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                this.$store
+                    .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
+                    .then(() => {
+                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces);
+                    });
+            }
         },
         computed: {
-            ...mapState("namespace", ["datatypeNamespaces"])
+            ...mapState("namespace", ["datatypeNamespaces"]),
+            ...mapState("auth", ["user"]),
         },
         data() {
             return {

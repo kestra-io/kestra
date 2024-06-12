@@ -188,6 +188,11 @@
             }
         },
         created() {
+            // Auth but no permission at all or no permission to load execution stats
+            if (this.user && (!this.user.hasAnyRole() || !this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ))) {
+                this.$router.push({name:"errors/403"});
+                return;
+            }
             this.load();
         },
         watch: {
@@ -239,8 +244,10 @@
                 return _merge(base, queryFilter)
             },
             load() {
-                this.loadStats();
-                this.haveExecutions();
+                if (this.user && this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
+                    this.loadStats();
+                    this.haveExecutions();
+                }
             },
             haveExecutions() {
                 let params = {

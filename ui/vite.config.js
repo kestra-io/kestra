@@ -1,7 +1,6 @@
 import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
-import pluginRewriteAll from "vite-plugin-rewrite-all";
 import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
 
@@ -19,7 +18,6 @@ export default defineConfig({
     },
     plugins: [
         vue(),
-        pluginRewriteAll(),
         visualizer(),
         eslintPlugin({
             failOnWarning: true,

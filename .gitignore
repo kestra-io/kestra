@@ -51,3 +51,6 @@ core/src/main/resources/gradle.properties
 
 # H2 Database
 data
+
+# Allure Reports
+**/allure-results/*

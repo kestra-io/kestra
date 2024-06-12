@@ -339,7 +339,7 @@ public class RunContext {
             if (execution.getTaskRunList() != null) {
                 Map<String, Object> outputs = new HashMap<>(execution.outputs());
                 if (decryptVariables) {
-                    decryptOutputs(outputs);
+                    outputs = decryptOutputs(outputs);
                 }
                 builder.put("outputs", outputs);
             }
@@ -404,22 +404,30 @@ public class RunContext {
         return builder.build();
     }
 
-    private void decryptOutputs(Map<String, Object> outputs) {
-        for (var entry: outputs.entrySet()) {
+    private Map<String, Object> decryptOutputs(Map<String, Object> mapToDecrypt) {
+        if (mapToDecrypt == null) {
+            return null;
+        }
+
+        Map<String, Object> decryptedMap = new HashMap<>();
+        for (var entry: mapToDecrypt.entrySet()) {
+            decryptedMap.put(entry.getKey(), entry.getValue());
             if (entry.getValue() instanceof Map map) {
-                // if some outputs are of type EncryptedString we decode them and replace the object
+                // if some value are of type EncryptedString we decode them and replace the object
                 if (EncryptedString.TYPE.equalsIgnoreCase((String)map.get("type"))) {
                     try {
                         String decoded = decrypt((String) map.get("value"));
-                        outputs.put(entry.getKey(), decoded);
+                        decryptedMap.put(entry.getKey(), decoded);
                     } catch (GeneralSecurityException e) {
                         throw new RuntimeException(e);
                     }
                 }  else {
-                    decryptOutputs((Map<String, Object>) map);
+                    decryptedMap.put(entry.getKey(), decryptOutputs((Map<String, Object>) map));
                 }
             }
         }
+
+        return decryptedMap;
     }
 
     private Map<String, Object> variables(TaskRun taskRun) {
@@ -502,6 +510,8 @@ public class RunContext {
         runContext.runContextLogger = this.runContextLogger;
         runContext.tempBasedPath = this.tempBasedPath;
         runContext.temporaryDirectory = this.temporaryDirectory;
+        runContext.pluginConfiguration = this.pluginConfiguration;
+        runContext.secretKey = this.secretKey;
 
         return runContext;
     }
@@ -581,6 +591,15 @@ public class RunContext {
         newContext.variables = ImmutableMap.copyOf(clone);
 
         return newContext;
+    }
+
+    public RunContext forWorkingDirectoryTask() {
+        Map<String, Object> decryptedVariables = new HashMap<>(this.variables);
+        if (this.variables.get("outputs") != null) {
+            decryptedVariables.put("outputs", decryptOutputs((Map<String, Object>) this.variables.get("outputs")));
+        }
+
+        return this.clone(decryptedVariables);
     }
 
     public RunContext forTaskRunner(TaskRunner taskRunner) {

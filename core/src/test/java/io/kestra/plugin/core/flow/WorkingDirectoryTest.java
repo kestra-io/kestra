@@ -6,7 +6,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
@@ -18,11 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     @Inject
     Suite suite;
+
+    @Inject
+    RunContextFactory runContextFactory;
 
     @Test
     void success() throws TimeoutException {
@@ -81,6 +84,11 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     @Test
     void outputFiles() throws Exception {
         suite.outputFiles(runnerUtils);
+    }
+
+    @Test
+    void encryption() throws Exception {
+        suite.encryption(runnerUtils, runContextFactory);
     }
 
     @Singleton
@@ -241,6 +249,18 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.findTaskRunsByTaskId("t1").get(0).getOutputs().get("value"), is("first"));
             assertThat(execution.findTaskRunsByTaskId("t2").get(0).getOutputs().get("value"), is("second"));
             assertThat(execution.findTaskRunsByTaskId("t3").get(0).getOutputs().get("value"), is("third"));
+        }
+
+        public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException {
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
+
+            assertThat(execution.getTaskRunList(), hasSize(3));
+            Map<String, Object> encryptedString = (Map<String, Object>) execution.findTaskRunsByTaskId("encrypted").get(0).getOutputs().get("value");
+            assertThat(encryptedString.get("type"), is(EncryptedString.TYPE));
+            String encryptedValue = (String) encryptedString.get("value");
+            assertThat(encryptedValue, is(not("Hello World")));
+            assertThat(runContextFactory.of().decrypt(encryptedValue), is("Hello World"));
+            assertThat(execution.findTaskRunsByTaskId("decrypted").get(0).getOutputs().get("value"), is("Hello World"));
         }
 
         private void put(String path, String content) throws IOException {

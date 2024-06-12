@@ -92,7 +92,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         description = "Required when providing a list of files."
     )
     @PluginProperty(dynamic = true)
-    private String destination;
+    @Builder.Default
+    private String destination = "/";
 
     @Builder.Default
 

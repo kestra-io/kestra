@@ -593,13 +593,15 @@ public class RunContext {
         return newContext;
     }
 
-    public RunContext forWorkingDirectoryTask() {
+    public RunContext forWorkingDirectoryTask(final Task task) {
         Map<String, Object> decryptedVariables = new HashMap<>(this.variables);
         if (this.variables.get("outputs") != null) {
             decryptedVariables.put("outputs", decryptOutputs((Map<String, Object>) this.variables.get("outputs")));
         }
 
-        return this.clone(decryptedVariables);
+        RunContext newRunContext = this.clone(decryptedVariables);
+        newRunContext.initPluginConfiguration(applicationContext, task.getClass(), task.getType());
+        return newRunContext;
     }
 
     public RunContext forTaskRunner(TaskRunner taskRunner) {

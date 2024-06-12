@@ -115,7 +115,7 @@ public class LocalStorage implements StorageInterface {
                     URI relative = URI.create(
                         getPath(tenantId, null).relativize(
                             Path.of(file.toUri())
-                        ).toString()
+                        ).toString().replace("\\", "/")
                     );
                     return getAttributes(tenantId, relative);
                 }))

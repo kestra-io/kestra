@@ -57,7 +57,7 @@ public final class ScriptService {
         return INTERNAL_STORAGE_PATTERN
             .matcher(command)
             .replaceAll(throwFunction(matchResult -> {
-                String localFile = saveOnLocalStorage(runContext, matchResult.group());
+                String localFile = saveOnLocalStorage(runContext, matchResult.group()).replace("\\", "/");
 
                 internalStorageToLocalFileConsumer.accept(matchResult.group(), localFile);
 

@@ -12,7 +12,6 @@ import lombok.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -57,13 +56,6 @@ public class TaskRun implements TenantInterface {
 
     @With
     Integer iteration;
-
-    public void destroyOutputs() {
-        // DANGER ZONE: this method is only used to deals with issues with messages too big that must be stripped down
-        // to avoid crashing the platform. Don't use it for anything else.
-        this.outputs = Collections.emptyMap();
-        this.state = this.state.withState(State.Type.FAILED);
-    }
 
     @Deprecated
     public void setItems(String items) {

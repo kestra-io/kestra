@@ -23,6 +23,10 @@ class Me {
     hasAnyActionOnAnyNamespace(permission, action) {
         return true;
     }
+
+    hasAnyRole() {
+        return true;
+    }
 }
 
 export default {

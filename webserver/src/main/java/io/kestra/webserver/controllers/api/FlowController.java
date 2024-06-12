@@ -274,7 +274,7 @@ public class FlowController {
             namespace,
             sources
                 .stream()
-                .map(flow -> FlowWithSource.of(yamlFlowParser.parse(flow, Flow.class), flow))
+                .map(flow -> FlowWithSource.of(yamlFlowParser.parse(flow, Flow.class), flow.trim()))
                 .toList(),
             delete
         );
@@ -727,7 +727,7 @@ public class FlowController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                this.importFlow(tenantId, source);
+                this.importFlow(tenantId, source.trim());
             }
         } else if (fileName.endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {

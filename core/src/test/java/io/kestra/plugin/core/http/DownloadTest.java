@@ -12,7 +12,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@KestraTest
 class DownloadTest {
     public static final String FILE = "http://speedtest.ftp.otenet.gr/files/test1Mb.db";
     @Inject

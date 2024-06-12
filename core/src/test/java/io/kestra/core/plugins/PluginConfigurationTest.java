@@ -1,6 +1,6 @@
 package io.kestra.core.plugins;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@MicronautTest
+@KestraTest
 class PluginConfigurationTest {
 
     @Inject

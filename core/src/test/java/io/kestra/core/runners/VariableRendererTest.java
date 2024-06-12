@@ -2,14 +2,14 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-@MicronautTest
+@KestraTest
 class VariableRendererTest {
 
     @Inject

@@ -178,7 +178,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Override
     public void run() {
-        setState(ServiceState.RUNNING);
         this.receiveCancellations.addFirst(this.executionKilledQueue.receive(executionKilled -> {
             if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
@@ -232,6 +231,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 });
             }
         ));
+        setState(ServiceState.RUNNING);
     }
 
     private void setState(final ServiceState state) {

@@ -3,10 +3,7 @@ configurations {
 }
 
 dependencies {
-    implementation project(":core")
-
+    testImplementation project(":core")
     testImplementation project(':core').sourceSets.test.output
-    testImplementation project(':repository-memory')
-    testImplementation project(':storage-local')
-    testImplementation project(':runner-memory')
+    api project(":repository-memory")
 }

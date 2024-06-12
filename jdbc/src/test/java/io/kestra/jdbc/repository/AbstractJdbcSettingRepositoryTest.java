@@ -4,7 +4,7 @@ import io.kestra.jdbc.JdbcTestUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 
-public abstract class AbstractJdbcSettingRepositoryTest extends io.kestra.core.repositories.AbstracSettingRepositoryTest {
+public abstract class AbstractJdbcSettingRepositoryTest extends io.kestra.core.repositories.AbstractSettingRepositoryTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;
 

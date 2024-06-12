@@ -14,7 +14,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest
+@KestraTest
 class RequestTest {
     @Inject
     private RunContextFactory runContextFactory;

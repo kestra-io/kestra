@@ -9,7 +9,7 @@ import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -30,7 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest(transactional = false)
+@KestraTest
 public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
     @Inject

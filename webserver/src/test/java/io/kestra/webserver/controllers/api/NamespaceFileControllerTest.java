@@ -16,7 +16,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,7 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 
-@MicronautTest
+@KestraTest
 class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     private static final String NAMESPACE = "io.namespace";
 

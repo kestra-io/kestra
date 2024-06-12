@@ -1,7 +1,7 @@
 package io.kestra.core.utils;
 
 import io.kestra.core.models.tasks.retrys.Constant;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@KestraTest
 class RetryUtilsTest {
     @Inject
     RetryUtils retryUtils;

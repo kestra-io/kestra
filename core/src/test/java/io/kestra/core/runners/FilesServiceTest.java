@@ -1,6 +1,6 @@
 package io.kestra.core.runners;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class FilesServiceTest {
     @Inject
     private RunContextFactory runContextFactory;

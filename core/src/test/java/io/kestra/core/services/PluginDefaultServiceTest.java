@@ -16,7 +16,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.runners.RunContext;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,7 +35,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class PluginDefaultServiceTest {
     @Inject
     private PluginDefaultService pluginDefaultService;

@@ -28,7 +28,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
@@ -50,7 +50,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@MicronautTest(transactional = false, environments =  {"test", "liveness"})
+@KestraTest(environments =  {"test", "liveness"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
 @Property(name = "kestra.server-type", value = "EXECUTOR")
 public abstract class JdbcServiceLivenessCoordinatorTest {
@@ -119,15 +119,17 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask(Duration.ofSeconds(10)));
-        runningLatch.await(5, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
+        assertThat(runningLatchAwait, is(true));
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         newWorker.run();
-        resubmitLatch.await(30, TimeUnit.SECONDS);
-        newWorker.shutdown();
+        boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
+        assertThat(resubmitLatchAwait, is(true));
         assertThat(receive.blockLast().getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
+        newWorker.shutdown();
     }
 
     @Test
@@ -154,7 +156,8 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask);
-        runningLatch.await(2, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(2, TimeUnit.SECONDS);
+        assertThat(runningLatchAwait, is(true));
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);

@@ -2,7 +2,7 @@ package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class ConcatTest {
     @Inject
     RunContextFactory runContextFactory;

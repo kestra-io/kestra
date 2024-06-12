@@ -1,6 +1,6 @@
 package io.kestra.plugin.core.storage;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@KestraTest
 class DeleteTest {
     @Inject
     RunContextFactory runContextFactory;

@@ -1,24 +1,27 @@
 package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.runner.memory.MemoryMultipleConditionStorage;
 
 import java.util.Collections;
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-@MicronautTest
+@KestraTest
 class MultipleConditionTest {
     @Inject
     ConditionService conditionService;
+
+    @Inject
+    MultipleConditionStorageInterface multipleConditionStorage;
 
     @Test
     void simple() {
@@ -37,7 +40,7 @@ class MultipleConditionTest {
             ))
             .build();
 
-        boolean test = conditionService.isValid(build, flow, execution, new MemoryMultipleConditionStorage());
+        boolean test = conditionService.isValid(build, flow, execution, multipleConditionStorage);
 
 
         assertThat(test, is(false));

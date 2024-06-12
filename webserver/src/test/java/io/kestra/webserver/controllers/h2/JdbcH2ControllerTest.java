@@ -6,15 +6,15 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 
-@MicronautTest(transactional = false)
+@KestraTest
 public class JdbcH2ControllerTest {
     @Inject
-    private StandAloneRunner runner;
+    protected StandAloneRunner runner;
 
     @Inject
     private JdbcTestUtils jdbcTestUtils;

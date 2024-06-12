@@ -7,7 +7,7 @@ import io.kestra.core.runners.SubflowExecution;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.jooq.Field;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest(transactional = false)
+@KestraTest
 public abstract class AbstractSubflowExecutionTest {
     @Inject
     AbstractJdbcSubflowExecutionStorage subflowExecutionStorage;

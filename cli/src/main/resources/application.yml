@@ -123,56 +123,6 @@ kestra:
     delay: 1s
     maxDelay: ""
 
-  jdbc:
-    tables:
-      queues:
-        table: "queues"
-      flows:
-        table: "flows"
-        cls: io.kestra.core.models.flows.Flow
-      executions:
-        table: "executions"
-        cls: io.kestra.core.models.executions.Execution
-      templates:
-        table: "templates"
-        cls: io.kestra.core.models.templates.Template
-      triggers:
-        table: "triggers"
-        cls: io.kestra.core.models.triggers.Trigger
-      logs:
-        table: "logs"
-        cls: io.kestra.core.models.executions.LogEntry
-      metrics:
-        table: "metrics"
-        cls: io.kestra.core.models.executions.MetricEntry
-      multipleconditions:
-        table: "multipleconditions"
-        cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
-      subflow_executions:
-        table: "subflow_executions"
-        cls: io.kestra.core.runners.SubflowExecution
-      executorstate:
-        table: "executorstate"
-        cls: io.kestra.core.runners.ExecutorState
-      executordelayed:
-        table: "executordelayed"
-        cls: io.kestra.core.runners.ExecutionDelay
-      settings:
-        table: "settings"
-        cls: io.kestra.core.models.Setting
-      flowtopologies:
-        table: "flow_topologies"
-        cls: io.kestra.core.models.topologies.FlowTopology
-      serviceinstance:
-        cls: io.kestra.core.server.ServiceInstance
-        table: "service_instance"
-      workerjobrunning:
-        cls: io.kestra.core.runners.WorkerJobRunning
-        table: "worker_job_running"
-      executionqueued:
-        table: "execution_queued"
-        cls: io.kestra.core.runners.ExecutionQueued
-
     queues:
       min-poll-interval: 25ms
       max-poll-interval: 1000ms

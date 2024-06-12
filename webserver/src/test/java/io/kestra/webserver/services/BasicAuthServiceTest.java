@@ -38,7 +38,7 @@ class BasicAuthServiceTest {
     @BeforeEach
     void mockEventsAndStartApp() {
         stubFor(
-            post(urlMatching("/v1/reports/events"))
+            post(urlEqualTo("/v1/reports/events"))
                 .willReturn(aResponse().withStatus(200))
         );
         ctx = ApplicationContext.run(Map.of("kestra.server.basic-auth.enabled", "true"), Environment.TEST);

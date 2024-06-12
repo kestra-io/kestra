@@ -28,7 +28,6 @@ import java.util.function.BiConsumer;
 @JdbcRunnerEnabled
 @Singleton
 @Slf4j
-@Replaces(DefaultScheduler.class)
 public class JdbcScheduler extends AbstractScheduler {
     private final QueueInterface<Execution> executionQueue;
     private final TriggerRepositoryInterface triggerRepository;

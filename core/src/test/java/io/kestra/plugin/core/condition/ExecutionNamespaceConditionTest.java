@@ -2,7 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@KestraTest
 class ExecutionNamespaceConditionTest {
     @Inject
     ConditionService conditionService;

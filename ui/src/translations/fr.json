@@ -299,6 +299,14 @@
         "title": "Page introuvable",
         "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
+      },
+      "401": {
+        "title": "Non authentifié",
+        "content": "Vous devez être authentifié pour accéder à cette page."
+      },
+      "403": {
+        "title": "Accès refusé",
+        "content": "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
       }
     },
     "copy logs": "Copier les logs",

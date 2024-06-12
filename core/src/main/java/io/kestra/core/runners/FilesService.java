@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -85,10 +86,14 @@ public abstract class FilesService {
                 .filter(path -> pathMatcher.matches(runContext.tempDir().relativize(path)))
                 .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
                     runContext.tempDir().relativize(path).toString(),
-                    runContext.storage().putFile(path.toFile())
+                    runContext.storage().putFile(path.toFile(), resolveUniqueNameForFile(path))
                 )))
                 .toList()
                 .stream();
         }
+    }
+
+    private static String resolveUniqueNameForFile(final Path path) {
+        return IdUtils.from(path.toString()) + "-" + path.toFile().getName();
     }
 }

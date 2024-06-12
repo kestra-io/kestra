@@ -80,8 +80,7 @@ import java.util.Map;
                     - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
             full = true
         )
-    },
-    beta = true // all task runners are beta for now, but this one is stable as it was the one used before
+    }
 )
 public class Process extends TaskRunner {
 

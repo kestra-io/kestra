@@ -29,7 +29,6 @@ public class WorkerTask extends WorkerJob {
     private Task task;
 
     @NotNull
-    @With
     private RunContext runContext;
 
     public Logger logger() {

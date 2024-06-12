@@ -287,11 +287,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContext
+                        runContext.forWorkingDirectoryTask()
                     );
 
                     // all tasks will be handled immediately by the worker
-                    WorkerTaskResult workerTaskResult = this.run(currentWorkerTask.withRunContext(runContext.forWorkingDirectoryTask()), false);
+                    WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
 
                     if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;

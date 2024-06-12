@@ -594,13 +594,9 @@ public class RunContext {
     }
 
     public RunContext forWorkingDirectoryTask() {
-        Map<String, Object> decryptedVariables = new HashMap<>();
-        for(Map.Entry<String, Object> entry: this.variables.entrySet()) {
-            if (entry.getKey().equals("outputs")) {
-                decryptedVariables.put(entry.getKey(), decryptOutputs((Map<String, Object>) entry.getValue()));
-            } else {
-                decryptedVariables.put(entry.getKey(), entry.getValue());
-            }
+        Map<String, Object> decryptedVariables = new HashMap<>(this.variables);
+        if (this.variables.get("outputs") != null) {
+            decryptedVariables.put("outputs", decryptOutputs((Map<String, Object>) this.variables.get("outputs")));
         }
 
         return this.clone(decryptedVariables);

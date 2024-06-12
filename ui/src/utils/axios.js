@@ -93,7 +93,7 @@ export default (callback, store, router) => {
 
             if (errorResponse.response.status === 401
                 && !store.getters["auth/isLogged"]) {
-                if(window.location.pathname === "/ui/login"){
+                if(window.location.pathname.startsWith("/ui/login")){
                     return Promise.reject(errorResponse);
                 }
 

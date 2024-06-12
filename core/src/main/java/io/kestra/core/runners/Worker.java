@@ -285,7 +285,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContext.forWorkingDirectoryTask()
+                        runContext.forWorkingDirectoryTask(currentTask)
                     );
 
                     // all tasks will be handled immediately by the worker

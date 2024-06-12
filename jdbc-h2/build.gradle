@@ -1,5 +1,3 @@
-publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
-
 configurations {
     implementation.extendsFrom(micronaut)
 }

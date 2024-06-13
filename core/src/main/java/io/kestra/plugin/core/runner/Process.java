@@ -101,11 +101,11 @@ public class Process extends TaskRunner {
         long pid = process.pid();
         logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", taskCommands.getCommands()));
 
-        LogThread stdOut = new LogThread(process.getInputStream(), defaultLogConsumer, false);
-        LogThread stdErr = new LogThread(process.getErrorStream(), defaultLogConsumer, true);
+        LogRunnable stdOutRunnable = new LogRunnable(process.getInputStream(), defaultLogConsumer, false);
+        LogRunnable stdErrRunnable = new LogRunnable(process.getErrorStream(), defaultLogConsumer, true);
+        Thread stdOut = Thread.startVirtualThread(stdOutRunnable);
+        Thread stdErr = Thread.startVirtualThread(stdErrRunnable);
 
-        stdOut.start();
-        stdErr.start();
 
         try {
             int exitCode = process.waitFor();
@@ -151,14 +151,14 @@ public class Process extends TaskRunner {
         });
     }
 
-    public static class LogThread extends Thread {
+    public static class LogRunnable implements Runnable {
         private final InputStream inputStream;
 
         private final AbstractLogConsumer logConsumerInterface;
 
         private final boolean isStdErr;
 
-        protected LogThread(InputStream inputStream, AbstractLogConsumer logConsumerInterface, boolean isStdErr) {
+        protected LogRunnable(InputStream inputStream, AbstractLogConsumer logConsumerInterface, boolean isStdErr) {
             this.inputStream = inputStream;
             this.logConsumerInterface = logConsumerInterface;
             this.isStdErr = isStdErr;

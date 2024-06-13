@@ -234,7 +234,12 @@ subprojects {
         showPassedStandardStreams false
         showSkippedStandardStreams true
     }
+}
 
+/**********************************************************************************************************************\
+ * Allure Reports
+ **********************************************************************************************************************/
+subprojects {
     dependencies {
         testImplementation platform("io.qameta.allure:allure-bom:2.27.0")
         testImplementation "io.qameta.allure:allure-junit5"
@@ -253,6 +258,48 @@ subprojects {
 
     test {
         jvmArgs = [ "-javaagent:${configurations.agent.singleFile}" ]
+    }
+}
+
+/**********************************************************************************************************************\
+ * Jacoco
+ **********************************************************************************************************************/
+subprojects {
+    apply plugin: 'jacoco'
+
+    test {
+        finalizedBy jacocoTestReport
+    }
+}
+
+dependencies {
+    jacocoAggregation subprojects
+}
+
+tasks.named('testCodeCoverageReport') {
+    dependsOn = subprojects.test
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+}
+
+/**********************************************************************************************************************\
+ * Sonar
+ **********************************************************************************************************************/
+subprojects {
+    sonar {
+        properties {
+            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
+        }
+    }
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "kestra-io_kestra"
+        property "sonar.organization", "kestra-io"
+        property "sonar.host.url", "https://sonarcloud.io"
     }
 }
 
@@ -350,62 +397,6 @@ task executableJar(type: Zip) {
 
     from executableDir
     archiveClassifier.set(null)
-}
-
-/**********************************************************************************************************************\
- * Jacoco
- **********************************************************************************************************************/
-subprojects {
-    test {
-        finalizedBy jacocoTestReport
-    }
-
-    jacoco {
-        toolVersion = "0.8.11"
-    }
-
-    jacocoTestReport {
-        getAdditionalSourceDirs().setFrom(files(sourceSets.main.allSource.srcDirs))
-        getSourceDirectories().setFrom(files(sourceSets.main.allSource.srcDirs))
-        getClassDirectories().setFrom(files(sourceSets.main.output))
-        reports {
-            html.required = true
-            xml.required = true
-        }
-    }
-
-    sonar {
-        properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
-        }
-    }
-}
-
-
-task jacoco(type: JacocoReport) {
-    dependsOn = subprojects.test
-
-    def javaProject = subprojects.findAll { it.name != 'ui' };
-
-    getAdditionalSourceDirs().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
-    getSourceDirectories().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
-    getClassDirectories().setFrom(files(javaProject.sourceSets.main.output))
-    getExecutionData().setFrom(files(javaProject.jacocoTestReport.executionData))
-}
-
-tasks.named('check') {
-    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
-}
-
-/**********************************************************************************************************************\
- * Sonar
- **********************************************************************************************************************/
-sonar {
-    properties {
-        property "sonar.projectKey", "kestra-io_kestra"
-        property "sonar.organization", "kestra-io"
-        property "sonar.host.url", "https://sonarcloud.io"
-    }
 }
 
 /**********************************************************************************************************************\

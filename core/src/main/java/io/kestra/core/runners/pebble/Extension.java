@@ -84,6 +84,7 @@ public class Extension extends AbstractExtension {
         filters.put("yaml", new YamlFilter());
         filters.put("startsWith", new StartsWithFilter());
         filters.put("endsWith", new EndsWithFilter());
+        filters.put("values", new ValuesFilter());
         return filters;
     }
 

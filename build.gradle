@@ -328,7 +328,7 @@ task writeExecutableJar() {
     }
 
     doLast {
-        executable.append(file("${buildDir}/libs/${project.name}-${project.version}.jar").readBytes())
+        executable.setBytes(file("${buildDir}/libs/${project.name}-${project.version}.jar").readBytes())
         ByteArrayOutputStream executableBytes = new ByteArrayOutputStream()
         executableBytes.write("\n: <<END_OF_KESTRA_SELFRUN\r\n".getBytes())
         executableBytes.write(file("gradle/jar/selfrun.bat").readBytes())

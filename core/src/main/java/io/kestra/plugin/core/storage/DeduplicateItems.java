@@ -101,7 +101,7 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
         long droppedItemsTotal = 0L;
         long numKeys = index.size();
 
-        final Path path = runContext.tempFile(".ion");
+        final Path path = runContext.workingDir().createTempFile(".ion");
         // 2nd iteration: write deduplicate
         try (final BufferedWriter writer = Files.newBufferedWriter(path);
              final BufferedReader reader = newBufferedReader(runContext, from)) {

@@ -82,7 +82,7 @@ public class CommandsWrapper implements TaskCommands {
 
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
-        this.workingDirectory = runContext.tempDir();
+        this.workingDirectory = runContext.workingDir().path();
         this.logConsumer = new DefaultLogConsumer(runContext);
         this.additionalVars = new HashMap<>();
         this.env = new HashMap<>();

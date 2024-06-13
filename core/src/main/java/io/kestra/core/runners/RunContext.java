@@ -6,6 +6,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.storages.Storage;
+import io.kestra.core.utils.FileUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ public abstract class RunContext {
     /**
      * Returns the trigger execution id attached to this context.
      *
-     * @return  the string id.
+     * @return the string id.
      * @throws IllegalStateException if trigger execution id is defined.
      */
     @JsonIgnore
@@ -94,52 +95,70 @@ public abstract class RunContext {
     public abstract List<WorkerTaskResult> dynamicWorkerResults();
 
     /**
-     * Returns the local temporary directory associated to this context.
+     * Gets access to the working directory.
      *
-     * <p>
-     * This method automatically creates the temporary directory if not already exists.
-     *
-     * @return  the temp-dir path.
+     * @return The {@link WorkingDir}.
      */
+    public abstract WorkingDir workingDir();
+
+    /**
+     * @deprecated use {@link WorkingDir#path}
+     */
+    @Deprecated(forRemoval = true)
     public abstract Path tempDir();
 
     /**
-     * Returns the local temporary directory associated to this context.
-     *
-     * @param create specifies if the directory must be created if not exists.
-     *
-     * @return  the temp-dir path.
+     * @deprecated use {@link WorkingDir#path(boolean)}
      */
+    @Deprecated(forRemoval = true)
     public abstract Path tempDir(boolean create);
 
     /**
-     * Resolve a path inside the working directory (a.k.a. the tempDir).
-     * If the resolved path escapes the working directory, an IllegalArgumentException will be thrown to protect against path traversal security issue.
-     * This method is null-friendly: it will return the working directory (a.k.a. the tempDir) if called with a null path.
+     * @deprecated use {@link WorkingDir#resolve(Path)}
      */
+    @Deprecated(forRemoval = true)
     public abstract Path resolve(Path path);
 
     /**
-     * @deprecated use {@link #tempFile(String)} instead
+     * @deprecated use {@link WorkingDir#createTempFile()}
      */
+    @Deprecated(forRemoval = true)
     public abstract Path tempFile() throws IOException;
 
+    /**
+     * @deprecated use {@link WorkingDir#createTempFile(String)}
+     */
+    @Deprecated(forRemoval = true)
     public abstract Path tempFile(String extension) throws IOException;
 
+    /**
+     * @deprecated use {@link WorkingDir#createTempFile(byte[])}
+     */
+    @Deprecated
     public abstract Path tempFile(byte[] content) throws IOException;
 
+    /**
+     * @deprecated use {@link WorkingDir#createTempFile(byte[], String)}
+     */
+    @Deprecated(forRemoval = true)
     public abstract Path tempFile(byte[] content, String extension) throws IOException;
 
+    /**
+     * @deprecated use {@link WorkingDir#createFile(String)}
+     */
+    @Deprecated(forRemoval = true)
     public abstract Path file(String filename) throws IOException;
 
+    /**
+     * @deprecated use {@link WorkingDir#createFile(String, byte[])}
+     */
+    @Deprecated(forRemoval = true)
     public abstract Path file(byte[] content, String filename) throws IOException;
 
     /**
-     * Get the file extension including the '.' to be used with the various methods that took a suffix.
-     *
-     * @param fileName the name of the file
-     * @return the file extension including the '.' or null
+     * @deprecated use {@link io.kestra.core.utils.FileUtils#getExtension(String)}
      */
+    @Deprecated(forRemoval = true)
     public abstract String fileExtension(String fileName);
 
     /**

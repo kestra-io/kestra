@@ -23,7 +23,7 @@ class FilesServiceTest {
 
         FilesService.inputFiles(runContext, Map.of("file.txt", "overriden content"));
 
-        String fileContent = FileUtils.readFileToString(runContext.tempDir().resolve("file.txt").toFile(), "UTF-8");
+        String fileContent = FileUtils.readFileToString(runContext.workingDir().path().resolve("file.txt").toFile(), "UTF-8");
         assertThat(fileContent, is("overriden content"));
     }
 

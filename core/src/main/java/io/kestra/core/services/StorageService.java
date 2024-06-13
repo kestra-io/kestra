@@ -66,7 +66,7 @@ public abstract class StorageService {
                 totalBytes = 0;
                 totalRows = 0;
 
-                Path path = runContext.tempFile(extension);
+                Path path = runContext.workingDir().createTempFile(extension);
                 files.add(path);
                 write = new RandomAccessFile(path.toFile(), "rw");
             }
@@ -91,7 +91,7 @@ public abstract class StorageService {
         List<RandomAccessFile> writers = new ArrayList<>();
 
         for (int i = 0; i < partition; i++) {
-            Path path = runContext.tempFile(extension);
+            Path path = runContext.workingDir().createTempFile(extension);
             files.add(path);
 
             writers.add(new RandomAccessFile(path.toFile(), "rw"));

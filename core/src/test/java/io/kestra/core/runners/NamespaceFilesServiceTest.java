@@ -140,7 +140,7 @@ class NamespaceFilesServiceTest {
             runContextFactory.of(),
             "tenant1",
             namespace,
-            runContext.tempDir(),
+            runContext.workingDir().path(),
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -148,7 +148,7 @@ class NamespaceFilesServiceTest {
         );
         assertThat(injected.size(), is(1));
 
-        String content = Files.walk(runContext.tempDir()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
+        String content = Files.walk(runContext.workingDir().path()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
         assertThat(content, is("1"));
 
         runContext = runContextFactory.of();
@@ -156,7 +156,7 @@ class NamespaceFilesServiceTest {
             runContextFactory.of(),
             "tenant2",
             namespace,
-            runContext.tempDir(),
+            runContext.workingDir().path(),
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -164,7 +164,7 @@ class NamespaceFilesServiceTest {
         );
         assertThat(injected.size(), is(1));
 
-        content = Files.walk(runContext.tempDir()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
+        content = Files.walk(runContext.workingDir().path()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
         assertThat(content, is("2"));
     }
 
@@ -175,7 +175,7 @@ class NamespaceFilesServiceTest {
             runContextFactory.of(),
             "tenant1",
             "io.kestra." + IdUtils.create(),
-            runContext.tempDir(),
+            runContext.workingDir().path(),
             NamespaceFiles
                 .builder()
                 .enabled(true)

@@ -93,7 +93,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
 
         LogRepositoryInterface logRepository = ((DefaultRunContext)runContext).getApplicationContext().getBean(LogRepositoryInterface.class);
 
-        File tempFile = runContext.tempFile(".ion").toFile();
+        File tempFile = runContext.workingDir().createTempFile(".ion").toFile();
         AtomicLong count = new AtomicLong();
 
         try (OutputStream output = new FileOutputStream(tempFile)) {

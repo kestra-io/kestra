@@ -17,7 +17,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,11 +40,11 @@ public class RunContextFactory {
     @Inject
     protected RunContextCache runContextCache;
 
+    @Inject
+    protected WorkingDirFactory workingDirFactory;
+
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
-
-    @Value("${kestra.tasks.tmp-dir.path}")
-    protected Optional<String> tempBasedPath;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
@@ -143,7 +142,7 @@ public class RunContextFactory {
             .withVariableRenderer(variableRenderer)
             .withStorageInterface(storageInterface)
             .withSecretKey(secretKey)
-            .withTempBasedPath(Path.of(tempBasedPath.orElse(System.getProperty("java.io.tmpdir"))));
+            .withWorkingDir(workingDirFactory.createWorkingDirectory());
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {

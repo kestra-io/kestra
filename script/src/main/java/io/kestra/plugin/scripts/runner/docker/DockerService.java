@@ -102,7 +102,7 @@ public class DockerService {
             finalConfig = MapUtils.merge(finalConfig, Map.of("auths", Map.of(registry, auths)));
         }
 
-        File docker = runContext.tempDir(true).resolve("config.json").toFile();
+        File docker = runContext.workingDir().path(true).resolve("config.json").toFile();
 
         if (docker.exists()) {
             //noinspection ResultOfMethodCallIgnored

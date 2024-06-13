@@ -108,7 +108,7 @@ public final class ScriptService {
 
     private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {
         try (InputStream inputStream = runContext.storage().getFile(URI.create(uri))) {
-            Path path = runContext.tempFile();
+            Path path = runContext.workingDir().createTempFile();
 
             IOUtils.copyLarge(inputStream, new FileOutputStream(path.toFile()));
 

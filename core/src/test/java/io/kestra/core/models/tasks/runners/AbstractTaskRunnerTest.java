@@ -82,7 +82,7 @@ public abstract class AbstractTaskRunnerTest {
         FileUtils.writeStringToFile(Path.of("/tmp/unittest/internalStorage.txt").toFile(), "Hello from internal storage", StandardCharsets.UTF_8);
 
         // Generate input files
-        FileUtils.writeStringToFile(runContext.resolve(Path.of("hello.txt")).toFile(), "Hello World", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(runContext.workingDir().resolve(Path.of("hello.txt")).toFile(), "Hello World", StandardCharsets.UTF_8);
 
         DefaultLogConsumer defaultLogConsumer = new DefaultLogConsumer(runContext);
         // This is purely to showcase that no logs is sent as STDERR for now as CloudWatch doesn't seem to send such information.
@@ -195,7 +195,7 @@ public abstract class AbstractTaskRunnerTest {
             }
         });
 
-        var workingDirectory = runContext.tempDir();
+        var workingDirectory = runContext.workingDir().path();
         Mockito.when(commands.getWorkingDirectory()).thenReturn(workingDirectory);
 
         var outputDirectory = workingDirectory.resolve(IdUtils.create());

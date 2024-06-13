@@ -23,13 +23,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
@@ -140,12 +137,10 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             });
 
             // check for file in current tempDir that match regexs
-            List<PathMatcher> patterns = regexs.stream().map(reg -> FileSystems.getDefault().getPathMatcher("glob:" + runContext.tempDir().toString() + checkLeadingSlash(reg))).toList();
-            for (File file : Objects.requireNonNull(listFilesRecursively(runContext.tempDir().toFile()))) {
-                if (patterns.stream().anyMatch(p -> p.matches(Path.of(file.toURI().getPath())))) {
-                    String newFilePath = buildPath(renderedDestination, file.getPath().replace(runContext.tempDir().toString(), ""));
-                    storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
-                }
+            for (Path path : runContext.workingDir().findAllFilesMatching(regexs)) {
+                File file = path.toFile();
+                String newFilePath = buildPath(renderedDestination, file.getPath().replace(runContext.workingDir().path().toString(), ""));
+                storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
             }
         } else if (files instanceof Map map) {
             // Using a Map for the `files` property, there must be only URI
@@ -200,24 +195,6 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             logger.debug(String.format("File %s created", filePath));
         }
     }
-
-    private List<File> listFilesRecursively(File directory) throws IOException {
-        List<File> files = new ArrayList<>();
-        if (directory == null || !directory.isDirectory()) {
-            return files; // Handle invalid directory or not a directory
-        }
-
-        for (File file : directory.listFiles()) {
-            if (file.isFile()) {
-                files.add(file);
-            } else {
-                // Recursively call for subdirectories
-                files.addAll(listFilesRecursively(file));
-            }
-        }
-        return files;
-    }
-
 
     @Builder
     @Getter

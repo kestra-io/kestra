@@ -25,7 +25,7 @@ public class Read extends Task implements RunnableTask<Read.Output> {
     @Override
     public Read.Output run(RunContext runContext) throws Exception {
         return Output.builder()
-            .value(Files.readString(Paths.get(runContext.tempDir().toString(), runContext.render(path))))
+            .value(Files.readString(Paths.get(runContext.workingDir().path().toString(), runContext.render(path))))
             .build();
     }
 

@@ -114,6 +114,8 @@
         },
     });
 
+    const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
+
     const flowErrors = computed(() => {
         const isFlow = currentTab?.value?.extension === undefined;
 
@@ -991,7 +993,7 @@
                 @save="save"
                 @execute="execute"
                 v-model="flowYaml"
-                schema-type="flow"
+                :schema-type="isCurrentTabFlow? 'flow': undefined"
                 :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                 :extension="currentTab?.extension"
                 @update:model-value="editorUpdate"

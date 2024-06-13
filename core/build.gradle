@@ -21,6 +21,9 @@ dependencies {
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
 
+    // reactor
+    api "io.projectreactor:reactor-core"
+
     // micronaut
     implementation "io.micronaut:micronaut-http-server-netty"
 

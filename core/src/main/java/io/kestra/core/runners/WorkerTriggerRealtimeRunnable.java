@@ -9,12 +9,12 @@ import java.util.function.Consumer;
 
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
-public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
+public class WorkerTriggerRealtimeRunnable extends AbstractWorkerTriggerRunnable {
     RealtimeTriggerInterface streamingTrigger;
     Consumer<? super Throwable> onError;
     Consumer<Execution> onNext;
 
-    public WorkerTriggerRealtimeThread(
+    public WorkerTriggerRealtimeRunnable(
         RunContext runContext,
         WorkerTrigger workerTrigger,
         RealtimeTriggerInterface realtimeTrigger,

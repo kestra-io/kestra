@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.KILLED;
 
-public abstract class AbstractWorkerThread extends Thread {
+public abstract class AbstractWorkerRunnable implements Runnable {
     volatile boolean killed = false;
 
     Logger logger;
@@ -33,14 +33,22 @@ public abstract class AbstractWorkerThread extends Thread {
 
     private final ClassLoader classLoader;
 
-    public AbstractWorkerThread(RunContext runContext, String type, ClassLoader classLoader) {
-        super("WorkerThread");
-        this.setUncaughtExceptionHandler(this::exceptionHandler);
+    private Thread thread;
 
+    public AbstractWorkerRunnable(RunContext runContext, String type, ClassLoader classLoader) {
         this.logger = runContext.logger();
         this.runContext = runContext;
         this.type = type;
         this.classLoader = classLoader;
+    }
+
+    public void setThread(Thread thread) {
+        if (this.thread != null) {
+            throw new IllegalStateException("Thread already set");
+        }
+
+        this.thread = thread;
+        thread.setUncaughtExceptionHandler(this::exceptionHandler);
     }
 
     @Synchronized
@@ -51,6 +59,10 @@ public abstract class AbstractWorkerThread extends Thread {
     /** {@inheritDoc} **/
     @Override
     public void run() {
+        if (this.thread == null) {
+            throw new IllegalStateException("Cannot run if thread is not set");
+        }
+
         Thread.currentThread().setContextClassLoader(classLoader);
         try {
             doRun();
@@ -87,15 +99,19 @@ public abstract class AbstractWorkerThread extends Thread {
     protected void kill(boolean markAsKilled) {
         this.killed = markAsKilled;
         this.taskState = KILLED;
-        this.interrupt();
+        interrupt();
     }
 
-    protected void exceptionHandler(Thread t, Throwable e) {
+    protected void exceptionHandler(Runnable t, Throwable e) {
         this.exception = e;
 
         if (!this.killed) {
             logger.error(e.getMessage(), e);
             taskState = FAILED;
         }
+    }
+
+    public void interrupt() {
+        thread.interrupt();
     }
 }

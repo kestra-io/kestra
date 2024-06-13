@@ -12,7 +12,7 @@ import java.time.Duration;
 
 import static io.kestra.core.models.flows.State.Type.*;
 
-public class WorkerTaskThread extends AbstractWorkerThread {
+public class WorkerTaskRunnable extends AbstractWorkerRunnable {
     RunnableTask<?> task;
     MetricRegistry metricRegistry;
 
@@ -22,7 +22,7 @@ public class WorkerTaskThread extends AbstractWorkerThread {
     @Getter
     Output taskOutput;
 
-    public WorkerTaskThread(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
+    public WorkerTaskRunnable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
         super(runContext, task.getClass().getName(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;

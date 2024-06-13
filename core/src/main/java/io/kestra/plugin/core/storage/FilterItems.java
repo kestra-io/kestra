@@ -100,7 +100,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
 
         final PebbleExpressionPredicate predicate = getExpressionPredication(runContext);
 
-        final Path path = runContext.tempFile(".ion");
+        final Path path = runContext.workingDir().createTempFile(".ion");
         long processedItemsTotal = 0L;
         long droppedItemsTotal = 0L;
         try (final BufferedWriter writer = Files.newBufferedWriter(path);

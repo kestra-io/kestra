@@ -9,7 +9,6 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
@@ -19,15 +18,12 @@ import jakarta.inject.Provider;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
@@ -62,39 +58,22 @@ public class DefaultRunContext extends RunContext {
     @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
 
-    private Path tempBasedPath;
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private Supplier<Logger> logger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
-
-    protected transient Path tempDir;
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    /**
-     * ContextID is used to resolved local temporary directory.
-     */
-    private final String contextId;
+    private WorkingDir workingDir;
 
     /**
      * Creates a new {@link DefaultRunContext} instance.
      */
-    public DefaultRunContext() {
-        this(IdUtils.create());
-    }
-
-    /**
-     * Creates a new {@link DefaultRunContext} instance.
-     *
-     * @param contextId a context ID.
-     */
-    private DefaultRunContext(final String contextId) {
-        this.contextId = contextId;
-    }
+    public DefaultRunContext() {}
 
     /**
      * {@inheritDoc}
@@ -126,10 +105,9 @@ public class DefaultRunContext extends RunContext {
         if (isInitialized.compareAndSet(false, true)) {
             this.applicationContext = applicationContext;
             this.applicationContext.inject(this);
-            this.tempBasedPath = Path.of(applicationContext
-                .getProperty("kestra.tasks.tmp-dir.path", String.class)
-                .orElse(System.getProperty("java.io.tmpdir"))
-            );
+            if (this.workingDir == null) {
+                this.workingDir = applicationContext.getBean(WorkingDirFactory.class).createWorkingDirectory();
+            }
         }
     }
 
@@ -153,8 +131,8 @@ public class DefaultRunContext extends RunContext {
         this.triggerExecutionId = triggerExecutionId;
     }
 
-    void setTempDir(final Path tempDir) {
-        this.tempDir = tempDir;
+    void setWorkingDir(final WorkingDir workingDir) {
+        this.workingDir = workingDir;
     }
 
     /**
@@ -162,7 +140,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public DefaultRunContext clone() {
-        DefaultRunContext runContext = new DefaultRunContext(this.contextId);
+        DefaultRunContext runContext = new DefaultRunContext();
         runContext.variableRenderer = this.variableRenderer;
         runContext.applicationContext = this.applicationContext;
         runContext.storageInterface = this.storageInterface;
@@ -170,10 +148,11 @@ public class DefaultRunContext extends RunContext {
         runContext.variables = new HashMap<>(this.variables);
         runContext.metrics = new ArrayList<>();
         runContext.meterRegistry = this.meterRegistry;
-        runContext.tempBasedPath = this.tempBasedPath;
-        runContext.tempDir = this.tempDir;
+        runContext.workingDir = this.workingDir;
         runContext.logger = this.logger;
         runContext.pluginConfiguration = this.pluginConfiguration;
+        runContext.version = version;
+        runContext.isInitialized.set(this.isInitialized.get());
         return runContext;
     }
 
@@ -377,8 +356,16 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
+    public WorkingDir workingDir() {
+        return workingDir;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Path tempDir() {
-        return tempDir(true);
+        return workingDir.path();
     }
 
     /**
@@ -386,16 +373,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public synchronized Path tempDir(boolean create) {
-        if (this.tempDir == null) {
-            this.tempDir = tempBasedPath.resolve(contextId);
-        }
-
-        if (create && !this.tempDir.toFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            this.tempDir.toFile().mkdirs();
-        }
-
-        return this.tempDir;
+        return workingDir.path(true);
     }
 
     /**
@@ -403,22 +381,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path resolve(Path path) {
-        if (path == null) {
-            return tempDir();
-        }
-
-        if (path.toString().contains(".." + File.separator)) {
-            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
-        }
-
-        Path baseDir = tempDir();
-        Path resolved = baseDir.resolve(path).toAbsolutePath();
-
-        if (!resolved.startsWith(baseDir)) {
-            throw new IllegalArgumentException("The path to resolve must be a relative path inside the current working directory");
-        }
-
-        return resolved;
+        return workingDir.resolve(path);
     }
 
     /**
@@ -426,7 +389,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path tempFile() throws IOException {
-        return this.tempFile(null, null);
+        return workingDir.createTempFile();
     }
 
     /**
@@ -434,7 +397,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path tempFile(String extension) throws IOException {
-        return this.tempFile(null, extension);
+        return workingDir.createTempFile(extension);
     }
 
     /**
@@ -442,7 +405,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path tempFile(byte[] content) throws IOException {
-        return this.tempFile(content, null);
+        return workingDir.createTempFile(content);
     }
 
     /**
@@ -450,13 +413,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path tempFile(byte[] content, String extension) throws IOException {
-        Path tempFile = Files.createTempFile(this.tempDir(), null, extension);
-
-        if (content != null) {
-            Files.write(tempFile, content);
-        }
-
-        return tempFile;
+        return workingDir.createTempFile(content, extension);
     }
 
     /**
@@ -464,7 +421,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path file(String filename) throws IOException {
-        return this.file(null, filename);
+        return workingDir.createFile(filename);
     }
 
     /**
@@ -472,15 +429,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Path file(byte[] content, String filename) throws IOException {
-        Path newFilePath = this.resolve(Path.of(filename));
-        Files.createDirectories(newFilePath.getParent());
-        Path file = Files.createFile(newFilePath);
-
-        if (content != null) {
-            Files.write(file, content);
-        }
-
-        return file;
+        return workingDir.createFile(filename, content);
     }
 
     /**
@@ -498,10 +447,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     public void cleanup() {
         try {
-            if (tempDir != null && Files.exists(tempDir)) {
-                FileUtils.deleteDirectory(tempDir.toFile());
-                this.tempDir = null;
-            }
+           workingDir.cleanup();
         } catch (IOException ex) {
             new RunContextLogger().logger().warn("Unable to cleanup worker task", ex);
         }
@@ -575,7 +521,7 @@ public class DefaultRunContext extends RunContext {
         private List<WorkerTaskResult> dynamicWorkerResults;
         private Map<String, Object> pluginConfiguration;
         private Optional<String> secretKey = Optional.empty();
-        private Path tempBasedPath;
+        private WorkingDir workingDir;
         private Storage storage;
         private String triggerExecutionId;
         private Supplier<Logger> logger;
@@ -595,7 +541,7 @@ public class DefaultRunContext extends RunContext {
             context.pluginConfiguration = Optional.ofNullable(pluginConfiguration).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
             context.logger = logger;
             context.secretKey = secretKey;
-            context.tempBasedPath = tempBasedPath;
+            context.workingDir = workingDir;
             context.storage = storage;
             context.triggerExecutionId = triggerExecutionId;
             return context;

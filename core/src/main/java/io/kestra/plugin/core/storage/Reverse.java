@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.FileUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -65,13 +66,13 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Override
     public Reverse.Output run(RunContext runContext) throws Exception {
         URI from = new URI(runContext.render(this.from));
-        String extension = runContext.fileExtension(from.toString());
+        String extension = FileUtils.getExtension(from);
         String separator = runContext.render(this.separator);
         Charset charset = Charsets.toCharset(runContext.render(this.charset));
 
-        File tempFile = runContext.tempFile(extension).toFile();
+        File tempFile = runContext.workingDir().createTempFile(extension).toFile();
 
-        File originalFile = runContext.tempFile(extension).toFile();
+        File originalFile = runContext.workingDir().createTempFile(extension).toFile();
         try (OutputStream outputStream = new FileOutputStream(originalFile)) {
             IOUtils.copyLarge(runContext.storage().getFile(from), outputStream);
         }

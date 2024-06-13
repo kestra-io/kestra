@@ -255,7 +255,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     while ((entry = archive.getNextEntry()) != null) {
                         if (!entry.isDirectory()) {
                             try {
-                                Path file = runContext.tempDir().resolve(entry.getName());
+                                Path file = runContext.workingDir().path().resolve(entry.getName());
                                 Files.createDirectories(file.getParent());
                                 Files.createFile(file);
                                 Files.write(file, archive.readAllBytes());
@@ -273,7 +273,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
         if (this.namespaceFiles != null ) {
             NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
-            namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.tempDir(), this.namespaceFiles);
+            namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.workingDir().path(), this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {
@@ -301,70 +301,52 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         if (cache == null) {
             return;
         }
+        try {
+            // This is monolithic, maybe a cache entry by pattern would be better.
+            List<Path> matchesList = runContext.workingDir().findAllFilesMatching(cache.getPatterns());
 
-        // This is monolithic, maybe a cache entry by pattern would be better.
-
-        List<Path> matchesList = new ArrayList<>();
-        FileVisitor<Path> matcherVisitor = new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) throws IOException {
-                FileSystem fs = FileSystems.getDefault();
-                for (String pattern: cache.getPatterns()) {
-                    String fullPattern = runContext.tempDir().toString() + "/" + pattern;
-                    PathMatcher matcher = fs.getPathMatcher("glob:" + fullPattern);
-                    if(matcher.matches(file)) {
-                        matchesList.add(file);
+            // Check that some files has been updated since the start of the task
+            // TODO we may need to allow excluding files as some files always changed for dependencies (for ex .package-log.json)
+            boolean cacheFilesAreUpdated = matchesList.stream()
+                .anyMatch(path -> {
+                    try {
+                        return Files.getLastModifiedTime(path).toMillis() > cacheDownloadedTime;
+                    } catch (IOException e) {
+                        runContext.logger().warn("Unable to retrieve files last modified time,  will update the cache anyway", e);
+                        return true;
                     }
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        };
+                });
 
+            if (cacheFilesAreUpdated) {
+                runContext.logger().debug("Cache files changed, we update the cache");
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                     ZipOutputStream archive = new ZipOutputStream(bos)) {
 
-            try {
-                Files.walkFileTree(runContext.tempDir(), matcherVisitor);
-                // Check that some files has been updated since the start of the task
-                // TODO we may need to allow excluding files as some files always changed for dependencies (for ex .package-log.json)
-                boolean cacheFilesAreUpdated = matchesList.stream()
-                    .anyMatch(path -> {
-                        try {
-                            return Files.getLastModifiedTime(path).toMillis() > cacheDownloadedTime;
-                        } catch (IOException e) {
-                            runContext.logger().warn("Unable to retrieve files last modified time,  will update the cache anyway", e);
-                            return true;
-                        }
-                    });
-
-                if (cacheFilesAreUpdated) {
-                    runContext.logger().debug("Cache files changed, we update the cache");
-                    try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                         ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-                        for (var path : matchesList) {
-                            File file = path.toFile();
-                            if (file.isDirectory() || !file.canRead()) {
-                                continue;
-                            }
-
-                            var relativeFileName = file.getPath().substring(runContext.tempDir().toString().length() + 1);
-                            var zipEntry = new ZipEntry(relativeFileName);
-                            archive.putNextEntry(zipEntry);
-                            archive.write(Files.readAllBytes(path));
-                            archive.closeEntry();
+                    for (var path : matchesList) {
+                        File file = path.toFile();
+                        if (file.isDirectory() || !file.canRead()) {
+                            continue;
                         }
 
-                        archive.finish();
-                        File archiveFile = File.createTempFile("archive", ".zip");
-                        Files.write(archiveFile.toPath(), bos.toByteArray());
-                        URI uri = runContext.storage().putCacheFile(archiveFile, getId(), taskRun.getValue());
-                        runContext.logger().debug("Caching in {}", uri);
+                        var relativeFileName = file.getPath().substring(runContext.workingDir().path().toString().length() + 1);
+                        var zipEntry = new ZipEntry(relativeFileName);
+                        archive.putNextEntry(zipEntry);
+                        archive.write(Files.readAllBytes(path));
+                        archive.closeEntry();
                     }
-                } else {
-                    runContext.logger().debug("Cache files didn't change, skip updating it");
+
+                    archive.finish();
+                    File archiveFile = File.createTempFile("archive", ".zip");
+                    Files.write(archiveFile.toPath(), bos.toByteArray());
+                    URI uri = runContext.storage().putCacheFile(archiveFile, getId(), taskRun.getValue());
+                    runContext.logger().debug("Caching in {}", uri);
                 }
-            } catch (IOException e) {
-                runContext.logger().error("Unable to execute WorkingDirectory post actions", e);
+            } else {
+                runContext.logger().debug("Cache files didn't change, skip updating it");
             }
+        } catch (IOException e) {
+            runContext.logger().error("Unable to execute WorkingDirectory post actions", e);
+        }
     }
 
     @Override

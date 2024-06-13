@@ -129,7 +129,7 @@ class DeduplicateItemsTest {
     }
 
     private URI generateKeyValueFile(final List<?> items, RunContext runContext) throws IOException {
-        Path path = runContext.tempFile(".ion");
+        Path path = runContext.workingDir().createTempFile(".ion");
         try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
             items.forEach(object -> {
                 try {

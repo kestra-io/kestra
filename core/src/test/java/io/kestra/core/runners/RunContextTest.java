@@ -174,26 +174,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void tempFiles() throws IOException {
-        RunContext runContext = runContextFactory.of();
-        Path path = runContext.tempFile();
-
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
-    }
-
-    @Test
-    void files() throws IOException {
-        RunContext runContext = runContextFactory.of();
-        Path path = runContext.file("folder/file.txt");
-
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
-        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt"), is(true));
-    }
-
-    @Test
     void largeInput() throws IOException, InterruptedException {
         RunContext runContext = runContextFactory.of();
-        Path path = runContext.tempFile();
+        Path path = runContext.workingDir().createTempFile();
 
         long size = 1024L * 1024 * 1024;
 
@@ -230,35 +213,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(runContext.metrics().get(3).getValue(), is(Duration.ofSeconds(123)));
         assertThat(runContext.metrics().get(3).getTags().size(), is(1));
-    }
-
-    @Test
-    void fileExtension() {
-        RunContext runContext = runContextFactory.of();
-
-        assertThat(runContext.fileExtension(null), nullValue());
-        assertThat(runContext.fileExtension(""), nullValue());
-        assertThat(runContext.fileExtension("/file/hello"), nullValue());
-        assertThat(runContext.fileExtension("/file/hello.txt"), is(".txt"));
-    }
-
-    @Test
-    void resolve() {
-        RunContext runContext = runContextFactory.of();
-        String baseDir = runContext.tempDir().toString();
-
-        Path path = runContext.resolve(Path.of("file.txt"));
-        assertThat(path.toString(), is(baseDir + "/file.txt"));
-
-        path = runContext.resolve(Path.of("subdir/file.txt"));
-        assertThat(path.toString(), is(baseDir + "/subdir/file.txt"));
-
-        path = runContext.resolve(null);
-        assertThat(path.toString(), is(baseDir));
-
-        assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("/etc/passwd")));
-        assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("../../etc/passwd")));
-        assertThrows(IllegalArgumentException.class, () -> runContext.resolve(Path.of("subdir/../../../etc/passwd")));
     }
 
     @Test

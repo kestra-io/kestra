@@ -170,7 +170,7 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                         String render = runContext.render((String) e.getValue());
 
                         if (render.startsWith("kestra://")) {
-                            File tempFile = runContext.tempFile().toFile();
+                            File tempFile = runContext.workingDir().createTempFile().toFile();
 
                             try (OutputStream outputStream = new FileOutputStream(tempFile)) {
                                 IOUtils.copyLarge(runContext.storage().getFile(new URI(render)), outputStream);
@@ -184,7 +184,7 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                         String name = runContext.render(((Map<String, String>) e.getValue()).get("name"));
                         String content = runContext.render(((Map<String, String>) e.getValue()).get("content"));
 
-                        File tempFile = runContext.tempFile().toFile();
+                        File tempFile = runContext.workingDir().createTempFile().toFile();
                         File renamedFile = new File(Files.move(tempFile.toPath(), tempFile.toPath().resolveSibling(name)).toUri());
 
                         try (OutputStream outputStream = new FileOutputStream(renamedFile)) {

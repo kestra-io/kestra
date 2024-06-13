@@ -112,7 +112,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
     @SuppressWarnings("unchecked")
     @Override
     public Concat.Output run(RunContext runContext) throws Exception {
-        File tempFile = runContext.tempFile(extension).toFile();
+        File tempFile = runContext.workingDir().createTempFile(extension).toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
             if (this.files instanceof List) {

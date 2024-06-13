@@ -60,7 +60,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         Logger logger = runContext.logger();
         URI from = new URI(runContext.render(this.uri));
 
-        File tempFile = runContext.tempFile(filenameFromURI(from)).toFile();
+        File tempFile = runContext.workingDir().createTempFile(filenameFromURI(from)).toFile();
 
         // output
         Output.OutputBuilder builder = Output.builder();

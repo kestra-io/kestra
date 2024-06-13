@@ -66,10 +66,10 @@ class LocalFilesTest {
             new String(storageInterface.get(null, outputs.getUris().get("hello-input.txt")).readAllBytes()),
             is("Hello Input")
         );
-        assertThat(runContext.tempDir().toFile().list().length, is(2));
-        assertThat(Files.readString(runContext.tempDir().resolve("execution.txt")), is("tata"));
+        assertThat(runContext.workingDir().path().toFile().list().length, is(2));
+        assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt")), is("tata"));
         assertThat(
-            Files.readString(runContext.tempDir().resolve("application-test.yml")),
+            Files.readString(runContext.workingDir().path().resolve("application-test.yml")),
             is(new String(storageInterface.get(null, storageFile).readAllBytes()))
         );
 
@@ -116,7 +116,7 @@ class LocalFilesTest {
     @Test
     void failWithExistingInputFile() throws IOException {
         var runContext = runContextFactory.of();
-        Files.createFile(Path.of(runContext.tempDir().toString(), "hello-input.txt"));
+        Files.createFile(Path.of(runContext.workingDir().path().toString(), "hello-input.txt"));
 
         var task = LocalFiles.builder()
             .id(IdUtils.create())

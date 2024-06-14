@@ -86,6 +86,8 @@ class PluginControllerTest {
             );
 
             assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Log.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
+            // test an alias
+            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals("io.kestra.core.tasks.log.Log")).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
         });
     }
 

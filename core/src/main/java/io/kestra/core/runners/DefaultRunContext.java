@@ -373,7 +373,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public synchronized Path tempDir(boolean create) {
-        return workingDir.path(true);
+        return workingDir.path(create);
     }
 
     /**

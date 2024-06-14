@@ -613,7 +613,9 @@
 
                     this.editor = monaco.editor.create(this.$el, options);
 
-                    await this.changeTab(this.currentTab?.path ?? this.currentTab?.name, () => this.value);
+                    if(!this.input){
+                        await this.changeTab(this.currentTab?.path ?? this.currentTab?.name, () => this.value);
+                    }
                 }
 
                 let editor = this.getModifiedEditor();
@@ -623,7 +625,7 @@
                     if (self.value !== value) {
                         self.$emit("change", value, event);
 
-                        if (self.currentTab && self.currentTab.name) {
+                        if (!self.input && self.currentTab && self.currentTab.name) {
                             self.changeOpenedTabs({
                                 action: "dirty",
                                 ...self.currentTab,

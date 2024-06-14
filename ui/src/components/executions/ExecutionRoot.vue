@@ -69,6 +69,14 @@
                 if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
                     this.follow()
                 }
+                // if we change the execution id, we need to close the sse
+                if (this.$route.params.id != this.execution.id) {
+                    this.closeSSE();
+                    window.removeEventListener("popstate", this.follow)
+                    this.$store.commit("execution/setExecution", undefined);
+                    this.$store.commit("flow/setFlow", undefined);
+                    this.$store.commit("flow/setFlowGraph", undefined);
+                }
             },
         },
         methods: {
@@ -91,13 +99,16 @@
                         }
                         // sse.onerror doesnt return the details of the error
                         // but as our emitter can only throw an error on 404
-                        // we can safely assume that the error
+                        // we can safely assume that the error is a 404
+                        // if execution is not defined
                         this.sse.onerror = () => {
-                            this.$store.dispatch("core/showMessage", {
-                                variant: "error",
-                                title: this.$t("error"),
-                                message: this.$t("errors.404.flow or execution"),
-                            });
+                            if (!this.execution) {
+                                this.$store.dispatch("core/showMessage", {
+                                    variant: "error",
+                                    title: this.$t("error"),
+                                    message: this.$t("errors.404.flow or execution"),
+                                });
+                            }
                         }
                     });
             },

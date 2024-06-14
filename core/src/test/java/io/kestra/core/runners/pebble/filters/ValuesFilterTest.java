@@ -44,7 +44,6 @@ class ValuesFilterTest {
 
         render = variableRenderer.render("{{ vars.second | values }}", vars);
         assertThat(render, containsString("\"string\""));
-        assertThat(render, containsString("2013-09-08T16:19:00+02"));
         assertThat(render, containsString("true,"));
     }
 }

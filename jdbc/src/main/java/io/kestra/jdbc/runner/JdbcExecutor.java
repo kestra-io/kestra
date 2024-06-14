@@ -227,7 +227,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         );
 
         // look at exceptions on the scheduledDelay thread
-        Thread scheduledDelayExceptionThread = new Thread(
+        Thread.ofVirtual().name("jdbc-delay-exception-watcher").start(
             () -> {
                 Await.until(scheduledDelayFuture::isDone);
 
@@ -240,10 +240,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         KestraContext.getContext().shutdown();
                     }
                 }
-            },
-            "jdbc-delay-exception-watcher"
+            }
         );
-        scheduledDelayExceptionThread.start();
 
         this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,

@@ -65,11 +65,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Introspected
 public class Worker implements Service, Runnable, AutoCloseable {
-    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
-
-    @Inject
-    private ApplicationContext applicationContext;
 
     @Inject
     private WorkerJobQueueInterface workerJobQueue;
@@ -125,8 +122,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private final String id;
 
-    // package private to allow its usage within tests
-    final ExecutorService executorService;
+    private final ExecutorService executorService;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
@@ -764,7 +760,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         AtomicReference<ServiceState> shutdownState = new AtomicReference<>();
         // start shutdown
-        new Thread(
+        Thread.ofVirtual().name("worker-shutdown").start(
             () -> {
                 try {
                     this.receiveCancellations.forEach(Runnable::run);
@@ -786,9 +782,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     log.error("Failed to shutdown the worker. Thread was interrupted");
                     shutdownState.set(TERMINATED_FORCED);
                 }
-            },
-            "worker-shutdown"
-        ).start();
+            }
+        );
 
 
         // wait for task completion

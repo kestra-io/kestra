@@ -1,13 +1,19 @@
 package io.kestra.core.runners;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Service interface for accessing a dedicated working directory.
+ * Service interface for accessing a specific working directory.
  * <p>
- * A working directory is a local and temporary directory associated to a task-run context.
+ * A working directory (or working-dir) is a local and temporary directory attached
+ * to the execution of task.
+ * <p>
+ * For example, a task can use the working directory to temporarily
+ * buffered data on local disk before storing them on the Kestra's internal storage.
  *
  * @see RunContext#workingDir()
  */
@@ -81,16 +87,21 @@ public interface WorkingDir {
     Path createTempFile(byte[] content, String extension) throws IOException;
 
     /**
-     * Creates a new empty file in the working directory with the given name.
+     * Creates a new empty file in the working directory with the given filename.
+     * <p>
+     * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
-     * @throws IOException              if an error happen while creating the file.
-     * @throws IllegalArgumentException if the given filename is {@code null} or empty.
+     * @throws IOException                if an error happen while creating the file.
+     * @throws FileAlreadyExistsException – If a file of that name already exists (optional specific
+     * @throws IllegalArgumentException   if the given filename is {@code null} or empty.
      */
     Path createFile(String filename) throws IOException;
 
     /**
-     * Creates a new empty file in the working directory with the given name and content.
+     * Creates a new file in the working directory with the given name and content.
+     * <p>
+     * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
      * @param content  The file content - may be {@code null}.
@@ -98,6 +109,30 @@ public interface WorkingDir {
      * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename, byte[] content) throws IOException;
+
+    /**
+     * Creates a new file in the working directory with the given name and content.
+     * <p>
+     * This method will throw an exception if a file already exists for the given filename.
+     *
+     * @param filename The file name.
+     * @param content  The file content - may be {@code null}.
+     * @throws IOException              if an error happen while creating the file.
+     * @throws IllegalArgumentException if the given filename is {@code null} or empty.
+     */
+    Path createFile(String filename, InputStream content) throws IOException;
+
+    /**
+     * Creates a new file or replaces an existing one with the given content.
+     * <p>
+     * This method will throw an exception if a file already exists for the given filename.
+     *
+     * @param path    The path of the file.
+     * @param content The file content - may be {@code null}.
+     * @throws IOException              if an error happen while creating the file.
+     * @throws IllegalArgumentException if the given path is {@code null}.
+     */
+    Path putFile(Path path, InputStream content) throws IOException;
 
     /**
      * Finds all files  in the working directory that matches one of the given patterns.

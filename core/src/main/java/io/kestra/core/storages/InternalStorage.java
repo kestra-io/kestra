@@ -1,7 +1,7 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.services.FlowService;
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +30,7 @@ public class InternalStorage implements Storage {
     private final Logger logger;
     private final StorageContext context;
     private final StorageInterface storage;
+    private final FlowService flowService;
 
     /**
      * Creates a new {@link InternalStorage} instance.
@@ -38,7 +39,7 @@ public class InternalStorage implements Storage {
      * @param storage The storage to delegate operations.
      */
     public InternalStorage(StorageContext context, StorageInterface storage) {
-        this(LOG, context, storage);
+        this(LOG, context, storage, null);
     }
 
     /**
@@ -48,10 +49,35 @@ public class InternalStorage implements Storage {
      * @param context The storage context.
      * @param storage The storage to delegate operations.
      */
-    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage) {
+    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, FlowService flowService) {
         this.logger = logger;
         this.context = context;
         this.storage = storage;
+        this.flowService = flowService;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Namespace namespace() {
+        return new InternalNamespace(logger, context.getTenantId(), context.getNamespace(), storage);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Namespace namespace(String namespace) {
+        boolean isExternalNamespace = !namespace.equals(context.getNamespace());
+        // Checks whether the contextual namespace is allowed to access the passed namespace.
+        if (isExternalNamespace && flowService != null) {
+            flowService.checkAllowedNamespace(
+                context.getTenantId(), namespace, // requested Tenant/Namespace
+                context.getTenantId(), context.getNamespace() // from Tenant/Namespace
+            );
+        }
+        return new InternalNamespace(logger, context.getTenantId(), namespace, storage);
     }
 
     /**

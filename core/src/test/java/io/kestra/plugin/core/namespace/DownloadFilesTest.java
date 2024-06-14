@@ -1,10 +1,8 @@
 package io.kestra.plugin.core.namespace;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -13,9 +11,10 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -27,18 +26,11 @@ public class DownloadFilesTest {
     StorageInterface storageInterface;
 
     @Inject
-    NamespaceFilesService namespaceFilesService;
-
-    @Inject
     RunContextFactory runContextFactory;
 
     @Test
-    void download() throws Exception {
-        String namespace = "io.kestra." + IdUtils.create();
-
-        put(namespace, "/a/b/test1.txt", "1");
-        put(namespace, "/a/b/test2.txt", "1");
-
+    void shouldDownloadNamespaceFile() throws Exception {
+        String namespaceId = "io.kestra." + IdUtils.create();
         DownloadFiles downloadFiles = DownloadFiles.builder()
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
@@ -46,20 +38,16 @@ public class DownloadFilesTest {
             .namespace("{{ inputs.namespace }}")
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, ImmutableMap.of("namespace", namespace));
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));
+        final Namespace namespace = runContext.storage().namespace(namespaceId);
+
+        namespace.putFile(Path.of("/a/b/test1.txt"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
+        namespace.putFile(Path.of("/a/b/test2.txt"), new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
 
         DownloadFiles.Output output = downloadFiles.run(runContext);
 
         assertThat(output.getFiles().size(), is(1));
         assertThat(output.getFiles().get("/a/b/test1.txt"), notNullValue());
 
-    }
-
-    private void put(String namespace, String path, String content) throws IOException {
-        storageInterface.put(
-            null,
-            URI.create(StorageContext.namespaceFilePrefix(namespace) + path),
-            new ByteArrayInputStream(content.getBytes())
-        );
     }
 }

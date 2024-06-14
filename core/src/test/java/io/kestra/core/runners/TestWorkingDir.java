@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.utils.IdUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,6 +83,16 @@ public final class TestWorkingDir implements WorkingDir {
     @Override
     public Path createFile(String filename, byte[] content) throws IOException {
         return captureCreateFileAndGet(delegate.createFile(filename, content));
+    }
+
+    @Override
+    public Path createFile(String filename, InputStream content) throws IOException {
+        return captureCreateFileAndGet(delegate.createFile(filename, content));
+    }
+
+    @Override
+    public Path putFile(Path path, InputStream content) throws IOException {
+        return captureCreateFileAndGet(delegate.putFile(path, content));
     }
 
     @Override

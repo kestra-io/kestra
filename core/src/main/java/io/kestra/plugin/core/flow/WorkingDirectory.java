@@ -17,12 +17,12 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Rethrow;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -34,17 +34,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -271,9 +263,14 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null ) {
-            NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
-            namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.workingDir().path(), this.namespaceFiles);
+        if (this.namespaceFiles != null && this.namespaceFiles.getEnabled()) {
+            runContext.storage()
+                .namespace()
+                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
+                .forEach(Rethrow.throwConsumer(namespaceFile -> {
+                    InputStream content = runContext.storage().getFile(namespaceFile.uri());
+                    runContext.workingDir().putFile(namespaceFile.path(), content);
+                }));
         }
 
         if (this.inputFiles != null) {

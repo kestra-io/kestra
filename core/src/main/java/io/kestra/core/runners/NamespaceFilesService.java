@@ -1,70 +1,53 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.tasks.NamespaceFiles;
+import io.kestra.core.storages.InternalNamespace;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Rethrow;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
+@Deprecated
 @Singleton
-@Slf4j
 public class NamespaceFilesService {
-    @Inject
-    private StorageInterface storageInterface;
 
+    private static final Logger log = LoggerFactory.getLogger(NamespaceFilesService.class);
+
+    private final StorageInterface storageInterface;
+
+    @Inject
+    public NamespaceFilesService(final StorageInterface storageInterface) {
+        this.storageInterface = storageInterface;
+    }
+
+    @Deprecated
     public List<URI> inject(RunContext runContext, String tenantId, String namespace, Path basePath, NamespaceFiles namespaceFiles) throws Exception {
         if (!namespaceFiles.getEnabled()) {
             return Collections.emptyList();
         }
 
-        List<URI> list = recursiveList(tenantId, namespace, null);
+        List<NamespaceFile> matchedNamespaceFiles = namespaceFor(tenantId, namespace)
+            .findAllFilesMatching(namespaceFiles.getInclude(), namespaceFiles.getExclude());
 
-        list = list
-            .stream()
-            .filter(throwPredicate(f -> {
-                var file = f.getPath();
-
-                if (namespaceFiles.getExclude() != null) {
-                    boolean b = match(runContext.render(namespaceFiles.getExclude()), file);
-
-                    if (b) {
-                        return false;
-                    }
-                }
-
-                if (namespaceFiles.getInclude() != null) {
-                    boolean b = match(namespaceFiles.getInclude(), file);
-
-                    if (!b) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }))
-            .collect(Collectors.toList());
-
-        copy(tenantId, namespace, basePath, list);
-
-        return list;
+        matchedNamespaceFiles.forEach(Rethrow.throwConsumer(namespaceFile -> {
+            InputStream content = storageInterface.get(tenantId, namespaceFile.uri());
+            runContext.workingDir().putFile(namespaceFile.path(), content);
+        }));
+        return matchedNamespaceFiles.stream().map(NamespaceFile::path).map(Path::toUri).toList();
     }
 
     public URI uri(String namespace, @Nullable URI path) {
@@ -75,61 +58,41 @@ public class NamespaceFilesService {
     }
 
     public List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path) throws IOException {
-        return this.recursiveList(tenantId, namespace, path, false);
+        return recursiveList(tenantId, namespace, path, false);
     }
 
     public List<URI> recursiveList(String tenantId, String namespace, @Nullable URI path, boolean includeDirectoryEntries) throws IOException {
-        return storageInterface.allByPrefix(tenantId, URI.create(this.uri(namespace, path) + "/"), includeDirectoryEntries)
-            // We get rid of Kestra schema as we want to work on a folder-like basis
-            .stream().map(URI::getPath)
-            .map(URI::create)
-            .map(uri -> URI.create("/" + this.uri(namespace, null).relativize(uri)))
+        return namespaceFor(tenantId, namespace)
+            .all(path.getPath(), includeDirectoryEntries)
+            .stream()
+            .map(NamespaceFile::path)
+            .map(Path::toUri)
             .toList();
     }
 
+    private InternalNamespace namespaceFor(String tenantId, String namespace) {
+        return new InternalNamespace(log, tenantId, namespace, storageInterface);
+    }
+
     public boolean delete(String tenantId, String namespace, URI path) throws IOException {
-        return storageInterface.delete(tenantId, this.uri(namespace, path));
+        return namespaceFor(tenantId, namespace).delete(Path.of(path));
     }
 
     public URI createFile(String tenantId, String namespace, URI path, InputStream inputStream) throws IOException {
-        return storageInterface.put(tenantId, this.uri(namespace, path), inputStream);
+        return namespaceFor(tenantId, namespace).putFile(Path.of(path), inputStream, Namespace.Conflicts.OVERWRITE)
+            .path()
+            .toUri();
     }
 
     public URI createDirectory(String tenantId, String namespace, URI path) throws IOException {
-        return storageInterface.createDirectory(tenantId, this.uri(namespace, path));
-    }
-
-    private static boolean match(List<String> patterns, String file) {
-        return patterns
-            .stream()
-            .anyMatch(s -> FileSystems
-                .getDefault()
-                .getPathMatcher("glob:" + (s.matches("\\w+[\\s\\S]*") ? "**/" + s : s))
-                .matches(Paths.get(file))
-            );
+        return namespaceFor(tenantId, namespace).createDirectory(Path.of(path.getPath()));
     }
 
     public InputStream content(String tenantId, String namespace, URI path) throws IOException {
-        return storageInterface.get(tenantId, uri(namespace, path));
+        return namespaceFor(tenantId, namespace).getFileContent(Path.of(path));
     }
 
     public static URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
-        return URI.create("kestra://" + StorageContext.namespaceFilePrefix(namespace) + Optional.ofNullable(relativePath).map(URI::getPath).orElse("/"));
-    }
-
-    private void copy(String tenantId, String namespace, Path basePath, List<URI> files) throws IOException {
-        files
-            .forEach(throwConsumer(f -> {
-                Path destination = Paths.get(basePath.toString(), f.getPath());
-
-                if (!destination.getParent().toFile().exists()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    destination.getParent().toFile().mkdirs();
-                }
-
-                try (InputStream inputStream = this.content(tenantId, namespace, f)) {
-                    Files.copy(inputStream, destination, REPLACE_EXISTING);
-                }
-            }));
+        return NamespaceFile.of(namespace, relativePath).uri();
     }
 }

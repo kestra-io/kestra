@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,7 +36,6 @@ class NamespaceFilesServiceTest {
 
     @Test
     public void noFilter() throws Exception {
-        Path basePath = Files.createTempDirectory("unit");
         String namespace = "io.kestra." + IdUtils.create();
 
         put(null, namespace, "/a/b/c/1.sql", "1");
@@ -48,7 +48,7 @@ class NamespaceFilesServiceTest {
             runContext,
             null,
             namespace,
-            basePath,
+            null,   // not used anymore
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -56,10 +56,11 @@ class NamespaceFilesServiceTest {
         );
 
         assertThat(injected.size(), is(3));
-        List<Path> tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
-        assertThat(tempDir.size(), is(3));
+        List<Path> workingDirFiles = runContext.workingDir().findAllFilesMatching(List.of("**/**"));
+        assertThat(workingDirFiles.size(), is(3));
+
         String fileContent = FileUtils.readFileToString(
-            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            workingDirFiles.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
             "UTF-8"
         );
         assertThat(fileContent, is(expectedFileContent));
@@ -71,7 +72,7 @@ class NamespaceFilesServiceTest {
             runContext,
             null,
             namespace,
-            basePath,
+            null,   // not used anymore
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -79,10 +80,10 @@ class NamespaceFilesServiceTest {
         );
 
         assertThat(injected.size(), is(3));
-        tempDir = Files.walk(basePath).filter(path -> path.toFile().isFile()).toList();
-        assertThat(tempDir.size(), is(3));
+        workingDirFiles = runContext.workingDir().findAllFilesMatching(List.of("**/**"));
+        assertThat(workingDirFiles.size(), is(3));
         fileContent = FileUtils.readFileToString(
-            tempDir.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
+            workingDirFiles.stream().filter(path -> path.toString().contains("b/c/d/1.sql")).findFirst().orElseThrow().toFile(),
             "UTF-8"
         );
         assertThat(fileContent, is(expectedFileContent));
@@ -90,8 +91,7 @@ class NamespaceFilesServiceTest {
 
     @Test
     public void filter() throws Exception {
-        Path basePath = Files.createTempDirectory("unit");
-        String namespace = "io.kestra." + IdUtils.create();
+        final String namespace = "io.kestra." + IdUtils.create();
 
         put(null, namespace, "/a/b/c/1.sql", "1");
         put(null, namespace, "/a/2.sql", "2");
@@ -99,11 +99,14 @@ class NamespaceFilesServiceTest {
         put(null, namespace, "/b/d/4.sql", "4");
         put(null, namespace, "/c/5.sql", "5");
 
+        final RunContext runContext = runContextFactory.of();
+        final Path workingDir = runContext.workingDir().path();
+
         List<URI> injected = namespaceFilesService.inject(
-            runContextFactory.of(),
+            runContext,
             null,
             namespace,
-            basePath,
+            null,   // not used anymore
             NamespaceFiles.builder()
                 .include(List.of(
                     "/a/**",
@@ -118,13 +121,12 @@ class NamespaceFilesServiceTest {
             hasProperty("path", endsWith("3.sql")),
             hasProperty("path", endsWith("5.sql"))
         ));
-        List<String> tempDirEntries = Files.walk(basePath).filter(path -> path.toFile().isFile())
-            .map(Path::toString)
-            .toList();
-        assertThat(tempDirEntries, containsInAnyOrder(
-            is(Paths.get(basePath.toString(), "/a/b/c/1.sql").toString()),
-            is(Paths.get(basePath.toString(), "/b/c/d/3.sql").toString()),
-            is(Paths.get(basePath.toString(), "/c/5.sql").toString())
+
+        List<Path> workingDirFiles = runContext.workingDir().findAllFilesMatching(List.of("**/**"));
+        assertThat(workingDirFiles, containsInAnyOrder(
+            is(Paths.get(workingDir.toString(), "/a/b/c/1.sql")),
+            is(Paths.get(workingDir.toString(), "/b/c/d/3.sql")),
+            is(Paths.get(workingDir.toString(), "/c/5.sql"))
         ));
     }
 
@@ -135,12 +137,12 @@ class NamespaceFilesServiceTest {
         put("tenant1", namespace, "/a/b/c/1.sql", "1");
         put("tenant2", namespace, "/a/b/c/1.sql", "2");
 
-        RunContext runContext = runContextFactory.of();
+        RunContext runContextTenant1 = runContextFactory.of(Map.of("flow", Map.of("tenantId", "tenant1")));
         List<URI> injected = namespaceFilesService.inject(
-            runContextFactory.of(),
+            runContextTenant1,
             "tenant1",
             namespace,
-            runContext.workingDir().path(),
+            null,   // not used anymore
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -148,15 +150,15 @@ class NamespaceFilesServiceTest {
         );
         assertThat(injected.size(), is(1));
 
-        String content = Files.walk(runContext.workingDir().path()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
+        String content = runContextTenant1.workingDir().findAllFilesMatching(List.of("**/**")).stream().findFirst().map(throwFunction(Files::readString)).orElseThrow();
         assertThat(content, is("1"));
 
-        runContext = runContextFactory.of();
+        RunContext runContextTenant2 = runContextFactory.of(Map.of("flow", Map.of("tenantId", "tenant2")));
         injected = namespaceFilesService.inject(
-            runContextFactory.of(),
+            runContextTenant2,
             "tenant2",
             namespace,
-            runContext.workingDir().path(),
+            null,   // not used anymore
             NamespaceFiles
                 .builder()
                 .enabled(true)
@@ -164,7 +166,7 @@ class NamespaceFilesServiceTest {
         );
         assertThat(injected.size(), is(1));
 
-        content = Files.walk(runContext.workingDir().path()).filter(path -> path.toFile().isFile()).findFirst().map(throwFunction(Files::readString)).orElseThrow();
+        content = runContextTenant2.workingDir().findAllFilesMatching(List.of("**/**")).stream().findFirst().map(throwFunction(Files::readString)).orElseThrow();
         assertThat(content, is("2"));
     }
 

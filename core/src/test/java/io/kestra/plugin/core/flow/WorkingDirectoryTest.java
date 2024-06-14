@@ -138,8 +138,9 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             StorageContext storageContext = StorageContext.forTask(taskRun);
             InternalStorage storage = new InternalStorage(
                 null,
-                storageContext
-                , storageInterface
+                storageContext,
+                storageInterface,
+                null
             );
 
             URI uri = ((Map<String, String>) outputs.get("outputFiles")).values()
@@ -159,8 +160,9 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             StorageContext storageContext = StorageContext.forTask(execution.getTaskRunList().get(1));
             InternalStorage storage = new InternalStorage(
                 null,
-                storageContext
-                , storageInterface
+                storageContext,
+                storageInterface,
+                null
             );
 
             TaskRun taskRun = execution.getTaskRunList().get(1);
@@ -184,8 +186,9 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             );
             InternalStorage storage = new InternalStorage(
                 null,
-                storageContext
-                , storageInterface
+                storageContext,
+                storageInterface,
+                null
             );
             storage.deleteCacheFile("workingDir", null);
 

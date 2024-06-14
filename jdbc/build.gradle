@@ -10,5 +10,6 @@ dependencies {
     implementation("io.micronaut.sql:micronaut-jooq")
     implementation("io.micronaut.flyway:micronaut-flyway")
 
+    testImplementation project(':tests')
     testImplementation project(':core').sourceSets.test.output
 }

@@ -4,6 +4,8 @@ configurations {
 
 dependencies {
     testImplementation project(":core")
-    testImplementation project(':core').sourceSets.test.output
     api project(":repository-memory")
+
+
+    testImplementation project(':tests')
 }

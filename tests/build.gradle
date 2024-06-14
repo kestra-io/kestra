@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(':core')
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut.test:micronaut-test-junit5"
+
+    implementation "org.junit.jupiter:junit-jupiter-engine"
+    implementation "org.junit.jupiter:junit-jupiter-engine"
+
+    api 'org.hamcrest:hamcrest:2.2'
+    api 'org.hamcrest:hamcrest-library:2.2'
+    api 'org.mockito:mockito-junit-jupiter'
+}

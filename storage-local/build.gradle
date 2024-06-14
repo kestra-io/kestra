@@ -7,5 +7,5 @@ dependencies {
     implementation project(":core")
 
     testAnnotationProcessor project(":processor")
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':tests')
 }

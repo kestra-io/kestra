@@ -62,7 +62,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final QueueInterface<Trigger> triggerQueue;
     private final QueueInterface<WorkerJob> workerTaskQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
-    private QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final QueueInterface<ExecutionKilled> executionKilledQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -134,7 +134,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         );
 
         // look at exception on the main thread
-        Thread thread = new Thread(
+        Thread.ofVirtual().name("scheduler-listener").start(
             () -> {
                 Await.until(handle::isDone);
 
@@ -147,10 +147,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     close();
                     applicationContext.close();
                 }
-            },
-            "scheduler-listener"
+            }
         );
-        thread.start();
 
         // remove trigger on flow update, update local triggers store, and stop the trigger on the worker
         this.flowListeners.listen((flow, previous) -> {

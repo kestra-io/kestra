@@ -138,17 +138,13 @@ public class PluginController {
     public MutableHttpResponse<Map<String, PluginIcon>> icons() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
-            .flatMap(plugin -> Stream
-                .concat(
+            .flatMap(plugin -> Stream.of(
                     plugin.getTasks().stream(),
-                    Stream.concat(
-                        Stream.concat(
-                            plugin.getTriggers().stream(),
-                            plugin.getConditions().stream()
-                        ),
-                        plugin.getTaskRunners().stream()
-                    )
+                    plugin.getTriggers().stream(),
+                    plugin.getConditions().stream(),
+                    plugin.getTaskRunners().stream()
                 )
+                .flatMap(i -> i)
                 .map(e -> new AbstractMap.SimpleEntry<>(
                     e.getName(),
                     new PluginIcon(
@@ -160,6 +156,20 @@ public class PluginController {
             )
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+
+        // add aliases
+        Map<String, PluginIcon> aliasIcons = pluginRegistry.plugins().stream()
+            .flatMap(plugin -> plugin.getAliases().values().stream().map(e -> new AbstractMap.SimpleEntry<>(
+                e.getKey(),
+                new PluginIcon(
+                    e.getKey().substring(e.getKey().lastIndexOf('.') + 1),
+                    plugin.icon(e.getValue()),
+                    FlowableTask.class.isAssignableFrom(e.getValue())
+                ))))
+            .filter(entry -> entry.getKey() != null)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+        icons.putAll(aliasIcons);
+
         return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
 

@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
@@ -22,15 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-
-import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 
 @Slf4j
 @Validated
@@ -56,7 +57,7 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q
     ) throws IOException, URISyntaxException {
-        URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
+        URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
         return storageInterface.allByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri, false).stream()
             .map(storageUri -> "/" + baseNamespaceFilesUri.relativize(storageUri).getPath())
             .filter(path -> path.contains(q)).toList();
@@ -71,8 +72,7 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         forbiddenPathsGuard(path);
 
-        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
-
+        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
@@ -85,16 +85,15 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         forbiddenPathsGuard(path);
 
-        // if stats is performed upon namespace root and it doesn't exist yet, we create it
+        // if stats is performed upon namespace root, and it doesn't exist yet, we create it
         if (path == null) {
-            if(!storageInterface.exists(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null))) {
-                storageInterface.createDirectory(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null));
+            if(!storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
+                storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
             }
-
-            return storageInterface.getAttributes(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null));
+            return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
         }
 
-        return storageInterface.getAttributes(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
+        return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -112,12 +111,12 @@ public class NamespaceFileController {
 
         String pathString = path.getPath();
 
-        if (pathString.equals("/") && !storageInterface.exists(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null))) {
-            storageInterface.createDirectory(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null));
+        if (pathString.equals("/") && !storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
+            storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
             return Collections.emptyList();
         }
 
-        return storageInterface.list(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
+        return storageInterface.list(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -129,7 +128,7 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         forbiddenPathsGuard(path);
 
-        storageInterface.createDirectory(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, path));
+        storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -178,7 +177,7 @@ public class NamespaceFileController {
             return;
         }
 
-        storageInterface.put(tenantId, toNamespacedStorageUri(namespace, path), inputStream);
+        storageInterface.put(tenantId, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
     protected void importFlow(String tenantId, String source) {
@@ -194,7 +193,7 @@ public class NamespaceFileController {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ZipOutputStream archive = new ZipOutputStream(bos)) {
 
-            URI baseNamespaceFilesUri = toNamespacedStorageUri(namespace, null);
+            URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
             String tenantId = tenantService.resolveTenant();
             storageInterface.allByPrefix(tenantId, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
                 try (InputStream inputStream = storageInterface.get(tenantId, uri)) {
@@ -231,7 +230,7 @@ public class NamespaceFileController {
         ensureWritableNamespaceFile(from);
         ensureWritableNamespaceFile(to);
 
-        storageInterface.move(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, from), toNamespacedStorageUri(namespace, to));
+        storageInterface.move(tenantService.resolveTenant(), NamespaceFile.of(namespace, from).uri(),NamespaceFile.of(namespace, to).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -244,10 +243,11 @@ public class NamespaceFileController {
         ensureWritableNamespaceFile(path);
 
         String pathWithoutScheme = path.getPath();
-        List<String> allNamespaceFilesPaths = new ArrayList<>(storageInterface.allByPrefix(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, null), true).stream()
-            .map(toNamespacedStorageUri(namespace, null)::relativize)
-            .map(uri -> "/" + uri.getPath())
-            .toList());
+
+        List<String> allNamespaceFilesPaths = storageInterface.allByPrefix(tenantService.resolveTenant(), NamespaceFile.of(namespace).storagePath().toUri(), true)
+            .stream()
+            .map(uri -> NamespaceFile.of(namespace, uri).path(true).toString())
+            .collect(Collectors.toCollection(ArrayList::new));
 
         if (allNamespaceFilesPaths.contains(pathWithoutScheme + "/")) {
             // the given path to delete is a directory
@@ -267,7 +267,7 @@ public class NamespaceFileController {
             allNamespaceFilesPaths.removeIf(filesInParentFolder::contains);
             pathWithoutScheme = parentFolder.endsWith("/") ? parentFolder.substring(0, parentFolder.length() - 1) : parentFolder;
         }
-        storageInterface.delete(tenantService.resolveTenant(), toNamespacedStorageUri(namespace, URI.create(pathWithoutScheme)));
+        storageInterface.delete(tenantService.resolveTenant(), NamespaceFile.of(namespace, Path.of(pathWithoutScheme)).uri());
     }
 
     private void forbiddenPathsGuard(URI path) {

@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -33,6 +34,9 @@ public class RunContextFactory {
 
     @Inject
     protected StorageInterface storageInterface;
+
+    @Inject
+    protected FlowService flowService;
 
     @Inject
     protected MetricRegistry metricRegistry;
@@ -62,7 +66,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Execution
             .withPluginConfiguration(Map.of())
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, flowService))
             .withVariables(newRunVariablesBuilder()
                 .withFlow(flow)
                 .withExecution(execution)
@@ -83,7 +87,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService))
             .withVariables(newRunVariablesBuilder()
                 .withFlow(flow)
                 .withTask(task)
@@ -122,8 +126,15 @@ public class RunContextFactory {
                     public URI getContextStorageURI() {
                         return URI.create("");
                     }
+
+                    @Override
+                    public String getTenantId() {
+                        var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
+                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(null);
+                    }
                 },
-                storageInterface
+                storageInterface,
+                flowService
             ))
             .withVariables(variables)
             .build();

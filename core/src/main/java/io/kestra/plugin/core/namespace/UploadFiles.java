@@ -1,34 +1,30 @@
 package io.kestra.plugin.core.namespace;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.utils.FileUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.codehaus.commons.nullanalysis.NotNull;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import static io.kestra.core.runners.NamespaceFilesService.toNamespacedStorageUri;
 import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 
 @SuperBuilder(toBuilder = true)
@@ -60,7 +56,7 @@ tasks:
 
   - id: python
     type: io.kestra.plugin.scripts.python.Commands
-    namespaceFiles:
+    namespace:
       enabled: true
     commands:
       - python scripts/main.py"""
@@ -99,21 +95,17 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         title = "Which action to take when uploading a file that already exists.",
         description = "Can be one of the following OVERWRITE, ERROR or SKIP."
     )
-    private ConflictAction conflict = ConflictAction.OVERWRITE;
+    private Namespace.Conflicts conflict = Namespace.Conflicts.OVERWRITE;
 
     @Override
+    @SuppressWarnings("unchecked")
     public UploadFiles.Output run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger();
         String renderedNamespace = runContext.render(namespace);
-        String renderedDestination = runContext.render(destination);
-        // Check if namespace is allowed
-        RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
+        String renderedDestination = checkLeadingSlash(runContext.render(destination));
 
-        StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
+        final Namespace storageNamespace = runContext.storage().namespace(renderedNamespace);
 
-        if (files instanceof List filesList) {
+        if (files instanceof List<?> filesList) {
             if (renderedDestination == null) {
                 throw new RuntimeException("Destination must be set when providing a List for the `files` property.");
             }
@@ -121,91 +113,52 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
             final List<String> regexs = new ArrayList<>();
 
-            // First handle string that are full URI
-            ((List<String>) filesList).forEach(path -> {
-                if (storageInterface.exists(flowInfo.tenantId(), URI.create(path))) {
-                    String newFilePath = null;
-                    try {
-                        newFilePath = buildPath(renderedDestination, storageInterface.getAttributes(flowInfo.tenantId(), URI.create(path)).getFileName());
-                        storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, storageInterface.get(flowInfo.tenantId(), URI.create(path)));
-                    } catch (IOException | IllegalVariableEvaluationException e) {
-                        throw new RuntimeException(e);
+            for (Object file : filesList) {
+                Optional<URI> uri = FileUtils.getURI(file.toString());
+                // Immediately handle strings that are full URI
+                if (uri.isPresent()) {
+                    if (runContext.storage().isFileExist(uri.get())) {
+                        Path targetFilePath = Path.of(renderedDestination, FileUtils.getFileName(uri.get()));
+                        storageNamespace.putFile(targetFilePath, runContext.storage().getFile(uri.get()), conflict);
                     }
+                    // else ignore
                 } else {
-                    regexs.add(path);
+                    regexs.add(file.toString());
                 }
-            });
+            }
 
-            // check for file in current tempDir that match regexs
+            // Check for files in the current WORKING_DIR that match the expressions
             for (Path path : runContext.workingDir().findAllFilesMatching(regexs)) {
                 File file = path.toFile();
-                String newFilePath = buildPath(renderedDestination, file.getPath().replace(runContext.workingDir().path().toString(), ""));
-                storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), newFilePath, new FileInputStream(file));
+                Path resolve = Paths.get("/").resolve(runContext.workingDir().path().relativize(file.toPath()));
+
+                Path targetFilePath = Path.of(renderedDestination, resolve.toString());
+                storageNamespace.putFile(targetFilePath, new FileInputStream(file), conflict);
             }
         } else if (files instanceof Map map) {
             // Using a Map for the `files` property, there must be only URI
             Map<String, Object> renderedMap = runContext.render((Map<String, Object>) map);
-            renderedMap.forEach((key, value) -> {
-                if (key instanceof String keyString && value instanceof String valueString) {
-                    URI toUpload = URI.create(valueString);
-                    if (storageInterface.exists(flowInfo.tenantId(), toUpload)) {
-                        try {
-                            storeNewFile(logger, runContext, storageInterface, flowInfo.tenantId(), checkLeadingSlash(keyString), storageInterface.get(flowInfo.tenantId(), toUpload));
-                        } catch (IOException | IllegalVariableEvaluationException e) {
-                            throw new RuntimeException(e);
-                        }
+            for (Map.Entry<String, Object> entry : renderedMap.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (key instanceof String targetFilePath && value instanceof String stringSourceFileURI) {
+                    URI sourceFileURI = URI.create(stringSourceFileURI);
+                    if (runContext.storage().isFileExist(sourceFileURI)) {
+                        storageNamespace.putFile(Path.of(targetFilePath), runContext.storage().getFile(sourceFileURI), conflict);
                     }
                 } else {
                     throw new IllegalArgumentException("files must be a List<String> or a Map<String, String>");
                 }
-            });
+            }
         }
 
         return Output.builder().build();
-    }
-
-    private String buildPath(String destination, String filename) {
-        return checkLeadingSlash(String.join("/", destination, filename));
-    }
-
-    private void storeNewFile(Logger logger, RunContext runContext, StorageInterface storageInterface, String tenantId, String filePath, InputStream fileContent) throws IOException, IllegalVariableEvaluationException {
-        String renderedNamespace = runContext.render(namespace);
-        URI newFileURI = toNamespacedStorageUri(
-            renderedNamespace,
-            URI.create(filePath)
-        );
-
-        boolean fileExists = storageInterface.exists(tenantId, newFileURI);
-        if (!conflict.equals(ConflictAction.OVERWRITE) && fileExists) {
-            if (conflict.equals(ConflictAction.ERROR)) {
-                throw new IOException(String.format("File %s already exists and conflict is set to %s", filePath, ConflictAction.ERROR));
-            }
-            logger.debug(String.format("File %s already exists and conflict is set to %s, skipping", filePath, ConflictAction.ERROR));
-            return;
-        }
-
-        storageInterface.put(
-            tenantId,
-            newFileURI,
-            fileContent
-        );
-        if (fileExists) {
-            logger.debug(String.format("File %s overwritten", filePath));
-        } else {
-            logger.debug(String.format("File %s created", filePath));
-        }
     }
 
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private final Map<String, URI> files;
-    }
-
-    public enum ConflictAction {
-        OVERWRITE,
-        ERROR,
-        SKIP
     }
 
 }

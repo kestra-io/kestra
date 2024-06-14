@@ -1,9 +1,13 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.utils.IdUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -52,9 +56,8 @@ class LocalWorkingDirTest {
         assertThat(workingDirectory.getAllCreatedTempFiles().size(), is(1));
     }
 
-
     @Test
-    void shouldCreatedFile() throws IOException {
+    void shouldCreateFile() throws IOException {
         String workingDirId = IdUtils.create();
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path path = workingDirectory.createFile("folder/file.txt");
@@ -62,6 +65,17 @@ class LocalWorkingDirTest {
         assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
         assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt"), is(true));
         assertThat(workingDirectory.getAllCreatedFiles().size(), is(1));
+    }
+
+    @Test
+    void shouldThrowExceptionGivenFileAlreadyExist() throws IOException {
+        String workingDirId = IdUtils.create();
+        TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
+
+        workingDirectory.createFile("folder/file.txt", "1".getBytes(StandardCharsets.UTF_8));
+        Assertions.assertThrows(FileAlreadyExistsException.class, () -> {
+            workingDirectory.createFile("folder/file.txt", "2".getBytes(StandardCharsets.UTF_8));
+        });
     }
 
     @Test

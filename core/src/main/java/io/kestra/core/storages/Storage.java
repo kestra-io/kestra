@@ -16,6 +16,20 @@ import java.util.Optional;
 public interface Storage {
 
     /**
+     * Gets access to the namespace files for the contextual namespace.
+     *
+     * @return The {@link Namespace}.
+     */
+    Namespace namespace();
+
+    /**
+     * Gets access to the namespace files for the given namespace.
+     *
+     * @return The {@link Namespace}.
+     */
+    Namespace namespace(String namespace);
+
+    /**
      * Checks whether the given URI points to an exiting file/object in the internal storage.
      *
      * @param uri the URI of the file/object in the internal storage.

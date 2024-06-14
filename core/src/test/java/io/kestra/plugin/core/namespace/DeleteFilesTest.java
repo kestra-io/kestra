@@ -1,10 +1,8 @@
 package io.kestra.plugin.core.namespace;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -13,12 +11,14 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 @KestraTest
 public class DeleteFilesTest {
@@ -26,17 +26,12 @@ public class DeleteFilesTest {
     StorageInterface storageInterface;
 
     @Inject
-    NamespaceFilesService namespaceFilesService;
-
-    @Inject
     RunContextFactory runContextFactory;
 
     @Test
-    void delete() throws Exception {
-        String namespace = "io.kestra." + IdUtils.create();
-
-        put(namespace, "/a/b/test1.txt", "1");
-        put(namespace, "/a/b/test2.txt", "1");
+    void shouldDeleteNamespaceFilesForMatchingExpression() throws Exception {
+        // Given
+        String namespaceId = "io.kestra." + IdUtils.create();
 
         DeleteFiles deleteFiles = DeleteFiles.builder()
             .id(DeleteFiles.class.getSimpleName())
@@ -45,19 +40,18 @@ public class DeleteFilesTest {
             .namespace("{{ inputs.namespace }}")
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles,  ImmutableMap.of("namespace", namespace));
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
+        final Namespace namespace = runContext.storage().namespace(namespaceId);
 
-        DeleteFiles.Output output = deleteFiles.run(runContext);
+        namespace.putFile(Path.of("/a/b/test1.txt"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
+        namespace.putFile(Path.of("/a/b/test2.txt"), new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(namespaceFilesService.recursiveList(null, namespace, URI.create("/a/b/")).size(), is(1));
+        assertThat(namespace.all("/a/b/", false).size(), is(2));
 
-    }
+        // When
+        assertThat(deleteFiles.run(runContext), notNullValue());
 
-    private void put(String namespace, String path, String content) throws IOException {
-        storageInterface.put(
-            null,
-            URI.create(StorageContext.namespaceFilePrefix(namespace) + path),
-            new ByteArrayInputStream(content.getBytes())
-        );
+        // Then
+        assertThat(namespace.all("/a/b/", false).size(), is(1));
     }
 }

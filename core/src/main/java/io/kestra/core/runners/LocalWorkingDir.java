@@ -1,21 +1,24 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.PathMatcherPredicate;
 import org.apache.commons.io.FileUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * Default implementation of the {@link WorkingDir}.
@@ -128,7 +131,7 @@ public class LocalWorkingDir implements WorkingDir {
      **/
     @Override
     public Path createFile(String filename) throws IOException {
-        return createFile(filename, null);
+        return createFile(filename, (InputStream) null);
     }
 
     /**
@@ -136,18 +139,54 @@ public class LocalWorkingDir implements WorkingDir {
      **/
     @Override
     public Path createFile(String filename, byte[] content) throws IOException {
+        return createFile(filename, content == null ? null : new ByteArrayInputStream(content));
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Path createFile(String filename, InputStream content) throws IOException {
         if (filename == null || filename.isBlank()) {
             throw new IllegalArgumentException("Cannot create a working directory file with a null or empty name");
         }
         Path newFilePath = this.resolve(Path.of(filename));
         Files.createDirectories(newFilePath.getParent());
-        Path file = Files.createFile(newFilePath);
+
+        Files.createFile(newFilePath);
 
         if (content != null) {
-            Files.write(file, content);
+            try (content) {
+                Files.copy(content, newFilePath, REPLACE_EXISTING);
+            }
         }
 
-        return file;
+        return newFilePath;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Path putFile(Path path, InputStream inputStream) throws IOException {
+        if (path == null) {
+            throw new IllegalArgumentException("Cannot create a working directory file with a null path");
+        }
+        if (inputStream == null) {
+            throw new IllegalArgumentException("Cannot create a working directory file with an empty inputStream");
+        }
+        Path newFilePath = this.resolve(path);
+        Files.createDirectories(newFilePath.getParent());
+
+        if (Files.notExists(newFilePath)) {
+            Files.createFile(newFilePath);
+        }
+
+        try (inputStream) {
+            Files.copy(inputStream, newFilePath, REPLACE_EXISTING);
+        }
+
+        return newFilePath;
     }
 
     /**
@@ -158,7 +197,7 @@ public class LocalWorkingDir implements WorkingDir {
         if (patterns == null || patterns.isEmpty()) {
             return Collections.emptyList();
         }
-        MatcherFileVisitor visitor = new MatcherFileVisitor(path(), patterns);
+        MatcherFileVisitor visitor = new MatcherFileVisitor(PathMatcherPredicate.matches(path(), patterns));
         Files.walkFileTree(path(), visitor);
         return visitor.getMatchedFiles();
     }
@@ -175,23 +214,16 @@ public class LocalWorkingDir implements WorkingDir {
 
     private static class MatcherFileVisitor extends SimpleFileVisitor<Path> {
 
-        private static final String SYNTAX_GLOB = "glob:";
-        private static final String SYNTAX_REGEX = "regex:";
-
-        private final List<PathMatcher> matchers;
+        private final Predicate<Path> predicate;
         private final List<Path> matchedFiles = new ArrayList<>();
 
-        public MatcherFileVisitor(final Path basePath, final List<String> patterns) {
-            FileSystem fs = FileSystems.getDefault();
-            this.matchers = patterns.stream()
-                .map(pattern -> {
-                    var syntaxAndPattern = isPrefixWithSyntax(pattern) ? pattern : SYNTAX_GLOB + basePath + addLeadingSlash(pattern);
-                    return fs.getPathMatcher(syntaxAndPattern);
-                })
-                .toList();
+        public MatcherFileVisitor(final Predicate<Path> predicate) {
+            this.predicate = predicate;
         }
 
-        /** {@inheritDoc} **/
+        /**
+         * {@inheritDoc}
+         **/
         @Override
         public FileVisitResult visitFile(final Path path, final BasicFileAttributes basicFileAttributes) {
             if (!basicFileAttributes.isRegularFile()) {
@@ -199,7 +231,7 @@ public class LocalWorkingDir implements WorkingDir {
                 return FileVisitResult.CONTINUE;
             }
 
-            if (matchers.stream().anyMatch(pathMatcher -> pathMatcher.matches(path))) {
+            if (predicate.test(path)) {
                 matchedFiles.add(path);
             }
 
@@ -208,14 +240,6 @@ public class LocalWorkingDir implements WorkingDir {
 
         public List<Path> getMatchedFiles() {
             return matchedFiles;
-        }
-
-        private static String addLeadingSlash(final String path) {
-            return path.startsWith("/") ? path : "/" + path;
-        }
-
-        private static boolean isPrefixWithSyntax(final String pattern) {
-            return pattern.startsWith(SYNTAX_REGEX) | pattern.startsWith(SYNTAX_GLOB);
         }
     }
 }

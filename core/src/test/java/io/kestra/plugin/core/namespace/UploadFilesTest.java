@@ -2,9 +2,10 @@ package io.kestra.plugin.core.namespace;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -34,13 +35,10 @@ public class UploadFilesTest {
     StorageInterface storageInterface;
 
     @Inject
-    NamespaceFilesService namespaceFilesService;
-
-    @Inject
     RunContextFactory runContextFactory;
 
     @Test
-    void uploadConflictError() throws Exception {
+    void shouldThrowExceptionGivenAlreadyExistingFileWhenConflictError() throws Exception {
         String namespace = "io.kestra." + IdUtils.create();
         File file = new File(Objects.requireNonNull(UploadFilesTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
@@ -54,22 +52,19 @@ public class UploadFilesTest {
             .type(UploadFiles.class.getName())
             .files(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(namespace)
-            .conflict(UploadFiles.ConflictAction.ERROR)
+            .conflict(Namespace.Conflicts.ERROR)
             .destination("/folder")
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
         uploadFile.run(runContext);
 
-        assertThat(namespaceFilesService.recursiveList(null, namespace, URI.create("")).size(), is(1));
-
-        assertThrows(RuntimeException.class, () -> {
-            uploadFile.run(runContext);
-        });
+        assertThat(runContext.storage().namespace(namespace).all().size(), is(1));
+        assertThrows(IOException.class, () -> uploadFile.run(runContext));
     }
 
     @Test
-    void uploadConflictOverwrite() throws Exception {
+    void  shouldPutFileGivenAlreadyExistingFileWhenConflictOverwrite() throws Exception {
         String namespace = "io.kestra." + IdUtils.create();
 
         URI fileStorage = addToStorage("application-test.yml");
@@ -85,10 +80,11 @@ public class UploadFilesTest {
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile,  ImmutableMap.of("namespace", namespace));
         uploadFile.run(runContext);
 
-        List<URI> namespaceFiles = namespaceFilesService.recursiveList(null, namespace, URI.create(""));
+        Namespace namespaceStorage = runContext.storage().namespace(namespace);
+        List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String previousFile = IOUtils.toString(namespaceFilesService.content(null, namespace, namespaceFiles.getFirst()), StandardCharsets.UTF_8);
+        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
@@ -97,16 +93,16 @@ public class UploadFilesTest {
 
         uploadFile.run(runContext);
 
-        namespaceFiles = namespaceFilesService.recursiveList(null, namespace, URI.create(""));
+        namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String newFile = IOUtils.toString(namespaceFilesService.content(null, namespace, namespaceFiles.getFirst()), StandardCharsets.UTF_8);
+        String newFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
 
         assertThat(previousFile.equals(newFile), is(false));
     }
 
     @Test
-    void uploadConflictSkip() throws Exception {
+    void shouldPutFileGivenAlreadyExistingFileWhenConflictSkip() throws Exception {
         String namespace = "io.kestra." + IdUtils.create();
 
         URI fileStorage = addToStorage("application-test.yml");
@@ -116,17 +112,18 @@ public class UploadFilesTest {
             .type(UploadFiles.class.getName())
             .files(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(namespace)
-            .conflict(UploadFiles.ConflictAction.SKIP)
+            .conflict(Namespace.Conflicts.SKIP)
             .destination("/folder")
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
         uploadFile.run(runContext);
 
-        List<URI> namespaceFiles = namespaceFilesService.recursiveList(null, namespace, URI.create(""));
+        Namespace namespaceStorage = runContext.storage().namespace(namespace);
+        List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String previousFile = IOUtils.toString(namespaceFilesService.content(null, namespace, namespaceFiles.getFirst()), StandardCharsets.UTF_8);
+        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
@@ -135,10 +132,10 @@ public class UploadFilesTest {
 
         uploadFile.run(runContext);
 
-        namespaceFiles = namespaceFilesService.recursiveList(null, namespace, URI.create(""));
+        namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String newFile = IOUtils.toString(namespaceFilesService.content(null, namespace, namespaceFiles.getFirst()), StandardCharsets.UTF_8);
+        String newFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
 
         assertThat(previousFile.equals(newFile), is(true));
     }

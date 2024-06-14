@@ -5,10 +5,11 @@ import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
@@ -20,6 +21,7 @@ import lombok.Getter;
 import lombok.With;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -129,22 +131,20 @@ public class CommandsWrapper implements TaskCommands {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     public ScriptOutput run() throws Exception {
         List<String> filesToUpload = new ArrayList<>();
-        if (this.namespaceFiles != null) {
-            String tenantId = ((Map<String, String>) runContext.getVariables().get("flow")).get("tenantId");
-            String namespace = ((Map<String, String>) runContext.getVariables().get("flow")).get("namespace");
+        if (this.namespaceFiles != null && this.namespaceFiles.getEnabled()) {
 
-            NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
-            List<URI> injectedFiles = namespaceFilesService.inject(
-                runContext,
-                tenantId,
-                namespace,
-                this.workingDirectory,
-                this.namespaceFiles
-            );
-            injectedFiles.forEach(uri -> filesToUpload.add(uri.toString().substring(1))); // we need to remove the leading '/'
+            List<NamespaceFile> matchedNamespaceFiles = runContext.storage()
+                .namespace()
+                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude());
+
+            matchedNamespaceFiles.forEach(Rethrow.throwConsumer(namespaceFile -> {
+                    InputStream content = runContext.storage().getFile(namespaceFile.uri());
+                    runContext.workingDir().createFile(namespaceFile.path().toString(), content);
+                }));
+
+            matchedNamespaceFiles.forEach(file -> filesToUpload.add(file.path().toString()));
         }
 
         TaskRunner realTaskRunner = this.getTaskRunner();

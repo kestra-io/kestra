@@ -4,6 +4,7 @@ include 'platform'
 
 include 'cli'
 include 'core'
+include 'tests'
 
 include 'runner-memory'
 

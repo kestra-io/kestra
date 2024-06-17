@@ -142,6 +142,18 @@ class FlowTest {
         assertThat(all.size(), is(3));
     }
 
+    @Test
+    void inputValidation() {
+        Flow flow = this.parse("flows/invalids/inputs-validation.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(2));
+
+        assertThat(validate.get().getMessage(), containsString("inputs[0]: no `defaults` can be set for inputs of type 'FILE'"));
+        assertThat(validate.get().getMessage(), containsString("inputs[1]: `itemType` cannot be `ARRAY"));
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

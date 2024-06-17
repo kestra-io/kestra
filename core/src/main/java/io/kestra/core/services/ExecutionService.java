@@ -447,7 +447,7 @@ public class ExecutionService {
 
         var unpausedExecution = this.markAs(execution, flow, runningTaskRun.getId(), newState, inputs);
 
-        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(new CrudEvent<>(unpausedExecution, execution, CrudEventType.UPDATE));
         return unpausedExecution;
     }
 

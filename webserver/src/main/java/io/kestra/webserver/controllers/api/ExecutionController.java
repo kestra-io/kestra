@@ -689,7 +689,7 @@ public class ExecutionController {
 
         Execution restart = executionService.restart(execution.get(), revision);
         executionQueue.emit(restart);
-        eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(new CrudEvent<>(restart, execution.get(), CrudEventType.UPDATE));
 
         return restart;
     }
@@ -739,7 +739,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
             executionQueue.emit(restart);
-            eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+            eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
         }
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
@@ -781,7 +781,7 @@ public class ExecutionController {
             .map(throwFunction(e -> {
                 Execution restart = executionService.restart(e, null);
                 executionQueue.emit(restart);
-                eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+                eventPublisher.publishEvent(new CrudEvent<>(restart, e, CrudEventType.UPDATE));
                 return 1;
             }))
             .reduce(Integer::sum)
@@ -807,7 +807,7 @@ public class ExecutionController {
 
         Execution replay = executionService.replay(execution.get(), taskRunId, revision);
         executionQueue.emit(replay);
-        eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
+        eventPublisher.publishEvent(new CrudEvent<>(replay, execution.get(), CrudEventType.CREATE));
 
         return replay;
     }
@@ -845,7 +845,7 @@ public class ExecutionController {
 
         Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
         executionQueue.emit(replay);
-        eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(new CrudEvent<>(replay, execution.get(), CrudEventType.UPDATE));
 
         return replay;
     }
@@ -1194,7 +1194,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             Execution replay = executionService.replay(execution, null, null);
             executionQueue.emit(replay);
-            eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
+            eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
         }
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());

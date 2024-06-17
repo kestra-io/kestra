@@ -32,6 +32,24 @@
                     {{ item }}
                 </el-option>
             </el-select>
+            <el-select
+                :full-height="false"
+                :input="true"
+                :navbar="false"
+                v-if="input.type === 'MULTISELECT'"
+                v-model="multiSelectInputs[input.id]"
+                @update:model-value="onMultiSelectChange(input.id, $event)"
+                multiple
+            >
+                <el-option
+                    v-for="item in input.options"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                >
+                    {{ item }}
+                </el-option>
+            </el-select>
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"
@@ -139,6 +157,7 @@
         data() {
             return {
                 inputs: {},
+                multiSelectInputs: {}
             };
         },
         emits: ["update:modelValue"],
@@ -169,14 +188,27 @@
 
         },
         methods: {
+            parseInput(input) {
+                if (input && input.length > 0) {
+                    return JSON.parse(input)
+                }
+                return input
+            },
             updateDefaults() {
                 for (const input of this.inputsList || []) {
+                    if (input.type === "MULTISELECT") {
+                        this.multiSelectInputs[input.id] = input.defaults;
+                    }
                     this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
                     this.onChange();
                 }
             },
             onChange() {
                 this.$emit("update:modelValue", this.inputs);
+            },
+            onMultiSelectChange(input, e) {
+                this.inputs[input] = JSON.stringify(e).toString();
+                this.onChange();
             },
             onFileChange(input, e) {
                 if (!e.target) {

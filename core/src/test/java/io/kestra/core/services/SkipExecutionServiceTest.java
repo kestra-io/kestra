@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,14 @@ import static org.hamcrest.Matchers.*;
 class SkipExecutionServiceTest {
     @Inject
     private SkipExecutionService skipExecutionService;
+
+    @BeforeEach
+    void resetAll() {
+        skipExecutionService.setSkipExecutions(null);
+        skipExecutionService.setSkipFlows(null);
+        skipExecutionService.setSkipNamespaces(null);
+        skipExecutionService.setSkipTenants(null);
+    }
 
     @Test
     void skipExecutionByExecutionId() {

@@ -16,7 +16,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @ArrayInputValidation
-public class ArrayInput extends Input<List<?>> {
+public class ArrayInput extends Input<List<?>> implements ItemTypeInterface {
     @Schema(
         title = "Type of the array items.",
         description = "Cannot be of type `ARRAY`."

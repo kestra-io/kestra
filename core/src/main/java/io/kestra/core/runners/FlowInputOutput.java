@@ -7,8 +7,8 @@ import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
-import io.kestra.core.models.flows.input.ArrayInput;
 import io.kestra.core.models.flows.input.FileInput;
+import io.kestra.core.models.flows.input.ItemTypeInterface;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -246,7 +246,7 @@ public class FlowInputOutput {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
 
-        final Type elementType = data instanceof ArrayInput arrayInput ? arrayInput.getItemType() : null;
+        final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
@@ -289,7 +289,7 @@ public class FlowInputOutput {
                         throw new IllegalArgumentException("Expected `URI` but received `" + current + "`");
                     }
                 }
-                case ARRAY -> {
+                case ARRAY, MULTISELECT -> {
                     if (elementType != null) {
                         // recursively parse the elements only once
                         yield JacksonMapper.toList(((String) current))

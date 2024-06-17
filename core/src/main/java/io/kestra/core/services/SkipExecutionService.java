@@ -16,7 +16,7 @@ public class SkipExecutionService {
     private volatile List<String> skipTenants = Collections.emptyList();
 
     public synchronized void setSkipExecutions(List<String> skipExecutions) {
-        this.skipExecutions = skipExecutions;
+        this.skipExecutions = skipExecutions == null ? Collections.emptyList() : skipExecutions;
     }
 
     public synchronized void setSkipFlows(List<String> skipFlows) {
@@ -48,10 +48,10 @@ public class SkipExecutionService {
 
     @VisibleForTesting
     boolean skipExecution(String tenant, String namespace, String flow, String executionId) {
-        return skipTenants.contains(tenant) ||
+        return (tenant != null && skipTenants.contains(tenant)) ||
             skipNamespaces.contains(new NamespaceId(tenant, namespace)) ||
             skipFlows.contains(new FlowId(tenant, namespace, flow)) ||
-            skipExecutions.contains(executionId);
+            (executionId != null && skipExecutions.contains(executionId));
     }
 
     private static String[] splitIdParts(String id) {

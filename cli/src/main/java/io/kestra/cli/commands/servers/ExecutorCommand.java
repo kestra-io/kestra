@@ -40,6 +40,9 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipNamespaces = Collections.emptyList();
 
+    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting purpose only")
+    private List<String> skipTenants = Collections.emptyList();
+
     @CommandLine.Option(names = {"--start-executors"}, split=",", description = "a list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
     private List<String> startExecutors = Collections.emptyList();
 
@@ -58,6 +61,7 @@ public class ExecutorCommand extends AbstractServerCommand {
         this.skipExecutionService.setSkipExecutions(skipExecutions);
         this.skipExecutionService.setSkipFlows(skipFlows);
         this.skipExecutionService.setSkipNamespaces(skipNamespaces);
+        this.skipExecutionService.setSkipTenants(skipTenants);
 
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 

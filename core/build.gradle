@@ -33,7 +33,7 @@ dependencies {
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
     implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.28.1'
     implementation group: 'de.focus-shift', name: 'jollyday-jaxb', version: '0.28.1'
-    implementation 'nl.basjes.gitignore:gitignore-reader:1.5.1'
+    implementation 'nl.basjes.gitignore:gitignore-reader:1.6.0'
     implementation group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
 
     // scheduler

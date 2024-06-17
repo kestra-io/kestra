@@ -212,7 +212,7 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findById() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId(), false);
         assertThat(full.isPresent(), is(true));
 
         full.ifPresent(current -> {
@@ -224,12 +224,12 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void purge() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId(), false);
         assertThat(full.isPresent(), is(true));
 
         executionRepository.purge(ExecutionFixture.EXECUTION_1);
 
-        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
+        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId(), false);
         assertThat(full.isPresent(), is(false));
     }
 
@@ -237,12 +237,12 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void delete() {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
-        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId(), false);
         assertThat(full.isPresent(), is(true));
 
         executionRepository.delete(ExecutionFixture.EXECUTION_1);
 
-        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
+        full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId(), false);
         assertThat(full.isPresent(), is(false));
     }
 
@@ -525,7 +525,7 @@ public abstract class AbstractExecutionRepositoryTest {
         Execution updated = execution.toBuilder().labels(List.of(label)).build();
         executionRepository.update(updated);
 
-        Optional<Execution> validation = executionRepository.findById(null, updated.getId());
+        Optional<Execution> validation = executionRepository.findById(null, updated.getId(), false);
         assertThat(validation.isPresent(), is(true));
         assertThat(validation.get().getLabels().size(), is(1));
         assertThat(validation.get().getLabels().getFirst(), is(label));

@@ -47,7 +47,7 @@ public class SkipExecutionCaseTest {
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
         Thread.sleep(25); // to be 100% sure that it works, add a slight delay to be sure we didn't miss the execution by chance
-        execution1 = executionRepository.findById(null, execution1Id).get();
+        execution1 = executionRepository.findById(null, execution1Id, false).get();
         assertThat(execution1.getState().getCurrent(), is(State.Type.CREATED));
     }
 

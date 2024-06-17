@@ -65,4 +65,13 @@ class SkipExecutionServiceTest {
         assertThat(skipExecutionService.skipExecution(null, "namespace", "not_skipped", "random"), is(false));
         assertThat(skipExecutionService.skipExecution("tenant", "namespace", "not_skipped", "random"), is(false));
     }
+
+    @Test
+    void skipExecutionByNamespace() {
+        skipExecutionService.setSkipNamespaces(List.of("namespace"));
+
+        assertThat(skipExecutionService.skipExecution(null, "namespace", "someFlow", "someExecution"), is(true));
+        assertThat(skipExecutionService.skipExecution(null, "namespace", "anotherFlow", "anotherExecution"), is(true));
+        assertThat(skipExecutionService.skipExecution(null, "other.namespace", "someFlow", "someExecution"), is(false));
+    }
 }

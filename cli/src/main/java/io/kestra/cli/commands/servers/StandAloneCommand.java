@@ -44,6 +44,9 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipFlows = Collections.emptyList();
 
+    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "a list of namespaces to skip, separated by a coma; for troubleshooting purpose only")
+    private List<String> skipNamespaces = Collections.emptyList();
+
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
@@ -55,6 +58,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         this.skipExecutionService.setSkipExecutions(skipExecutions);
         this.skipExecutionService.setSkipFlows(skipFlows);
+        this.skipExecutionService.setSkipNamespaces(skipNamespaces);
 
         super.call();
 

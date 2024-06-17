@@ -1,0 +1,15 @@
+id: inputs-validations
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+    defaults: something
+  - id: array
+    type: ARRAY
+    itemType: ARRAY
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀

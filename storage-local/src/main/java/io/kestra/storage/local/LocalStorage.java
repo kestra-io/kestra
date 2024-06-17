@@ -78,7 +78,7 @@ public class LocalStorage implements StorageInterface {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                uris.add(URI.create(file.toString()));
+                uris.add(URI.create(file.toString().replace("\\", "/")));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -90,7 +90,7 @@ public class LocalStorage implements StorageInterface {
             }
         });
 
-        URI fsPathUri = URI.create(fsPath.toString());
+        URI fsPathUri = URI.create(fsPath.toString().replace("\\", "/"));
         return uris.stream().sorted(Comparator.reverseOrder())
             .map(fsPathUri::relativize)
             .map(URI::getPath)

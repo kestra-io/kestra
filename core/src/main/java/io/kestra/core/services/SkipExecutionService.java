@@ -12,6 +12,7 @@ import java.util.List;
 public class SkipExecutionService {
     private volatile List<String> skipExecutions = Collections.emptyList();
     private volatile List<FlowId> skipFlows = Collections.emptyList();
+    private volatile List<String> skipNamespaces = Collections.emptyList();
 
     public synchronized void setSkipExecutions(List<String> skipExecutions) {
         this.skipExecutions = skipExecutions;
@@ -19,6 +20,10 @@ public class SkipExecutionService {
 
     public synchronized void setSkipFlows(List<String> skipFlows) {
         this.skipFlows = skipFlows == null ? Collections.emptyList() : skipFlows.stream().map(flow -> FlowId.from(flow)).toList();
+    }
+
+    public synchronized void setSkipNamespaces(List<String> skipNamespaces) {
+        this.skipNamespaces = skipNamespaces == null ? Collections.emptyList() : skipNamespaces;
     }
 
     /**
@@ -38,8 +43,9 @@ public class SkipExecutionService {
 
     @VisibleForTesting
     boolean skipExecution(String tenant, String namespace, String flow, String executionId) {
-        return skipExecutions.contains(executionId) ||
-            skipFlows.contains(new FlowId(tenant, namespace, flow));
+        return skipNamespaces.contains(namespace) ||
+            skipFlows.contains(new FlowId(tenant, namespace, flow)) ||
+            skipExecutions.contains(executionId);
     }
 
     record FlowId(String tenant, String namespace, String flow) {

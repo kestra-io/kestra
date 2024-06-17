@@ -3,11 +3,11 @@ package io.kestra.core.runners;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import lombok.Getter;
 
-public abstract class AbstractWorkerTriggerThread extends AbstractWorkerThread {
+public abstract class AbstractWorkerTriggerRunnable extends AbstractWorkerRunnable {
     @Getter
     WorkerTrigger workerTrigger;
 
-    public AbstractWorkerTriggerThread(RunContext runContext, String type, WorkerTrigger workerTrigger) {
+    public AbstractWorkerTriggerRunnable(RunContext runContext, String type, WorkerTrigger workerTrigger) {
         super(runContext, type, workerTrigger.getTrigger().getClass().getClassLoader());
         this.workerTrigger = workerTrigger;
     }

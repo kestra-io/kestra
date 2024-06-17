@@ -123,7 +123,6 @@ export default (callback, store, router) => {
             }
 
             if (errorResponse.response.data) {
-                console.log("heret", errorResponse.response.data)
                 store.dispatch("core/showMessage", {
                     response: errorResponse.response,
                     content: errorResponse.response.data,

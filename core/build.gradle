@@ -31,7 +31,7 @@ dependencies {
     implementation 'com.github.oshi:oshi-core:6.6.1'
     implementation 'io.pebbletemplates:pebble:3.2.2'
     implementation group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
-    implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.28.1'
+    implementation group: 'de.focus-shift', name: 'jollyday-core', version: '0.29.0'
     implementation group: 'de.focus-shift', name: 'jollyday-jaxb', version: '0.29.0'
     implementation 'nl.basjes.gitignore:gitignore-reader:1.6.0'
     implementation group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'

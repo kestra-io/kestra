@@ -20,7 +20,7 @@
 
 <script>
     import EditorView from "../inputs/EditorView.vue";
-    import {mapGetters, mapState} from "vuex";
+    import {mapGetters, mapState, mapMutations} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {apiUrl} from "override/utils/route";
@@ -44,11 +44,15 @@
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
+
+            this.closeAllTabs()
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },
         methods: {
+            ...mapMutations("editor", ["closeAllTabs"]),
+
             async queryBlueprint(blueprintId) {
                 return (await this.$http.get(`${this.blueprintUri}/${blueprintId}/flow`)).data;
             },

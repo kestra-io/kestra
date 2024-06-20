@@ -84,5 +84,9 @@ export default {
                 state.tabs = [state.tabs[0]];
             }
         },
+        closeAllTabs(state) {
+            state.tabs = [];
+            state.current = undefined
+        },
     },
 };

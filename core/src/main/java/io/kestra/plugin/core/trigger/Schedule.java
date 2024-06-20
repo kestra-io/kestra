@@ -22,7 +22,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.validations.CronExpression;
+import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -120,10 +120,11 @@ import java.util.stream.Stream;
     },
     aliases = "io.kestra.core.models.triggers.types.Schedule"
 )
+@ScheduleValidation
 public class Schedule extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
     private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
 
-    public static final CronParser CRON_PARSER = new CronParser(CronDefinitionBuilder.defineCron()
+    private static final CronDefinitionBuilder CRON_DEFINITION_BUILDER = CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()
         .withHours().withValidRange(0, 23).withStrictRange().and()
         .withDayOfMonth().withValidRange(1, 31).withStrictRange().and()
@@ -135,15 +136,15 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         .withSupportedNicknameWeekly()
         .withSupportedNicknameDaily()
         .withSupportedNicknameMidnight()
-        .withSupportedNicknameHourly()
-        .instance()
-    );
+        .withSupportedNicknameHourly();
+
+    private static final CronParser CRON_PARSER = new CronParser(CRON_DEFINITION_BUILDER.instance());
+    private static final CronParser CRON_PARSER_WITH_SECONDS = new CronParser(CRON_DEFINITION_BUILDER.withSeconds().withValidRange(0, 59).withStrictRange().and().instance());
 
     @NotNull
-    @CronExpression
     @Schema(
         title = "The cron expression.",
-        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) without second.\n" +
+        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) with 5 fields (minutes precision). Using `ẁithSeconds: true` you can switch to 6 fields and a seconds precision.\n" +
             "Can also be a cron extension / nickname:\n" +
             "* `@yearly`\n" +
             "* `@annually`\n" +
@@ -155,6 +156,15 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     )
     @PluginProperty
     private String cron;
+
+    @Schema(
+        title = "Whether the cron expression has seconds precision",
+        description = "By default, the cron expression has 5 fields, setting this property to true will allow a 6th fields for seconds precision."
+    )
+    @NotNull
+    @Builder.Default
+    @PluginProperty
+    private Boolean withSeconds = false;
 
     @TimezoneId
     @Schema(
@@ -427,6 +437,11 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .orElse(RecoverMissedSchedules.ALL);
     }
 
+    public Cron parseCron() {
+        CronParser parser = Boolean.TRUE.equals(withSeconds) ? CRON_PARSER_WITH_SECONDS : CRON_PARSER;
+        return parser.parse(this.cron);
+    }
+
     private List<Label> generateLabels(ConditionContext conditionContext, Backfill backfill) {
         List<Label> labels = new ArrayList<>();
 
@@ -477,9 +492,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     private synchronized ExecutionTime executionTime() {
         if (this.executionTime == null) {
-            Cron parse = CRON_PARSER.parse(this.cron);
-
-            this.executionTime = ExecutionTime.forCron(parse);
+            Cron parsed = parseCron();
+            this.executionTime = ExecutionTime.forCron(parsed);
         }
 
         return this.executionTime;

@@ -164,6 +164,29 @@ class ScheduleTest {
     }
 
     @Test
+    void everySecond() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").cron("* * * * * *").withSeconds(true).build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minus(Duration.ofSeconds(1));
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContext(trigger),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent(), is(true));
+
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+
+
+        assertThat(dateFromVars(vars.get("date"), date), is(date));
+        assertThat(dateFromVars(vars.get("next"), date), is(date.plus(Duration.ofSeconds(1))));
+        assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofSeconds(1))));
+    }
+
+    @Test
     void noBackfillNextDate() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());

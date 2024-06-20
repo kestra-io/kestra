@@ -123,6 +123,8 @@ dependencies {
 publishing {
     publications {
         sonatypePublication(MavenPublication) {
+            groupId project.group
+            artifactId project.name
             from components.javaPlatform
         }
     }

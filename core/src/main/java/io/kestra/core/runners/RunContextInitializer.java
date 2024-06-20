@@ -114,7 +114,7 @@ public class RunContextInitializer {
         }
 
         final RunContextLogger runContextLogger = contextLoggerFactory.create(taskRun, task);
-        enrichedVariables.put("addSecretConsumer", (Consumer<String>) runContextLogger::usedSecret);
+        enrichedVariables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
         enrichedVariables = variablesModifier.apply(enrichedVariables);
 
@@ -192,7 +192,7 @@ public class RunContextInitializer {
         final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
-        variables.put("addSecretConsumer", (Consumer<String>) runContextLogger::usedSecret);
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
         final StorageContext context = StorageContext.forTrigger(
             triggerContext.getTenantId(),

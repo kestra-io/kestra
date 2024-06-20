@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.RunVariables;
 import io.kestra.core.secret.SecretService;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
@@ -36,7 +37,7 @@ public class SecretFunction implements Function {
             String secret = secretService.findSecret(flow.get("tenantId"), flow.get("namespace"), key);
 
             try {
-                Consumer<String> addSecretConsumer = (Consumer<String>) context.getVariable("addSecretConsumer");
+                Consumer<String> addSecretConsumer = (Consumer<String>) context.getVariable(RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
                 addSecretConsumer.accept(secret);
             } catch (Exception e) {
                 log.warn("Unable to get secret consumer", e);

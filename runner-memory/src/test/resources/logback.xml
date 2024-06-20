@@ -2,6 +2,7 @@
 <configuration debug="false">
     <include resource="logback/base.xml" />
     <include resource="logback/text.xml" />
+    <include resource="logback/test.xml" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

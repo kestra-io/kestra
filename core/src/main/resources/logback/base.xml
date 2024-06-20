@@ -36,7 +36,7 @@
         We enable INFO for DbMigrate otherwise there is nothing displayed on the console when a migration is ongoing,
         which can be make thinking Kestra is not starting when the migration is long.
     -->
-    <logger name="org.flywaydb.core.internal.command.DbMigrate" level="INFO" />
+    <logger name="org.flywaydb" level="INFO" />
     <!-- Flyway log when using IF NOT EXISTS -->
     <logger name="org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor" level="ERROR" />
 </included>

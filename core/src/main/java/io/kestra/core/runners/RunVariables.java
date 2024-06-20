@@ -7,7 +7,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import lombok.AllArgsConstructor;
 import lombok.With;
@@ -18,12 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * Class for building {@link RunContext} variables.
  */
 public final class RunVariables {
+    public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -273,6 +274,9 @@ public final class RunVariables {
             // adds any additional variables
             if (variables != null) {
                 builder.putAll(variables);
+                if (logger != null && !variables.containsKey(RunVariables.SECRET_CONSUMER_VARIABLE_NAME)) {
+                    builder.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
+                }
             }
 
             return builder.build();

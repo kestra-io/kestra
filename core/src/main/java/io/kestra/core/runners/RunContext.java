@@ -401,6 +401,10 @@ public class RunContext {
                 ));
         }
 
+        if (this.runContextLogger != null) {
+            builder.put("addSecretConsumer", (Consumer<String>) s -> this.runContextLogger.usedSecret(s));
+        }
+
         return builder.build();
     }
 

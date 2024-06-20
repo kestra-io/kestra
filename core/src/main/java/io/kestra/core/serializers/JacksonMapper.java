@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -185,6 +186,10 @@ public final class JacksonMapper {
     public static String applyPatches(Object object, List<JsonNode> patches) throws JsonProcessingException {
         for (JsonNode patch : patches) {
             try {
+                // Required for ES
+                if (!patch.has("value")) {
+                    ((ObjectNode) patch.get(0)).put("value", (JsonNode) null);
+                }
                 JsonNode current = MAPPER.valueToTree(object);
                 object = JsonPatch.fromJson(patch).apply(current);
             } catch (IOException | JsonPatchException e) {

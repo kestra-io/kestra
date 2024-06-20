@@ -1330,6 +1330,8 @@ public class ExecutionController {
         }
 
         Execution newExecution = setLabels(execution, labels);
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+
         return HttpResponse.ok(newExecution);
     }
 
@@ -1350,6 +1352,8 @@ public class ExecutionController {
             .toBuilder()
             .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).toList())
             .build();
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+
         return executionRepository.save(newExecution);
     }
 

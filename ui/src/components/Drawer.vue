@@ -43,11 +43,16 @@
             required: false,
             default: undefined
         },
+        fullScreen: {
+            type: Boolean,
+            required: false,
+            default: false
+        }
     });
 
     const emit = defineEmits(["update:modelValue"])
 
-    const fullScreen = ref(false);
+    const fullScreen = ref(props.fullScreen);
 
     const toggleFullScreen = () => {
         fullScreen.value = !fullScreen.value;

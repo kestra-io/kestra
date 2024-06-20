@@ -21,6 +21,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @deprecated should not be used anymore
+ */
 @Deprecated
 @Singleton
 public class NamespaceFilesService {
@@ -36,7 +39,7 @@ public class NamespaceFilesService {
 
     @Deprecated
     public List<URI> inject(RunContext runContext, String tenantId, String namespace, Path basePath, NamespaceFiles namespaceFiles) throws Exception {
-        if (!namespaceFiles.getEnabled()) {
+        if (!Boolean.TRUE.equals(namespaceFiles.getEnabled())) {
             return Collections.emptyList();
         }
 

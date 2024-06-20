@@ -263,7 +263,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null && this.namespaceFiles.getEnabled()) {
+        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
             runContext.storage()
                 .namespace()
                 .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())

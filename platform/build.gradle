@@ -42,13 +42,14 @@ dependencies {
         // ugly bug for jackson
         api("com.fasterxml.jackson.core:jackson-core")
         api("com.fasterxml.jackson.core:jackson-databind")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-        api("com.fasterxml.jackson.module:jackson-module-parameter-names")
-        api("com.fasterxml.jackson.datatype:jackson-datatype-guava")
         api("com.fasterxml.jackson.core:jackson-annotations")
+        api("com.fasterxml.jackson.module:jackson-module-parameter-names")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
         api("com.fasterxml.jackson.dataformat:jackson-dataformat-smile")
         api("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
         api("com.fasterxml.jackson.dataformat:jackson-dataformat-ion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
+        api("com.fasterxml.jackson.datatype:jackson-datatype-guava")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
         // issue with the Docker lib having a too old version for the k8s extension

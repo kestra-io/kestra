@@ -41,7 +41,7 @@ import java.util.Map;
             full = true,
             code = """
             id: api_call
-            namespace: dev
+            namespace: company.team
             tasks:
               - id: basic_auth_api
                 type: io.kestra.plugin.core.http.Request

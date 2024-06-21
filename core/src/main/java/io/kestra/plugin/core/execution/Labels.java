@@ -44,7 +44,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = {
                 "id: webhook-based-labels",
-                "namespace: com.company",
+                "namespace: company.team",
                 "tasks:",
                 "  - id: update-labels-with-map",
                 "    type: io.kestra.plugin.core.execution.Labels",

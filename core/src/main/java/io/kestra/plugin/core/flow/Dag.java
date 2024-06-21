@@ -47,7 +47,7 @@ import java.util.stream.Stream;
             full = true,
             code = """
                   id: dag-flow
-                  namespace: io.kestra.tests
+                  namespace: company.team
                   tasks:
                     - id: dag
                       type: io.kestra.plugin.core.flow.Dag

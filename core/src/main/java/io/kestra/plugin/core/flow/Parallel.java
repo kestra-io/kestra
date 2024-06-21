@@ -42,7 +42,7 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             code = {
                 "id: parallel",
-                "namespace: io.kestra.tests\n" +
+                "namespace: company.team\n" +
                 "",
                 "tasks:\n" +
                 "  - id: parallel\n" +

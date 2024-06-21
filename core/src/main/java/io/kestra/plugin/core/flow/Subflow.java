@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
         @Example(
             title = "Run a subflow with custom inputs.",
             code = {
-                "namespace: dev",
+                "namespace: company.team",
                 "flowId: subflow",
                 "inputs:",
                 "  user: \"Rick Astley\"",

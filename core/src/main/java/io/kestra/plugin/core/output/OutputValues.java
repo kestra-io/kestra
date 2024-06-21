@@ -31,7 +31,7 @@ import java.util.Map;
             full = true,
             code = """
 id: outputs_flow
-namespace: myteam
+namespace: company.team
 
 tasks:
   - id: output_values

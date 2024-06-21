@@ -11,6 +11,7 @@ import io.kestra.core.server.LocalServiceStateFactory;
 import io.kestra.core.server.ServiceLivenessManager;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 import io.kestra.jdbc.runner.JdbcRunnerEnabled;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -22,6 +23,7 @@ import java.time.Instant;
 
 @Context
 @JdbcRunnerEnabled
+@JdbcRepositoryEnabled
 public final class JdbcServiceLivenessManager extends ServiceLivenessManager {
 
     private static final Logger log = LoggerFactory.getLogger(JdbcServiceLivenessManager.class);

@@ -114,6 +114,14 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check javadoc --no-daemon --priority=normal
 
+      # Sonar
+      - name: Analyze with Sonar
+        if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --info
+
       # Allure check
       - name: Auth to Google Cloud
         id: auth
@@ -157,13 +165,6 @@ jobs:
         if: success() || failure()
         with:
           report_paths: '**/build/test-results/**/TEST-*.xml'
-
-      - name: Analyze with Sonar
-        if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar --info
 
       # Codecov
       - uses: codecov/codecov-action@v4

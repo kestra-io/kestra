@@ -60,7 +60,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = {
                 "id: template",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "inputs:",
                 "  - id: with-string",
@@ -72,7 +72,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
                 "  - id: 2-template",
                 "    type: io.kestra.plugin.core.flow.Template",
-                "    namespace: io.kestra.tests",
+                "    namespace: company.team",
                 "    templateId: template",
                 "    args:",
                 "      my-forward: \"{{ inputs.with-string }}\"",

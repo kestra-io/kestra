@@ -53,7 +53,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             full = true,
             code = {
                 "id: switch",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "inputs:",
                 "  - id: string",

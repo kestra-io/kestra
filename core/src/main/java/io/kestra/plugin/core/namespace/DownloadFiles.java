@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
             code = {
                 """
                 id: download_file
-                namespace: dev
+                namespace: company.team
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.namespace.DownloadFiles
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
             code = {
                 """
                 id: download_all_files
-                namespace: dev
+                namespace: company.team
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.namespace.DownloadFiles

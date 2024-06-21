@@ -59,7 +59,7 @@ import java.util.stream.Stream;
             full = true,
             code = """
             id: scheduled_flow
-            namespace: dev
+            namespace: company.team
 
             tasks:
               - id: sleep_randomly
@@ -103,7 +103,7 @@ import java.util.stream.Stream;
             full = true,
             code = """
             id: business_critical_flow
-            namespace: production
+            namespace: company.team
 
             tasks:
               - id: important_task

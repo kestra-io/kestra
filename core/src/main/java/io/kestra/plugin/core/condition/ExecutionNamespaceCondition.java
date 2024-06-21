@@ -30,7 +30,7 @@ import java.util.function.BiPredicate;
             code = {
                 "- conditions:",
                 "    - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition",
-                "      namespace: io.kestra.tests",
+                "      namespace: company.team",
                 "      comparison: PREFIX"
             }
         )

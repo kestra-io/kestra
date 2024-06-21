@@ -37,7 +37,7 @@ import java.util.Map;
             code = {
                 """
                 id: delete_files
-                namespace: dev
+                namespace: company.team
                 tasks:
                   - id: delete
                     type: io.kestra.plugin.core.namespace.DeleteFiles
@@ -53,7 +53,7 @@ import java.util.Map;
             code = {
                 """
                 id: delete_all_files
-                namespace: dev
+                namespace: company.team
                 tasks:
                   - id: delete
                     type: io.kestra.plugin.core.namespace.DeleteFiles

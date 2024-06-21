@@ -48,7 +48,7 @@ import java.util.Optional;
             full = true,
             code = {
                 "id: each-parallel",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: each-parallel",
@@ -64,7 +64,7 @@ import java.util.Optional;
             full = true,
             code = {
                 "id: each-parallel",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: each-parallel",
@@ -84,7 +84,7 @@ import java.util.Optional;
             full = true,
             code = {
                 "id: each-parallel",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: each-parallel",

@@ -30,7 +30,7 @@ import jakarta.validation.constraints.NotNull;
             code = {
                 "- conditions:",
                 "    - type: io.kestra.plugin.core.condition.FlowCondition",
-                "      namespace: io.kestra.tests",
+                "      namespace: company.team",
                 "      flowId: my-current-flow"
             }
         )

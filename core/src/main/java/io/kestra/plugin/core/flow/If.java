@@ -48,7 +48,7 @@ import java.util.stream.Stream;
             full = true,
             code = {
                 "id: if",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "inputs:",
                 "  - id: string",

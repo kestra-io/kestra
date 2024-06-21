@@ -39,7 +39,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             full = true,
             code = """
                 id: hello_world
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: greeting

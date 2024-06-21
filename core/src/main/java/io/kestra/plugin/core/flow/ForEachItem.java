@@ -66,7 +66,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 Execute a subflow for each batch of items. The subflow `orders` is called from the parent flow `orders_parallel` using the `ForEachItem` task in order to start one subflow execution for each batch of items.
                 ```yaml
                 id: orders
-                namespace: prod
+                namespace: company.team
 
                 inputs:
                   - id: order
@@ -87,7 +87,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = """
                 id: orders_parallel
-                namespace: prod
+                namespace: company.team
 
                 tasks:
                   - id: extract
@@ -104,7 +104,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     items: "{{ outputs.extract.uri }}"
                     batch:
                       rows: 1
-                    namespace: prod
+                    namespace: company.team
                     flowId: orders
                     wait: true # wait for the subflow execution
                     transmitFailed: true # fail the task run if the subflow execution fails
@@ -122,7 +122,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 ```yaml
                 id: mysubflow
-                namespace: dev
+                namespace: company.team
 
                 inputs:
                   - id: json
@@ -137,7 +137,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = """
                 id: iterate_over_json
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: download
@@ -163,7 +163,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     items: "{{ outputs.ion_to_jsonl.uri }}"
                     batch:
                       rows: 1
-                    namespace: dev
+                    namespace: company.team
                     flowId: mysubflow
                     wait: true
                     transmitFailed: true
@@ -176,7 +176,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 ```yaml
                 id: process_batch
-                namespace: dev
+                namespace: company.team
 
                 inputs:
                   - id: data
@@ -191,7 +191,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = """
                 id: process_files
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: loop_over_files
@@ -204,7 +204,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                         batch:
                           rows: 1
                         flowId: process_batch
-                        namespace: dev
+                        namespace: company.team
                         wait: true
                         transmitFailed: true
                         inputs:

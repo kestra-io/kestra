@@ -39,7 +39,7 @@ import jakarta.validation.constraints.NotNull;
             "and forward the `uri` of `myTask` taskId outputs.",
         full = true,
         code = "id: trigger-flow-listener\n" +
-            "namespace: io.kestra.tests\n" +
+            "namespace: company.team\n" +
             "\n" +
             "inputs:\n" +
             "  - id: from-parent\n" +
@@ -57,7 +57,7 @@ import jakarta.validation.constraints.NotNull;
             "      from-parent: '{{ outputs.myTask.uri }}'\n" +
             "    conditions:\n" +
             "      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition\n" +
-            "        namespace: io.kestra.tests\n" +
+            "        namespace: company.team\n" +
             "        flowId: trigger-flow\n" +
             "      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition\n" +
             "        in:\n" +

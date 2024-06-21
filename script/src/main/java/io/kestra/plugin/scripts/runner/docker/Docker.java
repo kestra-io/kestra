@@ -62,7 +62,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
             title = "Execute a Shell command.",
             code = """
                 id: new-shell
-                namespace: myteam
+                namespace: company.team
 
                 tasks:
                   - id: shell
@@ -77,7 +77,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
             title = "Pass input files to the task, execute a Shell command, then retrieve output files.",
             code = """
                 id: new-shell-with-file
-                namespace: myteam
+                namespace: company.team
 
                 inputs:
                   - id: file
@@ -87,14 +87,14 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                   - id: shell
                     type: io.kestra.plugin.scripts.shell.Commands
                     inputFiles:
-                      data.txt: "{{inputs.file}}"
+                      data.txt: "{{ inputs.file }}"
                     outputFiles:
                       - out.txt
                     containerImage: centos
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
                     commands:
-                    - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
+                    - cp {{ workingDir }}/data.txt {{ workingDir }}/out.txt""",
             full = true
         )
     }

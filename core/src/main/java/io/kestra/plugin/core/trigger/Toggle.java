@@ -40,35 +40,35 @@ import java.util.Optional;
             code = {
                 """
                     id: trigger-toggle
-                        namespace: myteam
+                    namespace: company.team
 
-                        inputs:
-                          - id: toggle
-                            type: BOOLEAN
-                            defaults: true
+                    inputs:
+                      - id: toggle
+                        type: BOOLEAN
+                        defaults: true
 
-                        tasks:
-                          - id: if
-                            type: io.kestra.plugin.core.flow.If
-                            condition: "{{inputs.toggle}}"
-                            then:
-                            - id: enable
-                              type: io.kestra.plugin.core.trigger.Toggle
-                              trigger: schedule
-                              enabled: true
-                            else:
-                            - id: disable
-                              type: io.kestra.plugin.core.trigger.Toggle
-                              trigger: schedule
-                              enabled: false
-                          - id: log
-                            type: io.kestra.plugin.core.log.Log
-                            message: Hello World
+                    tasks:
+                      - id: if
+                        type: io.kestra.plugin.core.flow.If
+                        condition: "{{inputs.toggle}}"
+                        then:
+                        - id: enable
+                          type: io.kestra.plugin.core.trigger.Toggle
+                          trigger: schedule
+                          enabled: true
+                        else:
+                        - id: disable
+                          type: io.kestra.plugin.core.trigger.Toggle
+                          trigger: schedule
+                          enabled: false
+                      - id: log
+                        type: io.kestra.plugin.core.log.Log
+                        message: Hello World
 
-                        triggers:
-                          - id: schedule
-                            type: io.kestra.plugin.core.trigger.Schedule
-                            cron: "* * * * *\""""
+                    triggers:
+                      - id: schedule
+                        type: io.kestra.plugin.core.trigger.Schedule
+                        cron: "* * * * *\""""
             }
         )
     },

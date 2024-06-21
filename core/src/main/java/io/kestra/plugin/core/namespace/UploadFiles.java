@@ -37,11 +37,11 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 @Plugin(
     examples = {
         @Example(
-            title = "Upload a custom Python script to the `dev` namespace and execute it",
+            title = "Upload a custom Python script to the `dev` namespace and execute it.",
             full = true,
             code = """
 id: upload_inputfile
-namespace: dev
+namespace: company.team
 
 inputs:
   - id: my_python_script

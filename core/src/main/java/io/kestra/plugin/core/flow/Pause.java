@@ -48,7 +48,7 @@ import java.util.stream.Stream;
             full = true,
             code = """
                 id: human_in_the_loop
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: before_approval
@@ -74,7 +74,7 @@ import java.util.stream.Stream;
             full = true,
             code = """
                 id: vacation_approval_process
-                namespace: dev
+                namespace: company.team
 
                 inputs:
                   - id: request.name

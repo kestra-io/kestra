@@ -65,7 +65,7 @@ import jakarta.validation.constraints.NotNull;
             title = "Clone a Git repository into the Working Directory and run a Python script in a Docker container.",
             code = """
                 id: gitPython
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: wdir
@@ -89,7 +89,7 @@ import jakarta.validation.constraints.NotNull;
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
 id: apiJSONtoMongoDB
-namespace: dev
+namespace: company.team
 
 tasks:
 - id: wdir
@@ -138,7 +138,7 @@ tasks:
             full = true,
             code = {
                 "id: working-directory",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: working-directory",
@@ -160,7 +160,7 @@ tasks:
             title = "A working directory with a cache of the node_modules directory.",
             code = """
                 id: node-with-cache
-                namespace: dev
+                namespace: company.team
                 tasks:
                   - id: working-dir
                     type: io.kestra.plugin.core.flow.WorkingDirectory

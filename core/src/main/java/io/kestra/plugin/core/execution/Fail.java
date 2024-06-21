@@ -32,7 +32,7 @@ import lombok.experimental.SuperBuilder;
             full = true,
             code = {
                 "id: fail-on-switch\n" +
-                "namespace: io.kestra.tests\n" +
+                "namespace: company.team\n" +
                 "\n" +
                 "inputs:\n" +
                 "  - id: param\n" +
@@ -66,7 +66,7 @@ import lombok.experimental.SuperBuilder;
             full = true,
             code = {
                 "id: fail-on-condition\n" +
-                "namespace: io.kestra.tests\n" +
+                "namespace: company.team\n" +
                 "\n" +
                 "inputs:\n" +
                 "  - name: param\n" +

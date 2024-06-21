@@ -45,7 +45,7 @@ import java.util.stream.Stream;
             full = true,
             code = {
                 "id: sequential",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: sequential",

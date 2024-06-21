@@ -35,7 +35,7 @@ import java.util.Optional;
                         code = {
                                 """
                                 id: http_price_alert
-                                namespace: dev
+                                namespace: company.team
 
                                 tasks:
                                   - id: send_slack_alert
@@ -63,7 +63,7 @@ import java.util.Optional;
                         code = {
                                 """
                                 id: http-trigger
-                                namespace: dev
+                                namespace: company.team
 
                                 triggers:
                                   - id: http

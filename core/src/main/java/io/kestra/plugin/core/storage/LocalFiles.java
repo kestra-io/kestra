@@ -32,7 +32,7 @@ import java.util.Map;
         title = "Output local files created in a Python task and load them to S3.",
         code = """
                 id: outputsFromPythonTask
-                namespace: dev
+                namespace: company.team
 
                 tasks:
                   - id: wdir

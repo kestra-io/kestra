@@ -36,7 +36,7 @@ import java.util.Optional;
             full = true,
             code = {
                 "id: allow-failure",
-                "namespace: io.kestra.tests",
+                "namespace: company.team",
                 "",
                 "tasks:",
                 "  - id: sequential",

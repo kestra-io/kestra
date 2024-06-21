@@ -12,7 +12,7 @@ class NamespaceFileTest {
 
     @Test
     void shouldThrowExceptionGivenNullNamespace() {
-        Assertions.assertThrows(NullPointerException.class, () -> NamespaceFile.of(null, (Path)null));
+        Assertions.assertThrows(NullPointerException.class, () -> NamespaceFile.of(null, (Path) null));
     }
 
     @Test
@@ -86,5 +86,17 @@ class NamespaceFileTest {
             namespace
         );
         Assertions.assertEquals(Path.of("/io/kestra/test/_files/sub/dir/file.txt"), namespaceFile.storagePath());
+    }
+
+    @Test
+    void shouldPreserveTrailingSlashForUri() {
+        NamespaceFile namespaceFile = NamespaceFile.of(namespace, URI.create("/sub/dir/"));
+        Assertions.assertEquals(new NamespaceFile(
+                Path.of("sub/dir"),
+                URI.create("kestra:///io/kestra/test/_files/sub/dir/"),
+                namespace
+            ), namespaceFile
+        );
+        Assertions.assertTrue(namespaceFile.isDirectory());
     }
 }

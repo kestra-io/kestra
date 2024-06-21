@@ -31,7 +31,7 @@ public class NamespaceFilesService {
     private StorageInterface storageInterface;
 
     public List<URI> inject(RunContext runContext, String tenantId, String namespace, Path basePath, NamespaceFiles namespaceFiles) throws Exception {
-        if (!namespaceFiles.getEnabled()) {
+        if (!Boolean.TRUE.equals(namespaceFiles.getEnabled())) {
             return Collections.emptyList();
         }
 

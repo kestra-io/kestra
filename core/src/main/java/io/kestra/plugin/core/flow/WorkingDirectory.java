@@ -270,7 +270,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null ) {
+        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
             NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
             namespaceFilesService.inject(runContext, taskRun.getTenantId(), taskRun.getNamespace(), runContext.tempDir(), this.namespaceFiles);
         }

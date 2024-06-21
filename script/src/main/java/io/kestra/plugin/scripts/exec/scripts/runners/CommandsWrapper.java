@@ -131,8 +131,10 @@ public class CommandsWrapper implements TaskCommands {
     @SuppressWarnings("unchecked")
     public ScriptOutput run() throws Exception {
         List<String> filesToUpload = new ArrayList<>();
-        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
+        String tenantId = ((Map<String, String>) runContext.getVariables().get("flow")).get("tenantId");
+        String namespace = ((Map<String, String>) runContext.getVariables().get("flow")).get("namespace");
 
+        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
             NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
             List<URI> injectedFiles = namespaceFilesService.inject(
                 runContext,

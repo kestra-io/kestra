@@ -41,7 +41,9 @@ dependencies {
     implementation group: 'com.cronutils', name: 'cron-utils'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator'
+    implementation ("com.github.victools:jsonschema-generator") {
+        exclude (group: 'com.fasterxml.jackson.core', module: 'jackson-core')
+    }
     implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation'
     implementation group: 'com.github.victools', name: 'jsonschema-module-jackson'
     implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2'

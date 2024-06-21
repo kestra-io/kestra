@@ -117,6 +117,7 @@ dependencies {
         api "io.kestra:model:$version"
         api "io.kestra:script:$version"
         api "io.kestra:processor:$version"
+        api "io.kestra:tests:$version"
         // the following are used in plugin tests so they are in the platform even if normally not used out there
         api "io.kestra:repository-memory:$version"
         api "io.kestra:runner-memory:$version"

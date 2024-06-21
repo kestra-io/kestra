@@ -115,6 +115,16 @@ public class RunContextFactory {
 
 
     @VisibleForTesting
+    public RunContext of(final Flow flow, final Map<String, Object> variables) {
+        RunContextLogger runContextLogger = new RunContextLogger();
+        return newBuilder()
+            .withLogger(runContextLogger)
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, flowService))
+            .withVariables(variables)
+            .build();
+    }
+
+    @VisibleForTesting
     public RunContext of(final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
@@ -127,10 +137,18 @@ public class RunContextFactory {
                         return URI.create("");
                     }
 
+                    @SuppressWarnings("unchecked")
                     @Override
                     public String getTenantId() {
                         var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
                         return Optional.ofNullable(tenantId).map(Object::toString).orElse(null);
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public String getNamespace() {
+                        var namespace = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("namespace");
+                        return Optional.ofNullable(namespace).map(Object::toString).orElse(null);
                     }
                 },
                 storageInterface,

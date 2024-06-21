@@ -34,7 +34,7 @@ public record NamespaceFile(
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
      *
-     * @param uri       The path of file relative to the namespace - cannot be {@code null}.
+     * @param uri       The path of file relative to the namespace or fully qualified URI.
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
@@ -44,10 +44,12 @@ public record NamespaceFile(
         }
 
         Path path = Path.of(uri.getPath());
+
+        final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
             if (!uri.getScheme().equalsIgnoreCase("kestra")) {
                 throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri.getScheme()
+                    "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
                 ));
             }
             if (!uri.getPath().startsWith(StorageContext.namespaceFilePrefix(namespace))) {
@@ -55,9 +57,22 @@ public record NamespaceFile(
                     "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri)
                 );
             }
-            return of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path));
+            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path));
+        } else {
+            namespaceFile = of(namespace, path);
         }
-        return of(namespace, path);
+
+        boolean trailingSlash = uri.toString().endsWith("/");
+        if (!trailingSlash) {
+            return namespaceFile;
+        }
+
+        // trailing slash on URI is used to identify directory.
+        return new NamespaceFile(
+                namespaceFile.path,
+                URI.create(namespaceFile.uri.toString() + "/"),
+                namespaceFile.namespace
+            );
     }
 
     /**
@@ -90,7 +105,7 @@ public record NamespaceFile(
     }
 
     /**
-     * Returns The path of file relative to the namespace.
+     * Returns the path of file relative to the namespace.
      *
      * @param withLeadingSlash specify whether to remove leading slash from the returned path.
      * @return The path.
@@ -116,5 +131,16 @@ public record NamespaceFile(
      */
     public Path storagePath() {
         return Path.of(uri().getPath());
+    }
+
+    /**
+     * Checks whether this namespace file is a directory.
+     * <p>
+     * By default, a namespace file is considered a directory if its URI ends with "/".
+     *
+     * @return {@code true} if this namespace file is a directory.
+     */
+    public boolean isDirectory() {
+        return uri.toString().endsWith("/");
     }
 }

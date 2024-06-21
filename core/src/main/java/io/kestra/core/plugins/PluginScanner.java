@@ -106,9 +106,9 @@ public class PluginScanner {
 
         final ServiceLoader<Plugin> sl = ServiceLoader.load(Plugin.class, classLoader);
         try {
-            sl.forEach(plugin -> {
+            for (Plugin plugin : sl) {
                 if (plugin.getClass().isAnnotationPresent(Hidden.class)) {
-                    return;
+                    continue;
                 }
 
                 switch (plugin) {
@@ -141,10 +141,14 @@ public class PluginScanner {
                 }
 
                 Plugin.getAliases(plugin.getClass()).forEach(alias -> aliases.put(alias, plugin.getClass()));
-            });
-        } catch (ServiceConfigurationError e) {
+            }
+        } catch (ServiceConfigurationError | NoClassDefFoundError e) {
             Object location = externalPlugin != null ? externalPlugin.getLocation() : "core";
-            log.error("Unable to load all plugin classes from '{}'. Cause: {}", location, e.getMessage());
+            log.error("Unable to load all plugin classes from '{}'. Cause: [{}] {}",
+                location,
+                e.getClass().getSimpleName(),
+                e.getMessage()
+            );
         }
 
         var guidesDirectory = classLoader.getResource("doc/guides");

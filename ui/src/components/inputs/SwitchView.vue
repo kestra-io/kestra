@@ -28,6 +28,8 @@
 </script>
 
 <script>
+    import {mapMutations} from "vuex";
+
     export default {
         props: {
             type: {
@@ -37,7 +39,10 @@
         },
         emits: ["switch-view"],
         methods: {
+            ...mapMutations("editor", ["changeView"]),
+
             switchView(view) {
+                this.changeView(view)
                 this.$emit("switch-view", view)
             },
             buttonType(view) {

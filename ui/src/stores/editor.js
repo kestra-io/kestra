@@ -6,6 +6,7 @@ export default {
         explorerWidth: 20,
         current: undefined,
         tabs: [],
+        view: undefined,
     },
     mutations: {
         updateOnboarding(state) {
@@ -87,6 +88,9 @@ export default {
         closeAllTabs(state) {
             state.tabs = [];
             state.current = undefined
+        },
+        changeView(state, view) {
+            state.view = view;
         },
     },
 };

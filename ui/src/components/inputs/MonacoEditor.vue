@@ -16,6 +16,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas";
+    import {editorViewTypes} from "../../utils/constants";
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import uniqBy from "lodash/uniqBy";
@@ -56,7 +57,8 @@
             ...mapState({
                 currentTab: (state) => state.editor.current,
                 tabs: (state) => state.editor.tabs,
-                flow: (state) => state.flow.flow
+                flow: (state) => state.flow.flow,
+                view: (state) => state.editor.view
             }),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
@@ -677,6 +679,8 @@
                 this.editor.focus();
             },
             destroy: function () {
+                if(this.view === editorViewTypes.TOPOLOGY) return;
+
                 this.subflowAutocompletionProvider?.dispose();
                 this.pebbleAutocompletion?.dispose();
                 this.nestedFieldAutocompletionProvider?.dispose();

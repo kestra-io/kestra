@@ -479,7 +479,7 @@ subprojects {
     }
 
     tasks.withType(GenerateModuleMetadata).configureEach {
-        // Suppression this validaton error as we want to enfore the Kestra platform
+        // Suppression this validation error as we want to enforce the Kestra platform
         suppressedValidationErrors.add('enforced-platform')
     }
 }

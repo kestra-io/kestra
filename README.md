@@ -137,8 +137,6 @@ triggers:
   - id: schedule
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "*/15 * * * *"
-    backfill:
-      start: 2023-10-05T14:00:00Z
 ```
 
 

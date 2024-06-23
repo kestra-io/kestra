@@ -142,13 +142,13 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(10));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
 
         List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 1);
         receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
-        assertThat(logEntries.get(0).getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
+        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
     }
 
     @Test
@@ -158,7 +158,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(3));
 
         assertThat(
-            ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().get(0).getOutputs().get("value"))),
+            ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().getFirst().getOutputs().get("value"))),
             ZonedDateTimeMatchers.within(10, ChronoUnit.SECONDS, ZonedDateTime.now())
         );
         assertThat(execution.getTaskRunList().get(1).getOutputs().get("value"), is("task-id"));

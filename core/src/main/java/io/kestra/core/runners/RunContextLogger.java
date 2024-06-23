@@ -205,7 +205,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 return value
                     .stream()
                     .map(this::recursive)
-                    .collect(Collectors.toList());
+                    .toList();
             } else if (object instanceof String string) {
                 return replaceSecret(string);
             } else {

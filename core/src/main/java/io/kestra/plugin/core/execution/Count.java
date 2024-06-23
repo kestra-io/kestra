@@ -152,7 +152,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
                 .count(item.getCount())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
 
         logger.debug("{} flows matching the expression", count.size());
 

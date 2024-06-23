@@ -186,7 +186,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
                 this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
                 this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

@@ -25,10 +25,10 @@ class PluginInstallCommandTest {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:0.6.0"};
             PicocliRunner.call(PluginInstallCommand.class, ctx, args);
 
-            List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
+            List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.get(0).getFileName().toString(), is("plugin-notifications-0.6.0.jar"));
+            assertThat(files.getFirst().getFileName().toString(), is("plugin-notifications-0.6.0.jar"));
         }
     }
 
@@ -41,11 +41,11 @@ class PluginInstallCommandTest {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:LATEST"};
             PicocliRunner.call(PluginInstallCommand.class, ctx, args);
 
-            List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
+            List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.get(0).getFileName().toString(), startsWith("plugin-notifications"));
-            assertThat(files.get(0).getFileName().toString(), not(containsString("LATEST")));
+            assertThat(files.getFirst().getFileName().toString(), startsWith("plugin-notifications"));
+            assertThat(files.getFirst().getFileName().toString(), not(containsString("LATEST")));
         }
     }
 
@@ -59,10 +59,10 @@ class PluginInstallCommandTest {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.storage:storage-s3:[0.12,0.13.0-SNAPSHOT)"};
             PicocliRunner.call(PluginInstallCommand.class, ctx, args);
 
-            List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
+            List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.get(0).getFileName().toString(), is("storage-s3-0.12.1.jar"));
+            assertThat(files.getFirst().getFileName().toString(), is("storage-s3-0.12.1.jar"));
         }
     }
 }

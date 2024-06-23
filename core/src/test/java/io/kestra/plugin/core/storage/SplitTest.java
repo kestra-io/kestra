@@ -46,7 +46,7 @@ class SplitTest {
         Split.Output run = result.run(runContext);
 
         assertThat(run.getUris().size(), is(8));
-        assertThat(run.getUris().get(0).getPath(), endsWith(".yml"));
+        assertThat(run.getUris().getFirst().getPath(), endsWith(".yml"));
         assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n"), is(1000));
     }
 
@@ -86,7 +86,7 @@ class SplitTest {
         return IntStream
             .range(0, count)
             .mapToObj(value -> StringUtils.leftPad(value + "", 20))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private String readAll(List<URI> uris) throws IOException {

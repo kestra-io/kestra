@@ -34,9 +34,9 @@ class ClassPluginDocumentationTest {
             List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
             assertThat(scan.size(), is(1));
-            assertThat(scan.get(0).getTasks().size(), is(1));
+            assertThat(scan.getFirst().getTasks().size(), is(1));
 
-            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class);
 
             assertThat(doc.getDocExamples().size(), is(2));
             assertThat(doc.getIcon(), is(notNullValue()));

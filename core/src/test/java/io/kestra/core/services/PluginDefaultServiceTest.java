@@ -77,17 +77,17 @@ class PluginDefaultServiceTest {
 
         Flow injected = pluginDefaultService.injectDefaults(flow);
 
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getDoubleValue(), is(19D));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getArrays().size(), is(2));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getArrays(), containsInAnyOrder(1, 2));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getHere(), is("me"));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
-        assertThat(((DefaultTriggerTester) injected.getTriggers().get(0)).getSet(), is(123));
-        assertThat(((ExpressionCondition) injected.getTriggers().get(0).getConditions().get(0)).getExpression(), is("{{ test }}"));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(666));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getDoubleValue(), is(19D));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getArrays().size(), is(2));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getArrays(), containsInAnyOrder(1, 2));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getHere(), is("me"));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().size(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().size(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().get("key"), is("test"));
+        assertThat(((DefaultTriggerTester) injected.getTriggers().getFirst()).getSet(), is(123));
+        assertThat(((ExpressionCondition) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression(), is("{{ test }}"));
     }
 
     @Test
@@ -117,7 +117,7 @@ class PluginDefaultServiceTest {
 
         Flow injected = pluginDefaultService.injectDefaults(flow);
 
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(123));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(123));
     }
 
     @Test
@@ -157,8 +157,8 @@ class PluginDefaultServiceTest {
 
         Flow injected = pluginDefaultService.injectDefaults(flow);
 
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(2));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(666));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(2));
     }
 
     @Test
@@ -180,7 +180,7 @@ class PluginDefaultServiceTest {
 
         Flow injected = pluginDefaultService.injectDefaults(flow);
 
-        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(1));
     }
 
     @SuperBuilder

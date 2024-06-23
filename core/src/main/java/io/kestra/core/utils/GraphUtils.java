@@ -86,7 +86,7 @@ public class GraphUtils {
             .stream()
             .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private static List<Triple<AbstractGraph, AbstractGraph, Relation>> rawEdges(GraphCluster graphCluster) {
@@ -98,14 +98,14 @@ public class GraphUtils {
                     .stream()
                     .flatMap(t -> t instanceof GraphCluster ? rawEdges((GraphCluster) t).stream() : Stream.of())
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static List<FlowGraph.Edge> edges(GraphCluster graphCluster) {
         return rawEdges(graphCluster)
             .stream()
             .map(r -> new FlowGraph.Edge(r.getLeft().getUid(), r.getMiddle().getUid(), r.getRight()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static List<Pair<GraphCluster, List<String>>> clusters(GraphCluster graphCluster, List<String> parents) {
@@ -125,7 +125,7 @@ public class GraphUtils {
 
                 return Stream.of();
             })
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static Set<AbstractGraph> successors(GraphCluster graphCluster, List<String> taskRunIds) {
@@ -136,7 +136,7 @@ public class GraphUtils {
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
-            .collect(Collectors.toList());
+            .toList();
 
         Set<String> edgeUuid = selectedTaskRuns
             .stream()
@@ -158,7 +158,7 @@ public class GraphUtils {
                 Stream.of(edge),
                 recursiveEdge(edges, edge.getTarget()).stream()
             ))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static void sequential(
@@ -470,6 +470,6 @@ public class GraphUtils {
         return taskRuns
             .stream()
             .filter(taskRun -> parent == null || (taskRun.getParentTaskRunId().equals(parent.getId())))
-            .collect(Collectors.toList());
+            .toList();
     }
 }

@@ -186,7 +186,7 @@ public class Flow extends AbstractFlow {
     public List<Task> allTasksWithChilds() {
         return allTasks()
             .flatMap(this::allTasksWithChilds)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private Stream<Task> allTasksWithChilds(Task task) {
@@ -209,7 +209,7 @@ public class Flow extends AbstractFlow {
     public List<String> allTriggerIds() {
         return this.triggers != null ? this.triggers.stream()
             .map(AbstractTrigger::getId)
-            .collect(Collectors.toList()) : new ArrayList<>();
+            .toList() : new ArrayList<>();
     }
 
     public List<String> allTasksWithChildsAndTriggerIds() {
@@ -218,7 +218,7 @@ public class Flow extends AbstractFlow {
                 .map(Task::getId),
             this.allTriggerIds().stream()
         )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<Task> allErrorsWithChilds() {
@@ -290,7 +290,7 @@ public class Flow extends AbstractFlow {
             return value
                 .stream()
                 .map(r -> recursiveUpdate(r, previous, newValue))
-                .collect(Collectors.toList());
+                .toList();
         } else {
             return object;
         }
@@ -304,7 +304,7 @@ public class Flow extends AbstractFlow {
         return this.getListeners()
             .stream()
             .flatMap(listener -> listener.getTasks().stream())
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public boolean equalsWithoutRevision(Flow o) {

@@ -193,7 +193,7 @@ public final class RunVariables {
                 List<Map<String, Object>> parents = execution.parents(taskRun);
                 builder.put("parents", parents);
                 if (!parents.isEmpty()) {
-                    builder.put("parent", parents.get(0));
+                    builder.put("parent", parents.getFirst());
                 }
             }
 

@@ -44,7 +44,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @Override
@@ -79,7 +79,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @SuppressWarnings("RedundantCast")

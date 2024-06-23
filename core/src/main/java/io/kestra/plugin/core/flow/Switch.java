@@ -127,7 +127,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
                     this.errors != null ? this.errors.stream() : Stream.empty()
                 )
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

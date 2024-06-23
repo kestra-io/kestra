@@ -37,7 +37,7 @@ public class KeysFilter implements Filter {
             return IntStream
                 .rangeClosed(0, inputList.size() - 1)
                 .boxed()
-                .collect(Collectors.toList());
+                .toList();
         }
 
         if (input.getClass().isArray()) {
@@ -45,7 +45,7 @@ public class KeysFilter implements Filter {
             return IntStream
                 .rangeClosed(0, length - 1)
                 .boxed()
-                .collect(Collectors.toList());
+                .toList();
         }
 
         throw new PebbleException(null, "'keys' filter can only be applied to List, Map, Array. Actual type was: " + input.getClass().getName(), lineNumber, self.getName());

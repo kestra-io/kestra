@@ -39,7 +39,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
                 .map(path -> yamlFlowParser.parse(path.toFile(), Template.class))
-                .collect(Collectors.toList());
+                .toList();
 
             if (templates.isEmpty()) {
                 stdOut("No template found on '{}'", directory.toFile().getAbsolutePath());

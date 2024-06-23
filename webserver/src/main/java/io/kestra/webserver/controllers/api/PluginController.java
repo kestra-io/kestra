@@ -88,7 +88,7 @@ public class PluginController {
     public List<InputType> inputs() throws ClassNotFoundException {
         return Stream.of(Type.values())
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Get(uri = "inputs/{type}")
@@ -129,7 +129,7 @@ public class PluginController {
         return pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Get(uri = "icons")

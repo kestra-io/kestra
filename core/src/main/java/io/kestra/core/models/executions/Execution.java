@@ -238,7 +238,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         return this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
@@ -324,7 +324,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         return tasks
             .stream()
             .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
@@ -339,7 +339,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 .stream()
                 .anyMatch(resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun))
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public Optional<TaskRun> findFirstByState(State.Type state) {
@@ -652,7 +652,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                             Stream.of(lastAttempt
                                 .withState(State.Type.FAILED))
                         )
-                        .collect(Collectors.toList())
+                        .toList()
                 )
                 .withState(State.Type.FAILED),
             RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun))
@@ -843,7 +843,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         )
             .filter(t -> t.getValue() != null)
             .map(TaskRun::getValue)
-            .collect(Collectors.toList());
+            .toList();
     }
 
 

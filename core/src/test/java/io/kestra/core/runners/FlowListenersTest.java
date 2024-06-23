@@ -80,7 +80,7 @@ abstract public class FlowListenersTest {
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
-            assertThat(flowListenersService.flows().get(0).getTasks().get(0).getId(), is("test2"));
+            assertThat(flowListenersService.flows().getFirst().getTasks().getFirst().getId(), is("test2"));
         });
 
         Flow second = create("second_" + IdUtils.create(), "test");

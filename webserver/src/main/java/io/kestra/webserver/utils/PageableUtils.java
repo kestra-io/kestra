@@ -43,7 +43,7 @@ public class PageableUtils {
 
                     return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);
                 })
-                .collect(Collectors.toList())
+                .toList()
             );
     }
 }

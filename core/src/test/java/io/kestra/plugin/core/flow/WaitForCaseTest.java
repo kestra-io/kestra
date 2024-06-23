@@ -44,6 +44,7 @@ public class WaitForCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
+    @SuppressWarnings("unchecked")
     public void waitforMultipleTasks() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-multiple-tasks");
 

@@ -299,7 +299,7 @@ public class FlowController {
                 flows
                     .stream()
                     .map(throwFunction(flow -> FlowWithSource.of(flow, flow.generateSource())))
-                    .collect(Collectors.toList()),
+                    .toList(),
                 delete
             )
             .stream()
@@ -595,7 +595,7 @@ public class FlowController {
     ) throws IOException {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
-            .collect(Collectors.toList());
+            .toList();
         var bytes = zipFlows(flows);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }

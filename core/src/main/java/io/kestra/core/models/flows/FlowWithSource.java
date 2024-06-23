@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 public class FlowWithSource extends Flow {
     String source;
 
+    @SuppressWarnings("deprecation")
     public Flow toFlow() {
         return Flow.builder()
             .tenantId(this.tenantId)
@@ -58,6 +59,7 @@ public class FlowWithSource extends Flow {
             this.source.equals(cleanupSource(flowSource));
     }
 
+    @SuppressWarnings("deprecation")
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
             .tenantId(flow.tenantId)

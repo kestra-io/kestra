@@ -140,7 +140,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
                 this.tasks != null ? this.tasks.stream().map(DagTask::getTask) : Stream.empty(),
                 this.errors != null ? this.errors.stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override
@@ -177,7 +177,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
 
         return dependenciesIds.stream()
             .filter(dependencyId -> !tasksIds.contains(dependencyId))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public ArrayList<String> dagCheckCyclicDependencies(List<DagTask> taskDepends) {

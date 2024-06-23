@@ -63,7 +63,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(23));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        TaskRun last = execution.findTaskRunsByTaskId("2_return").get(0);
+        TaskRun last = execution.findTaskRunsByTaskId("2_return").getFirst();
         TaskRun lastWithValue = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
         assertThat((String) last.getOutputs().get("value"), containsString((String) lastWithValue.getOutputs().get("value")));
 

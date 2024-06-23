@@ -39,7 +39,7 @@ public class SchedulerEndpoint {
                     schedulableNextDate.containsKey(uid) ? schedulableNextDate.get(uid).getNext() : null
                 );
             })
-            .collect(Collectors.toList());
+            .toList();
 
         return SchedulerEndpointResult.builder()
             .schedulableCount(result.size())

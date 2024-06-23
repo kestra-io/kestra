@@ -96,7 +96,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
                 this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
                 this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

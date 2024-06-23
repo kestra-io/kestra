@@ -41,7 +41,7 @@ public class WorkerEndpoint {
                         (workerTask instanceof WorkerTask) ? ((WorkerTask) workerTask).getTask() : null,
                         (workerTask instanceof WorkerTrigger) ? ((WorkerTrigger) workerTask).getTrigger() : null
                     ))
-                    .collect(Collectors.toList())
+                    .toList()
             )
             .build()
         ;

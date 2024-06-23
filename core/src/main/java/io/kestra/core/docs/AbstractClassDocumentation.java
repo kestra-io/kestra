@@ -83,7 +83,7 @@ public abstract class AbstractClassDocumentation<T> {
                         (String) r.get("code")
                     ))
                 ))
-                .collect(Collectors.toList());
+                .toList();
         }
 
         if (this.propertiesSchema.containsKey("properties")) {

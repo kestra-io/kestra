@@ -123,7 +123,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
                 tasks.stream(),
                 this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

@@ -20,7 +20,7 @@ class PluginScannerTest {
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
-        assertThat(scan.get(0).getManifest().getMainAttributes().getValue("X-Kestra-Group"), is("io.kestra.plugin.templates"));
+        assertThat(scan.getFirst().getManifest().getMainAttributes().getValue("X-Kestra-Group"), is("io.kestra.plugin.templates"));
     }
 
     @Test

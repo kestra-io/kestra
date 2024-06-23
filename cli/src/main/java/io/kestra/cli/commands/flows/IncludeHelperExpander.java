@@ -28,7 +28,7 @@ public abstract class IncludeHelperExpander {
 
         // handle single line directly with the suffix (should be between quotes or double-quotes
         if(include.size() == 1) {
-            String singleInclude = include.get(0);
+            String singleInclude = include.getFirst();
             return prefix + singleInclude + suffix;
         }
 

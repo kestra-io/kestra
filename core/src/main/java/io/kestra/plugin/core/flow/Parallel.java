@@ -103,7 +103,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
                 this.tasks != null ? this.tasks.stream() : Stream.empty(),
                 this.errors != null ? this.errors.stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

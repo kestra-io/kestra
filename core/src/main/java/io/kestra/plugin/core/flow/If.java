@@ -133,7 +133,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
                     this._else != null ? this._else.stream() : Stream.empty(),
                     this.errors != null ? this.errors.stream() : Stream.empty())
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

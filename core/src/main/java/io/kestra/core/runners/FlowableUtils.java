@@ -60,7 +60,7 @@ public class FlowableUtils {
         // first one
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
         if (taskRuns.isEmpty()) {
-            return Collections.singletonList(currentTasks.get(0).toNextTaskRun(execution));
+            return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
         }
 
         // first created, leave
@@ -129,7 +129,7 @@ public class FlowableUtils {
             if (currentTasks.size() > lastIndex + 1) {
                 return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRun(execution));
             } else {
-                return Collections.singletonList(currentTasks.get(0).toNextTaskRun(execution));
+                return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
             }
         }
 
@@ -185,7 +185,7 @@ public class FlowableUtils {
                 .parentId(parentTaskRun.getId())
                 .build()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static List<NextTaskRun> resolveParallelNexts(
@@ -299,7 +299,7 @@ public class FlowableUtils {
             }
 
 
-            return nextTaskRunStream.collect(Collectors.toList());
+            return nextTaskRunStream.toList();
         }
 
         return Collections.emptyList();

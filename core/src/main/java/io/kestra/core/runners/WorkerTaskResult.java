@@ -34,6 +34,6 @@ public class WorkerTaskResult {
         this.dynamicTaskRuns = dynamicWorkerResults
             .stream()
             .map(WorkerTaskResult::getTaskRun)
-            .collect(Collectors.toList());
+            .toList();
     }
 }

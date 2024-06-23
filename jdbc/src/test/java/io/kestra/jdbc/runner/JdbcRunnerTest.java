@@ -97,7 +97,7 @@ public abstract class JdbcRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(13));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat((String) execution.findTaskRunsByTaskId("t2").get(0).getOutputs().get("value"), containsString("value1"));
+        assertThat((String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), containsString("value1"));
     }
 
     @Test
@@ -263,7 +263,7 @@ public abstract class JdbcRunnerTest {
     void executionDate() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "execution-start-date", null, null, Duration.ofSeconds(60));
 
-        assertThat((String) execution.getTaskRunList().get(0).getOutputs().get("value"), matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
+        assertThat((String) execution.getTaskRunList().getFirst().getOutputs().get("value"), matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
     }
 
     @Test
@@ -321,7 +321,7 @@ public abstract class JdbcRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "executable-fail");
 
         assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

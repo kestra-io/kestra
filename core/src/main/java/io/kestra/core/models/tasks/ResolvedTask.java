@@ -41,6 +41,6 @@ public class ResolvedTask {
         return tasks
             .stream()
             .map(ResolvedTask::of)
-            .collect(Collectors.toList());
+            .toList();
     }
 }

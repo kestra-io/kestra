@@ -81,7 +81,7 @@ class RequestTest {
         Request.Output output = task.run(runContext);
 
         assertThat(output.getUri(), is(URI.create(url)));
-        assertThat(output.getHeaders().get("Content-Length").get(0), is("104857600"));
+        assertThat(output.getHeaders().get("Content-Length").getFirst(), is("104857600"));
     }
 
     @Test

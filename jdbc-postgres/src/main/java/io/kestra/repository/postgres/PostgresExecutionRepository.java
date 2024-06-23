@@ -34,7 +34,7 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
             .map(s -> DSL.field("state_current")
                 .eq(DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
                 ))
-            .collect(Collectors.toList())
+            .toList()
         );
     }
 

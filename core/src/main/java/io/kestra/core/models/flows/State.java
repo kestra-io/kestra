@@ -85,14 +85,14 @@ public class State {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Duration getDuration() {
         return Duration.between(
-            this.histories.get(0).getDate(),
+            this.histories.getFirst().getDate(),
             this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
         );
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Instant getStartDate() {
-        return this.histories.get(0).getDate();
+        return this.histories.getFirst().getDate();
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -126,7 +126,7 @@ public class State {
             return Instant.now();
         }
 
-        return this.histories.get(0).getDate();
+        return this.histories.getFirst().getDate();
     }
 
     @JsonIgnore

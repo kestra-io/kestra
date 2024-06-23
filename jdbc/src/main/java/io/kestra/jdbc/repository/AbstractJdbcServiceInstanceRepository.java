@@ -240,10 +240,10 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 DSLContext context = using(configuration);
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE).from(table()).where("1=1");
                 if (states != null && !states.isEmpty()) {
-                    select = select.and(STATE.in(states.stream().map(Enum::name).collect(Collectors.toList())));
+                    select = select.and(STATE.in(states.stream().map(Enum::name).toList()));
                 }
                 if (types != null && !types.isEmpty()) {
-                    select = select.and(TYPE.in(types.stream().map(Enum::name).collect(Collectors.toList())));
+                    select = select.and(TYPE.in(types.stream().map(Enum::name).toList()));
                 }
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });

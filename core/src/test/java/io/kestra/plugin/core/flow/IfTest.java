@@ -19,21 +19,21 @@ class IfTest  extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-true").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "true") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-true").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 1) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-true").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
@@ -43,28 +43,28 @@ class IfTest  extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-false").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "false") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-false").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 0) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-false").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", -0) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-false").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         // We cannot test null as inputs cannot be null
@@ -76,7 +76,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("when-true").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-without-else", null,

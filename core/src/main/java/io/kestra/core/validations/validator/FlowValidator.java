@@ -90,6 +90,6 @@ public class FlowValidator  implements ConstraintValidator<FlowValidation, Flow>
         return taskIds.stream()
             .distinct()
             .filter(entry -> Collections.frequency(taskIds, entry) > 1)
-            .collect(Collectors.toList());
+            .toList();
     }
 }

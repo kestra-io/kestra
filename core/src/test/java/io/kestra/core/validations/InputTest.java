@@ -36,7 +36,7 @@ class InputTest {
             .build();
 
         assertThat(validInput.getId(), is(id));
-        assertThat(validInput.getName(), nullValue());
+        assertThat(validInput.getId(), nullValue());
 
         String newName = "newName";
         validInput = StringInput.builder()
@@ -46,6 +46,6 @@ class InputTest {
         validInput.setName(newName);
 
         assertThat(validInput.getId(), is(newName));
-        assertThat(validInput.getName(), is(newName));
+        assertThat(validInput.getId(), is(newName));
     }
 }

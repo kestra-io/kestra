@@ -109,7 +109,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
                                 .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(flowTopology))
                                 .set(this.jdbcRepository.persistFields(flowTopology))
                             )
-                            .collect(Collectors.toList())
+                            .toList()
                         )
                         .execute();
                 }

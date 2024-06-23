@@ -40,8 +40,8 @@ public class PluginDefaultsCaseTest {
 
         assertThat(execution.getTaskRunList(), hasSize(8));
 
-        assertThat(execution.getTaskRunList().get(0).getTaskId(), is("first"));
-        assertThat(execution.getTaskRunList().get(0).getOutputs().get("def"), is("1"));
+        assertThat(execution.getTaskRunList().getFirst().getTaskId(), is("first"));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("def"), is("1"));
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("second"));
         assertThat(execution.getTaskRunList().get(1).getOutputs().get("def"), is("2"));
         assertThat(execution.getTaskRunList().get(2).getTaskId(), is("third"));
@@ -92,7 +92,7 @@ public class PluginDefaultsCaseTest {
                     this.tasks != null ? this.tasks.stream() : Stream.empty(),
                     this.errors != null ? this.errors.stream() : Stream.empty()
                 )
-                .collect(Collectors.toList());
+                .toList();
         }
 
         @Override

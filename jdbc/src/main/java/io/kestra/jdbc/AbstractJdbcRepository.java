@@ -211,7 +211,7 @@ public abstract class AbstractJdbcRepository<T> {
                     return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
                 }
             })
-            .collect(Collectors.toList());
+            .toList();
 
         return Collections.singletonList(String.join("\n", fragments));
     }

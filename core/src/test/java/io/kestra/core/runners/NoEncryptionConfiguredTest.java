@@ -47,7 +47,7 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
-        TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
+        TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
         assertThat(valueOutput.size(), is(2));
         assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));

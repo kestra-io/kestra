@@ -40,7 +40,7 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
                 .equals("trigger-multiplecondition-listener"))
             .findFirst()
             .orElseThrow();
-        assertThat(flow.getFragments().get(0), containsString("condition.MultipleCondition[/mark]"));
+        assertThat(flow.getFragments().getFirst(), containsString("condition.MultipleCondition[/mark]"));
     }
 
     @Override

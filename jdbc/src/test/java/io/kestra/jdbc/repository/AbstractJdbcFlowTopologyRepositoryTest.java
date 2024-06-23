@@ -48,7 +48,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
         list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
 
         assertThat(list.size(), is(1));
-        assertThat(list.get(0).getDestination().getId(), is("flow-c"));
+        assertThat(list.getFirst().getDestination().getId(), is("flow-c"));
 
         flowTopologyRepository.save(
             flow,

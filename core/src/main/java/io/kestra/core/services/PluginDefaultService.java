@@ -183,7 +183,7 @@ public class PluginDefaultService {
             return value
                 .stream()
                 .map(r -> recursiveDefaults(r, defaults))
-                .collect(Collectors.toList());
+                .toList();
         } else {
             return object;
         }

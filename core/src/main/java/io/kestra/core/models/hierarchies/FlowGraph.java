@@ -26,12 +26,12 @@ public class FlowGraph {
                     .nodes()
                     .stream()
                     .map(AbstractGraph::getUid)
-                    .collect(Collectors.toList()),
+                    .toList(),
                     g.getValue(),
                     g.getKey().getRoot().getUid(),
                     g.getKey().getEnd().getUid()
                 ))
-                .collect(Collectors.toList())
+                .toList()
             )
             .build();
     }
@@ -45,7 +45,7 @@ public class FlowGraph {
             .nodes(this.nodes
                 .stream()
                 .map(AbstractGraph::forExecution)
-                .collect(Collectors.toList())
+                .toList()
             )
             .build();
     }

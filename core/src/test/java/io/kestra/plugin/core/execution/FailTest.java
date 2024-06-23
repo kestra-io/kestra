@@ -20,7 +20,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.findTaskRunsByTaskId("switch").get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("switch").getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
@@ -30,7 +30,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("fail").get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
@@ -40,7 +40,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
             (f, e) -> Map.of("param", "success") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.findTaskRunsByTaskId("fail").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

@@ -187,8 +187,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(edge(flowGraph, ".*parent", ".*t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
         assertThat(edge(flowGraph, ".*parent", ".*t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
 
-        assertThat(edge(flowGraph, ".*t1", ((GraphCluster) flowGraph.getClusters().get(0).getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t1"));
-        assertThat(edge(flowGraph, ".*t4", ((GraphCluster) flowGraph.getClusters().get(0).getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t4"));
+        assertThat(edge(flowGraph, ".*t1", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t1"));
+        assertThat(edge(flowGraph, ".*t4", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t4"));
 
         assertThat(((AbstractGraphTask) node(flowGraph, "t1")).getTaskRun(), is(notNullValue()));
         assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun(), is(notNullValue()));
@@ -216,7 +216,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     void trigger() throws IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/trigger-flow-listener.yaml");
         triggerRepositoryInterface.save(
-            Trigger.of(flow, flow.getTriggers().get(0)).toBuilder().disabled(true).build()
+            Trigger.of(flow, flow.getTriggers().getFirst()).toBuilder().disabled(true).build()
         );
 
         FlowGraph flowGraph = graphService.flowGraph(flow, null);
@@ -320,7 +320,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
             .stream()
             .filter(e -> e.getSource().matches(source))
             .map(FlowGraph.Edge::getTarget)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private FlowGraph.Cluster cluster(FlowGraph flowGraph, String clusterIdRegex) {

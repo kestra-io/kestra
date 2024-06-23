@@ -134,6 +134,7 @@ public class ConditionService {
         return execution.isTerminated(this.findValidListeners(flow, execution));
     }
 
+    @SuppressWarnings("deprecation")
     public List<ResolvedTask> findValidListeners(Flow flow, Execution execution) {
         if (flow == null || flow.getListeners() == null) {
             return new ArrayList<>();
@@ -153,6 +154,6 @@ public class ConditionService {
             )
             .flatMap(listener -> listener.getTasks().stream())
             .map(ResolvedTask::of)
-            .collect(Collectors.toList());
+            .toList();
     }
 }

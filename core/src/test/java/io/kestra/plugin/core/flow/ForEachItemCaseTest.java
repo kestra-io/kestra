@@ -31,7 +31,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -60,6 +59,7 @@ public class ForEachItemCaseTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -72,7 +72,7 @@ public class ForEachItemCaseTest {
             }
         });
 
-        URI file = storageUpload(10);
+        URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
@@ -85,7 +85,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(3));
@@ -102,6 +102,7 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 
+    @SuppressWarnings("unchecked")
     public void forEachItemNoWait() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -117,7 +118,7 @@ public class ForEachItemCaseTest {
             }
         });
 
-        URI file = storageUpload(10);
+        URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
@@ -130,7 +131,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(3));
@@ -151,6 +152,7 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 
+    @SuppressWarnings("unchecked")
     public void forEachItemFailed() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -163,7 +165,7 @@ public class ForEachItemCaseTest {
             }
         });
 
-        URI file = storageUpload(10);
+        URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
@@ -176,7 +178,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(3));
@@ -193,6 +195,7 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 
+    @SuppressWarnings("unchecked")
     public void forEachItemWithSubflowOutputs() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -205,7 +208,7 @@ public class ForEachItemCaseTest {
             }
         });
 
-        URI file = storageUpload(10);
+        URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-outputs", null,
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
@@ -218,7 +221,7 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(3));
@@ -246,10 +249,10 @@ public class ForEachItemCaseTest {
         }
     }
 
-    private URI storageUpload(int count) throws URISyntaxException, IOException {
+    private URI storageUpload() throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 
-        Files.write(tempFile.toPath(), content(count));
+        Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
             null,
@@ -258,10 +261,10 @@ public class ForEachItemCaseTest {
         );
     }
 
-    private List<String> content(int count) {
+    private List<String> content() {
         return IntStream
-            .range(0, count)
+            .range(0, 10)
             .mapToObj(value -> StringUtils.leftPad(value + "", 20))
-            .collect(Collectors.toList());
+            .toList();
     }
 }

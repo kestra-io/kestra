@@ -159,6 +159,6 @@ class ExecutionTest {
             .build();
 
         assertThat(execution.getLabels().size(), is(1));
-        assertThat(execution.getLabels().get(0), is(new Label("test", "test-value")));
+        assertThat(execution.getLabels().getFirst(), is(new Label("test", "test-value")));
     }
 }

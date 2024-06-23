@@ -101,7 +101,7 @@ class FileSerdeTest {
 
         final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
         assertThat(outputValues, hasSize(1));
-        assertThat(outputValues.get(0), equalTo(new SimpleEntry(1, "value1")));
+        assertThat(outputValues.getFirst(), equalTo(new SimpleEntry(1, "value1")));
     }
 
     @Test
@@ -113,7 +113,7 @@ class FileSerdeTest {
 
         final List<SimpleEntry> outputValues = FileSerde.readAll(Files.newInputStream(inputTempFilePath), new TypeReference<SimpleEntry>() {}).collectList().block();
         assertThat(outputValues, hasSize(3));
-        assertThat(outputValues.get(0), equalTo(new SimpleEntry(1, "value1")));
+        assertThat(outputValues.getFirst(), equalTo(new SimpleEntry(1, "value1")));
         assertThat(outputValues.get(1), equalTo(new SimpleEntry(2, "value2")));
         assertThat(outputValues.get(2), equalTo(new SimpleEntry(3, "value3")));
     }
@@ -136,7 +136,7 @@ class FileSerdeTest {
 
         final List<String> outputLines = Files.readAllLines(outputTempFilePath);
         assertThat(outputLines, hasSize(1));
-        assertThat(outputLines.get(0), equalTo("{id:1,value:\"value1\"}"));
+        assertThat(outputLines.getFirst(), equalTo("{id:1,value:\"value1\"}"));
     }
 
     @Test
@@ -149,7 +149,7 @@ class FileSerdeTest {
 
         final List<String> outputLines = Files.readAllLines(outputTempFilePath);
         assertThat(outputLines, hasSize(3));
-        assertThat(outputLines.get(0), equalTo("{id:1,value:\"value1\"}"));
+        assertThat(outputLines.getFirst(), equalTo("{id:1,value:\"value1\"}"));
         assertThat(outputLines.get(1), equalTo("{id:2,value:\"value2\"}"));
         assertThat(outputLines.get(2), equalTo("{id:3,value:\"value3\"}"));
     }

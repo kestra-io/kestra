@@ -69,7 +69,7 @@ abstract public class AbstractMetricEntry<T> {
                 others.entrySet().stream()
             )
             .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
-            .collect(Collectors.toList())
+            .toList()
             .toArray(String[]::new);
     }
 

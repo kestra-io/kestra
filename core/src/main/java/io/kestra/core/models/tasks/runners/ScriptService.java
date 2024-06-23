@@ -80,7 +80,7 @@ public final class ScriptService {
             return null;
         }
 
-        return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), internalStorageToLocalFileConsumer, replaceWithRelativePath).get(0);
+        return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), internalStorageToLocalFileConsumer, replaceWithRelativePath).getFirst();
     }
 
     public static List<String> replaceInternalStorage(
@@ -94,7 +94,7 @@ public final class ScriptService {
             .stream()
             .map(throwFunction(c -> runContext.render(c, additionalVars)))
             .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, internalStorageToLocalFileConsumer, replaceWithRelativePath)))
-            .collect(Collectors.toList());
+            .toList();
 
     }
 

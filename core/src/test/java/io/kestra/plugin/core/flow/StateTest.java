@@ -25,17 +25,17 @@ class StateTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(((Map<String, Integer>) execution.findTaskRunsByTaskId("createGet").get(0).getOutputs().get("data")).get("value"), is(1));
+        assertThat(((Map<String, Integer>) execution.findTaskRunsByTaskId("createGet").getFirst().getOutputs().get("data")).get("value"), is(1));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(((Map<String, Object>) execution.findTaskRunsByTaskId("updateGet").get(0).getOutputs().get("data")).get("value"), is("2"));
+        assertThat(((Map<String, Object>) execution.findTaskRunsByTaskId("updateGet").getFirst().getOutputs().get("data")).get("value"), is("2"));
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("deleteGet").get(0).getOutputs().get("count"), is(0));
+        assertThat(execution.findTaskRunsByTaskId("deleteGet").getFirst().getOutputs().get("count"), is(0));
     }
 
     @SuppressWarnings("unchecked")

@@ -139,7 +139,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
-            .in(state.stream().map(Enum::name).collect(Collectors.toList()));
+            .in(state.stream().map(Enum::name).toList());
     }
 
     @Override
@@ -329,7 +329,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         return dailyStatisticsQueryMapRecord(
             results.resultsOrRows()
-                .get(0)
+                .getFirst()
                 .result(),
             startDate,
             endDate,
@@ -368,7 +368,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         return dailyStatisticsQueryMapRecord(
             results.resultsOrRows()
-                .get(0)
+                .getFirst()
                 .result(),
             startDate,
             endDate,
@@ -401,7 +401,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .stream()
             .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
             .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
-            .collect(Collectors.toList()), startDate, endDate);
+            .toList(), startDate, endDate);
     }
 
     private Results dailyStatisticsQueryForAllTenants(
@@ -545,7 +545,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .map(e -> field("namespace").eq(e.getNamespace())
                         .and(field("flow_id").eq(e.getId()))
                     )
-                    .collect(Collectors.toList())
+                    .toList()
             ));
         }
 
@@ -586,7 +586,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         return results
             .resultsOrRows()
-            .get(0)
+            .getFirst()
             .result()
             .intoGroups(field("namespace", String.class))
             .entrySet()
@@ -753,7 +753,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                             field("namespace").eq(flow.getNamespace()),
                             field("flow_id").eq(flow.getFlowId())
                         ))
-                        .collect(Collectors.toList())
+                        .toList()
                 ));
 
                 // map result to flow
@@ -764,7 +764,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     ))
                     .fetchMany()
                     .resultsOrRows()
-                    .get(0)
+                    .getFirst()
                     .result()
                     .stream()
                     .map(record -> new ExecutionCount(
@@ -772,7 +772,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         record.getValue("flow_id", String.class),
                         record.getValue("count", Long.class)
                     ))
-                    .collect(Collectors.toList());
+                    .toList();
             });
 
         // fill missing with count at 0
@@ -790,7 +790,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     0L
                 ))
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public List<Execution> lastExecutions(
@@ -822,7 +822,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                                 field("namespace").eq(flow.getNamespace()),
                                 field("flow_id").eq(flow.getId())
                             ))
-                            .collect(Collectors.toList())
+                            .toList()
                     ));
 
                 Table<Record2<Object, Integer>> cte = subquery.asTable("cte");

@@ -67,12 +67,12 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             throw new IllegalStateException("Too many fields for h2 '" + fields + "'");
         }
 
-        Field<Object> field = AbstractJdbcRepository.field(fields.get(0));
+        Field<Object> field = AbstractJdbcRepository.field(fields.getFirst());
 
         List<LikeEscapeStep> match = Arrays
             .stream(query.split("\\p{P}|\\p{S}|\\p{Z}"))
             .map(s -> field.likeIgnoreCase("%" + s.toUpperCase(Locale.ROOT) + "%"))
-            .collect(Collectors.toList());
+            .toList();
 
         if (match.size() == 0) {
             return DSL.falseCondition();
@@ -94,7 +94,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.get(0).get("total_count", Integer.class) : 0;
+        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

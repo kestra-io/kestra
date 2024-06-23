@@ -39,7 +39,7 @@ public class RetryCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
     }
 
     public void retrySuccessAtFirstAttempt() throws TimeoutException {
@@ -47,14 +47,14 @@ public class RetryCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(1));
     }
 
     public void retryFailed() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-failed");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
@@ -62,7 +62,7 @@ public class RetryCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-random");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
@@ -70,7 +70,7 @@ public class RetryCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-expo");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
@@ -78,7 +78,7 @@ public class RetryCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-and-fail");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
     }
@@ -201,7 +201,7 @@ public class RetryCaseTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(0).attemptNumber(), is(3));
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(3));
     }
 
     public void retryFailedTaskAttempts() throws TimeoutException {
@@ -215,7 +215,7 @@ public class RetryCaseTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(0).attemptNumber(), is(4));
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(4));
     }
 
     public void retryFailedFlowDuration() throws TimeoutException {
@@ -228,7 +228,7 @@ public class RetryCaseTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(0).attemptNumber(), is(3));
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(3));
     }
 
     public void retryFailedFlowAttempts() throws TimeoutException {
@@ -241,7 +241,7 @@ public class RetryCaseTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(0).attemptNumber(), is(4));
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(4));
     }
 
     public void retryFlowable() throws TimeoutException {

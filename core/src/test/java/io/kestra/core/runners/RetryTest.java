@@ -20,7 +20,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //
 //        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
 //        assertThat(execution.getTaskRunList(), hasSize(1));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
 //    }
 //
 //    @Test
@@ -29,7 +29,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //
 //        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 //        assertThat(execution.getTaskRunList(), hasSize(1));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(1));
 //    }
 //
 //    @Test
@@ -37,7 +37,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-failed");
 //
 //        assertThat(execution.getTaskRunList(), hasSize(2));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
 //        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 //    }
 //
@@ -46,7 +46,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-random");
 //
 //        assertThat(execution.getTaskRunList(), hasSize(1));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
 //        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 //    }
 //
@@ -55,7 +55,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-expo");
 //
 //        assertThat(execution.getTaskRunList(), hasSize(1));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(3));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
 //        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 //    }
 //
@@ -64,7 +64,7 @@ public class RetryTest extends AbstractMemoryRunnerTest {
 //        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-and-fail");
 //
 //        assertThat(execution.getTaskRunList(), hasSize(2));
-//        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(5));
+//        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
 //        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 //
 //    }

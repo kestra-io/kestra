@@ -33,9 +33,9 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.findTaskRunsByTaskId("variable").get(0).getOutputs().get("value"), is("1 > 2 > 3"));
-        assertThat(execution.findTaskRunsByTaskId("env").get(0).getOutputs().get("value"), is("true Pass by env"));
-        assertThat(execution.findTaskRunsByTaskId("global").get(0).getOutputs().get("value"), is("string 1 true 2"));
+        assertThat(execution.findTaskRunsByTaskId("variable").getFirst().getOutputs().get("value"), is("1 > 2 > 3"));
+        assertThat(execution.findTaskRunsByTaskId("env").getFirst().getOutputs().get("value"), is("true Pass by env"));
+        assertThat(execution.findTaskRunsByTaskId("global").getFirst().getOutputs().get("value"), is("string 1 true 2"));
     }
 
     @Test
@@ -62,6 +62,6 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "failed-first");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
     }
 }

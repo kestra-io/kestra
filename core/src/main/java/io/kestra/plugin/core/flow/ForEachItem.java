@@ -317,7 +317,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                 this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
                 this.errors != null ? this.errors.stream() : Stream.empty()
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Override

@@ -23,7 +23,7 @@ public class AutocompleteUtils {
         return stream
             .distinct()
             .map(map)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @SafeVarargs

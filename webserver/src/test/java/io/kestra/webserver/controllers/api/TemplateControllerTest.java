@@ -138,7 +138,7 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
         client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
         Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(updatedTemplate.getTasks().size(), is(1));
-        assertThat(updatedTemplate.getTasks().get(0).getId(), is("task-3"));
+        assertThat(updatedTemplate.getTasks().getFirst().getId(), is("task-3"));
         assertThat(updatedTemplate.getDescription(),is("My new template description"));
     }
 

@@ -18,19 +18,12 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
-import io.kestra.core.services.AbstractFlowTriggerService;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.services.LogService;
-import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.services.WorkerGroupService;
-import io.kestra.plugin.core.flow.ForEachItem;
-import io.kestra.plugin.core.flow.Template;
+import io.kestra.core.services.*;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
@@ -39,6 +32,8 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
+import io.kestra.plugin.core.flow.ForEachItem;
+import io.kestra.plugin.core.flow.Template;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.annotation.Nullable;
@@ -57,16 +52,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@SuppressWarnings("deprecation")
 @Singleton
 @JdbcRunnerEnabled
 @Slf4j
@@ -192,10 +183,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
      * @param eventPublisher             The {@link ApplicationEventPublisher}.
      */
     @Inject
-    public JdbcExecutor(@Nullable final JdbcServiceLivenessCoordinator serviceLivenessCoordinator,
-                        final FlowRepositoryInterface flowRepository,
-                        final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
-                        final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
+    public JdbcExecutor(
+        @Nullable final JdbcServiceLivenessCoordinator serviceLivenessCoordinator,
+        final FlowRepositoryInterface flowRepository,
+        final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
+        final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher
+    ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowRepository = flowRepository;
         this.flowTopologyRepository = flowTopologyRepository;
@@ -272,7 +265,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             )
                     )
                         .distinct()
-                        .collect(Collectors.toList())
+                        .toList()
                 );
             }
         ));
@@ -350,7 +343,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     List.of(State.Type.RUNNING, State.Type.PAUSED),
                     null,
                     null
-                ).get(0);
+                ).getFirst();
 
                 executor = executorService.checkConcurrencyLimit(executor, flow, execution, count.getCount());
 

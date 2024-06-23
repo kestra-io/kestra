@@ -63,13 +63,13 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static List<String> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {
-            return Arrays.stream(Level.values()).map(Enum::name).collect(Collectors.toList());
+            return Arrays.stream(Level.values()).map(Enum::name).toList();
         }
 
         return Arrays.stream(Level.values())
             .filter(level -> level.toInt() >= minLevel.toInt())
             .map(Enum::name)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static LogEntry of(Execution execution) {

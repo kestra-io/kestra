@@ -346,7 +346,7 @@ public class ExecutorService {
 
                 return taskRun;
             }))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private Executor onEnd(Executor executor) {
@@ -607,7 +607,7 @@ public class ExecutorService {
                 return null;
             }))
             .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+            .toList();
 
         if (executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
             return executor
@@ -633,7 +633,7 @@ public class ExecutorService {
             ))
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(Collectors.toList());
+            .toList();
 
         return executor.withWorkerTaskResults(workerTaskResults, "handleChildWorkerCreatedKilling");
     }
@@ -722,7 +722,7 @@ public class ExecutorService {
                     .task(task)
                     .build();
             }))
-            .collect(Collectors.toList());
+            .toList();
 
         if (workerTasks.isEmpty()) {
             return executor;

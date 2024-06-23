@@ -83,11 +83,11 @@ public class RestartCaseTest {
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getTaskRunList(), hasSize(2));
-        assertThat(firstExecution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(firstExecution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getState().getCurrent() == State.Type.FAILED && execution.getTaskRunList().get(0).getAttempts().size() == 2,
+            execution -> execution.getState().getCurrent() == State.Type.FAILED && execution.getTaskRunList().getFirst().getAttempts().size() == 2,
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);
@@ -106,7 +106,7 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getParentId(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().size(), is(2));
 
-        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getAttempts().size(), is(2));
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size(), is(2));
 
         assertThat(finishedRestartedExecution.getState().getCurrent(), is(State.Type.FAILED));
     }

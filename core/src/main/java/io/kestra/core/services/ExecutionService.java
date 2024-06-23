@@ -161,7 +161,7 @@ public class ExecutionService {
                 State.Type.RESTARTED,
                 taskRunToRestart.contains(originalTaskRun.getId()))
             ))
-            .collect(Collectors.toList());
+            .toList();
 
         // Worker task, we need to remove all child in order to be restarted
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
@@ -194,7 +194,7 @@ public class ExecutionService {
                     .getTaskRunList()
                     .stream()
                     .filter(predicate)
-                    .collect(Collectors.toList())
+                    .toList()
             );
 
         if (finalTaskRunToRestart.size() == 0) {
@@ -230,7 +230,7 @@ public class ExecutionService {
                         State.Type.RESTARTED,
                         taskRunToRestart.contains(originalTaskRun.getId()))
                     ))
-                    .collect(Collectors.toList())
+                    .toList()
             );
 
             // remove all child for replay task id
@@ -268,6 +268,7 @@ public class ExecutionService {
         return this.markAs(execution, flow, taskRunId, newState, null);
     }
 
+    @SuppressWarnings("deprecation")
     private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,

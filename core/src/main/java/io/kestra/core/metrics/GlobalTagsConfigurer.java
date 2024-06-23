@@ -25,7 +25,7 @@ public class GlobalTagsConfigurer implements MeterRegistryConfigurer<SimpleMeter
                         .entrySet()
                         .stream()
                         .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
-                        .collect(Collectors.toList())
+                        .toList()
                         .toArray(String[]::new)
                 );
         }

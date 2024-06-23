@@ -81,6 +81,6 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
         return IntStream
             .range(0, 10)
             .mapToObj(value -> StringUtils.leftPad(value + "", 20))
-            .collect(Collectors.toList());
+            .toList();
     }
 }

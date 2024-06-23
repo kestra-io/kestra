@@ -105,7 +105,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             Flow flow = flowRepository.findByExecution(execution);
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
-            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             Execution restarted = executionService.markAs(
@@ -137,8 +137,8 @@ public class PauseTest extends AbstractMemoryRunnerTest {
                 Duration.ofSeconds(5)
             );
 
-            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
-            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
             assertThat(execution.getTaskRunList(), hasSize(3));
         }
 
@@ -162,9 +162,9 @@ public class PauseTest extends AbstractMemoryRunnerTest {
                 Duration.ofSeconds(5)
             );
 
-            assertThat("Task runs were: " + execution.getTaskRunList().toString(), execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
-            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(1L));
-            assertThat(execution.getTaskRunList().get(0).getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count(), is(1L));
+            assertThat("Task runs were: " + execution.getTaskRunList().toString(), execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(1L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count(), is(1L));
             assertThat(execution.getTaskRunList(), hasSize(1));
         }
 
@@ -174,7 +174,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             Flow flow = flowRepository.findByExecution(execution);
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
-            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             Execution restarted = executionService.markAs(
@@ -200,7 +200,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             Flow flow = flowRepository.findByExecution(execution);
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
-            assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.PAUSED));
             assertThat(execution.getTaskRunList(), hasSize(1));
 
             CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
@@ -224,7 +224,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").get(0).getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
             assertThat(outputs.get("asked"), is("restarted"));
             assertThat((String) outputs.get("data"), startsWith("kestra://"));
             assertThat(
@@ -265,7 +265,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").get(0).getOutputs().get("values");
+            Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
             assertThat(outputs.get("asked"), is("MISSING"));
         }
     }

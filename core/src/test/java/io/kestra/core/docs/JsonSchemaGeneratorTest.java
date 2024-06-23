@@ -56,7 +56,7 @@ class JsonSchemaGeneratorTest {
     @Test
     void tasks() {
         List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
-        Class<? extends Task> cls = scan.get(0).getTasks().get(0);
+        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
@@ -163,7 +163,7 @@ class JsonSchemaGeneratorTest {
             var metrics = (List<Object>) returnTask.get("$metrics");
             assertThat(metrics.size(), is(2));
 
-            var firstMetric = (Map<String, Object>) metrics.get(0);
+            var firstMetric = (Map<String, Object>) metrics.getFirst();
             assertThat(firstMetric.get("name"), is("length"));
             assertThat(firstMetric.get("type"), is("counter"));
             var secondMetric = (Map<String, Object>) metrics.get(1);

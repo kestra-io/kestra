@@ -152,7 +152,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                     template.getTasks() != null ? template.getTasks().stream() : Stream.empty(),
                     template.getErrors() != null ? template.getErrors().stream() : Stream.empty()
                 )
-                .collect(Collectors.toList());
+                .toList();
         } catch (IllegalVariableEvaluationException e) {
             return Collections.emptyList();
         }

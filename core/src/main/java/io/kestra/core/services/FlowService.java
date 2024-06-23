@@ -259,7 +259,7 @@ public class FlowService {
 
     public Collection<Flow> keepLastVersion(List<Flow> flows) {
         return keepLastVersionCollector(flows.stream())
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private Stream<Flow> keepLastVersionCollector(Stream<Flow> stream) {
@@ -298,7 +298,7 @@ public class FlowService {
                 .stream()
                 .noneMatch(c -> c.getId().equals(p.getId()))
             )
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
@@ -384,7 +384,7 @@ public class FlowService {
             return ((Collection<?>) object)
                 .stream()
                 .map(FlowService::fixSnakeYaml)
-                .collect(Collectors.toList());
+                .toList();
         } else if (object instanceof String) {
             String item = (String) object;
 

@@ -97,7 +97,7 @@ public class FlowTestCommand extends AbstractCommand {
             }
 
             runnerUtils.runOne(
-                all.get(0),
+                all.getFirst(),
                 (flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputs),
                 Duration.ofHours(1)
             );

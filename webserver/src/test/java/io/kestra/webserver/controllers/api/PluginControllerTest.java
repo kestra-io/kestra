@@ -50,10 +50,10 @@ class PluginControllerTest {
             assertThat(template.getDescription(), is("Plugin template for Kestra"));
 
             assertThat(template.getTasks().size(), is(1));
-            assertThat(template.getTasks().get(0), is("io.kestra.plugin.templates.ExampleTask"));
+            assertThat(template.getTasks().getFirst(), is("io.kestra.plugin.templates.ExampleTask"));
 
             assertThat(template.getGuides().size(), is(2));
-            assertThat(template.getGuides().get(0), is("authentication"));
+            assertThat(template.getGuides().getFirst(), is("authentication"));
 
             Plugin core = list.stream()
                 .filter(plugin -> plugin.getTitle().equals("core"))

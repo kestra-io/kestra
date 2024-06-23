@@ -1,25 +1,24 @@
 package io.kestra.core.services;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -62,7 +61,7 @@ class FlowServiceTest {
         assertThat(importFlow.getNamespace(), is("some.namespace"));
         assertThat(importFlow.getRevision(), is(1));
         assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().get(0).getId(), is("task"));
+        assertThat(importFlow.getTasks().getFirst().getId(), is("task"));
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
         assertThat(fromDb.isPresent(), is(true));
@@ -73,7 +72,7 @@ class FlowServiceTest {
         importFlow = flowService.importFlow("my-tenant", source);
         assertThat(importFlow.getRevision(), is(2));
         assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().get(0).getId(), is("replaced_task"));
+        assertThat(importFlow.getTasks().getFirst().getId(), is("replaced_task"));
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
         assertThat(fromDb.isPresent(), is(true));
@@ -96,7 +95,7 @@ class FlowServiceTest {
         assertThat(importFlow.getNamespace(), is("some.namespace"));
         assertThat(importFlow.getRevision(), is(1));
         assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().get(0).getId(), is("task"));
+        assertThat(importFlow.getTasks().getFirst().getId(), is("task"));
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
         assertThat(fromDb.isPresent(), is(true));
@@ -107,7 +106,7 @@ class FlowServiceTest {
         importFlow = flowService.importFlow("my-tenant", newSource, true);
         assertThat(importFlow.getRevision(), is(2));
         assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().get(0).getId(), is("replaced_task"));
+        assertThat(importFlow.getTasks().getFirst().getId(), is("replaced_task"));
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
         assertThat(fromDb.isPresent(), is(true));
@@ -124,11 +123,11 @@ class FlowServiceTest {
             create("test", "test2", 4)
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).collect(Collectors.toList());
+        List<Flow> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
-        assertThat(collect.get(0).isDeleted(), is(false));
-        assertThat(collect.get(0).getRevision(), is(4));
+        assertThat(collect.getFirst().isDeleted(), is(false));
+        assertThat(collect.getFirst().getRevision(), is(4));
     }
 
     @Test
@@ -141,11 +140,11 @@ class FlowServiceTest {
             create("test", "test2", 2).toDeleted()
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).collect(Collectors.toList());
+        List<Flow> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
-        assertThat(collect.get(0).isDeleted(), is(false));
-        assertThat(collect.get(0).getId(), is("test2"));
+        assertThat(collect.getFirst().isDeleted(), is(false));
+        assertThat(collect.getFirst().getId(), is("test2"));
     }
 
     @Test
@@ -157,11 +156,11 @@ class FlowServiceTest {
             create("test", "test2", 2).toDeleted()
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).collect(Collectors.toList());
+        List<Flow> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
-        assertThat(collect.get(0).isDeleted(), is(false));
-        assertThat(collect.get(0).getRevision(), is(4));
+        assertThat(collect.getFirst().isDeleted(), is(false));
+        assertThat(collect.getFirst().getRevision(), is(4));
     }
 
     @Test
@@ -176,7 +175,7 @@ class FlowServiceTest {
 
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).collect(Collectors.toList());
+        List<Flow> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));
@@ -230,8 +229,8 @@ class FlowServiceTest {
                     message: Hello, {{taskrun.value}}""");
 
         assertThat(warnings.size(), is(2));
-        assertThat(warnings.get(0).from(), is("io.kestra.core.runners.test.task.Alias"));
-        assertThat(warnings.get(0).to(), is("io.kestra.core.runners.test.TaskWithAlias"));
+        assertThat(warnings.getFirst().from(), is("io.kestra.core.runners.test.task.Alias"));
+        assertThat(warnings.getFirst().to(), is("io.kestra.core.runners.test.TaskWithAlias"));
     }
 
     @Test
@@ -245,14 +244,14 @@ class FlowServiceTest {
                     .type(Type.STRING)
                     .build(),
                 StringInput.builder()
-                    .name("inputWithName")
+                    .id("inputWithName")
                     .type(Type.STRING)
                     .build()
             ))
-            .tasks(Collections.singletonList(Echo.builder()
+            .tasks(Collections.singletonList(Log.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .format("test")
+                .message("test")
                 .build()))
             .build();
 

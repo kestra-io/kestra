@@ -67,6 +67,7 @@ class SubflowTest {
         assertThat(result, is(Optional.empty()));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void shouldNotReturnOutputsForSubflowOutputsDisabled() {
         // Given

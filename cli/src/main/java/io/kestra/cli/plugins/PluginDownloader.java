@@ -84,7 +84,7 @@ public class PluginDownloader {
 
                 return build.build();
             })
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private static RepositorySystem repositorySystem() {

@@ -26,7 +26,7 @@ class AllowFailureTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(9));
         control(execution);
         assertThat(execution.findTaskRunsByTaskId("global-error").size(), is(0));
-        assertThat(execution.findTaskRunsByTaskId("last").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("last").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
     }
 
@@ -42,19 +42,19 @@ class AllowFailureTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(10));
         control(execution);
-        assertThat(execution.findTaskRunsByTaskId("global-error").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("switch").get(0).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("crash").get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("global-error").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("switch").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("crash").getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
     private static void control(Execution execution) {
-        assertThat(execution.findTaskRunsByTaskId("first").get(0).getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.findTaskRunsByTaskId("1-1-allow-failure").get(0).getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.findTaskRunsByTaskId("1-1-1_seq").get(0).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("1-1-1-1").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ko").get(0).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("local-error").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("1-2-todo").get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("first").getFirst().getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.findTaskRunsByTaskId("1-1-allow-failure").getFirst().getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.findTaskRunsByTaskId("1-1-1_seq").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("1-1-1-1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.findTaskRunsByTaskId("local-error").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("1-2-todo").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

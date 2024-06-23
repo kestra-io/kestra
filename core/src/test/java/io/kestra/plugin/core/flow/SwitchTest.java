@@ -23,8 +23,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t1"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("FIRST"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value"), is("FIRST"));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults"), is(false));
     }
 
     @Test
@@ -38,8 +38,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t2"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("SECOND"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value"), is("SECOND"));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults"), is(false));
         assertThat(execution.getTaskRunList().get(2).getTaskId(), is("t2_sub"));
     }
 
@@ -54,8 +54,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t3"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("THIRD"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value"), is("THIRD"));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults"), is(false));
         assertThat(execution.getTaskRunList().get(2).getTaskId(), is("failed"));
         assertThat(execution.getTaskRunList().get(3).getTaskId(), is("error-t1"));
     }
@@ -71,8 +71,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("default"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("DEFAULT"));
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(true));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value"), is("DEFAULT"));
+        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults"), is(true));
     }
 
     @Test

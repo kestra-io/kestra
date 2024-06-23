@@ -37,6 +37,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
     @Client("/")
     ReactorSseClient sseClient;
 
+    @SuppressWarnings("unchecked")
     @Test
     void find() {
         LogEntry log1 = logEntry(Level.INFO);
@@ -59,6 +60,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
         assertThat(logs.getTotal(), is(2L));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void findByExecution() {
         LogEntry log1 = logEntry(Level.INFO);
@@ -73,7 +75,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size(), is(2));
-        assertThat(logs.get(0).getExecutionId(), is(log1.getExecutionId()));
+        assertThat(logs.getFirst().getExecutionId(), is(log1.getExecutionId()));
         assertThat(logs.get(1).getExecutionId(), is(log1.getExecutionId()));
     }
 
@@ -94,6 +96,7 @@ class LogControllerTest extends JdbcH2ControllerTest {
         assertThat(logs, containsString("another message"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void delete() {
         LogEntry log1 = logEntry(Level.INFO);

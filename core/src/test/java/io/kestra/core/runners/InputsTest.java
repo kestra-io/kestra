@@ -338,6 +338,6 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getInputs().get("json"), instanceOf(Map.class));
         assertThat(((Map<?, ?>) execution.getInputs().get("json")).size(), is(0));
-        assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").get(0).getOutputs().get("value"), is("{}"));
+        assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value"), is("{}"));
     }
 }

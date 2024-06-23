@@ -34,7 +34,7 @@ public class FlattenFilter implements Filter {
             List<?> list = (List<?>) input;
             List<Object> flattened = list.stream()
                 .flatMap(o -> o instanceof List ? ((List<?>) o).stream() : Stream.of(o))
-                .collect(Collectors.toList());
+                .toList();
             return flattened;
         } catch (Exception e) {
             throw new PebbleException(e, "An error occurred while flattening the list.", lineNumber, self.getName());

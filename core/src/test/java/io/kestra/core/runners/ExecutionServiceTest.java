@@ -92,7 +92,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getState().getHistories(), hasSize(4));
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count(), greaterThan(1L));
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count(), greaterThan(1L));
-        assertThat(restart.getTaskRunList().get(0).getId(), is(restart.getTaskRunList().get(0).getId()));
+        assertThat(restart.getTaskRunList().getFirst().getId(), is(restart.getTaskRunList().getFirst().getId()));
     }
 
     @RetryingTest(5)
@@ -106,7 +106,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getState().getHistories(), hasSize(4));
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count(), greaterThan(1L));
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count(), greaterThan(1L));
-        assertThat(restart.getTaskRunList().get(0).getId(), is(restart.getTaskRunList().get(0).getId()));
+        assertThat(restart.getTaskRunList().getFirst().getId(), is(restart.getTaskRunList().getFirst().getId()));
     }
 
     @Test
@@ -119,8 +119,8 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
 
-        assertThat(restart.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RESTARTED));
-        assertThat(restart.getTaskRunList().get(0).getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getTaskRunList().getFirst().getState().getHistories(), hasSize(4));
     }
 
     @Test
@@ -137,7 +137,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
         assertThat(restart.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(restart.getState().getHistories(), hasSize(1));
-        assertThat(restart.getState().getHistories().get(0).getDate(), not(is(execution.getState().getStartDate())));
+        assertThat(restart.getState().getHistories().getFirst().getDate(), not(is(execution.getState().getStartDate())));
         assertThat(restart.getTaskRunList(), hasSize(0));
 
         assertThat(restart.getId(), not(execution.getId()));
@@ -277,7 +277,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent(), is(State.Type.RUNNING));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories(), hasSize(4));
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().getFirst().getState().getCurrent(), is(State.Type.FAILED));
     }
 
     @Test

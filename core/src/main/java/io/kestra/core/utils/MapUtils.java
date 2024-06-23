@@ -50,7 +50,7 @@ public class MapUtils {
                                 )
                                 .stream()
                                 .flatMap(Collection::stream)
-                                .collect(Collectors.toList());
+                                .toList();
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }

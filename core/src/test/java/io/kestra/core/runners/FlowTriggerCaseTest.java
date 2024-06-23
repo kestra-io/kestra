@@ -66,7 +66,7 @@ public class FlowTriggerCaseTest {
 
         assertThat(flowListener.get().getTaskRunList().size(), is(1));
         assertThat(flowListener.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(flowListener.get().getTaskRunList().get(0).getOutputs().get("value"), is("childs: from parents: " + execution.getId()));
+        assertThat(flowListener.get().getTaskRunList().getFirst().getOutputs().get("value"), is("childs: from parents: " + execution.getId()));
         assertThat(flowListener.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
         assertThat(flowListener.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
         assertThat(flowListener.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));

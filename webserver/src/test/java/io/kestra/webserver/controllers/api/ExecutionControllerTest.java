@@ -172,7 +172,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getInputs().containsKey("bool"), is(true));
         assertThat(result.getInputs().get("bool"), nullValue());
         assertThat(result.getLabels().size(), is(5));
-        assertThat(result.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(result.getLabels().getFirst(), is(new Label("flow-label-1", "flow-label-1")));
         assertThat(result.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
         assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
         assertThat(result.getLabels().get(3), is(new Label("b", "label-2")));
@@ -462,7 +462,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(finishedRestartedExecution.getParentId(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().size(), is(4));
 
-        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getAttempts().size(), is(1));
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size(), is(1));
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().size(), is(2));
         assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size(), is(1));
@@ -526,7 +526,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(finishedRestartedExecution.getParentId(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().size(), is(5));
 
-        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getAttempts().size(), is(1));
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size(), is(1));
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count(), is(1L));
@@ -644,7 +644,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b"), is(true));
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name"), is(List.of("john")));
         assertThat(((Map<String, List<Integer>>) execution.getTrigger().getVariables().get("parameters")).get("age"), containsInAnyOrder("12", "13"));
-        assertThat(execution.getLabels().get(0), is(new Label("flow-label-1", "flow-label-1")));
+        assertThat(execution.getLabels().getFirst(), is(new Label("flow-label-1", "flow-label-1")));
         assertThat(execution.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
 
         execution = client.toBlocking().retrieve(

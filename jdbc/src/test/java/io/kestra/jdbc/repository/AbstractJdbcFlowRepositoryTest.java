@@ -46,7 +46,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .equals("trigger-multiplecondition-listener"))
             .findFirst()
             .orElseThrow();
-        assertThat(flow.getFragments().get(0), containsString("condition.MultipleCondition[/mark]"));
+        assertThat(flow.getFragments().getFirst(), containsString("condition.MultipleCondition[/mark]"));
     }
 
     @Test

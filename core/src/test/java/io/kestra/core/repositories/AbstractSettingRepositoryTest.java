@@ -36,7 +36,7 @@ public abstract class AbstractSettingRepositoryTest {
 
         List<Setting> all = settingRepository.findAll();
         assertThat(all.size(), is(1));
-        assertThat(all.get(0).getValue(), is(setting.getValue()));
+        assertThat(all.getFirst().getValue(), is(setting.getValue()));
 
         Setting delete = settingRepository.delete(setting);
         assertThat(delete.getValue(), is(setting.getValue()));

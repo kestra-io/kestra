@@ -202,7 +202,7 @@ public class DocumentationGenerator {
                 e.getValue(),
                 null
             )))
-            .collect(Collectors.toList());
+            .toList();
     }
 
 
@@ -221,7 +221,7 @@ public class DocumentationGenerator {
                     throw new RuntimeException(e);
                 }
             })
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private static String docPath(RegisteredPlugin registeredPlugin) {

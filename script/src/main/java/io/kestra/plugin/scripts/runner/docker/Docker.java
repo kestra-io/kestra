@@ -425,7 +425,7 @@ public class Docker extends TaskRunner {
             .entrySet()
             .stream()
             .map(r -> r.getKey() + "=" + r.getValue())
-            .collect(Collectors.toList())
+            .toList()
         );
 
         if (workingDirectory != null) {
@@ -479,7 +479,7 @@ public class Docker extends TaskRunner {
                     .withCapabilities(deviceRequest.getCapabilities())
                     .withOptions(deviceRequest.getOptions())
                 ))
-                .collect(Collectors.toList())
+                .toList()
             );
         }
 

@@ -88,7 +88,7 @@ class ScheduleTest {
             .withMinute(0)
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS)
-            .minus(1, ChronoUnit.MONTHS);
+            .minusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
@@ -111,7 +111,6 @@ class ScheduleTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void successWithInput() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 1 * *").inputs(Map.of("input1", "input1")).build();
 
@@ -121,7 +120,7 @@ class ScheduleTest {
             .withMinute(0)
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS)
-            .minus(1, ChronoUnit.MONTHS);
+            .minusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
@@ -163,6 +162,7 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofMinutes(1))));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void everySecond() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("* * * * * *").withSeconds(true).build();
@@ -214,7 +214,7 @@ class ScheduleTest {
             .withMinute(45)
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS)
-            .minus(1, ChronoUnit.MONTHS);
+            .minusMonths(1);
 
         ZonedDateTime expexted = date.withMinute(30)
             .plusMonths(1);
@@ -296,7 +296,6 @@ class ScheduleTest {
         assertThat(vars.containsKey("next"), is(false));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void lateMaximumDelay() throws Exception {
         Schedule trigger = Schedule.builder()
@@ -358,7 +357,7 @@ class ScheduleTest {
             .withSecond(0)
             .withYear(2022)
             .truncatedTo(ChronoUnit.SECONDS)
-            .minus(1, ChronoUnit.MONTHS);
+            .minusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),

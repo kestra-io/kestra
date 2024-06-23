@@ -45,7 +45,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @Override
@@ -78,7 +78,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @SuppressWarnings("RedundantCast")

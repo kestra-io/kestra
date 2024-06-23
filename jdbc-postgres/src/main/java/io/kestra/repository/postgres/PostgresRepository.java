@@ -46,7 +46,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             throw new IllegalArgumentException("Invalid fullTextCondition" + fields);
         }
 
-        return DSL.condition(fields.get(0) + " @@ FULLTEXT_SEARCH(?)", query);
+        return DSL.condition(fields.getFirst() + " @@ FULLTEXT_SEARCH(?)", query);
     }
 
     @SneakyThrows
@@ -87,7 +87,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
         )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.get(0).get("total_count", Integer.class) : 0;
+        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

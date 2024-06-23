@@ -183,7 +183,7 @@ public class TemplateController {
             .stream()
             .map(Template::getId)
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
 
         if (duplicate.size() < templates.size()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
@@ -209,7 +209,7 @@ public class TemplateController {
                 .stream()
                 .filter(template -> !ids.contains(template.getId()))
                 .peek(template -> templateRepository.delete(template))
-                .collect(Collectors.toList());
+                .toList();
         }
 
         // update or create templates
@@ -225,7 +225,7 @@ public class TemplateController {
             })
             .toList();
 
-        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
+        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).toList();
     }
 
 
@@ -282,7 +282,7 @@ public class TemplateController {
     ) throws IOException {
         var templates = ids.stream()
             .map(id -> templateRepository.findById(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
-            .collect(Collectors.toList());
+            .toList();
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
@@ -301,7 +301,7 @@ public class TemplateController {
             .find(tenantService.resolveTenant(), query, namespace)
             .stream()
             .peek(templateRepository::delete)
-            .collect(Collectors.toList());
+            .toList();
 
         return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }

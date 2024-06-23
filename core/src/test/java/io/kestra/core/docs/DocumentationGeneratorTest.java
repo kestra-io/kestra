@@ -41,7 +41,7 @@ class DocumentationGeneratorTest {
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -154,7 +154,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin core = pluginScanner.scan();
 
         List<Document> docs = documentationGenerator.generate(core);
-        Document doc = docs.get(0);
+        Document doc = docs.getFirst();
         assertThat(doc.getIcon(), is(notNullValue()));
         assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
     }

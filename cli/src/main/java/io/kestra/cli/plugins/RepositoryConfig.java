@@ -13,6 +13,7 @@ import lombok.Getter;
 public class RepositoryConfig {
     String id;
 
+    @Builder.Default
     String type = "default";
 
     String url;

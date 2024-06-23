@@ -46,7 +46,7 @@ public abstract class StorageService {
             return splited
                 .stream()
                 .map(throwFunction(path -> runContext.storage().putFile(path.toFile())))
-                .collect(Collectors.toList());
+                .toList();
         }
     }
 

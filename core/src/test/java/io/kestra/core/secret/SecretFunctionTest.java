@@ -43,7 +43,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
-        assertThat(execution.getTaskRunList().get(0).getOutputs().get("value"), is("secretValue"));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value"), is("secretValue"));
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong"));
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getTaskId() != null && logEntry.getTaskId().equals("log-secret"));

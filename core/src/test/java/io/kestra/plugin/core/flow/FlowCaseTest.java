@@ -76,18 +76,18 @@ public class FlowCaseTest {
         receive.blockLast();
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getState().getCurrent(), is(fromState));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(1));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent(), is(fromState));
         assertThat(execution.getState().getCurrent(), is(fromState));
 
         if (outputs != null) {
-            assertThat(((Map<String, String>) execution.getTaskRunList().get(0).getOutputs().get("outputs")).get("extracted"), containsString(outputs));
+            assertThat(((Map<String, String>) execution.getTaskRunList().getFirst().getOutputs().get("outputs")).get("extracted"), containsString(outputs));
         }
 
-        assertThat(execution.getTaskRunList().get(0).getOutputs().get("executionId"), is(triggered.get().getId()));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId"), is(triggered.get().getId()));
 
         if (outputs != null) {
-            assertThat(execution.getTaskRunList().get(0).getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
+            assertThat(execution.getTaskRunList().getFirst().getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
         }
 
         assertThat(triggered.get().getTrigger().getType(), is("io.kestra.plugin.core.flow.Subflow"));

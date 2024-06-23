@@ -100,7 +100,7 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), is("must not be empty"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage(), is("must not be empty"));
     }
 
     @Test
@@ -136,8 +136,8 @@ class YamlFlowParserTest {
         Flow flow = this.parse("flows/tests/inputs-old.yaml");
 
         assertThat(flow.getInputs().size(), is(1));
-        assertThat(flow.getInputs().get(0).getId(), is("myInput"));
-        assertThat(flow.getInputs().get(0).getType(), is(Type.STRING));
+        assertThat(flow.getInputs().getFirst().getId(), is("myInput"));
+        assertThat(flow.getInputs().getFirst().getType(), is(Type.STRING));
     }
 
     @Test
@@ -158,7 +158,7 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage(), containsString("must not be empty"));
         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
     }
 
@@ -235,7 +235,7 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("Duplicate field 'variables.tf'"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage(), containsString("Duplicate field 'variables.tf'"));
     }
 
     private Flow parse(String path) {

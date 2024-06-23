@@ -69,6 +69,7 @@ class FlowWithSourceTest {
         assertThat(source, containsString("  cron: 0 1 9 * * *"));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void of() {
         // test that all fields are transmitted to FlowWithSource

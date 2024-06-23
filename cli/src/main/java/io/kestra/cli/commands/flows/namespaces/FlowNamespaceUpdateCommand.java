@@ -31,7 +31,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     @Inject
     public YamlFlowParser yamlFlowParser;
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -47,7 +47,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                         throw new RuntimeException(e);
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
 
             String body = "";
             if (flows.isEmpty()) {

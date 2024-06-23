@@ -2,15 +2,14 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -24,8 +23,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -174,6 +171,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         assertThat(afterUpdated.getDisabled(), is(false));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow("flow-with-triggers");
@@ -184,7 +182,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
             Duration.ofMinutes(2)
         );
         PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
-        assertThat(triggers.getResults().get(0).getTriggerContext().getNextExecutionDate(), notNullValue());
+        assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate(), notNullValue());
         assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate(), notNullValue());
     }
 

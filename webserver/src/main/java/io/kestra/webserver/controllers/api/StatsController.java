@@ -80,7 +80,7 @@ public class StatsController {
             tenantService.resolveTenant(),
             statisticRequest.namespace(),
             statisticRequest.flowId(),
-            statisticRequest.flows() != null && statisticRequest.flows().get(0).getNamespace() != null && statisticRequest.flows().get(0).getId() != null ? statisticRequest.flows() : null,
+            statisticRequest.flows() != null && statisticRequest.flows().getFirst().getNamespace() != null && statisticRequest.flows().getFirst().getId() != null ? statisticRequest.flows() : null,
             statisticRequest.startDate() != null ? statisticRequest.startDate().withZoneSameInstant(ZoneId.systemDefault()) : null,
             statisticRequest.endDate() != null ? statisticRequest.endDate().withZoneSameInstant(ZoneId.systemDefault()) : null,
             Boolean.TRUE.equals(statisticRequest.namespaceOnly())
@@ -95,7 +95,7 @@ public class StatsController {
     ) {
         return executionRepository.lastExecutions(
             tenantService.resolveTenant(),
-            lastExecutionsRequest.flows() != null && lastExecutionsRequest.flows().get(0).getNamespace() != null && lastExecutionsRequest.flows().get(0).getId() != null ? lastExecutionsRequest.flows() : null
+            lastExecutionsRequest.flows() != null && lastExecutionsRequest.flows().getFirst().getNamespace() != null && lastExecutionsRequest.flows().getFirst().getId() != null ? lastExecutionsRequest.flows() : null
         );
     }
 

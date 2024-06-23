@@ -56,7 +56,7 @@ class ErrorControllerTest {
         assertThat(response, containsString("Failed to convert argument"));
 
         // missing getter & setter on JsonError
-        // assertThat(exception.getResponse().getBody(JsonError.class).get().getEmbedded().get("errors").get().get(0).getPath(), containsInAnyOrder("tasks"));
+        // assertThat(exception.getResponse().getBody(JsonError.class).get().getEmbedded().get("errors").get().getFirst().getPath(), containsInAnyOrder("tasks"));
     }
 
     @Test

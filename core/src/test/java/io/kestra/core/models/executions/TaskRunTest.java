@@ -18,8 +18,8 @@ class TaskRunTest {
             .onRunningResend();
 
         assertThat(taskRun.getAttempts().size(), is(1));
-        assertThat(taskRun.getAttempts().get(0).getState().getHistories().get(0), is(taskRun.getState().getHistories().get(0)));
-        assertThat(taskRun.getAttempts().get(0).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst(), is(taskRun.getState().getHistories().getFirst()));
+        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent(), is(State.Type.KILLED));
     }
 
     @Test
@@ -34,8 +34,8 @@ class TaskRunTest {
             .onRunningResend();
 
         assertThat(taskRun.getAttempts().size(), is(1));
-        assertThat(taskRun.getAttempts().get(0).getState().getHistories().get(0), is(not(taskRun.getState().getHistories().get(0))));
-        assertThat(taskRun.getAttempts().get(0).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(taskRun.getAttempts().getFirst().getState().getHistories().getFirst(), is(not(taskRun.getState().getHistories().getFirst())));
+        assertThat(taskRun.getAttempts().getFirst().getState().getCurrent(), is(State.Type.KILLED));
     }
 
     @Test
@@ -50,7 +50,7 @@ class TaskRunTest {
             .onRunningResend();
 
         assertThat(taskRun.getAttempts().size(), is(2));
-        assertThat(taskRun.getAttempts().get(1).getState().getHistories().get(0), is(not(taskRun.getState().getHistories().get(0))));
+        assertThat(taskRun.getAttempts().get(1).getState().getHistories().getFirst(), is(not(taskRun.getState().getHistories().getFirst())));
         assertThat(taskRun.getAttempts().get(1).getState().getCurrent(), is(State.Type.KILLED));
     }
 

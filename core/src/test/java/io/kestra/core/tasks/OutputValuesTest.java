@@ -24,7 +24,7 @@ public class OutputValuesTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        TaskRun outputValues = execution.getTaskRunList().get(0);
+        TaskRun outputValues = execution.getTaskRunList().getFirst();
         HashMap<String, String> values = (HashMap<String, String>) outputValues.getOutputs().get("values");
         assertThat(values.get("output1"), is("xyz"));
         assertThat(values.get("output2"), is("abc"));

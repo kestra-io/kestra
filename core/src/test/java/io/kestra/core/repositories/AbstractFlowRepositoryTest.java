@@ -30,6 +30,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -299,7 +300,7 @@ public abstract class AbstractFlowRepositoryTest {
             List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
             assertThat((long) save.size(), is(1L));
 
-            assertThat(save.get(0).getSource(), is(FlowService.cleanupSource(flowSource)));
+            assertThat(save.getFirst().getSource(), is(FlowService.cleanupSource(flowSource)));
         } finally {
             deleteFlow(flow);
         }
@@ -357,7 +358,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent(), is(true));
 
         List<FlowWithSource> revisions = flowRepository.findRevisions(null, flow.getNamespace(), flow.getId());
-        assertThat(revisions.get(revisions.size() - 1).getRevision(), is(delete.getRevision()));
+        assertThat(revisions.getLast().getRevision(), is(delete.getRevision()));
     }
 
     @Test
@@ -465,6 +466,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat((long) distinctNamespace.size(), is(5L));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void templateDisabled() {
         Template template = Template.builder()
@@ -551,15 +553,12 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {
+        @Getter
         private static List<CrudEvent<Flow>> emits = new ArrayList<>();
 
         @Override
         public void onApplicationEvent(CrudEvent<Flow> event) {
             emits.add(event);
-        }
-
-        public static List<CrudEvent<Flow>> getEmits() {
-            return emits;
         }
 
         public static void reset() {

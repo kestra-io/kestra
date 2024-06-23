@@ -13,7 +13,6 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
@@ -121,9 +120,10 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(8));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat((String) execution.findTaskRunsByTaskId("2_end").get(0).getOutputs().get("value"), startsWith("kestra://"));
+            assertThat((String) execution.findTaskRunsByTaskId("2_end").getFirst().getOutputs().get("value"), startsWith("kestra://"));
         }
 
+        @SuppressWarnings("unchecked")
         public void outputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-outputs");
@@ -131,7 +131,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList(), hasSize(2));
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-            TaskRun taskRun = execution.getTaskRunList().get(0);
+            TaskRun taskRun = execution.getTaskRunList().getFirst();
             Map<String, Object> outputs = taskRun.getOutputs();
             assertThat(outputs, hasKey("outputFiles"));
 
@@ -150,6 +150,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(new String(storage.getFile(uri).readAllBytes()), is("Hello World"));
         }
 
+        @SuppressWarnings("unchecked")
         public void inputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-inputs");
@@ -175,7 +176,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(new String(storage.getFile(uri).readAllBytes()), is("Hello World"));
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
         public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
             // make sure the cache didn't exist
             StorageContext storageContext = StorageContext.forFlow(Flow
@@ -248,22 +249,23 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
 
             assertThat(execution.getTaskRunList(), hasSize(6));
             assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-            assertThat(execution.findTaskRunsByTaskId("t4").get(0).getState().getCurrent(), is(State.Type.FAILED));
-            assertThat(execution.findTaskRunsByTaskId("t1").get(0).getOutputs().get("value"), is("first"));
-            assertThat(execution.findTaskRunsByTaskId("t2").get(0).getOutputs().get("value"), is("second"));
-            assertThat(execution.findTaskRunsByTaskId("t3").get(0).getOutputs().get("value"), is("third"));
+            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value"), is("first"));
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), is("second"));
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third"));
         }
 
+        @SuppressWarnings("unchecked")
         public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
 
             assertThat(execution.getTaskRunList(), hasSize(3));
-            Map<String, Object> encryptedString = (Map<String, Object>) execution.findTaskRunsByTaskId("encrypted").get(0).getOutputs().get("value");
+            Map<String, Object> encryptedString = (Map<String, Object>) execution.findTaskRunsByTaskId("encrypted").getFirst().getOutputs().get("value");
             assertThat(encryptedString.get("type"), is(EncryptedString.TYPE));
             String encryptedValue = (String) encryptedString.get("value");
             assertThat(encryptedValue, is(not("Hello World")));
             assertThat(runContextFactory.of().decrypt(encryptedValue), is("Hello World"));
-            assertThat(execution.findTaskRunsByTaskId("decrypted").get(0).getOutputs().get("value"), is("Hello World"));
+            assertThat(execution.findTaskRunsByTaskId("decrypted").getFirst().getOutputs().get("value"), is("Hello World"));
         }
 
         private void put(String path, String content) throws IOException {

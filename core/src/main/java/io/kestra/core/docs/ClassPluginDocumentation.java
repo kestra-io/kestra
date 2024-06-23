@@ -62,7 +62,7 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
                     (String) r.get("unit"),
                     (String) r.get("description")
                 ))
-                .collect(Collectors.toList());
+                .toList();
         }
 
         if (alias != null) {

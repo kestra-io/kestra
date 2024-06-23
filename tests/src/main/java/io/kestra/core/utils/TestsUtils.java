@@ -60,12 +60,12 @@ abstract public class TestsUtils {
         return logs
             .stream()
             .filter(r -> r.getTaskRunId() != null && r.getTaskRunId().equals(taskRun.getId()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static LogEntry awaitLog(List<LogEntry> logs, Predicate<LogEntry> logMatcher) {
         List<LogEntry> matchingLogs = awaitLogs(logs, logMatcher, (Predicate<Integer>) null);
-        return matchingLogs.isEmpty() ? null : matchingLogs.get(0);
+        return matchingLogs.isEmpty() ? null : matchingLogs.getFirst();
     }
 
     public static List<LogEntry> awaitLogs(List<LogEntry> logs, Integer exactCount) {
@@ -84,7 +84,7 @@ abstract public class TestsUtils {
                     Collections.synchronizedList(logs)
                         .stream()
                         .filter(logMatcher)
-                        .collect(Collectors.toList())
+                        .toList()
                 );
 
                 if(countMatcher == null){

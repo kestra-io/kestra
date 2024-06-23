@@ -26,6 +26,6 @@ public class TenantSerializer extends BeanSerializerModifier {
 
         return beanProperties.stream()
             .filter(property -> !property.getName().equals("tenantId"))
-            .collect(Collectors.toList());
+            .toList();
     }
 }

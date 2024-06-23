@@ -99,7 +99,7 @@ public class RegisteredPlugin {
             .entrySet()
             .stream()
             .flatMap(map -> map.getValue().stream())
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @SuppressWarnings("rawtypes")

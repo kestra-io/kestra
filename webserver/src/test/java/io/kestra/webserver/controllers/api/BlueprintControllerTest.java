@@ -46,12 +46,12 @@ class BlueprintControllerTest {
         assertThat(blueprintsWithTotal.getTotal(), is(2L));
         ArrayListTotal<BlueprintController.BlueprintItem> blueprints = blueprintsWithTotal.getResults();
         assertThat(blueprints.size(), is(2));
-        assertThat(blueprints.get(0).getId(), is("1"));
-        assertThat(blueprints.get(0).getTitle(), is("GCS Trigger"));
-        assertThat(blueprints.get(0).getDescription(), is("GCS trigger flow"));
-        assertThat(blueprints.get(0).getPublishedAt(), is(Instant.parse("2023-06-01T08:37:34.661Z")));
-        assertThat(blueprints.get(0).getTags().size(), is(2));
-        assertThat(blueprints.get(0).getTags(), contains("3", "2"));
+        assertThat(blueprints.getFirst().getId(), is("1"));
+        assertThat(blueprints.getFirst().getTitle(), is("GCS Trigger"));
+        assertThat(blueprints.getFirst().getDescription(), is("GCS trigger flow"));
+        assertThat(blueprints.getFirst().getPublishedAt(), is(Instant.parse("2023-06-01T08:37:34.661Z")));
+        assertThat(blueprints.getFirst().getTags().size(), is(2));
+        assertThat(blueprints.getFirst().getTags(), contains("3", "2"));
         assertThat(blueprints.get(1).getId(), is("2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
@@ -143,9 +143,9 @@ class BlueprintControllerTest {
         );
 
         assertThat(blueprintTags.size(), is(3));
-        assertThat(blueprintTags.get(0).getId(), is("3"));
-        assertThat(blueprintTags.get(0).getName(), is("Cloud"));
-        assertThat(blueprintTags.get(0).getPublishedAt(), is(Instant.parse("2023-06-01T08:37:10.171Z")));
+        assertThat(blueprintTags.getFirst().getId(), is("3"));
+        assertThat(blueprintTags.getFirst().getName(), is("Cloud"));
+        assertThat(blueprintTags.getFirst().getPublishedAt(), is(Instant.parse("2023-06-01T08:37:10.171Z")));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/tags?q=someQuery")));

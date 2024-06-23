@@ -69,7 +69,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @Override
@@ -103,7 +103,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         return configuredSelect
             .fetchMany()
-            .get(0);
+            .getFirst();
     }
 
     @SuppressWarnings("RedundantCast")

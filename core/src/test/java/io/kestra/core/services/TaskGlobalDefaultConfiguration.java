@@ -36,7 +36,7 @@ class TaskGlobalDefaultConfigurationTest {
 
             assertThat(
                 ((Map<String, String>) taskDefaultGlobalConfiguration.getDefaults()
-                    .get(0)
+                    .getFirst()
                     .getValues()
                     .get("env")).keySet(),
                 is(Set.of("AB_VALUE", "ABCVALUE"))

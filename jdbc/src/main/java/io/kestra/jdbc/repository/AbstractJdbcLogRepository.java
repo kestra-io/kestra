@@ -211,7 +211,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                         .flatMap(levelLongMap -> levelLongMap.entrySet().stream())
                         .collect(Collectors.groupingBy(Map.Entry::getKey, Collectors.summingLong(Map.Entry::getValue)));
 
-                    return logStatistics.get(0).toBuilder().counts(collect).build();
+                    return logStatistics.getFirst().toBuilder().counts(collect).build();
                 })
                 .findFirst()
                 .orElse(LogStatistics.builder().timestamp(currentDate.toInstant()).groupBy(groupByType.val()).build());

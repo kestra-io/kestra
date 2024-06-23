@@ -42,11 +42,11 @@ class PluginDocCommandTest {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), docPath.toAbsolutePath().toString()};
             PicocliRunner.call(PluginDocCommand.class, ctx, args);
 
-            List<Path> files = Files.list(docPath).collect(Collectors.toList());
+            List<Path> files = Files.list(docPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.get(0).getFileName().toString(), is("plugin-template-test"));
-            var directory = files.get(0).toFile();
+            assertThat(files.getFirst().getFileName().toString(), is("plugin-template-test"));
+            var directory = files.getFirst().toFile();
             assertThat(directory.isDirectory(), is(true));
             assertThat(directory.listFiles().length, is(3));
 

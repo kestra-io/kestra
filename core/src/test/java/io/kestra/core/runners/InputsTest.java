@@ -64,12 +64,15 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     private Map<String, Object> typedInputs(Map<String, Object> map) {
         return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
     }
 
     private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
-        return runnerUtils.typedInputs(
+        return flowIO.typedInputs(
             flow,
             Execution.builder()
                 .id("test")
@@ -155,7 +158,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(13));
@@ -327,7 +330,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, map)
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, map)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(13));

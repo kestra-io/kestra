@@ -27,13 +27,16 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     @Test
     void runnableTask() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-runnable");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("fail").get(0).getAttempts().size(), is(3));
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size(), is(3));
     }
 
     @Test
@@ -46,9 +49,9 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
 
     @Test
     void executableTask_ForEachItem() throws TimeoutException, URISyntaxException, IOException {
-        URI file = storageUpload(10);
+        URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
         assertThat(execution.getTaskRunList(), hasSize(4));
@@ -62,10 +65,10 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
-    private URI storageUpload(int count) throws URISyntaxException, IOException {
+    private URI storageUpload() throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 
-        Files.write(tempFile.toPath(), content(count));
+        Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
             null,
@@ -74,9 +77,9 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
         );
     }
 
-    private List<String> content(int count) {
+    private List<String> content() {
         return IntStream
-            .range(0, count)
+            .range(0, 10)
             .mapToObj(value -> StringUtils.leftPad(value + "", 20))
             .collect(Collectors.toList());
     }

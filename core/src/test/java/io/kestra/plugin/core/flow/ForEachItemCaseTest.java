@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
@@ -56,6 +57,9 @@ public class ForEachItemCaseTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -71,7 +75,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 3 subflows
@@ -116,7 +120,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-no-wait", null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // assert that not all subflows ran (depending on the speed of execution, there can be some)
@@ -162,7 +166,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 3 subflows
@@ -204,7 +208,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload(10);
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-outputs", null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 3 subflows

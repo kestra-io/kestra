@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.runners.FlowInputOutput;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -14,6 +16,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 class AllowFailureTest extends AbstractMemoryRunnerTest {
+    @Inject
+    private FlowInputOutput flowIO;
+
     @Test
     void success() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "allow-failure", Duration.ofSeconds(120));
@@ -32,7 +37,7 @@ class AllowFailureTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "allow-failure",
             null,
-            (f, e) -> runnerUtils.typedInputs(f, e, ImmutableMap.of("crash", "1"))
+            (f, e) -> flowIO.typedInputs(f, e, ImmutableMap.of("crash", "1"))
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));

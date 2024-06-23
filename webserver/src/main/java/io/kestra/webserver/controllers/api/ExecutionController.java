@@ -302,7 +302,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Deleted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> deleteByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId,
-        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") boolean includeNonTerminated
+        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated
     ) {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();

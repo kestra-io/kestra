@@ -6,6 +6,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.plugin.core.flow.TemplateTest;
@@ -44,6 +45,9 @@ public abstract class JdbcTemplateRunnerTest {
     @Inject
     private TemplateRepositoryInterface templateRepository;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     @BeforeAll
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
@@ -56,7 +60,7 @@ public abstract class JdbcTemplateRunnerTest {
 
     @Test
     void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue, flowIO);
     }
 
     @RetryingTest(5) // flaky on MySQL

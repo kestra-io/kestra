@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -91,6 +92,9 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
     ReactorSseClient sseClient;
+
+    @Inject
+    private FlowInputOutput flowIO;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
@@ -193,6 +197,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             Execution.class
         ).block();
 
+        assertThat(foundExecution, is(notNullValue()));
         assertThat(foundExecution.getId(), is(result.getId()));
         assertThat(foundExecution.getNamespace(), is(result.getNamespace()));
     }
@@ -231,12 +236,13 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .collectList()
             .block();
 
+        assertThat(results, is(notNullValue()));
         assertThat(results.size(), is(greaterThan(0)));
-        assertThat(results.get(results.size() - 1).getData().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(results.getLast().getData().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {
-        ExecutionController.EvalResult eval = client.toBlocking().retrieve(
+        return client.toBlocking().retrieve(
             HttpRequest
                 .POST(
                     "/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().get(index).getId(),
@@ -245,8 +251,6 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
                 .contentType(MediaType.TEXT_PLAIN_TYPE),
             Argument.of(ExecutionController.EvalResult.class)
         );
-
-        return eval;
     }
 
     @Test
@@ -257,7 +261,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getResult(), is("my simple string"));
 
         result = this.eval(execution, "{{ taskrun.id }}", 0);
-        assertThat(result.getResult(), is(execution.getTaskRunList().get(0).getId()));
+        assertThat(result.getResult(), is(execution.getTaskRunList().getFirst().getId()));
 
         result = this.eval(execution, "{{ outputs['1-1_return'][taskrun.value].value }}", 21);
         assertThat(result.getResult(), containsString("1-1_return"));
@@ -282,7 +286,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(resultMap.get("type"), is("io.kestra.datatype:aes_encrypted"));
         assertThat(resultMap.get("value"), notNullValue());
 
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         result = this.eval(execution, "{{inputs.secret}}", 0);
         assertThat(result.getResult(), not(inputs.get("secret")));
@@ -294,7 +298,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "unknownTaskId";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -312,7 +316,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String flowId = "restart_with_inputs";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -331,7 +335,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "instant";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
 
@@ -382,7 +386,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent(), is(true));
@@ -538,7 +542,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void downloadFile() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(13));
 
         String path = (String) execution.getInputs().get("file");
@@ -555,6 +559,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             FileMetas.class
         ).block();
 
+
+        assertThat(metas, is(notNullValue()));
         assertThat(metas.getSize(), is(5L));
 
         String newExecutionId = IdUtils.create();
@@ -573,7 +579,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void filePreview() throws TimeoutException {
-        Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList(), hasSize(13));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
@@ -598,7 +604,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("json", "{}")
             .build();
 
-        Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, latin1FileInputs));
+        Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, latin1FileInputs));
         assertThat(latin1Execution.getTaskRunList(), hasSize(13));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
@@ -623,7 +629,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void webhook() {
         Flow webhook = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, "webhook").orElseThrow();
-        String key = ((Webhook) webhook.getTriggers().get(0)).getKey();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
 
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -650,8 +656,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             Execution.class
         );
 
-        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).get(0).get("a"), is(1));
-        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).get(0).get("b"), is(true));
+        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("a"), is(1));
+        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("b"), is(true));
 
         execution = client.toBlocking().retrieve(
             HttpRequest
@@ -786,7 +792,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             Execution.class);
         assertThat(execution.getState().isPaused(), is(false));
 
-        Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").get(0).getOutputs().get("onResume");
+        Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
         assertThat(outputs.get("asked"), is("myString"));
         assertThat((String) outputs.get("data"), startsWith("kestra://"));
     }
@@ -968,6 +974,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
 
         executions = client.toBlocking().retrieve(
@@ -1031,7 +1038,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             Execution.class);
         assertThat(execution.getState().getCurrent(), is(State.Type.KILLED));
         assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.KILLED));
     }
 
     @Test
@@ -1150,6 +1157,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullValue, Execution.class));
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
     void getFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
@@ -1159,9 +1167,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(result, notNullValue());
         assertThat(result.getTasks(), hasSize(5));
-        assertThat((result.getTasks().get(0) instanceof TaskForExecution), is(true));
+        assertThat((result.getTasks().getFirst() instanceof TaskForExecution), is(true));
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
     void getFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
@@ -1180,9 +1189,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(result.getId(), is(execution.getFlowId()));
         assertThat(result.getTriggers(), hasSize(1));
-        assertThat((result.getTriggers().get(0) instanceof AbstractTriggerForExecution), is(true));
+        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution), is(true));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void getDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
@@ -1193,6 +1203,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.size(), greaterThanOrEqualTo(5));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void getFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(

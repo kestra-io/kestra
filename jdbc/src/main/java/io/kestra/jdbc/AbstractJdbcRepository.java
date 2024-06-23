@@ -45,6 +45,7 @@ public abstract class AbstractJdbcRepository<T> {
     @Getter
     protected Table<Record> table;
 
+    @SuppressWarnings("unchecked")
     public AbstractJdbcRepository(
         JdbcTableConfig tableConfig,
         QueueService queueService,

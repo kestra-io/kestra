@@ -9,22 +9,10 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.multipart.CompletedFileUpload;
-import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.http.server.netty.multipart.NettyCompletedAttribute;
-import io.micronaut.http.server.netty.multipart.NettyCompletedFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 
-import java.io.*;
-import java.net.URI;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -47,19 +35,6 @@ public class RunnerUtils {
 
     @Inject
     private ConditionService conditionService;
-
-    @Inject
-    private FlowInputOutput flowIO;
-
-    @Deprecated
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Publisher<CompletedPart> inputs) throws IOException {
-        return flowIO.typedInputs(flow, execution, inputs);
-    }
-
-    @Deprecated
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in) {
-        return flowIO.typedInputs(flow, execution, in);
-    }
 
     public Execution runOne(String tenantId, String namespace, String flowId) throws TimeoutException {
         return this.runOne(tenantId, namespace, flowId, null, null, null, null);

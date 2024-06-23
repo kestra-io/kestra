@@ -9,6 +9,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.plugin.core.log.Log;
@@ -42,15 +43,21 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
 
+    @Inject
+    private FlowInputOutput flowIO;
+
     public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
         .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
-    public static void withTemplate(RunnerUtils runnerUtils,
-                                    TemplateRepositoryInterface templateRepository,
-                                    LocalFlowRepositoryLoader repositoryLoader,
-                                    QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
+    public static void withTemplate(
+        RunnerUtils runnerUtils,
+        TemplateRepositoryInterface templateRepository,
+        LocalFlowRepositoryLoader repositoryLoader,
+        QueueInterface<LogEntry> logQueue,
+        FlowInputOutput flowIO
+    ) throws TimeoutException, IOException, URISyntaxException {
         templateRepository.create(TEMPLATE_1);
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
             "flows/templates/with-template.yaml")));
@@ -58,13 +65,12 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
-
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
             "with-template",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, ImmutableMap.of(
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, ImmutableMap.of(
                 "with-string", "myString",
                 "with-optional", "myOpt"
             )),
@@ -80,7 +86,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
     @Test
     void withTemplate() throws TimeoutException, IOException, URISyntaxException {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue, flowIO);
     }
 
 

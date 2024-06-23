@@ -19,7 +19,6 @@ import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
@@ -57,7 +56,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest extends AbstractMemoryRunnerTest {
@@ -91,7 +89,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     private QueueInterface<LogEntry> logQueue;
 
     @Inject
-    private PluginConfigurations pluginConfigurations;
+    private FlowInputOutput flowIO;
 
     @Test
     void logs() throws TimeoutException {
@@ -103,7 +101,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(5));
 
-        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(0).getId()));
+        matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().getFirst().getId()));
         assertThat(matchingLog, notNullValue());
         assertThat(matchingLog.getLevel(), is(Level.TRACE));
         assertThat(matchingLog.getMessage(), is("first t1"));
@@ -139,7 +137,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs-large",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));
@@ -180,7 +178,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         long size = 1024L * 1024 * 1024;
 
-        Process p = Runtime.getRuntime().exec(String.format("dd if=/dev/zero of=%s bs=1 count=1 seek=%s", path, size));
+        Process p = Runtime.getRuntime().exec(new String[] {String.format("dd if=/dev/zero of=%s bs=1 count=1 seek=%s", path, size)});
         p.waitFor();
         p.destroy();
 
@@ -228,19 +226,20 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(decrypted, is(plainText));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void encryptedStringOutput() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
-        TaskRun hello = execution.findTaskRunsByTaskId("hello").get(0);
+        TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
         assertThat(valueOutput.size(), is(2));
         assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));
         // the value is encrypted so it's not the plaintext value of the task property
         assertThat(valueOutput.get("value"), not("Hello World"));
-        TaskRun returnTask = execution.findTaskRunsByTaskId("return").get(0);
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
         assertThat(returnTask.getOutputs().get("value"), is("Hello World"));
     }
@@ -308,7 +307,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         receive.blockLast();
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null).getMessage(), is("john ******** doe"));
+        assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage(), is("john ******** doe"));
     }
 
     @SuperBuilder

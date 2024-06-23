@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.JacksonYAMLParseException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -38,7 +38,7 @@ public class YamlFunction implements Function {
 
         try {
             return MAPPER.readValue(yaml, TYPE_REFERENCE);
-        } catch (YAMLException e) {
+        } catch (JacksonYAMLParseException e) {
             throw new PebbleException(null, "Invalid yaml: " + e.getMessage(), lineNumber, self.getName());
         } catch (JsonMappingException e) {
             throw new PebbleException(null, "Invalid yaml: " + e.getMessage(), lineNumber, self.getName());

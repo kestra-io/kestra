@@ -55,7 +55,7 @@ public class PluginController {
     )
     public HttpResponse<Map<String, Object>> schemas(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
-        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") boolean arrayOf
+        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf
     ) {
         return HttpResponse.ok()
             .body(this.schemasCache(type, arrayOf))

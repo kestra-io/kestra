@@ -34,6 +34,7 @@ public class RunnerUtils {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
+
     private ConditionService conditionService;
 
     public Execution runOne(String tenantId, String namespace, String flowId) throws TimeoutException {

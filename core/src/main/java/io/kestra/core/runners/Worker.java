@@ -25,11 +25,10 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.Hashing;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -151,25 +150,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.eventPublisher = eventPublisher;
         this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
         setState(ServiceState.CREATED);
-    }
-
-    @SuppressWarnings("unchecked")
-    @VisibleForTesting
-    @Deprecated(forRemoval = true)
-    public Worker(
-        ApplicationContext context,
-        Integer numThreads,
-        String workerGroupKey
-    ) {
-        this(
-            UUID.randomUUID().toString(),
-            numThreads,
-            workerGroupKey,
-            context.getBean(ApplicationEventPublisher.class),
-            context.getBean(WorkerGroupService.class),
-            context.getBean(ExecutorsUtils.class)
-        );
-        context.inject(this);
     }
 
     @Override

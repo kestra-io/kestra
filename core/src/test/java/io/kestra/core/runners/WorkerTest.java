@@ -192,7 +192,7 @@ class WorkerTest {
 
     @Test
     void shouldCreateInstanceGivenApplicationContext() {
-        Assertions.assertDoesNotThrow(() -> new Worker(applicationContext, 8, null));
+        Assertions.assertDoesNotThrow(() -> applicationContext.createBean(Worker.class, IdUtils.create(), 8, null));
 
     }
 

@@ -102,66 +102,6 @@ public abstract class RunContext {
     public abstract WorkingDir workingDir();
 
     /**
-     * @deprecated use {@link WorkingDir#path}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path tempDir();
-
-    /**
-     * @deprecated use {@link WorkingDir#path(boolean)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path tempDir(boolean create);
-
-    /**
-     * @deprecated use {@link WorkingDir#resolve(Path)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path resolve(Path path);
-
-    /**
-     * @deprecated use {@link WorkingDir#createTempFile()}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path tempFile() throws IOException;
-
-    /**
-     * @deprecated use {@link WorkingDir#createTempFile(String)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path tempFile(String extension) throws IOException;
-
-    /**
-     * @deprecated use {@link WorkingDir#createTempFile(byte[])}
-     */
-    @Deprecated
-    public abstract Path tempFile(byte[] content) throws IOException;
-
-    /**
-     * @deprecated use {@link WorkingDir#createTempFile(byte[], String)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path tempFile(byte[] content, String extension) throws IOException;
-
-    /**
-     * @deprecated use {@link WorkingDir#createFile(String)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path file(String filename) throws IOException;
-
-    /**
-     * @deprecated use {@link WorkingDir#createFile(String, byte[])}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract Path file(byte[] content, String filename) throws IOException;
-
-    /**
-     * @deprecated use {@link io.kestra.core.utils.FileUtils#getExtension(String)}
-     */
-    @Deprecated(forRemoval = true)
-    public abstract String fileExtension(String fileName);
-
-    /**
      * Cleanup any temporary resources, files created through this context.
      */
     public abstract void cleanup();

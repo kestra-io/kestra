@@ -18,13 +18,10 @@ import jakarta.inject.Provider;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -138,6 +135,7 @@ public class DefaultRunContext extends RunContext {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public DefaultRunContext clone() {
         DefaultRunContext runContext = new DefaultRunContext();
@@ -358,87 +356,6 @@ public class DefaultRunContext extends RunContext {
     @Override
     public WorkingDir workingDir() {
         return workingDir;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path tempDir() {
-        return workingDir.path();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public synchronized Path tempDir(boolean create) {
-        return workingDir.path(create);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path resolve(Path path) {
-        return workingDir.resolve(path);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path tempFile() throws IOException {
-        return workingDir.createTempFile();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path tempFile(String extension) throws IOException {
-        return workingDir.createTempFile(extension);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path tempFile(byte[] content) throws IOException {
-        return workingDir.createTempFile(content);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path tempFile(byte[] content, String extension) throws IOException {
-        return workingDir.createTempFile(content, extension);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path file(String filename) throws IOException {
-        return workingDir.createFile(filename);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Path file(byte[] content, String filename) throws IOException {
-        return workingDir.createFile(filename, content);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String fileExtension(String fileName) {
-        String extension = FilenameUtils.getExtension(fileName);
-        return StringUtils.isEmpty(extension) ? null : "." + extension;
     }
 
     /**

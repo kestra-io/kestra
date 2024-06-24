@@ -70,7 +70,7 @@ public class PluginDownloader {
             .map(repositoryConfig -> {
                 var build = new RemoteRepository.Builder(
                     repositoryConfig.getId(),
-                    repositoryConfig.getType(),
+                    "default",
                     repositoryConfig.getUrl()
                 );
 

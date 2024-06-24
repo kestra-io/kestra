@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
@@ -233,6 +234,7 @@ class FlowServiceTest {
         assertThat(warnings.getFirst().to(), is("io.kestra.core.runners.test.TaskWithAlias"));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void propertyRenamingDeprecation() {
         Flow flow = Flow.builder()
@@ -244,14 +246,14 @@ class FlowServiceTest {
                     .type(Type.STRING)
                     .build(),
                 StringInput.builder()
-                    .id("inputWithName")
+                    .name("inputWithName")
                     .type(Type.STRING)
                     .build()
             ))
-            .tasks(Collections.singletonList(Log.builder()
+            .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .message("test")
+                .format("test")
                 .build()))
             .build();
 

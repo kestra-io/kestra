@@ -84,7 +84,7 @@ abstract public class TestsUtils {
                     Collections.synchronizedList(logs)
                         .stream()
                         .filter(logMatcher)
-                        .toList()
+                        .collect(Collectors.toList())
                 );
 
                 if(countMatcher == null){

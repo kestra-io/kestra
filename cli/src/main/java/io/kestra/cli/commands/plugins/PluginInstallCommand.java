@@ -62,8 +62,7 @@ public class PluginInstallCommand extends AbstractCommand {
                     URIBuilder uriBuilder = new URIBuilder(s);
 
                     RepositoryConfig.RepositoryConfigBuilder builder = RepositoryConfig.builder()
-                        .id(IdUtils.create())
-                        .type("default");
+                        .id(IdUtils.create());
 
                     if (uriBuilder.getUserInfo() != null) {
                         int index = uriBuilder.getUserInfo().indexOf(":");
@@ -97,7 +96,7 @@ public class PluginInstallCommand extends AbstractCommand {
 
         return 0;
     }
-    
+
     @Override
     protected boolean loadExternalPlugins() {
         return false;

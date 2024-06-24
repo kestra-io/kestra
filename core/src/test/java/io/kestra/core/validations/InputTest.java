@@ -27,6 +27,7 @@ class InputTest {
         assertThat(modelValidator.isValid(validInput).isEmpty(), is(true));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void inputNameDeprecation() {
         String id = "test";
@@ -36,7 +37,7 @@ class InputTest {
             .build();
 
         assertThat(validInput.getId(), is(id));
-        assertThat(validInput.getId(), nullValue());
+        assertThat(validInput.getName(), nullValue());
 
         String newName = "newName";
         validInput = StringInput.builder()
@@ -45,7 +46,7 @@ class InputTest {
 
         validInput.setName(newName);
 
-        assertThat(validInput.getId(), is(newName));
+        assertThat(validInput.getName(), is(newName));
         assertThat(validInput.getId(), is(newName));
     }
 }

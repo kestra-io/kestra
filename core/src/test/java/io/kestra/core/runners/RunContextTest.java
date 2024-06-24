@@ -178,7 +178,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         long size = 1024L * 1024 * 1024;
 
-        Process p = Runtime.getRuntime().exec(new String[] {String.format("dd if=/dev/zero of=%s bs=1 count=1 seek=%s", path, size)});
+        Process p = Runtime.getRuntime().exec(new String[] {"dd", "if=/dev/zero", String.format("of=%s", path), "bs=1", "count=1", String.format("seek=%s", size)});
         p.waitFor();
         p.destroy();
 

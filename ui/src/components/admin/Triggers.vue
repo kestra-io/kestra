@@ -33,15 +33,32 @@
                     </el-form-item>
                 </template>
                 <template #table>
-                    <el-table
+                    <select-table
                         :data="triggersMerged"
-                        ref="table"
+                        ref="selectTable"
                         :default-sort="{prop: 'flowId', order: 'ascending'}"
                         stripe
                         table-layout="auto"
                         fixed
                         @sort-change="onSort"
+                        @selection-change="onSelectionChange"
                     >
+                        <template #select-actions>
+                            <bulk-select
+                                :select-all="queryBulkAction"
+                                :selections="selection"
+                                :total="total"
+                                @update:select-all="toggleAllSelection"
+                                @unselect="toggleAllUnselected"
+                            >
+                                <el-button>
+                                    {{ $t('enable') }}
+                                </el-button>
+                                <el-button>
+                                    {{ $t('disable') }}
+                                </el-button>
+                            </bulk-select>
+                        </template>
                         <el-table-column
                             prop="triggerId"
                             sortable="custom"
@@ -143,7 +160,7 @@
                                 </el-tooltip>
                             </template>
                         </el-table-column>
-                    </el-table>
+                    </select-table>
                 </template>
             </data-table>
 
@@ -169,6 +186,8 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import Check from "vue-material-design-icons/Check.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
+    import SelectTable from "../layout/SelectTable.vue";
+    import BulkSelect from "../layout/BulkSelect.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -183,9 +202,10 @@
     import Id from "../Id.vue";
     import Status from "../Status.vue";
     import {mapState} from "vuex";
+    import SelectTableActions from "../../mixins/selectTableActions";
 
     export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             RefreshButton,
             MarkdownTooltip,
@@ -205,10 +225,14 @@
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
-                ]
+                ],
+                selection: null
             };
         },
         methods: {
+            onSelectionChange(selection) {
+                this.selection = selection;
+            },
             loadData(callback) {
                 this.$store.dispatch("trigger/search", {
                     namespace: this.$route.query.namespace,

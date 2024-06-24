@@ -83,6 +83,8 @@ import java.util.Map;
     }
 )
 public class Process extends TaskRunner {
+    /** Convenient default instance to be used as task default value for a 'taskRunner' property. */
+    public static final Process INSTANCE = Process.builder().type(Process.class.getName()).build();
 
     @Override
     public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {

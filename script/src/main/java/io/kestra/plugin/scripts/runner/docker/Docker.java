@@ -34,7 +34,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -100,8 +99,11 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
     }
 )
 public class Docker extends TaskRunner {
+    /** Convenient default instance to be used as task default value for a 'taskRunner' property. */
+    public static final Docker INSTANCE = Docker.builder().type(Docker.class.getName()).build();
+
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
-    public static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
+    private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
     private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";

@@ -9,11 +9,13 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
 public class IonModule extends SimpleModule {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Version VERSION = VersionUtil.parseVersion(
         "0.0.1",
@@ -49,6 +51,7 @@ public class IonModule extends SimpleModule {
     }
 
     public static class StringTypedSerializer <T> extends StdScalarSerializer<T> {
+        @Serial
         private static final long serialVersionUID = 1L;
         private final Function<T, String> mapper;
 
@@ -64,6 +67,7 @@ public class IonModule extends SimpleModule {
     }
 
     public static class InstantSerializer extends StdScalarSerializer<Instant> {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         protected InstantSerializer() {
@@ -77,6 +81,7 @@ public class IonModule extends SimpleModule {
     }
 
     public static class LocalDateSerializer extends StdScalarSerializer<LocalDate> {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         protected LocalDateSerializer() {

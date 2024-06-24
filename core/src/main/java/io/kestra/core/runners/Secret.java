@@ -40,7 +40,7 @@ final class Secret {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Map<String, Object> decrypt(final Map<String, Object> data) {
         Map<String, Object> decryptedMap = new HashMap<>(data);
         for (var entry: data.entrySet()) {

@@ -11,6 +11,7 @@ import jakarta.inject.Singleton;
 
 import java.util.Optional;
 
+@SuppressWarnings("unchecked")
 @Factory
 @Requires(missingProperty = "datasources", condition = DatasourceProvider.H2RepositoryOrQueue.class)
 public class DatasourceProvider {

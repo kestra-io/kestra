@@ -134,6 +134,7 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("Deprecated"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void state() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
@@ -159,6 +160,7 @@ class DocumentationGeneratorTest {
         assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void taskRunner() throws IOException {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());

@@ -98,7 +98,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     private Namespace.Conflicts conflict = Namespace.Conflicts.OVERWRITE;
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public UploadFiles.Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(namespace);
         String renderedDestination = checkLeadingSlash(runContext.render(destination));

@@ -82,6 +82,7 @@ public class DeleteFiles extends Task implements RunnableTask<DeleteFiles.Output
     @PluginProperty(dynamic = true)
     private Object files;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();

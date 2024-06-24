@@ -88,51 +88,51 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
-id: apiJSONtoMongoDB
-namespace: company.team
+                id: apiJSONtoMongoDB
+                namespace: company.team
 
-tasks:
-- id: wdir
-  type: io.kestra.plugin.core.flow.WorkingDirectory
-  outputFiles:
-    - output.json
-  inputFiles:
-    query.sql: |
-      SELECT sum(total) as total, avg(quantity) as avg_quantity
-      FROM sales;
-  tasks:
-    - id: inlineScript
-      type: io.kestra.plugin.scripts.python.Script
-      taskRunner:
-        type: io.kestra.plugin.scripts.runner.docker.Docker
-      containerImage: python:3.11-slim
-      beforeCommands:
-        - pip install requests kestra > /dev/null
-      warningOnStdErr: false
-      script: |
-        import requests
-        import json
-        from kestra import Kestra
+                tasks:
+                - id: wdir
+                  type: io.kestra.plugin.core.flow.WorkingDirectory
+                  outputFiles:
+                    - output.json
+                  inputFiles:
+                    query.sql: |
+                      SELECT sum(total) as total, avg(quantity) as avg_quantity
+                      FROM sales;
+                  tasks:
+                    - id: inlineScript
+                      type: io.kestra.plugin.scripts.python.Script
+                      taskRunner:
+                        type: io.kestra.plugin.scripts.runner.docker.Docker
+                      containerImage: python:3.11-slim
+                      beforeCommands:
+                        - pip install requests kestra > /dev/null
+                      warningOnStdErr: false
+                      script: |
+                        import requests
+                        import json
+                        from kestra import Kestra
 
-        with open('query.sql', 'r') as input_file:
-            sql = input_file.read()
+                        with open('query.sql', 'r') as input_file:
+                            sql = input_file.read()
 
-        response = requests.get('https://api.github.com')
-        data = response.json()
+                        response = requests.get('https://api.github.com')
+                        data = response.json()
 
-        with open('output.json', 'w') as output_file:
-            json.dump(data, output_file)
+                        with open('output.json', 'w') as output_file:
+                            json.dump(data, output_file)
 
-        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-- id: loadToMongoDB
-  type: io.kestra.plugin.mongodb.Load
-  connection:
-    uri: mongodb://host.docker.internal:27017/
-  database: local
-  collection: github
-  from: "{{ outputs.wdir.uris['output.json'] }}"
-                """
+                - id: loadToMongoDB
+                  type: io.kestra.plugin.mongodb.Load
+                  connection:
+                    uri: mongodb://host.docker.internal:27017/
+                  database: local
+                  collection: github
+                  from: "{{ outputs.wdir.uris['output.json'] }}"
+            """
         ),
         @Example(
             full = true,

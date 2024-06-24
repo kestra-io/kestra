@@ -8,8 +8,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.plugins.PluginModule;
 
 import java.io.IOException;
+import java.io.Serial;
 
 public class RunContextModule extends SimpleModule {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 
     public static final String NAME = "kestra-context";

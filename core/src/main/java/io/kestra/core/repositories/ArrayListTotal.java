@@ -4,6 +4,7 @@ import io.micronaut.data.model.Pageable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -13,6 +14,7 @@ import static java.util.stream.Collectors.toCollection;
 @Getter
 @NoArgsConstructor
 public class ArrayListTotal<T> extends ArrayList<T> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private long total;

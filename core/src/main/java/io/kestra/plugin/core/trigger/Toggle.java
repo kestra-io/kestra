@@ -100,6 +100,7 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty
     private Boolean enabled = false;
 
+    @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Map<String, String> flowVariables = (Map<String, String>) runContext.getVariables().get("flow");

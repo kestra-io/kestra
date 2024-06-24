@@ -177,6 +177,7 @@ public final class ScriptService {
      * If a prefix is set, label names will be generated as 'prefix/name'.
      * If normalizeValue is true, label values will normalize it based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes.
      */
+    @SuppressWarnings("unchecked")
     public static Map<String, String> labels(RunContext runContext, String prefix, boolean normalizeValue, boolean lowerCase) {
         Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
         Map<String, String> task = (Map<String, String>) runContext.getVariables().get("task");
@@ -228,6 +229,7 @@ public final class ScriptService {
      * Create a job name like {namespace}-{flowId}-{taskId}-{random} with random being 5 alphanumerical characters.
      * The Job name will be normalized based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes
      */
+    @SuppressWarnings("unchecked")
     public static String jobName(RunContext runContext) {
         Map<String, String> flow = (Map<String, String>) runContext.getVariables().get("flow");
         Map<String, String> task = (Map<String, String>) runContext.getVariables().get("task");

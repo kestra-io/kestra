@@ -10,11 +10,15 @@ import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
 
+import java.io.Serial;
+
 /**
  * Jackson module for registering the {@link PluginDeserializer} for
  * all supported plugin type.
  */
 public class PluginModule extends SimpleModule {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public static final String NAME = "kestra-plugin";
 

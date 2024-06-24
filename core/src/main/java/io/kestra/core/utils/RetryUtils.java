@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -193,6 +194,7 @@ public class RetryUtils {
 
     @Getter
     public static class RetryFailed extends Exception {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final int attemptCount;

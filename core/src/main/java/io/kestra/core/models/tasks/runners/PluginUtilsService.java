@@ -201,6 +201,7 @@ abstract public class PluginUtilsService {
      * <p>
      * It will throw IllegalArgumentException for any incompatible set of variables.
      */
+    @SuppressWarnings("unchecked")
     public static ExecutionInfo executionFromTaskParameters(RunContext runContext, String namespace, String flowId, String executionId) throws IllegalVariableEvaluationException {
         var flowInfo = runContext.flowInfo();
 

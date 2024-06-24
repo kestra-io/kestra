@@ -76,6 +76,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
 
+    @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, this.namespace, this.flowId, this.executionId);

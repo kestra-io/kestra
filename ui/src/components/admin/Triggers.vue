@@ -57,6 +57,18 @@
                                 <el-button>
                                     {{ $t('disable') }}
                                 </el-button>
+                                <el-button>
+                                    {{ $t('unlock') }}
+                                </el-button>
+                                <el-button>
+                                    {{ $t('pause backfill') }}
+                                </el-button>
+                                <el-button>
+                                    {{ $t('continue backfill') }}
+                                </el-button>
+                                <el-button>
+                                    {{ $t('delete backfill') }}
+                                </el-button>
                             </bulk-select>
                         </template>
                         <el-table-column

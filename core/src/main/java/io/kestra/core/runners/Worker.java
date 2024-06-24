@@ -167,7 +167,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
             synchronized (this) {
                 if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
-                    // @FIXME: the hashset will never expire killed execution
                     killedExecution.add(executionKilledExecution.getExecutionId());
 
                     workerThreadReferences
@@ -556,15 +555,25 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private void logError(WorkerTrigger workerTrigger, Throwable e) {
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
 
-        logService.logTrigger(
-            workerTrigger.getTriggerContext(),
-            logger,
-            Level.WARN,
-            "[date: {}] Worker Evaluate Failed with error '{}'",
-            workerTrigger.getTriggerContext().getDate(),
-            e != null ? e.getMessage() : "null",
-            e
-        );
+        if (e instanceof InterruptedException || (e != null && e.getCause() instanceof InterruptedException)) {
+            logService.logTrigger(
+                workerTrigger.getTriggerContext(),
+                logger,
+                Level.WARN,
+                "[date: {}] Trigger evaluation interrupted in the worker",
+                workerTrigger.getTriggerContext().getDate()
+            );
+        } else {
+            logService.logTrigger(
+                workerTrigger.getTriggerContext(),
+                logger,
+                Level.WARN,
+                "[date: {}] Trigger evaluation failed in the worker with error: {}",
+                workerTrigger.getTriggerContext().getDate(),
+                e != null ? e.getMessage() : "unknown",
+                e
+            );
+        }
 
         if (logger.isTraceEnabled() && e != null) {
             logger.trace(Throwables.getStackTraceAsString(e));
@@ -645,7 +654,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             workerThread.join();
             state = workerThread.getTaskState();
         } catch (InterruptedException e) {
-            logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
+            logger.error("Failed to join the Worker thread: {}", e.getMessage(), e);
             if (workerThread instanceof WorkerTaskThread workerTaskThread) {
                 state = workerTaskThread.getWorkerTask().getTask().isAllowFailure() ? WARNING : FAILED;
             } else {
@@ -839,7 +848,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } else if (workerThread instanceof AbstractWorkerTriggerThread workerTriggerThread) {
                     return workerTriggerThread.workerTrigger;
                 } else {
-                    throw new Exception("Invalid thread type: '" + workerThread.getClass().getName() + "'");
+                    throw new IllegalArgumentException("Invalid thread type: '" + workerThread.getClass().getName() + "'");
                 }
             }))
             .toList();

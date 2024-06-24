@@ -711,6 +711,7 @@
                     store.commit("editor/changeOpenedTabs", {
                         action: "dirty",
                         name: "Flow",
+                        path: "Flow.yaml",
                         dirty: false
                     });
                 }
@@ -922,7 +923,7 @@
                 <TypeIcon :name="tab.name" />
                 <el-tooltip
                     effect="light"
-                    v-if="tab.path"
+                    v-if="tab.path && !tab.persistent"
                     :content="tab.path"
                     transition=""
                     :hide-after="0"

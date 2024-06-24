@@ -889,6 +889,7 @@
                         this.changeOpenedTabs({
                             action: "open",
                             name: "Flow",
+                            path: "Flow.yaml",
                             persistent: true,
                         });
                     }

@@ -161,7 +161,7 @@ public class ExecutionService {
                 State.Type.RESTARTED,
                 taskRunToRestart.contains(originalTaskRun.getId()))
             ))
-            .toList();
+            .collect(Collectors.toCollection(ArrayList::new));
 
         // Worker task, we need to remove all child in order to be restarted
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)

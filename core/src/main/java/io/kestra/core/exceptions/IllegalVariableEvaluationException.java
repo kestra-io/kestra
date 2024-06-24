@@ -1,6 +1,9 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
+
 public class IllegalVariableEvaluationException extends InternalException {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public IllegalVariableEvaluationException(Throwable e) {

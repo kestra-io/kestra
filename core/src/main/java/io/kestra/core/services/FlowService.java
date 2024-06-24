@@ -179,6 +179,7 @@ public class FlowService {
     }
     public record Relocation(String from, String to) {}
 
+    @SuppressWarnings("unchecked")
     private List<Relocation> relocations(Map<String, Class<?>> aliases, Map<String, Object> stringObjectMap) {
         List<Relocation> relocations = new ArrayList<>();
         for (Map.Entry<String, Object> entry : stringObjectMap.entrySet()) {

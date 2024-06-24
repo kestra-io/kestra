@@ -484,6 +484,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Optional<SubflowExecutionResult> createSubflowExecutionResult(
             RunContext runContext,

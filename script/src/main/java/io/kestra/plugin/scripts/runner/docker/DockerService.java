@@ -50,6 +50,7 @@ public class DockerService {
         return "unix:///dind/docker.sock";
     }
 
+    @SuppressWarnings("unchecked")
     public static Path createConfig(RunContext runContext, @Nullable Object config, @Nullable List<Credentials> credentials, @Nullable String image) throws IllegalVariableEvaluationException, IOException {
         Map<String, Object> finalConfig = new HashMap<>();
 
@@ -57,7 +58,6 @@ public class DockerService {
             if (config instanceof String) {
                 finalConfig = JacksonMapper.toMap(runContext.render(config.toString()));
             } else {
-                //noinspection unchecked
                 finalConfig = runContext.render((Map<String, Object>) config);
             }
         }

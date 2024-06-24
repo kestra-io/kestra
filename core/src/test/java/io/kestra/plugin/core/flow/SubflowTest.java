@@ -98,6 +98,7 @@ class SubflowTest {
         assertThat(result.get().getParentTaskRun().getOutputs(), is(expected));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void shouldReturnOutputsForSubflowOutputsEnabled() throws IllegalVariableEvaluationException {
         // Given

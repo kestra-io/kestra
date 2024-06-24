@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuperBuilder
@@ -223,6 +222,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public WaitFor.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
        Map<String, Object> outputs = (Map<String, Object>) runContext.getVariables().get("outputs");

@@ -10,8 +10,10 @@ import com.fasterxml.jackson.core.io.IOContext;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Serial;
 
 public class IonFactory extends com.fasterxml.jackson.dataformat.ion.IonFactory {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public IonFactory(IonSystem system) {

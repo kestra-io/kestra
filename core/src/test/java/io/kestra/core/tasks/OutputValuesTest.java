@@ -8,7 +8,7 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -18,6 +18,7 @@ public class OutputValuesTest extends AbstractMemoryRunnerTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 
+    @SuppressWarnings("unchecked")
     @Test
     void output() throws Exception {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "output-values");
@@ -25,7 +26,7 @@ public class OutputValuesTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(1));
         TaskRun outputValues = execution.getTaskRunList().getFirst();
-        HashMap<String, String> values = (HashMap<String, String>) outputValues.getOutputs().get("values");
+        Map<String, String> values = (Map<String, String>) outputValues.getOutputs().get("values");
         assertThat(values.get("output1"), is("xyz"));
         assertThat(values.get("output2"), is("abc"));
     }

@@ -195,6 +195,7 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void betaTask() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
@@ -209,6 +210,7 @@ class JsonSchemaGeneratorTest {
         return (Map<String, Map<String, Object>>) generate.get("properties");
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> map(Object object) {
         return (Map<String, Object>) object;
     }

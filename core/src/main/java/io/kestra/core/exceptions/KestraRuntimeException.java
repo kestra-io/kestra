@@ -1,9 +1,13 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
+
 /**
  * The top-level {@link KestraRuntimeException} for non-recoverable errors.
  */
 public class KestraRuntimeException extends RuntimeException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public KestraRuntimeException() {
     }

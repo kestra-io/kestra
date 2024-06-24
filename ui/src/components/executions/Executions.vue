@@ -29,7 +29,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section :class="{'container': topbar}" v-if="ready">
+    <section :class="{'container padding-bottom': topbar}" v-if="ready">
         <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
@@ -864,3 +864,9 @@
         },
     };
 </script>
+
+<style scoped lang="scss">
+    .padding-bottom {
+        padding-bottom: 4rem;
+    }
+</style>

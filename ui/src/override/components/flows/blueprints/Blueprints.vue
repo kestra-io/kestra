@@ -46,5 +46,6 @@
 <style scoped lang="scss">
     .main-container {
         padding-top: 6px !important;
+        padding-bottom: 4rem;
     }
 </style>

@@ -226,8 +226,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 try {
                     scheduledDelayFuture.get();
-                } catch (ExecutionException | InterruptedException e) {
-                    if (e.getCause().getClass() != CannotCreateTransactionException.class) {
+                } catch (ExecutionException | InterruptedException | CancellationException e) {
+                    if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
                         close();
                         KestraContext.getContext().shutdown();

@@ -200,13 +200,6 @@ jobs:
           files: |
             build/executable/*
 
-      - name: Flow to add BC
-        if: startsWith(github.ref, 'refs/tags/v')
-        continue-on-error: true
-        run: |
-          curl --location "http://15.188.182.127:8080/api/v1/executions/webhook/product/release_notes/${{secrets.KESTRA_WEBHOOK_KEY}}" \
-          --header 'Content-Type: application/json'
-
   docker:
     name: Publish docker
     runs-on: ubuntu-latest

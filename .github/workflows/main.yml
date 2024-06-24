@@ -149,11 +149,11 @@ jobs:
 
       # Jacoco
       - name: 'Set up Cloud SDK'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: 'Copy jacoco files'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
           mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/jacocoTestReport.xml

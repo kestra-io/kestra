@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <top-nav-bar :title="routeInfo.title" />
     <template v-if="!pluginIsSelected">
         <plugin-home v-if="plugins" :plugins="plugins" />
     </template>

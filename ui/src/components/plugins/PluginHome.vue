@@ -16,7 +16,7 @@
             clearable
         />
     </el-row>
-    <section class="container plugins-container pb-2">
+    <section class="container plugins-container">
         <el-tooltip v-for="(plugin, index) in pluginsList" :key="index" effect="light">
             <template #content>
                 <div class="tasks-tooltips">
@@ -197,6 +197,7 @@
         margin: 0 auto;
         justify-content: center;
         align-items: flex-start;
+        padding-bottom: 4rem;
     }
 
     .tasks-tooltips {

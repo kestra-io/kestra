@@ -21,6 +21,7 @@ import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 @SuperBuilder
 @ToString
@@ -122,6 +123,16 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
                 response = client
                     .toBlocking()
                     .exchange(request, Argument.STRING, Argument.STRING);
+
+                // check that the string is a valid Unicode string
+                if (response.getBody().isPresent()) {
+                    OptionalInt illegalChar = response.body().chars().filter(c -> !Character.isDefined(c)).findFirst();
+                    if (illegalChar.isPresent()) {
+                        throw new IllegalArgumentException("Illegal unicode code point in request body: " + illegalChar.getAsInt() +
+                            ", the Request task only support valid Unicode strings as body.\n" +
+                            "You can try using the Download task instead.");
+                    }
+                }
             } catch (HttpClientResponseException e) {
                 if (!allowFailed) {
                     throw e;

@@ -609,7 +609,7 @@
       },
       "import": {
           "import": "Importer",
-          "file": "Importer un fichier",
+          "files": "Importer des fichiers",
           "folder": "Importer un dossier",
           "success": "Fichier(s) importé(s) avec succès",
           "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"

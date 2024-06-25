@@ -61,7 +61,6 @@
                 <input
                     ref="folderPicker"
                     type="file"
-                    multiple
                     webkitdirectory
                     mozdirectory
                     msdirectory
@@ -77,7 +76,7 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item @click="$refs.filePicker.click()">
-                                {{ $t("namespace files.import.file") }}
+                                {{ $t("namespace files.import.files") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 @click="$refs.folderPicker.click()"

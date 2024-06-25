@@ -644,7 +644,7 @@
       },
       "import": {
         "import": "Import",
-        "file": "Import file",
+        "files": "Import files",
         "folder": "Import folder",
         "success": "File(s) successfully imported",
         "error": "Error(s) occurred while importing the file(s)"

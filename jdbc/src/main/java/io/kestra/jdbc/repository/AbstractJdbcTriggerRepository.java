@@ -275,18 +275,23 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .transaction(configuration -> {
                     DSLContext context = DSL.using(configuration);
 
-                    context
+                    var select = context
                         .select(
                             field("value")
                         )
                         .hint(context.configuration().dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                         .from(this.jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId))
-                        .and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")))
-                        .and(this.fullTextCondition(query))
-                        .fetch()
-                        .map(this.jdbcRepository::map)
-                        .forEach(emitter::next);
+                        .where(this.defaultFilter(tenantId));
+                    if (namespace != null) {
+                        select =  select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                    }
+                    if (query != null) {
+                        select = select.and(this.fullTextCondition(query));
+                    }
+
+                    select.fetch()
+                    .map(this.jdbcRepository::map)
+                    .forEach(emitter::next);
 
                     emitter.complete();
 

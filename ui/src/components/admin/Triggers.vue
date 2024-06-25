@@ -51,23 +51,23 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button>
-                                    {{ $t('enable') }}
+                                <el-button @click="setDisabledTriggers(false)">
+                                    {{ $t("enable") }}
                                 </el-button>
-                                <el-button>
-                                    {{ $t('disable') }}
+                                <el-button @click="setDisabledTriggers(true)">
+                                    {{ $t("disable") }}
                                 </el-button>
-                                <el-button>
-                                    {{ $t('unlock') }}
+                                <el-button @click="unlockTriggers()">
+                                    {{ $t("unlock") }}
                                 </el-button>
-                                <el-button>
-                                    {{ $t('pause backfill') }}
+                                <el-button @click="pauseBackfills()">
+                                    {{ $t("pause backfills") }}
                                 </el-button>
-                                <el-button>
-                                    {{ $t('continue backfill') }}
+                                <el-button @click="unpauseBackfills()">
+                                    {{ $t("continue backfills") }}
                                 </el-button>
-                                <el-button>
-                                    {{ $t('delete backfill') }}
+                                <el-button @click="deleteBackfills()">
+                                    {{ $t("delete backfills") }}
                                 </el-button>
                             </bulk-select>
                         </template>
@@ -119,7 +119,11 @@
 
                         <el-table-column :label="$t('state')">
                             <template #default="scope">
-                                <status v-if="scope.row.executionCurrentState" :status="scope.row.executionCurrentState" size="small" />
+                                <status
+                                    v-if="scope.row.executionCurrentState"
+                                    :status="scope.row.executionCurrentState"
+                                    size="small"
+                                />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('date')">
@@ -142,7 +146,11 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDatevaluateRunningDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)" column-key="action" class-name="row-action">
+                        <el-table-column
+                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            column-key="action"
+                            class-name="row-action"
+                        >
                             <template #default="scope">
                                 <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
@@ -153,6 +161,19 @@
                                         <lock-off />
                                     </kicon>
                                 </el-button>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
+                            <template #default="scope">
+                                <span v-if="scope.row.backfill">
+                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                        <play-box />
+                                    </el-tooltip>
+                                    <el-tooltip v-else :content="$t('backfill paused')">
+                                        <pause-box />
+                                    </el-tooltip>
+                                </span>
                             </template>
                         </el-table-column>
 
@@ -183,7 +204,7 @@
                 {{ $t("unlock trigger.warning") }}
                 <template #footer>
                     <el-button :icon="LockOff" @click="unlock" type="primary">
-                        {{ $t('unlock trigger.button') }}
+                        {{ $t("unlock trigger.button") }}
                     </el-button>
                 </template>
             </el-dialog>
@@ -192,6 +213,8 @@
 </template>
 <script setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";
+    import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import Kicon from "../Kicon.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -215,6 +238,7 @@
     import Status from "../Status.vue";
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -296,7 +320,86 @@
                     .then(_ => {
                         this.loadData();
                     })
-            }
+            },
+            genericConfirmAction(toast, queryAction, byIdAction, success, data) {
+                this.$toast().confirm(
+                    this.$t(toast, {"count": this.queryBulkAction ? this.total : this.selection.length}),
+                    () => this.genericConfirmCallback(queryAction, byIdAction, success, data),
+                    () => {
+                    }
+                );
+            },
+            genericConfirmCallback(queryAction, byIdAction, success, data) {
+                if (this.queryBulkAction) {
+                    const query = this.loadQuery({});
+                    const options = {...query, ...data};
+                    return this.$store
+                        .dispatch(queryAction, options)
+                        .then(data => {
+                            this.$toast().success(this.$t(success, {count: data.count}));
+                            this.loadData()
+                        })
+                } else {
+                    const selection = this.selection;
+                    const options = {triggers: selection, ...data};
+                    return this.$store
+                        .dispatch(byIdAction, byIdAction.includes("setDisabled") ? options : selection)
+                        .then(data => {
+                            this.$toast().success(this.$t(success, {count: data.count}));
+                            this.loadData()
+                        }).catch(e => {
+                            this.$toast().error(e?.invalids.map(exec => {
+                                return {message: this.$t(exec.message, {triggers: exec.invalidValue})}
+                            }), this.$t(e.message))
+                        })
+                }
+            },
+            unpauseBackfills() {
+                this.genericConfirmAction(
+                    "bulk unpause backfills",
+                    "trigger/unpauseBackfillByQuery",
+                    "trigger/unpauseBackfillByTriggers",
+                    "bulk success unpause backfills"
+                );
+            },
+            pauseBackfills() {
+                this.genericConfirmAction(
+                    "bulk pause backfills",
+                    "trigger/pauseBackfillByQuery",
+                    "trigger/pauseBackfillByTriggers",
+                    "bulk success pause backfills"
+                );
+            },
+            deleteBackfills() {
+                this.genericConfirmAction(
+                    "bulk delete backfills",
+                    "trigger/deleteBackfillByQuery",
+                    "trigger/deleteBackfillByTriggers",
+                    "bulk success delete backfills"
+                );
+            },
+            unlockTriggers() {
+                this.genericConfirmAction(
+                    "bulk unlock",
+                    "trigger/unlockByQuery",
+                    "trigger/unlockByTriggers",
+                    "bulk success unlock"
+                );
+            },
+            setDisabledTriggers(bool) {
+                this.genericConfirmAction(
+                    `bulk disabled status.${bool}`,
+                    "trigger/setDisabledByQuery",
+                    "trigger/setDisabledByTriggers",
+                    `bulk success disabled status.${bool}`,
+                    {disabled: bool}
+                );
+            },
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
+
+                return _merge(base, queryFilter)
+            },
         },
         computed: {
             ...mapState("auth", ["user"]),
@@ -316,7 +419,7 @@
                     }
                 })
 
-                if(!this.state) return all;
+                if (!this.state) return all;
 
                 const disabled = this.state === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
@@ -325,7 +428,7 @@
     };
 </script>
 <style>
-    .trigger-issue-icon{
+    .trigger-issue-icon {
         color: var(--bs-warning);
         font-size: 1.4em;
     }

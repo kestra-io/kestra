@@ -173,7 +173,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void unlockByIds() {
+    void unlockByTriggers() {
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -192,7 +192,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
         List<Trigger> triggers = List.of(triggerLock, triggerNotLock);
 
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-ids", triggers), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-triggers", triggers), BulkResponse.class);
 
         assertThat(bulkResponse.getCount(), is(1));
     }
@@ -221,27 +221,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void pauseByIds() {
-
-    }
-
-    @Test
-    void pauseByQuery() {
-
-    }
-
-    @Test
-    void unpauseByIds() {
-
-    }
-
-    @Test
-    void unpauseByQuery() {
-
-    }
-
-    @Test
-    void enableByIds() {
+    void enableByTriggers() {
         Trigger triggerDisabled = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -260,7 +240,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-ids", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount(), is(2));
         assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled(), is(false));
@@ -291,7 +271,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void disableByIds() {
+    void disableByTriggers() {
         Trigger triggerDisabled = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -310,7 +290,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-ids", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount(), is(2));
         assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled(), is(true));

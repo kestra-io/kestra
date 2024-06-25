@@ -367,7 +367,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                     .tenantId(triggerContext.getTenantId())
                     .namespace(triggerContext.getNamespace())
                     .flowId(triggerContext.getFlowId())
-                    .flowRevision(triggerContext.getFlowRevision())
+                    .flowRevision(conditionContext.getFlow().getRevision())
                     .labels(labels)
                     .state(new State().withState(State.Type.FAILED))
                     .build();
@@ -411,7 +411,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
-            .flowRevision(triggerContext.getFlowRevision())
+            .flowRevision(conditionContext.getFlow().getRevision())
             .labels(labels)
             .state(new State())
             .trigger(executionTrigger)

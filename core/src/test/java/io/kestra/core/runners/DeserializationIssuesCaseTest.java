@@ -90,8 +90,7 @@ public class DeserializationIssuesCaseTest {
             "date": "2023-11-24T15:48:57.632881597Z",
             "flowId": "http-trigger",
             "namespace": "dev",
-            "triggerId": "http",
-            "flowRevision": 3
+            "triggerId": "http"
           },
           "conditionContext": {
             "flow": {

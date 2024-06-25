@@ -22,10 +22,7 @@ import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -41,7 +38,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -51,6 +50,7 @@ import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlowControllerTest extends JdbcH2ControllerTest {
@@ -738,6 +738,45 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.size(), is(2));
         assertThat(body.getFirst().getConstraints(), containsString("Unrecognized field \"unknownProp\""));
         assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+    }
+
+    @Test
+    void commaInSingleLabelsValue() {
+        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
+
+        MutableHttpRequest<Object> searchRequest = HttpRequest
+            .GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel);
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest, PagedResults.class));
+
+        MutableHttpRequest<Object> exportRequest = HttpRequest
+            .GET("/api/v1/flows/export/by-query?labels=" + encodedCommaWithinLabel);
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(exportRequest, byte[].class));
+
+        MutableHttpRequest<List<Object>> deleteRequest = HttpRequest
+            .DELETE("/api/v1/flows/delete/by-query?labels=" + encodedCommaWithinLabel);
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> disableRequest = HttpRequest
+            .POST("/api/v1/flows/disable/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(disableRequest, BulkResponse.class));
+
+        MutableHttpRequest<List<Object>> enableRequest = HttpRequest
+            .POST("/api/v1/flows/enable/by-query?labels=" + encodedCommaWithinLabel, List.of());
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(enableRequest, BulkResponse.class));
+    }
+
+    @Test
+    void commaInOneOfMultiLabels() {
+        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
+        String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
+
+        Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
+        flow.put("labels", Map.of("project", "foo,bar", "status", "test"));
+
+        parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
+
+        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(1L));
     }
 
     private Flow generateFlow(String namespace, String inputName) {

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -28,12 +29,13 @@ import jakarta.inject.Singleton;
 public class FlowListeners implements FlowListenersInterface {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private Boolean isStarted = false;
+    private volatile Boolean isStarted = false; // must be volatile as called by multiple components so in different threads
     private final QueueInterface<Flow> flowQueue;
     private final List<Flow> flows;
-    private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
 
-    private final List<BiConsumer<Flow, Flow>> consumersEach = new ArrayList<>();
+    // use concurrent data structure as their can be concurrent write on them
+    private final List<Consumer<List<Flow>>> consumers = new CopyOnWriteArrayList<>();
+    private final List<BiConsumer<Flow, Flow>> consumersEach = new CopyOnWriteArrayList<>();
 
     @Inject
     public FlowListeners(
@@ -62,11 +64,9 @@ public class FlowListeners implements FlowListenersInterface {
                             log.error("Unexpected exception when trying to handle a deserialization error", e);
                             return;
                         }
-                    }
-                    else {
+                    } else {
                         flow = either.getLeft();
                     }
-                    Optional<Flow> previous = this.previous(flow);
 
                     if (flow.isDeleted()) {
                         this.remove(flow);
@@ -83,6 +83,7 @@ public class FlowListeners implements FlowListenersInterface {
                         );
                     }
 
+                    Optional<Flow> previous = this.previous(flow);
                     this.notifyConsumersEach(flow, previous.orElse(null));
                     this.notifyConsumers();
                 });

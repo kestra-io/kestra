@@ -21,7 +21,6 @@ public abstract class SchedulerTriggerStateInterfaceTest {
         return Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
-            .flowRevision(1)
             .triggerId(IdUtils.create())
             .executionId(IdUtils.create())
             .date(ZonedDateTime.now());

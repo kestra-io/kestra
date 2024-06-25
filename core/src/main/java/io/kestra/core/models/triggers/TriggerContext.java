@@ -30,9 +30,6 @@ public class TriggerContext {
     private String flowId;
 
     @NotNull
-    private Integer flowRevision;
-
-    @NotNull
     private String triggerId;
 
     @NotNull
@@ -53,7 +50,6 @@ public class TriggerContext {
         this.tenantId = b.tenantId;
         this.namespace = b.namespace;
         this.flowId = b.flowId;
-        this.flowRevision = b.flowRevision;
         this.triggerId = b.triggerId;
         this.date = b.date;
         this.nextExecutionDate = b.nextExecutionDate;

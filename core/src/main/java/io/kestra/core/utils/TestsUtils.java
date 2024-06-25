@@ -152,7 +152,6 @@ abstract public class TestsUtils {
             .triggerId(trigger.getId())
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
-            .flowRevision(flow.getRevision())
             .date(ZonedDateTime.now())
             .build();
 

@@ -65,7 +65,6 @@ class ScheduleTest {
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getNamespace())
-            .flowRevision(flow.getRevision())
             .triggerId(schedule.getId())
             .date(date)
             .build();

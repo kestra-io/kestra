@@ -26,7 +26,6 @@ public abstract class AbstractTriggerRepositoryTest {
         return Trigger.builder()
             .flowId(IdUtils.create())
             .namespace(TEST_NAMESPACE)
-            .flowRevision(1)
             .triggerId(IdUtils.create())
             .executionId(IdUtils.create())
             .date(ZonedDateTime.now());

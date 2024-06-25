@@ -65,7 +65,6 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         triggerState.create(Trigger.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
             .triggerId("hourly")
             .date(ZonedDateTime.parse("2021-09-06T02:00:00+01:00[Europe/Paris]"))
             .build()

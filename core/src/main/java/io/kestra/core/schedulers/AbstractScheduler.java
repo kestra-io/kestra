@@ -178,7 +178,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                         if (abstractTrigger instanceof WorkerTriggerInterface) {
                             RunContext runContext = runContextFactory.of(flow, abstractTrigger);
                             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-                            Trigger trigger = Trigger.of(flow, abstractTrigger);
 
                             try {
                                 this.triggerState.update(flow, abstractTrigger, conditionContext);
@@ -186,6 +185,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 logError(conditionContext, flow, abstractTrigger, e);
                             }
 
+                            Trigger trigger = Trigger.of(flow, abstractTrigger);
                             this.executionKilledQueue.emit(ExecutionKilledTrigger
                                 .builder()
                                 .tenantId(trigger.getTenantId())
@@ -255,7 +255,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .tenantId(flowAndTrigger.flow().getTenantId())
                             .namespace(flowAndTrigger.flow().getNamespace())
                             .flowId(flowAndTrigger.flow().getId())
-                            .flowRevision(flowAndTrigger.flow().getRevision())
                             .triggerId(flowAndTrigger.trigger().getId())
                             .date(now())
                             .nextExecutionDate(nextExecutionDate)
@@ -368,7 +367,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     public List<FlowWithTriggers> schedulerTriggers() {
         Map<String, Flow> flows = this.flowListeners.flows()
             .stream()
-            .collect(Collectors.toMap(Flow::uid, Function.identity()));
+            .collect(Collectors.toMap(Flow::uidWithoutRevision, Function.identity()));
 
         return this.triggerState.findAllForAllTenants().stream()
             .filter(trigger -> flows.containsKey(trigger.flowUid()))
@@ -526,7 +525,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .tenantId(f.getTriggerContext().getTenantId())
                             .namespace(f.getTriggerContext().getNamespace())
                             .flowId(f.getTriggerContext().getFlowId())
-                            .flowRevision(f.getTriggerContext().getFlowRevision())
                             .labels(f.getFlow().getLabels())
                             .state(new State().withState(State.Type.FAILED))
                             .build();
@@ -849,7 +847,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     .tenantId(f.getTriggerContext().getTenantId())
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())
-                    .flowRevision(f.getTriggerContext().getFlowRevision())
                     .triggerId(f.getTriggerContext().getTriggerId())
                     .date(f.getTriggerContext().getNextExecutionDate())
                     .nextExecutionDate(f.getTriggerContext().getNextExecutionDate())

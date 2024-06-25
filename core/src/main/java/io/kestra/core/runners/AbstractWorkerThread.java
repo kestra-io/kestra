@@ -87,7 +87,12 @@ public abstract class AbstractWorkerThread extends Thread {
     protected void kill(boolean markAsKilled) {
         this.killed = markAsKilled;
         this.taskState = KILLED;
-        this.interrupt();
+
+        // When we arrive here, the thread run() method may be ended but the thread "in the stopping process".
+        // So we don't interrupt if the shutdownLatch is 0 as this means the run() method is done or if the thread is no more alive.
+        if (shutdownLatch.getCount() > 0 && this.isAlive()) {
+            this.interrupt();
+        }
     }
 
     protected void exceptionHandler(Thread t, Throwable e) {

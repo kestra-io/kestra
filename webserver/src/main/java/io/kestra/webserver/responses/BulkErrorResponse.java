@@ -12,5 +12,5 @@ import java.util.Set;
 @NoArgsConstructor
 public class BulkErrorResponse {
     String message;
-    Set<ManualConstraintViolation<String>> invalids;
+    Object invalids;
 }

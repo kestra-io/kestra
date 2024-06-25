@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("this-escape")
 @Data
 public class StackdriverJsonLayout extends JsonLayout {
     private static final String SEVERITY_ATTRIBUTE = "severity";

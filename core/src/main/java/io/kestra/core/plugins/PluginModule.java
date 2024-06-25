@@ -16,6 +16,7 @@ import java.io.Serial;
  * Jackson module for registering the {@link PluginDeserializer} for
  * all supported plugin type.
  */
+@SuppressWarnings("this-escape")
 public class PluginModule extends SimpleModule {
     @Serial
     private static final long serialVersionUID = 1L;

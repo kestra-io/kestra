@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.is;
 class DeleteConfigurationApplicationListenersTest {
 
     @Test
+    @SuppressWarnings("try")
     void run() throws IOException {
         File tempFile = File.createTempFile("test", ".yml");
 

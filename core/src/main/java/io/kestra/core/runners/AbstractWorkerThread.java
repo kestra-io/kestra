@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.KILLED;
 
+@SuppressWarnings("this-escape")
 public abstract class AbstractWorkerThread extends Thread {
     volatile boolean killed = false;
 

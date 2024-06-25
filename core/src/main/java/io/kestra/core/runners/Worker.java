@@ -61,6 +61,7 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@SuppressWarnings("this-escape")
 @Slf4j
 @Introspected
 public class Worker implements Service, Runnable, AutoCloseable {
@@ -149,7 +150,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
         this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
-        setState(ServiceState.CREATED);
+        this.setState(ServiceState.CREATED);
     }
 
     @Override

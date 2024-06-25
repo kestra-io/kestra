@@ -14,6 +14,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
+@SuppressWarnings({"serial", "this-escape"})
 public class IonModule extends SimpleModule {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -53,6 +54,7 @@ public class IonModule extends SimpleModule {
     public static class StringTypedSerializer <T> extends StdScalarSerializer<T> {
         @Serial
         private static final long serialVersionUID = 1L;
+
         private final Function<T, String> mapper;
 
         protected StringTypedSerializer(Class<T> cls, Function<T, String> mapper) {

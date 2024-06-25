@@ -11,6 +11,7 @@ import java.util.Objects;
 /**
  * Event fired when a Service's state is changing.
  */
+@SuppressWarnings("serial")
 public final class ServiceStateChangeEvent extends ApplicationEvent {
     @Serial
     private static final long serialVersionUID = 1L;

@@ -10,6 +10,7 @@ import io.kestra.core.plugins.PluginModule;
 import java.io.IOException;
 import java.io.Serial;
 
+@SuppressWarnings("this-escape")
 public class RunContextModule extends SimpleModule {
     @Serial
     private static final long serialVersionUID = 1L;

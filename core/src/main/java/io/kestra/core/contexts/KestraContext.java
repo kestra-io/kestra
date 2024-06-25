@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Utility class for retrieving common information about a Kestra Server at runtime.
  */
+@SuppressWarnings("this-escape")
 public abstract class KestraContext {
 
     private static final Logger log = LoggerFactory.getLogger(KestraContext.class);

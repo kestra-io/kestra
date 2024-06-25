@@ -12,6 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("this-escape")
 @Getter
 @EqualsAndHashCode
 @ToString

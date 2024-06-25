@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 
+@SuppressWarnings("this-escape")
 @Getter
 public class GraphCluster extends AbstractGraph {
     @JsonIgnore

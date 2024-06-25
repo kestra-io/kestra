@@ -56,6 +56,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
+@SuppressWarnings("this-escape")
 public abstract class AbstractScheduler implements Scheduler, Service {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;

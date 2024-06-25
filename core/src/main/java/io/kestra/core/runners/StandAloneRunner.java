@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
+@SuppressWarnings("try")
 @Slf4j
 @Singleton
 @Requires(missingBeans = RunnerInterface.class)

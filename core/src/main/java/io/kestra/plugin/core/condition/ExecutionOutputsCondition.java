@@ -55,6 +55,7 @@ public class ExecutionOutputsCondition extends Condition implements ScheduleCond
     private String expression;
 
     /** {@inheritDoc} **/
+    @SuppressWarnings("unchecked")
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
 

@@ -23,6 +23,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @SuperBuilder
+@Introspected
 public abstract class AbstractRetry {
     abstract public String getType();
 

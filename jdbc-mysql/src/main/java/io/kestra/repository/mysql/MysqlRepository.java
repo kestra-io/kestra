@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("this-escape")
 @MysqlRepositoryEnabled
 @EachBean(JdbcTableConfig.class)
 public class MysqlRepository<T> extends AbstractJdbcRepository<T> {

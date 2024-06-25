@@ -24,6 +24,8 @@ dependencies {
         // sisu dependency injector is not used
         exclude group: 'org.eclipse.sisu'
     }
+    // aether still use javax.inject
+    compileOnly 'javax.inject:javax.inject:1'
 
     // modules
     implementation project(":core")

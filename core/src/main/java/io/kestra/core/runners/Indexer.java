@@ -27,6 +27,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+@SuppressWarnings("this-escape")
 @Slf4j
 @Singleton
 @Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})

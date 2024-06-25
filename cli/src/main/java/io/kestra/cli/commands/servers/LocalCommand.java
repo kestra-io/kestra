@@ -32,7 +32,7 @@ public class LocalCommand extends StandAloneCommand {
             "kestra.queue.type", "h2",
             "kestra.storage.type", "local",
             "kestra.storage.local.base-path", data.toString(),
-            "datasources.h2.url", "jdbc:h2:file:" + data.resolve("database") + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=30000",
+            "datasources.h2.url", "jdbc:h2:file:" + data.resolve("database") + ";TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=30000",
             "datasources.h2.username", "sa",
             "datasources.h2.password", "",
             "datasources.h2.driverClassName", "org.h2.Driver",

@@ -57,7 +57,7 @@ jobs:
       # Services
       - name: Build the docker-compose stack
         run: docker compose -f docker-compose-ci.yml up -d
-        if: ${{ github.event.inputs.skip-test == 'false' }}
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
 
       # Caches
       - name: Gradle cache
@@ -105,7 +105,7 @@ jobs:
 
       # Gradle check
       - name: Build with Gradle
-        if: ${{ github.event.inputs.skip-test == 'false' }}
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
@@ -116,7 +116,7 @@ jobs:
 
       # Sonar
       - name: Analyze with Sonar
-        if: ${{ env.SONAR_TOKEN != 0 && github.event.inputs.skip-test == 'false' }}
+        if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Publish allure report
         uses: andrcuns/allure-publish-action@v2.6.0
-        if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 && github.event.inputs.skip-test == 'false' }}
+        if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: /usr/lib/jvm/default-jvm/
@@ -149,11 +149,11 @@ jobs:
 
       # Jacoco
       - name: 'Set up Cloud SDK'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && github.event.inputs.skip-test == 'false' }}
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: 'Copy jacoco files'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && github.event.inputs.skip-test == 'false' }}
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
           mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/jacocoTestReport.xml
@@ -168,7 +168,7 @@ jobs:
 
       # Codecov
       - uses: codecov/codecov-action@v4
-        if: ${{ github.event.inputs.skip-test == 'false' }}
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

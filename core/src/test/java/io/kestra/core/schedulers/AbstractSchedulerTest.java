@@ -125,7 +125,7 @@ abstract public class AbstractSchedulerTest {
                     .id(IdUtils.create())
                     .namespace(context.getNamespace())
                     .flowId(context.getFlowId())
-                    .flowRevision(context.getFlowRevision())
+                    .flowRevision(conditionContext.getFlow().getRevision())
                     .state(new State())
                     .trigger(ExecutionTrigger.builder()
                         .id(this.getId())

@@ -42,6 +42,8 @@ public abstract class RunContext {
 
     public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
+    public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
+
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract List<String> render(List<String> inline) throws IllegalVariableEvaluationException;

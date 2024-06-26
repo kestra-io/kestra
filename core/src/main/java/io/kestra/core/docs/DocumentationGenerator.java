@@ -254,7 +254,7 @@ public class DocumentationGenerator {
 
         PebbleTemplate compiledTemplate = pebbleEngine.getLiteralTemplate(pebbleTemplate);
 
-        Writer writer = new JsonWriter(new StringWriter());
+        Writer writer = new JsonWriter();
         compiledTemplate.evaluate(writer, vars);
         String renderer = writer.toString();
 

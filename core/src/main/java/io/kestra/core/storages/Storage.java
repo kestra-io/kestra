@@ -1,5 +1,6 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.storages.kv.KVStore;
 import jakarta.annotation.Nullable;
 
 import java.io.File;
@@ -14,6 +15,20 @@ import java.util.Optional;
  * Service interface for accessing the Kestra's storage.
  */
 public interface Storage {
+
+    /**
+     * Gets access to the Key-Value store for the contextual namespace.
+     *
+     * @return The {@link KVStore}.
+     */
+    KVStore namespaceKv();
+
+    /**
+     * Gets access to the Key-Value store for the given namespace.
+     *
+     * @return The {@link KVStore}.
+     */
+    KVStore namespaceKv(String namespace);
 
     /**
      * Gets access to the namespace files for the contextual namespace.

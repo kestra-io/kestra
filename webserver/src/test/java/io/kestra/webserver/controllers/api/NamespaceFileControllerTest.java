@@ -35,6 +35,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -277,5 +278,6 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
         long creationTime;
         FileType type;
         long size;
+        Map<String, String> metadata;
     }
 }

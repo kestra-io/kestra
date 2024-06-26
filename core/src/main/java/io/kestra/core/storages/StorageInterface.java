@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 public interface StorageInterface extends AutoCloseable, Plugin {
 
@@ -34,6 +35,9 @@ public interface StorageInterface extends AutoCloseable, Plugin {
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
     InputStream get(String tenantId, URI uri) throws IOException;
+
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    StorageObject getWithMetadata(String tenantId, URI uri) throws IOException;
 
     /**
      * Returns all objects that start with the given prefix
@@ -67,7 +71,12 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     FileAttributes getAttributes(String tenantId, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    URI put(String tenantId, URI uri, InputStream data) throws IOException;
+    default URI put(String tenantId, URI uri, InputStream data) throws IOException {
+        return this.put(tenantId, uri, new StorageObject(null, data));
+    }
+
+    @Retryable(includes = {IOException.class})
+    URI put(String tenantId, URI uri, StorageObject storageObject) throws IOException;
 
     @Retryable(includes = {IOException.class})
     boolean delete(String tenantId, URI uri) throws IOException;

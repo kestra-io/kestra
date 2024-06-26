@@ -1,9 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.pebble.ExtensionCustomizer;
-import io.kestra.core.runners.pebble.JsonWriter;
-import io.kestra.core.runners.pebble.PebbleLruCache;
+import io.kestra.core.runners.pebble.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
@@ -70,37 +68,53 @@ public class VariableRenderer {
         return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
+    public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
+    }
+
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
+        return (String) this.render(inline, variables, recursive, true);
+    }
+
+    public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
 
-        if (inline.indexOf('{') == -1) {
+        if (inline instanceof String inlineStr && inlineStr.indexOf('{') == -1) {
             // it's not a Pebble template so we short-circuit rendering
             return inline;
         }
 
-        String render = recursive
-            ? renderRecursively(inline, variables)
-            : renderOnce(inline, variables);
+        Object render = recursive
+            ? renderRecursively(inline, variables, stringify)
+            : renderOnce(inline, variables, stringify);
 
-        return RAW_PATTERN.matcher(render).replaceAll("$2");
+        if (render instanceof String renderStr) {
+            return RAW_PATTERN.matcher(renderStr).replaceAll("$2");
+        }
+
+        return render;
     }
 
-    public String renderOnce(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        // pre-process raw tags
-        Matcher rawMatcher = RAW_PATTERN.matcher(inline);
-        Map<String, String> replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
-        String result = replaceRawTags(rawMatcher, replacers);
+    public Object renderOnce(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
+        Object result = inline;
+        Map<String, String> replacers = null;
+        if (inline instanceof String inlineStr) {
+            // pre-process raw tags
+            Matcher rawMatcher = RAW_PATTERN.matcher(inlineStr);
+            replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
+            result = replaceRawTags(rawMatcher, replacers);
+        }
 
         try {
-            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate(result);
+            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate((String) result);
 
-            Writer writer = new JsonWriter(new StringWriter());
+            OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
             compiledTemplate.evaluate(writer, variables);
-            result = writer.toString();
+            result = writer.output();
         } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, inline, variables);
+            String alternativeRender = this.alternativeRender(e, (String) inline, variables);
             if (alternativeRender == null) {
                 if (e instanceof PebbleException) {
                     throw properPebbleException((PebbleException) e);
@@ -111,8 +125,10 @@ public class VariableRenderer {
             }
         }
 
-        // post-process raw tags
-        result = putBackRawTags(replacers, result);
+        if (result instanceof String && replacers != null) {
+            // post-process raw tags
+            result = putBackRawTags(replacers, (String) result);
+        }
 
         return result;
     }
@@ -144,21 +160,21 @@ public class VariableRenderer {
         });
     }
 
-    public String renderRecursively(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.renderRecursively(0, inline, variables);
+    public Object renderRecursively(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
+        return this.renderRecursively(0, inline, variables, stringify);
     }
 
-    private String renderRecursively(int renderingCount, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    private Object renderRecursively(int renderingCount, Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {
         if (renderingCount > MAX_RENDERING_AMOUNT) {
             throw new IllegalVariableEvaluationException("Too many rendering attempts");
         }
 
-        String result = this.renderOnce(inline, variables);
+        Object result = this.renderOnce(inline, variables, stringify);
         if (result.equals(inline)) {
             return result;
         }
 
-        return renderRecursively(++renderingCount, result, variables);
+        return renderRecursively(++renderingCount, result, variables, stringify);
     }
 
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {

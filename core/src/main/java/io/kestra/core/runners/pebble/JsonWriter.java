@@ -11,14 +11,10 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.Map;
 
-public class JsonWriter extends Writer implements SpecializedWriter {
+public class JsonWriter extends OutputWriter implements SpecializedWriter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private final StringWriter stringWriter;
-
-    public JsonWriter(StringWriter stringWriter) {
-        this.stringWriter = stringWriter;
-    }
+    private final StringWriter stringWriter = new StringWriter();
 
     @Override
     public void writeSpecialized(int i) {
@@ -92,5 +88,10 @@ public class JsonWriter extends Writer implements SpecializedWriter {
     @Override
     public String toString() {
         return stringWriter.toString();
+    }
+
+    @Override
+    public Object output() {
+        return this.toString();
     }
 }

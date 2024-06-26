@@ -459,7 +459,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
             this.logTerminated(workerTask);
 
-            killedExecution.remove(workerTask.getTaskRun().getExecutionId());
+            // We cannot remove the execution ID from the killedExecution in case the worker is processing multiple tasks of the execution
+            // which can happens due to parallel processing.
 
             return workerTaskResult;
         }

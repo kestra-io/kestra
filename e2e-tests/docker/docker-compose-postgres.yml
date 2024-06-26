@@ -1,0 +1,66 @@
+volumes:
+  dind-socket:
+    driver: local
+  tmp-data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: kestra_unit
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  init:
+    image: busybox
+    volumes:
+      - dind-socket:/dind
+      - tmp-data:/tmp/kestra-wd
+    command: "chown -R 1000:1000 -R /dind /tmp/kestra-wd"
+
+  dind:
+    image: docker:dind-rootless
+    privileged: true
+    user: "1000"
+    environment:
+      DOCKER_HOST: unix://dind/docker.sock
+      TINI_SUBREAPER: 1
+    command:
+      - --log-level=fatal
+      - --group=1000
+    volumes:
+      - dind-socket:/dind
+      - tmp-data:/tmp/kestra-wd
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  kestra:
+    image: "${KESTRA_DOCKER_IMAGE:-kestra/kestra:develop-full}"
+    entrypoint:
+      - bash
+      - -c
+    command: "/app/entrypoint.sh"
+    volumes:
+      - dind-socket:/dind
+      - tmp-data:/tmp/kestra-wd:rw
+      - ./data/entrypoint.sh:/app/entrypoint.sh:ro
+      - ./data/flows/:/app/flows/:ro
+      - ./data/application-postgres.yml:/app/confs/application.yml:ro
+    environment:
+      MICRONAUT_CONFIG_FILES: /app/confs/application.yml
+    ports:
+      - 8080:8080
+    links:
+      - postgres
+    depends_on:
+      dind:
+        condition: service_started
+      postgres:
+        condition: service_started

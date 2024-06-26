@@ -1,0 +1,33 @@
+kestra:
+  repository:
+    type: postgres
+  storage:
+    type: local
+    local:
+      base-path: "/app/storage"
+  queue:
+    type: postgres
+  tasks:
+    tmp-dir:
+      path: /tmp/kestra-wd/tmp
+  encryption:
+    secret-key: not_really_a_secret_only_for_unit_test
+  anonymous-usage-report:
+    enabled: false
+  server:
+    basic-auth:
+      enabled: false
+datasources:
+  postgres:
+    url: jdbc:postgresql://postgres:5432/kestra_unit
+    driverClassName: org.postgresql.Driver
+    username: kestra
+    password: k3str4
+# Common configuration
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOriginsRegex: https?:\/\/(localhost|127\..*):.*

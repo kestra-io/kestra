@@ -9,12 +9,12 @@ import lombok.Getter;
 public class CrudEvent<T> {
     T model;
     @Nullable
-    T modelPrevious;
+    T previousModel;
     CrudEventType type;
 
     public CrudEvent(T model, CrudEventType type) {
         this.model = model;
         this.type = type;
-        this.modelPrevious = null;
+        this.previousModel = null;
     }
 }

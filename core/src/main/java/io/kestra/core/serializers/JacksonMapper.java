@@ -1,8 +1,6 @@
 
 package io.kestra.core.serializers;
 
-import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
-
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.impl._Private_IonBinaryWriterBuilder;
 import com.amazon.ion.impl._Private_Utils;
@@ -37,7 +35,11 @@ import org.yaml.snakeyaml.LoaderOptions;
 
 import java.io.IOException;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
+import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
 
 public final class JacksonMapper {
     public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
@@ -173,9 +175,9 @@ public final class JacksonMapper {
         return newLiteSystem(textWriterBuilder, (_Private_IonBinaryWriterBuilder) binaryWriterBuilder, readerBuilder);
     }
 
-    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object previousObject, Object newObject)  {
-        JsonNode previousJson = MAPPER.valueToTree(previousObject);
-        JsonNode newJson = MAPPER.valueToTree(newObject);
+    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object previous, Object current)  {
+        JsonNode previousJson = MAPPER.valueToTree(previous);
+        JsonNode newJson = MAPPER.valueToTree(current);
 
         JsonNode patchPrevToNew = JsonDiff.asJson(previousJson, newJson);
         JsonNode patchNewToPrev = JsonDiff.asJson(newJson, previousJson);
@@ -188,7 +190,7 @@ public final class JacksonMapper {
             try {
                 // Required for ES
                 if (!patch.has("value")) {
-                    ((ObjectNode) patch.get(0)).put("value", (JsonNode) null);
+                    ((ObjectNode) patch.get(0)).set("value", (JsonNode) null);
                 }
                 JsonNode current = MAPPER.valueToTree(object);
                 object = JsonPatch.fromJson(patch).apply(current);

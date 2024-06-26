@@ -17,7 +17,7 @@
         />
     </el-row>
     <section class="container plugins-container">
-        <el-tooltip v-for="(plugin, index) in pluginsList" :key="index" effect="light">
+        <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
             <template #content>
                 <div class="tasks-tooltips">
                     <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0">

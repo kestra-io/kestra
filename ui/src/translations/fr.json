@@ -803,6 +803,7 @@
     "bulk success disabled status": {
       "true": "{count} triggers désactivés",
       "false": "{count} triggers activés"
-    }
+    },
+    "workerId": "Worker Id"
   }
 }

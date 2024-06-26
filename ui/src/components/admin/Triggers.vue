@@ -126,6 +126,14 @@
                                 />
                             </template>
                         </el-table-column>
+                        <el-table-column prop="workerId" :label="$t('workerId')">
+                            <template #default="scope">
+                                <id
+                                    :value="scope.row.workerId"
+                                    :shrink="true"
+                                />
+                            </template>
+                        </el-table-column>
                         <el-table-column :label="$t('date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.date" />

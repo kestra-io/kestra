@@ -830,6 +830,7 @@
     "bulk success disabled status": {
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
-    }
+    },
+    "workerId": "Worker Id"
   }
 }

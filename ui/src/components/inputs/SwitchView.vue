@@ -3,17 +3,17 @@
         <el-tooltip :content="$t('source')" transition="" :hide-after="0" :persistent="false" effect="light">
             <el-button :type="buttonType(editorViewTypes.SOURCE)" @click="switchView(editorViewTypes.SOURCE)" :icon="FileDocumentEditOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and doc')" transition="" :hide-after="0" :persistent="false" effect="light">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_DOC)" @click="switchView(editorViewTypes.SOURCE_DOC)" :icon="BookOpenOutline" />
+        <el-tooltip :content="!isFlow ? $t('flow_only') : $t('source and doc')" transition="" :hide-after="0" :persistent="false" effect="light">
+            <el-button :disabled="!isFlow" :type="buttonType(editorViewTypes.SOURCE_DOC)" @click="switchView(editorViewTypes.SOURCE_DOC)" :icon="BookOpenOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and topology')" transition="" :hide-after="0" :persistent="false" effect="light">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_TOPOLOGY)" @click="switchView(editorViewTypes.SOURCE_TOPOLOGY)" :icon="FileTableOutline" />
+        <el-tooltip :content="!isFlow ? $t('flow_only') : $t('source and topology')" transition="" :hide-after="0" :persistent="false" effect="light">
+            <el-button :disabled="!isFlow" :type="buttonType(editorViewTypes.SOURCE_TOPOLOGY)" @click="switchView(editorViewTypes.SOURCE_TOPOLOGY)" :icon="FileTableOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('topology')" transition="" :hide-after="0" :persistent="false" effect="light">
-            <el-button :type="buttonType(editorViewTypes.TOPOLOGY)" @click="switchView(editorViewTypes.TOPOLOGY)" :icon="FileTreeOutline" />
+        <el-tooltip :content="!isFlow ? $t('flow_only') : $t('topology')" transition="" :hide-after="0" :persistent="false" effect="light">
+            <el-button :disabled="!isFlow" :type="buttonType(editorViewTypes.TOPOLOGY)" @click="switchView(editorViewTypes.TOPOLOGY)" :icon="FileTreeOutline" />
         </el-tooltip>
-        <el-tooltip :content="$t('source and blueprints')" transition="" :hide-after="0" :persistent="false" effect="light">
-            <el-button :type="buttonType(editorViewTypes.SOURCE_BLUEPRINTS)" @click="switchView(editorViewTypes.SOURCE_BLUEPRINTS)" :icon="BallotOutline" />
+        <el-tooltip :content="!isFlow ? $t('flow_only') : $t('source and blueprints')" transition="" :hide-after="0" :persistent="false" effect="light">
+            <el-button :disabled="!isFlow" :type="buttonType(editorViewTypes.SOURCE_BLUEPRINTS)" @click="switchView(editorViewTypes.SOURCE_BLUEPRINTS)" :icon="BallotOutline" />
         </el-tooltip>
     </el-button-group>
 </template>
@@ -28,7 +28,7 @@
 </script>
 
 <script>
-    import {mapMutations} from "vuex";
+    import {mapState, mapMutations} from "vuex";
 
     export default {
         props: {
@@ -38,6 +38,14 @@
             }
         },
         emits: ["switch-view"],
+        computed: {
+            ...mapState({
+                currentTab: (state) => state.editor.current
+            }),
+            isFlow(){
+                return this.currentTab?.name === "Flow"
+            }
+        },
         methods: {
             ...mapMutations("editor", ["changeView"]),
 

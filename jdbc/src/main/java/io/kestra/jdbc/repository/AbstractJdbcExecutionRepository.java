@@ -870,7 +870,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @SneakyThrows
     @Override
     public Execution delete(Execution execution) {
-        Optional<Execution> revision = this.findById(execution.getTenantId(), execution.getId(), false);
+        Optional<Execution> revision = this.findById(execution.getTenantId(), execution.getId());
         if (revision.isEmpty()) {
             throw new IllegalStateException("Execution " + execution.getId() + " doesn't exists");
         }

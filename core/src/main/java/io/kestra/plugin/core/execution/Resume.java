@@ -87,7 +87,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         FlowExecutorInterface flowExecutor = applicationContext.getBean(FlowExecutorInterface.class);
         QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
 
-        Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id(), false)
+        Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
         Flow flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
         Map<String, Object> renderedInputs = inputs != null ? runContext.render(inputs) : null;

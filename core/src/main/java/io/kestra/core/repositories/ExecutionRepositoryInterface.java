@@ -24,6 +24,10 @@ import reactor.core.publisher.Flux;
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
     Boolean isTaskRunEnabled();
 
+    default Optional<Execution> findById(String tenantId, String id) {
+        return findById(tenantId, id, false);
+    }
+
     Optional<Execution> findById(String tenantId, String id, boolean allowDeleted);
 
     ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);

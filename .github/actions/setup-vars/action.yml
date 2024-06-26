@@ -1,0 +1,20 @@
+name: 'Setup vars'
+description: 'Composite action to setup common vars'
+outputs:
+  tag:
+    description: "Git tag"
+    value: ${{ steps.vars.outputs.tag }}
+  commit:
+    description: "Git commit"
+    value: ${{ steps.vars.outputs.commit }}
+runs:
+  using: composite
+  steps:
+    # Setup vars
+    - name: Set variables
+      id: vars
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/*/}
+        echo "tag=${TAG}" >> $GITHUB_OUTPUT
+        echo "commit=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT

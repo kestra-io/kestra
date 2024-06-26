@@ -1,0 +1,28 @@
+configurations {
+    implementation.extendsFrom(micronaut)
+}
+
+dependencies {
+    testImplementation project(':tests')
+    testImplementation("com.microsoft.playwright:playwright:1.44.0")
+}
+
+/**********************************************************************************************************************\
+ * ./gradlew playwright
+ **********************************************************************************************************************/
+task playwright(type: JavaExec) {
+    classpath sourceSets.test.runtimeClasspath
+    mainClass = 'com.microsoft.playwright.CLI'
+}
+/**********************************************************************************************************************\
+ * Test
+ **********************************************************************************************************************/
+test {
+    useJUnitPlatform {
+        if (project.hasProperty('tags')) {
+            includeTags project.getProperty('tags').split(',')
+        }
+        // Setting the number of parallel forks
+        maxParallelForks = Runtime.runtime.availableProcessors()
+    }
+}

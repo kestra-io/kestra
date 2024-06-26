@@ -809,6 +809,7 @@
     "ee-tooltip": {
       "features-blocked": "This feature requires Enterprise Edition.",
       "button": "Talk to us"
-    }
+    },
+    "flow_only": "Only available on Flow tab."
   }
 }

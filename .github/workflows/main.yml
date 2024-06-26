@@ -266,6 +266,7 @@ jobs:
               io.kestra.plugin:plugin-kafka:$PLUGIN_VERSION
               io.kestra.plugin:plugin-kubernetes:$PLUGIN_VERSION
               io.kestra.plugin:plugin-malloy:$PLUGIN_VERSION
+              io.kestra.plugin:plugin-minio:$PLUGIN_VERSION
               io.kestra.plugin:plugin-modal:$PLUGIN_VERSION
               io.kestra.plugin:plugin-mongodb:$PLUGIN_VERSION
               io.kestra.plugin:plugin-mqtt:$PLUGIN_VERSION

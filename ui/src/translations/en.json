@@ -308,7 +308,7 @@
     "errors": {
       "404": {
         "title": "Page not found",
-        "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>",
+        "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
       },
       "401": {
@@ -320,6 +320,7 @@
         "content": "You don't have the required permissions to access this page."
       }
     },
+    "back_to_dashboard": "Back to dashboard",
     "copy logs": "Copy logs",
     "download logs": "Download logs",
     "delete logs": "Delete logs",

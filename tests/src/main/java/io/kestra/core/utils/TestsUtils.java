@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -151,11 +152,11 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static Map.Entry<ConditionContext, TriggerContext> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
+    public static Map.Entry<ConditionContext, Trigger> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
         Flow flow = TestsUtils.mockFlow(caller);
 
-        TriggerContext triggerContext = TriggerContext.builder()
+        Trigger triggerContext = Trigger.builder()
             .triggerId(trigger.getId())
             .flowId(flow.getId())
             .namespace(flow.getNamespace())

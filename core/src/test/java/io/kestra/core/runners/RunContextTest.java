@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -294,7 +295,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             .format("john {{ secret('PASSWORD') }} doe")
             .build();
 
-        Map.Entry<ConditionContext, TriggerContext> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
+        Map.Entry<ConditionContext, Trigger> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
 
         WorkerTrigger workerTrigger = WorkerTrigger.builder()
             .trigger(trigger)

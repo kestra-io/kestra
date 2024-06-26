@@ -471,10 +471,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 // If it has an interval, the Worker will execute the trigger.
                                 // Normally, only the Schedule trigger has no interval.
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
-
+                                var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {
                                     this.triggerState.save(triggerRunning, scheduleContext);
-                                    this.sendWorkerTriggerToWorker(f);
+                                    this.sendWorkerTriggerToWorker(flowWithTrigger);
                                 } catch (InternalException e) {
                                     logService.logTrigger(
                                         f.getTriggerContext(),

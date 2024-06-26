@@ -6,10 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Nullable;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -34,6 +31,10 @@ public class Trigger extends TriggerContext {
 
     @Nullable
     private ZonedDateTime evaluateRunningDate; // this is used as an evaluation lock to avoid duplicate evaluation
+
+    @Nullable
+    @Setter // it's unfortunate but neither toBuilder() not @With works so using @Setter here
+    private String workerId;
 
     protected Trigger(TriggerBuilder<?, ?> b) {
         super(b);

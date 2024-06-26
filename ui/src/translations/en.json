@@ -855,6 +855,11 @@
       "update": "Update value for key '{key}'",
       "duplicate": "This key already exists"
     },
-    "expiration": "Expiration"
+    "expiration": "Expiration",
+    "failed to render pdf": "Failed to render the PDF preview",
+    "page": {
+      "previous": "Previous page",
+      "next": "Next page"
+    }
   }
 }

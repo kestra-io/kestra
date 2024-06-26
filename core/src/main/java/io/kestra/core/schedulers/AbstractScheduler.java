@@ -82,8 +82,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.
     @Getter
-    private volatile List<FlowWithTriggers> schedulable = new ArrayList<>();
-    @Getter
     private volatile Map<String, FlowWithWorkerTriggerNextDate> schedulableNextDate = new ConcurrentHashMap<>();
 
     private final String id = IdUtils.create();

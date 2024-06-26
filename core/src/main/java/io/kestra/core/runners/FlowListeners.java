@@ -14,6 +14,7 @@ import io.kestra.core.services.FlowListenersInterface;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -98,13 +99,13 @@ public class FlowListeners implements FlowListenersInterface {
     private Optional<Flow> previous(Flow flow) {
         return flows
             .stream()
-            .filter(r -> r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()))
+            .filter(r -> Objects.equals(r.getTenantId(), flow.getTenantId()) && r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()))
             .findFirst();
     }
 
     private boolean remove(Flow flow) {
         synchronized (this) {
-            boolean remove = flows.removeIf(r -> r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()));
+            boolean remove = flows.removeIf(r -> Objects.equals(r.getTenantId(), flow.getTenantId()) && r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()));
             if (!remove && flow.isDeleted()) {
                 log.warn("Can't remove flow {}.{}", flow.getNamespace(), flow.getId());
             }

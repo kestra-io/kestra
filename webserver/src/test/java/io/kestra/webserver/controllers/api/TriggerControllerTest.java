@@ -11,6 +11,7 @@ import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -171,7 +172,154 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         assertThat(afterUpdated.getDisabled(), is(false));
     }
 
-    @SuppressWarnings("unchecked")
+    @Test
+    void unlockByTriggers() {
+        Trigger triggerLock = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .executionId(IdUtils.create())
+            .build();
+
+        Trigger triggerNotLock = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerLock);
+        jdbcTriggerRepository.save(triggerNotLock);
+
+        List<Trigger> triggers = List.of(triggerLock, triggerNotLock);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-triggers", triggers), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(1));
+    }
+
+    @Test
+    void unlockByQuery() {
+        Trigger triggerLock = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .executionId(IdUtils.create())
+            .build();
+
+        Trigger triggerNotLock = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerLock);
+        jdbcTriggerRepository.save(triggerNotLock);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-query?namespace=io.kestra.unittest", null), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(1));
+    }
+
+    @Test
+    void enableByTriggers() {
+        Trigger triggerDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .disabled(true)
+            .build();
+
+        Trigger triggerNotDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerDisabled);
+        jdbcTriggerRepository.save(triggerNotDisabled);
+
+        List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled(), is(false));
+    }
+
+    @Test
+    void enableByQuery() {
+        Trigger triggerDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .disabled(true)
+            .build();
+
+        Trigger triggerNotDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerDisabled);
+        jdbcTriggerRepository.save(triggerNotDisabled);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=false", null), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled(), is(false));
+    }
+
+    @Test
+    void disableByTriggers() {
+        Trigger triggerDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .disabled(true)
+            .build();
+
+        Trigger triggerNotDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerDisabled);
+        jdbcTriggerRepository.save(triggerNotDisabled);
+
+        List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled(), is(true));
+    }
+
+    @Test
+    void disableByQuery() {
+        Trigger triggerDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .disabled(true)
+            .build();
+
+        Trigger triggerNotDisabled = Trigger.builder()
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .triggerId(IdUtils.create())
+            .build();
+
+        jdbcTriggerRepository.save(triggerDisabled);
+        jdbcTriggerRepository.save(triggerNotDisabled);
+
+        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=true", null), BulkResponse.class);
+
+        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled(), is(true));
+    }
+
     @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow("flow-with-triggers");

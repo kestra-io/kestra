@@ -648,6 +648,9 @@
     "continue backfill": "Continuer le backfill",
     "delete backfill": "Supprimer le backfill",
     "pause backfill": "Mettre en pause le backfill",
+    "continue backfills": "Continuer les backfills",
+    "delete backfills": "Supprimer les backfills",
+    "pause backfills": "Mettre en pause les backfills",
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
     "backfill": "Backfill",
@@ -782,6 +785,23 @@
       "features-blocked": "Cette fonctionnalité nécessite l'édition Enterprise.",
       "button": "Contactez-nous"
     },
-    "flow_only": "Disponible uniquement sur l'onglet Flow."
+    "flow_only": "Disponible uniquement sur l'onglet Flow.",
+    "bulk unpause backfills": "Reprendre {count} backfill",
+    "bulk pause backfills": "Mettre en pause {count} backfill",
+    "bulk delete backfills": "Supprimer {count} backfill",
+    "bulk unlock": "Débloquer {count} triggers",
+    "bulk disabled status": {
+      "true": "Désactiver {count} triggers",
+      "false": "Activer {count} triggers"
+    },
+    "unlock": "Débloquer",
+    "bulk success unpause backfills": "{count} backfills redémarrés",
+    "bulk success pause backfills": "{count} backfills mis en pause",
+    "bulk success delete backfills": "{count} backfills supprimés",
+    "bulk success unlock": "{count} triggers débloqués",
+    "bulk success disabled status": {
+      "true": "{count} triggers désactivés",
+      "false": "{count} triggers activés"
+    }
   }
 }

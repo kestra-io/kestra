@@ -413,7 +413,6 @@
         "title": "Choose a use-case<br />and we'll show you how it's done!",
         "content": "You can edit your flow directly here from the UI. To add comments to your code, use <code>#</code>. Kestra provides autocompletion for all workflow components, including tasks, triggers and inputs. Start typing and use the keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> to leverage the autocompletion feature.",
         "action": "Next"
-
       },
       "step3": {
         "title": "Let's write your first flow!",
@@ -671,6 +670,9 @@
     "continue backfill": "Continue the backfill",
     "delete backfill": "Delete the backfill",
     "pause backfill": "Pause the backfill",
+    "continue backfills": "Continue backfills",
+    "delete backfills": "Delete backfills",
+    "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
     "relative": "Relative",
@@ -810,6 +812,23 @@
       "features-blocked": "This feature requires Enterprise Edition.",
       "button": "Talk to us"
     },
-    "flow_only": "Only available on Flow tab."
+    "flow_only": "Only available on Flow tab.",
+    "bulk unpause backfills": "Unpause {count} backfill",
+    "bulk pause backfills": "Pause {count} backfill",
+    "bulk delete backfills": "Delete {count} backfill",
+    "bulk unlock": "Unlock {count} triggers",
+    "bulk disabled status": {
+      "true": "Disable {count} triggers",
+      "false": "Enable {count} triggers"
+    },
+    "unlock": "Unlock",
+    "bulk success unpause backfills": "{count} backfills unpaused",
+    "bulk success pause backfills": "{count} backfills paused",
+    "bulk success delete backfills": "{count} backfills deleted",
+    "bulk success unlock": "{count} triggers unlocked",
+    "bulk success disabled status": {
+      "true": "{count} trigger(s) disabled",
+      "false": "{count} trigger(s) enabled"
+    }
   }
 }

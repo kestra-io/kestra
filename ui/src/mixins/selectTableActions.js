@@ -16,6 +16,7 @@ export default {
         },
         toggleAllUnselected() {
             this.elTable.clearSelection()
+            this.queryBulkAction = false;
         },
         toggleAllSelection() {
             if (this.elTable.getSelectionRows().length < this.elTable.data.length) {

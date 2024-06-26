@@ -2,8 +2,10 @@ package io.kestra.storage.local;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageObject;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -64,6 +67,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
+    public StorageObject getWithMetadata(String tenantId, URI uri) throws IOException {
+        return new StorageObject(LocalFileAttributes.getMetadata(this.getPath(tenantId, uri)), this.get(tenantId, uri));
+    }
+
+    @Override
     public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getPath(tenantId, prefix);
         List<URI> uris = new ArrayList<>();
@@ -78,7 +86,9 @@ public class LocalStorage implements StorageInterface {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                uris.add(URI.create(file.toString().replace("\\", "/")));
+                if (!file.getFileName().toString().endsWith(".metadata")) {
+                    uris.add(URI.create(file.toString().replace("\\", "/")));
+                }
                 return FileVisitResult.CONTINUE;
             }
 
@@ -111,6 +121,7 @@ public class LocalStorage implements StorageInterface {
     public List<FileAttributes> list(String tenantId, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getPath(tenantId, uri))) {
             return stream
+                .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
                 .map(throwFunction(file -> {
                     URI relative = URI.create(
                         getPath(tenantId, null).relativize(
@@ -126,20 +137,28 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public URI put(String tenantId, URI uri, InputStream data) throws IOException {
+    public URI put(String tenantId, URI uri, StorageObject storageObject) throws IOException {
         File file = getPath(tenantId, uri).toFile();
         File parent = file.getParentFile();
         if (!parent.exists()) {
             parent.mkdirs();
         }
 
-        try (data; OutputStream outStream = new FileOutputStream(file)) {
+        try (InputStream data = storageObject.inputStream(); OutputStream outStream = new FileOutputStream(file)) {
             byte[] buffer = new byte[8 * 1024];
             int bytesRead;
             while ((bytesRead = data.read(buffer)) != -1) {
                 outStream.write(buffer, 0, bytesRead);
             }
         }
+
+        Map<String, String> metadata = storageObject.metadata();
+        if (metadata != null) {
+            try (OutputStream outStream = new FileOutputStream(file.toPath() + ".metadata")) {
+                outStream.write(JacksonMapper.ofIon().writeValueAsBytes(metadata));
+            }
+        }
+
         return URI.create("kestra://" + uri.getPath());
     }
 
@@ -148,7 +167,7 @@ public class LocalStorage implements StorageInterface {
         Path path = getPath(tenantId, uri);
         try {
             return LocalFileAttributes.builder()
-                .fileName(path.getFileName().toString())
+                .filePath(path)
                 .basicFileAttributes(Files.readAttributes(path, BasicFileAttributes.class))
                 .build();
         } catch (NoSuchFileException e) {

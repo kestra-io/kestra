@@ -3,6 +3,7 @@ package io.kestra.core.storage;
 import com.google.common.io.CharStreams;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -13,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1008,14 +1010,39 @@ public abstract class StorageTestSuite {
             assertThat(storageInterface.exists(tenantId, new URI(s)), is(false));
         }));
     }
-
     //endregion
+
+    @Test
+    void metadata() throws Exception {
+        String prefix = IdUtils.create();
+        String tenantId = IdUtils.create();
+
+        Map<String, String> expectedMetadata = Map.of(
+            "key1", "value1",
+            "key2", "value2"
+        );
+        putFile(tenantId, "/" + prefix + "/storage/get.yml", expectedMetadata);
+        StorageObject withMetadata = storageInterface.getWithMetadata(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml"));
+        assertThat(CharStreams.toString(new InputStreamReader(withMetadata.inputStream())), is(contentString));
+        assertThat(withMetadata.metadata(), is(expectedMetadata));
+    }
 
     private URI putFile(String tenantId, String path) throws Exception {
         return storageInterface.put(
             tenantId,
             new URI(path),
             new ByteArrayInputStream(contentString.getBytes())
+        );
+    }
+
+    private URI putFile(String tenantId, String path, Map<String, String> metadata) throws Exception {
+        return storageInterface.put(
+            tenantId,
+            new URI(path),
+            new StorageObject(
+                metadata,
+                new ByteArrayInputStream(contentString.getBytes())
+            )
         );
     }
 }

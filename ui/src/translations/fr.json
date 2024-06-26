@@ -297,7 +297,7 @@
     "errors": {
       "404": {
         "title": "Page introuvable",
-        "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>",
+        "content": "L'URL demandée n'a pas été trouvée sur ce serveur.<br />C'est tout ce que nous savons.",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
       },
       "401": {
@@ -309,6 +309,7 @@
         "content": "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
       }
     },
+    "back_to_dashboard": "Retour au tableau de bord",
     "copy logs": "Copier les logs",
     "download logs": "Télécharger les logs",
     "delete logs": "Supprimer les logs",

@@ -39,7 +39,7 @@ public record NamespaceFile(
      * @return a new {@link NamespaceFile} object
      */
     public static NamespaceFile of(final String namespace, @Nullable final URI uri) {
-        if (uri == null) {
+        if (uri == null || uri.equals(URI.create("/"))) {
             return of(namespace, (Path) null);
         }
 
@@ -69,10 +69,10 @@ public record NamespaceFile(
 
         // trailing slash on URI is used to identify directory.
         return new NamespaceFile(
-                namespaceFile.path,
-                URI.create(namespaceFile.uri.toString() + "/"),
-                namespaceFile.namespace
-            );
+            namespaceFile.path,
+            URI.create(namespaceFile.uri.toString() + "/"),
+            namespaceFile.namespace
+        );
     }
 
     /**
@@ -142,5 +142,14 @@ public record NamespaceFile(
      */
     public boolean isDirectory() {
         return uri.toString().endsWith("/");
+    }
+
+    /**
+     * Checks whether this namespace file is the namespace file root directory.
+     *
+     * @return {@code true} if this namespace file is the root directory. Otherwise {@code false}.
+     */
+    public boolean isRootDirectory() {
+        return equals(NamespaceFile.of(namespace));
     }
 }

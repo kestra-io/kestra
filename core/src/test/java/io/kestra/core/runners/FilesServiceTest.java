@@ -35,6 +35,13 @@ class FilesServiceTest {
     }
 
     @Test
+    void renderRawFile() throws Exception {
+        RunContext runContext = runContextFactory.of(Map.of("filename", "file.txt", "content", "Hello World"));
+        Map<String, String> content = FilesService.inputFiles(runContext, Map.of("{{filename}}", "{% raw %}{{content}}{% endraw %}"));
+        assertThat(content.get("file.txt"), is("{{content}}"));
+    }
+
+    @Test
     void outputFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));

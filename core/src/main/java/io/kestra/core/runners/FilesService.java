@@ -45,17 +45,16 @@ public abstract class FilesService {
                      file.getParentFile().mkdirs();
                  }
 
-                 var fileContent = runContext.render(input, additionalVars);
-                 if (fileContent == null) {
+                 if (input == null) {
                     file.createNewFile();
                  } else {
-                     if (fileContent.startsWith("kestra://")) {
-                         try (var is = runContext.storage().getFile(URI.create(fileContent));
+                     if (input.startsWith("kestra://")) {
+                         try (var is = runContext.storage().getFile(URI.create(input));
                               var out = new FileOutputStream(file)) {
                              IOUtils.copyLarge(is, out);
                          }
                      } else {
-                         Files.write(file.toPath(), fileContent.getBytes());
+                         Files.write(file.toPath(), input.getBytes());
                      }
                  }
              }));

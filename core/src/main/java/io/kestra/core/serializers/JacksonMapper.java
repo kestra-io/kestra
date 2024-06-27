@@ -1,8 +1,6 @@
 
 package io.kestra.core.serializers;
 
-import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
-
 import com.amazon.ion.IonSystem;
 import com.amazon.ion.impl._Private_IonBinaryWriterBuilder;
 import com.amazon.ion.impl._Private_Utils;
@@ -14,8 +12,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -23,16 +23,23 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.diff.JsonDiff;
 import io.kestra.core.plugins.PluginModule;
 import io.kestra.core.runners.RunContextModule;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
+import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.LoaderOptions;
 
+import java.io.IOException;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
+import static com.amazon.ion.impl.lite._Private_LiteDomTrampoline.newLiteSystem;
 
 public final class JacksonMapper {
     public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
@@ -167,4 +174,32 @@ public final class JacksonMapper {
 
         return newLiteSystem(textWriterBuilder, (_Private_IonBinaryWriterBuilder) binaryWriterBuilder, readerBuilder);
     }
+
+    public static Pair<JsonNode, JsonNode> getBiDirectionalDiffs(Object previous, Object current)  {
+        JsonNode previousJson = MAPPER.valueToTree(previous);
+        JsonNode newJson = MAPPER.valueToTree(current);
+
+        JsonNode patchPrevToNew = JsonDiff.asJson(previousJson, newJson);
+        JsonNode patchNewToPrev = JsonDiff.asJson(newJson, previousJson);
+
+        return Pair.of(patchPrevToNew, patchNewToPrev);
+    }
+
+    public static String applyPatches(Object object, List<JsonNode> patches) throws JsonProcessingException {
+        for (JsonNode patch : patches) {
+            try {
+                // Required for ES
+                if (!patch.has("value")) {
+                    ((ObjectNode) patch.get(0)).set("value", (JsonNode) null);
+                }
+                JsonNode current = MAPPER.valueToTree(object);
+                object = JsonPatch.fromJson(patch).apply(current);
+            } catch (IOException | JsonPatchException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return MAPPER.writeValueAsString(object);
+    }
+
+
 }

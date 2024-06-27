@@ -120,7 +120,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public Optional<Execution> findById(String tenantId, String id) {
+    public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -128,7 +128,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
+                    .where(this.defaultFilter(tenantId, allowDeleted))
                     .and(field("key").eq(id));
 
                 return this.jdbcRepository.fetchOne(from);

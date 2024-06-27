@@ -504,7 +504,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
-        eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
+        if (exists.isPresent()) {
+            eventPublisher.publishEvent(new CrudEvent<>(flow, exists.get(), crudEventType));
+        } else {
+            eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
+        }
 
         return FlowWithSource.of(flow, flowSource);
     }

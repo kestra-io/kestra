@@ -105,6 +105,8 @@ dependencies {
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.3'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.3'
+        // Json Diff
+        api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.2.0"

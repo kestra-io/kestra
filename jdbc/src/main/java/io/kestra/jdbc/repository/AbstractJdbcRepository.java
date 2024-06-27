@@ -18,9 +18,18 @@ public abstract class AbstractJdbcRepository {
         return field("deleted", Boolean.class).eq(false);
     }
 
+    protected Condition defaultFilter(Boolean allowDeleted) {
+        return allowDeleted ? DSL.trueCondition() : field("deleted", Boolean.class).eq(false);
+    }
+
     protected Condition defaultFilter(String tenantId) {
         var tenant = buildTenantCondition(tenantId) ;
         return tenant.and(field("deleted", Boolean.class).eq(false));
+    }
+
+    protected Condition defaultFilter(String tenantId, Boolean allowDeleted) {
+        var tenant = buildTenantCondition(tenantId);
+        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {

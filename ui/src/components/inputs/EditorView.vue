@@ -587,10 +587,8 @@
         timer.value = setTimeout(() => onEdit(event, isFlow), 500);
     };
 
-    const switchViewType = (event, shouldPersist = true) => {
-        if(shouldPersist) persistViewType(event)
-        else viewType.value = event
-
+    const switchViewType = (event) => {
+        persistViewType(event);
         if (
             [editorViewTypes.TOPOLOGY, editorViewTypes.SOURCE_TOPOLOGY].includes(
                 viewType.value
@@ -881,13 +879,7 @@
         return tab.name === currentTab.value.name;
     }
 
-    watch(currentTab, (current, previous) => {
-        const isCurrentFlow = current?.name === "Flow";
-        const isPreviousFlow = previous?.name === "Flow";
-
-        if(isPreviousFlow) persistViewType(viewType.value);
-        switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
-        
+    watch(currentTab, () => {
         nextTick(() => {
             const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
             const rightMostCurrentTabPixel = activeTabElement.offsetLeft + activeTabElement.clientWidth;

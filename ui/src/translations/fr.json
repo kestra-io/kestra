@@ -775,7 +775,6 @@
     "ee-tooltip": {
       "features-blocked": "Cette fonctionnalité nécessite l'édition Enterprise.",
       "button": "Contactez-nous"
-    },
-    "flow_only": "Disponible uniquement sur l'onglet Flow."
+    }
   }
 }

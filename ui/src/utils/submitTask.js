@@ -21,7 +21,7 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             if (input.type === "DATETIME") {
                 if(inputValue) formData.append(inputName, submitor.$moment(inputValue).toISOString());
             } else if (input.type === "DATE") {
-                if(inputValue) formData.append(inputName, submitor.$moment(inputValue).toISOString());
+                if(inputValue) formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
                 formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"));
             } else if (input.type === "DURATION") {

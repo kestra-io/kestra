@@ -11,6 +11,31 @@ class NamespaceFileTest {
     private static final String namespace = "io.kestra.test";
 
     @Test
+    void shouldReturnTrueForIsRootDirectoryGivenRootDirectory() {
+        Assertions.assertTrue(NamespaceFile.of(namespace, URI.create("/")).isRootDirectory());
+    }
+    @Test
+    void shouldReturnFalseForIsRootDirectoryGivenNonRootDirectory() {
+        Assertions.assertFalse(NamespaceFile.of(namespace, URI.create("/my/sub/dir")).isRootDirectory());
+    }
+
+    @Test
+    void shouldCreateValidNamespaceFileGivenSlashURI() {
+        NamespaceFile expected = new NamespaceFile(
+            Path.of(""),
+            URI.create("kestra:///io/kestra/test/_files/"),
+            namespace
+        );
+
+        // Given URI
+        Assertions.assertEquals(expected, NamespaceFile.of(namespace, URI.create("/")));
+
+        // Given Path
+        Assertions.assertEquals(expected, NamespaceFile.of(namespace, Path.of("/"))
+        );
+    }
+
+    @Test
     void shouldThrowExceptionGivenNullNamespace() {
         Assertions.assertThrows(NullPointerException.class, () -> NamespaceFile.of(null, (Path) null));
     }

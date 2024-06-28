@@ -23,10 +23,12 @@ import org.apache.commons.lang3.ArrayUtils;
 @Singleton
 @Slf4j
 public class MetricRegistry {
+    public final static String METRIC_WORKER_JOB_PENDING_COUNT = "worker.job.pending";
+    public final static String METRIC_WORKER_JOB_RUNNING_COUNT = "worker.job.running";
+    public final static String METRIC_WORKER_JOB_THREAD_COUNT = "worker.job.thread";
     public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public final static String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
-    public final static String METRIC_WORKER_RETRYED_COUNT = "worker.retryed.count";
     public final static String METRIC_WORKER_TIMEOUT_COUNT = "worker.timeout.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";

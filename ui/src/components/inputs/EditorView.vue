@@ -468,7 +468,7 @@
                         editorViewTypes.SOURCE_TOPOLOGY,
                     ].includes(viewType.value)
                 ) {
-                    fetchGraph();
+                    if(!value.constraints) fetchGraph();
                 }
 
                 if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {

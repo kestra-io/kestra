@@ -178,6 +178,14 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
         assertThat(result.getLabels().get(3), is(new Label("b", "label-2")));
         assertThat(result.getLabels().get(4), is(new Label("url", URL_LABEL_VALUE)));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
+            HttpRequest
+                .POST("/api/v1/executions/foo/bar", createInputsFlowBody())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            HttpResponse.class
+        ));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
     @Test

@@ -22,4 +22,5 @@ include 'ui'
 include 'model'
 include 'processor'
 include 'script'
+include 'e2e-tests'
 

@@ -206,6 +206,37 @@ subprojects {
 }
 
 /**********************************************************************************************************************\
+ * End-to-End Tests
+ **********************************************************************************************************************/
+def e2eTestsCheck = tasks.register('e2eTestsCheck') {
+    group = 'verification'
+    description = "Runs the 'check' task for all e2e-tests modules"
+    doFirst {
+        project.ext.set("e2e-tests", true)
+    }
+}
+
+subprojects {
+    // Add e2e-tests modules check tasks to e2eTestsCheck
+    if (project.name.startsWith("e2e-tests")) {
+        test {
+            onlyIf {
+                project.hasProperty("e2e-tests")
+            }
+        }
+    }
+
+    afterEvaluate {
+        // Add e2e-tests modules check tasks to e2eTestsCheck
+        if (project.name.startsWith("e2e-tests")) {
+            e2eTestsCheck.configure {
+                finalizedBy(check)
+            }
+        }
+    }
+}
+
+/**********************************************************************************************************************\
  * Allure Reports
  **********************************************************************************************************************/
 subprojects {

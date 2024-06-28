@@ -1,0 +1,24 @@
+name: 'Load Kestra Plugin List'
+description: 'Composite action to load list of plugins'
+inputs:
+  plugin-version:
+    description: "Kestra version"
+    default: 'LATEST'
+    required: true
+  plugin-file:
+    description: "File of the plugins"
+    default: './.plugins'
+    required: true
+outputs:
+  plugins:
+    description: "List of all Kestra plugins"
+    value: ${{ steps.plugins.outputs.plugins }}
+runs:
+  using: composite
+  steps:
+    - name: Get Plugins List
+      id: plugins
+      shell: bash
+      run: |
+        PLUGINS=$([ -f ${{ inputs.plugin-file }} ] && cat ${{ inputs.plugin-file }} | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | sed -e "s/LATEST/${{ inputs.plugin-version }}/g" | xargs || echo '');
+        echo "plugins=$PLUGINS" >> $GITHUB_OUTPUT

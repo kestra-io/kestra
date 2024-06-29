@@ -1,12 +1,13 @@
-<!-- Thanks for submitting a Pull Request to kestra. To help us review your contribution, please follow the guidelines below:
+<!-- Thanks for submitting a Pull Request to Kestra. To help us review your contribution, please follow the guidelines below:
 
 - Make sure that your commits follow the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) specification e.g. `feat(ui): add a new navigation menu item` or `fix(core): fix a bug in the core model` or `docs: update the README.md`. This will help us automatically generate the changelog.
 - The title should briefly summarize the proposed changes.
 - Provide a short overview of the change and the value it adds.
 - Share a flow example to help the reviewer understand and QA the change.
-- Use "close" to automatically close an issue. For example, `close #1234` will close issue #1234. -->
+- Use "closes" to automatically close an issue. For example, `closes #1234` will close issue #1234. -->
 
 ### What changes are being made and why?
+
 <!-- Please include a brief summary of the changes included in this PR e.g. closes #1234. -->
 
 ---

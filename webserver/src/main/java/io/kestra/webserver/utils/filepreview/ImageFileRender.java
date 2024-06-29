@@ -1,18 +1,15 @@
 package io.kestra.webserver.utils.filepreview;
 
 import lombok.Getter;
-import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Base64;
 
 @Getter
-public class ImageFileRender extends FileRender {
+public class ImageFileRender extends Base64Render {
     ImageFileRender(String extension, InputStream inputStream, Integer maxLine) throws IOException {
-        super(extension, maxLine);
-        this.content =  Base64.getEncoder().encodeToString(IOUtils.toByteArray(inputStream));
+        super(extension, inputStream, maxLine);
         this.type = Type.IMAGE;
     }
 

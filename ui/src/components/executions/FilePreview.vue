@@ -15,6 +15,7 @@
             </el-alert>
             <list-preview v-if="filePreview.type === 'LIST'" :value="filePreview.content" />
             <img v-else-if="filePreview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+            <pdf-preview v-else-if="filePreview.type === 'PDF'" :source="filePreview.content" />
             <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
             <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
             <el-form class="ks-horizontal max-size mt-3">
@@ -64,12 +65,13 @@
 <script>
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
+    import PdfPreview from "../PdfPreview.vue";
     import {mapGetters, mapState} from "vuex";
     import Markdown from "../layout/Markdown.vue";
     import Drawer from "../Drawer.vue";
 
     export default {
-        components: {Markdown, ListPreview, Editor, Drawer},
+        components: {Markdown, ListPreview, PdfPreview, Editor, Drawer},
         props: {
             value: {
                 type: String,

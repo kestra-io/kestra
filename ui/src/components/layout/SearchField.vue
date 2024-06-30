@@ -1,5 +1,6 @@
 <template>
     <el-input
+        :data-component="dataComponent"
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
@@ -20,8 +21,10 @@
 <script>
     import {debounce} from "throttle-debounce";
     import Magnify from "vue-material-design-icons/Magnify.vue";
+    import BaseComponents from "../BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         emits: ["search"],
         components: {Magnify},
         searchDebounce: undefined,

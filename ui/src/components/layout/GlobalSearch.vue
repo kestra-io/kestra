@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div :data-component="dataComponent">
         <el-autocomplete
             ref="search"
             class="flex-shrink-0"
@@ -39,8 +39,10 @@
     import LeftMenu from "override/components/LeftMenu.vue";
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import {mapGetters, mapState} from "vuex";
+    import BaseComponents from "../BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         components: {
             GoogleCirclesExtended,
             SearchField,

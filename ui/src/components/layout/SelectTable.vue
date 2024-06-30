@@ -1,5 +1,20 @@
+<template>
+    <div :data-component="dataComponent" class="position-relative">
+        <div v-if="hasSelection" class="bulk-select-header">
+            <slot name="select-actions" />
+        </div>
+        <el-table ref="table" v-bind="$attrs" :data="data" @selection-change="selectionChanged">
+            <el-table-column type="selection" v-if="selectable" />
+            <slot name="default" />
+        </el-table>
+    </div>
+</template>
+
 <script>
+    import BaseComponents from "../BaseComponents.vue"
+
     export default {
+        extends: BaseComponents,
         data() {
             return {
                 hasSelection: false
@@ -40,18 +55,6 @@
         }
     }
 </script>
-
-<template>
-    <div class="position-relative">
-        <div v-if="hasSelection" class="bulk-select-header">
-            <slot name="select-actions" />
-        </div>
-        <el-table ref="table" v-bind="$attrs" :data="data" @selection-change="selectionChanged">
-            <el-table-column type="selection" v-if="selectable" />
-            <slot name="default" />
-        </el-table>
-    </div>
-</template>
 
 <style scoped lang="scss">
     .bulk-select-header {

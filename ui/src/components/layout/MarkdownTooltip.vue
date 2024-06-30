@@ -1,5 +1,5 @@
 <template>
-    <span v-if="description">
+    <span :data-component="dataComponent" v-if="description">
         <a @click="open()">
             <help-circle
                 title=""
@@ -21,8 +21,10 @@
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
     import Markdown from "./Markdown.vue";
     import Drawer from "../Drawer.vue";
+    import BaseComponents from "../BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         components: {
             HelpCircle,
             Markdown,

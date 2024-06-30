@@ -1,5 +1,6 @@
 <template>
     <el-date-picker
+        :data-component="dataComponent"
         :model-value="date"
         @update:model-value="onDate"
         type="datetimerange"
@@ -10,8 +11,10 @@
 </template>
 <script>
     import moment from "moment";
+    import BaseComponents from "../BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         emits: ["update:modelValue"],
         data() {
             return {

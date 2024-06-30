@@ -1,5 +1,5 @@
 <template>
-    <span>
+    <span :data-component="dataComponent">
         <el-tooltip v-if="histories" popper-class="duration-tt" :persistent="false" transition="" :hide-after="0" effect="light">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">
@@ -16,10 +16,12 @@
 <script>
     import State from "../../utils/state";
     import Utils from "../../utils/utils";
+    import BaseComponents from "../BaseComponents.vue"
 
     const ts = date => new Date(date).getTime();
 
     export default {
+        extends: BaseComponents,
         props: {
             histories: {
                 type: Array,

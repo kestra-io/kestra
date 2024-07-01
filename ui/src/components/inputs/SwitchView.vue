@@ -43,7 +43,7 @@
                 currentTab: (state) => state.editor.current
             }),
             isFlow(){
-                return this.currentTab?.name === "Flow"
+                return !this.currentTab || this.currentTab.name === "Flow"
             }
         },
         methods: {

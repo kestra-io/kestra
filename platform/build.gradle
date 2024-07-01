@@ -20,7 +20,7 @@ dependencies {
     def jsonschemaVersion = "4.35.0"
     def kafkaVersion = "3.7.1"
     def opensearchVersion = "2.10.3"
-    def opensearchRestVersion = "2.14.0"
+    def opensearchRestVersion = "2.15.0"
     def flyingSaucerVersion = "9.7.2"
 
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform

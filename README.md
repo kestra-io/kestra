@@ -375,7 +375,6 @@ This list is growing quickly and we welcome contributions.
 If you need help or have any questions, reach out using one of the following channels:
 
 - [Slack](https://kestra.io/slack) - join the community and get the latest updates.
-- [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
 - [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
 
 

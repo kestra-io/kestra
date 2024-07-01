@@ -3,5 +3,5 @@ export default {
     EXECUTION: "EXECUTION",
     TEMPLATE: "TEMPLATE",
     NAMESPACE: "NAMESPACE",
-    KV: "KV"
+    KVSTORE: "KVSTORE"
 }

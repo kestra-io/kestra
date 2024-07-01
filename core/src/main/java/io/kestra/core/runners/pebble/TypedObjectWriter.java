@@ -58,7 +58,17 @@ public class TypedObjectWriter extends OutputWriter implements SpecializedWriter
         if (current == null) {
             current = s;
         } else {
-            Short currentS = this.ofSameTypeOrThrow(current, Short.class);
+            Short currentS = null;
+            try {
+                currentS = this.ofSameTypeOrThrow(current, Short.class);
+            } catch (Exception e) {
+                try {
+                    current = this.ofSameTypeOrThrow(current, Integer.class) + s;
+                    return;
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
             current = currentS + s;
         }
     }
@@ -68,7 +78,17 @@ public class TypedObjectWriter extends OutputWriter implements SpecializedWriter
         if (current == null) {
             current = b;
         } else {
-            Byte currentB = this.ofSameTypeOrThrow(current, Byte.class);
+            Byte currentB = null;
+            try {
+                currentB = this.ofSameTypeOrThrow(current, Byte.class);
+            } catch (Exception e) {
+                try {
+                    current = this.ofSameTypeOrThrow(current, Integer.class) + b;
+                    return;
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
             current = currentB + b;
         }
     }
@@ -78,8 +98,18 @@ public class TypedObjectWriter extends OutputWriter implements SpecializedWriter
         if (current == null) {
             current = c;
         } else {
-            Character currentC = this.ofSameTypeOrThrow(current, Character.class);
-            current = currentC + c;
+            Character currentC;
+            try {
+                currentC = this.ofSameTypeOrThrow(current, Character.class);
+            } catch (Exception e) {
+                try {
+                    current = this.ofSameTypeOrThrow(current, String.class) + c;
+                    return;
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
+            current = "" + currentC + c;
         }
     }
 

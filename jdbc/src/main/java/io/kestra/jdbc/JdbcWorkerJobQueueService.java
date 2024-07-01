@@ -88,7 +88,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
         return this.disposable.get();
     }
 
-    /** {@inheritDoc **/
+    /** {@inheritDoc} **/
     @Override
     public void close() {
         if (!isStopped.compareAndSet(true, false)) {

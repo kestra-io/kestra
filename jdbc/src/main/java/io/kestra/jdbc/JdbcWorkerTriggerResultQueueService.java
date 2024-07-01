@@ -69,7 +69,9 @@ public class JdbcWorkerTriggerResultQueueService implements Closeable {
         return disposable.get();
     }
 
-    /** {@inheritDoc **/
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() {
         if (!isClosed.compareAndSet(false, true)) {

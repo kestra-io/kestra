@@ -92,7 +92,7 @@ public interface Service extends AutoCloseable {
      *                        |                      |
      *                        v                      |
      *                 +--------------+              |
-     *         +<----- | Running (1)  | ------------>+
+     *         +&lt;----- | Running (1)  | ------------>+
      *         |       +------+-------+              |
      *    +----+----+         |                      |
      *    | Error(2)|         |                      |

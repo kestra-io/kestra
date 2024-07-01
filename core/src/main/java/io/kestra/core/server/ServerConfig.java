@@ -28,7 +28,6 @@ public record ServerConfig(
 
 ) {
 
-    /** {@inheritDoc} **/
     public WorkerTaskRestartStrategy workerTaskRestartStrategy() {
         return Optional
             .ofNullable(workerTaskRestartStrategy)

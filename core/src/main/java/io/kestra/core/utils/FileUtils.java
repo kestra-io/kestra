@@ -36,7 +36,7 @@ public final class FileUtils {
     /**
      * Creates a new {@link URI} from the given string path.
      *
-     * @param path the string path - may be {@link null}.
+     * @param path the string path - may be {@code null}.
      * @return an optional URI, or {@link Optional#empty()} if the given path represent an invalid URI.
      */
     public static Optional<URI> getURI(final String path) {

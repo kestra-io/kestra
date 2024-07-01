@@ -1,5 +1,5 @@
 <template>
-    <el-tabs class="router-link" :class="{top: top}" v-model="activeName">
+    <el-tabs :data-component="dataComponent + '#tab'" class="router-link" :class="{top: top}" v-model="activeName">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
@@ -18,7 +18,7 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
+    <section :data-component="dataComponent + '#container'" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
         <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
@@ -36,10 +36,12 @@
 <script>
     import {mapState, mapMutations} from "vuex";
 
+    import BaseComponents from "./BaseComponents.vue";
     import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseTooltip from "./EnterpriseTooltip.vue";
 
     export default {
+        extends: BaseComponents,
         components: {EditorSidebar, EnterpriseTooltip},
         props: {
             tabs: {

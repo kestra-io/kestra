@@ -1,5 +1,5 @@
 <template>
-    <span v-if="labels">
+    <span :data-component="dataComponent" v-if="labels">
         <!-- 'el-check-tag' would be a better fit but it currently lacks customization -->
         <el-tag
             v-for="(value, key) in labelMap"
@@ -18,7 +18,10 @@
 </template>
 
 <script>
+    import BaseComponents from "../BaseComponents.vue"
+
     export default {
+        extends: BaseComponents,
         props: {
             labels: {
                 type: Object,

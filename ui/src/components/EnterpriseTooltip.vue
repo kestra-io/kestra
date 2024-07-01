@@ -1,5 +1,13 @@
 <template>
-    <el-tooltip :visible="visible" :persistent="false" :focus-on-show="true" popper-class="ee-tooltip" :disabled="!disabled" :placement="placement">
+    <el-tooltip
+        :data-component="dataComponent"
+        :visible="visible"
+        :persistent="false"
+        :focus-on-show="true"
+        popper-class="ee-tooltip"
+        :disabled="!disabled"
+        :placement="placement"
+    >
         <template #content v-if="link">
             <el-button circle class="ee-tooltip-close" @click="changeVisibility(false)">
                 <Close />
@@ -28,8 +36,10 @@
 <script>
     import Close from "vue-material-design-icons/Close.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+    import BaseComponents from "../components/BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         components: {Close, Lock},
         props: {
             top: {

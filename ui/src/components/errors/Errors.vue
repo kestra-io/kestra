@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <section class="container errors">
+    <section :data-component="dataComponent" class="container errors">
         <div class="img" />
         <h2>{{ $t("errors." + code + ".title") }}</h2>
 
@@ -17,8 +17,10 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         mixins: [RouteContext],
         components: {TopNavBar},
         props: {

@@ -8,6 +8,7 @@
     </el-dropdown-item>
 
     <drawer
+        :data-component="dataComponent"
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('outputs')"
@@ -27,8 +28,10 @@
 <script>
     import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
+        extends: {BaseComponents},
         components: {
             Vars,
             Drawer,

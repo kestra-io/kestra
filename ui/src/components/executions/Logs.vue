@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div :data-component="dataComponent">
         <collapse>
             <el-form-item>
                 <el-input
@@ -58,8 +58,10 @@
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
     import Utils from "../../utils/utils";
+    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
+        extends: BaseComponents,
         components: {
             TaskRunDetails,
             LogLevelSelector,

@@ -19,7 +19,6 @@
     import Kicon from "../Kicon.vue"
     import BaseComponents from "../BaseComponents.vue"
 
-
     export default {
         extends: BaseComponents,
         components: {Refresh, AutoRenew, AutoRenewOff, Kicon},

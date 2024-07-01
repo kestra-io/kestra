@@ -30,7 +30,16 @@
                 </div>
                 <div class="right-align">
                     <el-form-item class="submit">
-                        <el-button :icon="Flash" class="flow-run-trigger-button" :class="{'onboarding-glow': guidedProperties.tourStarted}" @click="onSubmit($refs.form)" type="primary" native-type="submit" :disabled="flow.disabled || haveBadLabels">
+                        <el-button
+                            data-test-id="execute-dialog-button"
+                            :icon="Flash"
+                            class="flow-run-trigger-button"
+                            :class="{'onboarding-glow': guidedProperties.tourStarted}"
+                            @click="onSubmit($refs.form)"
+                            type="primary"
+                            native-type="submit"
+                            :disabled="flow.disabled || haveBadLabels"
+                        >
                             {{ $t('launch execution') }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">

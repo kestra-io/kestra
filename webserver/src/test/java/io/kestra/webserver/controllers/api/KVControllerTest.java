@@ -1,47 +1,44 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.storages.kv.*;
-import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientException;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.URI;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
 
-@KestraTest
+@KestraTest(resolveParameters = false)
 class KVControllerTest extends JdbcH2ControllerTest {
     private static final String NAMESPACE = "io.namespace";
 
@@ -63,8 +60,8 @@ class KVControllerTest extends JdbcH2ControllerTest {
     @Test
     void list() throws IOException {
         Instant before = Instant.now().minusMillis(100);
-        Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5));
-        Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10));
+        Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
+        Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
         storageInterface.put(null, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
         storageInterface.put(null, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString()), new ByteArrayInputStream("my-second-value".getBytes())));
         Instant after = Instant.now().plusMillis(100);
@@ -79,31 +76,36 @@ class KVControllerTest extends JdbcH2ControllerTest {
         assertThat(res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get().expirationDate(), is(mySecondKeyExpirationDate));
     }
 
-    @Test
-    void get() throws IOException {
-        String myKeyStoredValue = JacksonMapper.ofIon().writeValueAsString(List.of(Map.of("key", "value"), "some-value"));
+    static Stream<Arguments> kvGetArgs() {
+        return Stream.of(
+            Arguments.of("{hello:\"world\"}", KVController.KVType.JSON, "{\"hello\":\"world\"}"),
+            Arguments.of("[\"hello\",\"world\"]", KVController.KVType.JSON, "[\"hello\",\"world\"]"),
+            Arguments.of("\"hello\"", KVController.KVType.STRING, "\"hello\""),
+            Arguments.of("1", KVController.KVType.NUMBER, "1"),
+            Arguments.of("1.0", KVController.KVType.NUMBER, "1.0"),
+            Arguments.of("true", KVController.KVType.BOOLEAN, "true"),
+            Arguments.of("false", KVController.KVType.BOOLEAN, "false"),
+            Arguments.of("2021-09-01", KVController.KVType.DATE, "\"2021-09-01\""),
+            Arguments.of("2021-09-01T01:02:03Z", KVController.KVType.DATETIME, "\"2021-09-01T01:02:03Z\""),
+            Arguments.of("\"PT5S\"", KVController.KVType.DURATION, "\"PT5S\"")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("kvGetArgs")
+    void get(String storedIonValue, KVController.KVType expectedType, String expectedValue) throws IOException {
         storageInterface.put(
             null,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
                 Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(5)).toString()),
-                new ByteArrayInputStream(myKeyStoredValue.getBytes())
-            )
-        );
-        String mySecondKeyStoredValue = JacksonMapper.ofIon().writeValueAsString(Map.of("some", "value", "nested", Map.of("key", "value")));
-        storageInterface.put(
-            null,
-            toKVUri(NAMESPACE, "my-second-key"),
-            new StorageObject(
-                Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(10)).toString()),
-                new ByteArrayInputStream(mySecondKeyStoredValue.getBytes())
+                new ByteArrayInputStream(storedIonValue.getBytes())
             )
         );
 
-        Object res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
-        assertThat(res, is(myKeyStoredValue));
-        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-second-key"));
-        assertThat(res, is(mySecondKeyStoredValue));
+        String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
+        assertThat(res, containsString("\"type\":\"" + expectedType + "\""));
+        assertThat(res, containsString("\"value\":" + expectedValue));
     }
 
     @Test
@@ -129,15 +131,30 @@ class KVControllerTest extends JdbcH2ControllerTest {
         assertThat(httpClientResponseException.getMessage(), is("Resource has expired: The requested value has expired"));
     }
 
-    @Test
-    void put() throws IOException {
-        String myKeyStoredValue = JacksonMapper.ofIon().writeValueAsString(List.of(Map.of("key", "value"), "some-value"));
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key", myKeyStoredValue).contentType(MediaType.APPLICATION_OCTET_STREAM).header("ttl", "PT5M"));
+    static Stream<Arguments> kvPutArgs() {
+        return Stream.of(
+            Arguments.of(MediaType.APPLICATION_JSON, "{\"hello\":\"world\"}", Map.class),
+            Arguments.of(MediaType.APPLICATION_JSON, "[\"hello\",\"world\"]", List.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "\"hello\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "1", Integer.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "1.0", BigDecimal.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "true", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "false", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "2021-09-01", LocalDate.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "2021-09-01T01:02:03Z", Instant.class),
+            Arguments.of(MediaType.TEXT_PLAIN_TYPE, "\"PT5S\"", Duration.class)
+        );
+    }
 
-        Object res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
-        assertThat(res, is(myKeyStoredValue));
+    @ParameterizedTest
+    @MethodSource("kvPutArgs")
+    void put(MediaType mediaType, String value, Class<?> expectedClass) throws IOException, ResourceExpiredException {
+        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M"));
 
         KVStore kvStore = new InternalKVStore(null, NAMESPACE, storageInterface);
+        Class<?> valueClazz = kvStore.get("my-key").get().getClass();
+        assertThat("Expected value to be a " + expectedClass + " but was " + valueClazz, expectedClass.isAssignableFrom(valueClazz), is(true));
+
         List<KVEntry> list = kvStore.list();
         assertThat(list.size(), is(1));
         KVEntry kvEntry = list.get(0);
@@ -170,7 +187,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
         assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
 
-        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.APPLICATION_OCTET_STREAM)));
+        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN)));
         assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
         assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
 

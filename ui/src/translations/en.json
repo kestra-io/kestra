@@ -72,6 +72,11 @@
     "topology": "Topology",
     "date": "Date",
     "datepicker": {
+      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (example: 'P1DT1H1M1S)'",
+      "duration example": "Example: 'P1DT1H1M1S'",
+      "error": "Invalid duration format, must be an ISO 8601 duration (P1DT1H1M1S for eg.)",
+      "custom": "Custom",
+      "custom duration": "Custom duration",
       "last5minutes": "Last 5 minutes",
       "last15minutes": "Last 15 minutes",
       "last1hour": "Last 1 hour",
@@ -81,6 +86,16 @@
       "last7days": "Last 7 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
+      "5minutes": "5 minutes",
+      "15minutes": "15 minutes",
+      "1hour": "1 hour",
+      "12hours": "12 hours",
+      "24hours": "24 hours",
+      "48hours": "48 hours",
+      "7days": "7 days",
+      "30days": "30 days",
+      "365days": "365 days",
+      "never": "Never",
       "today": "Today",
       "yesterday": "Yesterday",
       "dayBeforeYesterday": "Day before yesterday",
@@ -96,6 +111,7 @@
     },
     "created date": "Created date",
     "updated date": "Updated date",
+    "expiration date": "Expiration date",
     "healthcheck date": "HealthCheck Date",
     "next execution date": "Next execution date",
     "jump to...": "Jump to...",
@@ -831,6 +847,14 @@
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
     },
-    "workerId": "Worker Id"
+    "workerId": "Worker Id",
+    "kv": {
+      "name": "KV Store",
+      "type": "Type",
+      "add": "New Key-Value",
+      "update": "Update value for key '{key}'",
+      "duplicate": "This key already exists"
+    },
+    "expiration": "Expiration"
   }
 }

@@ -1,7 +1,5 @@
 package io.kestra.core.storages.kv;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageObject;
 
 import java.io.IOException;
@@ -35,9 +33,5 @@ public class KVStoreValueWrapper<T> {
             String ionString = new String(is.readAllBytes());
             return new KVStoreValueWrapper<>(new KVMetadata(storageObject.metadata()), ionString);
         }
-    }
-
-    static KVStoreValueWrapper<String> ionStringify(KVStoreValueWrapper<Object> kvStoreValueWrapper) throws JsonProcessingException {
-        return new KVStoreValueWrapper<>(kvStoreValueWrapper.kvMetadata(), JacksonMapper.ofIon().writeValueAsString(kvStoreValueWrapper.value()));
     }
 }

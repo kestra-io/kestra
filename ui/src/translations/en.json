@@ -81,6 +81,16 @@
       "last7days": "Last 7 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
+      "in5minutes": "In 5 minutes",
+      "in15minutes": "In 15 minutes",
+      "in1hour": "In 1 hour",
+      "in12hours": "In 12 hours",
+      "in24hours": "In 24 hours",
+      "in48hours": "In 48 hours",
+      "in7days": "In 7 days",
+      "in30days": "In 30 days",
+      "in365days": "In 365 days",
+      "never": "Never",
       "today": "Today",
       "yesterday": "Yesterday",
       "dayBeforeYesterday": "Day before yesterday",
@@ -96,6 +106,7 @@
     },
     "created date": "Created date",
     "updated date": "Updated date",
+    "expiration date": "Expiration date",
     "healthcheck date": "HealthCheck Date",
     "next execution date": "Next execution date",
     "jump to...": "Jump to...",
@@ -831,6 +842,14 @@
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
     },
-    "workerId": "Worker Id"
+    "workerId": "Worker Id",
+    "kv": {
+      "name": "KV Store",
+      "value type": "Value type",
+      "add": "New Key-Value",
+      "update": "Update value for key '{key}'",
+      "duplicate": "This key already exists"
+    },
+    "expiration": "Expiration"
   }
 }

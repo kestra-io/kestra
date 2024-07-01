@@ -132,7 +132,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
     @Test
     void put() throws IOException {
         String myKeyStoredValue = JacksonMapper.ofIon().writeValueAsString(List.of(Map.of("key", "value"), "some-value"));
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key", myKeyStoredValue).contentType(MediaType.APPLICATION_OCTET_STREAM).header("ttl", "PT5M"));
+        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key", myKeyStoredValue).contentType(MediaType.TEXT_PLAIN).header("ttl", "PT5M"));
 
         Object res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
         assertThat(res, is(myKeyStoredValue));
@@ -170,7 +170,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
         assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
 
-        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.APPLICATION_OCTET_STREAM)));
+        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN)));
         assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
         assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
 

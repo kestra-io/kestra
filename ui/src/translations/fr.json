@@ -76,6 +76,20 @@
       "last1hour": "Dernière heure",
       "last12hours": "12 dernières heures",
       "last24hours": "24 dernières heures",
+      "last48hours": "48 dernières heures",
+      "last7days": "7 derniers jours",
+      "last30days": "30 derniers jours",
+      "last365days": "365 derniers jours",
+      "in5minutes": "Dans 5 minutes",
+      "in15minutes": "Dans 15 minutes",
+      "in1hour": "Dans 1 heure",
+      "in12hours": "Dans 12 heures",
+      "in24hours": "Dans 24 heures",
+      "in48hours": "Dans 48 heures",
+      "in7days": "Dans 7 jours",
+      "in30days": "Dans 30 jours",
+      "in365days": "Dans 365 jours",
+      "never": "Jamais",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "dayBeforeYesterday": "Avant-hier",
@@ -91,6 +105,7 @@
     },
     "created date": "Date de création",
     "updated date": "Date de mise à jour",
+    "expiration date": "Date d'expiration",
     "started date": "Date de démarrage",
     "healthcheck date": "Dernier Healthcheck",
     "next execution date": "Prochaine date d'exécution",
@@ -804,6 +819,14 @@
       "true": "{count} triggers désactivés",
       "false": "{count} triggers activés"
     },
-    "workerId": "Worker Id"
+    "workerId": "Worker Id",
+    "kv": {
+      "name": "Stockage de clés/valeurs",
+      "value type": "Type de valeur",
+      "add": "Nouveau couple de clé/valeur",
+      "update": "Mettre à jour la valeur pour la clé '{key}'",
+      "duplicate": "Cette clé existe déjà"
+    },
+    "expiration": "Expiration"
   }
 }

@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
@@ -16,7 +17,6 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -52,8 +52,8 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{key}", consumes = MediaType.APPLICATION_OCTET_STREAM)
-    @Operation(tags = {"KV"}, summary = "Add a key-value pair to store")
+    @Put(uri = "{key}", consumes = {MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
+    @Operation(tags = {"KV"}, summary = "Puts a key-value pair in store")
     public void put(
         HttpHeaders httpHeaders,
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -62,7 +62,11 @@ public class KVController {
     ) throws IOException, URISyntaxException, ResourceExpiredException {
         String ttl = httpHeaders.get("ttl");
         KVMetadata kvMetadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
-        kvStore(namespace).putRaw(key, new KVStoreValueWrapper<>(kvMetadata, value));
+        String ionValue = value;
+        if (MediaType.APPLICATION_JSON_TYPE == httpHeaders.contentType().orElse(null)) {
+            ionValue = JacksonMapper.ofIon().writeValueAsString(JacksonMapper.toObject(value));
+        }
+        kvStore(namespace).putRaw(key, new KVStoreValueWrapper<>(kvMetadata, ionValue));
     }
 
     @ExecuteOn(TaskExecutors.IO)

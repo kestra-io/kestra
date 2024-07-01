@@ -1,8 +1,10 @@
 <template>
     <date-select
+        :placeholder="placeholder"
         :value="timeRange"
         :options="timeFilterPresets"
         :tooltip="$t('relative start date')"
+        :clearable="clearable"
         @change="onChangeRange"
     />
 </template>
@@ -22,53 +24,72 @@
                 timeFilterPresets: [
                     {
                         value: "PT5M",
-                        label: "datepicker.last5minutes"
+                        label: this.label("5minutes")
                     },
                     {
                         value: "PT15M",
-                        label: "datepicker.last15minutes"
+                        label: this.label("15minutes")
                     },
                     {
                         value: "PT1H",
-                        label: "datepicker.last1hour"
+                        label: this.label("1hour")
                     },
                     {
                         value: "PT12H",
-                        label: "datepicker.last12hours"
+                        label: this.label("12hours")
                     },
                     {
                         value: "P1D",
-                        label: "datepicker.last24hours"
+                        label: this.label("24hours")
                     },
                     {
                         value: "P2D",
-                        label: "datepicker.last48hours"
+                        label: this.label("48hours")
                     },
                     {
                         value: "P7D",
-                        label: "datepicker.last7days"
+                        label: this.label("7days")
                     },
                     {
                         value: "P30D",
-                        label: "datepicker.last30days"
+                        label: this.label("30days")
                     },
                     {
                         value: "P365D",
-                        label: "datepicker.last365days"
+                        label: this.label("365days")
                     }
                 ]
             }
         },
         props: {
+            placeholder: {
+                type: String,
+                default: undefined
+            },
             timeRange: {
                 type: String,
                 default: undefined
+            },
+            past: {
+                type: Boolean,
+                default: true
+            },
+            allowInfinite: {
+                type: Boolean,
+                default: false
+            },
+            clearable: {
+                type: Boolean,
+                default: false
             }
         },
         methods: {
             onChangeRange(range) {
                 this.$emit("update:modelValue", {"timeRange": range});
             },
+            label(duration) {
+                return "datepicker." + (this.past ? "last" : "in") + duration;
+            }
         }
     }
 </script>

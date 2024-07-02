@@ -803,6 +803,11 @@
       "true": "{count} triggers désactivés",
       "false": "{count} triggers activés"
     },
-    "no_namespaces": "Zéro espace de noms correspond aux critères de recherche."
+    "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "plugin defaults": "Paramètres par défaut du plugin",
+    "secret": {
+      "names": "Secrets",
+      "inherited": "Secrets hérités"
+    }
   }
 }

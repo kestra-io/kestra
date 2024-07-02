@@ -830,6 +830,11 @@
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
     },
-    "no_namespaces": "Zero namespaces match the search criteria."
+    "no_namespaces": "Zero namespaces match the search criteria.",
+    "plugin defaults": "Plugin defaults",
+    "secret": {           
+      "names": "Secrets",           
+      "inherited": "Inherited secrets"
+    }
   }
 }

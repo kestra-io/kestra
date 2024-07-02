@@ -829,6 +829,7 @@
     "bulk success disabled status": {
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
-    }
+    },
+    "no_namespaces": "Zero namespaces match the search criteria."
   }
 }

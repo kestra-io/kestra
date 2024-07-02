@@ -802,6 +802,7 @@
     "bulk success disabled status": {
       "true": "{count} triggers désactivés",
       "false": "{count} triggers activés"
-    }
+    },
+    "no_namespaces": "Zéro espace de noms correspond aux critères de recherche."
   }
 }

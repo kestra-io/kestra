@@ -160,14 +160,12 @@
                         },
                     },
                     {
+                        href: {name: "namespaces"},
+                        routes: this.routeStartWith("namespaces"),
                         title: this.$t("namespaces"),
                         icon: {
                             element: shallowRef(VectorIntersection),
                             class: "menu-icon"
-                        },
-                        disabled: true,
-                        attributes: {
-                            locked: true
                         }
                     },
                     {

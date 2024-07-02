@@ -17,7 +17,8 @@ import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
 import BlueprintDetail from "../components/flows/blueprints/BlueprintDetail.vue";
 import Triggers from "../components/admin/Triggers.vue";
 import Stats from "override/components/admin/stats/Stats.vue";
-
+import Namespaces from "../components/namespace/Namespaces.vue";
+import Namespace from "../components/namespace/Namespace.vue";
 
 export default [
     //Flows
@@ -54,6 +55,10 @@ export default [
 
     //Logs
     {name: "logs/list", path: "/:tenant?/logs", component: LogsWrapper},
+
+    //Namespaces
+    {name: "namespaces", path: "/:tenant?/namespaces", component: Namespaces},
+    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: Namespace},
 
     //Settings
     {name: "settings", path: "/:tenant?/settings", component: Settings},

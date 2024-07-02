@@ -9,12 +9,31 @@ const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
 const slashPrefix = (path) => (path.startsWith("/") ? path : `/${path}`);
 const safePath = (path) => encodeURIComponent(path).replace(/%2C|%2F/g, "/");
 
+const VALIDATE = {validateStatus: (status) => status === 200 || status === 404};
+
 export default {
     namespaced: true,
     state: {
         datatypeNamespaces: undefined,
+        namespaces: undefined,       
+        namespace: undefined
     },
     actions: {
+        search({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/search`, {params: options, ...VALIDATE})
+                .then(response => {
+                    if(response.status === 200) commit("setNamespaces", response.data.results)
+                    return response.data.results;
+                })
+        },
+        load({commit}, options) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${options.id}`, VALIDATE)
+                .then(response => {
+                    if(response.status === 200) commit("setNamespace", response.data)
+                    return response.data;
+                })
+        },
+
         // Create a directory
         async createDirectory(_, payload) {
             const URL = `${base.call(this, payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
@@ -103,6 +122,12 @@ export default {
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {
             state.datatypeNamespaces = datatypeNamespaces;
+        },    
+        setNamespaces(state, namespaces) {
+            state.namespaces = namespaces
         },
+        setNamespace(state, namespace) {
+            state.namespace = namespace
+        }
     },
 };

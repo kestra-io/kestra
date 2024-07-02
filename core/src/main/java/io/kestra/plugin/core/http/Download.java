@@ -38,11 +38,15 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "headers: ",
-                "  user-agent: \"kestra-io\"",
-                "uri: \"https://server.com/file\""
-            }
+            title = "Download a CSV file",
+            full = true,
+            code = """
+id: download
+namespace: company.myteam
+tasks:
+  - id: extract
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/blob/main/csv/orders.csv"""            
         )
     },
     metrics = {

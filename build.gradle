@@ -284,6 +284,11 @@ tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
 }
 
+tasks.named('testCodeCoverageReport') {
+    dependsOn ':core:copyGradleProperties'
+    dependsOn ':ui:assembleFrontend'
+}
+
 /**********************************************************************************************************************\
  * Sonar
  **********************************************************************************************************************/

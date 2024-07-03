@@ -3,7 +3,7 @@
         <template #additional-right v-if="canCreate">
             <ul>
                 <li>
-                    <router-link :to="{name: 'flows/create'}">
+                    <router-link :to="{name: 'flows/create'}" data-test-id="dashboard-create-button">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>

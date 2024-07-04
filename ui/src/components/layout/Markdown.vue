@@ -1,15 +1,13 @@
 <template>
-    <div :data-component="dataComponent">
+    <div data-component="FILENAME_PLACEHOLDER">
         <span class="markdown" v-html="markdownRenderer" />
     </div>
 </template>
 
 <script>
     import Markdown from "../../utils/markdown";
-    import BaseComponents from "../BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         props: {
             watches: {
                 type: Array,

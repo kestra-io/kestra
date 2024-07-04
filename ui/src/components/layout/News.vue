@@ -1,10 +1,10 @@
 <template>
-    <el-button :data-component="dataComponent + '#button'" class="news-link" @click="show">
+    <el-button data-component="FILENAME_PLACEHOLDER#button" class="news-link" @click="show">
         <bell title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </el-button>
 
-    <drawer :data-component="dataComponent + '#drawer'" v-if="isOpen" v-model="isOpen" :title="$t('feeds.title')">
+    <drawer data-component="FILENAME_PLACEHOLDER#drawer" v-if="isOpen" v-model="isOpen" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
                 <img class="float-end" :src="feed.image" alt="">
@@ -33,10 +33,8 @@
     import Markdown from "./Markdown.vue";
     import DateAgo from "./DateAgo.vue";
     import Drawer from "../Drawer.vue";
-    import BaseComponents from "../BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         components: {
             Bell,
             OpenInNew,

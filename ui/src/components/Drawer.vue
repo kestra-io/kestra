@@ -1,6 +1,6 @@
 <template>
     <el-drawer
-        :data-component="dataComponent"
+        data-component="FILENAME_PLACEHOLDER"
         :model-value="props.modelValue"
         @update:model-value="emit('update:modelValue', $event)"
         destroy-on-close
@@ -33,7 +33,6 @@
 <script setup>
     import {ref} from "vue";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
-    import useDataComponent from "../composables/useDataComponent";
 
     const props = defineProps({
         modelValue: {
@@ -52,7 +51,6 @@
         }
     });
 
-    const dataComponent = useDataComponent();
     const emit = defineEmits(["update:modelValue"])
 
     const fullScreen = ref(props.fullScreen);

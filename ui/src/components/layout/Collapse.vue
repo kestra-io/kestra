@@ -1,5 +1,5 @@
 <template>
-    <div :data-component="dataComponent" class="collapse mb-sm-4 mb-md-0">
+    <div data-component="FILENAME_PLACEHOLDER" class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
             <el-button @click="isNavbarVisible = !isNavbarVisible">
                 <menu-icon />
@@ -13,10 +13,8 @@
 
 <script>
     import MenuIcon from "vue-material-design-icons/Menu.vue";
-    import BaseComponents from "../BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         components: {MenuIcon},
         data() {
             return {

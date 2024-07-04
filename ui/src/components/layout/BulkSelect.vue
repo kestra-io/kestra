@@ -1,5 +1,5 @@
 <template>
-    <div :data-component="dataComponent" class="bulk-select">
+    <div data-component="FILENAME_PLACEHOLDER" class="bulk-select">
         <el-checkbox
             :model-value="selections.length > 0"
             @change="toggle"
@@ -20,10 +20,7 @@
     </div>
 </template>
 <script>
-    import BaseComponents from "../BaseComponents.vue"
-
     export default {
-        extends: BaseComponents,
         props: {
             total: {type: Number, required: true},
             selections: {type: Array, required: true},

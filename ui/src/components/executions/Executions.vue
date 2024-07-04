@@ -29,7 +29,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section :data-component="dataComponent" :class="{'container padding-bottom': topbar}" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
         <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
@@ -424,10 +424,8 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert} from "element-plus";
     import {h, ref} from "vue";
-    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             Status,

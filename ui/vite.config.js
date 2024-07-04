@@ -8,9 +8,6 @@ import {filename} from "./plugins/filename"
 
 export default defineConfig({
     base: "",
-    define: {
-        "import.meta.env.__ROOT_DIR__": JSON.stringify(__dirname),
-    },
     build: {
         outDir: "../webserver/src/main/resources/ui",
     },

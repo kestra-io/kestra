@@ -5,7 +5,7 @@ const process = (path: string): string => {
     return match ? match[1].toLowerCase() : path;
 };
 
-export function filename(): Plugin {
+export const filename = (): Plugin => {
     return {
         name: "filename",
         transform(code: string, id: string) {
@@ -13,4 +13,4 @@ export function filename(): Plugin {
             return {code: code.replace(/FILENAME_PLACEHOLDER/g, process(id)), map: null};
         },
     };
-}
+};

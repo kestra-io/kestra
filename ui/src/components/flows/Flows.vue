@@ -36,7 +36,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section :data-component="dataComponent" class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -244,10 +244,8 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
     import {storageKeys} from "../../utils/constants";
-    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
-        extends: {BaseComponents},
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             NamespaceSelect,

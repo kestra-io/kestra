@@ -61,7 +61,7 @@ public class ForEachItemCaseTest {
 
     @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
@@ -78,7 +78,7 @@ public class ForEachItemCaseTest {
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
-        // we should have triggered 3 subflows
+        // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
         receive.blockLast();
 
@@ -88,12 +88,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches"), is(3));
+        assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), is(0));
-        assertThat(iterations.get("SUCCESS"), is(3));
+        assertThat(iterations.get("SUCCESS"), is(26));
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -104,7 +104,7 @@ public class ForEachItemCaseTest {
 
     @SuppressWarnings("unchecked")
     public void forEachItemNoWait() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
@@ -134,14 +134,14 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches"), is(3));
+        assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED"), nullValue()); // if we didn't wait we will only observe RUNNING and SUCCESS
         assertThat(iterations.get("RUNNING"), is(0));
-        assertThat(iterations.get("SUCCESS"), is(3));
+        assertThat(iterations.get("SUCCESS"), is(26));
 
-        // wait for the 3 flows to ends
+        // wait for the 26 flows to ends
         assertThat("Remaining count was " + countDownLatch.getCount(), countDownLatch.await(1, TimeUnit.MINUTES), is(true));
         receive.blockLast();
 
@@ -154,7 +154,7 @@ public class ForEachItemCaseTest {
 
     @SuppressWarnings("unchecked")
     public void forEachItemFailed() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
@@ -171,7 +171,7 @@ public class ForEachItemCaseTest {
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
-        // we should have triggered 3 subflows
+        // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
         receive.blockLast();
 
@@ -181,12 +181,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches"), is(3));
+        assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), is(0));
-        assertThat(iterations.get("FAILED"), is(3));
+        assertThat(iterations.get("FAILED"), is(26));
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.FAILED));
@@ -197,7 +197,7 @@ public class ForEachItemCaseTest {
 
     @SuppressWarnings("unchecked")
     public void forEachItemWithSubflowOutputs() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
@@ -214,7 +214,7 @@ public class ForEachItemCaseTest {
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
-        // we should have triggered 3 subflows
+        // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
         receive.blockLast();
 
@@ -224,13 +224,13 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches"), is(3));
+        assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
 
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED"), is(0));
         assertThat(iterations.get("RUNNING"), is(0));
-        assertThat(iterations.get("SUCCESS"), is(3));
+        assertThat(iterations.get("SUCCESS"), is(26));
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -245,7 +245,7 @@ public class ForEachItemCaseTest {
 
         try (var br = new BufferedReader(new InputStreamReader(stream))) {
             // one line per sub-flows
-            assertThat(br.lines().count(), is(3L));
+            assertThat(br.lines().count(), is(26L));
         }
     }
 
@@ -263,7 +263,7 @@ public class ForEachItemCaseTest {
 
     private List<String> content() {
         return IntStream
-            .range(0, 10)
+            .range(0, 102)
             .mapToObj(value -> StringUtils.leftPad(value + "", 20))
             .toList();
     }

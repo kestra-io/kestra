@@ -299,7 +299,7 @@ jobs:
   docker:
     name: Publish Docker
     runs-on: ubuntu-latest
-    needs: [check, check-e2e]
+    needs: [build-artifacts, check, check-e2e]
     if: github.ref == 'refs/heads/develop'
     strategy:
       matrix:

@@ -18,6 +18,7 @@
     import imageDoc from "../../assets/onboarding/onboarding-docs-dark.svg"
     import imageProduct from "../../assets/onboarding/onboarding-product-dark.svg"
     import Markdown from "../layout/Markdown.vue";
+    import Utils from "../../utils/utils.js";
 
     export default {
         name: "OnboardingCard",
@@ -50,7 +51,7 @@
         },
         computed: {
             lang() {
-                const lang = localStorage.getItem("lang") || "en";
+                const lang = Utils.getLang();
                 if (lang === "fr") {
                     return "_fr"
                 }

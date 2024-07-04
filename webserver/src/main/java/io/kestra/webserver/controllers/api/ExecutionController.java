@@ -64,6 +64,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -1325,7 +1326,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "If the execution is not terminated")
     public HttpResponse<?> setLabels(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The labels to add to the execution") @Body @NotNull List<Label> labels
+        @Parameter(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels
     ) {
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -1431,7 +1432,7 @@ public class ExecutionController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-        @Parameter(description = "The labels to add to the execution") @Body @NotNull List<Label> setLabels
+        @Parameter(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels
     ) {
         validateTimeline(startDate, endDate);
 

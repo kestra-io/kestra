@@ -246,7 +246,7 @@
 
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
-            this.lang = localStorage.getItem("lang") || "en";
+            this.lang = Utils.getLang();
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";

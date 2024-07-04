@@ -12,7 +12,7 @@ export default {
         return Utils.humanDuration(value, options);
     },
     humanizeNumber: (value) => {
-        return parseInt(value).toLocaleString(localStorage.getItem("lang") || "en")
+        return parseInt(value).toLocaleString(Utils.getLang());
     },
     cap: value => value ? value.toString().capitalize() : "",
     lower: value => value ? value.toString().toLowerCase() : "",

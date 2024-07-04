@@ -6,7 +6,7 @@
                     placement="left"
                     :persistent="true"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
-                    width=""
+                    width="35em"
                     transition=""
                     :hide-after="0"
                 >

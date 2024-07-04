@@ -41,6 +41,7 @@
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
     "posthog-js": "^1.138.2",
+    "cronstrue": "^2.50.0",
     "throttle-debounce": "^5.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vue": "^3.4.27",

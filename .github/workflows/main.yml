@@ -42,6 +42,7 @@ jobs:
     timeout-minutes: 60
     outputs:
       docker-tag:  ${{ steps.vars.outputs.tag }}
+      docker-artifact-name:  ${{ steps.vars.outputs.artifact }}
     steps:
       # Checkout
       - uses: actions/checkout@v4
@@ -108,6 +109,7 @@ jobs:
             TAG="build-${{ github.run_id }}";
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "artifact=docker-kestra-${TAG}-full" >> $GITHUB_OUTPUT
 
       # Docker setup
       - name: Set up QEMU
@@ -129,7 +131,7 @@ jobs:
             KESTRA_PLUGINS=${{ steps.plugins.outputs.plugins }}
             APT_PACKAGES=${{ env.DOCKER_APT_PACKAGES }}
             PYTHON_LIBRARIES=${{ env.DOCKER_PYTHON_LIBRARIES }}
-          outputs: type=docker,dest=/tmp/kestra-docker-build-${{ github.run_id }}.tar
+          outputs: type=docker,dest=/tmp/${{ steps.vars.outputs.artifact }}.tar
 
       # Upload artifacts
       - name: Upload JAR
@@ -147,8 +149,8 @@ jobs:
       - name: Upload Docker
         uses: actions/upload-artifact@v4
         with:
-          name: kestra-docker-build-${{ github.run_id }}
-          path: /tmp/kestra-docker-build-${{ github.run_id }}.tar
+          name: ${{ steps.vars.outputs.artifact }}
+          path: /tmp/${{ steps.vars.outputs.artifact }}.tar
   # Run Reusable Workflow from QA repository
   check-e2e:
     name: Check E2E Tests
@@ -161,7 +163,7 @@ jobs:
         backends: ["postgres"]
     with:
       tags: oss
-      docker-artifact-name: kestra-docker-build-${{ github.run_id }}
+      docker-artifact-name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
       docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}-full
       backend: ${{ matrix.backends }}
     secrets:
@@ -337,7 +339,7 @@ jobs:
           cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 
       # [EXE] Docker Build and push
-      - name: Push to Docker Hub
+      - name: Build Docker Image
         uses: docker/build-push-action@v5
         if: matrix.image.use-artifact == 'exe'
         with:
@@ -355,14 +357,14 @@ jobs:
         if: matrix.image.use-artifact == 'docker'
         uses: actions/download-artifact@v4
         with:
-          name: kestra-docker-build-${{ github.run_id }}
+          name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
           path: /tmp
 
       # [DOCKER] Load Docker Image
       - name: Load Kestra Image
         if: matrix.image.use-artifact == 'docker'
         run: |
-          docker load --input /tmp/${{ inputs.docker-artifact-name }}.tar
+          docker load --input /tmp/${{ needs.build-artifacts.outputs.docker-artifact-name }}.tar
           docker image ls -a
 
       # Docker Push

@@ -271,12 +271,12 @@ public abstract class JdbcRunnerTest {
         skipExecutionCaseTest.skipExecution();
     }
 
-    @RetryingTest(5)
+    @Test
     void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItem();
     }
 
-    @RetryingTest(5)
+    @Test
     void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemNoWait();
     }
@@ -286,7 +286,7 @@ public abstract class JdbcRunnerTest {
         forEachItemCaseTest.forEachItemFailed();
     }
 
-    @RetryingTest(5)
+    @Test
     void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }

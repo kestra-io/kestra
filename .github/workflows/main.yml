@@ -350,9 +350,9 @@ jobs:
           tags: kestra/kestra:${{ matrix.image.tag }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            KESTRA_PLUGINS=""
-            APT_PACKAGES=""
-            PYTHON_LIBRARIES=""
+            KESTRA_PLUGINS=
+            APT_PACKAGES=
+            PYTHON_LIBRARIES=
 
       # [DOCKER] Download Docker Image
       - name: Download Kestra Image
@@ -436,6 +436,7 @@ jobs:
       - check
       - maven
       - docker
+      - release
     if: always()
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

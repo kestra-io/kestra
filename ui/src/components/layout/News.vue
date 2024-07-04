@@ -33,6 +33,7 @@
     import Markdown from "./Markdown.vue";
     import DateAgo from "./DateAgo.vue";
     import Drawer from "../Drawer.vue";
+    import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
         components: {
@@ -63,6 +64,12 @@
         methods: {
             show(event) {
                 event.preventDefault();
+
+                this.$store.dispatch("api/events", {
+                    type: "PAGE", 
+                    news: {opened: true, hasUnread: this.isUnread()}, 
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
 
                 localStorage.setItem("feeds", this.feeds[0].publicationDate)
                 this.hasUnread = this.isUnread();

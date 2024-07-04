@@ -349,6 +349,7 @@ jobs:
           push: false
           tags: kestra/kestra:${{ matrix.image.tag }}
           platforms: linux/amd64,linux/arm64
+          load: true
           build-args: |
             KESTRA_PLUGINS=
             APT_PACKAGES=
@@ -367,11 +368,11 @@ jobs:
         if: matrix.image.artifact-type == 'docker'
         run: |
           docker load --input /tmp/${{ matrix.image.artifact-name }}.tar
-          docker image ls -a
 
       # Docker Push
       - name: Push to Docker Hub
         run: |
+          docker image ls -a
           docker push kestra/kestra:${{ matrix.image.tag }}
 
   maven:

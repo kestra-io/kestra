@@ -1106,6 +1106,12 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/labels", List.of(new Label("key", "value"))))
         );
         assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+
+        exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label(null, null))))
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
     @Test
@@ -1138,6 +1144,15 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(response.getCount(), is(3));
+
+        var exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST(
+                "/api/v1/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                List.of(new Label(null, null)))
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
     @Test

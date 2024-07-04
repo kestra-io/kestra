@@ -346,10 +346,9 @@ jobs:
         if: matrix.image.artifact-type == 'exe'
         with:
           context: .
-          push: false
+          push: true
           tags: kestra/kestra:${{ matrix.image.tag }}
           platforms: linux/amd64,linux/arm64
-          load: true
           build-args: |
             KESTRA_PLUGINS=
             APT_PACKAGES=
@@ -363,15 +362,11 @@ jobs:
           name: ${{ matrix.image.artifact-name }}
           path: /tmp
 
-      # [DOCKER] Load Docker Image
-      - name: Load Kestra Image
+      # [DOCKER] Load & Push Docker Image
+      - name: Load & Push Kestra Image
         if: matrix.image.artifact-type == 'docker'
         run: |
           docker load --input /tmp/${{ matrix.image.artifact-name }}.tar
-
-      # Docker Push
-      - name: Push to Docker Hub
-        run: |
           docker image ls -a
           docker push kestra/kestra:${{ matrix.image.tag }}
 

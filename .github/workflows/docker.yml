@@ -16,13 +16,30 @@ on:
         required: false
         type: string
         default: "LATEST"
+env:
+  PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
 jobs:
+  plugins:
+    name: List Plugins
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.plugins.outputs.plugins }}
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+
+      # Get Plugins List
+      - name: Get Plugins List
+        uses: ./.github/actions/plugins-list
+        id: plugins
+        with:
+          plugin-version: ${{ env.PLUGIN_VERSION }}
   docker:
-    name: Publish docker
+    name: Publish Docker
+    needs: [ plugins ]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     env:
-      PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
       DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
       DOCKER_PYTHON_LIBRARIES: kestra
     strategy:
@@ -31,33 +48,20 @@ jobs:
           - name: ""
             packages: ""
             python-libs: ""
+            plugins: ""
           - name: "-full"
+            plugins: ${{needs.plugins.outputs.plugins}}
             packages: $DOCKER_APT_PACKAGES
             python-libs: $DOCKER_PYTHON_LIBRARIES
     steps:
       - uses: actions/checkout@v4
-
-      # Get Plugins List
-      - name: Get Plugins List
-        uses: ./.github/actions/plugins-list
-        id: plugins-list
-        with:
-          plugin-version: ${{ env.PLUGIN_VERSION }}
 
       # Vars
       - name: Set image name
         id: vars
         run: |
           TAG=${GITHUB_REF#refs/*/}
-          PLUGINS=""
-          
-          if [[ "${{ matrix.image.name }}" = "-full" ]]
-          then
-            PLUGINS = "$PLUGINS ${{ steps.plugins.outputs.plugins }}"
-          fi
-          
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
 
       # Download release
       - name: Download release
@@ -94,7 +98,7 @@ jobs:
           tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
+            KESTRA_PLUGINS=${{ matrix.image.plugins }}
             APT_PACKAGES=${{ matrix.image.packages }}
             PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 

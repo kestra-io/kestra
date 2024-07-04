@@ -4,11 +4,10 @@ import vue from "@vitejs/plugin-vue";
 import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
 
+import {filename} from "./plugins/filename"
+
 export default defineConfig({
     base: "",
-    define: {
-        "import.meta.env.__ROOT_DIR__": JSON.stringify(__dirname),
-    },
     build: {
         outDir: "../webserver/src/main/resources/ui",
     },
@@ -25,7 +24,8 @@ export default defineConfig({
         eslintPlugin({
             failOnWarning: true,
             failOnError: true
-        })
+        }),        
+        filename(),
     ],
     assetsInclude: ["**/*.md"],
     css: {

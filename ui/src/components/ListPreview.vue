@@ -1,5 +1,5 @@
 <template>
-    <el-table :data-component="dataComponent" :data="value" stripe>
+    <el-table data-component="FILENAME_PLACEHOLDER" :data="value" stripe>
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <template v-if="isComplex(scope.row[column])">
@@ -21,10 +21,8 @@
 </template>
 <script>
     import Editor from "./inputs/Editor.vue";
-    import BaseComponents from "../components/BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         name: "ListPreview",
         components: {Editor},
         props: {

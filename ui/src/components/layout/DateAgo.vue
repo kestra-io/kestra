@@ -1,6 +1,6 @@
 <template>
     <el-tooltip
-        :data-component="dataComponent"
+        data-component="FILENAME_PLACEHOLDER"
         :key="uid('tooltip')"
         v-if="date"
         :content="inverted ? from : full"
@@ -14,10 +14,8 @@
 </template>
 <script>
     import Utils from "../../utils/utils";
-    import BaseComponents from "../BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         props: {
             date: {
                 type: String,

@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <section :data-component="dataComponent" class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -247,10 +247,8 @@
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
-    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             RefreshButton,

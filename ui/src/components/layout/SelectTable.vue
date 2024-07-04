@@ -1,5 +1,5 @@
 <template>
-    <div :data-component="dataComponent" class="position-relative">
+    <div data-component="FILENAME_PLACEHOLDER" class="position-relative">
         <div v-if="hasSelection" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
@@ -11,10 +11,7 @@
 </template>
 
 <script>
-    import BaseComponents from "../BaseComponents.vue"
-
     export default {
-        extends: BaseComponents,
         data() {
             return {
                 hasSelection: false

@@ -1,6 +1,6 @@
 <template>
     <el-tooltip
-        :data-component="dataComponent"
+        data-component="FILENAME_PLACEHOLDER"
         :visible="visible"
         :persistent="false"
         :focus-on-show="true"
@@ -36,10 +36,8 @@
 <script>
     import Close from "vue-material-design-icons/Close.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
-    import BaseComponents from "../components/BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         components: {Close, Lock},
         props: {
             top: {

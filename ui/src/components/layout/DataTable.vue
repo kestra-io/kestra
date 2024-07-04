@@ -1,13 +1,13 @@
 <template>
     <div>
-        <nav :data-component="dataComponent + '#nav'" v-if="hasNavBar">
+        <nav data-component="FILENAME_PLACEHOLDER#nav" v-if="hasNavBar">
             <collapse>
                 <slot name="navbar" />
             </collapse>
         </nav>
 
-        <el-container :data-component="dataComponent + '#container'" direction="vertical" v-loading="isLoading">
-            <slot name="top" :data-component="dataComponent + '#top'" />
+        <el-container data-component="FILENAME_PLACEHOLDER#container" direction="vertical" v-loading="isLoading">
+            <slot name="top" data-component="FILENAME_PLACEHOLDER#top" />
 
             <pagination v-if="!embed" :size="size" :top="true" :page="page" :total="total" :max="max" @page-changed="onPageChanged">
                 <template #search>
@@ -15,7 +15,7 @@
                 </template>
             </pagination>
 
-            <slot name="table" :data-component="dataComponent + '#table'" />
+            <slot name="table" data-component="FILENAME_PLACEHOLDER#table" />
 
             <pagination v-if="total > 0" :size="size" :page="page" :total="total" :max="max" @page-changed="onPageChanged" />
         </el-container>
@@ -25,10 +25,8 @@
 <script>
     import Pagination from "./Pagination.vue";
     import Collapse from "./Collapse.vue";
-    import BaseComponents from "../BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         components: {Pagination, Collapse},
         emits: ["page-changed"],
         computed: {

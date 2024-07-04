@@ -1,6 +1,6 @@
 <template>
     <sidebar-menu
-        :data-component="dataComponent"
+        data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu="localMenu"
         @update:collapsed="onToggleCollapse"
@@ -54,10 +54,8 @@
     import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
     import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
-    import BaseComponents from "../../components/BaseComponents.vue"
 
     export default {
-        extends: BaseComponents,
         components: {
             ChevronDoubleLeft,
             ChevronDoubleRight,

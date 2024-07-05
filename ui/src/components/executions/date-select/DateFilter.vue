@@ -16,6 +16,7 @@
         :start-date="startDate"
         :end-date="endDate"
         @update:model-value="onAbsFilterChange"
+        class="w-auto"
     />
     <relative-date-select
         v-if="selectedFilterType === filterType.RELATIVE"

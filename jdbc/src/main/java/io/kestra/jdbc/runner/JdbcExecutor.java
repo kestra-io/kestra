@@ -701,6 +701,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             .executionId(killedExecution.getExecutionId())
             .isOnKillCascade(false)
             .state(ExecutionKilled.State.EXECUTED)
+            .tenantId(killedExecution.getTenantId())
             .build()
         );
 

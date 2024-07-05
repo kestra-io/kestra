@@ -120,7 +120,7 @@ export default class Utils {
     static humanDuration(value, options) {
         options = options || {maxDecimalPoints: 2};
         options.spacer = "";
-        options.language = localStorage.getItem("lang") || "en";
+        options.language = Utils.getLang();
         options.languages = humanizeDurationLanguages;
         options.largest = 2;
 
@@ -185,6 +185,10 @@ export default class Utils {
 
     static getTheme() {
         return localStorage.getItem("theme") || "light";
+    }
+
+    static getLang() {
+        return localStorage.getItem("lang") || "en";
     }
 
     static splitFirst(str, separator){

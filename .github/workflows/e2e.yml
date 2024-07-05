@@ -1,0 +1,164 @@
+name: 'Reusable Workflow for Running End-to-End Tests'
+on:
+  workflow_call:
+    inputs:
+      tags:
+        description: "Tags used for filtering tests to include for QA."
+        type: string
+        required: true
+      docker-artifact-name:
+        description: "The GitHub artifact containing the Kestra docker image."
+        type: string
+        required: false
+      docker-image-tag:
+        description: "The Docker image Tag for Kestra"
+        default: 'kestra/kestra:develop-full'
+        type: string
+        required: true
+      backend:
+        description: "The Kestra backend type to be used for E2E tests."
+        type: string
+        required: true
+        default: "postgres"
+    secrets:
+      GITHUB_AUTH_TOKEN:
+        description: "The GitHub Token."
+        required: true
+      GOOGLE_SERVICE_ACCOUNT:
+        description: "The Google Service Account."
+        required: false
+jobs:
+  check:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      E2E_TEST_DOCKER_DIR: ./kestra/e2e-tests/docker
+      KESTRA_BASE_URL: http://127.27.27.27:8080/ui/
+    steps:
+      # Checkout kestra
+      - name: Checkout kestra
+        uses: actions/checkout@v4
+        with:
+          path: kestra
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          caches-enabled: true
+
+      # Get Docker Image
+      - name: Download Kestra Image
+        if: inputs.docker-artifact-name != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.docker-artifact-name }}
+          path: /tmp
+
+      - name: Load Kestra Image
+        if: inputs.docker-artifact-name != ''
+        run: |
+          docker load --input /tmp/${{ inputs.docker-artifact-name }}.tar
+
+      # Docker Compose
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        if: inputs.docker-artifact-name == ''
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # Build configuration
+      - name: Create additional application configuration
+        run: |
+          touch ${{ env.E2E_TEST_DOCKER_DIR }}/data/application-secrets.yml
+
+      - name: Setup additional application configuration
+        if: env.APPLICATION_SECRETS != null
+        env:
+          APPLICATION_SECRETS: ${{ secrets.APPLICATION_SECRETS }}
+        run: |
+          echo $APPLICATION_SECRETS | base64 -d > ${{ env.E2E_TEST_DOCKER_DIR }}/data/application-secrets.yml
+
+      # Deploy Docker Compose Stack
+      - name: Run Kestra (${{ inputs.backend }})
+        env:
+          KESTRA_DOCKER_IMAGE: ${{ inputs.docker-image-tag }}
+        run: |
+          cd ${{ env.E2E_TEST_DOCKER_DIR }}
+          echo "KESTRA_DOCKER_IMAGE=$KESTRA_DOCKER_IMAGE" >> .env
+          docker compose -f docker-compose-${{ inputs.backend }}.yml up -d
+
+      - name: Install Playwright Deps
+        run: |
+          cd kestra
+          ./gradlew playwright --args="install-deps"
+
+      # Run E2E Tests
+      - name: Wait For Kestra UI
+        run: |
+          # Start time
+          START_TIME=$(date +%s)
+          # Timeout duration in seconds (5 minutes)
+          TIMEOUT_DURATION=$((5 * 60))
+          while [ $(curl -s -L -o /dev/null -w %{http_code} $KESTRA_BASE_URL) != 200 ]; do
+            echo -e $(date) "\tKestra server HTTP state: " $(curl -k -L -s -o /dev/null -w %{http_code} $KESTRA_BASE_URL) " (waiting for 200)";
+            # Check the elapsed time
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            # Break the loop if the elapsed time exceeds the timeout duration
+            if [ $ELAPSED_TIME -ge $TIMEOUT_DURATION ]; then
+              echo "Timeout reached: Exiting after 5 minutes."
+              exit 1;
+            fi
+            sleep 2;
+          done;
+          echo "Kestra is running: $KESTRA_BASE_URL 🚀";
+        continue-on-error: true
+
+      - name: Run E2E Tests (${{ inputs.tags }})
+        if: inputs.tags != ''
+        run: |
+          cd kestra
+          ./gradlew e2eTestsCheck -P tags=${{ inputs.tags }}
+
+      - name: Run E2E Tests
+        if: inputs.tags == ''
+        run: |
+          cd kestra
+          ./gradlew e2eTestsCheck
+
+      # Allure check
+      - name: Auth to Google Cloud
+        id: auth
+        if: ${{ !cancelled() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}'
+
+      - uses: rlespinasse/github-slug-action@v4
+
+      - name: Publish allure report
+        uses: andrcuns/allure-publish-action@v2.6.0
+        if: ${{ !cancelled() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          JAVA_HOME: /usr/lib/jvm/default-jvm/
+        with:
+          storageType: gcs
+          resultsGlob: build/allure-results
+          bucket: internal-kestra-host
+          baseUrl: "https://internal.kestra.io"
+          prefix: ${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'allure/playwright') }}
+          copyLatest: true
+          ignoreMissingResults: true

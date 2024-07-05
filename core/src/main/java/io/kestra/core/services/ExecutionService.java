@@ -478,6 +478,7 @@ public class ExecutionService {
                 .executionId(childExecution.getId())
                 .isOnKillCascade(true)
                 .state(ExecutionKilled.State.REQUESTED) // Event will be reentrant in the Executor.
+                .tenantId(tenantId)
                 .build()
             );
     }

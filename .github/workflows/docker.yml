@@ -39,20 +39,17 @@ jobs:
     needs: [ plugins ]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    env:
-      DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
-      DOCKER_PYTHON_LIBRARIES: kestra
     strategy:
       matrix:
         image:
           - name: ""
+            plugins: ""
             packages: ""
             python-libs: ""
-            plugins: ""
           - name: "-full"
             plugins: ${{needs.plugins.outputs.plugins}}
-            packages: $DOCKER_APT_PACKAGES
-            python-libs: $DOCKER_PYTHON_LIBRARIES
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+            python-libs: kestra
     steps:
       - uses: actions/checkout@v4
 
@@ -62,6 +59,7 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/*/}
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
 
       # Download release
       - name: Download release
@@ -98,7 +96,7 @@ jobs:
           tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
           platforms: linux/amd64,linux/arm64
           build-args: |
-            KESTRA_PLUGINS=${{ matrix.image.plugins }}
+            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
             APT_PACKAGES=${{ matrix.image.packages }}
             PYTHON_LIBRARIES=${{ matrix.image.python-libs }}
 

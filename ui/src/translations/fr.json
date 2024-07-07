@@ -832,6 +832,11 @@
       "update": "Mettre à jour la valeur pour la clé '{key}'",
       "duplicate": "Cette clé existe déjà"
     },
-    "expiration": "Expiration"
+    "expiration": "Expiration",
+    "failed to render pdf": "Impossible de rendre l'aperçu PDF",
+    "page": {
+      "previous": "Page précédente",
+      "next": "Page suivante"
+    }
   }
 }

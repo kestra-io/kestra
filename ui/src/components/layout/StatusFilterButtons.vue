@@ -1,5 +1,6 @@
 <template>
     <el-select
+        data-component="FILENAME_PLACEHOLDER"
         :model-value="value"
         @update:model-value="onInput"
         filterable
@@ -22,6 +23,7 @@
 <script>
     import State from "../../utils/state";
     import Status from "../Status.vue";
+
     export default {
         components: {Status},
         props: {

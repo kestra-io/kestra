@@ -49,6 +49,7 @@ import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
 import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
+import Utils from "./utils";
 
 export default (app, routes, stores, translations) => {
     // charts
@@ -102,7 +103,7 @@ export default (app, routes, stores, translations) => {
 
 
     // l18n
-    let locale = localStorage.getItem("lang") || "en";
+    let locale = Utils.getLang();
 
     let i18n = createI18n({
         locale: locale,

@@ -25,7 +25,6 @@ export default [
     {name: "root", path: "/", redirect: {name: "home"}},
     {name: "home", path: "/:tenant?/dashboard", component: Home},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
-    {name: "home", path: "/:tenant?/dashboard", component: Home},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},

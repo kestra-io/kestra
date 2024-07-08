@@ -1,5 +1,5 @@
 <template>
-    <el-button-group :size="size" :class="customClass">
+    <el-button-group data-component="FILENAME_PLACEHOLDER" :size="size" :class="customClass">
         <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh">
             <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
                 <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
@@ -17,6 +17,7 @@
     import AutoRenew from "vue-material-design-icons/Autorenew.vue";
     import AutoRenewOff from "vue-material-design-icons/AutorenewOff.vue";
     import Kicon from "../Kicon.vue"
+
     export default {
         components: {Refresh, AutoRenew, AutoRenewOff, Kicon},
         emits: ["refresh"],

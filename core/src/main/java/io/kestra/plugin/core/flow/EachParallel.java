@@ -62,49 +62,58 @@ import java.util.Optional;
         ),
         @Example(
             full = true,
-            code = {
-                "id: each-parallel",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: each-parallel",
-                "    type: io.kestra.plugin.core.flow.EachParallel",
-                "    value: ",
-                "      - value 1",
-                "      - value 2",
-                "      - value 3",
-                "    tasks:",
-                "      - id: each-value",
-                "        type: io.kestra.plugin.core.debug.Return",
-                "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
-            }
+            title = "Create a file for each value in parallel, then process all files in the next task. Note how the `inputFiles` property uses a `jq` expression with a `map` function to extract the paths of all files processed in parallel and pass them into the next task's working directory.",
+            code = """
+id: parallel_script
+namespace: company.team
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.EachParallel
+    value: "{{ range(1, 9) }}"
+    tasks:
+      - id: script
+        type: io.kestra.plugin.scripts.shell.Script
+        outputFiles:
+          - "out/*.txt"
+        script: |
+          mkdir out 
+          echo "{{ taskrun.value }}" > out/file_{{ taskrun.value }}.txt
+
+  - id: process_all_files 
+    type: io.kestra.plugin.scripts.shell.Script
+    inputFiles: "{{ outputs.script | jq('map(.outputFiles) | add') | first }}"
+    script: | 
+      ls -h out/
+"""
         ),
         @Example(
-            title = "Handling each value in parallel but only 1 child task for each value at the same time.",
+            title = "Run a group of tasks for each value in parallel.",
             full = true,
-            code = {
-                "id: each-parallel",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: each-parallel",
-                "    type: io.kestra.plugin.core.flow.EachParallel",
-                "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
-                "    tasks:",
-                "      - id: seq",
-                "        type: io.kestra.plugin.core.flow.Sequential",
-                "        tasks:",
-                "        - id: t1",
-                "          type: io.kestra.plugin.scripts.shell.Commands",
-                "          commands:",
-                "            - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
-                "            - 'sleep 1'",
-                "        - id: t2",
-                "          type: io.kestra.plugin.scripts.shell.Commands",
-                "          commands:",
-                "            - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
-                "            - 'sleep 1'"
-            }
+            code = """
+id: parallel_task_groups
+namespace: company.team
+
+tasks:
+  - id: for_each
+    type: io.kestra.plugin.core.flow.EachParallel
+    value: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: group
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: task1
+            type: io.kestra.plugin.scripts.shell.Commands
+            commands:
+              - echo "{{task.id}} > {{ parents[0].taskrun.value }}"
+              - sleep 1
+
+          - id: task2
+            type: io.kestra.plugin.scripts.shell.Commands
+            commands:
+              - echo "{{task.id}} > {{ parents[0].taskrun.value }}"
+              - sleep 1
+"""
         )
     },
     aliases = "io.kestra.core.tasks.flows.EachParallel"

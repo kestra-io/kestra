@@ -36,7 +36,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"

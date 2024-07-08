@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -165,6 +166,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> serialization(HttpRequest<?> request, DeserializationException e) {
         return jsonError(request, e, HttpStatus.LOCKED, "Locked");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> serialization(HttpRequest<?> request, ResourceExpiredException e) {
+        return jsonError(request, e, HttpStatus.GONE, "Resource has expired");
     }
 
     @Error(global = true)

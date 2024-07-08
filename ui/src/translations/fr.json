@@ -71,11 +71,30 @@
     "topology": "Topologie",
     "date": "Date",
     "datepicker": {
+      "leave empty for infinite": "Laisser vide pour une durée infinie ou entrer une durée ISO 8601 (exemple: 'P1DT1H1M1S)'",
+      "duration example": "Exemple: 'P1DT1H1M1S'",
+      "error": "Format de durée invalide, un format ISO 8601 est attendu (ex: P1DT1H1M1S)",
+      "custom": "Personnalisé",
+      "custom duration": "Durée personnalisée",
       "last5minutes": "5 dernières minutes",
       "last15minutes": "15 dernières minutes",
       "last1hour": "Dernière heure",
       "last12hours": "12 dernières heures",
       "last24hours": "24 dernières heures",
+      "last48hours": "48 dernières heures",
+      "last7days": "7 derniers jours",
+      "last30days": "30 derniers jours",
+      "last365days": "365 derniers jours",
+      "5minutes": "5 minutes",
+      "15minutes": "15 minutes",
+      "1hour": "1 heure",
+      "12hours": "12 heures",
+      "24hours": "24 heures",
+      "48hours": "48 heures",
+      "7days": "7 jours",
+      "30days": "30 jours",
+      "365days": "365 jours",
+      "never": "Jamais",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "dayBeforeYesterday": "Avant-hier",
@@ -91,6 +110,7 @@
     },
     "created date": "Date de création",
     "updated date": "Date de mise à jour",
+    "expiration date": "Date d'expiration",
     "started date": "Date de démarrage",
     "healthcheck date": "Dernier Healthcheck",
     "next execution date": "Prochaine date d'exécution",
@@ -297,7 +317,7 @@
     "errors": {
       "404": {
         "title": "Page introuvable",
-        "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>",
+        "content": "L'URL demandée n'a pas été trouvée sur ce serveur.<br />C'est tout ce que nous savons.",
         "flow or execution": "Le flow ou l'exécution demandé est introuvable."
       },
       "401": {
@@ -309,6 +329,7 @@
         "content": "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
       }
     },
+    "back_to_dashboard": "Retour au tableau de bord",
     "copy logs": "Copier les logs",
     "download logs": "Télécharger les logs",
     "delete logs": "Supprimer les logs",
@@ -808,6 +829,20 @@
     "secret": {
       "names": "Secrets",
       "inherited": "Secrets hérités"
+    },
+    "workerId": "Worker Id",
+    "kv": {
+      "name": "Stockage de clés/valeurs",
+      "type": "Type",
+      "add": "Nouveau couple de clé/valeur",
+      "update": "Mettre à jour la valeur pour la clé '{key}'",
+      "duplicate": "Cette clé existe déjà"
+    },
+    "expiration": "Expiration",
+    "failed to render pdf": "Impossible de rendre l'aperçu PDF",
+    "page": {
+      "previous": "Page précédente",
+      "next": "Page suivante"
     }
   }
 }

@@ -50,7 +50,7 @@ core/src/main/resources/gradle.properties
 .plugins.override
 
 # H2 Database
-data
+/data
 
 # Allure Reports
 **/allure-results/*

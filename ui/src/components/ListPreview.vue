@@ -1,5 +1,5 @@
 <template>
-    <el-table :data="value" stripe>
+    <el-table data-component="FILENAME_PLACEHOLDER" :data="value" stripe>
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <template v-if="isComplex(scope.row[column])">

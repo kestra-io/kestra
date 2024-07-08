@@ -1,5 +1,6 @@
 <template>
     <el-date-picker
+        data-component="FILENAME_PLACEHOLDER"
         :model-value="date"
         @update:model-value="onDate"
         type="datetimerange"

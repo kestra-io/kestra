@@ -1,6 +1,8 @@
 package io.kestra.core.storages;
 
 import io.kestra.core.services.FlowService;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVStore;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,23 @@ public class InternalStorage implements Storage {
         this.storage = storage;
         this.flowService = flowService;
     }
+
+    @Override
+    public KVStore namespaceKv() {
+        return new InternalKVStore(logger, context.getTenantId(), context.getNamespace(), storage);
+    }
+
+    @Override
+    public KVStore namespaceKv(String namespace) {
+        boolean isExternalNamespace = !namespace.equals(context.getNamespace());
+        // Checks whether the contextual namespace is allowed to access the passed namespace.
+        if (isExternalNamespace && flowService != null) {
+            flowService.checkAllowedNamespace(
+                context.getTenantId(), namespace, // requested Tenant/Namespace
+                context.getTenantId(), context.getNamespace() // from Tenant/Namespace
+            );
+        }
+        return new InternalKVStore(logger, context.getTenantId(), namespace, storage);    }
 
     /**
      * {@inheritDoc}

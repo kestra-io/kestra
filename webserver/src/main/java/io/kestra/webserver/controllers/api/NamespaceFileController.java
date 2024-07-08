@@ -105,18 +105,14 @@ public class NamespaceFileController {
     ) throws IOException, URISyntaxException {
         forbiddenPathsGuard(path);
 
-        if (path == null) {
-            path = URI.create("/");
-        }
+        NamespaceFile namespaceFile = NamespaceFile.of(namespace, path);
 
-        String pathString = path.getPath();
-
-        if (pathString.equals("/") && !storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
+        if (namespaceFile.isRootDirectory() && !storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
             storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
             return Collections.emptyList();
         }
 
-        return storageInterface.list(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
+        return storageInterface.list(tenantService.resolveTenant(), namespaceFile.uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)

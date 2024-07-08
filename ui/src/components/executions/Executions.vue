@@ -29,7 +29,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section :class="{'container padding-bottom': topbar}" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
         <data-table
             @page-changed="onPageChanged"
             ref="dataTable"
@@ -425,6 +425,8 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert} from "element-plus";
     import {h, ref} from "vue";
 
+    import {filterLabels} from "./utils"
+
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
@@ -809,6 +811,13 @@
                 );
             },
             setLabels() {
+                const filtered = filterLabels(this.executionLabels)
+
+                if(filtered.error) {
+                    this.$toast().error(this.$t("wrong labels"))
+                    return;
+                }
+
                 this.$toast().confirm(
                     this.$t("bulk set labels", {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
@@ -819,7 +828,7 @@
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                     }, false),
-                                    data: this.executionLabels
+                                    data: filtered.labels
                                 })
                                 .then(r => {
                                     this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));
@@ -829,7 +838,7 @@
                             return this.$store
                                 .dispatch("execution/bulkSetLabels", {
                                     executionsId: this.selection,
-                                    executionLabels: this.executionLabels
+                                    executionLabels: filtered.labels
                                 })
                                 .then(r => {
                                     this.$toast().success(this.$t("Set labels done", {executionCount: r.data.count}));

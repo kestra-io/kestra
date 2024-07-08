@@ -1,12 +1,16 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <section class="container errors">
+    <section data-component="FILENAME_PLACEHOLDER" class="container errors">
         <div class="img" />
         <h2>{{ $t("errors." + code + ".title") }}</h2>
 
         <p>
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
+
+        <el-button tag="router-link" :to="{name: 'home'}" type="primary">
+            {{ $t("back_to_dashboard") }}
+        </el-button>
     </section>
 </template>
 
@@ -42,19 +46,23 @@
 
 <style lang="scss" scoped>
     .errors {
-        h2 {
-            margin-bottom: calc(var(--spacer) * 2);
-        }
-
-        width: 100%;
+        margin-top: 10em;
         text-align: center;
 
         .img {
-            display: inline-block;
-            background: url("../../assets/errors/sorry.svg") no-repeat;
+            background: url("../../assets/errors/kestra-error.png") no-repeat center;
             background-size: contain;
-            height: 300px;
-            width: 300px;
         }
+
+        h2 {
+            line-height: 30px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            line-height: 22px;
+            font-size: 14px;
+        }    
     }
 </style>

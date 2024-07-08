@@ -1,5 +1,13 @@
 <template>
-    <el-tooltip :visible="visible" :persistent="false" :focus-on-show="true" popper-class="ee-tooltip" :disabled="!disabled" :placement="placement">
+    <el-tooltip
+        data-component="FILENAME_PLACEHOLDER"
+        :visible="visible"
+        :persistent="false"
+        :focus-on-show="true"
+        popper-class="ee-tooltip"
+        :disabled="!disabled"
+        :placement="placement"
+    >
         <template #content v-if="link">
             <el-button circle class="ee-tooltip-close" @click="changeVisibility(false)">
                 <Close />

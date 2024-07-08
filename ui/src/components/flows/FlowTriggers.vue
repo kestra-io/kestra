@@ -16,6 +16,15 @@
 
         <el-table-column prop="type" :label="$t('type')" />
 
+        <el-table-column prop="workerId" :label="$t('workerId')">
+            <template #default="scope">
+                <id
+                    :value="scope.row.workerId"
+                    :shrink="true"
+                />
+            </template>
+        </el-table-column>
+
         <el-table-column prop="nextExecutionDate" :label="$t('next execution date')">
             <template #default="scope">
                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
@@ -182,6 +191,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
+    import Id from "../Id.vue";
 </script>
 
 <script>

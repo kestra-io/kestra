@@ -48,6 +48,9 @@ dependencies {
     implementation group: 'com.github.victools', name: 'jsonschema-module-jackson'
     implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2'
 
+    // Json Diff
+    implementation 'com.github.java-json-tools:json-patch'
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':tests')

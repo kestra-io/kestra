@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -86,6 +87,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Inject
     @Named(QueueFactoryInterface.METRIC_QUEUE)
     private QueueInterface<MetricEntry> metricEntryQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    private QueueInterface<Trigger> triggerQueue;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -353,6 +358,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
 
+        // update the trigger so that it contains the workerId
+        var trigger = workerTrigger.getTriggerContext();
+        trigger.setWorkerId(this.id);
+        triggerQueue.emit(trigger);
+
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
             .record(() -> {
@@ -459,7 +469,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
             this.logTerminated(workerTask);
 
-            killedExecution.remove(workerTask.getTaskRun().getExecutionId());
+            // We cannot remove the execution ID from the killedExecution in case the worker is processing multiple tasks of the execution
+            // which can happens due to parallel processing.
 
             return workerTaskResult;
         }

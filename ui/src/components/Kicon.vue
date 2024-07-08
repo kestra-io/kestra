@@ -1,5 +1,5 @@
 <template>
-    <span class="kicon">
+    <span data-component="FILENAME_PLACEHOLDER" class="kicon">
         <el-tooltip
             effect="light"
             v-if="tooltip"

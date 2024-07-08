@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <section class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -123,6 +123,14 @@
                                     v-if="scope.row.executionCurrentState"
                                     :status="scope.row.executionCurrentState"
                                     size="small"
+                                />
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="workerId" :label="$t('workerId')">
+                            <template #default="scope">
+                                <id
+                                    :value="scope.row.workerId"
+                                    :shrink="true"
                                 />
                             </template>
                         </el-table-column>

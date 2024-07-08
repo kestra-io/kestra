@@ -26,7 +26,7 @@
 
 <br />
 <p align="center">
-    <a href="https://www.youtube.com/watch?v=h-P0eK2xN58&ab_channel=Kestra" target="_blank">
+    <a href="https://go.kestra.io/video/product-overview" target="_blank">
         <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
 </p>
@@ -375,7 +375,6 @@ This list is growing quickly and we welcome contributions.
 If you need help or have any questions, reach out using one of the following channels:
 
 - [Slack](https://kestra.io/slack) - join the community and get the latest updates.
-- [GitHub discussions](https://github.com/kestra-io/kestra/discussions) - useful to start a conversation that is not a bug or feature request.
 - [Twitter](https://twitter.com/kestra_io) - to follow up with the latest updates.
 
 

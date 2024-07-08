@@ -162,6 +162,14 @@ public class DefaultRunContext extends RunContext {
         return variableRenderer.render(inline, this.variables);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object renderTyped(String inline) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderTyped(inline, this.variables);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="name" id="environment">
+    <div data-component="FILENAME_PLACEHOLDER" v-if="name" id="environment">
         <strong>{{ name }}</strong>
     </div>
 </template>

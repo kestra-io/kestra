@@ -1,5 +1,5 @@
 <template>
-    <div class="bulk-select">
+    <div data-component="FILENAME_PLACEHOLDER" class="bulk-select">
         <el-checkbox
             :model-value="selections.length > 0"
             @change="toggle"

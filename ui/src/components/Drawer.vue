@@ -1,5 +1,6 @@
 <template>
     <el-drawer
+        data-component="FILENAME_PLACEHOLDER"
         :model-value="props.modelValue"
         @update:model-value="emit('update:modelValue', $event)"
         destroy-on-close
@@ -43,11 +44,16 @@
             required: false,
             default: undefined
         },
+        fullScreen: {
+            type: Boolean,
+            required: false,
+            default: false
+        }
     });
 
     const emit = defineEmits(["update:modelValue"])
 
-    const fullScreen = ref(false);
+    const fullScreen = ref(props.fullScreen);
 
     const toggleFullScreen = () => {
         fullScreen.value = !fullScreen.value;

@@ -27,6 +27,9 @@ public class Extension extends AbstractExtension {
     private SecretFunction secretFunction;
 
     @Inject
+    private KvFunction kvFunction;
+
+    @Inject
     private ReadFileFunction readFileFunction;
 
     @Inject
@@ -105,6 +108,7 @@ public class Extension extends AbstractExtension {
         functions.put("json", new JsonFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put("secret", secretFunction);
+        functions.put("kv", kvFunction);
         functions.put("read", readFileFunction);
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);

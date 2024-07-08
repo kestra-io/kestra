@@ -223,5 +223,10 @@
         .message {
             line-height: 1.8;
         }
+
+        p, :deep(.log-content p) {
+            display: inline;
+            margin-bottom: 0;
+        }
     }
 </style>

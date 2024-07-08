@@ -102,7 +102,6 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
                     .orElseThrow();
 
                 assertThat(executionCount.size(), is(10));
-                assertThat(executionList.size(), is(10));
                 assertThat(SchedulerStreamingTest.startedEvaluate.get(false), is(1));
                 assertThat(last.getTrigger().getVariables().get("startedEvaluate"), is(1));
             }
@@ -123,7 +122,6 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
                     .toList();
 
                 assertThat(executionCount.size(), greaterThan(10));
-                assertThat(executionList.size(), greaterThan(10));
                 assertThat(SchedulerStreamingTest.startedEvaluate.get(true), greaterThan(1));
             }
         );

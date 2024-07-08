@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div data-component="FILENAME_PLACEHOLDER">
         <collapse>
             <el-form-item>
                 <el-input

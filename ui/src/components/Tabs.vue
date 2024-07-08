@@ -1,5 +1,5 @@
 <template>
-    <el-tabs class="router-link" :class="{top: top}" v-model="activeName">
+    <el-tabs :data-component="`FILENAME_PLACEHOLDER#${tab}`" class="router-link" :class="{top: top}" v-model="activeName">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
@@ -8,7 +8,7 @@
             :disabled="tab.disabled || tab.locked"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
+                <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
                     <enterprise-tooltip :disabled="tab.locked" :term="tab.name" content="tabs">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
@@ -18,7 +18,7 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
+    <section data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
         <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">

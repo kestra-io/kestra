@@ -4,6 +4,8 @@ import vue from "@vitejs/plugin-vue";
 import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
 
+import {filename} from "./plugins/filename"
+
 export default defineConfig({
     base: "",
     build: {
@@ -22,7 +24,8 @@ export default defineConfig({
         eslintPlugin({
             failOnWarning: true,
             failOnError: true
-        })
+        }),        
+        filename(),
     ],
     assetsInclude: ["**/*.md"],
     css: {

@@ -11,6 +11,9 @@
                 <template v-if="scope.row.key === 'description'">
                     <markdown :source="scope.row.value" />
                 </template>
+                <template v-else-if="scope.row.key === 'cron'">
+                    <cron :cron-expression="scope.row.value" />
+                </template>
                 <template v-else>
                     <var-value :value="scope.row.value" :execution="execution" />
                 </template>
@@ -23,11 +26,13 @@
     import Utils from "../../utils/utils";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
+    import Cron from "../layout/Cron.vue";
 
     export default {
         components: {
             VarValue,
-            Markdown
+            Markdown,
+            Cron
         },
         props: {
             data: {

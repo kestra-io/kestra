@@ -1,5 +1,5 @@
 <template>
-    <span v-if="labels">
+    <span data-component="FILENAME_PLACEHOLDER" v-if="labels">
         <!-- 'el-check-tag' would be a better fit but it currently lacks customization -->
         <el-tag
             v-for="(value, key) in labelMap"

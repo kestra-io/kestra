@@ -209,7 +209,7 @@
         },
         watch: {
             $route(to) {
-                if (this.user && to.name === "home" && this.overallTotal === 0) {
+                if (to.name === "home" && this.overallTotal === 0) {
                     this.$router.push({
                         name: "welcome",
                         params: {

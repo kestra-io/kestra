@@ -447,7 +447,7 @@ public class ExecutionService {
 
         var unpausedExecution = this.markAs(execution, flow, runningTaskRun.getId(), newState, inputs);
 
-        this.eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(new CrudEvent<>(unpausedExecution, execution, CrudEventType.UPDATE));
         return unpausedExecution;
     }
 
@@ -479,6 +479,7 @@ public class ExecutionService {
                 .executionId(childExecution.getId())
                 .isOnKillCascade(true)
                 .state(ExecutionKilled.State.REQUESTED) // Event will be reentrant in the Executor.
+                .tenantId(tenantId)
                 .build()
             );
     }

@@ -16,8 +16,9 @@
         :start-date="startDate"
         :end-date="endDate"
         @update:model-value="onAbsFilterChange"
+        class="w-auto"
     />
-    <relative-date-select
+    <time-select
         v-if="selectedFilterType === filterType.RELATIVE"
         :time-range="timeRange"
         @update:model-value="onRelFilterChange"
@@ -26,12 +27,12 @@
 
 <script>
     import DateRange from "../../layout/DateRange.vue";
-    import RelativeDateSelect from "./RelativeDateSelect.vue";
+    import TimeSelect from "./TimeSelect.vue";
 
     export default {
         components: {
             DateRange,
-            RelativeDateSelect
+            TimeSelect
         },
         emits: [
             "update:isRelative",

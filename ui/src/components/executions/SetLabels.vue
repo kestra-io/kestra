@@ -53,6 +53,8 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import State from "../../utils/state";
 
+    import {filterLabels} from "./utils"
+
     export default {
         components: {LabelInput,},
         props: {
@@ -71,9 +73,16 @@
         },
         methods: {
             setLabels() {
+                const filtered = filterLabels(this.executionLabels)
+
+                if(filtered.error) {
+                    this.$toast().error(this.$t("wrong labels"))
+                    return;
+                }
+                
                 this.isOpen = false;
                 this.$store.dispatch("execution/setLabels", {
-                    labels: this.executionLabels,
+                    labels: filtered.labels,
                     executionId: this.execution.id
                 }).then(response => {
                     this.$store.commit("execution/setExecution", response.data)

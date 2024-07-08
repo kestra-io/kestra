@@ -1,5 +1,6 @@
 <template>
     <sidebar-menu
+        data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu="localMenu"
         @update:collapsed="onToggleCollapse"

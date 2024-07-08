@@ -24,7 +24,7 @@ public @interface Plugin {
      * An internal plugin can be resolved through the PluginRegistry, but cannot
      * be referenced directly in a YAML flow definition.
      *
-     * @return {@code true} if the plugin is internal. Otherwise {@link false}.
+     * @return {@code true} if the plugin is internal. Otherwise {@code false}.
      */
     boolean internal() default false;
 

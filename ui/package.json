@@ -40,6 +40,7 @@
     "moment-timezone": "^0.5.45",
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
+    "pdfjs-dist": "^4.3.136",
     "posthog-js": "^1.138.2",
     "cronstrue": "^2.50.0",
     "throttle-debounce": "^5.0.0",

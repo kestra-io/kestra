@@ -14,9 +14,10 @@ public class FileRenderBuilder {
             return new ImageFileRender(extension, filestream, maxLine);
         }
 
-        return switch (extension) {
+        return switch (extension.toLowerCase()) {
             case "ion" -> new IonFileRender(extension, filestream, maxLine);
             case "md" -> new DefaultFileRender(extension, filestream, DEFAULT_FILE_CHARSET, FileRender.Type.MARKDOWN, maxLine);
+            case "pdf" -> new PdfFileRender(extension, filestream, maxLine);
             default -> new DefaultFileRender(extension, filestream, charset.orElse(DEFAULT_FILE_CHARSET), maxLine);
         };
     }

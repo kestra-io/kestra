@@ -27,6 +27,7 @@ public abstract class FileRender {
         TEXT,
         LIST,
         IMAGE,
-        MARKDOWN
+        MARKDOWN,
+        PDF
     }
 }

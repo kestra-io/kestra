@@ -20,6 +20,7 @@
                 <el-form-item
                     :label="$t('password')"
                     required
+                    prop="email"
                 >
                     <el-input v-model="form.password" type="password" show-password />
                 </el-form-item>
@@ -62,7 +63,28 @@
                             trigger: ["blur"],
                             pattern: "^$|^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"
                         },
+                        {
+                            validator: (rule, value, callback) => {
+                                if (value && value.length > 256) {
+                                    callback(new Error(this.$t("Email must not exceed 256 characters")));
+                                } else {
+                                    callback();
+                                }
+                            },
+                            trigger: ["blur", "change"]
+                        }
                     ],
+                    password: [
+                        {
+                            validator: (rule, value, callback) => {
+                                if (value && value.length > 256) {
+                                    callback(new Error(this.$t("Password must not exceed 256 characters")));
+                                } else {
+                                    callback();
+                                }
+                            },
+                            trigger: ["blur", "change"]
+                        }
                     confirmPassword: [
                         {
                             validator: (rule, value, callback) => {

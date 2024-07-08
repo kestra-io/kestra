@@ -346,7 +346,8 @@ public class ExecutionService {
                 state,
                 null,
                 null,
-                null
+                null,
+                true
             )
             .map(throwFunction(execution -> {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();

@@ -16,7 +16,8 @@ export default {
     state: {
         datatypeNamespaces: undefined,
         namespaces: undefined,       
-        namespace: undefined
+        namespace: undefined,
+        kvs: undefined,
     },
     actions: {
         search({commit}, options) {
@@ -32,6 +33,48 @@ export default {
                     if(response.status === 200) commit("setNamespace", response.data)
                     return response.data;
                 })
+        },
+        kvsList({commit}, item) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${item.id}/kv`, {validateStatus: (status) => status === 200 || status === 404})
+                .then(response => {
+                    commit("setKvs", response.data)
+
+                    return response.data;
+                });
+        },
+        kv(_, payload) {
+            return this.$http
+                .get(`${apiUrl(this)}/namespaces/${payload.namespace}/kv/${payload.key}`)
+                .then(response => {
+                    const data = response.data;
+                    if (response.headers.getContentLength() === (data.length + 2).toString()) {
+                        return `"${data}"`;
+                    }
+
+                    return data;
+                });
+        },
+        createKv({dispatch}, payload) {
+            return this.$http
+                .put(
+                    `${apiUrl(this)}/namespaces/${payload.namespace}/kv/${payload.key}`,
+                    payload.value,
+                    {headers: {
+                        "Content-Type": payload.valueType === "JSON"
+                            ? "application/json"
+                            : "text/plain",
+                            "ttl": payload.ttl
+                    }})
+                .then(() => {
+                    return dispatch("kvsList", {id: payload.namespace})
+                });
+        },
+        deleteKv({dispatch}, payload) {
+            return this.$http
+                .delete(`${apiUrl(this)}/namespaces/${payload.namespace}/kv/${payload.key}`)
+                .then(() => {
+                    return dispatch("kvsList", {id: payload.namespace})
+                });
         },
 
         // Create a directory
@@ -128,6 +171,9 @@ export default {
         },
         setNamespace(state, namespace) {
             state.namespace = namespace
-        }
+        },
+        setKvs(state, kvs) {
+            state.kvs = kvs
+        },
     },
 };

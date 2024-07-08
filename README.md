@@ -24,13 +24,12 @@
 <a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
 </p>
 
-<br />
 <p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
         <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
 </p>
-<p align="center" style="color:grey;"><i>"Click on the image to get started in 4 minutes with Kestra."</i></p>
+<p align="center" style="color:grey;"><i>Click on the image to get started with Kestra in 4 minutes.</i></p>
 
 ## Live Demo
 

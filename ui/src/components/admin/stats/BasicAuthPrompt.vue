@@ -20,7 +20,7 @@
                 <el-form-item
                     :label="$t('password')"
                     required
-                    prop="email"
+                    prop="password"
                 >
                     <el-input v-model="form.password" type="password" show-password />
                 </el-form-item>
@@ -85,6 +85,7 @@
                             },
                             trigger: ["blur", "change"]
                         }
+                    ],
                     confirmPassword: [
                         {
                             validator: (rule, value, callback) => {

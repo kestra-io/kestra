@@ -1,11 +1,12 @@
 <template>
-    <el-tabs :data-component="`FILENAME_PLACEHOLDER#${tab}`" class="router-link" :class="{top: top}" v-model="activeName">
+    <el-tabs data-component="FILENAME_PLACEHOLDER" class="router-link" :class="{top: top}" v-model="activeName">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
             :disabled="tab.disabled || tab.locked"
+            :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">

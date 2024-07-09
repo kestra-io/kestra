@@ -31,7 +31,7 @@
                         <el-button
                             size="small"
                             tag="router-link"
-                            :to="{name: 'namespaces/update', params: {id: data.id}}"
+                            :to="{name: 'namespaces/update', params: {namespace: data.id}}"
                         >
                             <TextSearch />
                         </el-button>

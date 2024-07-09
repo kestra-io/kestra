@@ -57,7 +57,7 @@ export default [
 
     //Namespaces
     {name: "namespaces", path: "/:tenant?/namespaces", component: Namespaces},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: Namespace},
+    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:namespace/:tab?", component: Namespace},
 
     //Settings
     {name: "settings", path: "/:tenant?/settings", component: Settings},

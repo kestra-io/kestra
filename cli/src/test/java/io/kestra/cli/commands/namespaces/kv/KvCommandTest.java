@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.namespaces.kv;
 
-import io.kestra.cli.commands.namespaces.files.NamespaceFilesCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,7 @@ class KvCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             String[] args = {};
-            Integer call = PicocliRunner.call(NamespaceFilesCommand.class, ctx, args);
+            Integer call = PicocliRunner.call(KvCommand.class, ctx, args);
 
             assertThat(call, is(0));
             assertThat(out.toString(), containsString("Usage: kestra namespace kv"));

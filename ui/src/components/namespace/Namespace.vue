@@ -92,6 +92,19 @@
                         }
                     },
                     {
+                        name: "editor",
+                        component: EditorView,
+                        title: this.$t("editor"),
+                        props: {
+                            tab: "editor",
+                            isNamespace: true,
+                            isReadOnly: false,
+                        },
+                        query: {
+                            id: this.$route.query.id
+                        }
+                    },
+                    {
                         name: "flows",
                         component: NamespaceFlows,
                         title: this.$t("flows"),
@@ -101,23 +114,11 @@
                         query: {
                             id: this.$route.query.id
                         }
-                    },
-                    {
-                        name: "editor",
-                        component: EditorView,
-                        title: this.$t("editor"),
-                        props: {
-                            tab: "editor",
-                            isNamespace: true,
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
+                    },                   
                     {
                         name: "edit",
                         component: "",
-                        title: this.$route.params.id ? this.$t("edit") : this.$t("create"),
+                        title: this.$t("edit"),
                         props: {
                             tab: "edit",
                         },
@@ -150,28 +151,20 @@
                         },
                         disabled: true,
                         locked: true
-                    }
-                ])
-
-                if (this.$route.params.id || this.$route.query.id) {
-                    tabs.push(...[
-                        {
-                            name: "dependencies",
-                            component: NamespaceDependenciesWrapper,
-                            title: this.$t("dependencies"),
-                            props: {
-                                type: "dependencies",
-                                tab: "dependencies",
-                            },
-                            query: {
-                                id: this.$route.query.id
-                            }
+                    },
+                    {
+                        name: "dependencies",
+                        component: NamespaceDependenciesWrapper,
+                        title: this.$t("dependencies"),
+                        props: {
+                            type: "dependencies",
+                            tab: "dependencies",
                         },
-                    ]);
-                }
-
-                if (this.$route.params.id && this.user && this.user.isAllowed(permission.SECRET, action.READ, this.$route.params.id)) {
-                    tabs.push({
+                        query: {
+                            id: this.$route.query.id
+                        }
+                    },
+                    {
                         name: "secrets",
                         component: "",
                         title: this.$t("secret.names"),
@@ -189,11 +182,8 @@
                         },
                         disabled: true,
                         locked: true
-                    });
-                }
-
-                if (this.user && this.$route.params.id && this.user.isAllowed(permission.AUDITLOG, action.READ, this.$route.params.id)) {
-                    tabs.push({
+                    },
+                    {
                         name: "audit-logs",
                         component: "",
                         title: this.$t("auditlogs"),
@@ -202,10 +192,7 @@
                         },
                         disabled: true,
                         locked: true
-                    })                    
-                }
-
-                tabs.push(
+                    },
                     {
                         name: "kv",
                         component: NamespaceKV,
@@ -218,7 +205,8 @@
                                 this.modalAddKvVisible = value
                             }
                         }
-                    })
+                    }
+                ])
 
                 return tabs;
             }

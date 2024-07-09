@@ -29,9 +29,18 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             code = {
+                "# This will evaluate to true when the trigger date falls after the `after` date.",
                 "- conditions:",
                 "    - type: io.kestra.plugin.core.condition.DateTimeBetweenCondition",
-                "      after: \"2013-09-08T16:19:12Z\"",
+                "      date: \"{{ trigger.date }}\"",
+                "      after: \"2024-01-01T08:30:00Z\"",
+                "",
+                "# This will evaluate to true when the trigger date falls between the `before` and `after` dates.",
+                "- conditions:",
+                "    - type: io.kestra.plugin.core.condition.DateTimeBetweenCondition",
+                "      date: \"{{ trigger.date }}\"",
+                "      before: \"2024-01-01T08:30:00Z\"",
+                "      after: \"2024-12-31T23:30:00Z\"",
             }
         )
     },

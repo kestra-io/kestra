@@ -53,7 +53,6 @@ public class LogConsumerTest {
         RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
-            Collections.emptyList(),
             Collections.emptyList()
         );
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 2, null, Duration.ofSeconds(5));
@@ -89,7 +88,6 @@ public class LogConsumerTest {
         RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
-            Collections.emptyList(),
             Collections.emptyList()
         );
 

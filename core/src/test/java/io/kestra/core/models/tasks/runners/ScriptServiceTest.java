@@ -6,37 +6,36 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.ScriptService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class ScriptServiceTest {
+    public static final Pattern COMMAND_PATTERN_CAPTURE_LOCAL_PATH = Pattern.compile("my command with an internal storage file: (.*)");
     @Inject private RunContextFactory runContextFactory;
 
     @Test
     void replaceInternalStorage() throws IOException {
         var runContext = runContextFactory.of();
-        var command  = ScriptService.replaceInternalStorage(runContext, null, (ignored, file) -> {}, false);
+        var command  = ScriptService.replaceInternalStorage(runContext, null, false);
         assertThat(command, is(""));
 
-        command = ScriptService.replaceInternalStorage(runContext, "my command", (ignored, file) -> {}, false);
+        command = ScriptService.replaceInternalStorage(runContext, "my command", false);
         assertThat(command, is("my command"));
 
         Path path = Path.of("/tmp/unittest/file.txt");
@@ -45,16 +44,24 @@ class ScriptServiceTest {
         }
 
         String internalStorageUri = "kestra://some/file.txt";
-        AtomicReference<String> localFile = new AtomicReference<>();
+        File localFile = null;
         try {
-            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, (ignored, file) -> localFile.set(file), false);
-            assertThat(command, is("my command with an internal storage file: " + localFile.get()));
-            assertThat(Path.of(localFile.get()).toFile().exists(), is(true));
+            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, false);
 
-            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, (ignored, file) -> localFile.set(file), true);
-            assertThat(command, is("my command with an internal storage file: " + localFile.get().substring(1)));
+            Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+            assertThat(matcher.matches(), is(true));
+            Path absoluteLocalFilePath = Path.of(matcher.group(1));
+            localFile = absoluteLocalFilePath.toFile();
+            assertThat(localFile.exists(), is(true));
+
+            command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, true);
+            matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+            assertThat(matcher.matches(), is(true));
+            String relativePath = matcher.group(1);
+            assertThat(relativePath, not(startsWith("/")));
+            assertThat(runContext.workingDir().resolve(Path.of(relativePath)).toFile().exists(), is(true));
         } finally {
-            Path.of(localFile.get()).toFile().delete();
+            localFile.delete();
             path.toFile().delete();
         }
     }
@@ -68,8 +75,9 @@ class ScriptServiceTest {
             Files.createFile(path);
         }
 
-        Map<String, String> localFileByInternalStorage = new HashMap<>();
+        List<File> filesToDelete = new ArrayList<>();
         String internalStorageUri = "kestra://some/file.txt";
+
         try {
             String wdir = "/my/wd";
             var commands = ScriptService.replaceInternalStorage(
@@ -79,20 +87,29 @@ class ScriptServiceTest {
                     "my command with an internal storage file: " + internalStorageUri,
                     "my command with some additional var usage: {{ workingDir }}"
                 ),
-                localFileByInternalStorage::put,
                 false
             );
             assertThat(commands, not(empty()));
-            assertThat(commands.getFirst(), is("my command with an internal storage file: " + localFileByInternalStorage.get(internalStorageUri)));
-            assertThat(Path.of(localFileByInternalStorage.get(internalStorageUri)).toFile().exists(), is(true));
+
+            assertThat(commands.getFirst(), not(is("my command with an internal storage file: " + internalStorageUri)));
+            Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
+            assertThat(matcher.matches(), is(true));
+            File file = Path.of(matcher.group(1)).toFile();
+            assertThat(file.exists(), is(true));
+            filesToDelete.add(file);
+
             assertThat(commands.get(1), is("my command with some additional var usage: " + wdir));
 
-            commands = ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), List.of("my command with an internal storage file: " + internalStorageUri), localFileByInternalStorage::put, true);
-            assertThat(commands.getFirst(), is("my command with an internal storage file: " + localFileByInternalStorage.get(internalStorageUri).substring(1)));
+            commands = ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), List.of("my command with an internal storage file: " + internalStorageUri), true);
+            matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
+            assertThat(matcher.matches(), is(true));
+            file = runContext.workingDir().resolve(Path.of(matcher.group(1))).toFile();
+            assertThat(file.exists(), is(true));
+            filesToDelete.add(file);
         } catch (IllegalVariableEvaluationException e) {
             throw new RuntimeException(e);
         } finally {
-            localFileByInternalStorage.forEach((k, v) -> Path.of(v).toFile().delete());
+            filesToDelete.forEach(File::delete);
             path.toFile().delete();
         }
     }

@@ -97,7 +97,7 @@ public class TaskRunnerTest {
         }
 
         @Override
-        public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToUpload, List<String> filesToDownload) {
+        public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) {
             return null;
         }
 

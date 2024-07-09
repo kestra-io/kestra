@@ -132,7 +132,6 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     public ScriptOutput run() throws Exception {
-        List<String> filesToUpload = new ArrayList<>();
         if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
 
             List<NamespaceFile> matchedNamespaceFiles = runContext.storage()
@@ -143,22 +142,19 @@ public class CommandsWrapper implements TaskCommands {
                     InputStream content = runContext.storage().getFile(namespaceFile.uri());
                     runContext.workingDir().createFile(namespaceFile.path().toString(), content);
                 }));
-
-            matchedNamespaceFiles.forEach(file -> filesToUpload.add(file.path().toString()));
         }
 
         TaskRunner realTaskRunner = this.getTaskRunner();
         if (this.inputFiles != null) {
-            Map<String, String> finalInputFiles = FilesService.inputFiles(runContext, realTaskRunner.additionalVars(runContext, this), this.inputFiles);
-            filesToUpload.addAll(finalInputFiles.keySet());
+            FilesService.inputFiles(runContext, realTaskRunner.additionalVars(runContext, this), this.inputFiles);
         }
 
         RunContextInitializer initializer = ((DefaultRunContext) runContext).getApplicationContext().getBean(RunContextInitializer.class);
 
         RunContext taskRunnerRunContext = initializer.forPlugin(((DefaultRunContext) runContext).clone(), realTaskRunner);
-        this.commands = this.render(runContext, commands, filesToUpload);
+        this.commands = this.render(runContext, commands);
 
-        RunnerResult runnerResult = realTaskRunner.run(taskRunnerRunContext, this, filesToUpload, this.outputFiles);
+        RunnerResult runnerResult = realTaskRunner.run(taskRunnerRunContext, this, this.outputFiles);
 
         Map<String, URI> outputFiles = new HashMap<>();
         if (this.outputDirectoryEnabled()) {
@@ -221,18 +217,16 @@ public class CommandsWrapper implements TaskCommands {
             this.runContext,
             taskRunner.additionalVars(runContext, this),
             command,
-            (ignored, localFilePath) -> internalStorageLocalFiles.add(localFilePath),
             taskRunner instanceof RemoteRunnerInterface
         );
     }
 
-    public List<String> render(RunContext runContext, List<String> commands, List<String> internalStorageLocalFiles) throws IllegalVariableEvaluationException, IOException {
+    public List<String> render(RunContext runContext, List<String> commands) throws IllegalVariableEvaluationException, IOException {
         TaskRunner taskRunner = this.getTaskRunner();
         return ScriptService.replaceInternalStorage(
             this.runContext,
             taskRunner.additionalVars(runContext, this),
             commands,
-            (ignored, localFilePath) -> internalStorageLocalFiles.add(localFilePath),
             taskRunner instanceof RemoteRunnerInterface
         );
     }

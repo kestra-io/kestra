@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 
+import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
 
 public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
@@ -29,10 +30,22 @@ public class WorkerTriggerRealtimeThread extends AbstractWorkerTriggerThread {
 
     @Override
     public void doRun() throws Exception {
-        Publisher<Execution> evaluate = streamingTrigger.evaluate(
-            workerTrigger.getConditionContext().withRunContext(runContext),
-            workerTrigger.getTriggerContext()
-        );
+        Publisher<Execution> evaluate;
+
+        try {
+            evaluate = streamingTrigger.evaluate(
+                workerTrigger.getConditionContext().withRunContext(runContext),
+                workerTrigger.getTriggerContext()
+            );
+        } catch (Exception e) {
+            // If the Publisher cannot be created, we create a failed execution
+            taskState = FAILED;
+            exception = e;
+            return;
+        }
+
+        // Here the publisher can be created, so the task is in success.
+        // Errors can still occur, but they should be recovered automatically.
         taskState = SUCCESS;
         Flux.from(evaluate)
             .onBackpressureBuffer()

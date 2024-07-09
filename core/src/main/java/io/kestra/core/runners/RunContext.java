@@ -6,6 +6,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.FileUtils;
 import org.slf4j.Logger;
 
@@ -136,6 +137,22 @@ public abstract class RunContext {
      * @return the string version.
      */
     public abstract String version();
+
+    /**
+     * Gets access to the Key-Value store for the contextual namespace.
+     *
+     * @return The {@link KVStore}.
+     */
+    public KVStore namespaceKv() {
+        return this.namespaceKv(this.flowInfo().namespace());
+    }
+
+    /**
+     * Gets access to the Key-Value store for the given namespace.
+     *
+     * @return The {@link KVStore}.
+     */
+    public abstract KVStore namespaceKv(String namespace);
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
     }

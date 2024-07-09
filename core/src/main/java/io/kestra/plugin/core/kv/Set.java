@@ -101,10 +101,10 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         String renderedKey = runContext.render(this.key);
         Object renderedValue = runContext.renderTyped(this.value);
 
-        if (!this.overwrite && runContext.storage().namespaceKv(renderedNamespace).exists(renderedKey)) {
+        if (!this.overwrite && runContext.namespaceKv(renderedNamespace).exists(renderedKey)) {
             throw new IllegalStateException("Key already exists and overwrite is set to `false`");
         }
-        runContext.storage().namespaceKv(renderedNamespace).put(renderedKey, new KVStoreValueWrapper<>(new KVMetadata(ttl), renderedValue));
+        runContext.namespaceKv(renderedNamespace).put(renderedKey, new KVStoreValueWrapper<>(new KVMetadata(ttl), renderedValue));
 
         return null;
     }

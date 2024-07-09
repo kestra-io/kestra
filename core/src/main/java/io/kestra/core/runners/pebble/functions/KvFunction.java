@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.secret.SecretService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.utils.TruthUtils;
@@ -29,7 +30,7 @@ public class KvFunction implements Function {
     private FlowService flowService;
 
     @Inject
-    private StorageInterface storageInterface;
+    private KVStoreService kvStoreService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -46,15 +47,14 @@ public class KvFunction implements Function {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         String flowNamespace = flow.get("namespace");
         String flowTenantId = flow.get("tenantId");
+
         if (namespace == null) {
             namespace = flowNamespace;
-        } else {
-            flowService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
         }
 
         Optional<Object> value;
         try {
-            value = new InternalKVStore(flowTenantId, namespace, storageInterface).get(key);
+            value = kvStoreService.namespaceKv(flowTenantId, namespace, flowNamespace).get(key);
         } catch (Exception e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }

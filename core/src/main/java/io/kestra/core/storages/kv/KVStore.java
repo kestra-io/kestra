@@ -17,7 +17,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Service interface for accessing the files attached to a namespace Key-Value store.
  */
 public interface KVStore {
-    Pattern durationPattern = Pattern.compile("^P(?=.)(?:\\d*D)?(?:T(?=.)(?:\\d*H)?(?:\\d*M)?(?:\\d*S)?)?$");
+    Pattern durationPattern = Pattern.compile("^P(?=[^T]|T.)(?:\\d*D)?(?:T(?=.)(?:\\d*H)?(?:\\d*M)?(?:\\d*S)?)?$");
 
     default void validateKey(String key) {
         if (key == null || key.isEmpty()) {

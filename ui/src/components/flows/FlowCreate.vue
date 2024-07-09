@@ -63,7 +63,7 @@
                     this.source = await this.queryBlueprint(this.$route.query.blueprintId)
                 } else {
                     this.source = `id: myflow
-namespace: company.myteam
+namespace: company.team
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log

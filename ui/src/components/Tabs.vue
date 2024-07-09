@@ -19,7 +19,7 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab}">
+    <section data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'namespace-editor': isNamespaceEditor}">
         <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
@@ -150,6 +150,9 @@
             isEditorActiveTab() {
                 return this.activeTab.name === "editor";
             },
+            isNamespaceEditor(){
+                return this.activeTab?.props?.isNamespace === true;
+            },
             // Those are passed to the rendered component
             // We need to exclude class as it's already applied to this component root div
             attrsWithoutClass() {
@@ -193,6 +196,12 @@
         &:hover {
             background-color: var(--bs-secondary);
         }
+    }
+
+    .namespace-editor {
+        margin: 0 !important;
+        padding: 0;
+        flex-grow: 1;
     }
 </style>
 

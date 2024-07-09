@@ -108,6 +108,7 @@
                         title: this.$t("editor"),
                         props: {
                             tab: "editor",
+                            isNamespace: true,
                         },
                         query: {
                             id: this.$route.query.id

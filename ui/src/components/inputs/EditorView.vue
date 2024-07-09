@@ -112,6 +112,10 @@
             type: Number,
             default: 1,
         },
+        isNamespace: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
@@ -951,12 +955,14 @@
 
         <div class="d-inline-flex">
             <switch-view
+                v-if="!isNamespace"
                 :type="viewType"
                 class="to-topology-button"
                 @switch-view="switchViewType"
             />
 
             <ValidationError
+                v-if="!isNamespace"
                 ref="validationDomElement"
                 class="validation"
                 tooltip-placement="bottom-start"
@@ -986,6 +992,7 @@
                 @open-new-error="isNewErrorOpen = true"
                 @open-new-trigger="isNewTriggerOpen = true"
                 @open-edit-metadata="isEditMetadataOpen = true"
+                :is-namespace="isNamespace"
             />
         </div>
     </div>

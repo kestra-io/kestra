@@ -63,7 +63,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
 
         String renderedPrefix = runContext.render(this.prefix);
 
-        List<String> keys = runContext.storage().namespaceKv(renderedNamespace).list().stream()
+        List<String> keys = runContext.namespaceKv(renderedNamespace).list().stream()
             .map(KVEntry::key)
             .filter(key -> key.startsWith(renderedPrefix))
             .toList();

@@ -51,7 +51,7 @@ public class SetTest {
         ));
         set.run(runContext);
 
-        final KVStore kv = runContext.storage().namespaceKv(namespaceId);
+        final KVStore kv = runContext.namespaceKv(namespaceId);
         assertThat(kv.get(key).get(), is(value));
         assertThat(kv.list().get(0).expirationDate(), nullValue());
     }
@@ -75,7 +75,7 @@ public class SetTest {
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Collections.emptyMap());
         set.run(runContext);
 
-        final KVStore kv = runContext.storage().namespaceKv(namespaceId);
+        final KVStore kv = runContext.namespaceKv(namespaceId);
         assertThat(kv.get(key).get(), is(value));
         Instant expirationDate = kv.list().get(0).expirationDate();
         assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6))), is(true));

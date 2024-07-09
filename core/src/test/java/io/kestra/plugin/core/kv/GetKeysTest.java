@@ -44,7 +44,7 @@ public class GetKeysTest {
             "prefix", prefix
         ));
 
-        final KVStore kv = runContext.storage().namespaceKv(namespaceId);
+        final KVStore kv = runContext.namespaceKv(namespaceId);
         kv.put(prefix + "-key", new KVStoreValueWrapper<>(null, "value"));
         kv.put(prefix + "-second-key", new KVStoreValueWrapper<>(null, "value"));
         kv.put("another-key", new KVStoreValueWrapper<>(null, "value"));

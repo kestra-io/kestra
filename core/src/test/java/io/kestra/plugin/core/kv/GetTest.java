@@ -49,7 +49,7 @@ public class GetTest {
             "key", key
         ));
 
-        final KVStore kv = runContext.storage().namespaceKv(namespaceId);
+        final KVStore kv = runContext.namespaceKv(namespaceId);
         kv.put(key, new KVStoreValueWrapper<>(null, value));
 
         Get.Output run = get.run(runContext);

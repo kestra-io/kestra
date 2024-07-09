@@ -87,7 +87,7 @@ public class Process extends TaskRunner {
     public static final Process INSTANCE = Process.builder().type(Process.class.getName()).build();
 
     @Override
-    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToUpload, List<String> filesToDownload) throws Exception {
+    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
         AbstractLogConsumer defaultLogConsumer = taskCommands.getLogConsumer();
 

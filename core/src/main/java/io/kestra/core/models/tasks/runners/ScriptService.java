@@ -17,7 +17,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +46,6 @@ public final class ScriptService {
     public static String replaceInternalStorage(
         RunContext runContext,
         @Nullable String command,
-        BiConsumer<String, String> internalStorageToLocalFileConsumer,
         boolean replaceWithRelativePath
     ) throws IOException {
         if (command == null) {
@@ -59,13 +57,11 @@ public final class ScriptService {
             .replaceAll(throwFunction(matchResult -> {
                 String localFile = saveOnLocalStorage(runContext, matchResult.group()).replace("\\", "/");
 
-                internalStorageToLocalFileConsumer.accept(matchResult.group(), localFile);
-
                 if (!replaceWithRelativePath) {
                     return localFile;
                 }
 
-                return localFile.startsWith("/") ? localFile.substring(1) : localFile;
+                return runContext.workingDir().path().relativize(Path.of(localFile)).toString();
             }));
     }
 
@@ -73,27 +69,25 @@ public final class ScriptService {
         RunContext runContext,
         Map<String, Object> additionalVars,
         String command,
-        BiConsumer<String, String> internalStorageToLocalFileConsumer,
         boolean replaceWithRelativePath
     ) throws IOException, IllegalVariableEvaluationException {
         if (command == null) {
             return null;
         }
 
-        return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), internalStorageToLocalFileConsumer, replaceWithRelativePath).getFirst();
+        return ScriptService.replaceInternalStorage(runContext, additionalVars, List.of(command), replaceWithRelativePath).getFirst();
     }
 
     public static List<String> replaceInternalStorage(
         RunContext runContext,
         Map<String, Object> additionalVars,
         List<String> commands,
-        BiConsumer<String, String> internalStorageToLocalFileConsumer,
         boolean replaceWithRelativePath
     ) throws IOException, IllegalVariableEvaluationException {
         return commands
             .stream()
             .map(throwFunction(c -> runContext.render(c, additionalVars)))
-            .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, internalStorageToLocalFileConsumer, replaceWithRelativePath)))
+            .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, replaceWithRelativePath)))
             .toList();
 
     }
@@ -102,8 +96,7 @@ public final class ScriptService {
         RunContext runContext,
         List<String> commands
     ) throws IOException, IllegalVariableEvaluationException {
-        return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, (ignored, file) -> {
-        }, false);
+        return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, false);
     }
 
     private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {

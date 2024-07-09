@@ -18,14 +18,14 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -40,7 +40,7 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
 
         var taskRunner = taskRunner();
-        var result = taskRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList());
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
         assertThat(result, notNullValue());
         assertThat(result.getExitCode(), is(0));
     }
@@ -57,19 +57,19 @@ public abstract class AbstractTaskRunnerTest {
         assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
         assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR), is(false));
 
-        var result = taskRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList());
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
         assertThat(result, notNullValue());
         assertThat(result.getExitCode(), is(0));
     }
 
     @Test
-    protected void fail() {
+    protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
 
         var taskRunner = taskRunner();
-        assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList(), Collections.emptyList()));
+        assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
     }
 
     @Test
@@ -98,9 +98,6 @@ public abstract class AbstractTaskRunnerTest {
             }
         });
 
-        List<String> filesToUpload = new ArrayList<>();
-        filesToUpload.add("hello.txt");
-
         String wdir = this.needsToSpecifyWorkingDirectory() ? "{{ workingDir }}/" : "";
         List<String> renderedCommands = ScriptService.replaceInternalStorage(
             runContext,
@@ -114,13 +111,12 @@ public abstract class AbstractTaskRunnerTest {
                 "echo -n 'nested file from output dir' > {{outputDir}}/nested/file.txt",
                 "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
             )),
-            (ignored, file) -> filesToUpload.add(file),
             taskRunner instanceof RemoteRunnerInterface
         );
         Mockito.when(commands.getCommands()).thenReturn(renderedCommands);
 
         List<String> filesToDownload = List.of("output.txt");
-        RunnerResult run = taskRunner.run(runContext, commands, filesToUpload, filesToDownload);
+        RunnerResult run = taskRunner.run(runContext, commands, filesToDownload);
 
         Map<String, URI> outputFiles = ScriptService.uploadOutputFiles(runContext, commands.getOutputDirectory());
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
@@ -186,7 +182,7 @@ public abstract class AbstractTaskRunnerTest {
         return "ubuntu";
     }
 
-    protected TaskCommands initScriptCommands(RunContext runContext) {
+    protected TaskCommands initScriptCommands(RunContext runContext) throws IOException {
         var commands = Mockito.mock(TaskCommands.class);
         Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
@@ -205,6 +201,7 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(true);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(true);
         Mockito.when(commands.getTimeout()).thenReturn(null);
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
 
         return commands;
     }

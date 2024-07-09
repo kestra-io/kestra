@@ -6,6 +6,7 @@ import lombok.Value;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.triggers.AbstractTrigger;
 
+import java.util.Collections;
 import java.util.Map;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,7 +26,7 @@ public class ExecutionTrigger {
         return ExecutionTrigger.builder()
             .id(abstractTrigger.getId())
             .type(abstractTrigger.getType())
-            .variables(output.toMap())
+            .variables(output != null ? output.toMap() : Collections.emptyMap())
             .build();
     }
 

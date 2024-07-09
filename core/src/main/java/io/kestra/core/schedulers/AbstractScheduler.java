@@ -213,17 +213,15 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 }
 
                 WorkerTriggerResult workerTriggerResult = either.getLeft();
-                if (workerTriggerResult.getSuccess() && workerTriggerResult.getExecution().isPresent()) {
-                    if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface) {
-                        this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
-                    } else {
-                        SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
-                            workerTriggerResult.getExecution().get(),
-                            workerTriggerResult.getTriggerContext()
-                        );
-                        ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
-                        this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
-                    }
+                if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
+                    this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
+                } else if (workerTriggerResult.getSuccess() && workerTriggerResult.getExecution().isPresent()) {
+                    SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
+                        workerTriggerResult.getExecution().get(),
+                        workerTriggerResult.getTriggerContext()
+                    );
+                    ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                    this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
                 } else {
                     ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
                     this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));

@@ -34,6 +34,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -135,6 +136,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
+    private final Integer numThreads;
+    private final AtomicInteger pendingJobCount = new AtomicInteger(0);
+    private final AtomicInteger runningJobCount = new AtomicInteger(0);
+
     /**
      * Creates a new {@link Worker} instance.
      *
@@ -152,10 +157,20 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ExecutorsUtils executorsUtils
     ) {
         this.id = workerId;
+        this.numThreads = numThreads;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
         this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
         this.setState(ServiceState.CREATED);
+    }
+
+    @PostConstruct
+    void initMetrics() {
+        String[] tags = this.workerGroup == null ? new String[0] : new String[] { MetricRegistry.TAG_WORKER_GROUP, this.workerGroup };
+        // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
+        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
+        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
+        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
     }
 
     @Override
@@ -196,19 +211,29 @@ public class Worker implements Service, Runnable, AutoCloseable {
             this.workerGroup,
             Worker.class,
             either -> {
+                pendingJobCount.incrementAndGet();
+
                 executorService.execute(() -> {
-                    if (either.isRight()) {
-                        log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
-                        handleDeserializationError(either.getRight());
-                        return;
+                    pendingJobCount.decrementAndGet();
+                    runningJobCount.incrementAndGet();
+
+                    try {
+                        if (either.isRight()) {
+                            log.error("Unable to deserialize a worker job: {}", either.getRight().getMessage());
+                            handleDeserializationError(either.getRight());
+                            return;
+                        }
+
+                        WorkerJob workerTask = either.getLeft();
+                        if (workerTask instanceof WorkerTask task) {
+                            handleTask(task);
+                        } else if (workerTask instanceof WorkerTrigger trigger) {
+                            handleTrigger(trigger);
+                        }
+                    } finally {
+                        runningJobCount.decrementAndGet();
                     }
 
-                    WorkerJob workerTask = either.getLeft();
-                    if (workerTask instanceof WorkerTask task) {
-                        handleTask(task);
-                    } else if (workerTask instanceof WorkerTrigger trigger) {
-                        handleTrigger(trigger);
-                    }
                 });
             }
         ));
@@ -364,13 +389,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
         triggerQueue.emit(trigger);
 
         this.metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup))
+            .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger, workerGroup))
             .record(() -> {
                     StopWatch stopWatch = new StopWatch();
                     stopWatch.start();
 
                     this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger.getTriggerContext(), workerGroup)));
+                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger, workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     DefaultRunContext runContext = (DefaultRunContext)workerTrigger.getConditionContext().getRunContext();

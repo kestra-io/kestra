@@ -9,7 +9,6 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
@@ -25,7 +24,6 @@ import java.util.Comparator;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Singleton
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 

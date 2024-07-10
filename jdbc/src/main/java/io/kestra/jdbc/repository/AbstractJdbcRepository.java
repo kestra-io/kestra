@@ -2,7 +2,6 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.utils.DateUtils;
 import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -12,7 +11,6 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 
-@Singleton
 public abstract class AbstractJdbcRepository {
     protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);

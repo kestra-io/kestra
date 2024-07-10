@@ -2,7 +2,6 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.repositories.WorkerJobRunningRepositoryInterface;
 import io.kestra.core.runners.WorkerJobRunning;
-import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
@@ -12,7 +11,6 @@ import org.jooq.impl.DSL;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 @Slf4j
 public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdbcRepository implements WorkerJobRunningRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository;

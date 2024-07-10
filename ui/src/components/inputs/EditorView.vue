@@ -344,7 +344,9 @@
     };
 
     onMounted(async () => {
-        await initYamlSource();
+        if(!props.isNamespace) {
+            await initYamlSource();
+        }
 
         // Save on ctrl+s in topology
         document.addEventListener("keydown", save);
@@ -418,6 +420,8 @@
     };
 
     const fetchGraph = () => {
+        if(props.isNamespace) return;
+        
         return store.dispatch("flow/loadGraphFromSource", {
             flow: flowYaml.value,
             config: {

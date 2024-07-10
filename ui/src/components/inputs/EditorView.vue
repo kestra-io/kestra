@@ -977,7 +977,7 @@
             />
 
             <EditorButtons
-                v-if="openedTabs.length"
+                v-if="isCreating || openedTabs.length"
                 :is-creating="props.isCreating"
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
@@ -1011,7 +1011,7 @@
             style="flex: 1;"
         >
             <editor
-                v-if="openedTabs.length"
+                v-if="isCreating || openedTabs.length"
                 ref="editorDomElement"
                 @save="save"
                 @execute="execute"

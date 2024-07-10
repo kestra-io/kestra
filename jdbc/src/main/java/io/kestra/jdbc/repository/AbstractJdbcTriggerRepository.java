@@ -12,7 +12,6 @@ import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.micronaut.data.model.Pageable;
-import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-@Singleton
 public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
     protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;
 

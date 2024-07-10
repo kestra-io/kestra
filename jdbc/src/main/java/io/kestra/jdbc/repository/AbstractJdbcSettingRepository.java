@@ -6,7 +6,6 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Singleton
 public abstract class AbstractJdbcSettingRepository extends AbstractJdbcRepository implements SettingRepositoryInterface {
     protected final io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher;

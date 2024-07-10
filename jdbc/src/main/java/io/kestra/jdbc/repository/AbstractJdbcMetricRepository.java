@@ -10,7 +10,6 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
-import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-@Singleton
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface, JdbcIndexerInterface<MetricEntry> {
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 

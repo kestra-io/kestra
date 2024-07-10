@@ -6,7 +6,6 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
 import io.micronaut.data.model.Pageable;
-import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -30,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.using;
 
-@Singleton
 @Getter
 @Slf4j
 public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbcRepository implements ServiceInstanceRepositoryInterface {

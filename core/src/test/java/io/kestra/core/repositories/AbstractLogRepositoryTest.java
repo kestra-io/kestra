@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -141,9 +142,16 @@ public abstract class AbstractLogRepositoryTest {
         LogEntry log1 = logEntry(Level.INFO).build();
         logRepository.save(log1);
 
-        logRepository.deleteByQuery(null, log1.getExecutionId(), null, null, null, null);
+        logRepository.deleteByQuery(null, log1.getExecutionId(), null, (String) null, null, null);
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size(), is(0));
+
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", null, null, ZonedDateTime.now().plusMinutes(1));
+
+        find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size(), is(0));
     }
 

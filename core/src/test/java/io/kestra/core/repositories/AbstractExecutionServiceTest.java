@@ -112,6 +112,7 @@ public abstract class AbstractExecutionServiceTest {
             null,
             flow.getNamespace(),
             flow.getId(),
+            null,
             ZonedDateTime.now(),
             null
         );
@@ -129,6 +130,7 @@ public abstract class AbstractExecutionServiceTest {
             null,
             flow.getNamespace(),
             flow.getId(),
+            null,
             ZonedDateTime.now(),
             null
         );

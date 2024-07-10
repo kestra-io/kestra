@@ -1,4 +1,4 @@
-package io.kestra.plugin.core.storage;
+package io.kestra.plugin.core.execution;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class PurgeTest {
+class PurgeExecutionsTest {
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -35,7 +35,7 @@ class PurgeTest {
             .build();
         executionRepository.save(execution);
 
-        var purge = Purge.builder()
+        var purge = PurgeExecutions.builder()
             .endDate(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
             .build();
         var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace", "id", "flowId")));
@@ -56,7 +56,7 @@ class PurgeTest {
         executionRepository.save(execution);
         executionRepository.delete(execution);
 
-        var purge = Purge.builder()
+        var purge = PurgeExecutions.builder()
             .endDate(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
             .build();
         var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace", "id", "flowId")));

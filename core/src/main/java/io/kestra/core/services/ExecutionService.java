@@ -332,6 +332,7 @@ public class ExecutionService {
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> state
     ) throws IOException {
@@ -341,7 +342,7 @@ public class ExecutionService {
                 tenantId,
                 namespace,
                 flowId,
-                null,
+                startDate,
                 endDate,
                 state,
                 null,
@@ -361,7 +362,7 @@ public class ExecutionService {
                 }
 
                 if (purgeMetric) {
-                    this.metricRepository.purge(execution);
+                    builder.metricsCount(this.metricRepository.purge(execution));
                 }
 
                 if (purgeStorage) {
@@ -376,6 +377,7 @@ public class ExecutionService {
                 .executionsCount(a.getExecutionsCount() + b.getExecutionsCount())
                 .logsCount(a.getLogsCount() + b.getLogsCount())
                 .storagesCount(a.getStoragesCount() + b.getStoragesCount())
+                .metricsCount(a.getMetricsCount() + b.getMetricsCount())
                 .build()
             )
             .block();
@@ -535,6 +537,9 @@ public class ExecutionService {
 
         @Builder.Default
         private int storagesCount = 0;
+
+        @Builder.Default
+        private int metricsCount = 0;
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {

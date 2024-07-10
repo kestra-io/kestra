@@ -7,8 +7,11 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.services.FlowService;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
@@ -51,6 +54,9 @@ public class DefaultRunContext extends RunContext {
 
     @Inject
     private Provider<VersionProvider> version;
+
+    @Inject
+    private KVStoreService kvStoreService;
 
     @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
@@ -431,6 +437,11 @@ public class DefaultRunContext extends RunContext {
         return isInitialized.get() ? version.get().getVersion() : null;
     }
 
+    @Override
+    public KVStore namespaceKv(String namespace) {
+        return kvStoreService.namespaceKv(tenantId(), namespace, this.flowInfo().namespace());
+    }
+
     /**
      * Builder class for constructing new {@link DefaultRunContext} objects.
      */
@@ -450,6 +461,7 @@ public class DefaultRunContext extends RunContext {
         private Storage storage;
         private String triggerExecutionId;
         private Supplier<Logger> logger;
+        private KVStoreService kvStoreService;
 
         /**
          * Builds the new {@link DefaultRunContext} object.
@@ -469,6 +481,7 @@ public class DefaultRunContext extends RunContext {
             context.workingDir = workingDir;
             context.storage = storage;
             context.triggerExecutionId = triggerExecutionId;
+            context.kvStoreService = kvStoreService;
             return context;
         }
     }

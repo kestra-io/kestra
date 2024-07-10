@@ -25,10 +25,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * The default {@link KVStore} implementation.
- * This class acts as a facade to the {@link StorageInterface} for manipulating Key-Value store.
  *
- * @see Storage#namespaceKv()
- * @see Storage#namespaceKv(String)
  */
 public class InternalKVStore implements KVStore {
 
@@ -37,28 +34,15 @@ public class InternalKVStore implements KVStore {
     private final String namespace;
     private final String tenant;
     private final StorageInterface storage;
-    private final Logger logger;
 
     /**
      * Creates a new {@link InternalKVStore} instance.
      *
-     * @param namespace The namespace
-     * @param storage   The storage.
-     */
-    public InternalKVStore(final String tenant, final String namespace, final StorageInterface storage) {
-        this(log, tenant, namespace, storage);
-    }
-
-    /**
-     * Creates a new {@link InternalKVStore} instance.
-     *
-     * @param logger    The logger to be used by this class.
      * @param namespace The namespace
      * @param tenant    The tenant.
      * @param storage   The storage.
      */
-    public InternalKVStore(final Logger logger, @Nullable final String tenant, final String namespace, final StorageInterface storage) {
-        this.logger = Objects.requireNonNull(logger, "logger cannot be null");
+    public InternalKVStore(@Nullable final String tenant, final String namespace, final StorageInterface storage) {
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
         this.storage = Objects.requireNonNull(storage, "storage cannot be null");
         this.tenant = tenant;

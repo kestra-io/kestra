@@ -165,6 +165,6 @@ class InternalKVStoreTest {
 
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
-        return new InternalKVStore(logger, null, namespaceId, storageInterface);
+        return new InternalKVStore(null, namespaceId, storageInterface);
     }
 }

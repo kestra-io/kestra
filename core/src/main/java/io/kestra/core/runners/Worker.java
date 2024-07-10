@@ -10,12 +10,11 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -378,6 +377,41 @@ public class Worker implements Service, Runnable, AutoCloseable {
         );
     }
 
+    private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, Throwable e) {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
+
+        // We create a FAILED execution, so the user is aware that the realtime trigger failed to be created
+        var execution = TriggerService
+            .generateRealtimeExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), null)
+            .withState(FAILED);
+
+        // We create an ERROR log attached to the execution
+        Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
+        logService.logExecution(
+            execution,
+            logger,
+            Level.ERROR,
+            "[date: {}] Realtime trigger failed to be created in the worker with error: {}",
+            workerTrigger.getTriggerContext().getDate(),
+            e != null ? e.getMessage() : "unknown",
+            e
+        );
+        if (logger.isTraceEnabled() && e != null) {
+            logger.trace(Throwables.getStackTraceAsString(e));
+        }
+
+        this.workerTriggerResultQueue.emit(
+            WorkerTriggerResult.builder()
+                .success(false)
+                .execution(Optional.of(execution))
+                .triggerContext(workerTrigger.getTriggerContext())
+                .trigger(workerTrigger.getTrigger())
+                .build()
+        );
+    }
+
     private void handleTrigger(WorkerTrigger workerTrigger) {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
@@ -431,8 +465,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             );
                             io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
+                            // here the realtime trigger fail before the publisher being call so we create a fail execution
                             if (workerThread.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleTriggerError(workerTrigger, workerThread.getException());
+                                this.handleRealtimeTriggerError(workerTrigger, workerThread.getException());
                             }
                         }
                     } catch (Exception e) {

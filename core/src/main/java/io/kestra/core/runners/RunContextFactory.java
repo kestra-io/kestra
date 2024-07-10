@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -53,6 +54,9 @@ public class RunContextFactory {
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
+    @Inject
+    private KVStoreService kvStoreService;
+
     // hacky
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
@@ -95,6 +99,7 @@ public class RunContextFactory {
                 .withTaskRun(taskRun)
                 .withDecryptVariables(decryptVariables)
                 .build(runContextLogger))
+            .withKvStoreService(kvStoreService)
             .build();
     }
 
@@ -171,7 +176,8 @@ public class RunContextFactory {
             .withVariableRenderer(variableRenderer)
             .withStorageInterface(storageInterface)
             .withSecretKey(secretKey)
-            .withWorkingDir(workingDirFactory.createWorkingDirectory());
+            .withWorkingDir(workingDirFactory.createWorkingDirectory())
+            .withKvStoreService(kvStoreService);
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {

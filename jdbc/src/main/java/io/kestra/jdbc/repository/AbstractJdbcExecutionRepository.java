@@ -172,7 +172,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     state,
                     labels,
                     triggerExecutionId,
-                    childFilter
+                    childFilter,
+                    false
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -190,7 +191,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
+        @Nullable ChildFilter childFilter,
+        boolean deleted
     ) {
         return Flux.create(
             emitter -> this.jdbcRepository
@@ -209,7 +211,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         state,
                         labels,
                         triggerExecutionId,
-                        childFilter
+                        childFilter,
+                        deleted
                     );
 
                     select.fetch()
@@ -233,7 +236,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
+        @Nullable ChildFilter childFilter,
+        boolean deleted
     ) {
         SelectConditionStep<Record1<Object>> select = context
             .select(
@@ -241,7 +245,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             )
             .hint(context.configuration().dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId));
+            .where(this.defaultFilter(tenantId, deleted));
 
         select = filteringQuery(select, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
 

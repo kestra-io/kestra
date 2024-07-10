@@ -42,7 +42,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             full = true,
             code = """
 id: download
-namespace: company.myteam
+namespace: company.team
 tasks:
   - id: extract
     type: io.kestra.plugin.core.http.Download

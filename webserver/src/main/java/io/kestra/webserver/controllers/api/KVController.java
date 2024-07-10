@@ -3,10 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.MediaType;
@@ -80,7 +77,7 @@ public class KVController {
         return kvStore(namespace).delete(key);
     }
 
-    private InternalKVStore kvStore(String namespace) {
+    private KVStore kvStore(String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
     }
 

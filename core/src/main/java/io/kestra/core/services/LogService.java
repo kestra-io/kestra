@@ -4,11 +4,16 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.repositories.LogRepositoryInterface;
 import io.micronaut.context.annotation.Value;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
+
+import java.time.ZonedDateTime;
+import java.util.List;
 
 @Singleton
 public class LogService {
@@ -26,6 +31,9 @@ public class LogService {
 
     @Value("${kestra.ee.tenants.enabled:false}")
     private boolean tenantEnabled;
+
+    @Inject
+    LogRepositoryInterface logRepository;
 
     public void logFlow(Flow flow, Logger logger, Level level, String message, Object... args) {
         String finalMsg = tenantEnabled ? FLOW_PREFIX_WITH_TENANT + message : FLOW_PREFIX_NO_TENANT + message;
@@ -65,5 +73,9 @@ public class LogService {
         }
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
         logger.atLevel(level).log(finalMsg, finalArgs);
+    }
+
+    public int purge(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
     }
 }

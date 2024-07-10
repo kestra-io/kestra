@@ -388,6 +388,38 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
+    @Override
+    public int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var delete = context
+                    .delete(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+
+                if (startDate != null) {
+                    delete = delete.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+                }
+
+                if (namespace != null) {
+                    delete = delete.and(field("namespace").eq(namespace));
+                }
+
+                if (flowId != null) {
+                    delete = delete.and(field("flow_id").eq(flowId));
+                }
+
+                if (logLevels != null) {
+                    delete = delete.and(field("level").in(logLevels));
+                }
+
+                return delete.execute();
+            });
+    }
+
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()

@@ -208,7 +208,7 @@
         },
         methods: {
             durationValidator(rule, value, callback) {
-                if (value !== undefined && !value.match(/^P(?=.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
+                if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));
                 } else {
                     callback();

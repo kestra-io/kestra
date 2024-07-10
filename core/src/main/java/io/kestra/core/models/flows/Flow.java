@@ -209,7 +209,7 @@ public class Flow extends AbstractFlow {
     public List<String> allTriggerIds() {
         return this.triggers != null ? this.triggers.stream()
             .map(AbstractTrigger::getId)
-            .toList() : new ArrayList<>();
+            .collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public List<String> allTasksWithChildsAndTriggerIds() {

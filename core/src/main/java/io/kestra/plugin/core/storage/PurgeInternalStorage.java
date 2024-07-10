@@ -18,7 +18,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge all files from the Kestra's internal storage created by this execution.",
+    title = "Purge all files from Kestra's internal storage created by this execution.",
     description = "This will delete all the generated files from a flow for the current execution. This will delete all files from:\n" +
         "- inputs\n" +
         "- outputs\n" +
@@ -32,11 +32,11 @@ import java.util.List;
             }
         )
     },
-    aliases = "io.kestra.core.tasks.storages.PurgeExecution"
+    aliases = {"io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution"}
 )
-public class PurgeExecution extends Task implements RunnableTask<PurgeExecution.Output> {
+public class PurgeInternalStorage extends Task implements RunnableTask<PurgeInternalStorage.Output> {
     @Override
-    public PurgeExecution.Output run(RunContext runContext) throws Exception {
+    public PurgeInternalStorage.Output run(RunContext runContext) throws Exception {
         return Output.builder()
             .uris(runContext.storage().deleteExecutionFiles())
             .build();

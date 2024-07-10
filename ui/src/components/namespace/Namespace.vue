@@ -60,15 +60,15 @@
             ...mapState("auth", ["user"]),
             ...mapState("namespace", ["dependencies"]),
             canCreateSecret() {
-                return this.$route.params.id && this.user &&
-                    this.user.isAllowed(permission.SECRET, action.CREATE, this.$route.params.id);
+                return this.$route.params.namespace && this.user &&
+                    this.user.isAllowed(permission.SECRET, action.CREATE, this.$route.params.namespace);
             },
             canCreateKv() {
-                return this.$route.params.id;
+                return this.$route.params.namespace;
             },
             routeInfo() {
                 return {
-                    title: this.$route.params.id || this.$t("namespaces"),
+                    title: this.$route.params.namespace || this.$t("namespaces"),
                     breadcrumb: [
                         {
                             label: this.$t("namespaces"),
@@ -216,7 +216,7 @@
         },
         methods: {
             loadItem() {
-                if (this.$route.params.id) {
+                if (this.$route.params.namespace) {
                     this.$store
                         .dispatch(
                             "namespace/load",

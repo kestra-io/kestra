@@ -122,6 +122,7 @@ public class Extension extends AbstractExtension {
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new PrintContextFunction());
+        functions.put("ionDecode", new IonDecodeFunction());
 
         return functions;
     }

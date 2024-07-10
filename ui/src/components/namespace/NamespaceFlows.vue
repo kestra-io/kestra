@@ -129,7 +129,7 @@
         },
         methods: {
             loadData(callback) {
-                this.$store.dispatch("flow/findFlows", {namespace: this.$route.params.id}).then((flows) => {
+                this.$store.dispatch("flow/findFlows", {namespace: this.$route.params.namespace}).then((flows) => {
                     this.dailyGroupByFlowReady = false;
                     this.lastExecutionByFlowReady = false;
 

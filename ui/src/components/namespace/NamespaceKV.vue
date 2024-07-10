@@ -138,10 +138,10 @@
                 return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");
             },
             canUpdateKv() {
-                return this.$route.params.id                
+                return this.$route.params.namespace                
             },
             canDeleteKv() {
-                return this.$route.params.id
+                return this.$route.params.namespace
             },
             addKvDrawerVisible: {
                 get() {
@@ -216,7 +216,7 @@
             },
             loadKvs() {
                 this.$store
-                    .dispatch("namespace/kvsList", {id: this.$route.params.id})
+                    .dispatch("namespace/kvsList", {id: this.$route.params.namespace})
             },
             kvKeyDuplicate(rule, value, callback) {
                 if (this.kv.update === undefined && this.kvs && this.kvs.find(r => r.key === value)) {
@@ -227,7 +227,7 @@
             },
             async updateKvModal(key) {
                 this.kv.key = key;
-                const {type, value} = await this.$store.dispatch("namespace/kv", {namespace: this.$route.params.id, key});
+                const {type, value} = await this.$store.dispatch("namespace/kv", {namespace: this.$route.params.namespace, key});
                 this.kv.type = type;
                 if (type === "JSON") {
                     this.kv.value = JSON.stringify(value);
@@ -242,7 +242,7 @@
             removeKv(key) {
                 this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
                     return this.$store
-                        .dispatch("namespace/deleteKv", {namespace: this.$route.params.id, key: key})
+                        .dispatch("namespace/deleteKv", {namespace: this.$route.params.namespace, key: key})
                         .then(() => {
                             this.$toast().deleted(key);
                         });
@@ -269,7 +269,7 @@
                     return this.$store
                         .dispatch(
                             "namespace/createKv",
-                            {namespace: this.$route.params.id, ...this.kv, value}
+                            {namespace: this.$route.params.namespace, ...this.kv, value}
                         )
                         .then(() => {
                             this.$toast().saved(this.kv.key);

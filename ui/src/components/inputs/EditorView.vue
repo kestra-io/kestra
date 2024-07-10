@@ -345,8 +345,11 @@
 
     onMounted(async () => {
         if(!props.isNamespace) {
+            initViewType()
             await initYamlSource();
         } else {
+            store.commit("editor/closeAllTabs");
+            switchViewType(editorViewTypes.SOURCE, false)
             store.commit("editor/toggleExplorerVisibility", true);
         }
 

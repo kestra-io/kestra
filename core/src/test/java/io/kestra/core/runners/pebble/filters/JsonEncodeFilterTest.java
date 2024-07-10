@@ -16,14 +16,15 @@ import jakarta.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.endsWith;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-class JsonFilterTest {
+class JsonEncodeFilterTest {
     @Inject
     VariableRenderer variableRenderer;
 
     @Test
-    void map() throws IllegalVariableEvaluationException {
+    void jsonEncodeFilter() throws IllegalVariableEvaluationException {
         ZonedDateTime date = ZonedDateTime.parse("2013-09-08T16:19:00+02").withZoneSameLocal(ZoneId.systemDefault());
 
         ImmutableMap<String, Object> vars = ImmutableMap.of(
@@ -46,25 +47,25 @@ class JsonFilterTest {
             ))
         );
 
-        String render = variableRenderer.render("{{ vars.second.string | json }}", vars);
+        String render = variableRenderer.render("{{ vars.second.string | jsonEncode }}", vars);
         assertThat(render, is("\"string\""));
 
-        render = variableRenderer.render("{{ vars.second.int | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.int | jsonEncode }}", vars);
         assertThat(render, is("1"));
 
-        render = variableRenderer.render("{{ vars.second.float | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.float | jsonEncode }}", vars);
         assertThat(render, is("1.123"));
 
-        render = variableRenderer.render("{{ vars.second.list | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.list | jsonEncode }}", vars);
         assertThat(render, is("[\"string\",1,1.123]"));
 
-        render = variableRenderer.render("{{ vars.second.bool | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.bool | jsonEncode }}", vars);
         assertThat(render, is("true"));
 
-        render = variableRenderer.render("{{ vars.second.date | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.date | jsonEncode }}", vars);
         assertThat(render, is("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\""));
 
-        render = variableRenderer.render("{{ vars.second.map | json }}", vars);
+        render = variableRenderer.render("{{ vars.second.map | jsonEncode }}", vars);
         assertThat(render, containsString("\"int\":1"));
         assertThat(render, containsString("\"int\":1"));
         assertThat(render, containsString("\"float\":1.123"));
@@ -72,7 +73,29 @@ class JsonFilterTest {
         assertThat(render, startsWith("{"));
         assertThat(render, endsWith("}"));
 
-        render = variableRenderer.render("{{ {\"empty_object\":{}} | json }}", Map.of());
+        render = variableRenderer.render("{{ {\"empty_object\":{}} | jsonEncode }}", Map.of());
         assertThat(render, is("{\"empty_object\":{}}"));
+
+        render = variableRenderer.render("{{ null | jsonEncode }}", Map.of());
+        assertThat(render, is("null"));
+    }
+
+    @Test
+    void exception() {
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ | jsonEncode }}", Map.of()));
+
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ {not: json} | jsonEncode }}", Map.of()));
+    }
+
+    @Test
+    void jsonFilter() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "vars", ImmutableMap.of("second", Map.of(
+                "string", "string"
+            ))
+        );
+
+        String render = variableRenderer.render("{{ vars.second.string | jsonEncode }}", vars);
+        assertThat(render, is("\"string\""));
     }
 }

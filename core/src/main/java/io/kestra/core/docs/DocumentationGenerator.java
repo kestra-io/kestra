@@ -27,7 +27,6 @@ import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -53,7 +52,7 @@ public class DocumentationGenerator {
                 @Override
                 public Map<String, Filter> getFilters() {
                     Map<String, Filter> filters = new HashMap<>();
-                    filters.put("json", new JsonFilter());
+                    filters.put("json", new JsonEncodeFilter());
                     return filters;
                 }
             })

@@ -346,6 +346,8 @@
     onMounted(async () => {
         if(!props.isNamespace) {
             await initYamlSource();
+        } else {
+            store.commit("editor/toggleExplorerVisibility", true);
         }
 
         // Save on ctrl+s in topology
@@ -975,6 +977,7 @@
             />
 
             <EditorButtons
+                v-if="openedTabs.length"
                 :is-creating="props.isCreating"
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
@@ -1008,6 +1011,7 @@
             style="flex: 1;"
         >
             <editor
+                v-if="openedTabs.length"
                 ref="editorDomElement"
                 @save="save"
                 @execute="execute"
@@ -1022,6 +1026,21 @@
                 :read-only="isReadOnly"
                 :navbar="false"
             />
+            <section v-else class="no-tabs-opened">
+                <div class="img" />
+
+                <h2>{{ $t("namespace_editor.empty.title") }}</h2>
+                <p><span>{{ $t("namespace_editor.empty.message") }}</span></p>
+
+                <iframe
+                    width="60%"
+                    height="400px"
+                    src="https://www.youtube.com/embed/a2BZ7vOihjg?si=gHZuap7frp5c8HVx"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                />
+            </section>
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
         <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">
@@ -1309,6 +1328,27 @@
             font-style: normal;
             font-weight: 500;
         }
+    }
+
+    .no-tabs-opened {
+        margin-top: 5em 10em;
+        text-align: center;
+
+        .img {
+            background: url("../../assets/errors/kestra-error.png") no-repeat center;
+            background-size: contain;
+        }
+
+        h2 {
+            line-height: 30px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            line-height: 22px;
+            font-size: 14px;
+        }    
     }
 </style>
 

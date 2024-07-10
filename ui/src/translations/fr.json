@@ -843,6 +843,12 @@
     "page": {
       "previous": "Page précédente",
       "next": "Page suivante"
+    },
+    "namespace_editor": {
+      "empty": {
+        "title": "Aucun onglet actuellement ouvert",
+        "message": "Vous pouvez créer ou importer des fichiers de namespace à partir de la barre latérale et vous pouvez consulter la vidéo d'introduction pour notre éditeur."
+      }
     }
   }
 }

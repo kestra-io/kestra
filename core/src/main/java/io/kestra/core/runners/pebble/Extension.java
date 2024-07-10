@@ -107,6 +107,7 @@ public class Extension extends AbstractExtension {
 
         functions.put("now", new NowFunction());
         functions.put("json", new JsonFunction());
+        functions.put("jsonDecode", new JsonDecodeFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put("secret", secretFunction);
         functions.put("kv", kvFunction);

@@ -847,6 +847,12 @@
       "true": "{count} trigger(s) disabled",
       "false": "{count} trigger(s) enabled"
     },
+    "no_namespaces": "Zero namespaces match the search criteria.",
+    "plugin defaults": "Plugin defaults",
+    "secret": {           
+      "names": "Secrets",           
+      "inherited": "Inherited secrets"
+    },
     "workerId": "Worker Id",
     "kv": {
       "name": "KV Store",
@@ -860,6 +866,12 @@
     "page": {
       "previous": "Previous page",
       "next": "Next page"
+    },
+    "namespace_editor": {
+      "empty": {
+        "title": "No tabs currently opened",
+        "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      }
     }
   }
 }

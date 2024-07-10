@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isAllowedEdit || canDelete" class="mx-2">
+    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="mx-2">
         <el-dropdown>
             <el-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
@@ -120,6 +120,10 @@
             warnings: {
                 type: Array,
                 default: undefined
+            },
+            isNamespace: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {

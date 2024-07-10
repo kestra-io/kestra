@@ -852,6 +852,10 @@
         "title": "Aucun onglet actuellement ouvert",
         "message": "Vous pouvez créer ou importer des fichiers de namespace à partir de la barre latérale et vous pouvez consulter la vidéo d'introduction pour notre éditeur."
       }
+    },
+    "curl": {
+      "command": "Commande cURL",
+      "note": "Notez que les informations d'identification et les types d'entrée FILE/SECRET ne sont pas affichés."
     }
   }
 }

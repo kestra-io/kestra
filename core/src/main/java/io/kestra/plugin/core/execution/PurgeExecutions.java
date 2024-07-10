@@ -74,38 +74,38 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     private String endDate;
 
     @Schema(
-        title = "The state of the execution that can be purged.",
-        description = "If not set, execution for any states will be purged."
+        title = "The state of the executions to be purged.",
+        description = "If not set, executions for any states will be purged."
     )
     @PluginProperty
     private List<State.Type> states;
 
     @Schema(
-        title = "Whether to purge executions from the repository."
+        title = "Whether to purge executions."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeExecution = true;
 
     @Schema(
-        title = "Whether to purge logs from the repository.",
+        title = "Whether to purge execution's logs.",
         description = """
-            This will only purge logs from executions not from trigger, and it will do it execution by execution.
-            The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge logs as it will be more performant and will purge all logs including execution and trigger logs."""
+            This will only purge logs from executions not from triggers, and it will do it execution by execution.
+            The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge logs as it will purge logs in bulk, and will also purge logs not tied to an execution like trigger logs."""
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeLog = true;
 
     @Schema(
-        title = "Whether to purge metrics from the repository."
+        title = "Whether to purge execution's metrics."
     )
     @PluginProperty
     @Builder.Default
     private boolean purgeMetric = true;
 
     @Schema(
-        title = "Whether to purge files from the Kestra's internal storage."
+        title = "Whether to purge execution's files from the Kestra's internal storage."
     )
     @PluginProperty
     @Builder.Default

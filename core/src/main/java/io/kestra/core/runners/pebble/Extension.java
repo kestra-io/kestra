@@ -73,6 +73,7 @@ public class Extension extends AbstractExtension {
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
         filters.put("json", new JsonFilter());
+        filters.put("jsonEncode", new JsonEncodeFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
         filters.put("urldecode", new UrlDecoderFilter());

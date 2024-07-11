@@ -39,6 +39,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public Flux<Execution> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter, boolean allowDeleted) {
+        return null;
+    }
+
+    @Override
     public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states, @Nullable Map<String, String> labels, @Nullable String triggerExecutionId, @Nullable ChildFilter childFilter) {
         throw new UnsupportedOperationException();
     }

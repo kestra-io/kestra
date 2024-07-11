@@ -23,6 +23,11 @@ public abstract class AbstractJdbcRepository {
         return tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
+    protected Condition defaultFilter(String tenantId, Boolean allowDeleted) {
+        var tenant = buildTenantCondition(tenantId);
+        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+    }
+
     protected Condition buildTenantCondition(String tenantId) {
         return tenantId == null ? field("tenant_id").isNull() : field("tenant_id").eq(tenantId);
     }

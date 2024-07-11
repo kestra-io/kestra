@@ -34,9 +34,9 @@ import java.util.List;
     },
     aliases = {"io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution"}
 )
-public class PurgeInternalStorage extends Task implements RunnableTask<PurgeInternalStorage.Output> {
+public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<PurgeCurrentExecutionFiles.Output> {
     @Override
-    public PurgeInternalStorage.Output run(RunContext runContext) throws Exception {
+    public PurgeCurrentExecutionFiles.Output run(RunContext runContext) throws Exception {
         return Output.builder()
             .uris(runContext.storage().deleteExecutionFiles())
             .build();

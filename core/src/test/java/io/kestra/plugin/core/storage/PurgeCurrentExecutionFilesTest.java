@@ -12,7 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class PurgeInternalStorageTest {
+class PurgeCurrentExecutionFilesTest {
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -31,7 +31,7 @@ class PurgeInternalStorageTest {
         var file = runContext.workingDir().createFile("test.txt", "Hello World".getBytes());
         runContext.storage().putFile(file.toFile());
 
-        var purge = PurgeInternalStorage.builder()
+        var purge = PurgeCurrentExecutionFiles.builder()
             .build();
         var output = purge.run(runContext);
 

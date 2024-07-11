@@ -201,7 +201,8 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/graph")
     @Operation(tags = {"Executions"}, summary = "Generate a graph for an execution")
     public FlowGraph flowGraph(
-        @Parameter(description = "The execution id") @PathVariable String executionId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws IllegalVariableEvaluationException {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
@@ -215,7 +216,7 @@ public class ExecutionController {
 
                 return flow
                     .map(throwFunction(value ->
-                        graphService.executionGraph(value, null,  execution).forExecution()
+                        graphService.flowGraph(value, subflows,  execution).forExecution()
                     ))
                     .orElse(null);
             }))

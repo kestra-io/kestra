@@ -46,4 +46,11 @@ public abstract class AbstractGraph {
     public AbstractGraph forExecution() {
         return this;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AbstractGraph)) return false;
+        return o.hashCode() == this.hashCode();
+    }
 }

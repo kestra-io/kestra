@@ -2,7 +2,6 @@ package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.TaskInterface;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -56,17 +55,8 @@ public abstract class AbstractGraphTask extends AbstractGraph {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        AbstractGraphTask that = (AbstractGraphTask) object;
-
-        return Objects.equals(this.getUid(), that.getUid());
-    }
-
-    @Override
     public AbstractGraph forExecution() {
-        this.setTask(TaskForExecution.of((Task) this.getTask()));
+        this.setTask(TaskForExecution.of(this.getTask()));
 
         return this;
     }

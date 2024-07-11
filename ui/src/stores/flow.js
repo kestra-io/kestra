@@ -168,9 +168,6 @@ export default {
             }
             return axios.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => {
-                    if (response.status === 422) {
-                        return response;
-                    }
                     commit("setFlowGraph", response.data)
 
                     let flow = YamlUtils.parse(options.flow);
@@ -188,7 +185,11 @@ export default {
 
                     return response;
                 }).catch(error => {
-                    if(error.response?.status === 404) {
+                    if (error.response?.status === 422 && (!config?.params?.subflows || config?.params?.subflows?.length === 0)) {
+                        return Promise.resolve(error.response);
+                    }
+
+                    if([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
                         commit("core/setMessage", {
                             title: "Couldn't expand subflow",
                             message: error.response.data.message,

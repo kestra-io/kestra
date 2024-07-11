@@ -1,3 +1,4 @@
+import axios from "axios";
 import {apiUrl} from "override/utils/route";
 
 export default {
@@ -209,8 +210,8 @@ export default {
                 // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
                 if(data.extension === "ion") {
                     const notObjects = data.content.some(e => typeof e !== "object");
-                    
-                    if(notObjects) {   
+
+                    if(notObjects) {
                         const content = data.content.length === 1 ? data.content[0] : data.content.join("\n");
                         data = {...data, type: "TEXT", content}
                     }
@@ -249,7 +250,8 @@ export default {
                 });
         },
         loadGraph({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/executions/${options.id}/graph`)
+            const params = options.params ? options.params : {};
+            return axios.get(`${apiUrl(this)}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
                 .then(response => {
                     commit("setFlowGraph", response.data)
                 })

@@ -426,7 +426,7 @@
 
     const fetchGraph = () => {
         if(props.isNamespace) return;
-        
+
         return store.dispatch("flow/loadGraphFromSource", {
             flow: flowYaml.value,
             config: {
@@ -435,7 +435,7 @@
                     subflows: props.expandedSubflows.join(","),
                 },
                 validateStatus: (status) => {
-                    return status === 200 || status === 422;
+                    return status === 200;
                 },
             },
         });
@@ -788,8 +788,8 @@
                                 "</code></li>"
                         )
                         .join("\n");
-                        
-                    if(deps.length){                    
+
+                    if(deps.length){
                         warning =
                             "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
                             "<div class=\"el-alert__content\">\n" +
@@ -904,7 +904,7 @@
 
         if(isPreviousFlow) persistViewType(viewType.value);
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
-        
+
         nextTick(() => {
             const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
             const rightMostCurrentTabPixel = activeTabElement?.offsetLeft + activeTabElement?.clientWidth;
@@ -1038,8 +1038,8 @@
 
                 <iframe
                     width="60%"
-                    height="400px"                    
-                    src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC" 
+                    height="400px"
+                    src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
@@ -1352,7 +1352,7 @@
         p {
             line-height: 22px;
             font-size: 14px;
-        }    
+        }
     }
 </style>
 

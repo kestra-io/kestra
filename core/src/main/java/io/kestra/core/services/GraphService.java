@@ -4,11 +4,14 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.Rethrow;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -16,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 @Slf4j
@@ -26,6 +31,8 @@ public class GraphService {
     private TriggerRepositoryInterface triggerRepository;
     @Inject
     private PluginDefaultService pluginDefaultService;
+    @Inject
+    private RunContextFactory runContextFactory;
 
     public FlowGraph flowGraph(Flow flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException {
         return this.flowGraph(flow, expandedSubflows, null);
@@ -33,14 +40,6 @@ public class GraphService {
 
     public FlowGraph flowGraph(Flow flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
         return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
-    }
-
-    public FlowGraph executionGraph(Flow flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
-        return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
-    }
-
-    public GraphCluster of(Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid) throws IllegalVariableEvaluationException {
-        return this.of(flow, expandedSubflows, flowByUid, null);
     }
 
     public GraphCluster of(Flow flow, List<String> expandedSubflows, Map<String, Flow> flowByUid, Execution execution) throws IllegalVariableEvaluationException {
@@ -75,30 +74,58 @@ public class GraphService {
                 return subflowGraphTasks.stream().map(subflowGraphTask -> Map.entry(entry.getKey(), subflowGraphTask));
             });
 
-        subflowToReplaceByParent.map(Rethrow.throwFunction(parentWithSubflowGraphTask -> {
+        Flow finalFlow = flow;
+        subflowToReplaceByParent.map(throwFunction(parentWithSubflowGraphTask -> {
                 SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
+                Task task = (Task) subflowGraphTask.getTask();
+                RunContext runContext = subflowGraphTask.getExecutableTask().subflowId().flowUid().contains("{{") && execution != null ?
+                    runContextFactory.of(finalFlow, task, execution, subflowGraphTask.getTaskRun()) :
+                    null;
+                subflowGraphTask = subflowGraphTask.withRenderedSubflowId(runContext);
+                ExecutableTask.SubflowId subflowId = subflowGraphTask.getExecutableTask().subflowId();
+
+                if (subflowId.flowUid().contains("{{")) {
+                    throw new IllegalArgumentException("Can't expand subflow task '" + task.getId() + "' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
+                }
+
                 Flow subflow = flowByUid.computeIfAbsent(
-                    subflowGraphTask.getExecutableTask().subflowId().flowUid(),
-                    uid -> flowRepository.findByIdWithoutAcl(
-                        tenantId,
-                        subflowGraphTask.getExecutableTask().subflowId().namespace(),
-                        subflowGraphTask.getExecutableTask().subflowId().flowId(),
-                        subflowGraphTask.getExecutableTask().subflowId().revision()
-                    ).orElseThrow(() -> new NoSuchElementException(
-                        "Unable to find subflow " +
-                            (subflowGraphTask.getExecutableTask().subflowId().revision().isEmpty() ? subflowGraphTask.getExecutableTask().subflowId().flowUidWithoutRevision() : subflowGraphTask.getExecutableTask().subflowId().flowUid())
-                            + " for task " + subflowGraphTask.getTask().getId()
-                    ))
+                    subflowId.flowUid(),
+                    uid -> {
+                        Optional<Flow> flowById;
+                        // Prevent the need for FLOW READ access in case we're looking at an execution graph
+                        if (execution != null) {
+                            flowById = flowRepository.findByIdWithoutAcl(
+                                tenantId,
+                                subflowId.namespace(),
+                                subflowId.flowId(),
+                                subflowId.revision()
+                            );
+                        } else {
+                            flowById = flowRepository.findById(
+                                tenantId,
+                                subflowId.namespace(),
+                                subflowId.flowId(),
+                                subflowId.revision()
+                            );
+                        }
+
+                        return flowById.orElseThrow(() -> new NoSuchElementException(
+                            "Unable to find subflow " +
+                                (subflowId.revision().isEmpty() ? subflowId.flowUidWithoutRevision() : subflowId.flowUid())
+                                + " for task " + task.getId()
+                        ));
+                    }
                 );
                 subflow = pluginDefaultService.injectDefaults(subflow);
 
+                SubflowGraphTask finalSubflowGraphTask = subflowGraphTask;
                 return new TaskToClusterReplacer(
                     parentWithSubflowGraphTask.getKey(),
                     subflowGraphTask,
                     this.of(
                         new SubflowGraphCluster(subflowGraphTask.getUid(), subflowGraphTask),
                         subflow,
-                        expandedSubflows.stream().filter(expandedSubflow -> expandedSubflow.startsWith(subflowGraphTask.getUid() + ".")).toList(),
+                        expandedSubflows.stream().filter(expandedSubflow -> expandedSubflow.startsWith(finalSubflowGraphTask.getUid() + ".")).toList(),
                         flowByUid
                     )
                 );

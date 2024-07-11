@@ -102,6 +102,16 @@
             </template>
         </el-table-column>
 
+        <el-table-column column-key="restart" class-name="row-action" v-if="userCan(action.UPDATE)">
+            <template #default="scope">
+                <el-button size="small" v-if="scope.row.evaluateRunningDate" @click="restart(scope.row)">
+                    <kicon :tooltip="$t('restart trigger.button')">
+                        <Restart />
+                    </kicon>
+                </el-button>
+            </template>
+        </el-table-column>
+
         <el-table-column column-key="unlock" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
@@ -188,6 +198,7 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import Check from "vue-material-design-icons/Check.vue";
+    import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
@@ -371,6 +382,21 @@
             },
             unlock(trigger) {
                 this.$store.dispatch("trigger/unlock", {
+                    namespace: trigger.namespace,
+                    flowId: trigger.flowId,
+                    triggerId: trigger.triggerId
+                }).then(newTrigger => {
+                    this.$toast().saved(newTrigger.id);
+                    this.triggers = this.triggers.map(t => {
+                        if (t.id === newTrigger.id) {
+                            return newTrigger
+                        }
+                        return t
+                    })
+                })
+            },
+            restart(trigger) {
+                this.$store.dispatch("trigger/restart", {
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId

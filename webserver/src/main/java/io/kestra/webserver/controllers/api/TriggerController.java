@@ -1,6 +1,8 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueInterface;
@@ -43,6 +45,9 @@ public class TriggerController {
 
     @Inject
     private QueueInterface<Trigger> triggerQueue;
+
+    @Inject
+    private QueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -236,7 +241,7 @@ public class TriggerController {
             if (abstractTrigger instanceof RealtimeTriggerInterface && !newTrigger.getDisabled().equals(current.getDisabled())) {
                 throw new IllegalArgumentException("Realtime triggers can not be disabled through the API, please edit the trigger from the flow.");
             }
-            Trigger updated = null;
+            Trigger updated;
             ZonedDateTime nextExecutionDate = null;
             try {
                 RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
@@ -261,6 +266,56 @@ public class TriggerController {
         }
 
         return HttpResponse.ok(updatedTrigger);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{namespace}/{flowId}/{triggerId}/restart")
+    @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
+    public HttpResponse<?> restart(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId,
+        @Parameter(description = "The trigger id") @PathVariable String triggerId
+    ) throws HttpStatusException {
+        Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+            .tenantId(tenantService.resolveTenant())
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .build());
+
+        if (triggerOpt.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        var trigger = triggerOpt.get().toBuilder()
+            .workerId(null)
+            .evaluateRunningDate(null)
+            .date(null)
+            .build();
+
+        this.executionKilledQueue.emit(ExecutionKilledTrigger
+            .builder()
+            .tenantId(trigger.getTenantId())
+            .namespace(trigger.getNamespace())
+            .flowId(trigger.getFlowId())
+            .triggerId(trigger.getTriggerId())
+            .build()
+        );
+
+        // this will make the trigger restarting
+        // be careful that, as everything is asynchronous, it can be restarted before it is killed
+        this.triggerQueue.emit(trigger);
+
+        return HttpResponse.ok(trigger);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/restart")
+    @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
+    public void restart(
+        @Parameter(description = "The trigger") @Body final Trigger trigger
+    ) throws HttpStatusException {
+
     }
 
     @ExecuteOn(TaskExecutors.IO)

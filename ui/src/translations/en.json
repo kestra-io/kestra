@@ -590,6 +590,9 @@
       "button": "Unlock trigger",
       "success": "Trigger is unlocked"
     },
+    "restart trigger": {
+      "button": "Restart trigger"
+    },
     "date format": "Date format",
     "timezone": "Timezone",
     "add task": "Add a task",
@@ -849,8 +852,8 @@
     },
     "no_namespaces": "Zero namespaces match the search criteria.",
     "plugin defaults": "Plugin defaults",
-    "secret": {           
-      "names": "Secrets",           
+    "secret": {
+      "names": "Secrets",
       "inherited": "Inherited secrets"
     },
     "workerId": "Worker Id",

@@ -171,6 +171,23 @@
                                 </el-button>
                             </template>
                         </el-table-column>
+                        <el-table-column
+                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            column-key="restart"
+                            class-name="row-action"
+                        >
+                            <template #default="scope">
+                                <el-button size="small" v-if=" scope.row.evaluateRunningDate">
+                                    <kicon
+                                        :tooltip="$t(`restart trigger.tooltip`)"
+                                        placement="left"
+                                        @click="restart(scope.row)"
+                                    >
+                                        <Restart />
+                                    </kicon>
+                                </el-button>
+                            </template>
+                        </el-table-column>
 
                         <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
@@ -231,6 +248,7 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
+    import Restart from "vue-material-design-icons/Restart.vue";
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -313,6 +331,21 @@
                 }
 
                 this.triggerToUnlock = undefined;
+            },
+            restart(trigger) {
+                this.$store.dispatch("trigger/restart", {
+                    namespace: trigger.namespace,
+                    flowId: trigger.flowId,
+                    triggerId: trigger.triggerId
+                }).then(newTrigger => {
+                    this.$toast().saved(newTrigger.id);
+                    this.triggers = this.triggers.map(t => {
+                        if (t.id === newTrigger.id) {
+                            return newTrigger
+                        }
+                        return t
+                    })
+                })
             },
             setDisabled(trigger, value) {
                 if (trigger.codeDisabled) {

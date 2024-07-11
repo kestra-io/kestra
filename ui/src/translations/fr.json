@@ -571,6 +571,9 @@
       "button": "Débloquer le déclencheur",
       "success": "Le déclencheur est débloqué"
     },
+    "restart trigger": {
+      "button": "Redémarrer trigger"
+    },
     "date format": "Format de date",
     "timezone": "Fuseau horaire",
     "add task": "Ajouter une tâche",

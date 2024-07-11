@@ -15,6 +15,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -170,6 +171,27 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         assertThat(afterUpdated.getExecutionId(), not("hello"));
         // Assert that disabled can be edited
         assertThat(afterUpdated.getDisabled(), is(false));
+    }
+
+    @Test
+    void restart() {
+        Flow flow = generateFlow("flow-with-triggers");
+        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+
+        Trigger trigger = Trigger.builder()
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .triggerId("trigger-to-restart")
+            .executionId(IdUtils.create())
+            .disabled(true)
+            .build();
+
+        jdbcTriggerRepository.create(trigger);
+
+        HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST(("/api/v1/triggers/io.kestra.tests.schedule/flow-with-triggers/trigger-to-restart/restart"), null));
+        assertThat(restarted.getStatus(), is(HttpStatus.OK));
+
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST(("/api/v1/triggers/notfound/notfound/notfound/restart"), null)));
     }
 
     @Test

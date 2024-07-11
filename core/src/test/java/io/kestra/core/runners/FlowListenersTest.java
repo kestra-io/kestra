@@ -106,7 +106,7 @@ abstract public class FlowListenersTest {
         });
 
         Flow withTenant = first.toBuilder().tenantId("some-tenant").build();
-        flowRepository.create(withTenant, withTenant.generateSource(), pluginDefaultService.injectDefaults(withTenant));
+        flowRepository.create(withTenant, withTenant.generateSource(), taskDefaultService.injectDefaults(withTenant));
         wait(ref, () -> {
             assertThat(count.get(), is(3));
             assertThat(flowListenersService.flows().size(), is(3));

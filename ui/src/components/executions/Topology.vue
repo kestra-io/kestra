@@ -41,6 +41,7 @@
             return {
                 previousExecutionId: undefined,
                 expandedSubflows: [],
+                previousExpandedSubflows: [],
                 sseBySubflow: {},
                 throttledExecutionUpdate: throttle(function (subflow, executionEvent) {
                     const previousExecution = this.subflowsExecutions[subflow];
@@ -154,10 +155,15 @@
 
                         // force refresh
                         this.$store.commit("execution/setFlowGraph", Object.assign({}, this.flowGraph));
+                    }).catch(() => {
+                        this.expandedSubflows = this.previousExpandedSubflows;
+
+                        this.handleSubflowsSSE();
                     })
                 }
             },
             onExpandSubflow(expandedSubflows) {
+                this.previousExpandedSubflows = this.expandedSubflows;
                 this.expandedSubflows = expandedSubflows;
 
                 this.handleSubflowsSSE();
@@ -217,7 +223,7 @@
                         sse.onmessage = (executionEvent) => {
                             const isEnd = executionEvent && executionEvent.lastEventId === "end";
                             if (isEnd) {
-                                this.closeExecutionSSE();
+                                this.closeSubExecutionSSE(subflow);
                             }
                             this.throttledExecutionUpdate(subflow, executionEvent);
                             if (isEnd) {
@@ -225,6 +231,13 @@
                             }
                         };
                     });
+            },
+            closeSubExecutionSSE(subflow) {
+                const sse = this.sseBySubflow[subflow];
+                if (sse) {
+                    sse.close();
+                    delete this.sseBySubflow[subflow];
+                }
             }
         }
     };

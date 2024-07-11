@@ -70,7 +70,7 @@
                     this.follow()
                 }
                 // if we change the execution id, we need to close the sse
-                if (this.$route.params.id != this.execution.id) {
+                if (this.execution && this.$route.params.id != this.execution.id) {
                     this.closeSSE();
                     window.removeEventListener("popstate", this.follow)
                     this.$store.commit("execution/setExecution", undefined);

@@ -51,23 +51,36 @@
                 }
 
                 this.flow.inputs.forEach((input) => {
-                    if (this.isUnsupportedType(input.type)) {
-                        return;
-                    }
+                    let inputValue;
 
-                    const inputValue = this.inputs[input.id];
+                    switch (input.type) {
+                    case "FILE": {
+                        const fileInput = this.inputs[input.id];
+                        if (fileInput) {
+                            inputValue = fileInput.name;
+                        }
+                        break;
+                    }
+                    case "SECRET": {
+                        inputValue = this.inputs[input.id] ? "******" : undefined;
+                        break;
+                    }
+                    default:
+                        inputValue = this.inputs[input.id];
+                    }
 
                     if (inputValue === undefined) {
                         return;
                     }
 
-                    command.push("-F", `'${input.id}=${inputValue}'`);
-                });
-            },
-            isUnsupportedType(type) {
-                const unsupportedTypes = ["SECRET", "FILE"];
+                    command.push("-F");
 
-                return unsupportedTypes.indexOf(type) > -1;
+                    if (input.type === "FILE") {
+                        command.push(`'files=@${inputValue};filename=${input.id}'`);
+                    } else {
+                        command.push(`'${input.id}=${inputValue}'`);
+                    }
+                });
             },
             generateExecutionLabel(key, value) {
                 return `labels=${encodeURIComponent(key)}:${encodeURIComponent(value)}`;
@@ -96,7 +109,6 @@
 
                 command.push("-X", "POST");
 
-                this.addHeader(command, "Transfer-Encoding", "chunked");
                 this.addHeader(command, "Content-Type", "multipart/form-data");
 
                 this.addInputs(command);

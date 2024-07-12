@@ -855,7 +855,7 @@
     },
     "curl": {
       "command": "Commande cURL",
-      "note": "Notez que les informations d'identification et les types d'entrée FILE/SECRET ne sont pas affichés."
+      "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     }
   }
 }

@@ -46,7 +46,7 @@ public interface TaskCommands {
         }
 
         try (Stream<Path> walk = Files.walk(workingDirectory)) {
-            Stream<Path> filtered = walk.filter(Files::isRegularFile);
+            Stream<Path> filtered = walk.filter(path -> !Files.isDirectory(path));
             Path outputDirectory = this.getOutputDirectory();
             if (outputDirectory != null) {
                 filtered = filtered.filter(Predicate.not(path -> path.startsWith(outputDirectory)));

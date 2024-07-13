@@ -182,7 +182,7 @@ public class VariableRenderer {
     }
 
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);

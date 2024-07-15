@@ -28,6 +28,7 @@
 #io.kestra.plugin:plugin-fs:LATEST
 #io.kestra.plugin:plugin-gcp:LATEST
 #io.kestra.plugin:plugin-git:LATEST
+#io.kestra.plugin:plugin-github:LATEST
 #io.kestra.plugin:plugin-googleworkspace:LATEST
 #io.kestra.plugin:plugin-hightouch:LATEST
 #io.kestra.plugin:plugin-jdbc-as400:LATEST

@@ -69,7 +69,8 @@ public class TriggerController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "The identifier of the worker currently evaluating the trigger") @Nullable @QueryValue String workerId
     ) throws HttpStatusException {
 
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
@@ -77,7 +78,8 @@ public class TriggerController {
             query,
             tenantService.resolveTenant(),
             namespace,
-            null
+            null,
+            workerId
         );
 
         List<Triggers> triggers = new ArrayList<>();
@@ -217,7 +219,8 @@ public class TriggerController {
             query,
             tenantService.resolveTenant(),
             namespace,
-            flowId
+            flowId,
+            null
         ));
     }
 

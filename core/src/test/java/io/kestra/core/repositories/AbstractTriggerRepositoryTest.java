@@ -67,29 +67,29 @@ public abstract class AbstractTriggerRepositoryTest {
         Trigger trigger = trigger().namespace(namespace).build();
         triggerRepository.save(trigger);
 
-        List<Trigger> find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null);
+        List<Trigger> find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, null, null);
         assertThat(find.size(), is(4));
         assertThat(find.getFirst().getNamespace(), is(namespace));
 
-        find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, searchedTrigger.getFlowId());
+        find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, searchedTrigger.getFlowId(), null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getFlowId(), is(searchedTrigger.getFlowId()));
 
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, null, namespacePrefix);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, null, namespacePrefix, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(trigger.getTriggerId()));
 
         // Full text search is on namespace, flowId, triggerId, executionId
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), trigger.getNamespace(), null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), trigger.getNamespace(), null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(trigger.getTriggerId()));
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getFlowId(), null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getFlowId(), null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(searchedTrigger.getTriggerId()));
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getTriggerId(), null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getTriggerId(), null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(searchedTrigger.getTriggerId()));
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getExecutionId(), null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getExecutionId(), null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(searchedTrigger.getTriggerId()));
     }

@@ -56,7 +56,7 @@ public class GraphService {
         flow = pluginDefaultService.injectDefaults(flow);
         List<Trigger> triggers = null;
         if (flow.getTriggers() != null) {
-            triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId());
+            triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
 

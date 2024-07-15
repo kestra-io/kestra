@@ -232,12 +232,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     @Override
-    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace) {
-        return this.find(pageable, query, tenantId, namespace, null);
-    }
-
-    @Override
-    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace, String flowId) {
+    public ArrayListTotal<Trigger> find(Pageable pageable, String query, String tenantId, String namespace, String flowId, String workerId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -258,6 +253,9 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     select.and(field("flow_id").eq(flowId));
                 }
 
+                if (workerId != null) {
+                    select.and(field("worker_id").eq(workerId));
+                }
                 select.and(this.defaultFilter());
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);

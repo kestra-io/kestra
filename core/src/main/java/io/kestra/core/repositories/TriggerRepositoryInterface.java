@@ -25,9 +25,7 @@ public interface TriggerRepositoryInterface {
 
     Trigger lock(String triggerUid, Function<Trigger, Trigger> function);
 
-    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace);
-
-    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId) throws IllegalArgumentException;
+    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId, String workerId);
 
     /**
      * Find all triggers that match the query, return a flux of triggers

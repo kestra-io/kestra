@@ -1,0 +1,1 @@
+alter table triggers add "worker_id" VARCHAR(250) GENERATED ALWAYS AS (value ->> 'workerId') STORED;

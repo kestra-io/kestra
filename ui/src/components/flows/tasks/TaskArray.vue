@@ -38,7 +38,7 @@
         },
         computed: {
             values() {
-                if (this.modelValue === undefined) {
+                if (this.modelValue === undefined || (Array.isArray(this.modelValue) && this.modelValue.length === 0)) {
                     return this.schema.default || [undefined];
                 }
 

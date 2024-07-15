@@ -5,6 +5,7 @@ import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
 
 import {filename} from "./plugins/filename"
+import {details} from "./plugins/details"
 
 export default defineConfig({
     base: "",
@@ -24,8 +25,9 @@ export default defineConfig({
         eslintPlugin({
             failOnWarning: true,
             failOnError: true
-        }),        
+        }),
         filename(),
+        details()
     ],
     assetsInclude: ["**/*.md"],
     css: {

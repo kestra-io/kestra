@@ -50,6 +50,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable String triggerId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate

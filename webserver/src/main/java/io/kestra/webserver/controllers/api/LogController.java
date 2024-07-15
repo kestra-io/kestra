@@ -58,6 +58,7 @@ public class LogController {
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "A trigger id filter") @Nullable @QueryValue String triggerId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
@@ -65,7 +66,7 @@ public class LogController {
         validateTimeline(startDate, endDate);
 
         return PagedResults.of(
-            logRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace, flowId, minLevel, startDate, endDate)
+            logRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace, flowId, triggerId, minLevel, startDate, endDate)
         );
     }
 

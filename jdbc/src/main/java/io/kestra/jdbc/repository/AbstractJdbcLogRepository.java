@@ -33,12 +33,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     abstract protected Condition findCondition(String query);
 
+    @Override
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable String triggerId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
@@ -54,7 +56,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
-                this.filter(select, query, namespace, flowId, minLevel, startDate , endDate);
+                this.filter(select, query, namespace, flowId, triggerId, minLevel, startDate , endDate);
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -65,6 +67,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable String triggerId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
@@ -75,6 +78,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
         if (flowId != null) {
             select = select.and(field("flow_id").eq(flowId));
+        }
+
+        if (triggerId != null) {
+            select = select.and(field("trigger_id").eq(triggerId));
         }
 
         if (minLevel != null) {
@@ -96,6 +103,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return select;
     }
 
+    @Override
     public List<LogStatistics> statistics(
         @Nullable String query,
         @Nullable String tenantId,
@@ -130,7 +138,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
-                this.filter(select, query, namespace, flowId, minLevel, startDate, endDate);
+                this.filter(select, query, namespace, flowId, null, minLevel, startDate, endDate);
 
                 List<Field<?>> groupFields = new ArrayList<>(fields);
                 groupFields.addAll(dateFields);

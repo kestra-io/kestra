@@ -1,7 +1,7 @@
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
-[Kestra Code of Conduct](https://github.com/kestra-io/kestrablob/master/CODE_OF_CONDUCT.md).
+[Kestra Code of Conduct](https://github.com/kestra-io/kestra/blob/develop/.github/CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior
 to <hello@kestra.io>.
 

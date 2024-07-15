@@ -37,15 +37,3 @@ final linterTask = tasks.register('lintFrontend', RunNpm) {
 }
 
 check.dependsOn linterTask
-
-task addCommitInfo(type: Exec) {
-    dependsOn assembleFrontend
-    group = 'Frontend'
-    description = 'Adds the comment with commit details at the beginning of index.html'
-
-    commandLine 'node', 'scripts/commits.js'
-    
-    workingDir = projectDir
-}
-
-assembleFrontend.finalizedBy addCommitInfo

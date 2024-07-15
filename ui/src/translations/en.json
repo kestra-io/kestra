@@ -875,6 +875,10 @@
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
       }
+    },
+    "curl": {
+      "command": "cURL command",
+      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
     }
   }
 }

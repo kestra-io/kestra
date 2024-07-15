@@ -7,6 +7,7 @@
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
             <inputs-form :inputs-list="flow.inputs" v-model="inputs" />
+
             <el-collapse class="mt-4" v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item
@@ -17,6 +18,9 @@
                             v-model:labels="executionLabels"
                         />
                     </el-form-item>
+                </el-collapse-item>
+                <el-collapse-item :title="$t('curl.command')" name="curl">
+                    <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
                 </el-collapse-item>
             </el-collapse>
 
@@ -62,11 +66,12 @@
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
+    import Curl from "./Curl.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
 
     export default {
-        components: {LabelInput, InputsForm},
+        components: {LabelInput, InputsForm, Curl},
         props: {
             redirect: {
                 type: Boolean,

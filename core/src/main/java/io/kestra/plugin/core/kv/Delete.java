@@ -40,6 +40,7 @@ import java.util.NoSuchElementException;
     examples = {
         @Example(
             title = "Delete a KV pair.",
+            full = true,
             code = """
               id: delete_kv
               type: io.kestra.plugin.core.kv.Delete

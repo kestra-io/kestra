@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
     examples = {
         @Example(
             title = "Get value for `myvariable` key in `dev` namespace and fail if it's not present.",
+            full = true,
             code = """
               id: get_kv
               type: io.kestra.plugin.core.kv.Get

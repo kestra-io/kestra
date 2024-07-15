@@ -30,6 +30,7 @@ import java.util.*;
     examples = {
         @Example(
             title = "Get keys that are prefixed by `myvar`.",
+            full = true,
             code = """
               id: keys_kv
               type: io.kestra.plugin.core.kv.GetKeys

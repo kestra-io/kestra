@@ -43,6 +43,7 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
     examples = {
         @Example(
             title = "Set `query` task `uri` output as value for `myvariable` key in `dev` namespace.",
+            full = true,
             code = """
               id: set_kv
               type: io.kestra.plugin.core.kv.Set

@@ -43,7 +43,7 @@
     "nprogress": "^0.2.0",
     "pdfjs-dist": "^4.3.136",
     "posthog-js": "^1.138.2",
-    "throttle-debounce": "^5.0.0",
+    "throttle-debounce": "^5.0.2",
     "vite-plugin-eslint": "^1.8.1",
     "vue": "^3.4.27",
     "vue-axios": "3.5.2",

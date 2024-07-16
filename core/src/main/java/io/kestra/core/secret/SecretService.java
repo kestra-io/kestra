@@ -1,6 +1,5 @@
 package io.kestra.core.secret;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +33,7 @@ public class SecretService {
             ));
     }
 
-    public String findSecret(String tenantId, String namespace, String key) throws IOException, IllegalVariableEvaluationException {
+    public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
         return decodedSecrets.get(key.toUpperCase());
     }
 }

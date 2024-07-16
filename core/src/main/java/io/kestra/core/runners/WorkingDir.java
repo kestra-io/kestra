@@ -35,6 +35,13 @@ public interface WorkingDir {
     Path path(boolean create);
 
     /**
+     * Gets the working directory identifier.
+     *
+     * @return The identifier.
+     */
+    String id();
+
+    /**
      * Resolve a path inside the working directory (a.k.a. the tempDir).
      * <p>
      * This method is null-friendly: it will return the working directory (a.k.a. the tempDir) if called with a null path.

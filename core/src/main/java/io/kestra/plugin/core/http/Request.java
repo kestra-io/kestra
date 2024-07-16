@@ -57,7 +57,7 @@ import java.util.OptionalInt;
             """
         ),
         @Example(
-            title = "Send an HTTP POST request to a webserver",
+            title = "Send an HTTP POST request to a webserver.",
             code = {
                 "uri: \"https://server.com/login\"",
                 "headers: ",
@@ -69,7 +69,7 @@ import java.util.OptionalInt;
             }
         ),
         @Example(
-            title = "Send a multipart HTTP POST request to a webserver",
+            title = "Send a multipart HTTP POST request to a webserver.",
             code = {
                 "uri: \"https://server.com/upload\"",
                 "headers: ",
@@ -81,7 +81,7 @@ import java.util.OptionalInt;
             }
         ),
         @Example(
-            title = "Send a multipart HTTP POST request to a webserver and set a custom file name",
+            title = "Send a multipart HTTP POST request to a webserver and set a custom file name.",
             code = {
                 "uri: \"https://server.com/upload\"",
                 "headers: ",
@@ -172,29 +172,29 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URL of the current request"
+            title = "The URL of the current request."
         )
         private final URI uri;
 
         @Schema(
-            title = "The status code of the response"
+            title = "The status code of the response."
         )
         private final Integer code;
 
         @Schema(
-            title = "The headers of the response"
+            title = "The headers of the response."
         )
         @PluginProperty(additionalProperties = List.class)
         private final Map<String, List<String>> headers;
 
         @Schema(
-            title = "The body of the response",
+            title = "The body of the response.",
             description = "Kestra will by default store the task output using this property. However, if the `encryptBody` property is set to `true`, kestra will instead encrypt the output and store it using the `encryptedBody` output property."
         )
         private Object body;
 
         @Schema(
-            title = "The encrypted body of the response",
+            title = "The encrypted body of the response.",
             description = "If the `encryptBody` property is set to `true`, kestra will automatically encrypt the output before storing it, and decrypt it when the output is retrieved in a downstream task."
         )
         private EncryptedString encryptedBody;

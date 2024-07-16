@@ -26,6 +26,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class LocalWorkingDir implements WorkingDir {
 
     private final Path workingDirPath;
+    private final String workingDirId;
 
     /**
      * Creates a new {@link LocalWorkingDir} instance.
@@ -43,6 +44,7 @@ public class LocalWorkingDir implements WorkingDir {
      * @param workingDirId   The working directory id.
      */
     public LocalWorkingDir(final Path tmpdirBasePath, final String workingDirId) {
+        this.workingDirId = workingDirId;
         this.workingDirPath = tmpdirBasePath.resolve(workingDirId);
     }
 
@@ -52,6 +54,11 @@ public class LocalWorkingDir implements WorkingDir {
     @Override
     public Path path() {
         return path(true);
+    }
+
+    @Override
+    public String id() {
+        return workingDirId;
     }
 
     /**

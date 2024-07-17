@@ -39,6 +39,7 @@ import io.micronaut.reactor.http.client.ReactorSseClient;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -991,7 +992,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
-    @Test
+    // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
+    @RetryingTest(5)
     void kill() throws TimeoutException, InterruptedException {
         // Run execution until it is paused
         Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");

@@ -20,6 +20,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
@@ -138,6 +139,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final Integer numThreads;
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);
+    private Set<Metric> metrics;
 
     /**
      * Creates a new {@link Worker} instance.
@@ -170,6 +172,20 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+    }
+
+    @Override
+    public Set<Metric> getMetrics() {
+        if (this.metricRegistry == null) {
+            // can arrive if called before the instance is fully created
+            return Collections.emptySet();
+        }
+
+        return Set.of(
+            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT)),
+            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT)),
+            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT))
+        );
     }
 
     @Override

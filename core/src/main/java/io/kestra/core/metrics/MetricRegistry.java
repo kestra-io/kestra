@@ -9,11 +9,7 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -127,6 +123,38 @@ public class MetricRegistry {
      */
     public DistributionSummary summary(String name, String... tags) {
         return this.meterRegistry.summary(metricName(name), tags);
+    }
+
+    /**
+     * Search for an existing Counter in the meter registry
+     * @param name The base metric name
+     */
+    public Counter findCounter(String name) {
+        return this.meterRegistry.find(metricName(name)).counter();
+    }
+
+    /**
+     * Search for an existing Gauge in the meter registry
+     * @param name The base metric name
+     */
+    public Gauge findGauge(String name) {
+        return this.meterRegistry.find(metricName(name)).gauge();
+    }
+
+    /**
+     * Search for an existing Timer in the meter registry
+     * @param name The base metric name
+     */
+    public Timer findTimer(String name) {
+        return this.meterRegistry.find(metricName(name)).timer();
+    }
+
+    /**
+     * Search for an existing DistributionSummary in the meter registry
+     * @param name The base metric name
+     */
+    public DistributionSummary findDistributionSummary(String name) {
+        return this.meterRegistry.find(metricName(name)).summary();
     }
 
     /**

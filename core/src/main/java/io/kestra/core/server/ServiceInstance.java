@@ -25,7 +25,7 @@ import java.util.Set;
  * @param seqId     A monolithic sequence id which is incremented each time the service instance is updated.
  *                  Used to detect non-transactional update of the instance.
  */
-@JsonInclude(JsonInclude.Include.ALWAYS)
+@JsonInclude
 public record ServiceInstance(
     String id,
     Service.ServiceType type,

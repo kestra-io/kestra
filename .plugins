@@ -51,6 +51,7 @@
 #io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
 #io.kestra.plugin:plugin-jdbc-sqlite:LATEST
 #io.kestra.plugin:plugin-jdbc-sybase:LATEST
+#io.kestra.plugin:plugin-jira:LATEST
 #io.kestra.plugin:plugin-kafka:LATEST
 #io.kestra.plugin:plugin-kubernetes:LATEST
 #io.kestra.plugin:plugin-malloy:LATEST

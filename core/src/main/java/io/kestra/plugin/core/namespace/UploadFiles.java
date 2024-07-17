@@ -1,11 +1,15 @@
 package io.kestra.plugin.core.namespace;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.utils.FileUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -75,8 +79,9 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Schema(
         title = "A list of files.",
         description = "This can be a list of strings, where each string can be either a regex glob pattern or a file path. Providing a list requires specifying a `destination` where files will be stored.\n" +
-                    "This can also be a map where you can provide a specific destination path for a URI, which can be useful if you need to rename a file or move it to a different folder.",
-        anyOf = {List.class, Map.class}
+                    "This can also be a map where you can provide a specific destination path for a URI, which can be useful if you need to rename a file or move it to a different folder.\n" +
+                    "Finally, this can also be a string if its a pebble expression that render to a list or a map, or a single URI (that will be handle like a list of one).",
+        anyOf = {List.class, Map.class, String.class}
     )
     @PluginProperty(dynamic = true)
     private Object files;
@@ -105,10 +110,12 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
         final Namespace storageNamespace = runContext.storage().namespace(renderedNamespace);
 
+        if (files instanceof String filesString) {
+            // check if rendered filesString is a map, a list or a string
+            files = renderFilesString(runContext, filesString);
+        }
+
         if (files instanceof List<?> filesList) {
-            if (renderedDestination == null) {
-                throw new RuntimeException("Destination must be set when providing a List for the `files` property.");
-            }
             filesList = runContext.render((List<String>) filesList);
 
             final List<String> regexs = new ArrayList<>();
@@ -150,6 +157,9 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
                     throw new IllegalArgumentException("files must be a List<String> or a Map<String, String>");
                 }
             }
+        } else {
+            throw new IllegalArgumentException("Files must be a List<String> or a Map<String, String>");
+
         }
 
         return Output.builder().build();
@@ -159,6 +169,19 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private final Map<String, URI> files;
+    }
+
+    private Object renderFilesString(RunContext runContext, String filesString) throws IllegalVariableEvaluationException, JsonProcessingException {
+        String rendered = runContext.render(filesString);
+        if (runContext.storage().isFileExist(URI.create(rendered))) {
+            return List.of(rendered);
+        } else {
+            try {
+                return JacksonMapper.ofJson().readValue(rendered, Map.class);
+            } catch (JsonMappingException e) {
+                return JacksonMapper.ofJson().readValue(rendered, List.class);
+            }
+        }
     }
 
 }

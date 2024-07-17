@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="route.title">
-        <template #additional-right v-if="user && user.hasAnyAction(permission.NAMESPACE, action.CREATE)">
+        <template #additional-right v-if="!isUserEmpty && user.hasAnyAction(permission.NAMESPACE, action.CREATE)">
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary">
@@ -78,6 +78,7 @@
     const router = useRouter();
     const route = computed(() => ({title: t("namespaces")}));
     const user = computed(() => store.state.auth.user);
+    const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
 
     const filter = ref("");
     watch(filter, () => loadData());

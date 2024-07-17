@@ -725,7 +725,7 @@
                 }
 
                 const {fileName, extension, content, leaf} = FILE;
-                const NAME = `${fileName}.${extension}`;
+                const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
                 const NEW = {
                     id: Utils.uid(),
                     fileName: NAME,

@@ -129,22 +129,22 @@ public class App implements Callable<Integer> {
     }
 
     private static void validateServerCmdConfig(Map<String, Object> propertiesFromConfig) {
-        final String docsLink = "https://kestra.io/docs/configuration-guide/setup";
-        final List<String> requiredProperties = List.of(
-            "kestra.queue.type",
-            "kestra.repository.type",
-            "kestra.storage.type"
+        final Map<String, String> requiredProperties = Map.of(
+            "kestra.queue.type", "https://kestra.io/docs/configuration-guide/setup#queue-configuration",
+            "kestra.repository.type", "https://kestra.io/docs/configuration-guide/setup#repository-configuration",
+            "kestra.storage.type", "https://kestra.io/docs/configuration-guide/setup#internal-storage-configuration"
         );
 
-        Optional<String> missingKey = requiredProperties.stream()
-            .filter((property) -> !propertiesFromConfig.containsKey(property))
-            .findFirst();
+        final List<Map.Entry<String, String>> missingProperties = requiredProperties.entrySet().stream()
+            .filter((property) -> !propertiesFromConfig.containsKey(property.getKey()))
+            .toList();
 
-        if (missingKey.isPresent()) {
-            log.error("""
-                Server configuration requires following components to be defined - the Internal Storage, the Queue, and the Repository.
-                For more details, please follow the official configuration guide at: {}
-                """, docsLink);
+        missingProperties.forEach(property -> log.error("""
+            Server configuration requires the '{}' property to be defined.
+            For more details, please follow the official setup guide at: {}""", property.getKey(), property.getValue())
+        );
+
+        if (!missingProperties.isEmpty()) {
             throw new AbstractServerCommand.ServerCommandException("Incomplete server configuration - missing required properties");
         }
     }

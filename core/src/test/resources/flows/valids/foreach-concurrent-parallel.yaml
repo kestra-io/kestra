@@ -1,0 +1,18 @@
+id: foreach-concurrent-parallel
+namespace: io.kestra.tests
+
+tasks:
+  - id: for_each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["value 1", "value 2", "value 3"]
+    concurrency: 2
+    tasks:
+      - id: parallel
+        type: io.kestra.plugin.core.flow.Parallel
+        tasks:
+          - id: log
+            type: io.kestra.plugin.core.log.Log
+            message: Processing
+          - id: shell
+            type: io.kestra.plugin.core.log.Log
+            message: 2nd task

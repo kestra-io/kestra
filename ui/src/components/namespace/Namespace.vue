@@ -68,7 +68,7 @@
             },
             routeInfo() {
                 return {
-                    title: this.$route.params.namespace || this.$t("namespaces"),
+                    title: this.$route.params.id || this.$t("namespaces"),
                     breadcrumb: [
                         {
                             label: this.$t("namespaces"),

@@ -42,7 +42,15 @@
                         fixed
                         @sort-change="onSort"
                         @selection-change="onSelectionChange"
+                        expandable
                     >
+                        <template #expand>
+                            <el-table-column type="expand">
+                                <template #default="props">
+                                    <LogsWrapper class="m-3" :filters="props.row" :charts="false" embed />
+                                </template>
+                            </el-table-column>
+                        </template>
                         <template #select-actions>
                             <bulk-select
                                 :select-all="queryBulkAction"
@@ -265,6 +273,7 @@
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
+    import LogsWrapper from "../logs/LogsWrapper.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -277,6 +286,7 @@
             DateAgo,
             Status,
             Id,
+            LogsWrapper
         },
         data() {
             return {

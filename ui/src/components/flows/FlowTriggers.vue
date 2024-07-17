@@ -5,7 +5,13 @@
         stripe
         table-layout="auto"
         @row-dblclick="triggerId = $event.id; isOpen = true"
+        expandable
     >
+        <el-table-column type="expand">
+            <template #default="props">
+                <LogsWrapper class="m-3" :filters="props.row" :charts="false" embed />
+            </template>
+        </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
             <template #default="scope">
                 <code>
@@ -215,9 +221,10 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import moment from "moment";
+    import LogsWrapper from "../logs/LogsWrapper.vue";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         data() {
             return {
                 triggerId: undefined,

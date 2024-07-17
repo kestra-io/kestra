@@ -35,7 +35,7 @@
                     </el-form-item>
                 </template>
 
-                <template #top>
+                <template v-if="charts" #top>
                     <el-card shadow="never" class="mb-3" v-loading="!statsReady">
                         <div class="state-global-charts">
                             <template v-if="hasStatsData">
@@ -106,6 +106,18 @@
             logLevel: {
                 type: String,
                 default: undefined
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            charts: {
+                type: Boolean,
+                default: true
+            },
+            filters: {
+                type: Object,
+                default: null
             }
         },
         data() {
@@ -181,8 +193,7 @@
                 this.load();
             },
             loadQuery(base) {
-                let queryFilter = this.queryWithFilter();
-
+                let queryFilter = this.filters ? this.filters : this.queryWithFilter();
 
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
@@ -202,11 +213,15 @@
             },
             load() {
                 this.isLoading = true
+
+                const data = this.filters 
+                    ? {page: this.internalPageNumber, size: this.internalPageSize, ...this.filters} 
+                    : {page: this.$route.query.page || this.internalPageNumber, size: this.$route.query.size || this.internalPageSize}
+
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({
-                        page: this.$route.query.page || this.internalPageNumber,
-                        size: this.$route.query.size || this.internalPageSize,
-                        minLevel: this.selectedLogLevel,
+                        ...data,                      
+                        minLevel: this.filters ? null : this.selectedLogLevel,
                         sort: "timestamp:desc"
                     }))
                     .finally(() => {

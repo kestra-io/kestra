@@ -22,7 +22,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" id="namespaces" />
+    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" id="namespaces" />
 </template>
 
 <script setup>
@@ -98,6 +98,7 @@
                         props: {
                             tab: "editor",
                             isNamespace: true,
+                            namespace: this.$route.params.id,
                             isReadOnly: false,
                         },
                         query: {

@@ -230,6 +230,14 @@ public class Docker extends TaskRunner {
     @PluginProperty
     private FileHandlingStrategy fileHandlingStrategy = FileHandlingStrategy.VOLUME;
 
+    @Schema(
+        title = "Whether the container should be deleted upon completion."
+    )
+    @NotNull
+    @Builder.Default
+    @PluginProperty
+    private Boolean delete = true;
+
     public static Docker from(DockerOptions dockerOptions) {
         if (dockerOptions == null) {
             return Docker.builder().build();
@@ -441,11 +449,14 @@ public class Docker extends TaskRunner {
                     // kill container if it's still running, this means there was an exception and the container didn't
                     // come to a normal end.
                     kill();
-                    dockerClient.removeContainerCmd(exec.getId()).exec();
-                    logger.debug("Container deleted: {}", exec.getId());
-                    if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
-                        dockerClient.removeVolumeCmd(filesVolumeName).exec();
-                        logger.debug("Volume deleted: {}", filesVolumeName);
+
+                    if (Boolean.TRUE.equals(delete)) {
+                        dockerClient.removeContainerCmd(exec.getId()).exec();
+                        logger.debug("Container deleted: {}", exec.getId());
+                        if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
+                            dockerClient.removeVolumeCmd(filesVolumeName).exec();
+                            logger.debug("Volume deleted: {}", filesVolumeName);
+                        }
                     }
                 } catch (Exception ignored) {
 

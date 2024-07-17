@@ -121,7 +121,7 @@ jobs:
 
       # Docker Build
       - name: Build & Export Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -353,7 +353,7 @@ jobs:
 
       # Docker Build and push
       - name: Build Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true

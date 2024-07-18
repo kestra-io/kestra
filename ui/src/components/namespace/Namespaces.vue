@@ -44,7 +44,6 @@
 
 <script setup lang="ts">
     import {onMounted, computed, watch, ref} from "vue";
-    import {useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {ElTree} from "element-plus";
 
@@ -75,7 +74,6 @@
         children?: Node[];
     }
 
-    const router = useRouter();
     const route = computed(() => ({title: t("namespaces")}));
     const user = computed(() => store.state.auth.user);
     const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
@@ -85,10 +83,8 @@
 
     const namespaces = computed(() => store.state.namespace.namespaces as Namespace[]);
     const loadData = () => {
-        const query = filter.value ? {q: filter.value} : undefined;
-
-        router.push({query});
-
+        // TODO: Implement a new endpoint which does not require size limit but returns everything
+        const query = {size: 10000, page: 1, ...(filter.value ? {q: filter.value} : {})}
         store.dispatch("namespace/search", query);
     };
 

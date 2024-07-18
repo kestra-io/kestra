@@ -62,6 +62,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/flows")
 @Slf4j
 public class FlowController {
+    private static final String WARNING_JSON_FLOW_ENDPOINT = "This endpoint is deprecated. Handling flows as 'application/json' is no longer supported and will be removed in a future release. Please use the same endpoint with an 'application/x-yaml' content type.";
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -242,12 +244,18 @@ public class FlowController {
         return HttpResponse.ok(doCreate(flowParsed, flow));
     }
 
+    /**
+     * @deprecated use {@link #create(String)} instead
+     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.ALL)
-    @Operation(tags = {"Flows"}, summary = "Create a flow from json object")
+    @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true)
+    @Deprecated(forRemoval = true, since = "0.18")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
+        log.warn(WARNING_JSON_FLOW_ENDPOINT);
+
         return HttpResponse.ok(doCreate(flow, flow.generateSource()).toFlow());
     }
 
@@ -280,19 +288,26 @@ public class FlowController {
         );
     }
 
+    /**
+     * @deprecated use {@link #updateNamespace(String, String, Boolean)} instead
+     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}")
     @Operation(
         tags = {"Flows"},
         summary = "Update a complete namespace from json object",
         description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+            "Flow that already created but not in `flows` will be deleted if the query delete is `true`",
+        deprecated = true
     )
+    @Deprecated(forRemoval = true, since = "0.18")
     public List<Flow> updateNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
+        log.warn(WARNING_JSON_FLOW_ENDPOINT);
+
         return this
             .updateCompleteNamespace(
                 namespace,
@@ -352,13 +367,10 @@ public class FlowController {
         List<FlowWithSource> deleted = new ArrayList<>();
         if (delete) {
             deleted = flowRepository
-                .findByNamespace(tenantService.resolveTenant(), namespace)
+                .findByNamespaceWithSource(tenantService.resolveTenant(), namespace)
                 .stream()
                 .filter(flow -> !ids.contains(flow.getId()))
-                .map(flow -> {
-                    flowRepository.delete(flow);
-                    return FlowWithSource.of(flow, flow.generateSource());
-                })
+                .peek(flow -> flowRepository.delete(flow))
                 .toList();
         }
 
@@ -396,14 +408,20 @@ public class FlowController {
         return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
+    /**
+     * @deprecated use {@link #update(String, String, String)} instead
+     */
     @Put(uri = "{namespace}/{id}", consumes = MediaType.ALL)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a flow")
+    @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = true)
+    @Deprecated(forRemoval = true, since = "0.18")
     public HttpResponse<Flow> update(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
+        log.warn(WARNING_JSON_FLOW_ENDPOINT);
+
         Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -416,15 +434,21 @@ public class FlowController {
         return flowRepository.update(current, previous, source, pluginDefaultService.injectDefaults(current));
     }
 
+    /**
+     * @deprecated should not be used anymore
+     */
     @Patch(uri = "{namespace}/{id}/{taskId}")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a single task on a flow")
+    @Operation(tags = {"Flows"}, summary = "Update a single task on a flow", deprecated = true)
+    @Deprecated(forRemoval = true, since = "0.18")
     public HttpResponse<Flow> updateTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The task id") @PathVariable String taskId,
         @Parameter(description = "The task") @Valid @Body Task task
     ) throws ConstraintViolationException {
+        log.warn("This endpoint is deprecated: updating a single task is not longer supported and will be removed in a future release.");
+
         Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingFlow.isEmpty()) {

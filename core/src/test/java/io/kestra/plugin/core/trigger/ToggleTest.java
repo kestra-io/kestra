@@ -7,6 +7,8 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.schedulers.AbstractScheduler;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -28,8 +30,14 @@ class ToggleTest extends AbstractMemoryRunnerTest {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     private QueueInterface<Trigger> triggerQueue;
 
+    @Inject
+    private AbstractScheduler scheduler;
+
     @Test
     void toggle() throws Exception {
+        // we need to await for the scheduler to be ready otherwise there may be an issue with updating the trigger
+        Await.until(() -> scheduler.isReady());
+
         Trigger trigger = Trigger
             .builder()
             .triggerId("schedule")

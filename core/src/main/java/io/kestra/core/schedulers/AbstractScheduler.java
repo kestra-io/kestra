@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
@@ -118,7 +119,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         setState(ServiceState.CREATED);
     }
 
-    protected boolean isReady() {
+    @VisibleForTesting
+    public boolean isReady() {
         return isReady;
     }
 

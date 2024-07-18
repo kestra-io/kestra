@@ -2,8 +2,6 @@ import io.kestra.cli.commands.servers.AbstractServerCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.kestra.cli.App;
 
@@ -15,17 +13,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AppTest {
-    @BeforeAll
-    public static void setUp() {
-        // Don't make any assumptions about $HOME
-        System.setProperty("user.home", "/foo");
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        System.clearProperty("user.home");
-    }
-
     @Test
     public void testHelp() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();

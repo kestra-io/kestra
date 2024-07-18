@@ -1,0 +1,39 @@
+name: Dependency Checks
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Every day
+  workflow_dispatch: {}
+
+env:
+  JAVA_VERSION: '21'
+
+jobs:
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          caches-enabled: true
+
+      # Run OWASP dependency check plugin
+      - name: Run Dependency Check
+        run: |
+          ./gradlew dependencyCheckAggregate

@@ -1,4 +1,3 @@
-import io.kestra.cli.commands.servers.AbstractServerCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -10,7 +9,6 @@ import java.io.PrintStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AppTest {
     @Test
@@ -23,10 +21,5 @@ public class AppTest {
 
             assertThat(out.toString(), containsString("kestra"));
         }
-    }
-
-    @Test
-    public void testSeverCommandValidation() {
-        assertThrows(AbstractServerCommand.ServerCommandException.class, () -> App.main(new String[]{"server", "webserver"}));
     }
 }

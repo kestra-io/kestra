@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @CommandLine.Command(
     name = "update",

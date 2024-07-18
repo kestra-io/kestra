@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!--
+        This is a CPE/CVE suppression file for the Gradle dependency check plugin.
+        Each CPE that is found by error (false positive) needs to be suppressed for a specific jar using it's GAV.
+        If a CVE is disputed or cannot be fixed, it needs to be suppressed by it's CVE identifier.
+        See https://jeremylong.github.io/DependencyCheck/general/suppression.html
+     -->
+    <suppress>
+        <notes>
+            <![CDATA[
+                Suppress the false positive CPE for Kestra jdbc-mysql to mysql itself
+            ]]>
+        </notes>
+        <gav regex="true">io\.kestra:jdbc-mysql.*</gav>
+        <cpe>cpe:/a:mysql:mysql</cpe>
+    </suppress>
+    <suppress>
+        <notes>
+            <![CDATA[
+                Suppress the false positive CPE for plexus-component-annotations, plexus-interpolation and plexus-utils to codehaus-plexus
+            ]]>
+        </notes>
+        <gav regex="true">org\.codehaus\.plexus:plexus.*</gav>
+        <cpe>cpe:/a:codehaus-plexus_project:codehaus-plexus</cpe>
+    </suppress>
+</suppressions>

@@ -36,6 +36,9 @@ plugins {
     id 'signing'
     id 'ru.vyarus.pom' version '3.0.0' apply false
     id 'ru.vyarus.github-info' version '2.0.0' apply false
+
+    // OWASP dependency check
+    id "org.owasp.dependencycheck" version "10.0.3" apply false
 }
 
 idea {
@@ -306,6 +309,24 @@ sonar {
         property "sonar.organization", "kestra-io"
         property "sonar.host.url", "https://sonarcloud.io"
     }
+}
+
+/**********************************************************************************************************************\
+ * OWASP Dependency check
+ **********************************************************************************************************************/
+apply plugin: 'org.owasp.dependencycheck'
+
+dependencyCheck {
+    // fail only on HIGH and CRITICAL vulnerabilities, we may want to lower to 5 (mid-medium) later
+    failBuildOnCVSS = 7
+
+    // disable the .NET assembly analyzer as otherwise it wants to analyze EXE file
+    analyzers {
+        assemblyEnabled = false
+    }
+
+    // configure a suppression file
+    suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
 }
 
 /**********************************************************************************************************************\

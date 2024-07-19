@@ -20,7 +20,7 @@
         <el-col v-if="!namespaces || !namespaces.length" :span="24" class="my-2 p-3 namespaces empty">
             <span>{{ t("no_namespaces") }}</span>
         </el-col>
-        <el-col v-for="(namespace, index) in hierarchy(namespaces)" :key="index" :span="24" class="my-2 p-3 namespaces">
+        <el-col v-for="(namespace, index) in hierarchy(namespaces)" :key="index" :span="24" class="my-1 py-2 px-4 namespaces">
             <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto">
                 <template #default="{data}">
                     <div class="node">

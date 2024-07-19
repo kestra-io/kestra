@@ -1,5 +1,6 @@
 package io.kestra.webserver.utils.filepreview;
 
+import io.github.pixee.security.BoundedLineReader;
 import lombok.Getter;
 
 import java.io.BufferedReader;
@@ -26,7 +27,7 @@ public class DefaultFileRender extends FileRender {
 
     private void renderContent(InputStream fileStream, Charset charset) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(fileStream, charset));
-        String line = reader.readLine();
+        String line = BoundedLineReader.readLine(reader, 5_000_000);
         int lineCount = 0;
 
         StringBuilder contentBuilder = new StringBuilder();
@@ -34,7 +35,7 @@ public class DefaultFileRender extends FileRender {
         while (line != null && lineCount < this.maxLine) {
             contentBuilder.append(line);
             lineCount++;
-            if ((line = reader.readLine()) != null) {
+            if ((line = BoundedLineReader.readLine(reader, 5_000_000)) != null) {
                 contentBuilder.append("\n");
 
                 if(lineCount == this.maxLine) {

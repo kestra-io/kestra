@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.pixee.security.BoundedLineReader;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -107,7 +108,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
              final BufferedReader reader = newBufferedReader(runContext, from)) {
 
             String item;
-            while ((item = reader.readLine()) != null) {
+            while ((item = BoundedLineReader.readLine(reader, 5_000_000)) != null) {
                 IllegalVariableEvaluationException exception = null;
                 Boolean match = null;
                 try {

@@ -144,7 +144,8 @@
                     {
                         name: "outputs",
                         component: ExecutionOutput,
-                        title: title("outputs")
+                        title: title("outputs"),
+                        maximized: true
                     },
                     {
                         name: "metrics",

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.runner;
 
+import io.github.pixee.security.BoundedLineReader;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.tasks.runners.*;
@@ -172,7 +173,7 @@ public class Process extends TaskRunner {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                 try (BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
                     String line;
-                    while ((line = bufferedReader.readLine()) != null) {
+                    while ((line = BoundedLineReader.readLine(bufferedReader, 5_000_000)) != null) {
                         this.logConsumerInterface.accept(line, this.isStdErr);
                     }
                 }

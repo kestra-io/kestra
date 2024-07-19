@@ -27,8 +27,8 @@ export default {
                     return response.data.results;
                 })
         },
-        load({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/namespaces/${options.id}`, VALIDATE)
+        load({commit}, id) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${id}`, VALIDATE)
                 .then(response => {
                     if(response.status === 200) commit("setNamespace", response.data)
                     return response.data;

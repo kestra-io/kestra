@@ -216,8 +216,7 @@
                 }
             },
             loadKvs() {
-                this.$store
-                    .dispatch("namespace/kvsList", {id: this.$route.params.namespace})
+                this.$store.dispatch("namespace/kvsList", {id: this.$route.params.id})
             },
             kvKeyDuplicate(rule, value, callback) {
                 if (this.kv.update === undefined && this.kvs && this.kvs.find(r => r.key === value)) {

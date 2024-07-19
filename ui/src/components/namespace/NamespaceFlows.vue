@@ -1,5 +1,5 @@
 <template>
-    <data-table :total="total">
+    <data-table @page-changed="onPageChanged" :size="pageSize" :page="pageNumber" :total="total">
         <template #table>
             <el-table
                 :data="flows"
@@ -111,6 +111,7 @@
     import StateChart from "../stats/StateChart.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import Kicon from "../Kicon.vue"
+    import _merge from "lodash/merge";
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
 
@@ -128,8 +129,17 @@
             }
         },
         methods: {
+            loadQuery(base) {               
+                return _merge(base, this.queryWithFilter())
+            },
             loadData(callback) {
-                this.$store.dispatch("flow/findFlows", {namespace: this.$route.params.namespace}).then((flows) => {
+                const params =  {
+                    namespace: this.$route.params.id,
+                    page: this.$route.query.page || this.internalPageNumber, 
+                    size: this.$route.query.size || this.internalPageSize
+                }
+
+                this.$store.dispatch("flow/findFlows", this.loadQuery(params)).then((flows) => {
                     this.dailyGroupByFlowReady = false;
                     this.lastExecutionByFlowReady = false;
 

@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import io.github.pixee.security.ZipSecurity;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -356,7 +357,7 @@ public class TemplateController {
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
-            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
+            try (ZipInputStream archive = ZipSecurity.createHardenedInputStream(fileUpload.getInputStream())) {
                 ZipEntry entry;
                 while ((entry = archive.getNextEntry()) != null) {
                     if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {

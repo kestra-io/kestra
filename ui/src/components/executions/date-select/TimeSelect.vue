@@ -29,6 +29,25 @@
                 }
                 return this.allowCustom ? this.$t("datepicker.custom") : undefined;
             },
+            timeFilterPresets(){
+                let values = [
+                    {value: "PT5M", label: this.label("5minutes")},
+                    {value: "PT15M", label: this.label("15minutes")},
+                    {value: "PT1H", label: this.label("1hour")},
+                    {value: "PT12H", label: this.label("12hours")},
+                    {value: "PT24H", label: this.label("24hours")},
+                    {value: "PT48H", label: this.label("48hours")},
+                    {value: "PT168H", label: this.label("7days")},
+                    {value: "PT720H", label: this.label("30days")},
+                    {value: "PT8760H", label: this.label("365days")},
+                ]
+                
+                if(this.includeNever){
+                    values.push({value: undefined, label: this.$t("datepicker.never")})
+                }
+                
+                return values;
+            },
             presetValues() {
                 return this.timeFilterPresets.map(preset => preset.value);
             }
@@ -45,45 +64,7 @@
         },
         data() {
             return {
-                timeRangeSelect: undefined,
-                timeFilterPresets: [
-                    {
-                        value: "PT5M",
-                        label: this.label("5minutes")
-                    },
-                    {
-                        value: "PT15M",
-                        label: this.label("15minutes")
-                    },
-                    {
-                        value: "PT1H",
-                        label: this.label("1hour")
-                    },
-                    {
-                        value: "PT12H",
-                        label: this.label("12hours")
-                    },
-                    {
-                        value: "PT24H",
-                        label: this.label("24hours")
-                    },
-                    {
-                        value: "PT48H",
-                        label: this.label("48hours")
-                    },
-                    {
-                        value: "PT168H",
-                        label: this.label("7days")
-                    },
-                    {
-                        value: "PT720H",
-                        label: this.label("30days")
-                    },
-                    {
-                        value: "PT8760H",
-                        label: this.label("365days")
-                    }
-                ]
+                timeRangeSelect: undefined
             }
         },
         props: {
@@ -108,6 +89,10 @@
                 default: false
             },
             clearable: {
+                type: Boolean,
+                default: false
+            },
+            includeNever: {
                 type: Boolean,
                 default: false
             }

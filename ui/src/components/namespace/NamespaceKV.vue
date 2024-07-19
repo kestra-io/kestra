@@ -100,6 +100,7 @@
                     :placeholder="kv.ttl ? $t('datepicker.custom') : $t('datepicker.never')"
                     :time-range="kv.ttl"
                     clearable
+                    include-never
                     @update:model-value="onTtlChange"
                 />
             </el-form-item>

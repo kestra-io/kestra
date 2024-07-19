@@ -1,9 +1,9 @@
 <template>
     <div>
         <home
-            :namespace="$route.params.namespace || $route.query.id"
+            :namespace="$route.params.id || $route.query.id"
             :restore-url="false"
-            :description="$route.params.namespace ? namespace?.description : undefined"
+            :description="$route.params.id ? namespace?.description : undefined"
             embed
         />
     </div>

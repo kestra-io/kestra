@@ -10,6 +10,7 @@ import io.micronaut.core.annotation.Introspected;
 public enum Type {
     STRING(StringInput.class.getName()),
     ENUM(EnumInput.class.getName()),
+    SELECT(SelectInput.class.getName()),
     INT(IntInput.class.getName()),
     FLOAT(FloatInput.class.getName()),
     BOOLEAN(BooleanInput.class.getName()),

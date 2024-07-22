@@ -20,22 +20,23 @@
         <el-col v-if="!namespaces || !namespaces.length" :span="24" class="my-2 p-3 namespaces empty">
             <span>{{ t("no_namespaces") }}</span>
         </el-col>
-        <el-col v-for="(namespace, index) in hierarchy(namespaces)" :key="index" :span="24" class="my-1 py-2 px-4 namespaces">
+        <el-col
+            v-for="(namespace, index) in hierarchy(namespaces)"
+            :key="index"
+            :span="24"
+            class="my-1 py-2 px-4 namespaces"
+        >
             <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto">
                 <template #default="{data}">
-                    <div class="node">
+                    <router-link :to="{name: 'namespaces/update', params: {id: data.id}}" tag="div" class="node">
                         <div class="d-flex">
                             <VectorIntersection class="me-2 icon" />
                             <span>{{ data.label }}</span>
                         </div>
-                        <el-button
-                            size="small"
-                            tag="router-link"
-                            :to="{name: 'namespaces/update', params: {id: data.id}}"
-                        >
+                        <el-button size="small">
                             <TextSearch />
                         </el-button>
-                    </div>
+                    </router-link>
                 </template>
             </el-tree>
         </el-col>
@@ -84,7 +85,7 @@
     const namespaces = computed(() => store.state.namespace.namespaces as Namespace[]);
     const loadData = () => {
         // TODO: Implement a new endpoint which does not require size limit but returns everything
-        const query = {size: 10000, page: 1, ...(filter.value ? {q: filter.value} : {})}
+        const query = {size: 10000, page: 1, ...(filter.value ? {q: filter.value} : {})};
         store.dispatch("namespace/search", query);
     };
 
@@ -160,15 +161,6 @@ $active: #A396FF;
         overflow: hidden;
         background: var(--bs-body-bg);
 
-        &:hover {
-            background: var(--bs-body-bg);
-            color: $active;
-        }
-
-        .el-tree-node__expand-icon {
-            display: none;
-        }
-
         .icon {
             color: $active;
         }
@@ -179,6 +171,12 @@ $active: #A396FF;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        color: var(--el-text-color-regular);
+    
+        &:hover {
+            background: var(--bs-body-bg);
+            color: $active;
+        }
     }
 }
 </style>

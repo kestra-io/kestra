@@ -1330,7 +1330,6 @@ public class ExecutionController {
         }
 
         Execution newExecution = setLabels(execution, labels);
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
 
         return HttpResponse.ok(newExecution);
     }

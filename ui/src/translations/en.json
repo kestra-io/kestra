@@ -711,7 +711,7 @@
     "dependencies loaded": "Dependencies loaded",
     "loaded x dependencies": "{count} dependencies loaded",
     "security_advice": {
-      "title": "Your data is not protected!",
+      "title": "Protect your instance",
       "content": "Enable basic authentication to protect your instance.",
       "switch_text": "Don't show again",
       "enable": "Enable authentication"

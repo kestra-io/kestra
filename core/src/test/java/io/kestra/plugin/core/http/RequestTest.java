@@ -11,6 +11,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Head;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -67,7 +68,7 @@ class RequestTest {
 
     @Test
     void head() throws Exception {
-        final String url = "http://speedtest.ftp.otenet.gr/files/test100Mb.db";
+        final String url = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
 
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -81,7 +82,7 @@ class RequestTest {
         Request.Output output = task.run(runContext);
 
         assertThat(output.getUri(), is(URI.create(url)));
-        assertThat(output.getHeaders().get("Content-Length").get(0), is("104857600"));
+        assertThat(output.getHeaders().get("content-length").getFirst(), is("512789"));
     }
 
     @Test
@@ -258,6 +259,11 @@ class RequestTest {
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
+        }
+
+        @Head("/hello")
+        HttpResponse<String> head() {
+            return HttpResponse.ok();
         }
 
         @Get("/hello417")

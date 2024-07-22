@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class DownloadTest {
-    public static final String FILE = "http://speedtest.ftp.otenet.gr/files/test1Mb.db";
+    public static final String FILE = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -56,11 +56,11 @@ class DownloadTest {
             IOUtils.toString(this.storageInterface.get(null, output.getUri()), StandardCharsets.UTF_8),
             is(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8))
         );
-        assertThat(output.getUri().toString(), endsWith(".db"));
+        assertThat(output.getUri().toString(), endsWith(".csv"));
     }
 
     @Test
-    void noResponse() throws Exception {
+    void noResponse() {
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
 
@@ -100,7 +100,7 @@ class DownloadTest {
     }
 
     @Test
-    void error() throws Exception {
+    void error() {
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
         embeddedServer.start();
 

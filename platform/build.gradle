@@ -80,7 +80,7 @@ dependencies {
         api "org.eclipse.aether:aether-transport-file:$aetherVersion"
         api "org.eclipse.aether:aether-transport-http:$aetherVersion"
         api 'org.apache.maven:maven-aether-provider:3.3.9'
-        api 'com.github.oshi:oshi-core:6.6.1'
+        api 'com.github.oshi:oshi-core:6.6.2'
         api 'io.pebbletemplates:pebble:3.2.2'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion

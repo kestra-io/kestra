@@ -71,7 +71,7 @@
     "decompress": "^4.2.1",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.26.0",
-    "jsdom": "^24.1.0",
+    "jsdom": "^24.1.1",
     "monaco-editor": "^0.49.0",
     "monaco-yaml": "^5.2.0",
     "prettier": "^3.3.1",

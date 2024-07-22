@@ -165,9 +165,6 @@
         beforeUnmount() {
             document.removeEventListener("keydown", this._keyListener);
         },
-        computed: {
-
-        },
         methods: {
             updateDefaults() {
                 for (const input of this.inputsList || []) {

@@ -9,6 +9,7 @@
                     </el-form-item>
                     <el-form-item>
                         <namespace-select
+                            data-test-id="logs-namespace-selector"
                             data-type="flow"
                             v-if="$route.name !== 'flows/update'"
                             :value="$route.query.namespace"
@@ -17,6 +18,7 @@
                     </el-form-item>
                     <el-form-item>
                         <log-level-selector
+                            data-test-id="logs-log-level-selector"
                             :value="selectedLogLevel"
                             @update:model-value="onDataTableValue('level', $event)"
                         />

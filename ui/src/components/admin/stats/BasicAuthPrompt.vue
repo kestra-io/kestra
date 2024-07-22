@@ -66,7 +66,7 @@
                         {
                             validator: (rule, value, callback) => {
                                 if (value && value.length > 256) {
-                                    callback(new Error(this.$t("Email must not exceed 256 characters")));
+                                    callback(new Error(this.$t("email length constraint")));
                                 } else {
                                     callback();
                                 }
@@ -78,7 +78,7 @@
                         {
                             validator: (rule, value, callback) => {
                                 if (value && value.length > 256) {
-                                    callback(new Error(this.$t("Password must not exceed 256 characters")));
+                                    callback(new Error(this.$t("password length constraint")));
                                 } else {
                                     callback();
                                 }

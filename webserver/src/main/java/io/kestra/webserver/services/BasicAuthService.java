@@ -78,7 +78,7 @@ public class BasicAuthService {
 
         if (basicAuthConfiguration.getUsername().length() > EMAIL_PASSWORD_MAX_LEN ||
             basicAuthConfiguration.password.length() > EMAIL_PASSWORD_MAX_LEN) {
-            throw new IllegalArgumentException("The length of email or password should not exceed 256.");
+            throw new IllegalArgumentException("The length of email or password should not exceed 256 characters.");
         }
 
 

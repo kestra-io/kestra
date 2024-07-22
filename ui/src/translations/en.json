@@ -235,6 +235,8 @@
     "email": "Email",
     "password": "Password",
     "confirm password": "Confirm password",
+    "email length constraint": "Email must not exceed 256 characters",
+    "password length constraint": "Password must not exceed 256 characters",
     "passwords do not match": "Passwords do not match",
     "avg duration": "Avg. execution duration",
     "neutral trend": "Stable",

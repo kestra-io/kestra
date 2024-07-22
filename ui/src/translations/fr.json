@@ -224,6 +224,8 @@
     "email": "Email",
     "password": "Mot de passe",
     "confirm password": "Confirmer le mot de passe",
+    "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
+    "password length constraint": "Le mot de passe ne doit pas dépasser 256 caractères.",
     "passwords do not match": "Les mots de passe ne correspondent pas",
     "avg duration": "Durée moyenne d'exécution",
     "neutral trend": "Stable",

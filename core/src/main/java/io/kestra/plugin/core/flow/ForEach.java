@@ -33,13 +33,22 @@ import java.util.Optional;
     title = "Execute a group of tasks for each value in the list.",
     description = """
         You can control how many task groups are executed concurrently by setting the `concurrencyLimit` property. \
-        If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values. \
-        If you set the `concurrencyLimit` property to 1, Kestra will execute each task group one after the other starting with the first value in the list. \
-        Regardless of the `concurrencyLimit` property, the `tasks` will run one after the other — to run those in parallel, wrap them in a Parallel task as shown in one of the examples below. \
+
+        - If you set the `concurrencyLimit` property to `0`, Kestra will execute all task groups concurrently for all values. \
+
+        - If you set the `concurrencyLimit` property to `1`, Kestra will execute each task group one after the other starting with the task group for the first value in the list. \
+
+
+        Regardless of the `concurrencyLimit` property, the `tasks` will run one after the other — to run those in parallel, wrap them in a [Parallel](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.parallel) task as shown in the last example below (_see the flow `parallel_tasks_example`_). \
+
+
         The `values` should be defined as a JSON string or an array, e.g. a list of string values `["value1", "value2"]` or a list of key-value pairs `[{"key": "value1"}, {"key": "value2"}]`.\s
 
-        You can access the current iteration value using the variable `{{ taskrun.value }}`. \
-        If you need to access the value in a nested child task, you can use the syntax `{{ parent.taskrun.value }}`. \
+
+        You can access the current iteration value using the variable `{{ taskrun.value }}` \
+        or `{{ parent.taskrun.value }}` if you are in a nested child task. \
+
+
         If you need to execute more than 2-5 tasks for each value, we recommend triggering a subflow for each value for better performance and modularity. \
         Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."""
 )
@@ -143,8 +152,10 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The number of concurrent task groups for each value in the `values` array.",
         description = """
-        If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values. \
-        If you set the `concurrencyLimit` property to 1, Kestra will execute each task group one after the other starting with the first value in the list."""
+        If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values (zero limits!). \
+
+
+        If you set the `concurrencyLimit` property to 1, Kestra will execute each task group one after the other starting with the first value in the list (limit concurrency to one task group that can be actively running at any time)."""
     )
     @PluginProperty
     private final Integer concurrencyLimit = 1;

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
+    private static final int EMAIL_PASSWORD_MAX_LEN = 256;
 
     @Inject
     private SettingRepositoryInterface settingRepository;
@@ -74,6 +75,12 @@ public class BasicAuthService {
         if (basicAuthConfiguration.getPassword() == null) {
             throw new IllegalArgumentException("No password set for Basic Authentication. Please provide a password.");
         }
+
+        if (basicAuthConfiguration.getUsername().length() > EMAIL_PASSWORD_MAX_LEN ||
+            basicAuthConfiguration.password.length() > EMAIL_PASSWORD_MAX_LEN) {
+            throw new IllegalArgumentException("The length of email or password should not exceed 256 characters.");
+        }
+
 
         SaltedBasicAuthConfiguration previousConfiguration = this.configuration();
         String salt = previousConfiguration == null

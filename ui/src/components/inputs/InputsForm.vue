@@ -184,16 +184,7 @@
         beforeUnmount() {
             document.removeEventListener("keydown", this._keyListener);
         },
-        computed: {
-
-        },
         methods: {
-            parseInput(input) {
-                if (input && input.length > 0) {
-                    return JSON.parse(input)
-                }
-                return input
-            },
             updateDefaults() {
                 for (const input of this.inputsList || []) {
                     if (input.type === "MULTISELECT") {

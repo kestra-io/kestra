@@ -27,8 +27,8 @@ export default {
                     return response.data.results;
                 })
         },
-        load({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/namespaces/${options.id}`, VALIDATE)
+        load({commit}, id) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${id}`, VALIDATE)
                 .then(response => {
                     if(response.status === 200) commit("setNamespace", response.data)
                     return response.data;
@@ -103,6 +103,8 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
+            if(!payload.path) return;
+
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             const request = await this.$http.get(URL, {transformResponse: response => response, responseType: "json"})
 

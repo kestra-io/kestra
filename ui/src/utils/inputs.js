@@ -11,7 +11,7 @@ export default class Inputs {
         } else if (type === "DURATION" || type === "TIME") {
             res = moment().startOf("day").add(res, "seconds").toString()
         } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
-            res = JSON.stringify(res).toString();
+            if(typeof res !== "string") res = JSON.stringify(res).toString();
         } else if (type === "BOOLEAN" && type === undefined){
             res = "undefined";
         } else if (type === "STRING" && Array.isArray(res)){

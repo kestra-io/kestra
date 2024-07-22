@@ -1,5 +1,5 @@
 <template>
-    <NamespaceDependencies :id="route.params.namespace" />
+    <NamespaceDependencies :id="route.params.id" />
 </template>
 
 <script setup>

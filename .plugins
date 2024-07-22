@@ -31,6 +31,7 @@
 #io.kestra.plugin:plugin-github:LATEST
 #io.kestra.plugin:plugin-googleworkspace:LATEST
 #io.kestra.plugin:plugin-hightouch:LATEST
+#io.kestra.plugin:plugin-hubspot:LATEST
 #io.kestra.plugin:plugin-jdbc-as400:LATEST
 #io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
 #io.kestra.plugin:plugin-jdbc-db2:LATEST
@@ -54,6 +55,7 @@
 #io.kestra.plugin:plugin-jira:LATEST
 #io.kestra.plugin:plugin-kafka:LATEST
 #io.kestra.plugin:plugin-kubernetes:LATEST
+#io.kestra.plugin:plugin-ldap:LATEST
 #io.kestra.plugin:plugin-linear:LATEST
 #io.kestra.plugin:plugin-malloy:LATEST
 #io.kestra.plugin:plugin-minio:LATEST
@@ -88,6 +90,7 @@
 #io.kestra.plugin:plugin-terraform:LATEST
 #io.kestra.plugin:plugin-tika:LATEST
 #io.kestra.plugin:plugin-weaviate:LATEST
+#io.kestra.plugin:plugin-zendesk:LATEST
 #io.kestra.storage:storage-azure:LATEST
 #io.kestra.storage:storage-gcs:LATEST
 #io.kestra.storage:storage-minio:LATEST

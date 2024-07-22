@@ -736,14 +736,7 @@
                 };
 
                 if (creation) {
-                    if (!extension) {
-                        this.$toast().error("Missing file extension");
-                        return;
-                    }
-
-                    const path = `${
-                        this.dialog.folder ? `${this.dialog.folder}/` : ""
-                    }${NAME}`;
+                    const path = `${this.dialog.folder ? `${this.dialog.folder}/` : ""}${NAME}`;
                     await this.createFile({
                         namespace: this.currentNS ?? this.$route.params.namespace,
                         path,
@@ -896,6 +889,7 @@
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
+                            flow: true,
                         });
                     }
                 },

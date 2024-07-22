@@ -100,6 +100,10 @@
             input: {
                 type: Boolean,
                 default: false
+            },
+            creating: {
+                type: Boolean,
+                default: false        
             }
         },
         emits: ["editorDidMount", "change"],
@@ -130,7 +134,7 @@
                     await this.changeTab("Flow", () => this.flow.source);
                 } else {
                     const payload = {
-                        namespace: this.$route.params.namespace,
+                        namespace: this.$route.params.namespace || this.$route.params.id,
                         path: newValue.path ?? newValue.name,
                     };
 
@@ -179,7 +183,7 @@
                 this.initMonaco(monaco)
             })
 
-            if (!this.monacoYamlConfigured) {
+            if (!this.monacoYamlConfigured && this.currentTab?.flow) {
                 this.$store.commit("core/setMonacoYamlConfigured", true);
                 configureMonacoYaml(monaco, {
                     enableSchemaRequest: true,
@@ -616,7 +620,10 @@
                     this.editor = monaco.editor.create(this.$el, options);
 
                     if(!this.input){
-                        await this.changeTab(this.currentTab?.path ?? this.currentTab?.name, () => this.value);
+                        const name = this.currentTab?.path ?? this.currentTab?.name;            
+                        const value = this.currentTab?.flow || this.creating ? this.value : this.readFile({namespace: this.$route.params.namespace || this.$route.params.id, path: name})
+
+                        await this.changeTab(name, () => value);
                     }
                 }
 

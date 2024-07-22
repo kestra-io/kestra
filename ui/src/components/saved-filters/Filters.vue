@@ -1,11 +1,11 @@
 <template>
     <!-- No filter yet -->
-    <el-button v-if="!hasSavedFilters" :icon="ContentSave" @click="toggleDrawer()">
+    <el-button v-if="!hasSavedFilters" data-test-id="no-filters-selector" :icon="ContentSave" @click="toggleDrawer()">
         {{ $t("search filters.filters") }}
     </el-button>
     <!-- Existing filters -->
     <el-dropdown v-else button type="default" popper-class="disabled-means-selected">
-        <el-button class="dropdown-button" :icon="ContentSave" @click="toggleDrawer()">
+        <el-button class="dropdown-button" data-test-id="filters-selector" :icon="ContentSave" @click="toggleDrawer()">
             {{ $t("search filters.filters") }}
         </el-button>
         <template #dropdown>

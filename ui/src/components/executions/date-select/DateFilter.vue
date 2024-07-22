@@ -4,10 +4,10 @@
         @change="onSelectedFilterType()"
         class="filter"
     >
-        <el-radio-button :value="filterType.RELATIVE">
+        <el-radio-button data-test-id="date-filter-relative-selector" :value="filterType.RELATIVE">
             {{ $t("relative") }}
         </el-radio-button>
-        <el-radio-button :value="filterType.ABSOLUTE">
+        <el-radio-button data-test-id="date-filter-absolute-selector" :value="filterType.ABSOLUTE">
             {{ $t("absolute") }}
         </el-radio-button>
     </el-radio-group>

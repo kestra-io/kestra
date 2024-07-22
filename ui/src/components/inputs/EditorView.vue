@@ -117,7 +117,7 @@
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
     const flowErrors = computed(() => {
-        const isFlow = currentTab?.value?.extension === undefined;
+        const isFlow = currentTab?.value?.flow;
 
         if (isFlow) {
             const flowExistsError =
@@ -148,7 +148,7 @@
     });
 
     const flowWarnings = computed(() => {
-        const isFlow = currentTab?.value?.extension === undefined;
+        const isFlow = currentTab?.value?.flow;
 
         if (isFlow) {
             const outdatedWarning =
@@ -279,7 +279,7 @@
     );
 
     const flowHaveTasks = (source) => {
-        const isFlow = currentTab?.value?.extension === undefined;
+        const isFlow = currentTab?.value?.flow;
 
         if (isFlow) {
             const flow = source ? source : flowYaml.value;
@@ -380,7 +380,7 @@
         window.removeEventListener("beforeunload", persistEditorWidth);
         persistEditorWidth();
 
-        store.commit("editor/closeTabs");
+        store.commit("editor/closeAllTabs");
     });
 
     const stopTour = () => {
@@ -578,7 +578,7 @@
     };
 
     const editorUpdate = (event) => {
-        const isFlow = currentTab?.value?.extension === undefined;
+        const isFlow = currentTab?.value?.flow;
 
         updatedFromEditor.value = true;
         flowYaml.value = event;
@@ -698,7 +698,7 @@
             }
         }
 
-        const isFlow = currentTab?.value?.extension === undefined;
+        const isFlow = currentTab?.value?.flow || props.isCreating;
 
         if (isFlow) {
             onEdit(flowYaml.value, true).then((validation) => {
@@ -713,7 +713,9 @@
                     store.commit("editor/changeOpenedTabs", {
                         action: "dirty",
                         name: "Flow",
-                        dirty: false
+                        path: "Flow.yaml",
+                        dirty: false,
+                        flow: true,
                     });
                 }
             });
@@ -890,7 +892,7 @@
         
         nextTick(() => {
             const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
-            const rightMostCurrentTabPixel = activeTabElement.offsetLeft + activeTabElement.clientWidth;
+            const rightMostCurrentTabPixel = activeTabElement?.offsetLeft + activeTabElement?.clientWidth;
 
             const tabsWrapper = tabsScrollRef.value.wrapRef;
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);

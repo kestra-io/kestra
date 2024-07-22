@@ -43,6 +43,7 @@
                     :extension="extension"
                     :schema-type="schemaType"
                     :input="input"
+                    :creating="creating"
                 />
                 <div
                     v-show="showPlaceholder"

@@ -103,6 +103,8 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
+            if(!payload.path) return;
+
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             const request = await this.$http.get(URL, {transformResponse: response => response, responseType: "json"})
 

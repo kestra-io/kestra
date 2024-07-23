@@ -25,7 +25,7 @@ dependencies {
 
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.16.2")
-    api platform("io.micronaut.platform:micronaut-platform:4.4.3")
+    api platform("io.micronaut.platform:micronaut-platform:4.5.0")
     api platform("io.qameta.allure:allure-bom:2.28.0")
 
     constraints {

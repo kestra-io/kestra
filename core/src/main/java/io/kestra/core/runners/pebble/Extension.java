@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble;
 
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
+import io.kestra.core.runners.pebble.expression.UndefinedCoalescingExpression;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
 import io.kestra.core.runners.pebble.tests.JsonTest;
@@ -55,6 +56,7 @@ public class Extension extends AbstractExtension {
         List<BinaryOperator> operators = new ArrayList<>();
 
         operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }

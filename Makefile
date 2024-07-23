@@ -86,6 +86,8 @@ build-docker: build-exec
 		--compress \
 		--rm \
 		-f ./Dockerfile \
+		--build-arg="APT_PACKAGES=python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip" \
+		--build-arg="PYTHON_LIBRARIES=kestra" \
 		-t ${DOCKER_IMAGE}:${VERSION} ${DOCKER_PATH} || exit 1 ;
 
 # Verify whether Kestra is running

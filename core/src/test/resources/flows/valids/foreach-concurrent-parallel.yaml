@@ -5,7 +5,7 @@ tasks:
   - id: for_each
     type: io.kestra.plugin.core.flow.ForEach
     values: ["value 1", "value 2", "value 3"]
-    concurrency: 2
+    concurrencyLimit: 2
     tasks:
       - id: parallel
         type: io.kestra.plugin.core.flow.Parallel

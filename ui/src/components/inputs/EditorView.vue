@@ -1064,7 +1064,7 @@
                     v-if="flowGraph"
                     ref="lowCodeEditorRef"
                     @follow="forwardEvent('follow', $event)"
-                    @on-edit="onEdit"
+                    @on-edit="(e) => onEdit(e, true)"
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"

@@ -183,7 +183,7 @@
                 this.initMonaco(monaco)
             })
 
-            if (!this.monacoYamlConfigured && this.currentTab?.flow) {
+            if (!this.monacoYamlConfigured && (this.creating || this.currentTab?.flow)) {
                 this.$store.commit("core/setMonacoYamlConfigured", true);
                 configureMonacoYaml(monaco, {
                     enableSchemaRequest: true,

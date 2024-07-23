@@ -206,7 +206,7 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             .stream()
             .filter(t -> t.getParentTaskRunId() != null
                 && t.getParentTaskRunId().equals(parentTaskRun.getId())
-                && t.getState().isTerminated()
+                && t.getState().isSuccess()
             ).count() == tasks.size();
 
     }

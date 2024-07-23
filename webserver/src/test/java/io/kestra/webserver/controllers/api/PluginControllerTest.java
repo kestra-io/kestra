@@ -213,7 +213,7 @@ class PluginControllerTest {
                 Argument.listOf(InputType.class)
             );
 
-            assertThat(doc.size(), is(15));
+            assertThat(doc.size(), is(16));
         });
     }
 

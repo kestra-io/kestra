@@ -134,7 +134,7 @@
             purgeInputs(inputs){
                 for (let input in inputs) {
                     if (inputs[input] === undefined || inputs[input] === "") {
-                        inputs[input] = null;
+                        delete inputs[input];
                     }
                 }
                 return inputs;

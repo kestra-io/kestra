@@ -19,7 +19,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-if="input.type === 'ENUM'"
+                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
             >

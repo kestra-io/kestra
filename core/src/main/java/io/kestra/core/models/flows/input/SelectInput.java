@@ -15,11 +15,9 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-@Deprecated
-public class EnumInput extends Input<String> {
+public class SelectInput extends Input<String> {
     @Schema(
-        title = "List of values.",
-        description = "DEPRECATED; use 'SELECT' instead."
+        title = "List of values."
     )
     @NotNull
     List<@Regex String> values;
@@ -30,7 +28,7 @@ public class EnumInput extends Input<String> {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "it must match the values `" + values + "`",
                 this,
-                EnumInput.class,
+                SelectInput.class,
                 getId(),
                 input
             );

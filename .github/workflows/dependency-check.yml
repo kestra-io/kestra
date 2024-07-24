@@ -38,11 +38,31 @@ jobs:
         run: |
           ./gradlew dependencyCheckAggregate
 
+        # Upload dependency check report
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: dependency-check-report
+          path: build/reports/dependency-check-report.html
+
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.20.0
+        if: ${{ always() }}
         with:
           image-ref: kestra/kestra:develop-full
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          output: build/reports/image-vulnerabilities-report.html
+
+        # Upload dependency check report
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: image-vulnerabilities-report
+          path: build/reports/image-vulnerabilities-report.html

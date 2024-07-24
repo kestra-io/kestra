@@ -2,6 +2,7 @@
     <div class="line font-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
         <div class="log-content d-inline-block">
+            <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "").capitalize() }}</span>
             <div
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
@@ -53,6 +54,10 @@
             excludeMetas: {
                 type: Array,
                 default: () => [],
+            },
+            title: {
+                type: Boolean,
+                default: false
             }
         },
         data() {
@@ -184,11 +189,11 @@
         }
 
         .header-badge {
-            display: inline-block;
             font-size: 95%;
             text-align: center;
             white-space: nowrap;
             vertical-align: baseline;
+            width: 40px;
 
             span:first-child {
                 margin-right: 6px;

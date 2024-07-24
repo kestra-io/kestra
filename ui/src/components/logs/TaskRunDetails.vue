@@ -255,6 +255,8 @@
                 return Download
             },
             currentTaskRuns() {
+                // console.log(this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true))
+                // return this.logs.map(log => log.taskRunId).filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
                 return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? [];
             },
             params() {

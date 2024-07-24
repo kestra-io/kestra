@@ -881,6 +881,12 @@
     "curl": {
       "command": "cURL command",
       "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+    },
+    "logs_view": {
+      "raw": "Raw view",
+      "raw_details": "Show full logs in datetime order, but with less features",
+      "compact": "Compact view",
+      "compact_details": "Show compact logs group by Task, but may display less logs"
     }
   }
 }

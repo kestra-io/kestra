@@ -165,11 +165,7 @@ export default {
                 if (options.store === false) {
                     return response.data
                 }
-                if(options.params.page !== 1) {
-                    commit("appendLogs", response.data)
-                } else {
-                    commit("setLogs", response.data)
-                }
+                commit("setLogs", response.data)
 
                 return response.data
             });

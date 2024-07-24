@@ -42,7 +42,7 @@ jobs:
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: kestra/develop-full
+          image-ref: kestra/kestra:develop-full
           format: table
           skip-dirs: /app/plugins
           scanners: vuln

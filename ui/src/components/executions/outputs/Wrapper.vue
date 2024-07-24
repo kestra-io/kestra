@@ -1,6 +1,6 @@
 <template>
     <el-row class="flex-grow-1 outputs">
-        <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="d-flex flex-column">
+        <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="18" class="d-flex flex-column">
             <el-cascader-panel
                 ref="cascader"
                 v-model="selected"
@@ -9,7 +9,7 @@
                 class="flex-grow-1 overflow-x-auto cascader"
                 @expand-change="() => scrollRight()"
             >
-                <template #default="{node, data}">
+                <template #default="{data}">
                     <div v-if="data.heading" class="pe-none d-flex fs-5">
                         <component :is="data.component" class="me-2" />
                         <span>{{ data.label }}</span>
@@ -21,16 +21,24 @@
                             <span :class="{'ms-3': data.icon}">{{ data.label }}</span>
                         </div>
                         <code>
-                            <span v-if="node.isLeaf" class="regular">{{ trim(data.value) }}</span>                            
-                            <span v-else>{{ data.children.length }} items</span>                            
+                            <span :class="{regular: processedValue(data).regular}">
+                                {{ processedValue(data).label }}
+                            </span>
                         </code>
                     </div>
                 </template>
             </el-cascader-panel>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6" class="d-flex p-3 wrapper">
+        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="6" class="d-flex p-3 wrapper">
             <div class="overflow-auto">
-                Outputs: {{ selected && selected[selected.length - 1] }}
+                <div class="pe-none d-flex fs-5 values">
+                    <code class="d-block pb-3">
+                        {{ selectedNode().label }}
+                    </code>
+                </div>
+
+                <VarValue :value="selectedValue" :execution="execution" />
+                <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
             </div>
         </el-col>
     </el-row>
@@ -38,6 +46,7 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef} from "vue";
+    import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
     const store = useStore();
@@ -45,15 +54,45 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import VarValue from "../VarValue.vue";
+    import SubFlowLink from "../../flows/SubFlowLink.vue";
+
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
 
-    const cascader = ref<HTMLElement | { $el: HTMLElement; } | null>(null);
+    const cascader = ref<InstanceType<typeof ElTree> | null>(null);
+
     const scrollRight = () => setTimeout(() => (cascader.value as any).$el.scrollLeft = (cascader.value as any).$el.offsetWidth, 10);
 
+    const execution = computed(() => store.state.execution.execution);
+
+    const processedValue = (data): { label: string, regular: boolean; } => {
+        const regular = false;
+
+        if (!data.value && !data.children?.length) return {label: data.value, regular};
+        else if (data?.children?.length) {
+            const message = (length) => ({label: `${length} items`, regular});
+            const length = data.children.length;
+
+            return data.children[0].isFirstPass ? message(length - 1) : message(length);
+        }
+        return data.value.toString().startsWith("kestra:///") ? {label: "Internal link", regular} : {label: trim(data.value), regular: true};
+    };
+
     const selected = ref([]);
+    const selectedValue = computed(() => selected.value.length && selected.value[selected.value.length - 1]);
+    const selectedNode = () => {
+        const node = cascader.value?.getCheckedNodes();
+
+        if (!node?.length) return {label: undefined, value: undefined};
+
+        const {label, value} = node[0];
+
+        return {label, value};
+    };
+
     const transform = (o, isFirstPass = true) => {
         const result = Object.keys(o).map(key => {
             const value = o[key];
@@ -68,7 +107,7 @@
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {label: t("outputs"), heading: true, component: shallowRef(TextBoxSearchOutline)};
+            const OUTPUTS = {label: t("outputs"), heading: true, component: shallowRef(TextBoxSearchOutline), isFirstPass: true};
             result.unshift(OUTPUTS);
         }
 
@@ -76,7 +115,7 @@
     };
     const outputs = computed(() => {
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
-            return {label: task.taskId, value: task.taskId, ...task, icon: true, children: transform(task.outputs)};
+            return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
         });
 
         const HEADING = {label: t("tasks"), heading: true, component: shallowRef(TimelineTextOutline)};
@@ -136,6 +175,10 @@
         font-size: var(--el-font-size-small);
         color: var(--el-text-color-regular);
 
+        &[aria-haspopup="false"] {
+            padding-right: 0.5rem !important;
+        }
+
         &:hover {
             background-color: var(--bs-border-color);
         }
@@ -163,10 +206,9 @@
 }
 
 
-.el-scrollbar.el-cascader-menu:nth-of-type(-n+2) {
-    ul li:first-child {
-        pointer-events: none;
-        margin: 0.75rem 0 1.25rem 0;
-    }
+.el-scrollbar.el-cascader-menu:nth-of-type(-n+2) ul li:first-child,
+.values {
+    pointer-events: none;
+    margin: 0.75rem 0 1.25rem 0;
 }
 </style>

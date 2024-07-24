@@ -34,6 +34,15 @@ jobs:
           caches-enabled: true
 
       # Run OWASP dependency check plugin
-      - name: Run Dependency Check
+      - name: Gradle Dependency Check
         run: |
           ./gradlew dependencyCheckAggregate
+
+      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy
+      - name: Docker Vulnerabilities Check
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: kestra/develop-full
+          format: table
+          skip-dirs: /app/plugins
+          scanners: vuln

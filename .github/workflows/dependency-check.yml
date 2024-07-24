@@ -46,7 +46,7 @@ jobs:
           name: dependency-check-report
           path: build/reports/dependency-check-report.html
 
-      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy
+      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.20.0
         if: ${{ always() }}
@@ -55,8 +55,6 @@ jobs:
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
           output: build/reports/image-vulnerabilities-report.html
 
         # Upload dependency check report

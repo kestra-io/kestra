@@ -57,6 +57,31 @@ import java.util.OptionalInt;
             """
         ),
         @Example(
+            title = "Make an HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
+            full = true,
+            code = """
+id: http_post_request_example
+namespace: company.team
+
+inputs:
+  - id: payload
+    type: JSON
+    defaults: |
+      {"title": "Kestra Pen"}
+
+tasks:
+  - id: send_data
+    type: io.kestra.plugin.core.http.Request
+    uri: https://dummyjson.com/products/add
+    method: POST
+    contentType: application/json
+    body: "{{ inputs.payload }}"
+
+  - id: print_status
+    type: io.kestra.plugin.core.log.Log
+    message: '{{ outputs.send_data.body }}'"""
+        ),
+        @Example(
             title = "Send an HTTP POST request to a webserver.",
             code = {
                 "uri: \"https://server.com/login\"",

@@ -38,7 +38,7 @@ import java.util.OptionalInt;
 @Plugin(
     examples = {
         @Example(
-            title = "Execute a Kestra flow via an HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
+            title = "Execute a Kestra flow via a HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
             full = true,
             code = """
             id: api_call
@@ -57,7 +57,22 @@ import java.util.OptionalInt;
             """
         ),
         @Example(
-            title = "Make an HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
+            title = "Execute a Kestra flow via a HTTP request authenticated with authorization token.",
+            full = true,
+            code = """
+            id: api_auth_call
+            namespace: company.team
+            tasks:
+              - id: auth_token_api
+                type: io.kestra.plugin.core.http.Request
+                uri: https://dummyjson.com/user/me
+                method: GET
+                headers:
+                  authorization: 'Bearer <TOKEN>'
+            """
+        ),
+        @Example(
+            title = "Make a HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
             full = true,
             code = """
 id: http_post_request_example

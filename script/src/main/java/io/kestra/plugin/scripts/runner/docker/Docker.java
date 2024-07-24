@@ -308,7 +308,9 @@ public class Docker extends TaskRunner {
                 // first, create an archive
                 Path fileArchive = runContext.workingDir().createFile("inputFiles.tart");
                 try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
-                     ArchiveOutputStream<TarArchiveEntry> out = new TarArchiveOutputStream(fos)) {
+                     TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
+                    out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
+
                     for (Path file: relativeWorkingDirectoryFilesPaths) {
                         Path resolvedFile = runContext.workingDir().resolve(file);
                         TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());

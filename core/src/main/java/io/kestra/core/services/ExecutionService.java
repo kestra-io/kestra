@@ -19,14 +19,13 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.plugin.core.flow.Pause;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedPart;
-import io.micronaut.http.multipart.StreamingFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -42,6 +41,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,6 +100,7 @@ public class ExecutionService {
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
+        AtomicReference<Boolean> firstDone = new AtomicReference<>(false);
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -107,22 +108,17 @@ public class ExecutionService {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     // Keep only CREATED/RUNNING
                     // To avoid having large history
-                    return taskRun.replaceState(
-                         new State(
-                            State.Type.RUNNING,
-                            taskRun.getState().getHistories().subList(0,2)
-                        )
-                    );
+                    return taskRun.resetAttempts().incrementIteration();
                 }
 
                 if (flowableTaskRunId.equals(taskRun.getParentTaskRunId())) {
-                    // Clean attempts and only increment iteration
-                    // to avoid having large history
-                    return taskRun.resetAttempts().incrementIteration();
+                    // Clean children
+                    return null;
                 }
 
                 return taskRun;
             })
+            .filter(Objects::nonNull)
             .toList();
 
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);

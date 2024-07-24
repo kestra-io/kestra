@@ -105,7 +105,7 @@ public class FlowableUtils {
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
         if (taskRuns.isEmpty()) {
             return Collections.singletonList(
-                currentTasks.getFirst().toNextTaskRun(execution)
+                currentTasks.getFirst().toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration())
             );
         }
 
@@ -127,9 +127,9 @@ public class FlowableUtils {
             int lastIndex = taskRuns.indexOf(lastTerminated.get());
 
             if (currentTasks.size() > lastIndex + 1) {
-                return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRun(execution));
+                return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration()));
             } else {
-                return Collections.singletonList(currentTasks.getFirst().toNextTaskRun(execution));
+                return Collections.singletonList(currentTasks.getFirst().toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration()));
             }
         }
 

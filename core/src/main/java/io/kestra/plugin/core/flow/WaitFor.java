@@ -197,17 +197,6 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
         );
     }
 
-    public Optional<TaskRun> getChildTaskRun(Execution execution, TaskRun parentTaskRun) {
-        if (execution.getTaskRunList() == null) {
-            return Optional.empty();
-        }
-        return execution
-            .getTaskRunList()
-            .stream()
-            .filter(t -> t.getParentTaskRunId() != null && t.getParentTaskRunId().equals(parentTaskRun.getId()) && t.getState().isSuccess())
-            .findFirst();
-    }
-
     public boolean childTaskRunExecuted(Execution execution, TaskRun parentTaskRun) {
         if (execution.getTaskRunList() == null) {
             return false;
@@ -216,8 +205,8 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             .getTaskRunList()
             .stream()
             .filter(t -> t.getParentTaskRunId() != null
-                && t.getParentTaskRunId().equals(parentTaskRun.getId()) && t.getState().isSuccess()
-                && t.getState().isTerminated()
+                && t.getParentTaskRunId().equals(parentTaskRun.getId())
+                && t.getState().isSuccess()
             ).count() == tasks.size();
 
     }

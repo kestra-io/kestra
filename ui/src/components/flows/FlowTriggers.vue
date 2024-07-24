@@ -98,6 +98,7 @@
         <el-table-column column-key="disable" class-name="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-switch
+                    v-if="canBeDisabled(scope.row)"
                     size="small"
                     :active-text="$t('enabled')"
                     :model-value="!scope.row.disabled"
@@ -428,6 +429,9 @@
             },
             isSchedule(type) {
                 return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
+            },
+            canBeDisabled(trigger) {
+                return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id);
             }
         }
     };

@@ -38,7 +38,7 @@ import java.util.OptionalInt;
 @Plugin(
     examples = {
         @Example(
-            title = "Execute a Kestra flow via a HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
+            title = "Execute a Kestra flow via an HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
             full = true,
             code = """
             id: api_call
@@ -57,7 +57,7 @@ import java.util.OptionalInt;
             """
         ),
         @Example(
-            title = "Execute a Kestra flow via a HTTP request authenticated with authorization token.",
+            title = "Execute a Kestra flow via an HTTP request authenticated with a Bearer auth token.",
             full = true,
             code = """
             id: api_auth_call

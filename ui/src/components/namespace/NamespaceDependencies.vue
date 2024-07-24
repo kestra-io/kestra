@@ -29,7 +29,7 @@
     const hasNodes = ref(false);
 
     const props = defineProps({
-        id: {
+        namespace: {
             type: String,
             required: true
         }
@@ -38,9 +38,9 @@
     const load = () => {
         isLoading.value = true;
         return axios
-            .get(`${apiUrl(store)}/namespaces/${props.id}/dependencies`)
+            .get(`${apiUrl(store)}/namespaces/${props.namespace}/dependencies`)
             .then(response => {
-                loaded.value.push(`${props.id}`)
+                loaded.value.push(`${props.namespace}`)
 
                 if (Object.keys(response.data).length > 0) {
                     dependencies.value.nodes.push(...response.data.nodes)
@@ -141,7 +141,7 @@
                     loaded: loaded.value.indexOf(node.uid) >= 0,
                     namespace: node.namespace,
                     flowId: node.id,
-                    current: node.id === props.id,
+                    current: node.id === props.namespace,
                     color: "pink",
                     link: true
                 }
@@ -166,7 +166,7 @@
     };
 
     onMounted(() => {
-        if (props.id !== undefined) {
+        if (props.namespace !== undefined) {
             load();
         }
     })

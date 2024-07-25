@@ -176,4 +176,15 @@ public class LogController {
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), executionId, taskId, taskRunId, minLevel, attempt);
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "logs/{namespace}/{flowId}")
+    @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
+    public void deleteFromFlow(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow identifier") @PathVariable String flowId,
+        @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId
+    ) {
+        logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
+    }
 }

@@ -385,6 +385,28 @@ public class ExecutionService {
         return PurgeResult.builder().build();
     }
 
+    public void delete(
+        Execution execution,
+        boolean deleteLogs,
+        boolean deleteMetrics,
+        boolean deleteStorage
+    ) throws IOException {
+        this.executionRepository.purge(execution);
+
+        if (deleteLogs) {
+            this.logRepository.purge(execution);
+        }
+
+        if (deleteMetrics) {
+            this.metricRepository.purge(execution);
+        }
+
+        if (deleteStorage) {
+            URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
+            storageInterface.deleteByPrefix(execution.getTenantId(), uri);
+        }
+    }
+
     /**
      * Resume a paused execution to a new state.
      * The execution must be paused or this call will be a no-op.

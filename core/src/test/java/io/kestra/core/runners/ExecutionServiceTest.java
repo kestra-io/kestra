@@ -4,16 +4,24 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.plugin.core.debug.Return;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
+import org.slf4j.event.Level;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -28,6 +36,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
     @Inject
     PluginDefaultService pluginDefaultService;
+
+    @Inject
+    ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    LogRepositoryInterface logRepository;
 
     @Test
     void restartSimple() throws Exception {
@@ -293,7 +307,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(resume.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(resume.getState().getHistories(), hasSize(4));
 
-        IllegalArgumentException e = assertThrows(
+        assertThrows(
             IllegalArgumentException.class,
             () -> executionService.resume(resume, flow, State.Type.RUNNING)
         );
@@ -311,5 +325,27 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
 
         assertThat(resume.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(resume.getState().getHistories(), hasSize(4));
+    }
+
+    @Test
+    void deleteExecution() throws TimeoutException, IOException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        executionService.delete(execution, true, true, true);
+
+        assertThat(executionRepository.findById(execution.getTenantId(),execution.getId()), is(Optional.empty()));
+        assertThat(logRepository.findByExecutionId(execution.getTenantId(),execution.getId(), Level.INFO), hasSize(0));
+    }
+
+    @Test
+    void deleteExecutionKeepLogs() throws TimeoutException, IOException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        executionService.delete(execution, false, false, false);
+
+        assertThat(executionRepository.findById(execution.getTenantId(),execution.getId()), is(Optional.empty()));
+        assertThat(logRepository.findByExecutionId(execution.getTenantId(),execution.getId(), Level.INFO), hasSize(4));
     }
 }

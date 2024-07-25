@@ -92,8 +92,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
-import static io.kestra.core.utils.Rethrow.throwBiFunction;
-import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.*;
 
 @Slf4j
 @Validated
@@ -284,11 +283,14 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Delete an execution")
     @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
-        @Parameter(description = "The execution id") @PathVariable String executionId
-    ) {
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+    ) throws IOException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isPresent()) {
-            executionRepository.delete(execution.get());
+            executionService.delete(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -302,8 +304,11 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Deleted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> deleteByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId,
-        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated
-    ) {
+        @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
+        @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+    ) throws IOException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -332,7 +337,7 @@ public class ExecutionController {
         }
 
         executions
-            .forEach(execution -> executionRepository.delete(execution));
+            .forEach(throwConsumer(execution -> executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage)));
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
@@ -354,8 +359,11 @@ public class ExecutionController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-        @Parameter(description = "Specificies whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated
-    ) {
+        @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
+        @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+    ) throws IOException {
         validateTimeline(startDate, endDate);
 
         Integer count = executionRepository
@@ -372,10 +380,10 @@ public class ExecutionController {
                 childFilter
             )
             .filter(it -> it.getState().isTerminated() || includeNonTerminated)
-            .map(e -> {
-                executionRepository.delete(e);
+            .map(throwFunction(e -> {
+                executionService.delete(e, deleteLogs, deleteMetrics, deleteStorage);
                 return 1;
-            })
+            }))
             .reduce(Integer::sum)
             .blockOptional()
             .orElse(0);

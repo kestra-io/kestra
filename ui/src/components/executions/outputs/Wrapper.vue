@@ -1,10 +1,17 @@
 <template>
     <el-row class="flex-grow-1 outputs">
-        <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="18" class="d-flex flex-column">
+        <el-col
+            :xs="24"
+            :sm="24"
+            :md="multipleSelected ? 16 : 24"
+            :lg="multipleSelected ? 16 : 24"
+            :xl="multipleSelected ? 18 : 24"
+            class="d-flex flex-column"
+        >
             <el-cascader-panel
                 ref="cascader"
                 v-model="selected"
-                :options="outputs"
+                :options="outputs()"
                 :border="false"
                 class="flex-grow-1 overflow-x-auto cascader"
                 @expand-change="() => scrollRight()"
@@ -29,13 +36,47 @@
                 </template>
             </el-cascader-panel>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="6" class="d-flex p-3 wrapper">
-            <div class="overflow-auto">
-                <div class="pe-none d-flex fs-5 values">
-                    <code class="d-block pb-3">
-                        {{ selectedNode().label }}
+        <el-col v-if="multipleSelected" :xs="24" :sm="24" :md="8" :lg="8" :xl="6" class="d-flex p-3 wrapper">
+            <div class="w-100 overflow-auto">
+                <div class="d-flex justify-content-between pe-none fs-5 values">
+                    <code class="d-block">
+                        {{ selectedNode().label ?? "Value" }}
                     </code>
                 </div>
+
+                <el-collapse class="pb-3">
+                    <el-collapse-item>
+                        <template #title>
+                            <span>{{ t('eval.title') }}</span>
+                        </template>
+                        <editor
+                            ref="debugEditor"
+                            :full-height="false"
+                            :input="true"
+                            :navbar="false"
+                            @save="onDebugExpression($event)"
+                            class="pb-2"
+                        />
+                        <editor
+                            v-if="debugExpression"
+                            :read-only="true"
+                            :input="true"
+                            :full-height="false"
+                            :navbar="false"
+                            :minimap="false"
+                            :model-value="debugExpression"
+                            :lang="isJSON ? 'json' : ''"
+                        />
+                        <el-button type="primary" @click="onDebugExpression(debugEditor.editor.getValue())">
+                            {{ t('eval.title') }}
+                        </el-button>
+                    </el-collapse-item>
+                </el-collapse>
+
+                <el-alert v-if="debugError" type="error" :closable="false">
+                    <p><strong>{{ debugError }}</strong></p>
+                    <pre class="mb-0">{{ debugStackTrace }}</pre>
+                </el-alert>
 
                 <VarValue :value="selectedValue" :execution="execution" />
                 <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
@@ -54,6 +95,35 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import {apiUrl} from "../../../override/utils/route";
+
+    import Editor from "../../inputs/Editor.vue";
+    const debugEditor = ref(null);
+    const debugExpression = ref("");
+    const debugError = ref("");
+    const debugStackTrace = ref("");
+    const isJSON = ref(false);
+    const onDebugExpression = (expression) => {
+        const filter = (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.value;
+        const taskRunList = [...execution.value.taskRunList];
+        const taskRun = taskRunList.find(e => e.taskId === filter);
+
+        const URL = `${apiUrl(store)}/executions/${taskRun.executionId}/eval/${taskRun.id}`;
+        store.$http
+            .post(URL, expression, {headers: {"Content-type": "text/plain",}})
+            .then(response => {
+                try {
+                    debugExpression.value = JSON.stringify(JSON.parse(response.data.result), "  ", 2);
+                    isJSON.value = true;
+                } catch (e) {
+                    debugExpression.value = response.data.result;
+                }
+
+                debugError.value = response.data.error;
+                debugStackTrace.value = response.data.stackTrace;
+            });
+    };
+
     import VarValue from "../VarValue.vue";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
 
@@ -63,8 +133,8 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
 
     const cascader = ref<InstanceType<typeof ElTree> | null>(null);
-
     const scrollRight = () => setTimeout(() => (cascader.value as any).$el.scrollLeft = (cascader.value as any).$el.offsetWidth, 10);
+    const multipleSelected = computed(() => (cascader.value as any)?.menus?.length > 1);
 
     const execution = computed(() => store.state.execution.execution);
 
@@ -82,7 +152,10 @@
     };
 
     const selected = ref([]);
-    const selectedValue = computed(() => selected.value.length && selected.value[selected.value.length - 1]);
+    const selectedValue = computed(() => {
+        if (selected.value.length) return selected.value[selected.value.length - 1];
+        return undefined;
+    });
     const selectedNode = () => {
         const node = cascader.value?.getCheckedNodes();
 
@@ -113,7 +186,8 @@
 
         return result;
     };
-    const outputs = computed(() => {
+    const outputs = () => {
+        console.trace();
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
         });
@@ -122,7 +196,7 @@
         tasks.unshift(HEADING);
 
         return tasks;
-    });
+    };
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {

@@ -11,7 +11,7 @@
             <el-cascader-panel
                 ref="cascader"
                 v-model="selected"
-                :options="outputs()"
+                :options="outputs"
                 :border="false"
                 class="flex-grow-1 overflow-x-auto cascader"
                 @expand-change="() => scrollRight()"
@@ -186,7 +186,7 @@
 
         return result;
     };
-    const outputs = () => {
+    const outputs = computed(() => {
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
         });
@@ -195,7 +195,7 @@
         tasks.unshift(HEADING);
 
         return tasks;
-    };
+    });
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {

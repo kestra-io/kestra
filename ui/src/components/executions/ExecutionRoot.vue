@@ -15,7 +15,7 @@
     import Overview from "./Overview.vue";
     import Logs from "./Logs.vue";
     import Topology from "./Topology.vue";
-    import ExecutionOutput from "./ExecutionOutput.vue";
+    import ExecutionOutput from "./outputs/Wrapper.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
@@ -144,7 +144,8 @@
                     {
                         name: "outputs",
                         component: ExecutionOutput,
-                        title: title("outputs")
+                        title: title("outputs"),
+                        maximized: true
                     },
                     {
                         name: "metrics",

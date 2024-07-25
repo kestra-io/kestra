@@ -860,10 +860,10 @@
       "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     },
     "logs_view": {
-      "raw": "Vue simple",
-      "raw_details": "Affiche toutes les logs dans l'ordre de la date, mais avec moins de fonctionnalité",
-      "compact": "Vue compacte",
-      "compact_details": "Affiche les logs groupés par tâche, mais peut afficher moins de logs"
+      "raw": "Vue temporelle",
+      "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage",
+      "compact": "Vue par défaut",
+      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
     }
   }
 }

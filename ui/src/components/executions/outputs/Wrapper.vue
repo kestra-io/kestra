@@ -108,7 +108,7 @@
         const taskRunList = [...execution.value.taskRunList];
         const taskRun = taskRunList.find(e => e.taskId === filter);
 
-        const URL = `${apiUrl(store)}/executions/${taskRun.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http
             .post(URL, expression, {headers: {"Content-type": "text/plain",}})
             .then(response => {

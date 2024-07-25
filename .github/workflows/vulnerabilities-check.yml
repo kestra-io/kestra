@@ -1,4 +1,4 @@
-name: Dependency Checks
+name: Vulnerabilities Checks
 
 on:
   schedule:
@@ -78,15 +78,15 @@ jobs:
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          output: build/reports/develop-image-vulnerabilities-report.html
+          output: develop-image-vulnerabilities-report.html
 
         # Upload dependency check report
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
         if: ${{ always() }}
         with:
-          name: image-vulnerabilities-report
-          path: build/reports/develop-image-vulnerabilities-report.html
+          name: develop-image-vulnerabilities-report
+          path: develop-image-vulnerabilities-report.html
 
   latest-image-check:
     name: Image Check (latest-full)
@@ -120,12 +120,12 @@ jobs:
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          output: build/reports/latest-image-vulnerabilities-report.html
+          output: latest-image-vulnerabilities-report.html
 
         # Upload dependency check report
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
         if: ${{ always() }}
         with:
-          name: image-vulnerabilities-report
-          path: build/reports/latest-image-vulnerabilities-report.html
+          name: latest-image-vulnerabilities-report
+          path: latest-image-vulnerabilities-report.html

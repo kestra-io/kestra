@@ -46,16 +46,39 @@ jobs:
           name: dependency-check-report
           path: build/reports/dependency-check-report.html
 
+  develop-image-check:
+    name: Image Check (develop-full)
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: false
+          node-enabled: false
+          caches-enabled: true
+
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.20.0
-        if: ${{ always() }}
         with:
           image-ref: kestra/kestra:develop-full
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          output: build/reports/image-vulnerabilities-report.html
+          output: build/reports/develop-image-vulnerabilities-report.html
 
         # Upload dependency check report
       - name: Upload dependency check report
@@ -63,4 +86,46 @@ jobs:
         if: ${{ always() }}
         with:
           name: image-vulnerabilities-report
-          path: build/reports/image-vulnerabilities-report.html
+          path: build/reports/develop-image-vulnerabilities-report.html
+
+  latest-image-check:
+    name: Image Check (latest-full)
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: false
+          node-enabled: false
+          caches-enabled: true
+
+      # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
+      - name: Docker Vulnerabilities Check
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: kestra/kestra:latest-full
+          format: table
+          skip-dirs: /app/plugins
+          scanners: vuln
+          output: build/reports/latest-image-vulnerabilities-report.html
+
+        # Upload dependency check report
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: image-vulnerabilities-report
+          path: build/reports/latest-image-vulnerabilities-report.html

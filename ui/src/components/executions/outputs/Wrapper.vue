@@ -233,6 +233,7 @@
 
 .el-cascader-menu {
     min-width: 300px;
+    max-width: 300px;
 
     &:last-child {
         border-right: 1px solid var(--bs-border-color);

@@ -88,6 +88,8 @@
 #io.kestra.plugin:plugin-sqlmesh:LATEST
 #io.kestra.plugin:plugin-surrealdb:LATEST
 #io.kestra.plugin:plugin-terraform:LATEST
+#io.kestra.plugin:plugin-transform-grok:LATEST
+#io.kestra.plugin:plugin-transform-json:LATEST
 #io.kestra.plugin:plugin-tika:LATEST
 #io.kestra.plugin:plugin-weaviate:LATEST
 #io.kestra.plugin:plugin-zendesk:LATEST

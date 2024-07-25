@@ -10,7 +10,6 @@ export function linkTag(md: MarkdownIt) {
         const match = state.src.match(linkTagRegex);
         if (!match) return false;
 
-        console.log(match)
         // Get the attributes, they must have the following format: key="value"
         const attrs = match[0].match(/\S+="(\S)+"/g)
             .map(attr => attr.split("="))

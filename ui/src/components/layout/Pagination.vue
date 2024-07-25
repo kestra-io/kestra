@@ -21,7 +21,7 @@
                 v-model:current-page="internalPage"
                 :page-size="internalSize"
                 v-model:page-size="internalSize"
-                small
+                size="small"
                 layout="prev, pager, next"
                 :pager-count="5"
                 :total="Math.min((max || total ),total)"

@@ -20,8 +20,8 @@ export const details = (): Plugin => {
     return {
         name: "details",
         transformIndexHtml: {
-            enforce: "pre",
-            transform(html: string): string {
+            order: "pre",
+            handler(html: string): string {
                 return comment(hash, date) + html;
             },
         },

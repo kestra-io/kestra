@@ -397,6 +397,27 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
+    public void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var delete = context
+                    .delete(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId));
+
+                if (triggerId != null) {
+                    delete = delete.and(field("trigger_id").eq(triggerId));
+                }
+
+                delete.execute();
+            });
+    }
+
+    @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
         return this.jdbcRepository
             .getDslContextWrapper()

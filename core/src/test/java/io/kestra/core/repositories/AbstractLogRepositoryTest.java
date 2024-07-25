@@ -156,6 +156,24 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQuery() {
+        LogEntry log1 = logEntry(Level.INFO).build();
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(null, log1.getExecutionId(), null, (String) null, null, null);
+
+        ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size(), is(0));
+
+        logRepository.save(log1);
+
+        logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", null);
+
+        find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
+        assertThat(find.size(), is(0));
+    }
+
+    @Test
     void statistics() throws InterruptedException {
         for (int i = 0; i < 28; i++) {
             logRepository.save(

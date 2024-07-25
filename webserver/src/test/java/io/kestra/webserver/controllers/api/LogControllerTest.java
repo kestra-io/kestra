@@ -118,6 +118,27 @@ class LogControllerTest extends JdbcH2ControllerTest {
         assertThat(logs.size(), is(0));
     }
 
+    @Test
+    void deleteByQuery() {
+        LogEntry log1 = logEntry(Level.INFO);
+        LogEntry log2 = log1.toBuilder().message("another message").build();
+        LogEntry log3 = logEntry(Level.DEBUG);
+        logRepository.save(log1);
+        logRepository.save(log2);
+        logRepository.save(log3);
+
+        HttpResponse<?> delete = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/logs/" + log1.getNamespace() + "/" + log1.getFlowId())
+        );
+        assertThat(delete.getStatus(), is(HttpStatus.OK));
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/logs/" + log1.getExecutionId()),
+            Argument.of(List.class, LogEntry.class)
+        );
+        assertThat(logs.size(), is(0));
+    }
+
     private static LogEntry logEntry(Level level) {
         return LogEntry.builder()
             .flowId(IdUtils.create())

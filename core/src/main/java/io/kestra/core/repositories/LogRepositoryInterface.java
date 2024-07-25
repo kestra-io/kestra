@@ -73,5 +73,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt);
 
+    void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
+
     int deleteByQuery(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate);
 }

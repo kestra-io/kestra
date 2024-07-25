@@ -78,15 +78,6 @@ jobs:
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          output: develop-image-vulnerabilities-report.html
-
-        # Upload dependency check report
-      - name: Upload dependency check report
-        uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: develop-image-vulnerabilities-report
-          path: develop-image-vulnerabilities-report.html
 
   latest-image-check:
     name: Image Check (latest-full)
@@ -120,12 +111,3 @@ jobs:
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
-          output: latest-image-vulnerabilities-report.html
-
-        # Upload dependency check report
-      - name: Upload dependency check report
-        uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: latest-image-vulnerabilities-report
-          path: latest-image-vulnerabilities-report.html

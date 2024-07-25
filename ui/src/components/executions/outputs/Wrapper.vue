@@ -11,7 +11,7 @@
             <el-cascader-panel
                 ref="cascader"
                 v-model="selected"
-                :options="outputs()"
+                :options="outputs"
                 :border="false"
                 class="flex-grow-1 overflow-x-auto cascader"
                 @expand-change="() => scrollRight()"
@@ -186,7 +186,7 @@
 
         return result;
     };
-    const outputs = () => {
+    const outputs = computed(() => {
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
         });
@@ -195,7 +195,7 @@
         tasks.unshift(HEADING);
 
         return tasks;
-    };
+    });
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {
@@ -206,7 +206,7 @@
         return mapped;
     });
 
-    const trim = (value) => typeof value === "string" ? `${value.substring(0, 16)}...` : value;
+    const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
 </script>
 
 <style lang="scss">
@@ -233,6 +233,7 @@
 
 .el-cascader-menu {
     min-width: 300px;
+    max-width: 300px;
 
     &:last-child {
         border-right: 1px solid var(--bs-border-color);

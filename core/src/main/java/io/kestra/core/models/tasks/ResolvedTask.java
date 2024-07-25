@@ -1,14 +1,13 @@
 package io.kestra.core.models.tasks;
 
-import lombok.Builder;
-import lombok.Value;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Value;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import jakarta.validation.constraints.NotNull;
 
 @Builder
 @Value
@@ -23,6 +22,13 @@ public class ResolvedTask {
     public NextTaskRun toNextTaskRun(Execution execution) {
         return new NextTaskRun(
             TaskRun.of(execution, this),
+            this.getTask()
+        );
+    }
+
+    public NextTaskRun toNextTaskRunIncrementIteration(Execution execution, Integer iteration) {
+        return new NextTaskRun(
+            TaskRun.of(execution, this).withIteration(iteration != null ? iteration : 1),
             this.getTask()
         );
     }

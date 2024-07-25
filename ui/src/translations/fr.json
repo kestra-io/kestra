@@ -858,6 +858,12 @@
     "curl": {
       "command": "Commande cURL",
       "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
+    },
+    "logs_view": {
+      "raw": "Vue temporelle",
+      "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage",
+      "compact": "Vue par défaut",
+      "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
     }
   }
 }

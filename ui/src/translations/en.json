@@ -210,8 +210,8 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Render expression",
-      "tooltip": "You need to choose a task to render an expression from."
+      "title": "Debug Outputs",
+      "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",

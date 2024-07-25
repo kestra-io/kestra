@@ -206,7 +206,7 @@
         return mapped;
     });
 
-    const trim = (value) => typeof value === "string" ? `${value.substring(0, 16)}...` : value;
+    const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
 </script>
 
 <style lang="scss">

@@ -187,7 +187,6 @@
         return result;
     };
     const outputs = () => {
-        console.trace();
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
         });

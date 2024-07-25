@@ -263,7 +263,9 @@
                 return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
-                let flowTriggers = this.flow.triggers
+                let flowTriggers = this.flow.triggers.map(trigger => {
+                    return {...trigger, sourceDisabled: trigger.disabled ?? false}
+                })
                 if (flowTriggers) {
                     return flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
@@ -431,7 +433,8 @@
                 return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
             },
             canBeDisabled(trigger) {
-                return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id);
+                return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)
+                    && !trigger.sourceDisabled;
             }
         }
     };

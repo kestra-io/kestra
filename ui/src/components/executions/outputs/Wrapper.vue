@@ -124,7 +124,7 @@
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const selectedTask = () => {
-        const filter = (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.value;
+        const filter = selected.value.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.value;
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find(e => e.taskId === filter);
     };

@@ -3,9 +3,9 @@
         <el-col
             :xs="24"
             :sm="24"
-            :md="multipleSelected ? 16 : 24"
-            :lg="multipleSelected ? 16 : 24"
-            :xl="multipleSelected ? 18 : 24"
+            :md="multipleSelected || selectedValue ? 16 : 24"
+            :lg="multipleSelected || selectedValue ? 16 : 24"
+            :xl="multipleSelected || selectedValue ? 18 : 24"
             class="d-flex flex-column"
         >
             <el-cascader-panel
@@ -36,40 +36,59 @@
                 </template>
             </el-cascader-panel>
         </el-col>
-        <el-col v-if="multipleSelected" :xs="24" :sm="24" :md="8" :lg="8" :xl="6" class="d-flex p-3 wrapper">
+        <el-col
+            v-if="multipleSelected || selectedValue"
+            :xs="24"
+            :sm="24"
+            :md="8"
+            :lg="8"
+            :xl="6"
+            class="d-flex p-3 wrapper"
+        >
             <div class="w-100 overflow-auto">
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
-                        {{ selectedNode().label ?? "Value" }}
+                        {{ selectedNode()?.label ?? 'Value' }}
                     </code>
                 </div>
 
-                <el-collapse class="pb-3">
+                <el-collapse class="mb-3 debug bordered">
                     <el-collapse-item>
                         <template #title>
                             <span>{{ t('eval.title') }}</span>
                         </template>
-                        <editor
-                            ref="debugEditor"
-                            :full-height="false"
-                            :input="true"
-                            :navbar="false"
-                            @save="onDebugExpression($event)"
-                            class="pb-2"
-                        />
-                        <editor
-                            v-if="debugExpression"
-                            :read-only="true"
-                            :input="true"
-                            :full-height="false"
-                            :navbar="false"
-                            :minimap="false"
-                            :model-value="debugExpression"
-                            :lang="isJSON ? 'json' : ''"
-                        />
-                        <el-button type="primary" @click="onDebugExpression(debugEditor.editor.getValue())">
-                            {{ t('eval.title') }}
-                        </el-button>
+
+                        <div class="d-flex flex-column p-3 debug">
+                            <editor
+                                ref="debugEditor"
+                                :full-height="false"
+                                :input="true"
+                                :navbar="false"
+                                :model-value="computedDebugValue"
+                                @save="onDebugExpression($event)"
+                                class="w-100"
+                            />
+
+                            <el-button
+                                type="primary"
+                                @click="onDebugExpression(debugEditor.editor.getValue())"
+                                class="mt-3"
+                            >
+                                {{ t('eval.title') }}
+                            </el-button>
+
+                            <editor
+                                v-if="debugExpression"
+                                :read-only="true"
+                                :input="true"
+                                :full-height="false"
+                                :navbar="false"
+                                :minimap="false"
+                                :model-value="debugExpression"
+                                :lang="isJSON ? 'json' : ''"
+                                class="mt-3"
+                            />
+                        </div>
                     </el-collapse-item>
                 </el-collapse>
 
@@ -100,13 +119,17 @@
     import Editor from "../../inputs/Editor.vue";
     const debugEditor = ref(null);
     const debugExpression = ref("");
+    const computedDebugValue = computed(() => `{{ outputs${selectedTask()?.taskId ? `.${selectedTask().taskId}` : ""} }}`);
     const debugError = ref("");
     const debugStackTrace = ref("");
     const isJSON = ref(false);
-    const onDebugExpression = (expression) => {
+    const selectedTask = () => {
         const filter = (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.value;
         const taskRunList = [...execution.value.taskRunList];
-        const taskRun = taskRunList.find(e => e.taskId === filter);
+        return taskRunList.find(e => e.taskId === filter);
+    };
+    const onDebugExpression = (expression) => {
+        const taskRun = selectedTask();
 
         const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http
@@ -199,9 +222,18 @@
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {
+        const getTaskIcons = (tasks, mapped) => {
+            tasks.forEach(task => {
+                mapped[task.id] = task.type;
+                if (task.tasks && task.tasks.length > 0) {
+                    getTaskIcons(task.tasks, mapped);
+                }
+            });
+        };
+
         const mapped = {};
 
-        store.state.execution.flow?.tasks?.map((task) => mapped[task.id] = task.type);
+        getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
 
         return mapped;
     });
@@ -284,5 +316,13 @@
 .values {
     pointer-events: none;
     margin: 0.75rem 0 1.25rem 0;
+}
+
+.debug {
+    background: var(--bs-gray-100);
+}
+
+.bordered {
+    border: 1px solid var(--bs-border-color)
 }
 </style>

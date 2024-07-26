@@ -41,7 +41,7 @@
             <el-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <el-card>
-                    <editor class="position-relative" :read-only="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
+                    <editor class="position-relative" :read-only="true" :input="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
                         <template #nav>
                             <div class="position-absolute copy-wrapper">
                                 <el-tooltip trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">

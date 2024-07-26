@@ -3,9 +3,9 @@
         <el-col
             :xs="24"
             :sm="24"
-            :md="multipleSelected ? 16 : 24"
-            :lg="multipleSelected ? 16 : 24"
-            :xl="multipleSelected ? 18 : 24"
+            :md="multipleSelected || selectedValue ? 16 : 24"
+            :lg="multipleSelected || selectedValue ? 16 : 24"
+            :xl="multipleSelected || selectedValue ? 18 : 24"
             class="d-flex flex-column"
         >
             <el-cascader-panel
@@ -36,11 +36,19 @@
                 </template>
             </el-cascader-panel>
         </el-col>
-        <el-col v-if="multipleSelected" :xs="24" :sm="24" :md="8" :lg="8" :xl="6" class="d-flex p-3 wrapper">
+        <el-col
+            v-if="multipleSelected || selectedValue"
+            :xs="24"
+            :sm="24"
+            :md="8"
+            :lg="8"
+            :xl="6"
+            class="d-flex p-3 wrapper"
+        >
             <div class="w-100 overflow-auto">
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
-                        {{ selectedNode().label ?? selectedTask().taskId }}
+                        {{ selectedNode()?.label ?? 'Value' }}
                     </code>
                 </div>
 
@@ -56,7 +64,7 @@
                                 :full-height="false"
                                 :input="true"
                                 :navbar="false"
-                                :model-value="`{{ outputs.${selectedTask().taskId} }}`"
+                                :model-value="computedDebugValue"
                                 @save="onDebugExpression($event)"
                                 class="w-100"
                             />
@@ -111,6 +119,7 @@
     import Editor from "../../inputs/Editor.vue";
     const debugEditor = ref(null);
     const debugExpression = ref("");
+    const computedDebugValue = computed(() => `{{ outputs${selectedTask()?.taskId ? `.${selectedTask().taskId}` : ""} }}`);
     const debugError = ref("");
     const debugStackTrace = ref("");
     const isJSON = ref(false);
@@ -213,9 +222,18 @@
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {
+        const getTaskIcons = (tasks, mapped) => {
+            tasks.forEach(task => {
+                mapped[task.id] = task.type;
+                if (task.tasks && task.tasks.length > 0) {
+                    getTaskIcons(task.tasks, mapped);
+                }
+            });
+        };
+
         const mapped = {};
 
-        store.state.execution.flow?.tasks?.map((task) => mapped[task.id] = task.type);
+        getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
 
         return mapped;
     });

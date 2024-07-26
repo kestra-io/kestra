@@ -376,7 +376,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .map(trigger ->
                 new FlowWithTriggers(
                     flows.get(trigger.flowUid()),
-                    flows.get(trigger.flowUid()).getTriggers().stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst().orElse(null),
+                    ListUtils.emptyOnNull(flows.get(trigger.flowUid()).getTriggers()).stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst().orElse(null),
                     trigger,
                     null,
                     null

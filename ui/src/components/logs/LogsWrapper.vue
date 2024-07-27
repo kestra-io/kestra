@@ -55,6 +55,11 @@
                             </template>
                         </div>
                     </el-card>
+
+                    <el-button v-if="logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
+                        <TrashCan class="me-2" />
+                        <span>{{ $t("delete logs") }}</span>                     
+                    </el-button>
                 </template>
 
                 <template #table>
@@ -98,12 +103,13 @@
     import LogChart from "../stats/LogChart.vue";
     import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart, TrashCan},
         props: {
             logLevel: {
                 type: String,
@@ -243,6 +249,12 @@
                     .then(() => {
                         this.statsReady = true;
                     });
+            },
+            deleteLogs() {
+                this.$store.dispatch("log/deleteLogs", {
+                    namespace: this.namespace,
+                    flowId: this.flowId
+                })
             }
         },
     };
@@ -274,5 +286,9 @@
                 border-top: 1px solid var(--bs-border-color);
             }
         }
+    }
+
+    .delete-logs-btn {
+        width: 200px;
     }
 </style>

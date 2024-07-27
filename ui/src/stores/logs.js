@@ -14,6 +14,10 @@ export default {
                 commit("setTotal", response.data.total)
             })
         },
+        deleteLogs({commit}, log) {
+            const URL = `${apiUrl(this)}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`;
+            return this.$http.delete(URL).then(() => (commit("setLogs", undefined)))
+        }
     },
     mutations: {
         setLogs(state, logs) {

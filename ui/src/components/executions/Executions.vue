@@ -422,7 +422,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
-    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert} from "element-plus";
+    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
 
     import {filterLabels} from "./utils"
@@ -764,8 +764,12 @@
                 );
             },
             deleteExecutions() {
-
                 const includeNonTerminated = ref(false);
+                
+                const deleteLogs = ref(true);
+                const deleteMetrics = ref(true);
+                const deleteStorage = ref(true);
+
                 const message = () => h("div", null, [
                     h(
                         "p",
@@ -780,14 +784,29 @@
                             "onUpdate:modelValue": (val) => {
                                 includeNonTerminated.value = val
                             },
-                        }),
+                        }),                       
                     ]),
                     h(ElAlert, {
                         title: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
                         closable: false
-                    })
+                    }),
+                    h(ElCheckbox, {
+                        modelValue: deleteLogs.value,
+                        label: this.$t("execution_deletion.logs"),
+                        "onUpdate:modelValue": (val) => (deleteLogs.value = val),
+                    }),
+                    h(ElCheckbox, {
+                        modelValue: deleteMetrics.value,
+                        label: this.$t("execution_deletion.metrics"),
+                        "onUpdate:modelValue": (val) => (deleteMetrics.value = val),
+                    }),
+                    h(ElCheckbox, {
+                        modelValue: deleteStorage.value,
+                        label: this.$t("execution_deletion.storage"),
+                        "onUpdate:modelValue": (val) => (deleteStorage.value = val),
+                    }),
                 ]);
                 ElMessageBox.confirm(message, this.$t("confirmation"), {
                     type: "confirm",
@@ -795,6 +814,10 @@
                     inputValue: "false",
                 }).then(() => {
                     this.actionOptions.includeNonTerminated = includeNonTerminated.value;
+                    this.actionOptions.deleteLogs = deleteLogs.value;
+                    this.actionOptions.deleteMetrics = deleteMetrics.value;
+                    this.actionOptions.deleteStorage = deleteStorage.value;
+
                     this.genericConfirmCallback(
                         "execution/queryDeleteExecution",
                         "execution/bulkDeleteExecution",

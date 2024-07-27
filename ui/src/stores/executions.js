@@ -142,12 +142,13 @@ export default {
             })
         },
         deleteExecution({commit}, options) {
-            return this.$http.delete(`${apiUrl(this)}/executions/${options.id}`).then(() => {
+            const {id, deleteLogs, deleteMetrics, deleteStorage} = options
+            return this.$http.delete(`${apiUrl(this)}/executions/${id}`, {data: {deleteLogs, deleteMetrics, deleteStorage}}).then(() => {
                 commit("setExecution", null)
             })
         },
         bulkDeleteExecution({_commit}, options) {
-            return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId, params: {includeNonTerminated: options.includeNonTerminated}})
+            return this.$http.delete(`${apiUrl(this)}/executions/by-ids`, {data: options.executionsId, params: {...options}})
         },
         queryDeleteExecution({_commit}, options) {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})

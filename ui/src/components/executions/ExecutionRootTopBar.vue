@@ -34,6 +34,9 @@
 </script>
 
 <script>
+    import {h, ref} from "vue"
+    import {ElCheckbox, ElMessageBox} from "element-plus"
+
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
@@ -89,20 +92,56 @@
                         message += this.$t("delete execution running");
                     }
 
-                    this.$toast()
-                        .confirm(message, () => {
-                            return this.$store
-                                .dispatch("execution/deleteExecution", item)
-                                .then(() => {
-                                    return this.$router.push({
-                                        name: "executions/list",
-                                        tenant: this.$route.params.tenant
-                                    });
-                                })
-                                .then(() => {
-                                    this.$toast().deleted(item.id);
-                                })
-                        });
+                    const deleteLogs = ref(true);
+                    const deleteMetrics = ref(true);
+                    const deleteStorage = ref(true);
+
+                    ElMessageBox({
+                        boxType: "confirm",
+                        title: this.$t("confirmation"),
+                        showCancelButton: true,
+                        customStyle: "min-width: 600px",
+                        callback: (value) => {
+                            if(value === "confirm") {
+                                return this.$store
+                                    .dispatch("execution/deleteExecution", {
+                                        ...item, 
+                                        deleteLogs: deleteLogs.value,
+                                        deleteMetrics: deleteMetrics.value, 
+                                        deleteStorage: deleteStorage.value
+                                    })
+                                    .then(() => {
+                                        return this.$router.push({
+                                            name: "executions/list",
+                                            tenant: this.$route.params.tenant
+                                        });
+                                    })
+                                    .then(() => {
+                                        this.$toast().deleted(item.id);
+                                    })
+                            }
+                        },
+                        message: () => h("div", null, [
+                            h("p", {class: "pb-3"}, [h("span", {innerHTML: message})]),
+                            h(ElCheckbox, {
+                                modelValue: deleteLogs.value,
+                                label: this.$t("execution_deletion.logs"),
+                                "onUpdate:modelValue": (val) => (deleteLogs.value = val),
+                            }),
+                            h(ElCheckbox, {
+                                modelValue: deleteMetrics.value,
+                                label: this.$t("execution_deletion.metrics"),
+                                "onUpdate:modelValue": (val) => (deleteMetrics.value = val),
+                            }),
+                            h(ElCheckbox, {
+                                modelValue: deleteStorage.value,
+                                label: this.$t("execution_deletion.storage"),
+                                "onUpdate:modelValue": (val) => (deleteStorage.value = val),
+                            }),
+                        ])
+                    })
+
+                    return;
                 }
             },
         }

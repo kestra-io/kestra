@@ -864,6 +864,11 @@
       "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage",
       "compact": "Vue par défaut",
       "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
+    },
+    "execution_deletion": {
+      "logs": "Supprimer les journaux",
+      "metrics": "Supprimer les métriques",
+      "storage": "Supprimer les fichiers de stockage interne"
     }
   }
 }

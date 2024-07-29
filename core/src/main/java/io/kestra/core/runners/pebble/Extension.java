@@ -75,7 +75,7 @@ public class Extension extends AbstractExtension {
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
         filters.put("json", new JsonFilter());
-        filters.put("jsonEncode", new JsonEncodeFilter());
+        filters.put("toJson", new ToJsonFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
         filters.put("urldecode", new UrlDecoderFilter());
@@ -109,7 +109,7 @@ public class Extension extends AbstractExtension {
 
         functions.put("now", new NowFunction());
         functions.put("json", new JsonFunction());
-        functions.put("jsonDecode", new JsonDecodeFunction());
+        functions.put("fromJson", new FromJsonFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put("secret", secretFunction);
         functions.put("kv", kvFunction);
@@ -124,7 +124,7 @@ public class Extension extends AbstractExtension {
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new PrintContextFunction());
-        functions.put("ionDecode", new IonDecodeFunction());
+        functions.put("fromIon", new FromIonFunction());
 
         return functions;
     }

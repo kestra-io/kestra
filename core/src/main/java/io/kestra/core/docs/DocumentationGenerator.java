@@ -52,7 +52,7 @@ public class DocumentationGenerator {
                 @Override
                 public Map<String, Filter> getFilters() {
                     Map<String, Filter> filters = new HashMap<>();
-                    filters.put("json", new JsonEncodeFilter());
+                    filters.put("json", new ToJsonFilter());
                     return filters;
                 }
             })

@@ -13,23 +13,23 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-class IonDecodeFunctionTest {
+class FromIonFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
 
     @Test
     void ionDecodeFunction() throws IllegalVariableEvaluationException {
-        String render = variableRenderer.render("{{ ionDecode('{date:2024-04-21T23:00:00.000Z, title:\"Main_Page\",views:109787}').title }}", Map.of());
+        String render = variableRenderer.render("{{ fromIon('{date:2024-04-21T23:00:00.000Z, title:\"Main_Page\",views:109787}').title }}", Map.of());
         assertThat(render, is("Main_Page"));
 
-        render = variableRenderer.render("{{ ionDecode(null) }}", Map.of());
+        render = variableRenderer.render("{{ fromIon(null) }}", Map.of());
         assertThat(render, emptyString());
     }
 
     @Test
     void exception() {
-        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ ionDecode() }}", Map.of()));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fromIon() }}", Map.of()));
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ ionDecode('{not: ion') }}", Map.of()));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fromIon('{not: ion') }}", Map.of()));
     }
 }

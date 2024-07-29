@@ -11,7 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import java.util.List;
 import java.util.Map;
 
-public class IonDecodeFunction implements Function {
+public class FromIonFunction implements Function {
         private static final ObjectMapper MAPPER = JacksonMapper.ofIon();
 
         public List<String> getArgumentNames() {
@@ -21,7 +21,7 @@ public class IonDecodeFunction implements Function {
         @Override
         public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
             if (!args.containsKey("ion")) {
-                throw new PebbleException(null, "The 'ion' function expects an argument 'ion'.", lineNumber, self.getName());
+                throw new PebbleException(null, "The 'fromIon' function expects an argument 'ion'.", lineNumber, self.getName());
             }
 
             if (args.get("ion") == null) {
@@ -29,7 +29,7 @@ public class IonDecodeFunction implements Function {
             }
 
             if (!(args.get("ion") instanceof String)) {
-                throw new PebbleException(null, "The 'ion' function expects an argument 'ion' with type string.", lineNumber, self.getName());
+                throw new PebbleException(null, "The 'fromIon' function expects an argument 'ion' with type string.", lineNumber, self.getName());
             }
 
             String ion = (String) args.get("ion");;

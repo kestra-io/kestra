@@ -11,7 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import java.util.List;
 import java.util.Map;
 
-public class JsonDecodeFunction implements Function {
+public class FromJsonFunction implements Function {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     public List<String> getArgumentNames() {
@@ -21,7 +21,7 @@ public class JsonDecodeFunction implements Function {
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         if (!args.containsKey("json")) {
-            throw new PebbleException(null, "The 'json' function expects an argument 'json'.", lineNumber, self.getName());
+            throw new PebbleException(null, "The 'fromJson' function expects an argument 'json'.", lineNumber, self.getName());
         }
 
         if (args.get("json") == null) {
@@ -29,7 +29,7 @@ public class JsonDecodeFunction implements Function {
         }
 
         if (!(args.get("json") instanceof String)) {
-            throw new PebbleException(null, "The 'json' function expects an argument 'json' with type string.", lineNumber, self.getName());
+            throw new PebbleException(null, "The 'fromJson' function expects an argument 'json' with type string.", lineNumber, self.getName());
         }
 
         String json = (String) args.get("json");;

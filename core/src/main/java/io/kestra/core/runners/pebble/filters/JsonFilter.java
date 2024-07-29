@@ -9,11 +9,11 @@ import java.util.Map;
 
 @Slf4j
 @Deprecated
-public class JsonFilter extends JsonEncodeFilter {
+public class JsonFilter extends ToJsonFilter {
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {
-        log.warn("The 'json' filter is deprecated, please use 'jsonEncode' instead");
+        log.warn("The 'json' filter is deprecated, please use 'toJson' instead");
 
         return super.apply(input, args, self, context, lineNumber);
     }

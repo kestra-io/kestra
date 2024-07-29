@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-class JsonEncodeFilterTest {
+class ToJsonFilterTest {
     @Inject
     VariableRenderer variableRenderer;
 
@@ -47,25 +47,25 @@ class JsonEncodeFilterTest {
             ))
         );
 
-        String render = variableRenderer.render("{{ vars.second.string | jsonEncode }}", vars);
+        String render = variableRenderer.render("{{ vars.second.string | toJson }}", vars);
         assertThat(render, is("\"string\""));
 
-        render = variableRenderer.render("{{ vars.second.int | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.int | toJson }}", vars);
         assertThat(render, is("1"));
 
-        render = variableRenderer.render("{{ vars.second.float | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.float | toJson }}", vars);
         assertThat(render, is("1.123"));
 
-        render = variableRenderer.render("{{ vars.second.list | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.list | toJson }}", vars);
         assertThat(render, is("[\"string\",1,1.123]"));
 
-        render = variableRenderer.render("{{ vars.second.bool | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.bool | toJson }}", vars);
         assertThat(render, is("true"));
 
-        render = variableRenderer.render("{{ vars.second.date | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.date | toJson }}", vars);
         assertThat(render, is("\"" + date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\""));
 
-        render = variableRenderer.render("{{ vars.second.map | jsonEncode }}", vars);
+        render = variableRenderer.render("{{ vars.second.map | toJson }}", vars);
         assertThat(render, containsString("\"int\":1"));
         assertThat(render, containsString("\"int\":1"));
         assertThat(render, containsString("\"float\":1.123"));
@@ -73,18 +73,18 @@ class JsonEncodeFilterTest {
         assertThat(render, startsWith("{"));
         assertThat(render, endsWith("}"));
 
-        render = variableRenderer.render("{{ {\"empty_object\":{}} | jsonEncode }}", Map.of());
+        render = variableRenderer.render("{{ {\"empty_object\":{}} | toJson }}", Map.of());
         assertThat(render, is("{\"empty_object\":{}}"));
 
-        render = variableRenderer.render("{{ null | jsonEncode }}", Map.of());
+        render = variableRenderer.render("{{ null | toJson }}", Map.of());
         assertThat(render, is("null"));
     }
 
     @Test
     void exception() {
-        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ | jsonEncode }}", Map.of()));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ | toJson }}", Map.of()));
 
-        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ {not: json} | jsonEncode }}", Map.of()));
+        assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ {not: json} | toJson }}", Map.of()));
     }
 
     @Test
@@ -95,7 +95,7 @@ class JsonEncodeFilterTest {
             ))
         );
 
-        String render = variableRenderer.render("{{ vars.second.string | jsonEncode }}", vars);
+        String render = variableRenderer.render("{{ vars.second.string | toJson }}", vars);
         assertThat(render, is("\"string\""));
     }
 }

@@ -11,7 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import java.util.List;
 import java.util.Map;
 
-public class JsonEncodeFilter implements Filter {
+public class ToJsonFilter implements Filter {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Override

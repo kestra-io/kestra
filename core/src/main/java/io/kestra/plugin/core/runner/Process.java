@@ -37,8 +37,9 @@ import java.util.Map;
         To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
 
         Note that:
-        - This task runner is Operating System agnostic. You can use it also on Windows without any additional configuration.
-        - When the Kestra Worker running this task is terminated, the process will be interrupted and re-created at worker restart."""
+
+        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac or Windows without any additional configuration.
+        - When the Kestra Worker running this task is shut down, the process will be interrupted and re-created as soon as the worker is restarted."""
 )
 @Plugin(
     examples = {
@@ -55,6 +56,36 @@ import java.util.Map;
                       type: io.kestra.plugin.core.runner.Process
                     commands:
                     - echo "Hello World\"""",
+            full = true
+        ),
+        @Example(
+            title = "Install custom Python packages before executing a Python script. Note how we use the `--break-system-packages` flag to avoid conflicts with the system packages. Make sure to use this flag if you see errors similar to `error: externally-managed-environment`.",
+            code = """
+id: before_commands_example
+namespace: company.team
+
+inputs:
+  - id: url
+    type: URI
+    defaults: https://jsonplaceholder.typicode.com/todos/1
+
+tasks:
+  - id: transform
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    beforeCommands:
+      - pip install kestra requests --break-system-packages
+    script: |
+      import requests
+      from kestra import Kestra
+
+      url = "{{ inputs.url }}"
+
+      response = requests.get(url)
+      print('Status Code:', response.status_code)
+      Kestra.outputs(response.json())
+""",
             full = true
         ),
         @Example(

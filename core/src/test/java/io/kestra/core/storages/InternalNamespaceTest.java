@@ -65,7 +65,7 @@ class InternalNamespaceTest {
         // Then
         assertThat(namespaceFile, is(NamespaceFile.of(namespaceId, Path.of("sub/dir/file.txt"))));
         // Then
-        try (InputStream is  = namespace.getFileContent(namespaceFile.path())) {
+        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes()), is("1"));
         }
     }
@@ -78,13 +78,13 @@ class InternalNamespaceTest {
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
-        namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("1".getBytes()));
+        namespace.putFile(namespaceFile, new ByteArrayInputStream("1".getBytes()));
 
         // When
-        namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.OVERWRITE);
+        namespace.putFile(namespaceFile, new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.OVERWRITE);
 
         // Then
-        try (InputStream is  = namespace.getFileContent(namespaceFile.path())) {
+        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes()), is("2"));
         }
     }
@@ -97,12 +97,12 @@ class InternalNamespaceTest {
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
-        namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("1".getBytes()));
+        namespace.putFile(namespaceFile, new ByteArrayInputStream("1".getBytes()));
 
         // When - Then
         Assertions.assertThrows(
             IOException.class,
-            () -> namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.ERROR)
+            () -> namespace.putFile(namespaceFile, new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.ERROR)
         );
     }
 
@@ -114,13 +114,13 @@ class InternalNamespaceTest {
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
-        namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("1".getBytes()));
+        namespace.putFile(namespaceFile, new ByteArrayInputStream("1".getBytes()));
 
         // When
-        namespace.putFile(namespaceFile.path(), new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.SKIP);
+        namespace.putFile(namespaceFile, new ByteArrayInputStream("2".getBytes()), Namespace.Conflicts.SKIP);
 
         // Then
-        try (InputStream is  = namespace.getFileContent(namespaceFile.path())) {
+        try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
             assertThat(new String(is.readAllBytes()), is("1"));
         }
     }
@@ -146,9 +146,9 @@ class InternalNamespaceTest {
 
         // Then
         assertThat(namespaceFiles.stream().map(NamespaceFile::path).toList(), containsInAnyOrder(
-            is(Path.of("a/b/c/1.sql")),
-            is(Path.of("b/c/d/3.sql")),
-            is(Path.of("c/5.sql"))
+            is("a/b/c/1.sql"),
+            is("b/c/d/3.sql"),
+            is("c/5.sql")
         ));
     }
 

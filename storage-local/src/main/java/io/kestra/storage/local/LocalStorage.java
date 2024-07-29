@@ -78,10 +78,11 @@ public class LocalStorage implements StorageInterface {
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                String dirPath = dir.toString().replace("\\", "/");
                 if (includeDirectories) {
-                    uris.add(URI.create(dir + "/"));
+                    uris.add(URI.create(dirPath + "/"));
                 }
-                return super.preVisitDirectory(dir, attrs);
+                return super.preVisitDirectory(Path.of(dirPath), attrs);
             }
 
             @Override

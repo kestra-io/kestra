@@ -89,6 +89,14 @@ public interface Namespace {
 
     NamespaceFile putFile(Path path, InputStream content, Conflicts onAlreadyExist) throws IOException;
 
+    default NamespaceFile putFile(NamespaceFile file, InputStream content) throws IOException {
+        return putFile(file, content, Conflicts.OVERWRITE);
+    }
+
+    default NamespaceFile putFile(NamespaceFile file, InputStream content, Conflicts onAlreadyExist) throws IOException {
+        return putFile(Path.of(file.path()), content, onAlreadyExist);
+    }
+
     /**
      * Creates a new directory for the current namespace.
      *
@@ -105,7 +113,7 @@ public interface Namespace {
      * @throws IOException if an error happens while performing the delete operation.
      */
     default boolean delete(NamespaceFile file) throws IOException {
-        return delete(file.path());
+        return delete(Path.of(file.path()));
     }
 
     /**

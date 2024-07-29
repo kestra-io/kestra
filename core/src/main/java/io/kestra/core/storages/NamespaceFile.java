@@ -14,10 +14,14 @@ import java.util.Objects;
  * @param namespace The namespace of the file.
  */
 public record NamespaceFile(
-    Path path,
+    String path,
     URI uri,
     String namespace
 ) {
+
+    public NamespaceFile(Path path, URI uri, String namespace) {
+        this(path.toString(), uri, namespace);
+    }
 
     /**
      * Static factory method for constructing a new {@link NamespaceFile} object.
@@ -86,7 +90,7 @@ public record NamespaceFile(
         Objects.requireNonNull(namespace, "namespace cannot be null");
         if (path == null || path.equals(Path.of("/"))) {
             return new NamespaceFile(
-                Path.of(""),
+                "",
                 URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/"),
                 namespace
             );
@@ -97,9 +101,12 @@ public record NamespaceFile(
         if (filePath.isAbsolute()) {
             filePath = filePath.getRoot().relativize(filePath);
         }
+        // Need to remove starting trailing slash for Windows
+        String pathWithoutTrailingSlash = path.toString().replaceFirst("^[.]*[\\\\|/]*", "");
+
         return new NamespaceFile(
-            filePath,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(filePath)),
+            pathWithoutTrailingSlash,
+            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(pathWithoutTrailingSlash).toString().replace("\\","/")),
             namespace
         );
     }
@@ -121,7 +128,7 @@ public record NamespaceFile(
                 return Path.of("/").resolve(path);
             }
         }
-        return path;
+        return Path.of(path);
     }
 
     /**

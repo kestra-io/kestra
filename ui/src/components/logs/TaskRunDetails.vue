@@ -41,6 +41,7 @@
                                 :data-index="index"
                             >
                                 <log-line
+                                    :key="index"
                                     :level="level"
                                     :log="item"
                                     :exclude-metas="excludeMetas"

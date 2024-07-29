@@ -143,7 +143,9 @@ export default {
         },
         deleteExecution({commit}, options) {
             const {id, deleteLogs, deleteMetrics, deleteStorage} = options
-            return this.$http.delete(`${apiUrl(this)}/executions/${id}`, {data: {deleteLogs, deleteMetrics, deleteStorage}}).then(() => {
+            const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage}).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
+
+            return this.$http.delete(`${apiUrl(this)}/executions/${id}?${qs}`).then(() => {
                 commit("setExecution", null)
             })
         },

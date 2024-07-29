@@ -65,7 +65,7 @@
     "@rushstack/eslint-patch": "^1.10.3",
     "@shikijs/markdown-it": "^1.6.3",
     "@typescript-eslint/parser": "^7.17.0",
-    "@vitejs/plugin-vue": "^5.1.0",
+    "@vitejs/plugin-vue": "^5.1.1",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",

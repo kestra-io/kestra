@@ -119,7 +119,7 @@ dependencies {
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
         api 'com.github.tomakehurst:wiremock-jre8:3.0.1'
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.45.0"
+        api "com.microsoft.playwright:playwright:1.45.1"
 
         // Kestra components
         api "io.kestra:core:$version"

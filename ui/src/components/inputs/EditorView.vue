@@ -523,7 +523,7 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertTrigger(source, newTrigger.value));
+        onEdit(YamlUtils.insertTrigger(source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
         haveChange.value = true;
@@ -557,7 +557,7 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertError(source, newError.value));
+        onEdit(YamlUtils.insertError(source, newError.value), true);
         newError.value = null;
         isNewErrorOpen.value = false;
     };

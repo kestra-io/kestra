@@ -251,10 +251,11 @@
                     });
             },
             deleteLogs() {
-                this.$store.dispatch("log/deleteLogs", {
-                    namespace: this.namespace,
-                    flowId: this.flowId
-                })
+                this.$toast().confirm(
+                    this.$t("delete_all_logs"),
+                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
+                    () => {}
+                )
             }
         },
     };

@@ -335,6 +335,7 @@
     "copy logs": "Copier les logs",
     "download logs": "Télécharger les logs",
     "delete logs": "Supprimer les logs",
+    "delete_all_logs": "Êtes-vous sûr de vouloir supprimer tous les journaux ?",
     "toggle fullscreen": "Permuter le plein écran",
     "copied": "Copié",
     "tags": "Tags",

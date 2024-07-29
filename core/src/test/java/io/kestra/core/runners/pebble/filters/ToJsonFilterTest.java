@@ -24,7 +24,7 @@ class ToJsonFilterTest {
     VariableRenderer variableRenderer;
 
     @Test
-    void jsonEncodeFilter() throws IllegalVariableEvaluationException {
+    void toJsonFilter() throws IllegalVariableEvaluationException {
         ZonedDateTime date = ZonedDateTime.parse("2013-09-08T16:19:00+02").withZoneSameLocal(ZoneId.systemDefault());
 
         ImmutableMap<String, Object> vars = ImmutableMap.of(
@@ -95,7 +95,7 @@ class ToJsonFilterTest {
             ))
         );
 
-        String render = variableRenderer.render("{{ vars.second.string | toJson }}", vars);
+        String render = variableRenderer.render("{{ vars.second.string | json }}", vars);
         assertThat(render, is("\"string\""));
     }
 }

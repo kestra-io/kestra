@@ -91,6 +91,7 @@ public class Extension extends AbstractExtension {
         filters.put("startsWith", new StartsWithFilter());
         filters.put("endsWith", new EndsWithFilter());
         filters.put("values", new ValuesFilter());
+        filters.put("toIon", new ToIonFilter());
         return filters;
     }
 

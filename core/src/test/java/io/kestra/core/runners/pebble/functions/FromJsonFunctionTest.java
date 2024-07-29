@@ -18,7 +18,7 @@ class FromJsonFunctionTest {
     VariableRenderer variableRenderer;
 
     @Test
-    void jsonDecodeFunction() throws IllegalVariableEvaluationException {
+    void fronJsonFunction() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ fromJson('{\"test1\": 1, \"test2\": 2, \"test3\": 3}').test1 }}", Map.of());
         assertThat(render, is("1"));
 

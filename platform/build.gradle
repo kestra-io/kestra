@@ -18,7 +18,7 @@ dependencies {
     def aetherVersion = "1.1.0"
     def jollydayVersion = "0.29.0"
     def jsonschemaVersion = "4.35.0"
-    def kafkaVersion = "3.7.1"
+    def kafkaVersion = "3.8.0"
     def opensearchVersion = "2.12.0"
     def opensearchRestVersion = "2.15.0"
     def flyingSaucerVersion = "9.7.2"

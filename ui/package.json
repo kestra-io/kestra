@@ -62,7 +62,7 @@
     "yaml": "^2.5.0"
   },
   "devDependencies": {
-    "@rushstack/eslint-patch": "^1.10.3",
+    "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^1.6.3",
     "@typescript-eslint/parser": "^7.17.0",
     "@vitejs/plugin-vue": "^5.1.0",

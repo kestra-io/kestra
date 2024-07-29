@@ -137,28 +137,27 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     }
 
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
-        runContext.logger().debug("Using task runner '{}'", this.getTaskRunner().getType());
         return new CommandsWrapper(runContext)
             .withEnv(this.getEnv())
             .withWarningOnStdErr(this.getWarningOnStdErr())
             .withRunnerType(this.taskRunner == null ? this.getRunner() : null)
             .withContainerImage(runContext.render(this.getContainerImage()))
-            .withTaskRunner(this.getTaskRunner())
-            .withDockerOptions(this.getDocker() != null ? this.injectDefaults(this.getDocker()) : null)
-            .withNamespaceFiles(this.getNamespaceFiles())
-            .withInputFiles(this.getInputFiles())
-            .withOutputFiles(this.getOutputFiles())
+            .withTaskRunner(this.taskRunner)
+            .withDockerOptions(this.injectDefaults(getDocker()))
+            .withNamespaceFiles(this.namespaceFiles)
+            .withInputFiles(this.inputFiles)
+            .withOutputFiles(this.outputFiles)
             .withEnableOutputDirectory(this.getOutputDirectory())
             .withTimeout(this.getTimeout())
-            .withTargetOS(this.getTargetOS());
+            .withTargetOS(this.targetOS);
     }
 
     protected List<String> getBeforeCommandsWithOptions() {
-        return mayAddExitOnErrorCommands(this.getBeforeCommands());
+        return mayAddExitOnErrorCommands(this.beforeCommands);
     }
 
     protected List<String> mayAddExitOnErrorCommands(List<String> commands) {
-        if (!this.getFailFast()) {
+        if (!failFast) {
             return commands;
         }
 
@@ -178,7 +177,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
      */
     protected List<String> getExitOnErrorCommands() {
         // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
-        if (this.getTargetOS().equals(TargetOS.WINDOWS) || this.getTargetOS().equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process) {
+        if (targetOS.equals(TargetOS.WINDOWS) || targetOS.equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this.taskRunner instanceof Process) {
             return List.of("");
         }
         // errexit option may be unsupported by non-shell interpreter.
@@ -188,8 +187,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     /** {@inheritDoc} **/
     @Override
     public void kill() {
-        if (this.getTaskRunner() != null) {
-            this.getTaskRunner().kill();
+        if (this.taskRunner != null) {
+            this.taskRunner.kill();
         }
     }
 }

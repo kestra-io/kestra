@@ -342,6 +342,7 @@
     "copy logs": "Copy logs",
     "download logs": "Download logs",
     "delete logs": "Delete logs",
+    "delete_all_logs": "Are you sure you want to delete all logs?",
     "toggle fullscreen": "Toggle fullscreen",
     "copied": "Copied",
     "tags": "Tags",

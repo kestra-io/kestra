@@ -59,9 +59,7 @@
                                 </p>
                                 <div>
                                     <div
-                                        v-for="(task, taskIndex) in allTasks(
-                                            flow.tasks,
-                                        )"
+                                        v-for="(task, taskIndex) in allTasks(flow.tasks)"
                                         :key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         class="image me-1"
                                     >
@@ -70,6 +68,10 @@
                                             :icons="icons"
                                             :variable="ICON_COLOR"
                                             only-icon
+
+                                            :data-cls="task"
+                                            :data-task-index="taskIndex"
+                                            :data-key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         />
                                     </div>
                                 </div>
@@ -231,7 +233,7 @@
 
         tasks.forEach(collectTypes);
 
-        return Array.from(uniqueTypes);
+        return Array.from(uniqueTypes).filter(type => type);
     };
     const offset = computed(() => {
         switch (flows.value[activeFlow.value].id) {

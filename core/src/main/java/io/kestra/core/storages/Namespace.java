@@ -5,6 +5,7 @@ import io.kestra.core.utils.PathMatcherPredicate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -83,17 +84,17 @@ public interface Namespace {
      */
     InputStream getFileContent(Path path) throws IOException;
 
-    default NamespaceFile putFile(Path path, InputStream content) throws IOException {
+    default NamespaceFile putFile(Path path, InputStream content) throws IOException, URISyntaxException {
         return putFile(path, content, Conflicts.OVERWRITE);
     }
 
-    NamespaceFile putFile(Path path, InputStream content, Conflicts onAlreadyExist) throws IOException;
+    NamespaceFile putFile(Path path, InputStream content, Conflicts onAlreadyExist) throws IOException, URISyntaxException;
 
-    default NamespaceFile putFile(NamespaceFile file, InputStream content) throws IOException {
+    default NamespaceFile putFile(NamespaceFile file, InputStream content) throws IOException, URISyntaxException {
         return putFile(file, content, Conflicts.OVERWRITE);
     }
 
-    default NamespaceFile putFile(NamespaceFile file, InputStream content, Conflicts onAlreadyExist) throws IOException {
+    default NamespaceFile putFile(NamespaceFile file, InputStream content, Conflicts onAlreadyExist) throws IOException, URISyntaxException {
         return putFile(Path.of(file.path()), content, onAlreadyExist);
     }
 

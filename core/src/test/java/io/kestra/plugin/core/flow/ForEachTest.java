@@ -35,4 +35,12 @@ class ForEachTest  extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(10));
     }
+
+    @Test
+    void concurrentNoLimit() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "foreach-concurrent-no-limit");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(7));
+    }
 }

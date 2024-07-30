@@ -18,6 +18,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -147,6 +148,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     )
     private Object values;
 
+    @PositiveOrZero
     @NotNull
     @Builder.Default
     @Schema(
@@ -164,13 +166,23 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
 
-        GraphUtils.parallel(
-            subGraph,
-            this.getTasks(),
-            this.getErrors(),
-            taskRun,
-            execution
-        );
+        if (concurrencyLimit == 1) {
+            GraphUtils.sequential(
+                subGraph,
+                this.getTasks(),
+                this.getErrors(),
+                taskRun,
+                execution
+            );
+        } else {
+            GraphUtils.parallel(
+                subGraph,
+                this.getTasks(),
+                this.getErrors(),
+                taskRun,
+                execution
+            );
+        }
 
         return subGraph;
     }

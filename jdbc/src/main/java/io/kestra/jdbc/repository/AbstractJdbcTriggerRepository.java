@@ -240,7 +240,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.fullTextCondition(query))
                     .and(this.defaultFilter(tenantId));
@@ -275,7 +275,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                         .select(
                             field("value")
                         )
-                        .hint(context.configuration().dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                        .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                         .from(this.jdbcRepository.getTable())
                         .where(this.defaultFilter(tenantId));
                     if (namespace != null) {

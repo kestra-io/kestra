@@ -22,6 +22,7 @@ import org.codehaus.commons.nullanalysis.NotNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URI;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -123,13 +124,18 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             for (Object file : filesList) {
                 Optional<URI> uri = FileUtils.getURI(file.toString());
                 // Immediately handle strings that are full URI
-                if (uri.isPresent()) {
-                    if (runContext.storage().isFileExist(uri.get())) {
+                try {
+
+                    if (uri.isPresent() && runContext.storage().isFileExist(uri.get())) {
                         Path targetFilePath = Path.of(renderedDestination, FileUtils.getFileName(uri.get()));
                         storageNamespace.putFile(targetFilePath, runContext.storage().getFile(uri.get()), conflict);
+                    } else {
+                        regexs.add(file.toString());
                     }
-                    // else ignore
-                } else {
+                }
+                // If the string is not a valid URI, try to use it as a regex
+                catch (InvalidPathException | NullPointerException e) {
+                    runContext.logger().debug("File {} is not a valid URI, using it as a regex", file);
                     regexs.add(file.toString());
                 }
             }

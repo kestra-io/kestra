@@ -242,7 +242,7 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
-        long concurrencySlots = concurrency - nonTerminatedCount;
+        long concurrencySlots = concurrency == 0 ? Integer.MAX_VALUE : concurrency - nonTerminatedCount;
 
         // first one
         if (taskRuns.isEmpty()) {

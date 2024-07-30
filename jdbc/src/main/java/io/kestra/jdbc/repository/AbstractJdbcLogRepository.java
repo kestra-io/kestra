@@ -52,7 +52,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -125,8 +125,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         selectFields.add(
             DSL.count().as("count")
         );
-
-        selectFields.addAll(dateFields);
+        selectFields.addAll(groupByFields(Duration.between(finalStartDate, finalEndDate), "timestamp", groupBy, true));
 
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -457,7 +456,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
-                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 

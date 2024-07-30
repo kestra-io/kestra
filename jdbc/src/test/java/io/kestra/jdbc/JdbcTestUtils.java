@@ -4,7 +4,6 @@ import io.micronaut.flyway.FlywayConfigurationProperties;
 import io.micronaut.flyway.FlywayMigrator;
 import lombok.SneakyThrows;
 import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -28,8 +27,12 @@ public class JdbcTestUtils {
     @Inject
     private DataSource dataSource;
 
+    @Inject
+    private JdbcTableConfigs tableConfigs;
+
     @SneakyThrows
     public void drop() {
+        var tableNames = tableConfigs.getTableConfigs().stream().map(conf -> conf.table().toLowerCase()).toList();
         dslContextWrapper.transaction((configuration) -> {
             DSLContext dslContext = DSL.using(configuration);
 
@@ -38,9 +41,10 @@ public class JdbcTestUtils {
                 .getTables()
                 .stream()
                 .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                    table.getSchema().getName().equals("public") // for Postgres
+                    table.getSchema().getName().equals("public")  || // for Postgres
+                    table.getSchema().getName().equals("dbo") // fo SQLServer
                 ))
-                .filter(table -> !table.getName().equals("flyway_schema_history"))
+                .filter(table -> tableNames.contains(table.getName().toLowerCase()))
                 .forEach(t -> dslContext.delete(t).execute());
         });
     }

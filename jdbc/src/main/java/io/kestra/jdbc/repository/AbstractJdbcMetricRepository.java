@@ -204,7 +204,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         ZonedDateTime endDate,
         String aggregation
     ) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate)));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), true));
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -230,7 +230,9 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
                 dateFields.add(field("metric_name"));
 
-                var selectGroup = select.groupBy(dateFields);
+                List<Field<?>> groupByFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate)));
+                groupByFields.add(field("metric_name"));
+                var selectGroup = select.groupBy(groupByFields);
 
                 List<MetricAggregation> result = this.jdbcRepository
                     .fetchMetricStat(selectGroup, DateUtils.groupByType(Duration.between(startDate, endDate)).val());

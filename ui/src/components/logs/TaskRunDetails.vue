@@ -490,7 +490,9 @@
                 this.selectedAttemptNumberByTaskRunId[taskRunId] = newDisplayedAttemptNumber;
             },
             taskType(taskRun) {
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                if(!taskRun) return undefined;        
+
+                const task = FlowUtils.findTaskById(this.flow, taskRun?.taskId);
                 const parentTaskRunId = taskRun.parentTaskRunId;
                 if (task === undefined && parentTaskRunId) {
                     return this.taskType(this.taskRunById[parentTaskRunId])

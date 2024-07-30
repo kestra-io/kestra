@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,7 +85,7 @@ public class UploadFilesTest {
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
+        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
@@ -96,7 +97,7 @@ public class UploadFilesTest {
         namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String newFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
+        String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
         assertThat(previousFile.equals(newFile), is(false));
     }
@@ -123,7 +124,7 @@ public class UploadFilesTest {
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
+        String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
@@ -135,7 +136,7 @@ public class UploadFilesTest {
         namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size(), is(1));
 
-        String newFile = IOUtils.toString(namespaceStorage.getFileContent(namespaceFiles.getFirst().path()), StandardCharsets.UTF_8);
+        String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
         assertThat(previousFile.equals(newFile), is(true));
     }

@@ -1,6 +1,7 @@
 <template>
     <errors code="404" v-if="error && embed" />
     <div v-else>
+        <slot name="nav" />
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
                 <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">

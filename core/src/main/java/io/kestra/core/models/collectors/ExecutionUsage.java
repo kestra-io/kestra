@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -36,8 +35,8 @@ public class ExecutionUsage {
                 from,
                 to,
                 DateUtils.GroupType.DAY,
-                true
-            );
+                null,
+                true);
         } catch (UnsupportedOperationException ignored) {
 
         }
@@ -51,8 +50,8 @@ public class ExecutionUsage {
                 from,
                 to,
                 DateUtils.GroupType.DAY,
-                false
-            ))
+                null,
+                false))
             .dailyTaskRunsCount(dailyTaskRunsCount)
             .build();
     }

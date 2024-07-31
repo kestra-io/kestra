@@ -427,8 +427,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            false
-        );
+            null,
+            false);
 
         assertThat(result.size(), is(11));
         assertThat(result.get(10).getExecutionCounts().size(), is(11));
@@ -456,8 +456,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             null,
-            true
-        );
+            null,
+            true);
 
         assertThat(result.size(), is(11));
         assertThat(result.get(10).getExecutionCounts().size(), is(11));

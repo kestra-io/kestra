@@ -74,7 +74,7 @@ export default {
             let query = {...this.$route.query};
 
             for (const [key, value] of Object.entries(values)) {
-                if (value === undefined || value === "" || value === null) {
+                if (value === undefined || value === "" || value === null || value.length === 0) {
                     delete query[key]
                 } else {
                     query[key] = value;

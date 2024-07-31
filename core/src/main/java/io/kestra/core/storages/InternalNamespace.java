@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -125,13 +126,15 @@ public class InternalNamespace implements Namespace {
      * {@inheritDoc}
      **/
     @Override
-    public NamespaceFile putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException {
+    public NamespaceFile putFile(final Path path, final InputStream content, final Conflicts onAlreadyExist) throws IOException, URISyntaxException {
         Path namespaceFilesPrefix = NamespaceFile.of(namespace, path).storagePath();
-        final boolean exists = storage.exists(tenant, namespaceFilesPrefix.toUri());
+        // Remove Windows letter
+        URI cleanUri = new URI(namespaceFilesPrefix.toUri().toString().replaceFirst("^file:///[a-zA-Z]:", ""));
+        final boolean exists = storage.exists(tenant, cleanUri);
 
         return switch (onAlreadyExist) {
             case OVERWRITE -> {
-                URI uri = storage.put(tenant, namespaceFilesPrefix.toUri(), content);
+                URI uri = storage.put(tenant, cleanUri, content);
                 NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
                 if (exists) {
                     logger.debug(String.format(

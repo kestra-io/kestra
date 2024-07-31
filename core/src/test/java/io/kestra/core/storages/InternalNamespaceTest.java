@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -35,7 +36,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldGetAllNamespaceFiles() throws IOException {
+    void shouldGetAllNamespaceFiles() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -54,7 +55,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldPutFileGivenNoTenant() throws IOException {
+    void shouldPutFileGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -71,7 +72,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldSucceedPutFileGivenExistingFileForConflictOverwrite() throws IOException {
+    void shouldSucceedPutFileGivenExistingFileForConflictOverwrite() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -90,7 +91,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldFailPutFileGivenExistingFileForError() throws IOException {
+    void shouldFailPutFileGivenExistingFileForError() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -107,7 +108,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldIgnorePutFileGivenExistingFileForSkip() throws IOException {
+    void shouldIgnorePutFileGivenExistingFileForSkip() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -126,7 +127,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldFindAllMatchingGivenNoTenant() throws IOException {
+    void shouldFindAllMatchingGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
@@ -153,7 +154,7 @@ class InternalNamespaceTest {
     }
 
     @Test
-    void shouldFindAllGivenTenant() throws IOException {
+    void shouldFindAllGivenTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespaceTenant1 = new InternalNamespace(logger, "tenant1", namespaceId, storageInterface);

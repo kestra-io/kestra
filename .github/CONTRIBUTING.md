@@ -83,7 +83,7 @@ Now, you need to start a backend server, you could:
 ```yaml
 services:
   kestra:
-    image: kestra/kestra:latest-full
+    image: kestra/kestra:latest
     user: "root"
     command: server local
     environment:

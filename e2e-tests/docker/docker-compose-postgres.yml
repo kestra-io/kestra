@@ -42,7 +42,7 @@ services:
         condition: service_completed_successfully
 
   kestra:
-    image: "${KESTRA_DOCKER_IMAGE:-kestra/kestra:develop-full}"
+    image: "${KESTRA_DOCKER_IMAGE:-kestra/kestra:develop}"
     entrypoint:
       - bash
       - -c

@@ -763,7 +763,7 @@
             "editor_theme": "Editor Theme",
             "editor_font_size": "Editor Font Size",
             "editor_font_family": "Editor Font Family",
-            "editor_folding_stratgy": "Editor Automatic Fold or Multi Lines",
+            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "environment_name": "Environment Name",
             "environment_color": "Environment Color"
           }

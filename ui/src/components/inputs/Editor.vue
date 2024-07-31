@@ -407,7 +407,7 @@
 <style lang="scss">
     @import "../../styles/layout/root-dark.scss";
 
-    :not(.el-drawer__body) > .ks-editor {
+    :not(.namespace-form, .el-drawer__body) > .ks-editor{
         flex-direction: column;
         height: 100%;
     }

@@ -12,7 +12,7 @@ on:
         required: false
       docker-image-tag:
         description: "The Docker image Tag for Kestra"
-        default: 'kestra/kestra:develop-full'
+        default: 'kestra/kestra:develop'
         type: string
         required: true
       backend:

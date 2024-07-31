@@ -20,11 +20,11 @@ services:
       retries: 10
 
   kestra:
-    image: kestra/kestra:latest-full
+    image: kestra/kestra:latest
     pull_policy: always
     # Note that this setup with a root user is intended for development purpose. For production deployments, you might prefer a version without a root user.
-    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket 
-    # This version is rootless but more complex https://github.com/kestra-io/kestra/blob/develop/docker-compose-dind.yml 
+    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
+    # This version is rootless but more complex https://github.com/kestra-io/kestra/blob/develop/docker-compose-dind.yml
     user: "root"
     command: server standalone --worker-thread=128
     volumes:

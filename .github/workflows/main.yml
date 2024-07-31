@@ -110,7 +110,7 @@ jobs:
             TAG="build-${{ github.run_id }}";
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "artifact=docker-kestra-${TAG}-full" >> $GITHUB_OUTPUT
+          echo "artifact=docker-kestra-${TAG}" >> $GITHUB_OUTPUT
 
       # Docker setup
       - name: Set up QEMU
@@ -127,7 +127,7 @@ jobs:
           push: false
           file: Dockerfile
           tags: |
-            kestra/kestra:${{ steps.vars.outputs.tag }}-full
+            kestra/kestra:${{ steps.vars.outputs.tag }}
           build-args: |
             KESTRA_PLUGINS=${{ steps.plugins.outputs.plugins }}
             APT_PACKAGES=${{ env.DOCKER_APT_PACKAGES }}
@@ -165,7 +165,7 @@ jobs:
     with:
       tags: oss
       docker-artifact-name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
-      docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}-full
+      docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}
       backend: ${{ matrix.backends }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
@@ -305,11 +305,11 @@ jobs:
     strategy:
       matrix:
         image:
-          - tag: ${{needs.build-artifacts.outputs.docker-tag}}
+          - tag: ${{needs.build-artifacts.outputs.docker-tag}}-no-plugins
             packages: ""
             python-libraries: ""
 
-          - tag: ${{needs.build-artifacts.outputs.docker-tag}}-full
+          - tag: ${{needs.build-artifacts.outputs.docker-tag}}
             plugins: ${{needs.build-artifacts.outputs.plugins}}
             packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
             python-libraries: kestra

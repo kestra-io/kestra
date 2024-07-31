@@ -47,7 +47,7 @@ jobs:
           path: build/reports/dependency-check-report.html
 
   develop-image-check:
-    name: Image Check (develop-full)
+    name: Image Check (develop)
     runs-on: ubuntu-latest
     steps:
       # Checkout
@@ -74,13 +74,13 @@ jobs:
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: kestra/kestra:develop-full
+          image-ref: kestra/kestra:develop
           format: table
           skip-dirs: /app/plugins
           scanners: vuln
 
   latest-image-check:
-    name: Image Check (latest-full)
+    name: Image Check (latest)
     runs-on: ubuntu-latest
     steps:
       # Checkout
@@ -107,7 +107,7 @@ jobs:
       - name: Docker Vulnerabilities Check
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: kestra/kestra:latest-full
+          image-ref: kestra/kestra:latest
           format: table
           skip-dirs: /app/plugins
           scanners: vuln

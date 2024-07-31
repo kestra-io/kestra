@@ -2,6 +2,7 @@ package io.kestra.plugin.core.namespace;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.Namespace;
@@ -9,9 +10,8 @@ import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micrometer.core.instrument.util.IOUtils;
 import jakarta.inject.Inject;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -51,7 +51,7 @@ public class UploadFilesTest {
         UploadFiles uploadFile = UploadFiles.builder()
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
-            .files(Map.of("/path/file.txt", fileStorage.toString()))
+            .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(namespace)
             .conflict(Namespace.Conflicts.ERROR)
             .destination("/folder")
@@ -73,7 +73,7 @@ public class UploadFilesTest {
         UploadFiles uploadFile = UploadFiles.builder()
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
-            .files(Map.of("/path/file.txt", fileStorage.toString()))
+            .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace("{{ inputs.namespace }}")
             .destination("/folder")
             .build();
@@ -89,7 +89,7 @@ public class UploadFilesTest {
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
-                .files(Map.of("/path/file.txt", fileStorage.toString()))
+                .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
                 .build();
 
         uploadFile.run(runContext);
@@ -111,7 +111,7 @@ public class UploadFilesTest {
         UploadFiles uploadFile = UploadFiles.builder()
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
-            .files(Map.of("/path/file.txt", fileStorage.toString()))
+            .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(namespace)
             .conflict(Namespace.Conflicts.SKIP)
             .destination("/folder")
@@ -128,7 +128,7 @@ public class UploadFilesTest {
 
         fileStorage = addToStorage("logback.xml");
         uploadFile = uploadFile.toBuilder()
-            .files(Map.of("/path/file.txt", fileStorage.toString()))
+            .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .build();
 
         uploadFile.run(runContext);
@@ -139,6 +139,29 @@ public class UploadFilesTest {
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
         assertThat(previousFile.equals(newFile), is(true));
+    }
+
+    @Test
+    void shouldPutFileFromRegex() throws Exception {
+        String namespace = "io.kestra." + IdUtils.create();
+
+
+        UploadFiles uploadFile = UploadFiles.builder()
+            .id(UploadFiles.class.getSimpleName())
+            .type(UploadFiles.class.getName())
+            .files(List.of("glob:**application**"))
+            .namespace(namespace)
+            .conflict(Namespace.Conflicts.SKIP)
+            .destination("/folder/")
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
+        runContext.workingDir().createFile("application-test.yml");
+        uploadFile.run(runContext);
+
+        Namespace namespaceStorage = runContext.storage().namespace(namespace);
+        List<NamespaceFile> namespaceFiles = namespaceStorage.all();
+        assertThat(namespaceFiles.size(), is(1));
     }
 
     private URI addToStorage(String fileToLoad) throws IOException, URISyntaxException {

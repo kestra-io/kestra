@@ -12,24 +12,34 @@ import lombok.experimental.SuperBuilder;
 public class Memory {
     @Schema(
         title = "The maximum amount of memory resources the container can use.",
-        description = "It is recommended that you set the value to at least 6 megabytes."
+        description = """
+            Make sure to use the format integer + unit (regardless of the case) without any spaces.
+            The unit can be KB (kilobytes), MB (megabytes), GB (gigabytes), etc.
+
+            Given that it's case-insensitive, the following values are equivalent: 
+            - `"512MB"`
+            - `"512Mb"`
+            - `"512mb"`
+            - `"512000KB"`
+
+            It is recommended that you allocate at least `6MB`."""
     )
     @PluginProperty(dynamic = true)
     private String memory;
 
     @Schema(
-        title = "The amount of memory this container is allowed to swap to disk.",
+        title = "The total amount of `memory` and `swap` that can be used by a container.",
         description = "If `memory` and `memorySwap` are set to the same value, this prevents containers from " +
-            "using any swap. This is because `memorySwap` is the amount of combined memory and swap that can be " +
-            "used, while `memory` is only the amount of physical memory that can be used."
+            "using any swap. This is because `memorySwap` includes both the physical memory and swap space, " +
+            "while `memory` is only the amount of physical memory that can be used."
     )
     @PluginProperty(dynamic = true)
     private String memorySwap;
 
     @Schema(
-        title = "The amount of memory this container is allowed to swap to disk.",
+        title = "A setting which controls the likelihood of the kernel to swap memory pages."
         description = "By default, the host kernel can swap out a percentage of anonymous pages used by a " +
-            "container. You can set `memorySwappiness` to a value between 0 and 100, to tune this percentage."
+            "container. You can set `memorySwappiness` to a value between 0 and 100 to tune this percentage."
     )
     @PluginProperty(dynamic = true)
     private String memorySwappiness;
@@ -44,10 +54,10 @@ public class Memory {
 
     @Schema(
         title = "The maximum amount of kernel memory the container can use.",
-        description = "The minimum allowed value is 4m. Because kernel memory cannot be swapped out, a " +
+        description = "The minimum allowed value is `4MB`. Because kernel memory cannot be swapped out, a " +
             "container which is starved of kernel memory may block host machine resources, which can have " +
             "side effects on the host machine and on other containers. " +
-            "See [--kernel-memory](https://docs.docker.com/config/containers/resource_constraints/#--kernel-memory-details) details."
+            "See the [kernel-memory docs](https://docs.docker.com/config/containers/resource_constraints/#--kernel-memory-details) for more details."
     )
     @PluginProperty(dynamic = true)
     private String kernelMemory;

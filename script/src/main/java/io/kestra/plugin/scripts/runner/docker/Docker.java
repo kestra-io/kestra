@@ -59,22 +59,29 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Task runner that executes a task inside a container in a Docker compatible engine.",
+    title = "Run a task in a Docker container.",
     description = """
-        This task runner is container-based so the `containerImage` property must be set.
+        This task runner executes tasks in a container-based Docker-compatible engine. 
+        Use the `containerImage` property to configure the image to use.
 
-        To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
+        To access the task's working directory, use the `{{workingDir}}` Pebble expression 
+        or the `WORKING_DIR` environment variable. 
+        Input files and namespace files added to the task will be accessible from that directory.
 
-        To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
+        To generate output files, we recommend using the `outputFiles` task's property. 
+        This allows you to explicitly define which files from the task's working directory 
+        should be saved as output files.
 
-        Note that when the Kestra Worker running this task is terminated, the container will still run until completion, except if Kestra itself is run inside a container and Docker-In-Docker (dind) is used as the dind engine will also be terminated."""
+        Alternatively, when writing files in your task, you can leverage 
+        the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable.
+        All files written to this directory will be saved as output files automatically."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Execute a Shell command.",
             code = """
-                id: new-shell
+                id: simple_shell_example
                 namespace: company.team
 
                 tasks:
@@ -89,7 +96,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
         @Example(
             title = "Pass input files to the task, execute a Shell command, then retrieve output files.",
             code = """
-                id: new-shell-with-file
+                id: shell_example_with_files
                 namespace: company.team
 
                 inputs:
@@ -102,7 +109,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                     inputFiles:
                       data.txt: "{{ inputs.file }}"
                     outputFiles:
-                      - out.txt
+                      - "*.txt"
                     containerImage: centos
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
@@ -172,15 +179,31 @@ public class Docker extends TaskRunner {
 
     @Schema(
         title = "List of volumes to mount.",
-        description = "Must be a valid mount expression as string, example : `/home/user:/app`.\n\n" +
-            "Volumes mount are disabled by default for security reasons; you must enable them on [plugin configuration](https://kestra.io/docs/configuration-guide/plugins) by setting `volume-enabled` to `true`."
+        description = """
+            Make sure to provide a map of a local path to a container path in the format: `/home/local/path:/app/container/path`. 
+            Volume mounts are disabled by default for security reasons — if you are sure you want to use them, 
+            make sure you enable that feature in the [plugin configuration](https://kestra.io/docs/configuration-guide/plugins) 
+            by setting `volume-enabled` to `true`.
+
+            Here is an example of how to add that to your kestra configuration:
+            ```yaml
+            kestra:
+              plugins:
+                configurations:
+                  - type: io.kestra.plugin.scripts.runner.docker.Docker
+                    values:
+                      volume-enabled: true
+            ```"""
     )
     @PluginProperty(dynamic = true)
     protected List<String> volumes;
 
     @Schema(
-        title = "The pull policy for an image.",
-        description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
+        title = "The pull policy for a container image.",
+        description = """
+        Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images. 
+        Use the `ALWAYS` pull policy to pull the latest version of an image 
+        even if an image with the same tag already exists."""
     )
     @PluginProperty
     @Builder.Default

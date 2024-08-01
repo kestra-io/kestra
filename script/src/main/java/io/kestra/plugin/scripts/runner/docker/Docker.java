@@ -65,7 +65,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
         Use the `containerImage` property to configure the image for the task.
 
         To access the task's working directory, use the `{{workingDir}}` Pebble expression 
-        or the `WORKING_DIR` environment variable. 
+        or the `WORKING_DIR` environment variable.
         Input files and namespace files added to the task will be accessible from that directory.
 
         To generate output files, we recommend using the `outputFiles` task's property. 
@@ -73,7 +73,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
         should be saved as output files.
 
         Alternatively, when writing files in your task, you can leverage 
-        the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable.
+        the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable. 
         All files written to that directory will be saved as output files automatically."""
 )
 @Plugin(
@@ -116,7 +116,31 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                     commands:
                     - cp {{ workingDir }}/data.txt {{ workingDir }}/out.txt""",
             full = true
-        )
+        ),
+        @Example(
+            title = "Run a Python script in Docker and allocate a specific amount of memory.",
+            code = """
+                id: allocate_memory_to_python_script
+                namespace: company.team
+
+                tasks:
+                  - id: script
+                    type: io.kestra.plugin.scripts.python.Script
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      pullPolicy: IF_NOT_PRESENT
+                      cpu:
+                        cpus: 1
+                      memory:\s
+                        memory: "512Mb"
+                    containerImage: ghcr.io/kestra-io/kestrapy:latest
+                    script: |
+                      from kestra import Kestra
+                     \s
+                      data = dict(message="Hello from Kestra!"")
+                      Kestra.outputs(data)""",
+            full = true
+        ),
     }
 )
 public class Docker extends TaskRunner {

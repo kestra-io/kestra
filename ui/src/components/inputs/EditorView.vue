@@ -370,7 +370,6 @@
             stopTour();
         });
         window.addEventListener("beforeunload", persistEditorWidth);
-
         window.addEventListener("resize", onResize);
 
         if (props.isCreating) {
@@ -399,11 +398,12 @@
         store.commit("core/setGuidedProperties", {tourStarted: false});
     };
 
-    const isAllowedEdit = () => {
+    const isAllowedEdit = computed(() => {
+
         return (
-            user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace)
+            user && user.isAllowed(permission.FLOW, action.UPDATE, flowParsed.value?.namespace ?? props.namespace)
         );
-    };
+    });
 
     const forwardEvent = (type, event) => {
         emit(type, event);
@@ -985,7 +985,7 @@
                 :is-creating="props.isCreating"
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
-                :is-allowed-edit="isAllowedEdit()"
+                :is-allowed-edit="isAllowedEdit"
                 :have-change="flowYaml !== flowYamlOrigin"
                 :flow-have-tasks="flowHaveTasks()"
                 :errors="flowErrors"
@@ -1074,7 +1074,7 @@
                     :execution="execution"
                     :is-read-only="isReadOnly"
                     :source="flowYaml"
-                    :is-allowed-edit="isAllowedEdit()"
+                    :is-allowed-edit="isAllowedEdit"
                     :view-type="viewType"
                     :expanded-subflows="props.expandedSubflows"
                 />

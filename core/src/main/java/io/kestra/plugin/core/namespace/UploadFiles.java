@@ -128,7 +128,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
             "output a map of files so that you can directly pass the output property to this task e.g. " +
             "[outputFiles in the S3 Downloads task](https://kestra.io/plugins/plugin-aws/tasks/s3/io.kestra.plugin.aws.s3.downloads#outputfiles) " +
             "or the [files in the Archive Decompress task](https://kestra.io/plugins/plugin-compress/tasks/io.kestra.plugin.compress.archivedecompress#files).",
-        anyOf = {List.class, String.class}
+        anyOf = {Map.class, String.class}
     )
     @PluginProperty(dynamic = true)
     private Object filesMap;

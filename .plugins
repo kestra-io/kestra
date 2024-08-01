@@ -4,6 +4,7 @@
 # Uncomment the lines corresponding to the plugins to be installed:
 #
 #io.kestra.plugin:plugin-airbyte:LATEST
+#io.kestra.plugin:plugin-airflow:LATEST
 #io.kestra.plugin:plugin-amqp:LATEST
 #io.kestra.plugin:plugin-ansible:LATEST
 #io.kestra.plugin:plugin-aws:LATEST

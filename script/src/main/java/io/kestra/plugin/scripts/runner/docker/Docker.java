@@ -62,7 +62,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
     title = "Run a task in a Docker container.",
     description = """
         This task runner executes tasks in a container-based Docker-compatible engine. 
-        Use the `containerImage` property to configure the image to use.
+        Use the `containerImage` property to configure the image for the task.
 
         To access the task's working directory, use the `{{workingDir}}` Pebble expression 
         or the `WORKING_DIR` environment variable. 
@@ -74,7 +74,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
         Alternatively, when writing files in your task, you can leverage 
         the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable.
-        All files written to this directory will be saved as output files automatically."""
+        All files written to that directory will be saved as output files automatically."""
 )
 @Plugin(
     examples = {
@@ -182,10 +182,10 @@ public class Docker extends TaskRunner {
         description = """
             Make sure to provide a map of a local path to a container path in the format: `/home/local/path:/app/container/path`. 
             Volume mounts are disabled by default for security reasons — if you are sure you want to use them, 
-            make sure you enable that feature in the [plugin configuration](https://kestra.io/docs/configuration-guide/plugins) 
+            enable that feature in the [plugin configuration](https://kestra.io/docs/configuration-guide/plugins) 
             by setting `volume-enabled` to `true`.
 
-            Here is an example of how to add that to your kestra configuration:
+            Here is how you can add that setting to your kestra configuration:
             ```yaml
             kestra:
               plugins:

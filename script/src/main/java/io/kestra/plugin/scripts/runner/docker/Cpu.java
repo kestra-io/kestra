@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 public class Cpu {
     @Schema(
         title = "The maximum amount of CPU resources a container can use.",
-        description = "Make sure to set that value as a numeric value e.g. `cpus: \"1.5\"` or `cpus: \"4\"` or For instance, if the host machine has two CPUs and you set `cpus: \"1.5\"`, the container is guaranteed **at most** one and a half of the CPUs."
+        description = "Make sure to set that to a numeric value e.g. `cpus: \"1.5\"` or `cpus: \"4\"` or For instance, if the host machine has two CPUs and you set `cpus: \"1.5\"`, the container is guaranteed **at most** one and a half of the CPUs."
     )
     @PluginProperty
     private Long cpus;

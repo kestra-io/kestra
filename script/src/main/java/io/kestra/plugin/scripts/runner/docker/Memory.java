@@ -13,7 +13,7 @@ public class Memory {
     @Schema(
         title = "The maximum amount of memory resources the container can use.",
         description = """
-            Make sure to use the format integer + unit (regardless of the case) without any spaces.
+            Make sure to use the format `number` + `unit` (regardless of the case) without any spaces.
             The unit can be KB (kilobytes), MB (megabytes), GB (gigabytes), etc.
 
             Given that it's case-insensitive, the following values are equivalent: 
@@ -21,6 +21,7 @@ public class Memory {
             - `"512Mb"`
             - `"512mb"`
             - `"512000KB"`
+            - `"0.5GB"`
 
             It is recommended that you allocate at least `6MB`."""
     )

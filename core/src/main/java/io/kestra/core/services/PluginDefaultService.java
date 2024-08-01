@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -165,13 +166,10 @@ public class PluginDefaultService {
         allDefaults.addAll(aliasedPluginDefault);
     }
 
-    private Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults) {
+    @VisibleForTesting
+    Object recursiveDefaults(Object object, Map<String, List<PluginDefault>> defaults) {
         if (object instanceof Map<?, ?> value) {
-            if (value.containsKey("type")) {
-                value = defaults(value, defaults);
-            }
-
-            return value
+            value = value
                 .entrySet()
                 .stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(
@@ -179,6 +177,12 @@ public class PluginDefaultService {
                     recursiveDefaults(e.getValue(), defaults)
                 ))
                 .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+
+            if (value.containsKey("type")) {
+                value = defaults(value, defaults);
+            }
+
+            return value;
         } else if (object instanceof Collection<?> value) {
             return value
                 .stream()

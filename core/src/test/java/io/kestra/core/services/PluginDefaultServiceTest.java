@@ -1,12 +1,12 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.PluginDefault;
-import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -14,14 +14,16 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.plugin.core.condition.ExpressionCondition;
+import io.kestra.plugin.core.trigger.Schedule;
+import jakarta.inject.Inject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -29,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -37,8 +38,66 @@ import static org.hamcrest.Matchers.is;
 
 @KestraTest
 class PluginDefaultServiceTest {
+    private static final Map<String, Object> TEST_FLOW_AS_MAP = Map.of(
+        "id", "test",
+        "namespace", "type",
+        "tasks", List.of(
+            Map.of("id", "my-task", "type", "io.kestra.test")
+        )
+    );
+
     @Inject
     private PluginDefaultService pluginDefaultService;
+
+    @Test
+    void shouldInjectGivenDefaultsIncludingType() {
+        // Given
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra.test",
+            List.of(new PluginDefault("io.kestra.test", false, Map.of("taskRunner", Map.of("type", "io.kestra.test"))))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(TEST_FLOW_AS_MAP, defaults);
+
+        // Then
+        Assertions.assertEquals(Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of(
+                    "id", "my-task",
+                    "type", "io.kestra.test",
+                    "taskRunner", Map.of("type", "io.kestra.test")
+                )
+            )
+        ), result);
+    }
+
+    @Test
+    void shouldInjectGivenSimpleDefaults() {
+        // Given
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra.test",
+            List.of(new PluginDefault("io.kestra.test", false, Map.of("default-key", "default-value")))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(TEST_FLOW_AS_MAP, defaults);
+
+        // Then
+        Assertions.assertEquals(Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of(
+                    "id", "my-task",
+                    "type", "io.kestra.test",
+                    "default-key", "default-value"
+                )
+            )
+        ), result);
+    }
 
     @Test
     public void injectFlowAndGlobals() {

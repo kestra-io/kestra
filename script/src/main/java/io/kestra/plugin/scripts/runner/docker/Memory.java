@@ -16,7 +16,7 @@ public class Memory {
             Make sure to use the format `number` + `unit` (regardless of the case) without any spaces.
             The unit can be KB (kilobytes), MB (megabytes), GB (gigabytes), etc.
 
-            Given that it's case-insensitive, the following values are equivalent: 
+            Given that it's case-insensitive, the following values are equivalent:
             - `"512MB"`
             - `"512Mb"`
             - `"512mb"`
@@ -38,7 +38,7 @@ public class Memory {
     private String memorySwap;
 
     @Schema(
-        title = "A setting which controls the likelihood of the kernel to swap memory pages."
+        title = "A setting which controls the likelihood of the kernel to swap memory pages.",
         description = "By default, the host kernel can swap out a percentage of anonymous pages used by a " +
             "container. You can set `memorySwappiness` to a value between 0 and 100 to tune this percentage."
     )

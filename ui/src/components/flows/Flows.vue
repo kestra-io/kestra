@@ -296,7 +296,7 @@
                 return this.canRead || this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.CREATE, this.$route.query.namespace);
+                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
             },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);

@@ -326,7 +326,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             null,
             startDate,
             endDate,
-            groupBy
+            groupBy,
+            null
         );
 
         return dailyStatisticsQueryMapRecord(
@@ -348,6 +349,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
+        @Nullable List<State.Type> states,
         boolean isTaskRun
     ) {
         if (isTaskRun) {
@@ -365,7 +367,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             null,
             startDate,
             endDate,
-            groupBy
+            groupBy,
+            states
         );
 
         return dailyStatisticsQueryMapRecord(
@@ -414,7 +417,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
+        @Nullable DateUtils.GroupType groupBy,
+        @Nullable List<State.Type> state
     ) {
         return dailyStatisticsQuery(
             this.defaultFilter(),
@@ -425,7 +429,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             flows,
             startDate,
             endDate,
-            groupBy
+            groupBy,
+            state
         );
     }
 
@@ -438,7 +443,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
+        @Nullable DateUtils.GroupType groupBy,
+        @Nullable List<State.Type> state
     ) {
         return dailyStatisticsQuery(
             this.defaultFilter(tenantId),
@@ -449,7 +455,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             flows,
             startDate,
             endDate,
-            groupBy
+            groupBy,
+            state
         );
     }
 
@@ -462,7 +469,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
+        @Nullable DateUtils.GroupType groupBy,
+        @Nullable List<State.Type> state
     ) {
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
@@ -490,6 +498,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
                 select = filteringQuery(select, namespace, flowId, flows, query, null, null, null);
+
+                if (state != null) {
+                    select = select.and(this.statesFilter(state));
+                }
 
                 List<Field<?>> groupFields = new ArrayList<>(fields);
 
@@ -583,6 +595,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             flows,
             startDate,
             endDate,
+            null,
             null
         );
 

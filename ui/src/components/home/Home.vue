@@ -23,6 +23,23 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <el-select
+                        :model-value="state"
+                        @update:model-value="onStateSelect"
+                        clearable
+                        filterable
+                        multiple
+                        :placeholder="$t('state')"
+                    >
+                        <el-option
+                            v-for="item in State.allStates()"
+                            :key="item.key"
+                            :label="item.key"
+                            :value="item.key"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
                     <date-filter
                         @update:is-relative="onDateFilterTypeChange"
                         @update:filter-value="updateQuery"
@@ -156,6 +173,7 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
     import HomeStartup from "override/mixins/homeStartup"
+    import State from "../../utils/state";
 
     export default {
         mixins: [RouteContext, RestoreUrl, HomeStartup],
@@ -217,7 +235,8 @@
                 namespacesStats: undefined,
                 namespaceRestricted: !!this.namespace,
                 refreshDates: false,
-                canAutoRefresh: false
+                canAutoRefresh: false,
+                state: []
             };
         },
         methods: {
@@ -340,7 +359,19 @@
                 }
 
                 this.$router.push({query: query}).then(this.load);
-            }
+            },
+            onStateSelect(state) {
+                this.state = state;
+                if (state && state.length > 0) {
+                    this.$router.push({query: {...this.$route.query, state: state}});
+                } else {
+                    let query = {...this.$route.query}
+                    delete query["state"]
+                    this.$router.push({query: query});
+                }
+
+                this.load(this.onDataLoaded);
+            },
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),

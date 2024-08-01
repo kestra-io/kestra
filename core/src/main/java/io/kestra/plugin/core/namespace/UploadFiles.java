@@ -44,7 +44,7 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
             code = """
 id: upload_files_from_git
 namespace: company.team
-                
+
 tasks:
   - id: download
     type: io.kestra.plugin.core.http.Download
@@ -54,7 +54,7 @@ tasks:
     type: io.kestra.plugin.compress.ArchiveDecompress
     from: "{{ outputs.download.uri }}"
     algorithm: ZIP
-                
+
   - id: upload
     type: io.kestra.plugin.core.namespace.UploadFiles
     filesMap: "{{ outputs.unzip.files }}"
@@ -79,7 +79,7 @@ tasks:
         files:
           - "glob:**/dbt/**"
         namespace: dwh"""
-        ),        
+        ),
         @Example(
             title = "Upload a specific file and rename it.",
             full = true,
@@ -124,10 +124,10 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Schema(
         title = "A map of key-value pairs where the key is the filename and the value is the URI of the file to upload.",
         description = "This should be a map of URI, with the key being the filename that will be upload, and the key the URI." +
-            "This one is intended to be used with output files of other tasks. Many Kestra tasks, incl. all Downloads tasks, " + 
-            "output a map of files so that you can directly pass the output property to this task e.g. " + 
+            "This one is intended to be used with output files of other tasks. Many Kestra tasks, incl. all Downloads tasks, " +
+            "output a map of files so that you can directly pass the output property to this task e.g. " +
             "[outputFiles in the S3 Downloads task](https://kestra.io/plugins/plugin-aws/tasks/s3/io.kestra.plugin.aws.s3.downloads#outputfiles) " +
-            "or the [files in the Archive Decompress task](https://kestra.io/plugins/plugin-compress/tasks/io.kestra.plugin.compress.archivedecompress#files)."
+            "or the [files in the Archive Decompress task](https://kestra.io/plugins/plugin-compress/tasks/io.kestra.plugin.compress.archivedecompress#files).",
         anyOf = {List.class, String.class}
     )
     @PluginProperty(dynamic = true)

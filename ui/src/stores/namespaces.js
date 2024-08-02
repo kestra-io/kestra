@@ -59,12 +59,8 @@ export default {
                 .put(
                     `${apiUrl(this)}/namespaces/${payload.namespace}/kv/${payload.key}`,
                     payload.value,
-                    {headers: {
-                        "Content-Type": payload.valueType === "JSON"
-                            ? "application/json"
-                            : "text/plain",
-                            "ttl": payload.ttl
-                    }})
+                    {headers: {"Content-Type": "application/json", "ttl": payload.ttl}}
+                )
                 .then(() => {
                     return dispatch("kvsList", {id: payload.namespace})
                 });

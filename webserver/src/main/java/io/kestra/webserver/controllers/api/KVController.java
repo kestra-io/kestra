@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -45,14 +47,15 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
     ) throws IOException, URISyntaxException, ResourceExpiredException {
-        KVValue value = kvStore(namespace)
+        KVValue wrapper = kvStore(namespace)
             .getValue(key)
             .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
-        return new TypedValue(KVType.from(value.value()), value);
+        Object value = wrapper.value();
+        return new TypedValue(KVType.from(value), value);
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "{key}", consumes = {MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
+    @Put(uri = "{key}", consumes = {MediaType.APPLICATION_JSON})
     @Operation(tags = {"KV"}, summary = "Puts a key-value pair in store")
     public void put(
         HttpHeaders httpHeaders,
@@ -61,12 +64,14 @@ public class KVController {
         @Body String value
     ) throws IOException, URISyntaxException, ResourceExpiredException {
         String ttl = httpHeaders.get("ttl");
-        KVMetadata kvMetadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
-        String ionValue = value;
-        if (MediaType.APPLICATION_JSON_TYPE == httpHeaders.contentType().orElse(null)) {
-            ionValue = JacksonMapper.ofIon().writeValueAsString(JacksonMapper.toObject(value));
+        KVMetadata metadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
+        try {
+            // use ION mapper to properly handle timestamp
+            JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
+            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid JSON value for: " + value);
         }
-        kvStore(namespace).putRaw(key, new KVStoreValueWrapper<>(kvMetadata, ionValue));
     }
 
     @ExecuteOn(TaskExecutors.IO)

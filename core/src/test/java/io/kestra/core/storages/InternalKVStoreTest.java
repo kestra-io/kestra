@@ -5,7 +5,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.storage.local.LocalStorage;
@@ -51,9 +52,9 @@ class InternalKVStoreTest {
 
         assertThat(kv.list().size(), is(0));
 
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), complexValue));
-        kv.put("my-second-key", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(10)), complexValue));
-        kv.put("expired-key", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMillis(1)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
+        kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), complexValue));
+        kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMillis(1)), complexValue));
         Instant after = Instant.now().plusMillis(100);
 
         List<KVEntry> list = kv.list();
@@ -90,7 +91,7 @@ class InternalKVStoreTest {
 
         // When
         Instant before = Instant.now();
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
 
         // Then
         StorageObject withMetadata = storageInterface.getWithMetadata(null, URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
@@ -100,7 +101,7 @@ class InternalKVStoreTest {
         assertThat(valueFile, is(JacksonMapper.ofIon().writeValueAsString(complexValue)));
 
         // Re-When
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(10)), "some-value"));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), "some-value"));
 
         // Then
         withMetadata = storageInterface.getWithMetadata(null, URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
@@ -114,7 +115,7 @@ class InternalKVStoreTest {
     void shouldGetGivenEntryWithNullValue() throws IOException, ResourceExpiredException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), null));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), null));
 
         // When
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
@@ -127,7 +128,7 @@ class InternalKVStoreTest {
     void shouldGetGivenEntryWithComplexValue() throws IOException, ResourceExpiredException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
 
         // When
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
@@ -152,7 +153,7 @@ class InternalKVStoreTest {
     void shouldThrowGivenExpiredEntry() throws IOException {
         // Given
         final InternalKVStore kv = kv();
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(new KVMetadata(Duration.ofNanos(1)), complexValue));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofNanos(1)), complexValue));
 
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
@@ -163,16 +164,16 @@ class InternalKVStoreTest {
         InternalKVStore kv = kv();
         String expectedErrorMessage = "Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
 
-        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.validateKey("a/b"));
+        IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> KVStore.validateKey("a/b"));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
         illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.getValue("a/b"));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
-        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put("a/b", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), "content")));
+        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put("a/b", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), "content")));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
         illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.delete("a/b"));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
 
-        Assertions.assertDoesNotThrow(() -> kv.validateKey("AN_UPPER.CASE-key"));
+        Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
     }
 
     private InternalKVStore kv() {

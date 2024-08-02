@@ -255,15 +255,17 @@
                     }
 
                     let value = this.kv.value;
-                    if (this.kv.type === "BOOLEAN" && !this.kv.value) {
-                        value = "false"
-                    } else if (this.kv.type === "STRING" && !this.kv.value.startsWith("\"")) {
-                        value = `"${value}"`
-                    } else if (["DATE", "DATETIME"].includes(this.kv.type)) {
+                    const type = this.kv.type;
+
+                    if (["DATE", "DATETIME"].includes(type)) {
                         value = this.$moment(this.kv.value).toISOString()
                         if (this.kv.type === "DATE") {
                             value = value.split("T")[0]
                         }
+                    }
+
+                    if (["STRING", "DURATION"].includes(type)) {
+                        value = JSON.stringify(value);
                     }
 
                     return this.$store

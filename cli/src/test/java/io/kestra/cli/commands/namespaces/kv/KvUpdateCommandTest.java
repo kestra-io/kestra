@@ -2,6 +2,7 @@ package io.kestra.cli.commands.namespaces.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.micronaut.configuration.picocli.PicocliRunner;
@@ -41,7 +42,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("string").get(), is(new KVValue("stringValue")));
-            assertThat(kvStore.getRawValue("string").get(), is("\"stringValue\""));
+            assertThat(((InternalKVStore)kvStore).getRawValue("string").get(), is("\"stringValue\""));
         }
     }
 
@@ -67,7 +68,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("int").get(), is(new KVValue(1)));
-            assertThat(kvStore.getRawValue("int").get(), is("1"));
+            assertThat(((InternalKVStore)kvStore).getRawValue("int").get(), is("1"));
         }
     }
 
@@ -86,7 +87,8 @@ class KvUpdateCommandTest {
                 "io.kestra.cli",
                 "intStr",
                 "1",
-                "-t STRING"
+                "-t",
+                "STRING"
             };
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
@@ -94,7 +96,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("intStr").get(), is(new KVValue("1")));
-            assertThat(kvStore.getRawValue("intStr").get(), is("\"1\""));
+            assertThat(((InternalKVStore)kvStore).getRawValue("intStr").get(), is("\"1\""));
         }
     }
 
@@ -120,7 +122,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("object").get(), is(new KVValue(Map.of("some", "json"))));
-            assertThat(kvStore.getRawValue("object").get(), is("{some:\"json\"}"));
+            assertThat(((InternalKVStore)kvStore).getRawValue("object").get(), is("{some:\"json\"}"));
         }
     }
 
@@ -139,7 +141,8 @@ class KvUpdateCommandTest {
                 "io.kestra.cli",
                 "objectStr",
                 "{\"some\":\"json\"}",
-                "-t STRING"
+                "-t",
+                "STRING"
             };
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
@@ -147,7 +150,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("objectStr").get(), is(new KVValue("{\"some\":\"json\"}")));
-            assertThat(kvStore.getRawValue("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
+            assertThat(((InternalKVStore)kvStore).getRawValue("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
         }
     }
 
@@ -179,7 +182,7 @@ class KvUpdateCommandTest {
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
             assertThat(kvStore.getValue("objectFromFile").get(), is(new KVValue(Map.of("some", "json", "from", "file"))));
-            assertThat(kvStore.getRawValue("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
+            assertThat(((InternalKVStore)kvStore).getRawValue("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
         }
     }
 }

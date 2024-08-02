@@ -1,35 +1,25 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * Service interface for accessing the files attached to a namespace Key-Value store.
  */
 public interface KVStore {
-    Pattern durationPattern = Pattern.compile("^P(?=[^T]|T.)(?:\\d*D)?(?:T(?=.)(?:\\d*H)?(?:\\d*M)?(?:\\d*S)?)?$");
 
-    default void validateKey(String key) {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("Key cannot be null or empty");
-        }
-
-        if (!key.matches("[a-zA-Z0-9][a-zA-Z0-9._-]*")) {
-            throw new IllegalArgumentException("Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.");
-        }
-    }
-
+    /**
+     * Gets the namespace attached to this K/V store.
+     *
+     * @return The namespace id.
+     */
     String namespace();
 
     default URI storageUri(String key) {
@@ -41,42 +31,36 @@ public interface KVStore {
         return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + filePath);
     }
 
-    default void put(String key, KVStoreValueWrapper<Object> kvStoreValueWrapper) throws IOException {
-        put(key, kvStoreValueWrapper, true);
-    }
-    default void put(String key, KVStoreValueWrapper<Object> kvStoreValueWrapper, boolean overwrite) throws IOException {
-        Objects.requireNonNull(key, "key cannot be null");
-
-        if (!overwrite && exists(key)) {
-            throw new KVStoreException(String.format(
-                "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key));
-        }
-
-        Object value = kvStoreValueWrapper.value();
-        String ionValue;
-        if (value instanceof Duration duration) {
-            ionValue = duration.toString();
-        } else {
-            ionValue = JacksonMapper.ofIon().writeValueAsString(value);
-        }
-
-        this.putRaw(key, new KVStoreValueWrapper<>(kvStoreValueWrapper.kvMetadata(), ionValue));
+    /**
+     * Puts the given K/V entry.
+     *
+     * @param key       The entry key - cannot be {@code null}.
+     * @param value     The entry value - cannot be {@code null}.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    default void put(String key, KVValueAndMetadata value) throws IOException {
+        put(key, value, true);
     }
 
-    void putRaw(String key, KVStoreValueWrapper<String> kvStoreValueWrapper) throws IOException;
+    /**
+     * Puts the given K/V entry.
+     *
+     * @param key       The entry key - cannot be {@code null}.
+     * @param value     The entry value - cannot be {@code null}.
+     * @param overwrite Specifies whether to overwrite the existing value.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    void put(String key, KVValueAndMetadata value, boolean overwrite) throws IOException;
 
-    default Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException {
-        return this.getRawValue(key).map(throwFunction(raw -> {
-            Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
-            if (value instanceof String valueStr && durationPattern.matcher(valueStr).matches()) {
-                return new KVValue(Duration.parse(valueStr));
-            }
-
-            return new KVValue(value);
-        }));
-    }
-
-    Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException;
+    /**
+     * Finds the entry value for the given key.
+     *
+     * @param key The entry key - cannot be {@code null}.
+     * @return The {@link KVValue}, otherwise {@link Optional#empty()} if no entry exist for the given key.
+     * @throws IOException              if an error occurred while executing the operation on the K/V store.
+     * @throws ResourceExpiredException if the entry expired.
+     */
+    Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException;
 
     /**
      * Deletes the K/V store entry for the given key.
@@ -112,4 +96,23 @@ public interface KVStore {
     default boolean exists(String key) throws IOException {
         return list().stream().anyMatch(kvEntry -> kvEntry.key().equals(key));
     }
+
+
+    Pattern KEY_VALIDATOR_PATTERN = Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9._-]*");
+
+    /**
+     * Static helper method for validating a K/V entry key.
+     *
+     * @param key the key to validate.
+     */
+    static void validateKey(final String key) {
+        if (key == null || key.isEmpty()) {
+            throw new IllegalArgumentException("Key cannot be null or empty");
+        }
+
+        if (!KEY_VALIDATOR_PATTERN.matcher(key).matches()) {
+            throw new IllegalArgumentException("Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.");
+        }
+    }
+
 }

@@ -9,7 +9,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -86,7 +86,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         Object renderedValue = runContext.renderTyped(this.value);
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
-        kvStore.put(renderedKey, new KVStoreValueWrapper<>(new KVMetadata(ttl), renderedValue), this.overwrite);
+        kvStore.put(renderedKey, new KVValueAndMetadata(new KVMetadata(ttl), renderedValue), this.overwrite);
 
         return null;
     }

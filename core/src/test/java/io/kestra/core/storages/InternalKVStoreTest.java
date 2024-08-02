@@ -118,7 +118,7 @@ class InternalKVStoreTest {
         kv.put("my-key", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), complexValue));
 
         // When
-        Optional<Object> value = kv.get("my-key");
+        Optional<Object> value = kv.getValue("my-key");
 
         // Then
         assertThat(value.get(), is(complexValue));
@@ -130,7 +130,7 @@ class InternalKVStoreTest {
         final InternalKVStore kv = kv();
 
         // When
-        Optional<Object> value = kv.get("my-key");
+        Optional<Object> value = kv.getValue("my-key");
 
         // Then
         assertThat(value.isEmpty(), is(true));
@@ -143,7 +143,7 @@ class InternalKVStoreTest {
         kv.put("my-key", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofNanos(1)), complexValue));
 
         // When
-        Assertions.assertThrows(ResourceExpiredException.class, () -> kv.get("my-key"));
+        Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue("my-key"));
     }
 
     @Test
@@ -153,7 +153,7 @@ class InternalKVStoreTest {
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.validateKey("a/b"));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
-        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.get("a/b"));
+        illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.getValue("a/b"));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));
         illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> kv.put("a/b", new KVStoreValueWrapper<>(new KVMetadata(Duration.ofMinutes(5)), "content")));
         assertThat(illegalArgumentException.getMessage(), is(expectedErrorMessage));

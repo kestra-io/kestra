@@ -1,20 +1,14 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import jakarta.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -28,8 +22,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  *
  */
 public class InternalKVStore implements KVStore {
-
-    private static final Logger log = LoggerFactory.getLogger(InternalKVStore.class);
 
     private final String namespace;
     private final String tenant;
@@ -64,7 +56,7 @@ public class InternalKVStore implements KVStore {
     }
 
     @Override
-    public Optional<String> getRaw(String key) throws IOException, ResourceExpiredException {
+    public Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException {
         this.validateKey(key);
 
         StorageObject withMetadata;
@@ -78,7 +70,6 @@ public class InternalKVStore implements KVStore {
         Instant expirationDate = kvStoreValueWrapper.kvMetadata().getExpirationDate();
         if (expirationDate != null && Instant.now().isAfter(expirationDate)) {
             this.delete(key);
-
             throw new ResourceExpiredException("The requested value has expired");
         }
         return Optional.of(kvStoreValueWrapper.value());
@@ -103,5 +94,21 @@ public class InternalKVStore implements KVStore {
             .map(throwFunction(KVEntry::from))
             .filter(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isBefore(expirationDate)).orElse(true))
             .toList();
+    }
+
+    @Override
+    public Optional<KVEntry> get(final String key) throws IOException {
+        this.validateKey(key);
+
+        try {
+            KVEntry entry = KVEntry.from(this.storage.getAttributes(this.tenant, this.storageUri(key)));
+            if (entry.expirationDate() != null && Instant.now().isAfter(entry.expirationDate())) {
+                this.delete(key);
+                return Optional.empty();
+            }
+            return Optional.of(entry);
+        } catch (FileNotFoundException e) {
+            return Optional.empty();
+        }
     }
 }

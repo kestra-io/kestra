@@ -6,32 +6,34 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreValueWrapper;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 @KestraTest
 public class DeleteTest {
+    static final String TEST_KV_KEY = "test-key";
+
     @Inject
     RunContextFactory runContextFactory;
 
     @Test
-    void defaultCase() throws Exception {
+    void shouldOutputTrueGivenExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
-
-        String key = "my-key";
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespaceId),
+            "inputs", Map.of(
+                "key", TEST_KV_KEY,
+                "namespace", namespaceId
+            )
+        ));
 
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
@@ -40,23 +42,27 @@ public class DeleteTest {
             .key("{{ inputs.key }}")
             .build();
 
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, delete, Map.of(
-            "namespace", namespaceId,
-            "key", key
-        ));
-
         final KVStore kv = runContext.namespaceKv(namespaceId);
-        kv.put(key, new KVStoreValueWrapper<>(null, "value"));
+        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(null, "value"));
 
+        // When
         Delete.Output run = delete.run(runContext);
 
+        // Then
         assertThat(run.isDeleted(), is(true));
     }
 
     @Test
-    void nonPresentKey() throws Exception {
+    void shouldOutputFalseGivenNonExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespaceId),
+            "inputs", Map.of(
+                "key", TEST_KV_KEY,
+                "namespace", namespaceId
+            )
+        ));
 
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
@@ -65,8 +71,7 @@ public class DeleteTest {
             .key("my-key")
             .build();
 
-
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, delete, Collections.emptyMap());
+        // When
         Delete.Output run = delete.run(runContext);
 
         assertThat(run.isDeleted(), is(false));

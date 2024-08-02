@@ -1,14 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.runners.RunVariables;
-import io.kestra.core.secret.SecretService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.utils.TruthUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -17,11 +10,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 @Slf4j
 @Singleton
@@ -54,7 +45,7 @@ public class KvFunction implements Function {
 
         Optional<Object> value;
         try {
-            value = kvStoreService.namespaceKv(flowTenantId, namespace, flowNamespace).get(key);
+            value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
         } catch (Exception e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }

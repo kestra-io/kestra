@@ -6,13 +6,10 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreValueWrapper;
-import io.kestra.core.utils.FileUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,18 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.codehaus.commons.nullanalysis.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -96,16 +82,11 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     public VoidOutput run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace);
 
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.tenantId(), renderedNamespace, runContext.tenantId(), runContext.flowInfo().namespace());
-
         String renderedKey = runContext.render(this.key);
         Object renderedValue = runContext.renderTyped(this.value);
 
-        if (!this.overwrite && runContext.namespaceKv(renderedNamespace).exists(renderedKey)) {
-            throw new IllegalStateException("Key already exists and overwrite is set to `false`");
-        }
-        runContext.namespaceKv(renderedNamespace).put(renderedKey, new KVStoreValueWrapper<>(new KVMetadata(ttl), renderedValue));
+        KVStore kvStore = runContext.namespaceKv(renderedNamespace);
+        kvStore.put(renderedKey, new KVStoreValueWrapper<>(new KVMetadata(ttl), renderedValue), this.overwrite);
 
         return null;
     }

@@ -7,7 +7,6 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -439,7 +438,7 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public KVStore namespaceKv(String namespace) {
-        return kvStoreService.namespaceKv(tenantId(), namespace, this.flowInfo().namespace());
+        return kvStoreService.get(tenantId(), namespace, this.flowInfo().namespace());
     }
 
     /**

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,16 @@ public interface KVStore {
     }
 
     default void put(String key, KVStoreValueWrapper<Object> kvStoreValueWrapper) throws IOException {
+        put(key, kvStoreValueWrapper, true);
+    }
+    default void put(String key, KVStoreValueWrapper<Object> kvStoreValueWrapper, boolean overwrite) throws IOException {
+        Objects.requireNonNull(key, "key cannot be null");
+
+        if (!overwrite && exists(key)) {
+            throw new KVStoreException(String.format(
+                "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key));
+        }
+
         Object value = kvStoreValueWrapper.value();
         String ionValue;
         if (value instanceof Duration duration) {
@@ -54,8 +65,8 @@ public interface KVStore {
 
     void putRaw(String key, KVStoreValueWrapper<String> kvStoreValueWrapper) throws IOException;
 
-    default Optional<Object> get(String key) throws IOException, ResourceExpiredException {
-        return this.getRaw(key).map(throwFunction(raw -> {
+    default Optional<Object> getValue(String key) throws IOException, ResourceExpiredException {
+        return this.getRawValue(key).map(throwFunction(raw -> {
             Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
             if (value instanceof String valueStr && durationPattern.matcher(valueStr).matches()) {
                 return Duration.parse(valueStr);
@@ -65,12 +76,39 @@ public interface KVStore {
         }));
     }
 
-    Optional<String> getRaw(String key) throws IOException, ResourceExpiredException;
+    Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException;
 
+    /**
+     * Deletes the K/V store entry for the given key.
+     *
+     * @param key The entry key.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
     boolean delete(String key) throws IOException;
 
+    /**
+     * Lists all the K/V store entries.
+     *
+     * @return  The list of {@link KVEntry}.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
     List<KVEntry> list() throws IOException;
 
+    /**
+     * Finds the K/V store entry for the given key.
+     *
+     * @return  The {@link KVEntry} or {@link Optional#empty()} if entry exists or the entry expired.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
+    Optional<KVEntry> get(String key) throws IOException;
+
+    /**
+     * Checks whether a K/V entry exists for teh given key.
+     *
+     * @param key The entry key.
+     * @return {@code true} of an entry exists.
+     * @throws IOException if an error occurred while executing the operation on the K/V store.
+     */
     default boolean exists(String key) throws IOException {
         return list().stream().anyMatch(kvEntry -> kvEntry.key().equals(key));
     }

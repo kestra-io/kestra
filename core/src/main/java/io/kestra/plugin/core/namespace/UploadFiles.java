@@ -152,7 +152,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public UploadFiles.Output run(RunContext runContext) throws Exception {
-        String renderedNamespace = runContext.render(namespace);
+        RunContext.FlowInfo flowInfo = runContext.flowInfo();
+        String renderedNamespace = namespace != null ? runContext.render(namespace) : flowInfo.namespace();
         String renderedDestination = checkLeadingSlash(runContext.render(destination));
 
         final Namespace storageNamespace = runContext.storage().namespace(renderedNamespace);

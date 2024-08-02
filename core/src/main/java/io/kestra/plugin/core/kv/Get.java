@@ -3,17 +3,11 @@ package io.kestra.plugin.core.kv;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
-import io.kestra.core.utils.PathMatcherPredicate;
-import io.kestra.core.utils.Rethrow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,13 +15,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.commons.nullanalysis.NotNull;
-import org.slf4j.Logger;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -84,7 +73,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
 
         String renderedKey = runContext.render(this.key);
 
-        Optional<Object> maybeValue = runContext.namespaceKv(renderedNamespace).get(renderedKey);
+        Optional<Object> maybeValue = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         if (this.errorOnMissing && maybeValue.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }

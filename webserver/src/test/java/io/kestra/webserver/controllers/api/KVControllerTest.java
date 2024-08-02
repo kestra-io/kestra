@@ -152,7 +152,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
         client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M"));
 
         KVStore kvStore = new InternalKVStore(null, NAMESPACE, storageInterface);
-        Class<?> valueClazz = kvStore.get("my-key").get().getClass();
+        Class<?> valueClazz = kvStore.getValue("my-key").get().getClass();
         assertThat("Expected value to be a " + expectedClass + " but was " + valueClazz, expectedClass.isAssignableFrom(valueClazz), is(true));
 
         List<KVEntry> list = kvStore.list();

@@ -139,15 +139,6 @@ public abstract class RunContext {
     public abstract String version();
 
     /**
-     * Gets access to the Key-Value store for the contextual namespace.
-     *
-     * @return The {@link KVStore}.
-     */
-    public KVStore namespaceKv() {
-        return this.namespaceKv(this.flowInfo().namespace());
-    }
-
-    /**
      * Gets access to the Key-Value store for the given namespace.
      *
      * @return The {@link KVStore}.

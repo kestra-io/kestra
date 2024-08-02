@@ -6,68 +6,72 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreValueWrapper;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 
 @KestraTest
 public class GetKeysTest {
+    static final String TEST_KEY_PREFIX_TEST = "test";
+
     @Inject
     RunContextFactory runContextFactory;
 
     @Test
-    void defaultCase() throws Exception {
+    void shouldGetKeysGivenMatchingPrefix() throws Exception {
         // Given
-        String namespaceId = "io.kestra." + IdUtils.create();
+        String namespace = IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespace),
+            "inputs", Map.of(
+                "prefix", TEST_KEY_PREFIX_TEST
+            )
+        ));
 
-        String prefix = "my";
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .namespace("{{ inputs.namespace }}")
             .prefix("{{ inputs.prefix }}")
             .build();
 
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, getKeys, Map.of(
-            "namespace", namespaceId,
-            "prefix", prefix
-        ));
-
-        final KVStore kv = runContext.namespaceKv(namespaceId);
-        kv.put(prefix + "-key", new KVStoreValueWrapper<>(null, "value"));
-        kv.put(prefix + "-second-key", new KVStoreValueWrapper<>(null, "value"));
+        final KVStore kv = runContext.namespaceKv(namespace);
+        kv.put(TEST_KEY_PREFIX_TEST + "-key", new KVStoreValueWrapper<>(null, "value"));
+        kv.put(TEST_KEY_PREFIX_TEST + "-second-key", new KVStoreValueWrapper<>(null, "value"));
         kv.put("another-key", new KVStoreValueWrapper<>(null, "value"));
 
+        // When
         GetKeys.Output run = getKeys.run(runContext);
 
-        assertThat(run.getKeys(), containsInAnyOrder("my-key", "my-second-key"));
+        // Then
+        assertThat(run.getKeys(), containsInAnyOrder(TEST_KEY_PREFIX_TEST + "-key", TEST_KEY_PREFIX_TEST + "-second-key"));
     }
 
     @Test
-    void noKeysReturnsEmptyList() throws Exception {
+    void shouldGetNoKeysGivenEmptyKeyStore() throws Exception {
         // Given
-        String namespaceId = "io.kestra." + IdUtils.create();
+        String namespace = IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespace),
+            "inputs", Map.of(
+                "prefix", TEST_KEY_PREFIX_TEST
+            )
+        ));
 
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .namespace(namespaceId)
+            .prefix("{{ inputs.prefix }}")
             .build();
 
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, getKeys, Collections.emptyMap());
+        // When
         GetKeys.Output run = getKeys.run(runContext);
 
+        // Then
         assertThat(run.getKeys(), empty());
     }
 }

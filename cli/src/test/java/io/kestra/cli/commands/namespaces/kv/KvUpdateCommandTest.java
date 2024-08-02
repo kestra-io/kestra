@@ -37,10 +37,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("string").get(), is("stringValue"));
-            assertThat(kvStore.getRaw("string").get(), is("\"stringValue\""));
+            assertThat(kvStore.getValue("string").get(), is("stringValue"));
+            assertThat(kvStore.getRawValue("string").get(), is("\"stringValue\""));
         }
     }
 
@@ -63,10 +63,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("int").get(), is(1));
-            assertThat(kvStore.getRaw("int").get(), is("1"));
+            assertThat(kvStore.getValue("int").get(), is(1));
+            assertThat(kvStore.getRawValue("int").get(), is("1"));
         }
     }
 
@@ -90,10 +90,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("intStr").get(), is("1"));
-            assertThat(kvStore.getRaw("intStr").get(), is("\"1\""));
+            assertThat(kvStore.getValue("intStr").get(), is("1"));
+            assertThat(kvStore.getRawValue("intStr").get(), is("\"1\""));
         }
     }
 
@@ -116,10 +116,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("object").get(), is(Map.of("some", "json")));
-            assertThat(kvStore.getRaw("object").get(), is("{some:\"json\"}"));
+            assertThat(kvStore.getValue("object").get(), is(Map.of("some", "json")));
+            assertThat(kvStore.getRawValue("object").get(), is("{some:\"json\"}"));
         }
     }
 
@@ -143,10 +143,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("objectStr").get(), is("{\"some\":\"json\"}"));
-            assertThat(kvStore.getRaw("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
+            assertThat(kvStore.getValue("objectStr").get(), is("{\"some\":\"json\"}"));
+            assertThat(kvStore.getRawValue("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
         }
     }
 
@@ -175,10 +175,10 @@ class KvUpdateCommandTest {
             PicocliRunner.call(KvUpdateCommand.class, ctx, args);
 
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
-            KVStore kvStore = kvStoreService.namespaceKv(null, "io.kestra.cli", null);
+            KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.get("objectFromFile").get(), is(Map.of("some", "json", "from", "file")));
-            assertThat(kvStore.getRaw("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
+            assertThat(kvStore.getValue("objectFromFile").get(), is(Map.of("some", "json", "from", "file")));
+            assertThat(kvStore.getRawValue("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
         }
     }
 }

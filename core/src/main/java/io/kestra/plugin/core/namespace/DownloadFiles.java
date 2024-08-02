@@ -11,12 +11,12 @@ import io.kestra.core.storages.Namespace;
 import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.Rethrow;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.commons.nullanalysis.NotNull;
 import org.slf4j.Logger;
 
 import java.io.InputStream;

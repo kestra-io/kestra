@@ -65,7 +65,6 @@
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
-                                @save="onDebugExpression($event)"
                                 class="w-100"
                             />
 
@@ -124,12 +123,14 @@
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const selectedTask = () => {
-        const filter = selected.value.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.value;
+        const filter = selected.value.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find(e => e.taskId === filter);
     };
     const onDebugExpression = (expression) => {
         const taskRun = selectedTask();
+
+        if(!taskRun) return
 
         const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http

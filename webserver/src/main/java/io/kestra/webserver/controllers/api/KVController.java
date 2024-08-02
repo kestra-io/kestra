@@ -45,8 +45,10 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
     ) throws IOException, URISyntaxException, ResourceExpiredException {
-        Object value = kvStore(namespace).getValue(key).orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
-        return new TypedValue(KVType.from(value), value);
+        KVValue value = kvStore(namespace)
+            .getValue(key)
+            .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
+        return new TypedValue(KVType.from(value.value()), value);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -92,6 +94,8 @@ public class KVController {
         JSON;
 
         public static KVType from(Object value) {
+            if (value == null) return KVType.STRING;
+
             return switch (value) {
                 case String ignored -> STRING;
                 case Number ignored -> NUMBER;

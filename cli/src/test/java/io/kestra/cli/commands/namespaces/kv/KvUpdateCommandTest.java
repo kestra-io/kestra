@@ -3,6 +3,7 @@ package io.kestra.cli.commands.namespaces.kv;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValue;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -39,7 +40,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("string").get(), is("stringValue"));
+            assertThat(kvStore.getValue("string").get(), is(new KVValue("stringValue")));
             assertThat(kvStore.getRawValue("string").get(), is("\"stringValue\""));
         }
     }
@@ -65,7 +66,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("int").get(), is(1));
+            assertThat(kvStore.getValue("int").get(), is(new KVValue(1)));
             assertThat(kvStore.getRawValue("int").get(), is("1"));
         }
     }
@@ -92,7 +93,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("intStr").get(), is("1"));
+            assertThat(kvStore.getValue("intStr").get(), is(new KVValue("1")));
             assertThat(kvStore.getRawValue("intStr").get(), is("\"1\""));
         }
     }
@@ -118,7 +119,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("object").get(), is(Map.of("some", "json")));
+            assertThat(kvStore.getValue("object").get(), is(new KVValue(Map.of("some", "json"))));
             assertThat(kvStore.getRawValue("object").get(), is("{some:\"json\"}"));
         }
     }
@@ -145,7 +146,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectStr").get(), is("{\"some\":\"json\"}"));
+            assertThat(kvStore.getValue("objectStr").get(), is(new KVValue("{\"some\":\"json\"}")));
             assertThat(kvStore.getRawValue("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
         }
     }
@@ -177,7 +178,7 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectFromFile").get(), is(Map.of("some", "json", "from", "file")));
+            assertThat(kvStore.getValue("objectFromFile").get(), is(new KVValue(Map.of("some", "json", "from", "file"))));
             assertThat(kvStore.getRawValue("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
         }
     }

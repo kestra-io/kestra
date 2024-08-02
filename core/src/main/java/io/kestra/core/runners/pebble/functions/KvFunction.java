@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.KVValue;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -43,7 +44,7 @@ public class KvFunction implements Function {
             namespace = flowNamespace;
         }
 
-        Optional<Object> value;
+        Optional<KVValue> value;
         try {
             value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
         } catch (Exception e) {
@@ -54,7 +55,7 @@ public class KvFunction implements Function {
             throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
         }
 
-        return value.orElse(null);
+        return value.map(KVValue::value).orElse(null);
     }
 
     protected String getKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {

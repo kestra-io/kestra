@@ -6,6 +6,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
+import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -52,7 +53,7 @@ public class SetTest {
 
         // Then
         final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
-        assertThat(kv.getValue(TEST_KEY), is(Optional.of(value)));
+        assertThat(kv.getValue(TEST_KEY), is(Optional.of(new KVValue(value))));
         assertThat(kv.list().getFirst().expirationDate(), nullValue());
     }
 
@@ -80,7 +81,7 @@ public class SetTest {
 
         // Then
         final KVStore kv = runContext.namespaceKv("io.kestra.test");
-        assertThat(kv.getValue(TEST_KEY), is(Optional.of("test-value")));
+        assertThat(kv.getValue(TEST_KEY), is(Optional.of(new KVValue("test-value"))));
         assertThat(kv.list().getFirst().expirationDate(), nullValue());
     }
 
@@ -107,7 +108,7 @@ public class SetTest {
 
         // then
         final KVStore kv = runContext.namespaceKv("io.kestra.test.unit");
-        assertThat(kv.getValue(TEST_KEY), is(Optional.of("test-value")));
+        assertThat(kv.getValue(TEST_KEY), is(Optional.of(new KVValue("test-value"))));
         assertThat(kv.list().getFirst().expirationDate(), nullValue());
     }
 
@@ -156,7 +157,7 @@ public class SetTest {
 
         // Then
         final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
-        assertThat(kv.getValue(TEST_KEY), is(Optional.of(value)));
+        assertThat(kv.getValue(TEST_KEY), is(Optional.of(new KVValue(value))));
         Instant expirationDate = kv.get(TEST_KEY).get().expirationDate();
         assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6))), is(true));
     }

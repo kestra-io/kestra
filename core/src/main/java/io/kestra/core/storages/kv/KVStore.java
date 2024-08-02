@@ -65,14 +65,14 @@ public interface KVStore {
 
     void putRaw(String key, KVStoreValueWrapper<String> kvStoreValueWrapper) throws IOException;
 
-    default Optional<Object> getValue(String key) throws IOException, ResourceExpiredException {
+    default Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException {
         return this.getRawValue(key).map(throwFunction(raw -> {
             Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
             if (value instanceof String valueStr && durationPattern.matcher(valueStr).matches()) {
-                return Duration.parse(valueStr);
+                return new KVValue(Duration.parse(valueStr));
             }
 
-            return value;
+            return new KVValue(value);
         }));
     }
 

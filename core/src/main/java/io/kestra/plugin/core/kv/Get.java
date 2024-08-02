@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -73,13 +74,13 @@ public class Get extends Task implements RunnableTask<Get.Output> {
 
         String renderedKey = runContext.render(this.key);
 
-        Optional<Object> maybeValue = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+        Optional<KVValue> maybeValue = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         if (this.errorOnMissing && maybeValue.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 
         return Output.builder()
-            .value(maybeValue.orElse(null))
+            .value(maybeValue.map(KVValue::value).orElse(null))
             .build();
     }
 

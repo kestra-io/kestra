@@ -4,7 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
@@ -52,7 +52,7 @@ public class GetTest {
         final KVStore kv = runContext.namespaceKv(namespaceId);
 
         // When
-        kv.put(TEST_KV_KEY, new KVStoreValueWrapper<>(null, value));
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, value));
 
         // Then
         Get.Output run = get.run(runContext);

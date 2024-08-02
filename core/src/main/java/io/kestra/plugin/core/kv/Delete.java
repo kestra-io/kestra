@@ -3,31 +3,18 @@ package io.kestra.plugin.core.kv;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.kv.KVMetadata;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
-import io.kestra.core.utils.PathMatcherPredicate;
-import io.kestra.core.utils.Rethrow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.codehaus.commons.nullanalysis.NotNull;
-import org.slf4j.Logger;
 
-import java.net.URI;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @SuperBuilder(toBuilder = true)

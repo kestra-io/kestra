@@ -12,11 +12,10 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -47,7 +46,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     void get() throws TimeoutException, IOException {
         KVStore kv = new InternalKVStore(null, "io.kestra.tests", storageInterface);
-        kv.put("my-key", new KVStoreValueWrapper<>(null, Map.of("field", "value")));
+        kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "kv");
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value"), is("value"));

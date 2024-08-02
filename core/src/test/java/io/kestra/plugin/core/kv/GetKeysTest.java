@@ -4,7 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVStoreValueWrapper;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -40,9 +40,9 @@ public class GetKeysTest {
             .build();
 
         final KVStore kv = runContext.namespaceKv(namespace);
-        kv.put(TEST_KEY_PREFIX_TEST + "-key", new KVStoreValueWrapper<>(null, "value"));
-        kv.put(TEST_KEY_PREFIX_TEST + "-second-key", new KVStoreValueWrapper<>(null, "value"));
-        kv.put("another-key", new KVStoreValueWrapper<>(null, "value"));
+        kv.put(TEST_KEY_PREFIX_TEST + "-key", new KVValueAndMetadata(null, "value"));
+        kv.put(TEST_KEY_PREFIX_TEST + "-second-key", new KVValueAndMetadata(null, "value"));
+        kv.put("another-key", new KVValueAndMetadata(null, "value"));
 
         // When
         GetKeys.Output run = getKeys.run(runContext);

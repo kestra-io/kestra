@@ -56,7 +56,7 @@
                         </div>
                     </el-card>
 
-                    <el-button v-if="logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
+                    <el-button v-if="!isLogsListing && logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
                         <TrashCan class="me-2" />
                         <span>{{ $t("delete logs") }}</span>                     
                     </el-button>
@@ -152,6 +152,9 @@
             },
             isFlowEdit() {
                 return this.$route.name === "flows/update"
+            },
+            isLogsListing() {
+                return this.$route.name === "logs/list"
             },
             isNamespaceEdit() {
                 return this.$route.name === "namespaces/update"

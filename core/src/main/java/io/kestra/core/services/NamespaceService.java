@@ -6,14 +6,15 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Singleton
 public class NamespaceService {
 
-    private final FlowRepositoryInterface flowRepository;
+    private final Optional<FlowRepositoryInterface> flowRepository;
 
     @Inject
-    public NamespaceService(FlowRepositoryInterface flowRepository) {
+    public NamespaceService(Optional<FlowRepositoryInterface> flowRepository) {
         this.flowRepository = flowRepository;
     }
 
@@ -27,8 +28,10 @@ public class NamespaceService {
     public boolean isNamespaceExists(String tenant, String namespace) {
         Objects.requireNonNull(namespace, "namespace cannot be null");
 
-        List<String> namespaces =  flowRepository.findDistinctNamespace(tenant);
-        return namespaces.stream().anyMatch(ns -> ns.equals(namespace));
+        if (flowRepository.isPresent()) {
+            List<String> namespaces = flowRepository.get().findDistinctNamespace(tenant);
+            return namespaces.stream().anyMatch(ns -> ns.equals(namespace));
+        }
+        return false;
     }
-
 }

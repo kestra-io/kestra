@@ -80,7 +80,7 @@
     "sass": "^1.77.4",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
-    "vitest": "^2.0.4"
+    "vitest": "^2.0.5"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.19.0"

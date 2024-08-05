@@ -144,9 +144,6 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
     }
 )
 public class Docker extends TaskRunner {
-    /** Convenient default instance to be used as task default value for a 'taskRunner' property. */
-    public static final Docker INSTANCE = Docker.builder().type(Docker.class.getName()).build();
-
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
@@ -285,6 +282,13 @@ public class Docker extends TaskRunner {
     @Builder.Default
     @PluginProperty
     private Boolean delete = true;
+
+    /**
+     * Convenient default instance to be used as task default value for a 'taskRunner' property.
+     **/
+    public static Docker instance() {
+        return Docker.builder().type(Docker.class.getName()).build();
+    }
 
     public static Docker from(DockerOptions dockerOptions) {
         if (dockerOptions == null) {

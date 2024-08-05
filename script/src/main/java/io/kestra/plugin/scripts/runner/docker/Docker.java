@@ -187,7 +187,8 @@ public class Docker extends TaskRunner {
         title = "Docker entrypoint to use."
     )
     @PluginProperty(dynamic = true)
-    protected List<String> entryPoint;
+    @Builder.Default
+    protected List<String> entryPoint = List.of("");
 
     @Schema(
         title = "Extra hostname mappings to the container network interface configuration."

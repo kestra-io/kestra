@@ -139,7 +139,7 @@
                 return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");
             },
             canUpdateKv() {
-                return this.$route.params.id                
+                return this.$route.params.id
             },
             canDeleteKv() {
                 return this.$route.params.id
@@ -255,17 +255,14 @@
                     }
 
                     let value = this.kv.value;
-                    const type = this.kv.type;
-
-                    if (["DATE", "DATETIME"].includes(type)) {
+                    if (this.kv.type === "BOOLEAN" && !this.kv.value) {
+                        value = "false"
+                    } else if (this.kv.type === "STRING" && !this.kv.value.startsWith("\"")) {
+                        value = `"${value}"`
+                    } else if (this.kv.type === "DATETIME") {
                         value = this.$moment(this.kv.value).toISOString()
-                        if (this.kv.type === "DATE") {
-                            value = value.split("T")[0]
-                        }
-                    }
-
-                    if (["STRING", "DURATION"].includes(type)) {
-                        value = JSON.stringify(value);
+                    } else if (this.kv.type === "DATE") {
+                        value = this.$moment(this.kv.value).toISOString(true).split("T")[0]
                     }
 
                     return this.$store

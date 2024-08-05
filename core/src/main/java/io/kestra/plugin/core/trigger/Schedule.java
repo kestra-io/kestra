@@ -144,7 +144,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @NotNull
     @Schema(
         title = "The cron expression.",
-        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) with 5 fields (minutes precision). Using `ẁithSeconds: true` you can switch to 6 fields and a seconds precision.\n" +
+        description = "A standard [unix cron expression](https://en.wikipedia.org/wiki/Cron) with 5 fields (minutes precision). Using `withSeconds: true` you can switch to 6 fields and a seconds precision.\n" +
             "Can also be a cron extension / nickname:\n" +
             "* `@yearly`\n" +
             "* `@annually`\n" +

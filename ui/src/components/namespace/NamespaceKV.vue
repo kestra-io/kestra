@@ -254,21 +254,21 @@
                         return false;
                     }
 
+                    const type = this.kv.type;
                     let value = this.kv.value;
-                    if (this.kv.type === "BOOLEAN" && !this.kv.value) {
-                        value = "false"
-                    } else if (this.kv.type === "STRING" && !this.kv.value.startsWith("\"")) {
-                        value = `"${value}"`
-                    } else if (this.kv.type === "DATETIME") {
-                        value = this.$moment(this.kv.value).toISOString()
-                    } else if (this.kv.type === "DATE") {
-                        value = this.$moment(this.kv.value).toISOString(true).split("T")[0]
+                    
+                    if (["STRING", "DURATION"].includes(type)) {
+                        value = JSON.stringify(value);
+                    } else if (type === "DATETIME") {
+                        value = this.$moment(value).toISOString()
+                    } else if (type === "DATE") {
+                        value = this.$moment(value).toISOString(true).split("T")[0]
                     }
 
                     return this.$store
                         .dispatch(
                             "namespace/createKv",
-                            {namespace: this.$route.params.id, ...this.kv, value}
+                            {namespace: this.$route.params.id, ...this.kv, contentType: ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json", value}
                         )
                         .then(() => {
                             this.$toast().saved(this.kv.key);

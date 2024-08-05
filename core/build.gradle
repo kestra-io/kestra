@@ -42,14 +42,16 @@ dependencies {
 
     // schema
     implementation ("com.github.victools:jsonschema-generator") {
-        exclude (group: 'com.fasterxml.jackson.core', module: 'jackson-core')
+        exclude group: 'com.fasterxml.jackson.core'
     }
     implementation group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation'
     implementation group: 'com.github.victools', name: 'jsonschema-module-jackson'
     implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2'
 
     // Json Diff
-    implementation 'com.github.java-json-tools:json-patch'
+    implementation ('com.github.java-json-tools:json-patch') {
+        exclude group: 'com.fasterxml.jackson.core'
+    }
 
     // test
     testAnnotationProcessor project(':processor')

@@ -123,7 +123,9 @@ allprojects {
             implementation group: 'org.fusesource.jansi', name: 'jansi'
 
             // jackson
+            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
             implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
+            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations'
             implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
             implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
@@ -131,7 +133,9 @@ allprojects {
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
-            implementation group: 'net.thisptr', name: 'jackson-jq'
+            implementation (group: 'net.thisptr', name: 'jackson-jq') {
+                exclude group: 'com.fasterxml.jackson.core'
+            }
 
             // exposed utils
             api group: 'com.google.guava', name: 'guava'

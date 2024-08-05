@@ -42,7 +42,7 @@
     "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "^4.5.136",
-    "posthog-js": "^1.150.1",
+    "posthog-js": "^1.154.2",
     "throttle-debounce": "^5.0.2",
     "vite-plugin-eslint": "^1.8.1",
     "vue": "^3.4.34",

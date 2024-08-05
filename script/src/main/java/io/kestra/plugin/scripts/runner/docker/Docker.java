@@ -53,7 +53,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @ToString
 @EqualsAndHashCode
 @Getter
@@ -61,19 +61,19 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @Schema(
     title = "Run a task in a Docker container.",
     description = """
-        This task runner executes tasks in a container-based Docker-compatible engine. 
+        This task runner executes tasks in a container-based Docker-compatible engine.
         Use the `containerImage` property to configure the image for the task.
 
-        To access the task's working directory, use the `{{workingDir}}` Pebble expression 
+        To access the task's working directory, use the `{{workingDir}}` Pebble expression
         or the `WORKING_DIR` environment variable.
         Input files and namespace files added to the task will be accessible from that directory.
 
-        To generate output files, we recommend using the `outputFiles` task's property. 
-        This allows you to explicitly define which files from the task's working directory 
+        To generate output files, we recommend using the `outputFiles` task's property.
+        This allows you to explicitly define which files from the task's working directory
         should be saved as output files.
 
-        Alternatively, when writing files in your task, you can leverage 
-        the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable. 
+        Alternatively, when writing files in your task, you can leverage
+        the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variable.
         All files written to that directory will be saved as output files automatically."""
 )
 @Plugin(
@@ -204,9 +204,9 @@ public class Docker extends TaskRunner {
     @Schema(
         title = "List of volumes to mount.",
         description = """
-            Make sure to provide a map of a local path to a container path in the format: `/home/local/path:/app/container/path`. 
-            Volume mounts are disabled by default for security reasons — if you are sure you want to use them, 
-            enable that feature in the [plugin configuration](https://kestra.io/docs/configuration-guide/plugins) 
+            Make sure to provide a map of a local path to a container path in the format: `/home/local/path:/app/container/path`.
+            Volume mounts are disabled by default for security reasons — if you are sure you want to use them,
+            enable that feature in the [plugin configuration](https://kestra.io/docs/configuration-guide/plugins)
             by setting `volume-enabled` to `true`.
 
             Here is how you can add that setting to your kestra configuration:
@@ -225,8 +225,8 @@ public class Docker extends TaskRunner {
     @Schema(
         title = "The pull policy for a container image.",
         description = """
-        Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images. 
-        Use the `ALWAYS` pull policy to pull the latest version of an image 
+        Use the `IF_NOT_PRESENT` pull policy to avoid pulling already existing images.
+        Use the `ALWAYS` pull policy to pull the latest version of an image
         even if an image with the same tag already exists."""
     )
     @PluginProperty

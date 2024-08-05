@@ -113,7 +113,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {apiUrl} from "../../../override/utils/route";
+    import {apiUrl} from "override/utils/route";
 
     import Editor from "../../inputs/Editor.vue";
     const debugEditor = ref(null);

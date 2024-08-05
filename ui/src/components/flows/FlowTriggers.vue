@@ -5,7 +5,7 @@
         stripe
         table-layout="auto"
         @row-dblclick="triggerId = $event.id; isOpen = true"
-        expandable
+        default-expand-all
     >
         <el-table-column type="expand">
             <template #default="props">

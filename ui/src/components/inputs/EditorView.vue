@@ -283,10 +283,10 @@
     );
 
     const flowHaveTasks = (source) => {
-        const isFlow = currentTab?.value?.flow;
+        const isFlow = currentTab?.value?.flow || props.isCreating; 
 
         if (isFlow) {
-            const flow = source ? source : flowYaml.value;
+            const flow = props.isCreating ? props.flow.source : (source ? source : flowYaml.value);
             return flow ? YamlUtils.flowHaveTasks(flow) : false;
         } else return false;
     };

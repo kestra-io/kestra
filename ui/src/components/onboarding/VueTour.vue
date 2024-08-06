@@ -345,6 +345,9 @@
             target: "#execute-button",
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
+               before: () => {
+                wait(500);
+            },
         },
         {
             ...properties(5, true, false),

@@ -2,7 +2,6 @@
   "name": "kestra",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@9.8.1",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",

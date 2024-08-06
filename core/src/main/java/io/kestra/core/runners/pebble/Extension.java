@@ -61,6 +61,7 @@ public class Extension extends AbstractExtension {
         return operators;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Map<String, Filter> getFilters() {
         Map<String, Filter> filters = new HashMap<>();
@@ -104,6 +105,7 @@ public class Extension extends AbstractExtension {
         return tests;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Map<String, Function> getFunctions() {
         Map<String, Function> functions = new HashMap<>();

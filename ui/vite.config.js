@@ -3,6 +3,7 @@ import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
+import * as sass from "sass"
 
 import {filename} from "./plugins/filename"
 import {details} from "./plugins/details"
@@ -31,7 +32,12 @@ export default defineConfig({
     ],
     assetsInclude: ["**/*.md"],
     css: {
-        devSourcemap: true
+        devSourcemap: true,
+        preprocessorOptions: {
+            scss: {
+                logger: sass.Logger.silent
+            },
+        }
     },
     optimizeDeps: {
         include: [

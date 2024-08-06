@@ -41,6 +41,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getDocExamples().size(), is(2));
             assertThat(doc.getIcon(), is(notNullValue()));
             assertThat(doc.getInputs().size(), is(5));
+            assertThat(doc.getDocLicense(), is("EE"));
 
             // simple
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("type"), is("string"));
@@ -100,6 +101,7 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, Schedule.class, null);
 
             assertThat(doc.getDefs().size(), is(2));
+            assertThat(doc.getDocLicense(), nullValue());
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type"), is("object"));
             assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(1));

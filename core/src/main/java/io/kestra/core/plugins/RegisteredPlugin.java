@@ -173,6 +173,10 @@ public class RegisteredPlugin {
         return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Description");
     }
 
+    public String license() {
+        return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-License");
+    }
+
     public String longDescription() {
         try (var is = this.getClassLoader().getResourceAsStream("doc/" + this.group() + ".md")) {
             if(is != null) {

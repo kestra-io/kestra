@@ -17,6 +17,7 @@ public class Plugin {
     private String name;
     private String title;
     private String description;
+    private String license;
     private String longDescription;
     private String group;
     private String version;
@@ -43,6 +44,7 @@ public class Plugin {
         }
         plugin.group = registeredPlugin.group();
         plugin.description = registeredPlugin.description();
+        plugin.license = registeredPlugin.license();
         plugin.longDescription = registeredPlugin.longDescription();
         plugin.version = registeredPlugin.version();
         plugin.guides = registeredPlugin.getGuides();

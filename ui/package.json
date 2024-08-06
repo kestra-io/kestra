@@ -44,7 +44,6 @@
     "pdfjs-dist": "^4.5.136",
     "posthog-js": "^1.154.5",
     "throttle-debounce": "^5.0.2",
-    "vite-plugin-eslint": "^1.8.1",
     "vue": "^3.4.35",
     "vue-axios": "3.5.2",
     "vue-chartjs": "^5.3.1",
@@ -80,6 +79,7 @@
     "sass": "^1.77.8",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
+    "vite-plugin-eslint": "^1.8.1",
     "vitest": "^2.0.5"
   },
   "optionalDependencies": {

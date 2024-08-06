@@ -375,7 +375,8 @@
             langOptions() {
                 return [
                     {value: "en", text: "English"},
-                    {value: "fr", text: "Français"}
+                    {value: "fr", text: "Français"},
+                    {value: "zh_CN", text: "简体中文"}
                 ];
             },
             themesOptions() {

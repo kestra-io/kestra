@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.4",
-    "@shikijs/markdown-it": "^1.6.3",
+    "@shikijs/markdown-it": "^1.12.1",
     "@typescript-eslint/parser": "^8.0.1",
     "@vitejs/plugin-vue": "^5.1.2",
     "@vue/eslint-config-prettier": "^9.0.0",

@@ -22,12 +22,15 @@ updates:
       - "dependency-upgrade"
     open-pull-requests-limit: 50
 
-  # Maintain dependencies for Npm modules
+  # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
-      # Check for updates to Npm modules every week
       interval: "weekly"
+    open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"
-    open-pull-requests-limit: 50
+    ignore:
+      # Ignore updates to version 1.x as we are using 2.x beta
+      - dependency-name: "vue-virtual-scroller"
+        versions: ["1.x"]

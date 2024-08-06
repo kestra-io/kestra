@@ -2,6 +2,7 @@
   "name": "kestra",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",

@@ -48,7 +48,7 @@ public final class ExecutableUtils {
             .executionId(execution.getId())
             .state(parentTaskrun.getState().getCurrent())
             .parentTaskRun(parentTaskrun.withAttempts(
-                Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(parentTaskrun.getState().getCurrent())).build())
+                Collections.singletonList(TaskRunAttempt.builder().state(parentTaskrun.getState()).build())
             ))
             .build();
     }

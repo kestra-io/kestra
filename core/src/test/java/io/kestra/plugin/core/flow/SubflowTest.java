@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.micronaut.context.ApplicationContext;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +21,14 @@ import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,7 +38,7 @@ class SubflowTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(SubflowTest.class);
 
-    private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, Collections.emptyList());
+    private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
     public static final String EXECUTION_ID = "executionId";
 
     @Mock
@@ -96,6 +99,12 @@ class SubflowTest {
             .build()
             .toMap();
         assertThat(result.get().getParentTaskRun().getOutputs(), is(expected));
+
+        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories(), Matchers.contains(
+            hasProperty("state", is(State.Type.CREATED)),
+            hasProperty("state", is(State.Type.RUNNING)),
+            hasProperty("state", is(State.Type.SUCCESS))
+        ));
     }
 
     @SuppressWarnings("deprecation")
@@ -130,6 +139,12 @@ class SubflowTest {
             .build()
             .toMap();
         assertThat(result.get().getParentTaskRun().getOutputs(), is(expected));
+
+        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories(), Matchers.contains(
+            hasProperty("state", is(State.Type.CREATED)),
+            hasProperty("state", is(State.Type.RUNNING)),
+            hasProperty("state", is(State.Type.SUCCESS))
+        ));
     }
 
     @Test
@@ -163,5 +178,11 @@ class SubflowTest {
             .build()
             .toMap();
         assertThat(outputs, is(expected));
+
+        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories(), Matchers.contains(
+            hasProperty("state", is(State.Type.CREATED)),
+            hasProperty("state", is(State.Type.RUNNING)),
+            hasProperty("state", is(State.Type.SUCCESS))
+        ));
     }
 }

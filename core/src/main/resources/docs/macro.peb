@@ -42,6 +42,25 @@ This property is currently in beta. While it is considered safe for use, please 
 {% endif -%}
 {% endmacro %}
 
+{% macro dynamic(data) -%}
+    {%- set dynamic = "❓" -%}
+    {%- if data['$dynamic'] != null -%}
+        {%- if data['$dynamic'] == true -%}
+            {%- set dynamic = "✔️" -%}
+        {%- else -%}
+            {%- set dynamic = "❌" -%}
+        {% endif -%}
+    {%- elseif data.oneOf != null -%}
+        {%- for current in data.oneOf -%}
+            {%- if current['$dynamic'] == true -%}
+                {%- set dynamic = "✔️" -%}
+            {%- else -%}
+                {%- set dynamic = "❌" -%}
+            {% endif -%}
+        {%- endfor -%}
+    {% endif -%}
+    {{ dynamic }}
+{% endmacro %}
 
 
 {% macro fieldDetail(data) %}

@@ -46,9 +46,6 @@ public class DefaultRunContext extends RunContext {
     private VariableRenderer variableRenderer;
 
     @Inject
-    private StorageInterface storageInterface;
-
-    @Inject
     private MetricRegistry meterRegistry;
 
     @Inject
@@ -173,11 +170,15 @@ public class DefaultRunContext extends RunContext {
         return variableRenderer.renderTyped(inline, this.variables);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
     }
+
     /**
      * {@inheritDoc}
      */
@@ -469,7 +470,6 @@ public class DefaultRunContext extends RunContext {
             DefaultRunContext context = new DefaultRunContext();
             context.applicationContext = applicationContext;
             context.variableRenderer = variableRenderer;
-            context.storageInterface = storageInterface;
             context.meterRegistry = meterRegistry;
             context.variables = Optional.ofNullable(variables).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
             context.pluginConfiguration = Optional.ofNullable(pluginConfiguration).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());

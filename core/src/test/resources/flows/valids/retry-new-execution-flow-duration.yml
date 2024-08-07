@@ -3,8 +3,8 @@ namespace: io.kestra.tests
 retry:
   behavior: CREATE_NEW_EXECUTION
   type: constant
-  interval: PT5S
-  maxDuration: PT15S
+  interval: PT2S
+  maxDuration: PT6S
 
 tasks:
   - id: fail

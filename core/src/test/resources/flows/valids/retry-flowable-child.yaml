@@ -9,5 +9,5 @@ tasks:
         type: io.kestra.plugin.core.execution.Fail
         retry:
           type: constant
-          interval: PT2S
+          interval: PT1S
           maxAttempt: 3

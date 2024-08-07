@@ -26,7 +26,7 @@ export default defineConfig({
         vue(),
         visualizer(),
         eslintPlugin({failOnWarning: true, failOnError: true}),
-        nodePolyfills({include: ["child_process"]}),
+        nodePolyfills({include: ["process", "child_process"]}),
         filename(),
         commit()
     ],

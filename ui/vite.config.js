@@ -5,6 +5,8 @@ import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
 import * as sass from "sass"
 
+import {nodePolyfills} from "vite-plugin-node-polyfills"
+
 import {filename} from "./plugins/filename"
 import {commit} from "./plugins/commit"
 
@@ -23,10 +25,8 @@ export default defineConfig({
     plugins: [
         vue(),
         visualizer(),
-        eslintPlugin({
-            failOnWarning: true,
-            failOnError: true
-        }),
+        eslintPlugin({failOnWarning: true, failOnError: true}),
+        nodePolyfills({include: ["child_process"]}),
         filename(),
         commit()
     ],

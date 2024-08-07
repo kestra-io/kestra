@@ -144,18 +144,16 @@ public class DefaultRunContext extends RunContext {
     @Override
     public DefaultRunContext clone() {
         DefaultRunContext runContext = new DefaultRunContext();
-        runContext.variableRenderer = this.variableRenderer;
-        runContext.applicationContext = this.applicationContext;
-        runContext.storageInterface = this.storageInterface;
-        runContext.storage = this.storage;
         runContext.variables = new HashMap<>(this.variables);
-        runContext.metrics = new ArrayList<>();
-        runContext.meterRegistry = this.meterRegistry;
         runContext.workingDir = this.workingDir;
         runContext.logger = this.logger;
+        runContext.metrics = new ArrayList<>();
+        runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
-        runContext.version = version;
-        runContext.isInitialized.set(this.isInitialized.get());
+        if (this.isInitialized.get()) {
+            //Inject all services
+            runContext.init(applicationContext);
+        }
         return runContext;
     }
 

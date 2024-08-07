@@ -1,8 +1,9 @@
 {
   "name": "kestra",
-  "version": "0.1.0",
+  "version": "0.18.0",
   "private": true,
-  "packageManager": "npm@9.8.1",
+  "type": "module",
+  "packageManager": "npm@9.9.3",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",
@@ -12,17 +13,17 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
   },
   "dependencies": {
-    "@kestra-io/ui-libs": "^0.0.53",
+    "@kestra-io/ui-libs": "^0.0.57",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
-    "@vue-flow/core": "^1.39.1",
+    "@vue-flow/core": "^1.39.3",
     "ansi-to-html": "^0.7.2",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.3",
     "chartjs-chart-treemap": "^2.3.1",
-    "core-js": "^3.37.1",
+    "core-js": "^3.38.0",
     "cronstrue": "^2.50.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.7.8",
@@ -39,20 +40,18 @@
     "moment": "^2.30.1",
     "moment-range": "4.0.2",
     "moment-timezone": "^0.5.45",
-    "node-modules-polyfill": "^0.1.4",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "^4.5.136",
-    "posthog-js": "^1.150.1",
+    "posthog-js": "^1.154.5",
     "throttle-debounce": "^5.0.2",
-    "vite-plugin-eslint": "^1.8.1",
-    "vue": "^3.4.34",
+    "vue": "^3.4.36",
     "vue-axios": "3.5.2",
     "vue-chartjs": "^5.3.1",
     "vue-gtag": "^2.0.1",
     "vue-i18n": "^9.13.1",
     "vue-material-design-icons": "^5.3.0",
-    "vue-router": "^4.4.0",
-    "vue-sidebar-menu": "^5.4.0",
+    "vue-router": "^4.4.3",
+    "vue-sidebar-menu": "^5.4.1",
     "vue-virtual-scroller": "^2.0.0-beta.8",
     "vue3-popper": "^1.5.0",
     "vue3-runtime-template": "^1.0.2",
@@ -62,10 +61,11 @@
     "yaml": "^2.5.0"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rushstack/eslint-patch": "^1.10.4",
-    "@shikijs/markdown-it": "^1.6.3",
-    "@typescript-eslint/parser": "^7.17.0",
-    "@vitejs/plugin-vue": "^5.1.1",
+    "@shikijs/markdown-it": "^1.12.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "@vitejs/plugin-vue": "^5.1.2",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
@@ -77,13 +77,14 @@
     "prettier": "^3.3.3",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",
-    "sass": "^1.77.4",
+    "sass": "^1.77.8",
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
-    "vitest": "^2.0.4"
+    "vite-plugin-eslint": "^1.8.1",
+    "vitest": "^2.0.5"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.19.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.20.0"
   },
   "overrides": {
     "bootstrap": {

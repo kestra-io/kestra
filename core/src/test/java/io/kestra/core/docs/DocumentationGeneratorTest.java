@@ -49,7 +49,7 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("description: \"Short description for this task\""));
         assertThat(render, containsString("`VALUE_1`"));
         assertThat(render, containsString("`VALUE_2`"));
-        assertThat(render, containsString("requires an Enterprise Edition"));
+        assertThat(render, containsString("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra."));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -170,7 +170,7 @@ class DocumentationGeneratorTest {
 
         List<Document> docs = documentationGenerator.generate(list.stream().filter(r -> r.license() != null).findFirst().orElseThrow());
         Document doc = docs.getFirst();
-        assertThat(doc.getBody(), containsString("requires an Enterprise"));
+        assertThat(doc.getBody(), containsString("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra."));
     }
 
     @SuppressWarnings("unchecked")

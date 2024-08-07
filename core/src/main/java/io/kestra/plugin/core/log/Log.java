@@ -49,7 +49,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                       - If you need some help, reach out via Slack"""
         ),
     },
-    aliases = "io.kestra.core.tasks.log.Log"
+    aliases = "io.kestra.core.tasks.log.Log",
+    enableAutoPropertiesDynamicRendering = true
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
@@ -77,14 +78,11 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         Logger logger = runContext.logger();
 
         if(this.message instanceof String) {
-            String render = runContext.render((String) this.message);
-            this.log(logger, this.level, render);
+            this.log(logger, this.level, (String) this.message);
         } else if (this.message instanceof Collection) {
-            Collection<String> messages = (Collection<String>) this.message;
+            Collection<Object> messages = (Collection<Object>) this.message;
             messages.forEach(throwConsumer(message -> {
-                String render;
-                render = runContext.render(message);
-                this.log(logger, this.level, render);
+                this.log(logger, this.level, message.toString());
             }));
         } else {
             throw new IllegalArgumentException("Invalid message type '" + this.message.getClass() + "'");

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -15,6 +16,8 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
+import io.kestra.core.runners.RawTaskDeserializer;
+import io.kestra.core.runners.RawTaskListDeserializer;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -72,6 +75,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Valid
     @PluginProperty
     // FIXME -> issue with Pause @NotEmpty
+    @JsonDeserialize(using = RawTaskListDeserializer.class)
     private List<Task> tasks;
 
     @Override

@@ -1,16 +1,16 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.With;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -26,6 +26,7 @@ public class WorkerTask extends WorkerJob {
     private TaskRun taskRun;
 
     @NotNull
+    @JsonDeserialize(using = RawTaskDeserializer.class)
     private Task task;
 
     @NotNull

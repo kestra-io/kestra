@@ -39,7 +39,8 @@ import java.time.Duration;
               overwrite: true # whether to overwrite or fail if a value for that key already exists; default true
               ttl: P30D # optional TTL"""
         )
-    }
+    },
+    enableAutoPropertiesDynamicRendering = true
 )
 public class Set extends Task implements RunnableTask<VoidOutput> {
     @NotNull
@@ -54,7 +55,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         title = "The value to map to the key."
     )
     @PluginProperty(dynamic = true)
-    private String value;
+    private Object value;
 
     @NotNull
     @Schema(
@@ -83,10 +84,9 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         String renderedNamespace = runContext.render(this.namespace);
 
         String renderedKey = runContext.render(this.key);
-        Object renderedValue = runContext.renderTyped(this.value);
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
-        kvStore.put(renderedKey, new KVValueAndMetadata(new KVMetadata(ttl), renderedValue), this.overwrite);
+        kvStore.put(renderedKey, new KVValueAndMetadata(new KVMetadata(ttl), this.value), this.overwrite);
 
         return null;
     }

@@ -1,6 +1,10 @@
 package io.kestra.core.models.annotations;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -35,6 +39,13 @@ public @interface Plugin {
      * For the moment, aliases are considered as deprecated plugins replaced by the class annotated.
      */
     String[] aliases() default {};
+
+    /**
+     * Specifies whether to auto-rendering of properties must be enabled.
+     *
+     * @return {@code true} if auto-rendering is enabled. Otherwise {@code false}.
+     */
+    boolean enableAutoPropertiesDynamicRendering() default false;
 
     @Documented
     @Inherited

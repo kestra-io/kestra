@@ -7,6 +7,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -282,6 +285,25 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private void handleTask(WorkerTask workerTask) {
+        if (workerTask.getTask() instanceof RawTask rawTask) {
+            DefaultRunContext runContext = runContextInitializer.forWorker(((DefaultRunContext) workerTask.getRunContext()), workerTask);
+            try {
+                Task renderedTask = renderTask(rawTask, runContext);
+                workerTask = WorkerTask
+                    .builder()
+                    .runContext(workerTask.getRunContext())
+                    .taskRun(workerTask.getTaskRun())
+                    .task(renderedTask)
+                    .build();
+            } catch (Exception e) {
+                runContext.logger().error("Error occurred while rendering task's dynamic properties. Cause: {}", e.getMessage(), e);
+                workerTask = workerTask.fail();
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                this.logTerminated(workerTask);
+                return;
+            }
+        }
+
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
@@ -303,6 +325,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
                 // execute all tasks
                 for (Task currentTask : workingDirectory.getTasks()) {
+
                     if (Boolean.TRUE.equals(currentTask.getDisabled())) {
                         continue;
                     }
@@ -311,6 +334,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         currentTask,
                         runContextInitializer.forPlugin(runContext, currentTask)
                     );
+
+                    // TODO pre-render task as above
+                    if (currentWorkerTask.getTask() instanceof RawTask rawTask) {
+                        // TODO handle exception
+                        Task renderedTask = renderTask(rawTask, runContext);
+                        currentWorkerTask = WorkerTask
+                            .builder()
+                            .runContext(workerTask.getRunContext())
+                            .taskRun(workerTask.getTaskRun())
+                            .task(renderedTask)
+                            .build();
+                    }
 
                     // all tasks will be handled immediately by the worker
                     WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
@@ -337,6 +372,30 @@ public class Worker implements Service, Runnable, AutoCloseable {
             }
         } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
+        }
+    }
+
+    private static Task renderTask(RawTask rawTask, DefaultRunContext runContext) {
+        Map<String, Object> properties = rawTask.getProperties().entrySet().stream()
+            .map(entry -> {
+                if (entry.getValue() instanceof String value) {
+                    try {
+                        String rendered = runContext.render(value);
+                        return new AbstractMap.SimpleEntry<>(entry.getKey(), rendered);
+                    } catch (IllegalVariableEvaluationException e) {
+                        throw new KestraRuntimeException("Cannot render property `" + entry.getKey() + "`", e);
+                    }
+                }
+                return entry;
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        RawTask rendered = rawTask.toBuilder().properties(properties).build();
+        String rawRenderedTask = null;
+        try {
+            rawRenderedTask = JacksonMapper.ofJson().writeValueAsString(rendered);
+            return JacksonMapper.ofJson().readValue(rawRenderedTask, Task.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

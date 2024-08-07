@@ -180,7 +180,8 @@ import jakarta.validation.constraints.NotNull;
     },
     aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}
 )
-@WorkingDirectoryTaskValidation
+// TODO fix for working with RawTask
+//@WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
 
     private static final String OUTPUTS_FILE = "outputs.ion";

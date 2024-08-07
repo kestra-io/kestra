@@ -3,6 +3,7 @@
   "version": "0.18.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@9.9.3",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",

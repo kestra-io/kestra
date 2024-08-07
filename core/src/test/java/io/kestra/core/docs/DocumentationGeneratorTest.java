@@ -49,6 +49,7 @@ class DocumentationGeneratorTest {
         assertThat(render, containsString("description: \"Short description for this task\""));
         assertThat(render, containsString("`VALUE_1`"));
         assertThat(render, containsString("`VALUE_2`"));
+        assertThat(render, containsString("requires an Enterprise Edition"));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -64,8 +65,8 @@ class DocumentationGeneratorTest {
 
         assertThat(render, containsString("Dag"));
         assertThat(render, containsString("**Required:** ✔️"));
-
         assertThat(render, containsString("`concurrent`"));
+        assertThat(render, not(containsString("requires an Enterprise Edition")));
 
         int propertiesIndex = render.indexOf("Properties");
         int definitionsIndex = render.indexOf("Definitions");
@@ -158,6 +159,18 @@ class DocumentationGeneratorTest {
         Document doc = docs.getFirst();
         assertThat(doc.getIcon(), is(notNullValue()));
         assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
+    }
+
+    @Test
+    void pluginEeDoc() throws Exception {
+        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        List<RegisteredPlugin> list = pluginScanner.scan(plugins);
+
+        List<Document> docs = documentationGenerator.generate(list.stream().filter(r -> r.license() != null).findFirst().orElseThrow());
+        Document doc = docs.getFirst();
+        assertThat(doc.getBody(), containsString("requires an Enterprise"));
     }
 
     @SuppressWarnings("unchecked")

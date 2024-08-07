@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
     private String icon;
     private String group;
+    protected String docLicense;
     private String pluginTitle;
     private String subGroup;
     private String replacement;
@@ -26,6 +27,7 @@ public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
         // plugins metadata
         this.cls = alias == null ? cls.getName() : alias;
         this.group = plugin.group();
+        this.docLicense = plugin.license();
         this.pluginTitle = plugin.title();
         this.icon = plugin.icon(cls);
         if (alias != null) {

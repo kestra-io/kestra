@@ -22,7 +22,7 @@ import static org.hamcrest.core.StringContains.containsString;
 
 class PluginListCommandTest {
 
-    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.17.0-SNAPSHOT.jar";
+    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
 
     @Test
     void run() throws IOException, URISyntaxException {

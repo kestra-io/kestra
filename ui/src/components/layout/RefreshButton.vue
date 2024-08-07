@@ -37,7 +37,7 @@
         },
         data() {
             return {
-                autoRefresh: false,
+                autoRefresh: undefined,
                 refreshHandler: undefined
             };
         },
@@ -69,10 +69,12 @@
                     this.stopRefresh();
                 }
             },
-            autoRefresh(newValue) {
+            autoRefresh(newValue, oldValue) {
                 if (newValue) {
                     this.refreshHandler = setInterval(this.triggerRefresh, 10000);
-                    this.triggerRefresh()
+                    if (oldValue !== undefined) {
+                        this.triggerRefresh();
+                    }
                 } else {
                     this.stopRefresh();
                 }

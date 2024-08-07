@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.*;
 
 class PluginDocCommandTest {
 
-    public static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.17.0-SNAPSHOT.jar";
+    public static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
 
     @Test
     void run() throws IOException, URISyntaxException {
@@ -51,7 +51,9 @@ class PluginDocCommandTest {
             assertThat(directory.listFiles().length, is(3));
 
             var readme = directory.toPath().resolve("index.md");
-            assertThat(new String(Files.readAllBytes(readme)), containsString("""
+            var readmeContent = new String(Files.readAllBytes(readme));
+
+            assertThat(readmeContent, containsString("""
                 ---
                 title: Template test
                 description: "Plugin template for Kestra"
@@ -59,14 +61,17 @@ class PluginDocCommandTest {
 
                 ---
                 # Template test
+                """));
 
+            assertThat(readmeContent, containsString("""
                 Plugin template for Kestra
 
                 This is a more complex description of the plugin.
 
                 This is in markdown and will be inline inside the plugin page.
                 """));
-            assertThat(new String(Files.readAllBytes(readme)), containsString(
+
+            assertThat(readmeContent, containsString(
                 """
                     /> Subgroup title
 

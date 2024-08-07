@@ -92,6 +92,10 @@ public class DocumentationGenerator {
             builder.put("description", plugin.description());
         }
 
+        if (plugin.license() != null) {
+            builder.put("docLicense", plugin.license());
+        }
+
         if (plugin.longDescription() != null) {
             builder.put("longDescription", plugin.longDescription());
         }

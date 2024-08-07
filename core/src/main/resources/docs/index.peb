@@ -6,6 +6,12 @@ editLink: false
 ---
 # {% if icon -%}<img width="25" src="data:image/svg+xml;base64,{{ icon }}" /> {% endif %}{{ title | replace({"-": " "}) | capitalize }}
 
+{% if docLicense == "EE" %}
+::alert{type="info"}
+This plugin requires an Enterprise Edition license.
+::
+{%- endif %}
+
 {{ description }}
 
 {{ longDescription }}

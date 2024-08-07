@@ -29,6 +29,13 @@ This plugin is currently in beta. While it is considered safe for use, please be
 ::
 {%- endif %}
 
+
+{% if docLicense == "EE" %}
+::alert{type="info"}
+This plugin requires an Enterprise Edition license.
+::
+{%- endif %}
+
 ```yaml
 type: "{{ cls }}"
 ```

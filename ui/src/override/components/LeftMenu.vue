@@ -24,7 +24,19 @@
                 <chevron-double-right v-if="collapsed" />
                 <chevron-double-left v-else />
             </el-button>
-            <span class="version">{{ configs.version }}</span>
+            <span class="version">
+                <el-tooltip
+                    effect="light"
+                    :persistent="false"
+                    transition=""
+                    :hide-after="0"
+                >
+                    <template #content>
+                        <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
+                    </template>
+                    {{ configs.version }}
+                </el-tooltip>
+            </span>
         </template>
     </sidebar-menu>
 </template>
@@ -54,6 +66,7 @@
     import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
     import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
+    import DateAgo from "../../components/layout/DateAgo.vue"
 
     export default {
         components: {
@@ -61,6 +74,7 @@
             ChevronDoubleRight,
             SidebarMenu,
             Environment,
+            DateAgo,
         },
         emits: ["menu-collapse"],
         methods: {
@@ -308,7 +322,7 @@
                 mapState("misc", ["configs"]),
             menu() {
                 return this.disabledCurrentRoute(this.generateMenu());
-            }
+            },
         },
         mounted() {
             this.localMenu = this.menu;

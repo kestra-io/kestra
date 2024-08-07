@@ -15,13 +15,13 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -74,6 +74,8 @@ public class MiscController {
             .builder()
             .uuid(instanceService.fetch())
             .version(versionProvider.getVersion())
+            .commitId(versionProvider.getRevision())
+            .commitDate(versionProvider.getDate())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
@@ -120,6 +122,10 @@ public class MiscController {
         String uuid;
 
         String version;
+
+        String commitId;
+
+        ZonedDateTime commitDate;
 
         @JsonInclude
         Boolean isTaskRunEnabled;

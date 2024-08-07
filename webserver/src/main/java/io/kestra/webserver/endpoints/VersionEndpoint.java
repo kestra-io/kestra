@@ -37,6 +37,7 @@ public class VersionEndpoint {
         return Mono.just(new ServerInfo(
             version.getVersion() + VERSION_SUFFIX,
             version.getRevision(),
+            version.getDate(),
             serverType
         ));
     }

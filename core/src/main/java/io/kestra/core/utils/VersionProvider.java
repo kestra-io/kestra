@@ -9,6 +9,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -20,6 +22,9 @@ public class VersionProvider {
 
     @Getter
     private String revision;
+
+    @Getter
+    private ZonedDateTime date;
 
     @Inject
     private Environment environment;
@@ -33,6 +38,7 @@ public class VersionProvider {
             .load("classpath:gradle", environment);
 
         this.revision = loadRevision(gitProperties);
+        this.date = loadTime(gitProperties);
         this.version = loadVersion(buildProperties, gitProperties);
     }
 
@@ -70,6 +76,25 @@ public class VersionProvider {
                 )
             ).findFirst()
             .map(Object::toString)
+            .orElse(null);
+    }
+
+    private ZonedDateTime loadTime(final Optional<PropertySource> gitProperties) {
+        return gitProperties
+            .stream()
+            .flatMap(properties -> Stream
+                .of(
+                    properties.get("git.commit.time")
+                )
+            ).findFirst()
+            .map(Object::toString)
+            .map(s -> {
+                try {
+                    return ZonedDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXXX"));
+                } catch (Exception e) {
+                    return null;
+                }
+            })
             .orElse(null);
     }
 

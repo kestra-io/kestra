@@ -39,6 +39,3 @@ updates:
       # Ignore major versions greater than 8, as it's still known to be flaky
       - dependency-name: "eslint"
         versions: [">8"]
-      # Ignore minor versions greater than 0.2, as it has unresolved issues
-      - dependency-name: "vite-plugin-node-polyfills"
-        versions: [">=0.2.0 <0.3.0"]

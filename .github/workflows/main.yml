@@ -435,7 +435,7 @@ jobs:
       # Update
       - name: Update internal
         uses: benc-uk/workflow-dispatch@v1
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' && jobs.docker.result == 'success'
         with:
           workflow: oss-build.yml
           repo: kestra-io/infra

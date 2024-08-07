@@ -7,6 +7,6 @@ dependencies {
     implementation "org.junit.jupiter:junit-jupiter-engine"
 
     api 'org.hamcrest:hamcrest:2.2'
-    api 'org.hamcrest:hamcrest-library:2.2'
+    api 'org.hamcrest:hamcrest-library:3.0'
     api 'org.mockito:mockito-junit-jupiter'
 }

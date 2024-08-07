@@ -39,7 +39,7 @@ public class RetryCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(4));
     }
 
     public void retrySuccessAtFirstAttempt() throws TimeoutException {
@@ -78,7 +78,7 @@ public class RetryCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "retry-and-fail");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
+        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
     }

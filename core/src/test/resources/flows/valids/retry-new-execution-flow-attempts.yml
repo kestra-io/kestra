@@ -4,7 +4,7 @@ retry:
   behavior: CREATE_NEW_EXECUTION
   type: constant
   maxAttempt: 3
-  interval: PT2S
+  interval: PT1S
 
 tasks:
   - id: fail

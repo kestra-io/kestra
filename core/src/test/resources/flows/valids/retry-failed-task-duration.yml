@@ -7,6 +7,6 @@ tasks:
     retry:
       behavior: RETRY_FAILED_TASK
       type: constant
-      maxDuration: PT15S
-      interval: PT5S
+      maxDuration: PT3S
+      interval: PT1S
 

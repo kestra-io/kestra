@@ -4,11 +4,11 @@ namespace: io.kestra.tests
 tasks:
 - id: failed
   type: io.kestra.plugin.core.log.Log
-  message: "{{ taskrun.attemptsCount == 4 ? 'ok' : ko}}"
+  message: "{{ taskrun.attemptsCount == 3 ? 'ok' : ko}}"
   retry:
     type: constant
     interval: PT0.250S
-    maxAttempt: 5
+    maxAttempt: 4
     maxDuration: PT15S
     warningOnRetry: true
 

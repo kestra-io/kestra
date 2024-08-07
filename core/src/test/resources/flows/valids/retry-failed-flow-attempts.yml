@@ -4,7 +4,7 @@ retry:
   behavior: RETRY_FAILED_TASK
   type: constant
   maxAttempt: 4
-  interval: PT2S
+  interval: PT1S
 
 tasks:
   - id: fail

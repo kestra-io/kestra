@@ -9,8 +9,8 @@ tasks:
     description: Keep retrying with a simple retry defined.
     retry:
       type: constant
-      maxAttempt: 5
-      interval: PT2S
+      maxAttempt: 3
+      interval: PT1S
 
   - id: thisTaskShouldNotBeExecuted
     type: io.kestra.plugin.core.log.Log

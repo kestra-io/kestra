@@ -7,7 +7,7 @@ tasks:
     value: [0, 1]
     retry:
       type: constant
-      interval: PT2S
+      interval: PT1S
       maxAttempt: 3
     tasks:
       - id: child

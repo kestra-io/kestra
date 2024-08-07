@@ -6,7 +6,7 @@ tasks:
     type: io.kestra.plugin.core.flow.Sequential
     retry:
       type: constant
-      interval: PT2S
+      interval: PT1S
       maxAttempt: 3
     tasks:
       - id: child

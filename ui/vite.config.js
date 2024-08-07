@@ -3,9 +3,10 @@ import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 import {visualizer} from "rollup-plugin-visualizer";
 import eslintPlugin from "vite-plugin-eslint";
+import * as sass from "sass"
 
 import {filename} from "./plugins/filename"
-import {details} from "./plugins/details"
+import {commit} from "./plugins/commit"
 
 export default defineConfig({
     base: "",
@@ -22,16 +23,18 @@ export default defineConfig({
     plugins: [
         vue(),
         visualizer(),
-        eslintPlugin({
-            failOnWarning: true,
-            failOnError: true
-        }),
+        eslintPlugin({failOnWarning: true, failOnError: true}),
         filename(),
-        details()
+        commit()
     ],
     assetsInclude: ["**/*.md"],
     css: {
-        devSourcemap: true
+        devSourcemap: true,
+        preprocessorOptions: {
+            scss: {
+                logger: sass.Logger.silent
+            },
+        }
     },
     optimizeDeps: {
         include: [

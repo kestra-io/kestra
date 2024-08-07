@@ -81,7 +81,7 @@
     "typescript": "^5.5.4",
     "vite": "^5.3.5",
     "vite-plugin-eslint": "^1.8.1",
-    "vite-plugin-node-polyfills": "^0.22.0",
+    "vite-plugin-node-polyfills": "0.2.0",
     "vitest": "^2.0.5"
   },
   "optionalDependencies": {

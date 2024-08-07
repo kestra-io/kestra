@@ -8,7 +8,7 @@ editLink: false
 
 {% if docLicense == "EE" %}
 ::alert{type="info"}
-This plugin requires an Enterprise Edition license.
+This plugin requires an Enterprise Edition license or a Kestra Cloud account.
 ::
 {%- endif %}
 

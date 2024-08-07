@@ -1,0 +1,117 @@
+name: Daily Core check
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  check:
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    name: Check & Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          caches-enabled: true
+
+      # Services
+      - name: Build the docker-compose stack
+        run: docker compose -f docker-compose-ci.yml up -d
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+
+      # Gradle check
+      - name: Build with Gradle
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
+          ./gradlew check javadoc --parallel --refresh-dependencies
+
+      # Sonar
+      - name: Analyze with Sonar
+        if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --info
+
+      # Allure check
+      - name: Auth to Google Cloud
+        id: auth
+        if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}'
+
+      - uses: rlespinasse/github-slug-action@v4
+
+      - name: Publish allure report
+        uses: andrcuns/allure-publish-action@v2.7.1
+        if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_HOME: /usr/lib/jvm/default-jvm/
+        with:
+          storageType: gcs
+          resultsGlob: "**/build/allure-results"
+          bucket: internal-kestra-host
+          baseUrl: "https://internal.kestra.io"
+          prefix: ${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'allure/java') }}
+          copyLatest: true
+          ignoreMissingResults: true
+
+      # Jacoco
+      - name: 'Set up Cloud SDK'
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Copy jacoco files'
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        run: |
+          mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
+          mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/jacocoTestReport.xml
+          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'jacoco') }}
+
+
+      # report test
+      - name: Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure()
+        with:
+          report_paths: '**/build/test-results/**/TEST-*.xml'
+
+      # Codecov
+      - uses: codecov/codecov-action@v4
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Notify failed CI
+        id: send-ci-failed
+        if: always() && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && job.status != 'success'
+        uses: kestra-io/actions/.github/actions/send-ci-failed@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

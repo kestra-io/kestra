@@ -27,6 +27,8 @@ updates:
     directory: "/ui"
     schedule:
       interval: "weekly"
+      day: "sunday"
+      time: "09:00"
     open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"

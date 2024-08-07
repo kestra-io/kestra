@@ -25,6 +25,10 @@ public class VersionEndpoint {
     public static final boolean DEFAULT_SENSITIVE = false;
     private static final String VERSION_SUFFIX = "-oss";
 
+    protected String versionSuffix() {
+        return "-oss";
+    }
+
     @Value("${kestra.server-type}")
     private String serverType;
 

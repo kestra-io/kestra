@@ -7,6 +7,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
@@ -23,6 +24,13 @@ class PurgeExecutionsTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @BeforeEach
+    void cleanExecutions() {
+        executionRepository.find(null, null, null, null, null, null, null, null, null, null)
+            .toStream()
+            .forEach(executionRepository::delete);
+    }
 
     @Test
     void run() throws Exception {

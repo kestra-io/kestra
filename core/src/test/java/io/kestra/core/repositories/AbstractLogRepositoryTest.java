@@ -149,7 +149,7 @@ public abstract class AbstractLogRepositoryTest {
 
         logRepository.save(log1);
 
-        logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", null, null, ZonedDateTime.now().plusMinutes(1));
+        logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
 
         find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size(), is(0));

@@ -441,7 +441,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 }
 
                 if (logLevels != null) {
-                    delete = delete.and(field("level").in(logLevels));
+                    delete = delete.and(levelsCondition(logLevels));
                 }
 
                 return delete.execute();
@@ -493,7 +493,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
-    protected Condition minLevel(Level minLevel) {
-        return field("level").in(LogEntry.findLevelsByMin(minLevel));
+    private Condition minLevel(Level minLevel) {
+        return levelsCondition(LogEntry.findLevelsByMin(minLevel));
+    }
+
+    protected Condition levelsCondition(List<Level> levels) {
+        return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 }

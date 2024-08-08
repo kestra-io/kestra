@@ -10,6 +10,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -27,10 +28,9 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
     }
 
     @Override
-    protected Condition minLevel(Level minLevel) {
+    protected Condition levelsCondition(List<Level> levels) {
         return DSL.condition("level in (" +
-            LogEntry
-                .findLevelsByMin(minLevel)
+            levels
                 .stream()
                 .map(s -> "'" + s + "'::log_level")
                 .collect(Collectors.joining(", ")) +

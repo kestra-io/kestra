@@ -112,6 +112,7 @@
     "created date": "Created date",
     "updated date": "Updated date",
     "expiration date": "Expiration date",
+    "started date": "Started date",
     "healthcheck date": "HealthCheck Date",
     "next execution date": "Next execution date",
     "jump to...": "Jump to...",
@@ -236,6 +237,7 @@
     "show task logs": "Show task logs",
     "show task outputs": "Show task outputs",
     "show task source": "Show task source",
+    "specific task": "Specific task",
     "display output for specific task": "Display output for a specific task",
     "display metric for specific task": "Display metric for a specific task",
     "display direct sub tasks count": "Display direct subtask count",
@@ -395,6 +397,7 @@
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
+    "restore revision": "Are you sure you want to restore revision <code>{revision}</code>?",
     "seeing old revision": "You are seeing an old revision: {revision}",
     "export": "Export",
     "exports": "Exports",
@@ -423,79 +426,6 @@
     "expand dependencies": "Expand dependencies",
     "reset": "Restart",
     "Reset guided tour": "Restart Guided Tour",
-    "onboarding-content": {
-      "step1": {
-        "title": "Welcome to Kestra!",
-        "content": "We're thrilled to have you here.<br />Let's create your first flow.",
-        "action": "Let's go!"
-      },
-      "step2": {
-        "title": "Choose a use-case<br />and we'll show you how it's done!",
-        "content": "You can edit your flow directly here from the UI. To add comments to your code, use <code>#</code>. Kestra provides autocompletion for all workflow components, including tasks, triggers and inputs. Start typing and use the keyboard shortcut <kbd>CTRL or ⌘ + SPACE</kbd> to leverage the autocompletion feature.",
-        "action": "Next"
-      },
-      "step3": {
-        "title": "Let's write your first flow!",
-        "content": "Set an ID, namespace, and (optionally) a description for your flow."
-      },
-      "step4": {
-        "title": "Define inputs",
-        "content": "You can define custom input parameters to execute your workflow dynamically using custom, runtime-specific values. Give each input a name, a type, and (optionally) a default value."
-      },
-      "step5": {
-        "title": "Add tasks",
-        "content": "Add a list of tasks to your flow. A task is an atomic unit of work that will perform a specific action. A task can execute a SQL query, run a Python script, trigger a data transformation job or send an email."
-      },
-      "step6": {
-        "title": "Your first task",
-        "content": "Let's add a task that will log a message \"Hey there, Kestra user!\" to the terminal. This message will be captured with a log level <code>INFO</code>."
-      },
-      "step7": {
-        "title": "Fetch data from an API",
-        "content": "Let's add a task that will extract data from an HTTP API. In the next steps, we will process that data in Python and SQL."
-      },
-      "step8": {
-        "title": "Run a Python script",
-        "content": "In this task, we read the output from the previous step and we extract only relevant data using <code>jq</code>. Then, we use Polars to transform that data and save the final dataframe as a CSV file. Note how the <code>beforeCommands</code> property ensures that required Python packages are installed before starting the task. You can also specify a custom Docker image."
-      },
-      "step9": {
-        "title": "Execute a SQL query",
-        "content": "In this task, we use DuckDB to execute a SQL query and output the final result as a downloadable artifact. You can preview that result artifact as a table in the Outputs tab in the UI."
-      },
-      "step10": {
-        "title": "Schedule your flow",
-        "content": "To schedule our flow, we can add one or more <code>triggers</code> — each of them can run the flow with different input parameter values. Here, we schedule the flow to run every minute."
-      },
-      "step11": {
-        "title": "Save your flow 🚀",
-        "content": "We're all set! You can save the flow by clicking on the <code>Save</code> button."
-      },
-      "step12": {
-        "title": "Execute the flow!",
-        "content": "Let's execute our flow by clicking on the <code>New Execution</code> button."
-      },
-      "step13": {
-        "title": "Enter inputs",
-        "content": "You can set custom parameter values before executing the flow."
-      }
-    },
-    "onboarding-flow": {
-      "onboardComment1": "Flow declaration with a mandatory unique ID, a namespace, and an optional description.",
-      "onboardComment2": "Flow ID must be unique within a namespace.",
-      "inputs": "Flow inputs: each input has an id, a type, and an optional default value.",
-      "inputsDetails1": "We define one input of name 'user' with a default value 'Kestra user'",
-      "tasks1": "List of tasks that will be executed one after the other.",
-      "tasks2": "Each task must have an identifier unique for the flow and a type.",
-      "tasks3": "Check the task documentation for a full list of attributes.",
-      "taskLog1": "This task logs a message to the terminal.",
-      "taskLog2": "The message is passed using the 'format' attribute.",
-      "taskLog3": "We use Pebble expressions defined with curly brackets to access the input variables.",
-      "taskAPI": "This task extracts data from an API.",
-      "taskPython": "This task runs a Python script.",
-      "taskQuery": "Run a DuckDB query.",
-      "triggers": "To run the flow in an automated fashion, add one or more 'triggers'.",
-      "triggerSchedule1": "Here we use the 'Schedule' trigger to run the flow every minute."
-    },
     "Skip tour": "Skip tour",
     "Skip tutorial": "Skip Tutorial",
     "Next step": "Next step",
@@ -552,7 +482,6 @@
     "metric": "Metric",
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
-    "namespace choice": "Please choose a namespace to start using the editor",
     "of": "of",
     "save draft": {
       "message": "Draft saved",

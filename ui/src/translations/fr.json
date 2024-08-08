@@ -121,6 +121,14 @@
     "add flow": "Ajouter un flow",
     "from": "De",
     "to": "à",
+    "search filters": {
+      "saved": "Filtres sauvegardés",
+      "manage": "Gestion des filtres",
+      "manage desc": "Gestion des filtres sauvegardés",
+      "save filter": "Sauvegarder le filtre",
+      "filter name": "Nom du filtre",
+      "filters": "Filtres"
+    },
     "steps": "Étapes",
     "state": "État",
     "search term in message": "Chercher dans le message",
@@ -228,7 +236,7 @@
     "show task logs": "Afficher les journaux de la tâche",
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
-    "specific task": "Specific task",
+    "specific task": "Tâche specifique",
     "display output for specific task": "Afficher les sorties pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
@@ -351,6 +359,7 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
+    "restore confirm": "Êtes vous sûr de vouloir restaurer la révision <code>{revision}</code>?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
     "bulk replay": "Êtes-vous sur de vouloir rejouer <code>{executionCount}</code> exécution(s)?",
     "bulk resume": "Êtes-vous sur de vouloir reprendre <code>{executionCount}</code> exécution(s)?",
@@ -410,7 +419,7 @@
     "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
     "flow enable": "Êtes vous sûr de vouloir activer <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) désactivé(s)",
-    "flows enable": "<code>{count}</code> Flow(s) activé(s)",
+    "flows enabled": "<code>{count}</code> Flow(s) activé(s)",
     "dependencies": "Dépendances",
     "see dependencies": "Voir les dépendances",
     "dependencies missing acls": "Aucune permission sur ce flow",
@@ -418,70 +427,8 @@
     "expand dependencies": "Voir les dépendances",
     "reset": "Recommencer",
     "Reset guided tour": "Recommencer la visite guidée",
-    "onboarding-content": {
-      "step1": {
-        "title": "Bienvenue sur l'éditeur de flow Kestra !",
-        "content": "Le saviez-vous que Kestra utilise le YAML, un langage déclaratif et facile à lire ? Cela signifie que vous pouvez facilement définir vos flows en écrivant les différentes tâches avec du texte brute. Ne vous inquiétez pas si vous devez encore vous familiariser avec le YAML; nous vous guiderons étape par étape."
-      },
-      "step2": {
-        "title": "Ceci est l'éditeur Kestra",
-        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par <code>#</code>. Les différents types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec <kbd>CTRL ou ⌘ + SPACE</kbd>."
-      },
-      "step3": {
-        "title": "Commençons par votre premier flow",
-        "content": "La première étape pour définir un flow est de lui ajouter un ID, un namespace et optionnellement, une description."
-      },
-      "step4": {
-        "title": "Définition des inputs",
-        "content": "L'étape suivante est de définir les différentes entrées de votre flow. Cela se fait en attribuant à chaque entrée un nom et un type."
-      },
-      "step5": {
-        "title": "Ajout de tâches",
-        "content": "Ensuite, vous pouvez ajouter des tâches à votre flow. Une tâche est une étape de votre flow qui va exécuter une action spécifique. Par exemple, vous pouvez utiliser une tâche pour exécuter une requête SQL ou pour envoyer un mail."
-      },
-      "step6": {
-        "title": "Afficher des informations",
-        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flow est déclenché et affichera <code>Hey there, Kestra user</code>."
-      },
-      "step7": {
-        "title": "Exécuter une commande bash",
-        "content": "Parfois, vous souhaiterez exécuter des scripts spécifiques, Python, Node, Bash, etc. Ici, nous lançons une commande bash pour afficher un message."
-      },
-      "step8": {
-        "title": "Programmer",
-        "content": "Pour planifier un flux, nous ajoutons un \"déclencheur\". Ici, nous programmons le flux toutes les minutes."
-      },
-      "step9": {
-        "title": "Sauvegarde de votre flow",
-        "content": "Tout est prêt! Maintenant, sauvegardez votre flow en cliquant sur le bouton Enregistrer."
-      },
-      "step10": {
-        "title": "Maintenant exécuter votre flow!",
-        "content": "Vous pouvez maintenant exécuter votre flow en cliquant sur le bouton Nouvelle Exécution."
-      },
-      "step11": {
-        "title": "Insérer les inputs",
-        "content": "Finalement, si votre flow possède des entrées, il vous sera demandé de les insérer avant son exécution. Dans ce cas, nous l'avons déjà remplit grâce à la valeur par défaut."
-      }
-    },
-    "onboarding-flow": {
-      "onboardComment1": "Déclaration d'un flow avec un identifiant unique et un namespace obligatoire, ainsi qu'une description facultative.",
-      "onboardComment2": "Les identifiants d'un flow sont uniques à l'intérieur d'un namespace.",
-      "inputs": "Flow inputs: chaque entrée possède un id, un type et une valeur par défaut facultative.",
-      "inputsDetails1": "Nous définissons une entrée de nom 'csvUrl' avec comme valeur par défaut l'URL du fichier de données de test.",
-      "inputsDetails2": "Ces données de test proviennent du portail France Open Data et contiennent des consommations d'électricité en français au format CSV.",
-      "tasks1": "Liste de tâches qui seront exécutées les unes après les autres.",
-      "tasks2": "Chaque tâche doit avoir un identifiant unique pour le flow et un type.",
-      "tasks3": "En fonction du type de tâche, vous devrez peut-être passer des attributs supplémentaires.",
-      "taskLog1": "Il s'agit de l'une des tâches les plus simples : elle affiche un message dans le journal, comme la commande 'echo'.",
-      "taskLog2": "Le message est transmis grâce à l'attribut 'format'.",
-      "taskLog3": "Nous utiliserons la variable de 'inputs' : {'{{'} et {'}}'} sont des séparateurs d'une expression Pebble dans laquelle nous pouvons accéder à des variables.",
-      "taskBash1": "Cette tâche exécute une commande bash.",
-      "taskBash2": "Ici, nous nous contentons d'afficher un message, en utilisant à nouveau la variable d'entrée.",
-      "triggers": "Pour déclencher le flux, nous utilisons la propriété \"triggers\".",
-      "triggerSchedule1": "Ici, nous utilisons le déclencheur \"schedule\" pour exécuter le flux toutes les minutes."
-    },
     "Skip tour": "Passer",
+    "Skip tutorial": "Passer le tutoriel",
     "Next step": "Étape suivante",
     "Previous step": "Étape précédente",
     "Finish": "Terminer",
@@ -585,6 +532,10 @@
     "flow deleted, you can restore it": "Le flow a été supprimé et ceci est une vue en lecture seule, mais vous pouvez toujours le restaurer.",
     "workers": "Workers",
     "worker group": "Worker Group",
+    "version": "Version",
+    "services": "Services",
+    "cluster": "Cluster",
+    "server type": "Type de serveur",
     "hostname": "Nom d'hôte",
     "port": "Port",
     "management port": "Port de gestion",

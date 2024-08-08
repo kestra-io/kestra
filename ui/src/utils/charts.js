@@ -74,7 +74,7 @@ export function chartClick(moment, router, route, event) {
     const query = {};
 
     if (event.date) {
-        const formattedDate = moment(event.date, "DD/MM/YYYY");
+        const formattedDate = moment(event.date, moment.localeData().longDateFormat("L"));
         query.startDate = formattedDate.toISOString(true);
         query.endDate = formattedDate.add(1, "d").toISOString(true);
     }

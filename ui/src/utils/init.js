@@ -3,7 +3,7 @@ import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
 import {createI18n} from "vue-i18n";
 import moment from "moment-timezone";
-import "moment/locale/fr"
+import "moment/dist/locale/fr"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {

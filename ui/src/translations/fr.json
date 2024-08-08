@@ -718,6 +718,7 @@
       "previous": "Précédent",
       "finish": "Finir",
       "skip": "Passer le tutoriel",
+      "no_flows": "Aucun flux disponible dans l'espace de noms du tutoriel.",
       "steps": {
         "0": {
           "title": "Bienvenue chez Kestra!",

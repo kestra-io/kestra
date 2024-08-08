@@ -65,6 +65,7 @@
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
+                                @confirm="onDebugExpression($event)"
                                 class="w-100"
                             />
 

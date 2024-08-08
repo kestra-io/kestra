@@ -3,8 +3,8 @@ namespace: io.kestra.tests
 retry:
   behavior: RETRY_FAILED_TASK
   type: constant
-  maxDuration: PT3S
-  interval: PT1S
+  maxDuration: PT6S
+  interval: PT2S
 
 tasks:
   - id: fail

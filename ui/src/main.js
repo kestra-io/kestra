@@ -7,10 +7,12 @@ import configureAxios from "./utils/axios"
 import routes from "./routes/routes";
 import fr from "./translations/fr.json";
 import en from "./translations/en.json";
+import de from "./translations/de.json";
+import pl from "./translations/pl.json";
 import stores from "./stores/store";
 
 const app = createApp(App)
-const translations = {...fr,...en}
+const translations = {...fr,...en,...de,...pl}
 const {store, router} = initApp(app, routes, stores, translations);
 
 // Passing toast to VUEX store to be used in modules

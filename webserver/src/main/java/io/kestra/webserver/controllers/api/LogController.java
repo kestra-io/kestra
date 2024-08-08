@@ -126,7 +126,7 @@ public class LogController {
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
-        List<String> levels = LogEntry.findLevelsByMin(minLevel);
+        List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(level -> level.name()).toList();
 
         return Flux
             .<Event<LogEntry>>create(emitter -> {

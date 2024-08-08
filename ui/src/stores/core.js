@@ -1,3 +1,5 @@
+import {apiUrl} from "override/utils/route";
+
 export default {
     namespaced: true,
     state: {
@@ -10,7 +12,8 @@ export default {
             template: undefined,
         },
         monacoYamlConfigured: false,
-        autocompletionSource: undefined
+        autocompletionSource: undefined,
+        tutorialFlows: []
     },
     actions: {
         showMessage({commit}, message) {
@@ -21,7 +24,10 @@ export default {
         },
         isUnsaved({commit}, unsavedChange) {
             commit("setUnsavedChange", unsavedChange)
-        }
+        },
+        readTutorialFlows({commit}) {
+            return this.$http.get(`${apiUrl(this)}/flows/tutorial`).then((response) => commit("setTutorialFlows", response.data))
+        },
     },
     mutations: {
         setMessage(state, message) {
@@ -41,7 +47,10 @@ export default {
         },
         setAutocompletionSource(state, autocompletionSource) {
             state.autocompletionSource = autocompletionSource
-        }
+        },
+        setTutorialFlows(state, flows) {
+            state.tutorialFlows = flows
+        },
     },
     getters: {
         unsavedChange(state) {

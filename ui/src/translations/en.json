@@ -761,6 +761,7 @@
       "previous": "Previous",
       "finish": "Finish",
       "skip": "Skip Tutorial",
+      "no_flows": "No flows available under tutorial namespace.",
       "steps": {
         "0": {
           "title": "Welcome to Kestra!",

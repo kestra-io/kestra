@@ -27,7 +27,7 @@
                         <div
                             v-if="currentStep(tour).title"
                             class="title"
-                            :class="{dark: currentStep(tour).keepDark}"
+                            :class="{dark: currentStep(tour).keepDark, empty: !flows.length}"
                         >
                             <div v-if="currentStep(tour).icon">
                                 <img
@@ -35,7 +35,7 @@
                                     :class="{jump: currentStep(tour).jump}"
                                 >
                             </div>
-                            <span v-html="currentStep(tour).title" />
+                            <span v-html="tour.currentStep === 1 && !flows.length ? t('onboarding.no_flows') : currentStep(tour).title" />
                         </div>
                     </template>
                     <template #content>
@@ -99,6 +99,7 @@
                                     ![0, 1].includes(tour.currentStep) ||
                                         !tour.isLast
                                 "
+                                :disabled="tour.currentStep === 1 && !flows.length"
                                 @click="
                                     tour.isLast
                                         ? finishTour(tour.currentStep)
@@ -147,7 +148,6 @@
 
     import Finish from "./components/buttons/Finish.vue";
 
-    import {apiUrl} from "override/utils/route";
     import {pageFromRoute} from "../../utils/eventsRouter";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
@@ -208,7 +208,7 @@
     };
 
     const activeFlow = ref(0);
-    const flows = ref([]);
+    const flows = computed(() => store.state.core.tutorialFlows);
 
     const allTasks = (tasks) => {
         const uniqueTypes = new Set();
@@ -299,7 +299,7 @@
                     name: "flows/update",
                     params: {
                         namespace: "tutorial",
-                        id: flows.value[activeFlow.value].id,
+                        id: flows.value[activeFlow.value]?.id,
                         tab: "editor",
                     },
                 });
@@ -311,7 +311,7 @@
                 store.commit("editor/updateOnboarding"),
                 store.commit("core/setGuidedProperties", {
                     tourStarted: true,
-                    template: flows.value[activeFlow.value].id,
+                    template: flows.value[activeFlow.value]?.id,
                 });
 
                 wait(1);
@@ -418,11 +418,7 @@
     };
 
     onMounted(() => {
-        const HTTP = getCurrentInstance()?.appContext.config.globalProperties.$http;
-
-        HTTP.get(`${apiUrl(this)}/flows/tutorial`).then(
-            (response) => (flows.value = response.data),
-        );
+        store.dispatch("core/readTutorialFlows");
     });
 </script>
 
@@ -525,6 +521,11 @@ $flow-image-size-container: 36px;
         font-size: 2rem;
         font-weight: 500;
         color: $color;
+
+        &.empty {
+            font-size: 1.2rem;
+            margin-bottom: 0;
+        }
 
         & div {
             height: 2rem;

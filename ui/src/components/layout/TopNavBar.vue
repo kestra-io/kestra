@@ -132,6 +132,7 @@
         },
         computed: {
             ...mapState("api", ["version"]),
+            ...mapState("core", ["tutorialFlows"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -139,7 +140,7 @@
             },
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
-                return !Object.keys(this.user).length
+                return this.tutorialFlows?.length && !Object.keys(this.user).length
             }
         },
         methods: {

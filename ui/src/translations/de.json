@@ -297,7 +297,7 @@
     "Unfold content lines": "Mehrzeilige Zeichenfolgen entfalten",
     "Max displayable": "Maximal anzeigbar",
     "Total": "Gesamt",
-    "subflow": "Subflow",
+    "sub flow": "Subflow",
     "execute": "Ausführen",
     "execute flow behaviour": "Den Flow ausführen",
     "open in same tab": "Im selben Tab",
@@ -704,6 +704,7 @@
       "previous": "Zurück",
       "finish": "Beenden",
       "skip": "Tutorial überspringen",
+      "no_flows": "Keine Flows unter der tutorial Namespace verfügbar.",
       "steps": {
         "0": {
           "title": "Willkommen bei Kestra!",

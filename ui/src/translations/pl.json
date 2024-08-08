@@ -297,7 +297,7 @@
     "Unfold content lines": "Rozwiń wieloliniowe ciągi",
     "Max displayable": "Maksymalna liczba wyświetlanych",
     "Total": "Całkowity",
-    "subflow": "Subflow",
+    "sub flow": "Subflow",
     "execute": "Wykonaj",
     "execute flow behaviour": "Wykonaj flow",
     "open in same tab": "W tej samej zakładce",
@@ -703,7 +703,8 @@
       "next": "Następny",
       "previous": "Poprzedni",
       "finish": "Zakończ",
-      "skip": "Pomiń Samouczek",
+      "skip": "Pomiń samouczek",
+      "no_flows": "Brak flowów w namespace o nazwie tutorial.",
       "steps": {
         "0": {
           "title": "Witamy w Kestra!",

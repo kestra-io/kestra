@@ -110,7 +110,7 @@ jobs:
 
       - name: Notify failed CI
         id: send-ci-failed
-        if: always() && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && job.status != 'success'
+        if: always() && job.status != 'success'
         uses: kestra-io/actions/.github/actions/send-ci-failed@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

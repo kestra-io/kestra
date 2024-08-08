@@ -72,7 +72,7 @@ import java.util.OptionalInt;
             """
         ),
         @Example(
-            title = "Execute a Kestra flow via an HTTP request with a timeout. The `timeout` property specifies the maximum time allowed for the entire task to run, while the `options.connectTimeout`, `options.readTimeout`, `options.connectionPoolIdleTimeout`, and `options.readIdleTimeout` properties specify the time allowed for establishing a connection, reading data from the server, keeping an idle connection in the client's connection pool, and keeping a read connection idle before closing it, respectively.",
+            title = "Make an HTTP GET request with a timeout. The `timeout` property specifies the maximum time allowed for the entire task to run, while the `options.connectTimeout`, `options.readTimeout`, `options.connectionPoolIdleTimeout`, and `options.readIdleTimeout` properties specify the time allowed for establishing a connection, reading data from the server, keeping an idle connection in the client's connection pool, and keeping a read connection idle before closing it, respectively.",
             full = true,
             code = """
             id: timeout
@@ -83,6 +83,7 @@ import java.util.OptionalInt;
                 type: io.kestra.plugin.core.http.Request
                 uri: https://reqres.in/api/long-request
                 timeout: PT10M # no default
+                method: GET
                 options:
                   connectTimeout: PT1M # no default
                   readTimeout: PT30S # 10 seconds by default

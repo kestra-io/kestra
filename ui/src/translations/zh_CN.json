@@ -719,6 +719,7 @@
       "previous": "上一步",
       "finish": "完成",
       "skip": "跳过教程",
+      "no_flows": "教程命名空间下没有可用的流程。",
       "steps": {
         "0": {
           "title": "欢迎使用Kestra！",

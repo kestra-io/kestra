@@ -68,10 +68,6 @@
                                             :icons="icons"
                                             :variable="ICON_COLOR"
                                             only-icon
-
-                                            :data-cls="task"
-                                            :data-task-index="taskIndex"
-                                            :data-key="`flow__${flowIndex}__icon__${taskIndex}`"
                                         />
                                     </div>
                                 </div>

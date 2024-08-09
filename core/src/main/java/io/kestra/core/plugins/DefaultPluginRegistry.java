@@ -18,7 +18,7 @@ import java.util.function.Predicate;
  * @see io.kestra.core.plugins.serdes.PluginDeserializer
  * @see PluginScanner
  */
-public final class DefaultPluginRegistry implements PluginRegistry {
+public class DefaultPluginRegistry implements PluginRegistry {
 
     private static class LazyHolder {
         static final DefaultPluginRegistry INSTANCE = new DefaultPluginRegistry();
@@ -43,7 +43,7 @@ public final class DefaultPluginRegistry implements PluginRegistry {
         return instance;
     }
 
-    private DefaultPluginRegistry() {
+    protected DefaultPluginRegistry() {
     }
 
     private boolean isInitialized() {
@@ -53,7 +53,7 @@ public final class DefaultPluginRegistry implements PluginRegistry {
     /**
      * Initializes the registry by loading all core plugins.
      */
-    private void init() {
+    protected void init() {
         if (initialized.compareAndSet(false, true)) {
             register(scanner.scan());
         }

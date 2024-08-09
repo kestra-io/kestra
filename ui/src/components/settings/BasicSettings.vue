@@ -375,8 +375,11 @@
             langOptions() {
                 return [
                     {value: "en", text: "English"},
-                    {value: "fr", text: "Français"},
+                    {value: "fr", text: "French"},
+                    {value: "de", text: "German"},
+                    {value: "pl", text: "Polish"},
                     {value: "zh_CN", text: "简体中文"}
+
                 ];
             },
             themesOptions() {

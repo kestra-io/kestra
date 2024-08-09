@@ -137,7 +137,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
                     script: |
                       from kestra import Kestra
                      \s
-                      data = dict(message="Hello from Kestra!"")
+                      data = dict(message="Hello from Kestra!")
                       Kestra.outputs(data)""",
             full = true
         ),

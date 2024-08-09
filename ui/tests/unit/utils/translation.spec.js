@@ -27,6 +27,7 @@ describe("Translation Keys", () => {
         const hiFilePath = path.resolve(__dirname, "../../../src/translations/hi.json");
         const itFilePath = path.resolve(__dirname, "../../../src/translations/it.json");
         const jaFilePath = path.resolve(__dirname, "../../../src/translations/ja.json");
+        const koFilePath = path.resolve(__dirname, "../../../src/translations/ko.json");
         const plFilePath = path.resolve(__dirname, "../../../src/translations/pl.json");
         const ptFilePath = path.resolve(__dirname, "../../../src/translations/pt.json");
         const ruFilePath = path.resolve(__dirname, "../../../src/translations/ru.json");
@@ -39,6 +40,7 @@ describe("Translation Keys", () => {
         const hiJson = readJsonFile(hiFilePath);
         const itJson = readJsonFile(itFilePath);
         const jaJson = readJsonFile(jaFilePath);
+        const koJson = readJsonFile(koFilePath);
         const plJson = readJsonFile(plFilePath);
         const ptJson = readJsonFile(ptFilePath);
         const ruJson = readJsonFile(ruFilePath);
@@ -51,6 +53,7 @@ describe("Translation Keys", () => {
         const hiKeys = extractKeys(hiJson).filter(key => key !== "hi");
         const itKeys = extractKeys(itJson).filter(key => key !== "it");
         const jaKeys = extractKeys(jaJson).filter(key => key !== "ja");
+        const koKeys = extractKeys(koJson).filter(key => key !== "ko");
         const plKeys = extractKeys(plJson).filter(key => key !== "pl");
         const ptKeys = extractKeys(ptJson).filter(key => key !== "pt");
         const ruKeys = extractKeys(ruJson).filter(key => key !== "ru");
@@ -63,6 +66,7 @@ describe("Translation Keys", () => {
         const missingInHi = enKeys.filter(key => !hiKeys.includes(key));
         const missingInIt = enKeys.filter(key => !itKeys.includes(key));
         const missingInJa = enKeys.filter(key => !jaKeys.includes(key));
+        const missingInKo = enKeys.filter(key => !koKeys.includes(key));
         const missingInPl = enKeys.filter(key => !plKeys.includes(key));
         const missingInPt = enKeys.filter(key => !ptKeys.includes(key));
         const missingInRu = enKeys.filter(key => !ruKeys.includes(key));
@@ -75,6 +79,7 @@ describe("Translation Keys", () => {
         expect(missingInHi).toEqual([]);
         expect(missingInIt).toEqual([]);
         expect(missingInJa).toEqual([]);
+        expect(missingInKo).toEqual([]);
         expect(missingInPl).toEqual([]);
         expect(missingInPt).toEqual([]);
         expect(missingInRu).toEqual([]);

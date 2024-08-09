@@ -9,10 +9,12 @@ import fr from "./translations/fr.json";
 import en from "./translations/en.json";
 import de from "./translations/de.json";
 import pl from "./translations/pl.json";
+import zh_CN from "./translations/zh_CN.json"
 import stores from "./stores/store";
 
 const app = createApp(App)
-const translations = {...fr,...en,...de,...pl}
+const translations = {...fr,...en,...de,...pl,...zh_CN}
+
 const {store, router} = initApp(app, routes, stores, translations);
 
 // Passing toast to VUEX store to be used in modules

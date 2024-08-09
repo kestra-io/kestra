@@ -6,6 +6,7 @@ import moment from "moment-timezone";
 import "moment/dist/locale/fr"
 import "moment/dist/locale/de"
 import "moment/dist/locale/pl"
+import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {

@@ -41,7 +41,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             title = "Send a slack notification if there is no execution for a flow for the last 24 hours.",
             full = true,
             code = {
-                "id: executions-count",
+                "id: executions_count",
                 "namespace: company.team",
                 "",
                 "tasks:",

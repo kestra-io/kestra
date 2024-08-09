@@ -35,7 +35,7 @@ import java.util.Optional;
         @Example(
             full = true,
             code = {
-                "id: allow-failure",
+                "id: allow_failure",
                 "namespace: company.team",
                 "",
                 "tasks:",

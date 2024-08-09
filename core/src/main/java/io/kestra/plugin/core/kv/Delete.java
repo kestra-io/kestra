@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
             code = """
               id: delete_kv
               type: io.kestra.plugin.core.kv.Delete
-              key: myvariable
+              key: my_variable
               namespace: dev # the current namespace of the flow will be used by default"""
         )
     }

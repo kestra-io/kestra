@@ -62,7 +62,7 @@ import java.util.Optional;
                         full = true,
                         code = {
                                 """
-                                id: http-trigger
+                                id: http_trigger
                                 namespace: company.team
 
                                 triggers:

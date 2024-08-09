@@ -29,12 +29,12 @@ import java.util.*;
 @Plugin(
     examples = {
         @Example(
-            title = "Get keys that are prefixed by `myvar`.",
+            title = "Get keys that are prefixed by `my_var`.",
             full = true,
             code = """
               id: keys_kv
               type: io.kestra.plugin.core.kv.GetKeys
-              prefix: myvar
+              prefix: my_var
               namespace: dev # the current namespace of the flow will be used by default"""
         )
     }

@@ -34,7 +34,7 @@ import java.util.Map;
         @Example(
             title = "Set the default state for the current flow.",
             code = {
-                "id: setState",
+                "id: set_state",
                 "type: io.kestra.plugin.core.state.Set",
                 "data:",
                 "  '{{ inputs.store }}': '{{ outputs.download.md5 }}'",
@@ -44,7 +44,7 @@ import java.util.Map;
         @Example(
             title = "Set the `myState` state for the current flow.",
             code = {
-                "id: setState",
+                "id: set_state",
                 "type: io.kestra.plugin.core.state.Set",
                 "name: myState",
                 "data:",

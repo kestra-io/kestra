@@ -28,12 +28,12 @@ import java.time.Duration;
 @Plugin(
     examples = {
         @Example(
-            title = "Set `query` task `uri` output as value for `myvariable` key in `dev` namespace.",
+            title = "Set `query` task `uri` output as value for `my_variable` key in `dev` namespace.",
             full = true,
             code = """
               id: set_kv
               type: io.kestra.plugin.core.kv.Set
-              key: myvariable
+              key: my_variable
               value: "{{ outputs.query.uri }}"
               namespace: dev # the current namespace of the flow will be used by default
               overwrite: true # whether to overwrite or fail if a value for that key already exists; default true

@@ -46,7 +46,7 @@ import java.util.stream.Stream;
             title = "Run a series of tasks for which the execution order is defined by their upstream dependencies.",
             full = true,
             code = """
-                  id: dag-flow
+                  id: dag_flow
                   namespace: company.team
                   tasks:
                     - id: dag

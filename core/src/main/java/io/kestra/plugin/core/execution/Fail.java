@@ -31,7 +31,7 @@ import lombok.experimental.SuperBuilder;
             title = "Fail on a switch branch",
             full = true,
             code = {
-                "id: fail-on-switch\n" +
+                "id: fail_on_switch\n" +
                 "namespace: company.team\n" +
                 "\n" +
                 "inputs:\n" +
@@ -65,7 +65,7 @@ import lombok.experimental.SuperBuilder;
             title = "Fail on a condition",
             full = true,
             code = {
-                "id: fail-on-condition\n" +
+                "id: fail_on_condition\n" +
                 "namespace: company.team\n" +
                 "\n" +
                 "inputs:\n" +

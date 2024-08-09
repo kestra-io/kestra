@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -158,7 +159,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTask = this.childTasks(runContext, parentTaskRun);
-        if (childTask == null) {
+        if (ListUtils.isEmpty(childTask)) {
             // no next task to run, we guess the state from the parent task
             return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure()));
         }

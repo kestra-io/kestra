@@ -1,0 +1,262 @@
+{
+  "es": {
+    "service-accounts": "Cuentas de Servicio",
+    "service-account-name-validation": "El Nombre del Servicio debe <ul><li>contener como máximo 63 caracteres</li><li>contener solo caracteres alfanuméricos en minúscula o '-'</li><li>comenzar con un carácter alfanumérico</li><li>terminar con un carácter alfanumérico</li></ul>",
+    "user": "Usuario",
+    "users": "Usuarios",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "password": {
+      "name": "Contraseña",
+      "create": "Crear una contraseña",
+      "update": "Actualizar la contraseña actual",
+      "old": "Contraseña antigua",
+      "new": "Nueva contraseña",
+      "confirm": "Confirmar contraseña",
+      "identical": "Las contraseñas especificadas deben ser idénticas."
+    },
+    "profile": "Perfil",
+    "user-profile": "Perfil de Usuario",
+    "profile-username-cannot-be-changed": "\"Nombre de usuario\" no se puede cambiar.",
+    "profile-edit": "Editar perfil",
+    "profile-manage-user-details": "Administrar la información de tu perfil de usuario",
+    "profile-manage-api-tokens": "Administrar tus Tokens de API",
+    "profile-manage-api-tokens-details": "Administrar tokens de API para usar con la API de Kestra, CLI, Terraform, etc.",
+    "profile-your-user-id": "Tu ID de Usuario de Kestra",
+    "profile-password-changed-succeed": "¡La contraseña ha sido cambiada exitosamente!",
+    "api-tokens": "Tokens de API",
+    "api-token-iat": "Fecha de creación",
+    "api-token-expiration-time": "Fecha de expiración",
+    "api-token-prefix": "Prefijo del token",
+    "api-token-generate-new-token": "Generar Nuevo Token",
+    "api-token-generate": "Generar",
+    "api-token-last-used": "Último uso",
+    "api-token-expired": "Expirado",
+    "api-token-valid": "Válido",
+    "api-token-revoke": "Revocar token",
+    "api-token-max-age": "Edad máxima",
+    "api-token-duration-one-day": "24 horas",
+    "api-token-duration-one-week": "7 días",
+    "api-token-duration-thirty-days": "30 días",
+    "api-token-duration-ninety-days": "90 días",
+    "api-token-duration-custom": "Personalizado",
+    "api-token-duration-no": "Sin expiración",
+    "api-token": "Token de API",
+    "api-token-create": "Crear Token de API",
+    "api-token-show": "Mostrar Token de API",
+    "api-token-custom-max-date": "Fecha personalizada",
+    "api-token-extended": "Extendido",
+    "api-token-name-placeholder": "Nombre corto para identificar el token.",
+    "api-token-description-placeholder": "Para qué se utilizará el token.",
+    "api-token-max-age-placeholder": "Cuánto tiempo permanecerá válido el token.",
+    "api-token-expire-on": "El token expirará el: <strong>{expirationTime}</strong>",
+    "api-token-never-expire": "El token nunca expirará.",
+    "api-token-name-validation": "El Nombre del Token debe <ul><li>contener como máximo 63 caracteres</li><li>contener solo caracteres alfanuméricos en minúscula o '-'</li><li>comenzar con un carácter alfanumérico</li><li>terminar con un carácter alfanumérico</li></ul>",
+    "api-token-created-successfully": "El nuevo token de API ha sido generado exitosamente.",
+    "api-token-copy-and-save": "Copia y guarda el token de API antes de cerrar este diálogo. El valor completo del token no se puede obtener más tarde.",
+    "authentication-api-token": "Token de API de Autenticación",
+    "api-token-extended-details": "Cuando esta opción está seleccionada, la fecha de expiración se mueve automáticamente hacia adelante por la edad máxima cada vez que se usa el token.",
+    "configuration": "Configuración",
+    "cluster": "Monitor de Cluster",
+    "server type": "Tipo de servidor",
+    "cluster-server-information": "Información del servidor",
+    "cluster-service-liveness": "Disponibilidad del Servicio",
+    "cluster-service-last-heartbeat": "Último Latido",
+    "cluster-service-liveness-enable": "Disponibilidad Habilitada",
+    "cluster-service-liveness-interval": "Intervalo de Latido",
+    "cluster-service-liveness-timeout": "Tiempo de Expiración de Sesión",
+    "cluster-service-events-info": "Esta línea de tiempo muestra los eventos que han ocurrido durante el ciclo de vida del servicio.",
+    "cluster-service-termination-grace-period": "Período de Gracia para Terminación",
+    "cluster-service-last-heartbeat-tip": "Tiempo transcurrido desde que se recibió un latido del servicio.",
+    "cluster-service-termination-grace-period-tip": "El tiempo esperado para que este servicio complete todas sus tareas antes de iniciar un apagado ordenado.",
+    "cluster-service-liveness-timeout-tip": "El tiempo de espera utilizado para detectar la falla de este servicio. <br /> Si no se recibe un latido antes de que expire este tiempo de espera de sesión, este servicio pasará automáticamente al estado <strong>DISCONNECTED</strong>.",
+    "cluster-service-liveness-interval-tip": "El tiempo esperado entre latidos.",
+    "cluster-service-active": "Servicios activos",
+    "service.state.updated": "Estado del servicio actualizado",
+    "baseUnit": "Unidad Base",
+    "events": "Eventos",
+    "seconds": "segundos",
+    "incorrect credentials": "Nombre de usuario o contraseña incorrectos.",
+    "no permissions": "Tu usuario no tiene permiso.",
+    "permissions": "Permisos",
+    "expired authentication": "Autenticación expirada.",
+    "authentifications": "Autenticación",
+    "service": "Servicio",
+    "service accounts": "Cuentas de servicio",
+    "service account": "Cuenta de servicio",
+    "provisioning": "Aprovisionamiento",
+    "roles": "Roles",
+    "role": "Rol",
+    "role default": {
+      "detail": "El rol predeterminado se aplicará solo a los nuevos usuarios creados después de configurar el rol predeterminado. Solo se puede configurar un predeterminado."
+    },
+    "global roles": "Roles globales",
+    "namespace roles": "Roles de namespace",
+    "group": "Grupo",
+    "groups": "Grupos",
+    "members": "Miembros",
+    "bindings": "Acceso",
+    "namespace": "Namespace",
+    "existing only": "Solo existentes",
+    "inherited vars": "Variables heredadas",
+    "inherited pluginDefaults": "Valores predeterminados del Plugin heredados",
+    "plugin defaults": "Valores predeterminados del Plugin",
+    "resource": "Recurso",
+    "resourceType": "Tipo de recurso",
+    "type": "Tipo",
+    "detail": "Detalle",
+    "date": "Fecha",
+    "allowedNamespaces": "Namespaces permitidos",
+    "allowedNamespacesHelp": "Puedes proporcionar un namespace (o un prefijo de namespace).<br /><br /> Si no se establece ninguno, <strong>todos los namespaces</strong> podrán acceder a este namespace.",
+    "allowedNamespacesAllowAll": "Permitir todos los namespaces",
+    "allowedNamespacesRestrict": "Restringir a los siguientes namespaces",
+    "namespace_deletion": "El namespace no se puede eliminar porque contiene flows.",
+    "crud": {
+      "type": {
+        "READ": "Leer",
+        "CREATE": "Creado",
+        "UPDATE": "Actualizado",
+        "DELETE": "Eliminado",
+        "LOGIN": "Iniciar sesión",
+        "LOGOUT": "Cerrar sesión"
+      },
+      "display": {
+        "user": {
+          "READ": "Leído por {user}",
+          "CREATE": "Creado por {user}",
+          "UPDATE": "Actualizado por {user}",
+          "DELETE": "Eliminado por {user}",
+          "LOGIN": "Iniciado sesión por {user}",
+          "LOGOUT": "Cerrado sesión por {user}"
+        },
+        "nouser": {
+          "READ": "Leer",
+          "CREATE": "Creado",
+          "UPDATE": "Actualizado",
+          "DELETE": "Eliminado",
+          "LOGIN": "Iniciado sesión",
+          "LOGOUT": "Cerrado sesión"
+        }
+      }
+    },
+    "secret": {
+      "key": "Key",
+      "name": "Secreto",
+      "names": "Secretos",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción corta del secreto",
+      "tags": "Etiquetas",
+      "addTag": "Añadir etiqueta",
+      "add": "Nuevo secreto",
+      "update": "Actualizar secreto '{name}'",
+      "duplicate": "Esta key de secreto ya existe",
+      "inherited": "Secretos heredados"
+    },
+    "license expired": "Tu licencia de Enterprise Edition ha expirado. Por favor, contáctanos para seguir usando la Enterprise Edition de Kestra. <a href=\"mailto:sales{'@'}kestra.io\">Contáctanos</a>.",
+    "license almost expired": "Tu licencia de Enterprise Edition expirará en <span class=\"d-none d-md-inline bold\">{daysBeforeExpiration}</span> días. Por favor <a href=\"mailto:sales{'@'}kestra.io\">contáctanos</a>.",
+    "new tag": "Nueva Etiqueta",
+    "blueprints": {
+      "community": "Comunidad",
+      "custom": "Blueprints personalizados",
+      "create": "Crear un blueprint",
+      "edit": "Editar un blueprint"
+    },
+    "access": "Acceso",
+    "can not see user": "Si no puedes ver un usuario, es porque ese usuario no tiene permisos asignados. El usuario será visible una vez que le otorgues algunos permisos o lo añadas a un grupo.",
+    "instance setup": {
+      "configuration": {
+        "restart": "<h5>Por favor, corrige la <a href=\"https://kestra.io/docs/administrator-guide/configuration\" target=\"_blank\">configuración</a> y reinicia la instancia</h5>"
+      },
+      "validate": {
+        "progress": "Validar configuración",
+        "title": "¡Bienvenido a Kestra!",
+        "subtitle": "Aquí están los detalles de tu configuración.",
+        "configuration": {
+          "tenancy": "Multitenancy habilitado",
+          "repository": "Base de datos",
+          "queue": "Cola",
+          "storage": "Almacenamiento interno",
+          "default tenant": "Tenant predeterminado",
+          "secret": "Backend de secretos",
+          "not setup": "No configurado"
+        },
+        "confirm": {
+          "title": "Confirma que la configuración es válida",
+          "no": "No",
+          "yes": "Confirmar"
+        }
+      },
+      "create user": {
+        "subtitle": "Crea tu primer usuario",
+        "username": {
+          "error": "El nombre de usuario debe ser una dirección de correo electrónico válida."
+        },
+        "password": {
+          "error": "Contraseña incorrecta, debe respetar el siguiente regex: {regex}",
+          "confirm error": "Las contraseñas no son idénticas"
+        }
+      },
+      "create tenant": {
+        "subtitle": "Crea tu primer tenant",
+        "id": {
+          "error": "El ID es incorrecto, debe estar compuesto por letras minúsculas, dígitos y guiones."
+        }
+      },
+      "start": {
+        "progress": "Iniciar Kestra UI",
+        "subtitle": ""
+      },
+      "multitenancy": {
+        "default enabled": "El tenant predeterminado está habilitado, puedes dejar el formulario vacío para usarlo.",
+        "disabled": {
+          "title": "Multitenancy está actualmente deshabilitado.",
+          "details": "Si deseas crear un tenant, consulta la documentación sobre cómo habilitar multitenancy y reinicia la instancia."
+        }
+      },
+      "success": {
+        "title": "¡Felicidades!",
+        "subtitle": "¡Todo está listo!"
+      }
+    },
+    "default": "Predeterminado",
+    "superadmin": "SuperAdmin",
+    "superadmin details": "SuperAdmin es un usuario que tiene acceso total en IAM en toda la instancia de Kestra.",
+    "manage": "Administrar instancia",
+    "logo": "Logo",
+    "cannot edit default tenant": "El Tenant predeterminado no se puede editar",
+    "only svg allowed": "Solo se permiten archivos SVG.",
+    "secrets": {
+      "disabled": "Los secretos no están configurados",
+      "disabled_details": "Para usar secretos, primero configura un <a href=\"https://kestra.io/docs/enterprise/secrets-manager\" target=\"_blank\">gestor de secretos</a>."
+    },
+    "download_report": "Descargar Informe de Uso",
+    "select_month": "Seleccionar mes",
+    "forgot password": "¿Olvidaste tu contraseña?",
+    "forgot_password": {
+      "explain": "Ingresa tu correo electrónico para recibir un enlace para restaurar tu contraseña.",
+      "reset_explain": "Por favor, ingresa tu nueva contraseña y confírmala."
+    },
+    "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
+    "auditlog": {
+      "diff_title": "Cambios aplicados al objeto {id}"
+    },
+    "changes": "Cambios",
+    "actor": "Actor",
+    "input-name-validation": "El nombre debe <ul><li>contener como máximo 63 caracteres</li><li>contener solo caracteres alfanuméricos en minúscula o '-'</li><li>comenzar con un carácter alfanumérico</li><li>terminar con un carácter alfanumérico</li></ul>",
+    "security": {
+      "integration": {
+        "title": "Detalles de la Integración de Aprovisionamiento",
+        "input-name-placeholder": "Nombre corto para identificar la integración de aprovisionamiento.",
+        "disclaimer": "Copia y guarda los detalles antes de cerrar este diálogo, ya que los valores no se pueden obtener más tarde.",
+        "uri": "Endpoint del Tenant",
+        "uri-details": "La cadena de conexión utilizada para conectarse a la API de Kestra.",
+        "token": "Token Secreto",
+        "delete": "Eliminar Integración",
+        "create": "Crear Integración de Aprovisionamiento"
+      }
+    },
+    "details as key:value": "Detalles como key:value"
+  }
+}

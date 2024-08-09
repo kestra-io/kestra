@@ -384,6 +384,7 @@
                     {value: "ru", text: "Russian"},
                     {value: "zh_CN", text: "Chinese"},
                     {value: "ja", text: "Japanese"},
+                    {value: "ko", text: "Korean"},
                     {value: "hi", text: "Hindi"}
                 ];
             },

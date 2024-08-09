@@ -12,6 +12,7 @@ import fr from "./translations/fr.json";
 import hi from "./translations/hi.json";
 import it from "./translations/it.json";
 import ja from "./translations/ja.json";
+import ko from "./translations/ko.json";
 import pl from "./translations/pl.json";
 import pt from "./translations/pt.json";
 import ru from "./translations/ru.json";
@@ -19,7 +20,7 @@ import zh_CN from "./translations/zh_CN.json"
 import stores from "./stores/store";
 
 const app = createApp(App)
-const translations = {...de,...en,...es,...fr,...hi,...it,...ja,...pl,...pt,...ru,...zh_CN}
+const translations = {...de,...en,...es,...fr,...hi,...it,...ja,...ko,...pl,...pt,...ru,...zh_CN}
 
 const {store, router} = initApp(app, routes, stores, translations);
 

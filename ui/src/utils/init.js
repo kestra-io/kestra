@@ -3,9 +3,15 @@ import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
 import {createI18n} from "vue-i18n";
 import moment from "moment-timezone";
-import "moment/dist/locale/fr"
 import "moment/dist/locale/de"
+import "moment/dist/locale/es"
+import "moment/dist/locale/fr"
+import "moment/dist/locale/hi"
+import "moment/dist/locale/it"
+import "moment/dist/locale/ja"
 import "moment/dist/locale/pl"
+import "moment/dist/locale/pt"
+import "moment/dist/locale/ru"
 import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";

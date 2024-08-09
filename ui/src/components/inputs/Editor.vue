@@ -96,7 +96,7 @@
         components: {
             MonacoEditor,
         },
-        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor"],
+        emits: ["save", "execute", "focusout", "tab", "update:modelValue", "cursor", "confirm"],
         editor: undefined,
         data() {
             return {
@@ -259,6 +259,19 @@
                     contextMenuOrder: 1.5,
                     run: (ed) => {
                         this.$emit("execute", ed.getValue())
+                    }
+                });
+
+                this.editor.addAction({
+                    id: "confirm",
+                    label: "Confirm",
+                    keybindings: [
+                        KeyMod.CtrlCmd | KeyCode.Enter,
+                    ],
+                    contextMenuGroupId: "navigation",
+                    contextMenuOrder: 1.5,
+                    run: (ed) => {
+                        this.$emit("confirm", ed.getValue())
                     }
                 });
 

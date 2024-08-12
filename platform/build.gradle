@@ -53,7 +53,7 @@ dependencies {
         api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
         api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
         // issue with the Docker lib having a too old version for the k8s extension
-        api("org.apache.commons:commons-compress:1.26.2")
+        api("org.apache.commons:commons-compress:1.27.0")
         // Kafka
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"

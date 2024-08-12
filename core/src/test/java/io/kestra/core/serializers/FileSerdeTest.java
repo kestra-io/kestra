@@ -38,7 +38,7 @@ class FileSerdeTest {
         );
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes", "deprecated"})
     @ParameterizedTest
     @MethodSource("source")
     void ion(Object value, Object resultValue) throws IOException {

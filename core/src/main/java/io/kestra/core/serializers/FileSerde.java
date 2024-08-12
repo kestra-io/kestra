@@ -35,8 +35,9 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to use the {@link #readAll(Reader)} method instead.
+     * @deprecated use the {@link #readAll(Reader)} method instead.
      */
+    @Deprecated(since = "0.19", forRemoval = true)
     public static Consumer<FluxSink<Object>> reader(BufferedReader input) {
         return s -> {
             String row;
@@ -52,6 +53,10 @@ public final class FileSerde {
         };
     }
 
+    /**
+     * @deprecated use the {@link #readAll(Reader, Class)} method instead.
+     */
+    @Deprecated(since = "0.19", forRemoval = true)
     public static <T> Consumer<FluxSink<T>> reader(BufferedReader input, Class<T> cls) {
         return s -> {
             String row;
@@ -114,6 +119,13 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    public static <T> Flux<T> readAll(Reader reader, Class<T> type) throws IOException {
+        return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
+    }
+
+    /**
+     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     */
     public static Flux<Object> readAll(ObjectMapper objectMapper, Reader in) throws IOException {
         return readAll(objectMapper, in, DEFAULT_TYPE_REFERENCE);
     }
@@ -122,6 +134,18 @@ public final class FileSerde {
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
+        MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
+        return Flux.<T>create(sink -> {
+                mappingIterator.forEachRemaining(t -> sink.next(t));
+                sink.complete();
+            }, FluxSink.OverflowStrategy.BUFFER)
+            .doFinally(throwConsumer(ignored -> mappingIterator.close()));
+    }
+
+    /**
+     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     */
+    public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return Flux.<T>create(sink -> {
                 mappingIterator.forEachRemaining(t -> sink.next(t));
@@ -150,6 +174,17 @@ public final class FileSerde {
     }
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
+        // See https://github.com/FasterXML/jackson-dataformats-binary/issues/493
+        // There is a limitation with the MappingIterator that cannot differentiate between an array of things (of whatever shape)
+        // and a sequence/stream of things (of Array shape).
+        // To work around that, we need to create a JsonParser and advance to the first token.
+        try (var parser = objectMapper.createParser(reader)) {
+            parser.nextToken();
+            return objectMapper.readerFor(type).readValues(parser);
+        }
+    }
+
+    private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         // See https://github.com/FasterXML/jackson-dataformats-binary/issues/493
         // There is a limitation with the MappingIterator that cannot differentiate between an array of things (of whatever shape)
         // and a sequence/stream of things (of Array shape).

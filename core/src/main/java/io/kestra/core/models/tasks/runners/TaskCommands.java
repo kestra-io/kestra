@@ -40,13 +40,17 @@ public interface TaskCommands {
     TargetOS getTargetOS();
 
     default List<Path> relativeWorkingDirectoryFilesPaths() throws IOException {
+        return this.relativeWorkingDirectoryFilesPaths(false);
+    }
+
+    default List<Path> relativeWorkingDirectoryFilesPaths(boolean includeDirectories) throws IOException {
         Path workingDirectory = this.getWorkingDirectory();
         if (workingDirectory == null) {
             return Collections.emptyList();
         }
 
         try (Stream<Path> walk = Files.walk(workingDirectory)) {
-            Stream<Path> filtered = walk.filter(path -> !Files.isDirectory(path));
+            Stream<Path> filtered = includeDirectories ? walk : walk.filter(path -> !Files.isDirectory(path));
             Path outputDirectory = this.getOutputDirectory();
             if (outputDirectory != null) {
                 filtered = filtered.filter(Predicate.not(path -> path.startsWith(outputDirectory)));

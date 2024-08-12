@@ -134,7 +134,7 @@
                         validateStatus: (status) => {
                             return status === 200;
                         }
-                    })).data;
+                    }))?.data;
                 } else {
                     this.flowGraph = await this.$store.dispatch("flow/getGraphFromSourceResponse", {
                         flow: this.blueprint.flow, config: {

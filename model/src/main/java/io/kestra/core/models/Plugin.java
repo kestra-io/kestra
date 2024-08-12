@@ -4,8 +4,6 @@ import io.kestra.core.models.annotations.Plugin.Id;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;

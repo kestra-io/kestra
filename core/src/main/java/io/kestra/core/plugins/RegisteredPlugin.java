@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.expression.PebbleExtension;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -36,6 +37,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner>> taskRunners;
+    private final List<Class<? extends PebbleExtension>> pebbleExtensions;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
@@ -85,6 +87,10 @@ public class RegisteredPlugin {
             return TaskRunner.class;
         }
 
+        if (this.getPebbleExtensions().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return PebbleExtension.class;
+        }
+
         if(this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
@@ -112,6 +118,7 @@ public class RegisteredPlugin {
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
+        result.put("pebble-extensions", Arrays.asList(this.getPebbleExtensions().toArray(Class[]::new)));
 
         return result;
     }
@@ -284,6 +291,15 @@ public class RegisteredPlugin {
 
         if (!this.getAliases().isEmpty()) {
             b.append("[Aliases: ");
+            b.append(this.getAliases().values().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue
+            )));
+            b.append("] ");
+        }
+
+        if (!this.getPebbleExtensions().isEmpty()) {
+            b.append("[Pebble Extensions: ");
             b.append(this.getAliases().values().stream().collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue

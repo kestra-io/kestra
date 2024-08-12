@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.contains;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.pebbletemplates.pebble.PebbleEngine;
 import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import org.junit.jupiter.api.Assertions;
@@ -20,14 +21,17 @@ class VariableRendererTest {
     ApplicationContext applicationContext;
 
     @Inject
+    VariableRenderer variableRenderer;
+
+    @Inject
     VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Inject
-    VariableRenderer variableRenderer;
+    PebbleEngine pebbleEngine;
 
     @Test
     void shouldRenderUsingAlternativeRendering() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(applicationContext, variableConfiguration);
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngine, variableConfiguration.recursiveRendering());
         String render = renderer.render("{{ dummy }}", Map.of());
         Assertions.assertEquals("result", render);
     }
@@ -54,9 +58,9 @@ class VariableRendererTest {
 
     public static class TestVariableRenderer extends VariableRenderer {
 
-        public TestVariableRenderer(ApplicationContext applicationContext,
-                                    VariableConfiguration variableConfiguration) {
-            super(applicationContext, variableConfiguration);
+        public TestVariableRenderer(PebbleEngine pebbleEngine,
+                                    boolean recursiveRendering) {
+            super(pebbleEngine, recursiveRendering);
         }
 
         @Override
@@ -64,6 +68,5 @@ class VariableRendererTest {
             return "result";
         }
     }
-
 
 }

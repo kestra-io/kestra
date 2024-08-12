@@ -5,50 +5,35 @@ import io.kestra.core.runners.pebble.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.bind.annotation.Bindable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.AbstractExtension;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.Getter;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Singleton
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
     private final PebbleEngine pebbleEngine;
-    private final VariableConfiguration variableConfiguration;
+    private final boolean recursiveRendering;
 
-    @Inject
+    public VariableRenderer(final PebbleEngine pebbleEngine, final boolean recursiveRendering) {
+        this.pebbleEngine = Objects.requireNonNull(pebbleEngine, "pebbleEngine cannot be null");
+        this.recursiveRendering = recursiveRendering;
+    }
+
+    // For backward-compatibility only
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-
-        PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
-            .registerExtensionCustomizer(ExtensionCustomizer::new)
-            .strictVariables(true)
-            .cacheActive(this.variableConfiguration.getCacheEnabled())
-
-            .newLineTrimming(false)
-            .autoEscaping(false);
-
-        applicationContext.getBeansOfType(AbstractExtension.class)
-            .forEach(pebbleBuilder::extension);
-
-        if (this.variableConfiguration.getCacheEnabled()) {
-            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
-        }
-
-        this.pebbleEngine = pebbleBuilder.build();
+        this(
+            applicationContext.getBean(PebbleEngine.class),
+            Optional.ofNullable(variableConfiguration).map(VariableConfiguration::recursiveRendering).orElse(false)
+        );
     }
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException e) {
@@ -65,11 +50,11 @@ public class VariableRenderer {
     }
 
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.render(inline, variables, recursiveRendering);
     }
 
     public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(inline, variables, this.variableConfiguration.getRecursiveRendering(), false);
+        return this.render(inline, variables, recursiveRendering, false);
     }
 
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
@@ -178,7 +163,7 @@ public class VariableRenderer {
     }
 
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(in, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.render(in, variables, recursiveRendering);
     }
 
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
@@ -198,7 +183,7 @@ public class VariableRenderer {
     }
 
     public Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.renderObject(object, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.renderObject(object, variables, recursiveRendering);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -218,7 +203,7 @@ public class VariableRenderer {
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.renderList(list, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.renderList(list, variables, recursiveRendering);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
@@ -232,7 +217,7 @@ public class VariableRenderer {
     }
 
     public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(list, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.render(list, variables, recursiveRendering);
     }
 
     public List<String> render(List<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
@@ -245,7 +230,7 @@ public class VariableRenderer {
     }
 
     public Set<String> render(Set<String> set, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return this.render(set, variables, this.variableConfiguration.getRecursiveRendering());
+        return this.render(set, variables, recursiveRendering);
     }
 
     public Set<String> render(Set<String> list, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
@@ -257,17 +242,14 @@ public class VariableRenderer {
         return result;
     }
 
-    @Getter
     @ConfigurationProperties("kestra.variables")
-    public static class VariableConfiguration {
-        public VariableConfiguration() {
-            this.cacheEnabled = true;
-            this.cacheSize = 1000;
-            this.recursiveRendering = false;
-        }
-
-        Boolean cacheEnabled;
-        Integer cacheSize;
-        Boolean recursiveRendering;
+    public static record VariableConfiguration(
+        @Bindable(defaultValue = "true")
+        Boolean cacheEnabled,
+        @Bindable(defaultValue = "1000")
+        Integer cacheSize,
+        @Bindable(defaultValue = "false")
+        Boolean recursiveRendering
+    ) {
     }
 }

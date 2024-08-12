@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.expression.PebbleExtension;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -97,6 +98,7 @@ public class PluginScanner {
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
+        List<Class<? extends PebbleExtension>> pebbleExtensions = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -135,6 +137,10 @@ public class PluginScanner {
                     case TaskRunner runner -> {
                         log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
                         taskRunners.add(runner.getClass());
+                    }
+                    case PebbleExtension extension -> {
+                        log.debug("Loading PebbleExtension plugin: '{}'", plugin.getClass());
+                        pebbleExtensions.add(extension.getClass());
                     }
                     default -> {
                     }
@@ -179,6 +185,7 @@ public class PluginScanner {
             .storages(storages)
             .secrets(secrets)
             .taskRunners(taskRunners)
+            .pebbleExtensions(pebbleExtensions)
             .guides(guides)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey().toLowerCase(),

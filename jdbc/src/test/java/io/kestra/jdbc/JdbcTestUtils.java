@@ -7,9 +7,12 @@ import org.jooq.DSLContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.sql.DataSource;
+
+import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -30,25 +33,30 @@ public class JdbcTestUtils {
     @Inject
     private JdbcTableConfigs tableConfigs;
 
+    List<Table<?>> tables;
+
     @SneakyThrows
     public void drop() {
         var tableNames = tableConfigs.getTableConfigs().stream().map(conf -> conf.table().toLowerCase()).toList();
         dslContextWrapper.transaction((configuration) -> {
             DSLContext dslContext = DSL.using(configuration);
 
-            dslContext
-                .meta()
-                .getTables()
-                .stream()
-                .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                    table.getSchema().getName().equals("public")  || // for Postgres
-                    table.getSchema().getName().equals("dbo") // fo SQLServer
-                ))
-                .filter(table -> tableNames.contains(table.getName().toLowerCase()))
-                .forEach(t -> dslContext.delete(t).execute());
+            if (tables == null) {
+                tables = dslContext
+                    .meta()
+                    .getTables()
+                    .stream()
+                    .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
+                        table.getSchema().getName().equals("public")  || // for Postgres
+                        table.getSchema().getName().equals("dbo") // fo SQLServer
+                    ))
+                    .filter(table -> tableNames.contains(table.getName().toLowerCase()))
+                    .toList();
+            }
+
+            tables.forEach(t -> dslContext.delete(t).execute());
         });
     }
-
     public void migrate() {
         dslContextWrapper.transaction((configuration) -> {
             flywayMigrator.run(config, dataSource);

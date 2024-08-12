@@ -342,7 +342,7 @@ public class Docker extends TaskRunner {
             CreateContainerResponse exec = container.exec();
             logger.debug("Container created: {}", exec.getId());
 
-            List<Path> relativeWorkingDirectoryFilesPaths = taskCommands.relativeWorkingDirectoryFilesPaths();
+            List<Path> relativeWorkingDirectoryFilesPaths = taskCommands.relativeWorkingDirectoryFilesPaths(true);
             boolean hasFilesToUpload = !ListUtils.isEmpty(relativeWorkingDirectoryFilesPaths);
             boolean hasFilesToDownload = !ListUtils.isEmpty(filesToDownload);
             boolean outputDirectoryEnabled = taskCommands.outputDirectoryEnabled();

@@ -56,7 +56,6 @@ public class JdbcTestUtils {
 
     @SneakyThrows
     public void drop() {
-        var tableNames = tableConfigs.getTableConfigs().stream().map(conf -> conf.table().toLowerCase()).toList();
         dslContextWrapper.transaction((configuration) -> {
             DSLContext dslContext = DSL.using(configuration);
 

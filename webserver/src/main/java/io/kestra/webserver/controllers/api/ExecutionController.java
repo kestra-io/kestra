@@ -16,6 +16,7 @@ import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -53,7 +54,6 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.netty.util.IllegalReferenceCountException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -513,10 +513,15 @@ public class ExecutionController {
             return HttpResponse.noContent();
         }
 
-        executionQueue.emit(result);
-        eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+        try {
+            executionQueue.emit(result);
+            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+            return HttpResponse.ok(result);
+        } catch (QueueException e) {
+            log.error(e.getMessage(), e);
+            return HttpResponse.serverError();
+        }
 
-        return HttpResponse.ok(result);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -595,7 +600,7 @@ public class ExecutionController {
 
                         sink.onDispose(receive::run);
                     }
-                } catch (IOException e) {
+                } catch (IOException | QueueException e) {
                     sink.error(new RuntimeException(e));
                 }
             });
@@ -876,7 +881,7 @@ public class ExecutionController {
     public Execution changeStatus(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The new status of the execution") @NotNull @QueryValue State.Type status
-    ) {
+    ) throws QueueException {
         if (!status.isTerminated()) {
             throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
         }
@@ -906,7 +911,7 @@ public class ExecutionController {
     public HttpResponse<?> changeStatusById(
         @Parameter(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
-    ) {
+    ) throws QueueException {
         if (!newStatus.isTerminated()) {
             throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
         }
@@ -977,7 +982,7 @@ public class ExecutionController {
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
-    ) {
+    ) throws QueueException {
         validateTimeline(startDate, endDate);
 
         var ids = executionRepository
@@ -1010,7 +1015,7 @@ public class ExecutionController {
     public HttpResponse<?> kill(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException {
+    ) throws InternalException, QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -1043,7 +1048,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> killByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
-    ) {
+    ) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -1079,7 +1084,7 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(execution -> {
+        executions.forEach(throwConsumer(execution -> {
             killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)
@@ -1088,7 +1093,7 @@ public class ExecutionController {
                 .tenantId(tenantService.resolveTenant())
                 .build()
             );
-        });
+        }));
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
@@ -1241,7 +1246,7 @@ public class ExecutionController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
-    ) {
+    ) throws QueueException {
         validateTimeline(startDate, endDate);
 
         var ids = executionRepository

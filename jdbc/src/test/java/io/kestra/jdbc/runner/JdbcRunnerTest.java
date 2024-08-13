@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -19,15 +20,19 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
+import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // must be per-class to allow calling once init() which took a lot of time
@@ -80,6 +85,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
+
+    @Inject
+    private FlowInputOutput flowIO;
 
     @BeforeAll
     void init() throws IOException, URISyntaxException {
@@ -366,5 +374,77 @@ public abstract class JdbcRunnerTest {
     @Test
     void waitforMultipleTasksFailed() throws TimeoutException {
         waitForTestCaseTest.waitforMultipleTasksFailed();
+    }
+
+    @Test
+    void flowTooLarge() throws TimeoutException, IOException, URISyntaxException {
+        char[] chars = new char[200000];
+        Arrays.fill(chars, 'a');
+
+        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", new String(chars));
+
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "inputs-large",
+            null,
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(120)
+        );
+
+        assertThat(execution.getTaskRunList().size(), greaterThanOrEqualTo(6)); // the exact number is test-run-dependent.
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+        // To avoid flooding the database with big messages, we re-init it
+        init();
+    }
+
+    @Test
+    void queueMessageTooLarge() {
+        char[] chars = new char[1100000];
+        Arrays.fill(chars, 'a');
+
+        Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", new String(chars));
+
+        var exception = assertThrows(QueueException.class, () -> runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "inputs-large",
+            null,
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(60)
+        ));
+
+        // the size is different on all runs, so we cannot assert on the exact message size
+        assertThat(exception.getMessage(), containsString("Message of size"));
+        assertThat(exception.getMessage(), containsString("exceed the configured limit of 1048576"));
+        assertThat(exception, instanceOf(MessageTooBigException.class));
+    }
+
+    @Test
+    void workerTaskResultTooLarge() throws TimeoutException {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logsQueue, either -> logs.add(either.getLeft()));
+
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "workertask-result-too-large"
+        );
+
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("Unable to emit the worker task result to the queue"));
+        receive.blockLast();
+
+        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog.getLevel(), is(Level.ERROR));
+        // the size is different on all runs, so we cannot assert on the exact message size
+        assertThat(matchingLog.getMessage(), containsString("Message of size"));
+        assertThat(matchingLog.getMessage(), containsString("exceed the configured limit of 1048576"));
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().size(), is(1));
+
     }
 }

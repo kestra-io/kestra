@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
+import io.kestra.core.queues.QueueException;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -162,16 +163,21 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
                 triggersDeleted.forEach(abstractTrigger -> {
                     Trigger trigger = Trigger.of(flow, abstractTrigger);
-                    this.triggerQueue.delete(trigger);
 
-                    this.executionKilledQueue.emit(ExecutionKilledTrigger
-                        .builder()
-                        .tenantId(trigger.getTenantId())
-                        .namespace(trigger.getNamespace())
-                        .flowId(trigger.getFlowId())
-                        .triggerId(trigger.getTriggerId())
-                        .build()
-                    );
+                    try {
+                        this.triggerQueue.delete(trigger);
+
+                        this.executionKilledQueue.emit(ExecutionKilledTrigger
+                            .builder()
+                            .tenantId(trigger.getTenantId())
+                            .namespace(trigger.getNamespace())
+                            .flowId(trigger.getFlowId())
+                            .triggerId(trigger.getTriggerId())
+                            .build()
+                        );
+                    } catch (QueueException e) {
+                        log.error("Unable to kill the trigger {}.{}.{}", trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), e);
+                    }
                 });
 
             }
@@ -190,14 +196,18 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             }
 
                             Trigger trigger = Trigger.of(flow, abstractTrigger);
-                            this.executionKilledQueue.emit(ExecutionKilledTrigger
-                                .builder()
-                                .tenantId(trigger.getTenantId())
-                                .namespace(trigger.getNamespace())
-                                .flowId(trigger.getFlowId())
-                                .triggerId(trigger.getTriggerId())
-                                .build()
-                            );
+                            try {
+                                this.executionKilledQueue.emit(ExecutionKilledTrigger
+                                    .builder()
+                                    .tenantId(trigger.getTenantId())
+                                    .namespace(trigger.getNamespace())
+                                    .flowId(trigger.getFlowId())
+                                    .triggerId(trigger.getTriggerId())
+                                    .build()
+                                );
+                            } catch (QueueException e) {
+                                log.error("Unable to kill the trigger {}.{}.{}", trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), e);
+                            }
                         }
                     });
             }
@@ -584,7 +594,15 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected void emitExecution(Execution execution, TriggerContext trigger) {
         // we need to be sure that the tenantId is propagated from the trigger to the execution
         var newExecution = execution.withTenantId(trigger.getTenantId());
-        this.executionQueue.emit(newExecution);
+        try {
+            this.executionQueue.emit(newExecution);
+        } catch (QueueException e) {
+            try {
+                this.executionQueue.emit(newExecution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED));
+            } catch (QueueException ex) {
+                log.error("Unable to emit the execution", ex);
+            }
+        }
     }
 
     private boolean isExecutionNotRunning(FlowWithWorkerTrigger f) {
@@ -776,7 +794,11 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .triggerContext(flowWithTriggerWithDefault.triggerContext)
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build();
-        this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
+        try {
+            this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
+        } catch (QueueException e) {
+            log.error("Unable to emit the Worker Trigger job", e);
+        }
     }
 
     /**

@@ -1,0 +1,6 @@
+id: workertask-result-too-large
+namespace: io.kestra.tests
+
+tasks:
+  - id: workertask-result-too-large
+    type: io.kestra.core.runners.test.WorkerTaskResultTooLarge

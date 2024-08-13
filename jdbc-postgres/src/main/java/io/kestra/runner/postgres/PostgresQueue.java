@@ -7,7 +7,6 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
-import lombok.SneakyThrows;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -30,8 +29,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    @SneakyThrows
-    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) {
+    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) throws QueueException {
         Map<Field<Object>, Object> map = super.produceFields(consumerGroup, key, message);
 
         map.put(

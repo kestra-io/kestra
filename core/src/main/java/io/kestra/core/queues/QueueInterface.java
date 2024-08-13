@@ -44,5 +44,5 @@ public interface QueueInterface<T> extends Closeable {
     }
 
     Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate);
-    
+
 }

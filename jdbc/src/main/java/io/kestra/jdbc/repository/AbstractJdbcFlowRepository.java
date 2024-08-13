@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -31,6 +32,8 @@ import org.jooq.impl.DSL;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 import java.util.*;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Slf4j
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
@@ -507,6 +510,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
+    @SneakyThrows(QueueException.class)
     @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
         // Check flow with defaults injected
@@ -520,7 +524,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         FlowService
             .findRemovedTrigger(flow, previous)
-            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+            .forEach(throwConsumer(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger))));
 
         return this.save(flow, CrudEventType.UPDATE, flowSource);
     }

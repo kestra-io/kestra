@@ -15,6 +15,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -294,7 +295,13 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             logEntries(e, logEntry)
-                .forEach(logQueue::emitAsync);
+                .forEach(log -> {
+                    try {
+                        logQueue.emitAsync(log);
+                    } catch (QueueException ex) {
+                        // silently do nothing
+                    }
+                });
         }
     }
 

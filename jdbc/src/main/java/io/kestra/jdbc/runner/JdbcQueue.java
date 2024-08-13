@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
@@ -13,12 +14,12 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -57,6 +58,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final Configuration configuration;
 
+    protected final MessageProtectionConfiguration messageProtectionConfiguration;
+
     protected final Table<Record> table;
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
@@ -71,6 +74,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.cls = cls;
         this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
         this.configuration = applicationContext.getBean(Configuration.class);
+        this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
 
         JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 
@@ -79,12 +83,26 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
     }
 
-    @SneakyThrows
-    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) {
+    protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) throws QueueException {
+        byte[] bytes;
+        try {
+            bytes = MAPPER.writeValueAsBytes(message);
+        } catch (JsonProcessingException e) {
+            throw new QueueException("Unable to serialize the message", e);
+        }
+
+        if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
+            // we let terminated execution messages to go through anyway
+            if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
+                    throw new MessageTooBigException("Message of size " + bytes.length + " exceed the configured limit of " + messageProtectionConfiguration.limit);
+            }
+        }
+
+
         Map<Field<Object>, Object> fields = new HashMap<>();
         fields.put(AbstractJdbcRepository.field("type"), this.cls.getName());
         fields.put(AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create());
-        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(MAPPER.writeValueAsString(message)));
+        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(new String(bytes)));
 
         if (consumerGroup != null) {
             fields.put(AbstractJdbcRepository.field("consumer_group"), consumerGroup);
@@ -93,10 +111,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return fields;
     }
 
-    private void produce(String consumerGroup, String key, T message, Boolean skipIndexer) {
+    private void produce(String consumerGroup, String key, T message, Boolean skipIndexer) throws QueueException {
         if (log.isTraceEnabled()) {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
+
+        Map<Field<Object>, Object> fields = this.produceFields(consumerGroup, key, message);
 
         dslContextWrapper.transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
@@ -107,17 +127,17 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             context
                 .insertInto(table)
-                .set(this.produceFields(consumerGroup, key, message))
+                .set(fields)
                 .execute();
         });
     }
 
-    public void emitOnly(String consumerGroup, T message) {
+    public void emitOnly(String consumerGroup, T message) throws QueueException{
         this.produce(consumerGroup, queueService.key(message), message, true);
     }
 
     @Override
-    public void emit(String consumerGroup, T message) {
+    public void emit(String consumerGroup, T message) throws QueueException {
         this.produce(consumerGroup, queueService.key(message), message, false);
     }
 
@@ -176,7 +196,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 if (!result.isEmpty()) {
                     List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
 
-                    maxOffset.set(offsets.get(offsets.size() - 1));
+                    maxOffset.set(offsets.getLast());
                 }
 
                 return result;

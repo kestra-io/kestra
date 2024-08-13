@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
@@ -19,7 +20,6 @@ import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.N;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -30,6 +30,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import jakarta.validation.ConstraintViolationException;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
 @Slf4j
@@ -99,7 +101,13 @@ public class PluginDefaultService {
                     Execution.loggingEventFromException(e),
                     LogEntry.of(execution)
                 )
-                .forEach(logQueue::emitAsync);
+                .forEach(logEntry -> {
+                    try {
+                        logQueue.emitAsync(logEntry);
+                    } catch (QueueException e1) {
+                        // silently do nothing
+                    }
+                });
             return flow;
         }
     }

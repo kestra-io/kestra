@@ -8,6 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: "p4ssw0rd"
     command:
       - --log-bin-trust-function-creators=1
+      - --sort-buffer-size=10485760
     ports:
       - 3306:3306
     restart: on-failure

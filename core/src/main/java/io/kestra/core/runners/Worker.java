@@ -13,10 +13,7 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.WorkerJobQueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServerConfig;
@@ -102,6 +99,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Inject
     private RunContextInitializer runContextInitializer;
+
+    @Inject
+    private RunContextLoggerFactory runContextLoggerFactory;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
@@ -271,7 +271,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     var workerTriggerResult = WorkerTriggerResult.builder().triggerContext(triggerContext).success(false).execution(Optional.empty()).build();
                     this.workerTriggerResultQueue.emit(workerTriggerResult);
                 }
-            } catch (IOException e) {
+            } catch (IOException | QueueException e) {
                 // ignore the message if we cannot do anything about it
                 log.error("Unexpected exception when trying to handle a deserialization error", e);
             }
@@ -293,7 +293,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     workerTask = workerTask.fail();
-                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    try {
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    } catch (QueueException ex) {
+                        log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
+                    }
                     this.logTerminated(workerTask);
                     return;
                 }
@@ -326,7 +330,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     workerTask = workerTask.fail();
-                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    try {
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                    } catch (QueueException ex) {
+                        log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
+                    }
                 }
             } finally {
                 runContext.cleanup();
@@ -363,13 +371,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         }
 
-        this.workerTriggerResultQueue.emit(
-            WorkerTriggerResult.builder()
-                .execution(evaluate)
-                .triggerContext(workerTrigger.getTriggerContext())
-                .trigger(workerTrigger.getTrigger())
-                .build()
-        );
+        try {
+            this.workerTriggerResultQueue.emit(
+                WorkerTriggerResult.builder()
+                    .execution(evaluate)
+                    .triggerContext(workerTrigger.getTriggerContext())
+                    .trigger(workerTrigger.getTrigger())
+                    .build()
+            );
+        } catch (QueueException e) {
+            handleTriggerError(workerTrigger, e);
+        }
     }
 
     private void handleTriggerError(WorkerTrigger workerTrigger, Throwable e) {
@@ -378,13 +390,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .increment();
 
         logError(workerTrigger, e);
-        this.workerTriggerResultQueue.emit(
-            WorkerTriggerResult.builder()
-                .success(false)
-                .triggerContext(workerTrigger.getTriggerContext())
-                .trigger(workerTrigger.getTrigger())
-                .build()
-        );
+        try {
+            this.workerTriggerResultQueue.emit(
+                WorkerTriggerResult.builder()
+                    .success(false)
+                    .triggerContext(workerTrigger.getTriggerContext())
+                    .trigger(workerTrigger.getTrigger())
+                    .build()
+            );
+        } catch (QueueException ex) {
+            log.error("Unable to send the worker trigger result {}.{}.{}",
+                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex);
+        }
     }
 
     private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, Throwable e) {
@@ -412,14 +429,19 @@ public class Worker implements Service, Runnable, AutoCloseable {
             logger.trace(Throwables.getStackTraceAsString(e));
         }
 
-        this.workerTriggerResultQueue.emit(
-            WorkerTriggerResult.builder()
-                .success(false)
-                .execution(Optional.of(execution))
-                .triggerContext(workerTrigger.getTriggerContext())
-                .trigger(workerTrigger.getTrigger())
-                .build()
-        );
+        try {
+            this.workerTriggerResultQueue.emit(
+                WorkerTriggerResult.builder()
+                    .success(false)
+                    .execution(Optional.of(execution))
+                    .triggerContext(workerTrigger.getTriggerContext())
+                    .trigger(workerTrigger.getTrigger())
+                    .build()
+            );
+        } catch (QueueException ex) {
+            log.error("Unable to send the worker trigger result {}.{}.{}",
+                workerTrigger.getTriggerContext().getNamespace(), workerTrigger.getTriggerContext().getFlowId(), workerTrigger.getTriggerContext().getTriggerId(), ex);
+        }
     }
 
     private void handleTrigger(WorkerTrigger workerTrigger) {
@@ -430,7 +452,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // update the trigger so that it contains the workerId
         var trigger = workerTrigger.getTriggerContext();
         trigger.setWorkerId(this.id);
-        triggerQueue.emit(trigger);
+        try {
+            triggerQueue.emit(trigger);
+        } catch (QueueException e) {
+            handleTriggerError(workerTrigger, e);
+        }
 
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger, workerGroup))
@@ -518,7 +544,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) throws QueueException {
+    private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask, workerGroup))
             .increment();
@@ -535,7 +561,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(KILLED));
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask);
-            this.workerTaskResultQueue.emit(workerTaskResult);
+            try {
+                this.workerTaskResultQueue.emit(workerTaskResult);
+            } catch (QueueException ex) {
+                log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), ex);
+            }
 
             this.logTerminated(workerTask);
 
@@ -554,62 +584,74 @@ public class Worker implements Service, Runnable, AutoCloseable {
         );
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
-        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
-
-        AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
-
-        // run
-        WorkerTask workerTaskAttempt = this.runAttempt(current.get());
-
-        // save dynamic WorkerResults since cleanUpTransient will remove them
-        List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
-
-        WorkerTask finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
-
-        // get last state
-        TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
-        if (lastAttempt == null) {
-            throw new IllegalStateException("Can find lastAttempt on taskRun '" +
-                finalWorkerTask.getTaskRun().toString(true) + "'"
-            );
-        }
-        io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
-
-        if (workerTask.getTask().getRetry() != null &&
-            workerTask.getTask().getRetry().getWarningOnRetry() &&
-            finalWorkerTask.getTaskRun().attemptNumber() > 1 &&
-            state == SUCCESS
-        ) {
-            state = WARNING;
-        }
-
-        if (workerTask.getTask().isAllowFailure() && !finalWorkerTask.getTaskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
-            state = WARNING;
-        }
-
-        // emit
-        finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
-
-        // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
-        // So we just tried to fail the status of the worker task, in this case, no log can't be added, just
-        // changing status must work in order to finish current task (except if we are near the upper bound size).
         try {
+            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+        } catch (QueueException e) {
+            log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
+        }
+
+        try {
+            AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
+
+            // run
+            WorkerTask workerTaskAttempt = this.runAttempt(current.get());
+
+            // save dynamic WorkerResults since cleanUpTransient will remove them
+            List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
+
+            WorkerTask finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
+
+            // get last state
+            TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
+            if (lastAttempt == null) {
+                throw new IllegalStateException("Can find lastAttempt on taskRun '" +
+                    finalWorkerTask.getTaskRun().toString(true) + "'"
+                );
+            }
+            io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
+
+            if (workerTask.getTask().getRetry() != null &&
+                workerTask.getTask().getRetry().getWarningOnRetry() &&
+                workerTask.getTaskRun().attemptNumber() > 1 &&
+                state == SUCCESS
+            ) {
+                state = WARNING;
+            }
+
+            if (workerTask.getTask().isAllowFailure() && !finalWorkerTask.getTaskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
+                state = WARNING;
+            }
+
+            // emit
+            finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
+
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } catch (QueueException e) {
-            finalWorkerTask = workerTask.fail();
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
-            finalWorkerTask.logger().error("Exception while trying to emit the worker task result to the queue", e);
-            this.workerTaskResultQueue.emit(workerTaskResult);
+            // If there is a QueueException it can either be caused by the message limit or another queue issue.
+            // We fail the task and try to resend it.
+            WorkerTask finalWorkerTask  = workerTask.fail();
+            if (e instanceof MessageTooBigException) {
+                // If it's a message too big, we remove the outputs
+                finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withOutputs(Collections.emptyMap()));
+            }
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
+            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
+            contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
+            try {
+                this.workerTaskResultQueue.emit(workerTaskResult);
+            } catch (QueueException ex) {
+                log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
+            }
             return workerTaskResult;
         } finally {
             // remove tmp directory
             if (cleanUp) {
-                workerTaskAttempt.getRunContext().cleanup();
+                workerTask.getRunContext().cleanup();
             }
 
-            this.logTerminated(finalWorkerTask);
+            this.logTerminated(workerTask);
         }
     }
 
@@ -661,7 +703,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private WorkerTask runAttempt(WorkerTask workerTask) {
+    private WorkerTask runAttempt(WorkerTask workerTask) throws QueueException {
         DefaultRunContext runContext = (DefaultRunContext) workerTask.getRunContext();
         runContextInitializer.forWorker(runContext, workerTask);
 
@@ -707,7 +749,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withLogFile(runContext.logFileURI());
 
         // metrics
-        runContext.metrics().forEach(metric -> this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric)));
+        runContext.metrics().forEach(metric -> {
+            try {
+                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric));
+            } catch (QueueException e) {
+                // fail silently
+            }
+        });
 
         // save outputs
         List<TaskRunAttempt> attempts = this.addAttempt(workerTask, taskRunAttempt);

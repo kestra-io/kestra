@@ -15,6 +15,8 @@ import picocli.CommandLine;
 
 import java.util.Optional;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+
 @CommandLine.Command(
     name = "submit-queued-execution",
     description = {"Submit all queued execution to the executor",
@@ -49,7 +51,7 @@ public class SubmitQueuedCommand extends AbstractCommand {
             var executionQueuedStorage = applicationContext.getBean(AbstractJdbcExecutionQueuedStorage.class);
 
             for (ExecutionQueued queued : executionQueuedStorage.getAllForAllTenants()) {
-                executionQueuedStorage.pop(queued.getTenantId(), queued.getNamespace(), queued.getFlowId(), execution -> executionQueue.emit(execution.withState(State.Type.CREATED)));
+                executionQueuedStorage.pop(queued.getTenantId(), queued.getNamespace(), queued.getFlowId(), throwConsumer(execution -> executionQueue.emit(execution.withState(State.Type.CREATED))));
                 cpt++;
             }
         }

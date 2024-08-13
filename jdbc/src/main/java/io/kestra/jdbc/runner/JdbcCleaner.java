@@ -1,6 +1,5 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.queues.QueueException;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
@@ -39,7 +38,7 @@ public class JdbcCleaner {
         this.queueTable = DSL.table(jdbcTableConfig.table());
     }
 
-    public void deleteQueue() throws QueueException {
+    public void deleteQueue() {
         dslContextWrapper.transaction(configuration -> {
             int deleted = DSL
                 .using(configuration)

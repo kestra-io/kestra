@@ -2,6 +2,7 @@ package io.kestra.jdbc;
 
 import io.micronaut.flyway.FlywayConfigurationProperties;
 import io.micronaut.flyway.FlywayMigrator;
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import org.jooq.DSLContext;
 
@@ -35,26 +36,31 @@ public class JdbcTestUtils {
 
     List<Table<?>> tables;
 
+    @PostConstruct
+    public void setup() {
+        dslContextWrapper.transaction((configuration) -> {
+            DSLContext dslContext = DSL.using(configuration);
+
+            this.tables = dslContext
+                .meta()
+                .getTables()
+                .stream()
+                .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
+                    table.getSchema().getName().equals("public")  || // for Postgres
+                    table.getSchema().getName().equals("dbo") // for SQLServer
+                ))
+                .filter(table -> tableConfigs.getTableConfigs().stream().anyMatch(conf -> conf.table().equalsIgnoreCase(table.getName())))
+                .toList();
+        });
+    }
+
     @SneakyThrows
     public void drop() {
         var tableNames = tableConfigs.getTableConfigs().stream().map(conf -> conf.table().toLowerCase()).toList();
         dslContextWrapper.transaction((configuration) -> {
             DSLContext dslContext = DSL.using(configuration);
 
-            if (tables == null) {
-                tables = dslContext
-                    .meta()
-                    .getTables()
-                    .stream()
-                    .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                        table.getSchema().getName().equals("public")  || // for Postgres
-                        table.getSchema().getName().equals("dbo") // fo SQLServer
-                    ))
-                    .filter(table -> tableNames.contains(table.getName().toLowerCase()))
-                    .toList();
-            }
-
-            tables.forEach(t -> dslContext.delete(t).execute());
+            this.tables.forEach(t -> dslContext.delete(t).execute());
         });
     }
     public void migrate() {

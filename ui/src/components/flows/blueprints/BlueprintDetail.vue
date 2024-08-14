@@ -77,7 +77,6 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
-    import {apiUrl} from "override/utils/route";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -109,6 +108,10 @@
             tab: {
                 type: String,
                 default: "community"
+            },
+            blueprintBaseUri: {
+                type: String,
+                required: true
             }
         },
         methods: {
@@ -159,9 +162,6 @@
                     ...YamlUtils.parse(this.blueprint.flow),
                     source: this.blueprint.flow
                 }
-            },
-            blueprintBaseUri() {
-                return `${apiUrl(this.$store)}/blueprints/` + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
             }
         }
     };

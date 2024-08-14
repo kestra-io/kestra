@@ -72,7 +72,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click="blueprintToEditor(blueprint.id)">
+                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -146,7 +146,7 @@
                     params: {
                         tenant: this.$route.params.tenant
                     },
-                    query: {blueprintId: blueprintId}
+                    query: {blueprintId: blueprintId, blueprintSource: this.blueprintBaseUri.includes("community") ? "community" : "custom"}
                 });
             },
             tagsToString(blueprintTags) {
@@ -272,9 +272,6 @@
                 } else {
                     this.load(this.onDataLoaded);
                 }
-            },
-            blueprintBaseUri() {
-                this.hardReload();
             },
             tags() {
                 if(!Object.prototype.hasOwnProperty.call(this.tags, this.selectedTag)) {

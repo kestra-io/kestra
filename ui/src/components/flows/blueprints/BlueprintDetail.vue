@@ -132,7 +132,7 @@
             this.blueprint = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}`)).data
 
             try {
-                if (this.blueprintBaseUri.endsWith("community")) {
+                if (this.blueprintBaseUri?.endsWith("community")) {
                     this.flowGraph = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}/graph`, {
                         validateStatus: (status) => {
                             return status === 200;

@@ -42,7 +42,7 @@
                 multiple
             >
                 <el-option
-                    v-for="item in input.options"
+                    v-for="item in (input.values ?? input.options)"
                     :key="item"
                     :label="item"
                     :value="item"

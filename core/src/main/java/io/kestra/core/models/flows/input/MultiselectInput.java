@@ -6,7 +6,6 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,10 +18,18 @@ import java.util.List;
 @NoArgsConstructor
 public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface {
     @Schema(
+        title = "Deprecated, please use `values` instead."
+    )
+//    @NotNull
+    @Deprecated
+    List<@Regex String> options;
+
+    @Schema(
         title = "List of values available."
     )
-    @NotNull
-    List<@Regex String> options;
+    // FIXME: REMOVE `options` in 0.20 and bring back the NotNull
+    // @NotNull
+    List<@Regex String> values;
 
     @Schema(
         title = "Type of the different values available.",
@@ -33,10 +40,21 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
 
     @Override
     public void validate(List<String> inputs) throws ConstraintViolationException {
+        if (values != null && options != null) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "you can't define both `values` and `options`",
+                this,
+                MultiselectInput.class,
+                getId(),
+                ""
+            );
+        }
+
         for(String input : inputs){
-            if (!options.contains(input)) {
+            List<@Regex String> finalValues = this.values != null ? this.values : this.options;
+            if (!finalValues.contains(input)) {
                 throw ManualConstraintViolation.toConstraintViolationException(
-                    "it must match the values `" + options + "`",
+                    "it must match the values `" + finalValues + "`",
                     this,
                     MultiselectInput.class,
                     getId(),

@@ -277,6 +277,9 @@
                 if(!Object.prototype.hasOwnProperty.call(this.tags, this.selectedTag)) {
                     this.selectedTag = 0;
                 }
+            },
+            blueprintBaseUri() {
+                this.loadData();
             }
         }
     };

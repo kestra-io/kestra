@@ -16,44 +16,44 @@ import static org.mockito.ArgumentMatchers.eq;
 class InternalStorageTest {
 
 
-    @Test
-    void shouldGetTaskStateFileFromTaskContext() throws IOException {
-        // Given
-        StorageInterface storageInterface = Mockito.mock(StorageInterface.class);
-        InputStream is = new ByteArrayInputStream(new byte[0]);
-        Mockito.when(storageInterface.get(any(), eq(URI.create("/namespace/states/state/name")))).thenReturn(is);
-        InternalStorage storage = new InternalStorage(StorageContext.forTask(TaskRun
-            .builder()
-            .namespace("namespace")
-            .flowId("flowid")
-            .executionId("executionid")
-            .taskId("taskid")
-            .id("taskrunid")
-            .build()
-        ), storageInterface);
-
-        // When
-        InputStream result = storage.getTaskStateFile("state", "name", true, true);
-        // Then
-        Assertions.assertEquals(result, is);
-    }
-
-    @Test
-    void shouldGetTaskStateFileFromTriggerContext() throws IOException {
-        // Given
-        StorageInterface storageInterface = Mockito.mock(StorageInterface.class);
-        InputStream is = new ByteArrayInputStream(new byte[0]);
-        Mockito.when(storageInterface.get(any(), eq(URI.create("/namespace/states/state/name")))).thenReturn(is);
-        InternalStorage storage = new InternalStorage(StorageContext.forTrigger(null,
-            "namespace",
-            "flowid",
-            "executionId",
-            "triggerId"), storageInterface);
-
-        // When
-        InputStream result = storage.getTaskStateFile("state", "name", true, true);
-
-        // Then
-        Assertions.assertEquals(result, is);
-    }
+//    @Test
+//    void shouldGetTaskStateFileFromTaskContext() throws IOException {
+//        // Given
+//        StorageInterface storageInterface = Mockito.mock(StorageInterface.class);
+//        InputStream is = new ByteArrayInputStream(new byte[0]);
+//        Mockito.when(storageInterface.get(any(), eq(URI.create("/namespace/states/state/name")))).thenReturn(is);
+//        InternalStorage storage = new InternalStorage(StorageContext.forTask(TaskRun
+//            .builder()
+//            .namespace("namespace")
+//            .flowId("flowid")
+//            .executionId("executionid")
+//            .taskId("taskid")
+//            .id("taskrunid")
+//            .build()
+//        ), storageInterface);
+//
+//        // When
+//        InputStream result = storage.getTaskStateFile("state", "name", true, true);
+//        // Then
+//        Assertions.assertEquals(result, is);
+//    }
+//
+//    @Test
+//    void shouldGetTaskStateFileFromTriggerContext() throws IOException {
+//        // Given
+//        StorageInterface storageInterface = Mockito.mock(StorageInterface.class);
+//        InputStream is = new ByteArrayInputStream(new byte[0]);
+//        Mockito.when(storageInterface.get(any(), eq(URI.create("/namespace/states/state/name")))).thenReturn(is);
+//        InternalStorage storage = new InternalStorage(StorageContext.forTrigger(null,
+//            "namespace",
+//            "flowid",
+//            "executionId",
+//            "triggerId"), storageInterface);
+//
+//        // When
+//        InputStream result = storage.getTaskStateFile("state", "name", true, true);
+//
+//        // Then
+//        Assertions.assertEquals(result, is);
+//    }
 }

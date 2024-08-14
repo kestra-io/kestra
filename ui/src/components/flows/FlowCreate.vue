@@ -59,7 +59,7 @@
             async setupFlow() {
                 if (this.$route.query.copy && this.flow){
                     this.source = this.flow.source;
-                } else if (this.$route.query.blueprintId) {
+                } else if (this.$route.query.blueprintId && this.$route.query.blueprintSource) {
                     this.source = await this.queryBlueprint(this.$route.query.blueprintId)
                 } else {
                     this.source = `id: myflow
@@ -86,7 +86,7 @@ tasks:
                 };
             },
             blueprintUri() {
-                return `${apiUrl(this.$store)}/blueprints/community`
+                return `${apiUrl(this.$store)}/blueprints/${this.$route.query.blueprintSource}`
             },
             flowParsed() {
                 return YamlUtils.parse(this.source);

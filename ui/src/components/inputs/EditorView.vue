@@ -467,13 +467,16 @@
 
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
-        store.commit("editor/changeOpenedTabs", {
-            action: "dirty",
-            ...currentTab.value,
-            name: currentTab.value?.name ?? "Flow",
-            path: currentTab.value?.path ?? "Flow.yaml",
-            dirty: true
-        });
+        
+        if(!props.isCreating){
+            store.commit("editor/changeOpenedTabs", {
+                action: "dirty",
+                ...currentTab.value,
+                name: currentTab.value?.name ?? "Flow",
+                path: currentTab.value?.path ?? "Flow.yaml",
+                dirty: true
+            });
+        }
 
         clearTimeout(timer.value);
 

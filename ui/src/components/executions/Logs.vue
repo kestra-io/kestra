@@ -34,6 +34,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group>
+                    <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />
@@ -79,6 +80,7 @@
     import State from "../../utils/state";
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
+    import Restart from "./Restart.vue";
 
     export default {
         components: {
@@ -88,7 +90,8 @@
             Kicon,
             Download,
             Magnify,
-            Collapse
+            Collapse,
+            Restart
         },
         data() {
             return {

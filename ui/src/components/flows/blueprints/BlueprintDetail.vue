@@ -77,6 +77,7 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -111,7 +112,7 @@
             },
             blueprintBaseUri: {
                 type: String,
-                required: true
+                default: undefined,
             }
         },
         methods: {
@@ -129,7 +130,8 @@
             }
         },
         async created() {
-            this.blueprint = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}`)).data
+            const URL = this.blueprintBaseUri ?? `${apiUrl(this.$store)}/blueprints/` + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"))
+            this.blueprint = (await this.$http.get(`${URL}/${this.blueprintId}`)).data
 
             try {
                 if (this.blueprintBaseUri?.endsWith("community")) {

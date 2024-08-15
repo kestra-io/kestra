@@ -329,6 +329,7 @@
 
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange(e => {
+                        if(!this.$refs.container) return;                    
                         this.$refs.container.style.height = (e.contentHeight + this.customHeight) + "px";
                     });
                 }

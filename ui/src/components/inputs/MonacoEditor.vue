@@ -713,3 +713,11 @@
         outline: none;
     }
 </style>
+
+<style lang="scss">
+    @import "../../styles/layout/root-dark.scss";
+
+    .custom-dark-vs-theme .monaco-editor .sticky-widget {
+        background-color: $input-bg;        
+    }
+</style>

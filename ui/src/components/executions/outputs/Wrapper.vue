@@ -163,17 +163,35 @@
 
     const execution = computed(() => store.state.execution.execution);
 
-    const processedValue = (data): { label: string, regular: boolean; } => {
+    function isValidURL(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    const processedValue = (data) => {
         const regular = false;
 
-        if (!data.value && !data.children?.length) return {label: data.value, regular};
-        else if (data?.children?.length) {
+        if (!data.value && !data.children?.length) {
+            return {label: data.value, regular};
+        } else if (data?.children?.length) {
             const message = (length) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
             return data.children[0].isFirstPass ? message(length - 1) : message(length);
         }
-        return data.value.toString().startsWith("kestra:///") ? {label: "Internal link", regular} : {label: trim(data.value), regular: true};
+
+        // Check if the value is a valid URL and not an internal "kestra:///" link
+        if (isValidURL(data.value)) {
+            return data.value.startsWith("kestra:///") 
+                ? {label: "Internal link", regular} 
+                : {label: "External link", regular};
+        }
+
+        return {label: trim(data.value), regular: true};
     };
 
     const selected = ref([]);

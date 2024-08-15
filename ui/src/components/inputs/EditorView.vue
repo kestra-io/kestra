@@ -467,6 +467,14 @@
 
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
+        store.commit("editor/changeOpenedTabs", {
+            action: "dirty",
+            ...currentTab.value,
+            name: currentTab.value?.name ?? "Flow",
+            path: currentTab.value?.path ?? "Flow.yaml",
+            dirty: true
+        });
+
         clearTimeout(timer.value);
 
         if(!isFlow) return;
@@ -611,7 +619,7 @@
         ) {
             isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
-                onEdit(flowYaml.value);
+                onEdit(flowYaml.value, true);
                 updatedFromEditor.value = false;
             }
         }

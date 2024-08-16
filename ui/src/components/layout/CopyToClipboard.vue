@@ -1,7 +1,11 @@
 <template>
     <div class="copy-wrapper">
         <el-tooltip trigger="click" :content="$t('copied')" placement="left" :auto-close="2000" effect="light">
-            <el-button text round :icon="ContentCopy" @click="Utils.copy(text)" />
+            <el-button text round :icon="ContentCopy" @click="Utils.copy(text)">
+                <span v-if="label">
+                    {{ label }}
+                </span>
+            </el-button>
         </el-tooltip>
     </div>
 </template>
@@ -18,6 +22,11 @@
             text: {
                 type: String,
                 required: true
+            },
+            label: {
+                type: String,
+                required: false,
+                default: undefined
             }
         }
     }

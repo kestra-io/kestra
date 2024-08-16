@@ -46,7 +46,7 @@ import java.util.List;
                 "- TRACE",
                 "- DEBUG",
                 "- INFO",
-                "- WARNING",
+                "- WARN",
             }
         )
     }

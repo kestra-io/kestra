@@ -1,5 +1,6 @@
 package io.kestra.repository.postgres;
 
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcMapper;
@@ -21,6 +22,7 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.annotation.Nullable;
@@ -52,12 +54,10 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     @SneakyThrows
     @Override
     public Map<Field<Object>, Object> persistFields(T entity) {
-        Map<Field<Object>, Object> fields = super.persistFields(entity);
-
         String json = JdbcMapper.of().writeValueAsString(entity);
-        fields.replace(AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)));
-
-        return fields;
+        return new HashMap<>(ImmutableMap
+            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)))
+        );
     }
 
     @SneakyThrows

@@ -56,6 +56,7 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.netty.util.IllegalReferenceCountException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -588,13 +589,21 @@ public class ExecutionController {
                                 sink.success(item);
                             }
                         });
-                        sink.onDispose(() -> receive.run());
+
+                        sink.onDispose(receive::run);
                     }
                 } catch (IOException e) {
                     sink.error(new RuntimeException(e));
                 }
             })
-            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast()); // need to consume the inputs in case of error;
+            .doOnError(t -> {
+                // need to consume the inputs in case of error, that can failed, but we ignored
+                try {
+                    Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast();
+                } catch (IllegalReferenceCountException ignored) {
+
+                }
+            });
     }
 
     private List<Label> parseLabels(List<String> labels) {

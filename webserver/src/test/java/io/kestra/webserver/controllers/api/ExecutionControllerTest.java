@@ -130,6 +130,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             Execution.class
         );
     }
+
     private MultipartBody createInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
@@ -186,6 +187,25 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         ));
         assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
     }
+
+
+    @Test
+    void invalidInputs() {
+        MultipartBody.Builder builder = MultipartBody.builder()
+            .addPart("validatedString", "B-failed");
+        inputs.forEach((s, o) -> builder.addPart(s, o instanceof String ? (String) o : null));
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> triggerExecution(TESTS_FLOW_NS, "inputs", builder.build(), false)
+        );
+
+        String response = e.getResponse().getBody(String.class).orElseThrow();
+
+        assertThat(response, containsString("Invalid entity"));
+        assertThat(response, containsString("Invalid input for `validatedString`"));
+    }
+
 
     @Test
     void triggerAndWait() {

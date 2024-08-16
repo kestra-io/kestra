@@ -92,9 +92,13 @@
                     </el-collapse-item>
                 </el-collapse>
 
-                <el-alert v-if="debugError" type="error" :closable="false">
+                <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
                     <p><strong>{{ debugError }}</strong></p>
-                    <pre class="mb-0">{{ debugStackTrace }}</pre>
+                    <div class="my-2">
+                        <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
+                        <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                    </div>
+                    <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
                 </el-alert>
 
                 <VarValue :value="selectedValue" :execution="execution" />
@@ -115,6 +119,8 @@
     const {t} = useI18n({useScope: "global"});
 
     import {apiUrl} from "override/utils/route";
+
+    import CopyToClipboard from "../../layout/CopyToClipboard.vue"
 
     import Editor from "../../inputs/Editor.vue";
     const debugEditor = ref(null);

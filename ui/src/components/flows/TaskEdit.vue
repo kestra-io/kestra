@@ -21,7 +21,7 @@
                         :icon="ContentSave"
                         @click="saveTask"
                         v-if="canSave && !readOnly"
-                        :disabled="errors"
+                        :disabled="errors && !!errors.length"
                         type="primary"
                     >
                         {{ $t("save task") }}
@@ -160,8 +160,7 @@
                     if (this.task) {
                         this.taskYaml = YamlUtils.stringify(this.task);
                         if (this.task.type) {
-                            this.$store
-                                .dispatch("plugin/load", {cls: this.task.type})
+                            this.$store.dispatch("plugin/load", {cls: this.task.type})
                         }
                     } else {
                         this.taskYaml = "";
@@ -173,8 +172,7 @@
                 handler() {
                     const task = YamlUtils.parse(this.taskYaml);
                     if (task?.type && task.type !== this.type) {
-                        this.$store
-                            .dispatch("plugin/load", {cls: task.type})
+                        this.$store.dispatch("plugin/load", {cls: task.type})
                         this.type = task.type
                     }
                 },

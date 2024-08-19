@@ -27,7 +27,7 @@
                 </div>
             </slot>
         </nav>
-
+        <slot name="absolute" />
         <div class="editor-container" ref="container" :class="containerClass">
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor

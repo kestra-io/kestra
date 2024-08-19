@@ -41,8 +41,17 @@
             <el-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <el-card>
-                    <editor class="position-relative" :read-only="true" :input="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
-                        <template #nav>
+                    <editor
+                        class="position-relative"
+                        :read-only="true"
+                        :input="true"
+                        :full-height="false"
+                        :minimap="false"
+                        :model-value="blueprint.flow"
+                        lang="yaml"
+                        :navbar="false"
+                    >
+                        <template #absolute>
                             <copy-to-clipboard class="position-absolute" :text="blueprint.flow" />
                         </template>
                     </editor>
@@ -123,7 +132,8 @@
                     this.$router.push({
                         name: "blueprints",
                         params: {
-                            tenant: this.$route.params.tenant
+                            tenant: this.$route.params.tenant,
+                            tab: this.tab
                         }
                     })
                 }

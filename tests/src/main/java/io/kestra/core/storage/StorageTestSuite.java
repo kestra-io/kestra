@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -543,14 +545,22 @@ public abstract class StorageTestSuite {
         assertThat(attr.getFileName(), is("root.yml"));
         assertThat(attr.getType(), is(FileAttributes.FileType.File));
         assertThat(attr.getSize(), is((long) contentString.length()));
-        assertThat(attr.getLastModifiedTime(), notNullValue());
-        assertThat(attr.getCreationTime(), notNullValue());
+        Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
+        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1))), is(true));
+        assertThat(lastModifiedInstant.isBefore(Instant.now()), is(true));
+        Instant creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
+        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1))), is(true));
+        assertThat(creationInstant.isBefore(Instant.now()), is(true));
 
         attr = storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/level1"));
         assertThat(attr.getFileName(), is("level1"));
         assertThat(attr.getType(), is(FileAttributes.FileType.Directory));
-        assertThat(attr.getLastModifiedTime(), notNullValue());
-        assertThat(attr.getCreationTime(), notNullValue());
+        lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
+        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1))), is(true));
+        assertThat(lastModifiedInstant.isBefore(Instant.now()), is(true));
+        creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
+        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1))), is(true));
+        assertThat(creationInstant.isBefore(Instant.now()), is(true));
     }
 
     @Test

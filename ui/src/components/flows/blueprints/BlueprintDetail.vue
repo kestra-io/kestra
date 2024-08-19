@@ -100,7 +100,7 @@
                         label: this.$t("blueprints.title"),
                         link: {
                             name: "blueprints",
-                            params: this.$route.params
+                            params: this.$route.params.tab ? this.$route.params.tab : {...this.$route.params, tab: this.tab},
                         }
                     }
                 ]

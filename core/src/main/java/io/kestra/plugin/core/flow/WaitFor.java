@@ -160,7 +160,9 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             return false;
         }
 
-        Integer iterationCount = (Integer) parentTaskRun.getOutputs().get("iterationCount");
+        Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
+            .map(outputs -> (Integer) outputs.get("iterationCount"))
+            .orElse(0);
         if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount > this.checkFrequency.maxIterations) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
@@ -236,7 +238,9 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
 
     public WaitFor.Output outputs(TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         String value = parentTaskRun != null ?
-            parentTaskRun.getOutputs().get("iterationCount").toString() : "0";
+            String.valueOf(Optional.ofNullable(parentTaskRun.getOutputs())
+                .map(outputs -> outputs.get("iterationCount"))
+                .orElse("0")) : "0";
 
         return Output.builder()
             .iterationCount(Integer.parseInt(value) + 1)

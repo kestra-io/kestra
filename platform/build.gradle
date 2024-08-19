@@ -92,7 +92,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-jakarta-validation', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-jackson', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
-        api 'com.h2database:h2:2.3.230'
+        api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.3'
         api 'com.github.docker-java:docker-java:3.4.0'

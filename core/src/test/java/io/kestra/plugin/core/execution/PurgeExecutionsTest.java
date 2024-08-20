@@ -25,28 +25,25 @@ class PurgeExecutionsTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
 
-    @BeforeEach
-    void cleanExecutions() {
-        executionRepository.find(null, null, null, null, null, null, null, null, null, null)
-            .toStream()
-            .forEach(executionRepository::delete);
-    }
-
     @Test
     void run() throws Exception {
         // create an execution to delete
+        String namespace = "run.namespace";
+        String flowId = "run-flow-id";
         var execution = Execution.builder()
-            .namespace("namespace")
-            .flowId("flowId")
             .id(IdUtils.create())
+            .namespace(namespace)
+            .flowId(flowId)
             .state(new State().withState(State.Type.SUCCESS))
             .build();
         executionRepository.save(execution);
 
         var purge = PurgeExecutions.builder()
+            .flowId(flowId)
+            .namespace(namespace)
             .endDate(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
             .build();
-        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace", "id", "flowId")));
+        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
         var output = purge.run(runContext);
 
         assertThat(output.getExecutionsCount(), is(1));
@@ -54,10 +51,13 @@ class PurgeExecutionsTest {
 
     @Test
     void deleted() throws Exception {
+        String namespace = "deleted.namespace";
+        String flowId = "deleted-flow-id";
+
         // create an execution to delete
         var execution = Execution.builder()
-            .namespace("namespace")
-            .flowId("flowId")
+            .namespace(namespace)
+            .flowId(flowId)
             .id(IdUtils.create())
             .state(new State().withState(State.Type.SUCCESS))
             .build();
@@ -65,9 +65,11 @@ class PurgeExecutionsTest {
         executionRepository.delete(execution);
 
         var purge = PurgeExecutions.builder()
+            .namespace(namespace)
+            .flowId(flowId)
             .endDate(ZonedDateTime.now().plusMinutes(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME))
             .build();
-        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", "namespace", "id", "flowId")));
+        var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
         var output = purge.run(runContext);
 
         assertThat(output.getExecutionsCount(), is(1));

@@ -184,11 +184,15 @@ abstract public class PluginUtilsService {
 
                 if (bashCommand.getLogs() != null) {
                     bashCommand.getLogs().forEach(logLine -> {
-                        LoggingEventBuilder builder = runContext
-                            .logger()
-                            .atLevel(logLine.getLevel());
+                        try {
+                            LoggingEventBuilder builder = runContext
+                                .logger()
+                                .atLevel(logLine.getLevel());
 
-                        builder.log(logLine.getMessage());
+                            builder.log(logLine.getMessage());
+                        } catch (Exception e) {
+                            logger.warn("Invalid log '{}'", m.group(1), e);
+                        }
                     });
                 }
             }

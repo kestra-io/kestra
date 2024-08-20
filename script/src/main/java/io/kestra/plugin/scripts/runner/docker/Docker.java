@@ -340,7 +340,9 @@ public class Docker extends TaskRunner {
             // create container
             CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
             CreateContainerResponse exec = container.exec();
-            logger.debug("Container created: {}", exec.getId());
+            if (logger.isTraceEnabled()) {
+                logger.trace("Container created: {}", exec.getId());
+            }
 
             List<Path> relativeWorkingDirectoryFilesPaths = taskCommands.relativeWorkingDirectoryFilesPaths(true);
             boolean hasFilesToUpload = !ListUtils.isEmpty(relativeWorkingDirectoryFilesPaths);
@@ -354,7 +356,10 @@ public class Docker extends TaskRunner {
                 CreateVolumeCmd files = dockerClient.createVolumeCmd()
                     .withLabels(ScriptService.labels(runContext, "kestra.io/"));
                 filesVolumeName = files.exec().getName();
-                logger.debug("Volume created: {}", filesVolumeName);
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Volume created: {}", filesVolumeName);
+                }
+
                 String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
 
                 // first, create an archive
@@ -398,11 +403,14 @@ public class Docker extends TaskRunner {
 
             // start container
             dockerClient.startContainerCmd(exec.getId()).exec();
-            logger.debug(
-                "Starting command with container id {} [{}]",
-                exec.getId(),
-                String.join(" ", taskCommands.getCommands())
-            );
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "Starting command with container id {} [{}]",
+                    exec.getId(),
+                    String.join(" ", taskCommands.getCommands())
+                );
+            }
 
             // register the runnable to be used for killing the container.
             onKill(() -> kill(dockerClient, exec.getId(), logger));
@@ -473,7 +481,7 @@ public class Docker extends TaskRunner {
 
                 if (exitCode != 0) {
                     throw new TaskException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
-                } else {
+                } else if (logger.isDebugEnabled()) {
                     logger.debug("Command succeed with code " + exitCode);
                 }
 
@@ -506,10 +514,16 @@ public class Docker extends TaskRunner {
 
                     if (Boolean.TRUE.equals(delete)) {
                         dockerClient.removeContainerCmd(exec.getId()).exec();
-                        logger.debug("Container deleted: {}", exec.getId());
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("Container deleted: {}", exec.getId());
+                        }
+
                         if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
                             dockerClient.removeVolumeCmd(filesVolumeName).exec();
-                            logger.debug("Volume deleted: {}", filesVolumeName);
+
+                            if (logger.isTraceEnabled()) {
+                                logger.trace("Volume deleted: {}", filesVolumeName);
+                            }
                         }
                     }
                 } catch (Exception ignored) {
@@ -524,7 +538,10 @@ public class Docker extends TaskRunner {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
             if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
                 dockerClient.killContainerCmd(containerId).exec();
-                logger.debug("Container was killed.");
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Container was killed.");
+                }
             }
         } catch (NotFoundException ignore) {
             // silently ignore - container does not exist anymore
@@ -736,7 +753,9 @@ public class Docker extends TaskRunner {
                         .exec(new PullImageResultCallback())
                         .awaitCompletion();
 
-                    logger.debug("Image pulled [{}:{}]", repository, tag);
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Image pulled [{}:{}]", repository, tag);
+                    }
 
                     return true;
                 }

@@ -285,7 +285,7 @@
     "template creation": "템플릿 생성",
     "templates": "템플릿들",
     "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
-    "no result": "현재 선택에 대한 결과가 없습니다.",
+    "no result": "지금까지 log가 생성되지 않았습니다",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger 세부 정보",

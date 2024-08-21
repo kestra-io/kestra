@@ -285,7 +285,7 @@
     "template creation": "template निर्माण",
     "templates": "templates",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
-    "no result": "वर्तमान चयन के लिए कोई परिणाम नहीं",
+    "no result": "अब तक कोई logs उत्पन्न नहीं हुए हैं",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger विवरण",

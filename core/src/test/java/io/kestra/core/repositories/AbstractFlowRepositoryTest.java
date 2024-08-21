@@ -5,10 +5,8 @@ import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -54,6 +52,9 @@ import static org.mockito.Mockito.spy;
 public abstract class AbstractFlowRepositoryTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    protected ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
@@ -543,6 +544,67 @@ public abstract class AbstractFlowRepositoryTest {
             assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(2));
         } finally {
             deleteFlow(first);
+        }
+    }
+
+    @Test
+    void findByExecution() {
+        Flow flow = builder()
+            .revision(1)
+            .build();
+        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .state(new State())
+            .build();
+        execution = executionRepository.save(execution);
+
+        try {
+            Flow full = flowRepository.findByExecution(execution);
+            assertThat(full, notNullValue());
+            assertThat(full.getNamespace(), is(flow.getNamespace()));
+            assertThat(full.getId(), is(flow.getId()));
+
+            full = flowRepository.findByExecutionWithoutAcl(execution);
+            assertThat(full, notNullValue());
+            assertThat(full.getNamespace(), is(flow.getNamespace()));
+            assertThat(full.getId(), is(flow.getId()));
+        } finally {
+            deleteFlow(flow);
+            executionRepository.delete(execution);
+        }
+    }
+
+    @Test
+    void findByExecutionNoRevision() {
+        Flow flow = builder()
+            .revision(3)
+            .build();
+        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .state(new State())
+            .build();
+        executionRepository.save(execution);
+
+        try {
+            Flow full = flowRepository.findByExecution(execution);
+            assertThat(full, notNullValue());
+            assertThat(full.getNamespace(), is(flow.getNamespace()));
+            assertThat(full.getId(), is(flow.getId()));
+
+            full = flowRepository.findByExecutionWithoutAcl(execution);
+            assertThat(full, notNullValue());
+            assertThat(full.getNamespace(), is(flow.getNamespace()));
+            assertThat(full.getId(), is(flow.getId()));
+        } finally {
+            deleteFlow(flow);
+            executionRepository.delete(execution);
         }
     }
 

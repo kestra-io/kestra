@@ -1,8 +1,17 @@
 <template>
-    <div v-if="followedExecution" class="log-wrapper">
-        <div v-for="currentTaskRun in currentTaskRuns" :key="currentTaskRun.id">
-            <template
+    <DynamicScroller
+        v-if="followedExecution"
+        :items="currentTaskRuns"
+        :min-item-size="50"
+        key-field="id"
+        class="log-wrapper"
+    >
+        <template #default="{item: currentTaskRun, index: currentTaskRunId, active: isTaskRunActive}">
+            <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
+                :item="currentTaskRun"
+                :active="isTaskRunActive"
+                :data-index="currentTaskRunId"
             >
                 <el-card class="attempt-wrapper">
                     <task-run-line
@@ -63,9 +72,9 @@
                         </template>
                     </DynamicScroller>
                 </el-card>
-            </template>
-        </div>
-    </div>
+            </DynamicScrollerItem>
+        </template>
+    </DynamicScroller>
 </template>
 
 <script>
@@ -459,7 +468,7 @@
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },
             loadLogs(executionId) {
-                if(!this.showLogs) {
+                if (!this.showLogs) {
                     return;
                 }
                 this.$store.dispatch("execution/loadLogs", {
@@ -492,7 +501,7 @@
                 this.selectedAttemptNumberByTaskRunId[taskRunId] = newDisplayedAttemptNumber;
             },
             taskType(taskRun) {
-                if(!taskRun) return undefined;        
+                if (!taskRun) return undefined;
 
                 const task = FlowUtils.findTaskById(this.flow, taskRun?.taskId);
                 const parentTaskRunId = taskRun.parentTaskRunId;
@@ -512,6 +521,22 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .log-wrapper {
+        max-height: calc(100vh - 233px);
+
+        &::-webkit-scrollbar {
+            width: 2px;
+            height: 2px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+            border-radius: 0px;
+        }
+
         &.even > div > .el-card {
             background: var(--bs-gray-100);
 
@@ -525,8 +550,8 @@
             }
         }
 
-        :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-border-color);
+        :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
+            padding-bottom: var(--spacer);
         }
 
         :deep(.line) {
@@ -534,8 +559,11 @@
         }
 
         .attempt-wrapper {
-            margin-bottom: var(--spacer);
             background-color: var(--bs-white);
+
+            :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
+                border-top: 1px solid var(--bs-border-color);
+            }
 
             html.dark & {
                 background-color: var(--bs-gray-100);

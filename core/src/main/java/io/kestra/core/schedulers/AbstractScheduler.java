@@ -518,7 +518,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             var trigger = f.getTriggerContext().toBuilder().nextExecutionDate(nextExecutionDate).build().checkBackfill();
                             this.triggerState.save(trigger, scheduleContext);
                         }
-                    } catch (InternalException ie) {
+                    } catch (Exception ie) {
                         // validate schedule condition can fail to render variables
                         // in this case, we send a failed execution so the trigger is not evaluated each second.
                         logger.error("Unable to evaluate the trigger '{}'", f.getAbstractTrigger().getId(), ie);

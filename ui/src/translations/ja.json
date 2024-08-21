@@ -285,7 +285,7 @@
     "template creation": "テンプレート作成",
     "templates": "テンプレート",
     "templates deprecated": "テンプレートは非推奨です。代わりにsubflowsを使用してください。テンプレートからsubflowsへの移行方法については、<a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">移行セクション</a>を参照してください。",
-    "no result": "現在の選択に対する結果はありません",
+    "no result": "これまでにログは出力されていません",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Triggerの詳細",

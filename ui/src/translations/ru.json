@@ -285,7 +285,7 @@
     "template creation": "Создание шаблона",
     "templates": "Шаблоны",
     "templates deprecated": "Шаблоны устарели. Пожалуйста, используйте subflows вместо них. См. <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">раздел миграции</a>, объясняющий, как можно мигрировать с шаблонов на subflows.",
-    "no result": "Нет результатов для текущего выбора",
+    "no result": "Логи пока не были сгенерированы",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Подробности trigger",

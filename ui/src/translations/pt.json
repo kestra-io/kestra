@@ -285,7 +285,7 @@
     "template creation": "Criação de template",
     "templates": "Templates",
     "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
-    "no result": "Nenhum resultado para a seleção atual",
+    "no result": "Nenhum log emitido até agora",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Detalhes do trigger",

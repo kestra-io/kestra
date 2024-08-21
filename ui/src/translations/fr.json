@@ -299,7 +299,7 @@
     "template creation": "Création de template",
     "templates": "Templates",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
-    "no result": "Aucun résultat pour la selection courante.",
+    "no result": "Aucun log émis jusqu'à présent",
     "trigger": "Déclencheur",
     "triggers": "Déclencheurs",
     "trigger details": "Détails du déclencheur",
@@ -433,7 +433,7 @@
     "Previous step": "Étape précédente",
     "Finish": "Terminer",
     "Step": "Étape",
-    "welcome aboard": "\uD83D\uDE80 Bienvenue à bord !",
+    "welcome aboard": "🚀 Bienvenue à bord !",
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
     "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome button create": "Créer mon premier flow",
@@ -563,8 +563,8 @@
     },
     "namespace files": {
       "toggle": {
-          "show": "Afficher les fichiers de l'espace de noms",
-          "hide": "Masquer les fichiers de l'espace de noms"
+        "show": "Afficher les fichiers de l'espace de noms",
+        "hide": "Masquer les fichiers de l'espace de noms"
       },
       "filter": "Filtrer",
       "no_items": {
@@ -572,50 +572,50 @@
         "paragraph": "Créez ou importez vos fichiers pour commencer."
       },
       "tree": {
-          "expand": "Développer tous les dossiers",
-          "collapse": "Réduire tous les dossiers"
+        "expand": "Développer tous les dossiers",
+        "collapse": "Réduire tous les dossiers"
       },
       "create": {
-          "label": "Créer",
-          "file": "Créer un fichier",
-          "folder": "Créer un dossier"
+        "label": "Créer",
+        "file": "Créer un fichier",
+        "folder": "Créer un dossier"
       },
       "rename": {
-          "label": "Renommer",
-          "file": "Renommer le fichier",
-          "folder": "Renommer le dossier",
-          "new_file": "Nouveau nom avec extension :",
-          "new_folder": "Nouveau nom de dossier :"
+        "label": "Renommer",
+        "file": "Renommer le fichier",
+        "folder": "Renommer le dossier",
+        "new_file": "Nouveau nom avec extension :",
+        "new_folder": "Nouveau nom de dossier :"
       },
       "delete": {
-          "label": "Supprimer",
-          "file": "Supprimer le fichier",
-          "folder": "Supprimer le dossier"
+        "label": "Supprimer",
+        "file": "Supprimer le fichier",
+        "folder": "Supprimer le dossier"
       },
       "import": {
-          "import": "Importer",
-          "files": "Importer des fichiers",
-          "folder": "Importer un dossier",
-          "success": "Fichier(s) importé(s) avec succès",
-          "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
+        "import": "Importer",
+        "files": "Importer des fichiers",
+        "folder": "Importer un dossier",
+        "success": "Fichier(s) importé(s) avec succès",
+        "error": "Des erreurs se sont produites lors de l'importation du(des) fichier(s)"
       },
       "export": "Exporter les fichiers de l'espace de noms",
       "dialog": {
-          "name": {
-              "file": "Nom avec extension :",
-              "folder": "Nom du dossier :"
-          },
-          "parent_folder": "Dossier parent :",
-          "file_deletion": "Confirmer la suppression du fichier",
-          "folder_deletion": "Confirmer la suppression du dossier",
-          "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
-          "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
-          "confirm": "Confirmer"
+        "name": {
+          "file": "Nom avec extension :",
+          "folder": "Nom du dossier :"
+        },
+        "parent_folder": "Dossier parent :",
+        "file_deletion": "Confirmer la suppression du fichier",
+        "folder_deletion": "Confirmer la suppression du dossier",
+        "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
+        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
+        "confirm": "Confirmer"
       },
       "path": {
-          "copy": "Copier le chemin",
-          "success": "Chemin copié dans le presse-papiers",
-          "error": "Des erreurs se sont produites lors de la copie du chemin dans le presse-papiers"
+        "copy": "Copier le chemin",
+        "success": "Chemin copié dans le presse-papiers",
+        "error": "Des erreurs se sont produites lors de la copie du chemin dans le presse-papiers"
       }
     },
     "relative": "Relative",

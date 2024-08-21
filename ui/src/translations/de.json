@@ -285,7 +285,7 @@
     "template creation": "Vorlagenerstellung",
     "templates": "Vorlagen",
     "templates deprecated": "Vorlagen sind veraltet. Bitte verwenden Sie stattdessen Subflows. Siehe den <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrationsabschnitt</a>, der erklärt, wie Sie von Vorlagen zu Subflows migrieren können.",
-    "no result": "Keine Ergebnisse für die aktuelle Auswahl",
+    "no result": "Keine Logs bisher ausgegeben",
     "trigger": "Trigger",
     "triggers": "Trigger",
     "trigger details": "Trigger-Details",

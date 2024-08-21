@@ -300,7 +300,7 @@
     "template creation": "模板创建",
     "templates": "模板",
     "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
-    "no result": "当前选择没有结果",
+    "no result": "没有日志发出",
     "trigger": "触发器",
     "triggers": "触发器",
     "trigger details": "触发器详情",

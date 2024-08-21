@@ -59,6 +59,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcIndexerInterface<Execution> {
+    private static final int FETCH_SIZE = 100;
+
     protected final io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
     private final ApplicationContext applicationContext;
@@ -108,10 +110,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         .where(this.defaultFilter(tenantId))
                         .and(field("trigger_execution_id").eq(triggerExecutionId));
 
-                    select.fetch()
-                        .map(this.jdbcRepository::map)
-                        .forEach(emitter::next);
-                    emitter.complete();
+                    // fetchSize will fetch rows 100 by 100 even for databases where the driver loads all in memory
+                    // using a stream will fetch lazily, otherwise all fetches would be done before starting emitting the items
+                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
+                        stream.map(this.jdbcRepository::map).forEach(emitter::next);
+                    } finally {
+                        emitter.complete();
+                    }
                 }),
             FluxSink.OverflowStrategy.BUFFER
         );
@@ -215,7 +220,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                     // fetchSize will fetch rows 100 by 100 even for databases where the driver loads all in memory
                     // using a stream will fetch lazily, otherwise all fetches would be done before starting emitting the items
-                    try (var stream = select.fetchSize(100).stream()) {
+                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
                         stream.map(this.jdbcRepository::map).forEach(emitter::next);
                     } finally {
                         emitter.complete();

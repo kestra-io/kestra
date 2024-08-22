@@ -1,69 +1,80 @@
 <template>
     <el-card id="gantt" shadow="never" v-if="execution && flow">
-        <table>
-            <thead>
-                <tr>
-                    <th>
-                        <duration :histories="execution.state.histories" />
-                    </th>
-                    <td v-for="(date, i) in dates" :key="i">
-                        {{ date }}
-                    </td>
-                </tr>
-            </thead>
-            <tbody v-for="serie in filteredSeries" :key="serie.id">
-                <tr>
-                    <th dir="rtl">
-                        <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0" effect="light">
-                            <template #content>
-                                <code>{{ serie.name }}</code>
-                                <small v-if="serie.task && serie.task.value"><br>{{ serie.task.value }}</small>
-                            </template>
-                            <span>
-                                <code>{{ serie.name }}</code>
-                                <small v-if="serie.task && serie.task.value"> {{ serie.task.value }}</small>
-                            </span>
-                        </el-tooltip>
-                    </th>
-                    <td :colspan="dates.length" @click="onTaskSelect(serie.task)" class="cursor-pointer">
-                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
-                            <template #content>
-                                <span style="white-space: pre-wrap;">
-                                    {{ serie.tooltip }}
-                                </span>
-                            </template>
-                            <div
-                                :style="{left: serie.start + '%', width: serie.width + '%'}"
-                                class="task-progress"
-                                @click="onTaskSelect(serie.id)"
-                            >
-                                <div class="progress">
-                                    <div
-                                        class="progress-bar"
-                                        :style="{left: serie.left + '%', width: (100-serie.left) + '%'}"
-                                        :class="'bg-' + serie.color + (serie.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                        role="progressbar"
-                                    />
+        <template #header>
+            <div class="d-flex">
+                <duration class="th text-end" :histories="execution.state.histories" />
+                <span class="text-end" v-for="(date, i) in dates" :key="i">
+                    {{ date }}
+                </span>
+            </div>
+        </template>
+        <template #default>
+            <DynamicScroller
+                :items="filteredSeries"
+                :min-item-size="40"
+                key-field="id"
+                :buffer="0"
+                :update-interval="0"
+            >
+                <template #default="{item, index, active}">
+                    <DynamicScrollerItem
+                        :item="item"
+                        :active="active"
+                        :data-index="index"
+                        :size-dependencies="[selectedTaskRuns]"
+                    >
+                        <div class="d-flex flex-column">
+                            <div class="gantt-row d-flex">
+                                <el-tooltip placement="top-start" :persistent="false" transition="" :hide-after="0" effect="light">
+                                    <template #content>
+                                        <code>{{ item.name }}</code>
+                                        <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
+                                    </template>
+                                    <span>
+                                        <code>{{ item.name }}</code>
+                                        <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                    </span>
+                                </el-tooltip>
+                                <div @click="onTaskSelect(item.task)" class="cursor-pointer" :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
+                                    <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
+                                        <template #content>
+                                            <span style="white-space: pre-wrap;">
+                                                {{ item.tooltip }}
+                                            </span>
+                                        </template>
+                                        <div
+                                            :style="{left: item.start + '%', width: item.width + '%'}"
+                                            class="task-progress"
+                                            @click="onTaskSelect(item.id)"
+                                        >
+                                            <div class="progress">
+                                                <div
+                                                    class="progress-bar"
+                                                    :style="{left: item.left + '%', width: (100-item.left) + '%'}"
+                                                    :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                                    role="progressbar"
+                                                />
+                                            </div>
+                                        </div>
+                                    </el-tooltip>
                                 </div>
                             </div>
-                        </el-tooltip>
-                    </td>
-                </tr>
-                <tr v-if="selectedTaskRuns.includes(serie.id)">
-                    <td :colspan="dates.length + 1" class="p-0 pb-2">
-                        <task-run-details
-                            :task-run-id="serie.id"
-                            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                            level="TRACE"
-                            @follow="forwardEvent('follow', $event)"
-                            :target-execution="execution"
-                            :target-flow="flow"
-                            :show-logs="taskTypeByTaskRunId[serie.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[serie.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
-                        />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                            <div v-if="selectedTaskRuns.includes(item.id)" class="p-0">
+                                <task-run-details
+                                    :task-run-id="item.id"
+                                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                    level="TRACE"
+                                    @follow="forwardEvent('follow', $event)"
+                                    :target-execution="execution"
+                                    :target-flow="flow"
+                                    :show-logs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
+                                />
+                            </div>
+                        </div>
+                    </DynamicScrollerItem>
+                </template>
+            </DynamicScroller>
+        </template>
     </el-card>
 </template>
 <script>
@@ -73,11 +84,13 @@
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import FlowUtils from "../../utils/flowUtils";
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {TaskRunDetails, Duration},
+        components: {DynamicScroller, DynamicScrollerItem, TaskRunDetails, Duration},
         data() {
             return {
                 colors: State.colorClass(),
@@ -85,23 +98,16 @@
                 realTime: true,
                 dates: [],
                 duration: undefined,
-                usePartialSerie: true,
                 selectedTaskRuns: [],
                 taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
             };
         },
         watch: {
             execution(newValue, oldValue) {
-                if (oldValue.id !== newValue.id) {
+                if (oldValue.id !== newValue.id && !this.realTime) {
                     this.realTime = true;
+                    this.selectedTaskRuns = [];
                     this.paint();
-                } else {
-                    this.compute()
-                }
-            },
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name) {
-                    this.compute()
                 }
             },
             forEachItemsTaskRunIds: {
@@ -124,11 +130,8 @@
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
-            partialSeries() {
-                return (this.series || []).slice(0, this.usePartialSerie ? TASKRUN_THRESHOLD : this.taskRunsCount)
-            },
             taskTypeByTaskRun() {
-                return this.partialSeries.map(serie => [serie.task, this.taskType(serie.task)]);
+                return this.series.map(serie => [serie.task, this.taskType(serie.task)]);
             },
             taskTypeByTaskRunId() {
                 return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
@@ -137,7 +140,7 @@
                 return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.plugin.core.flow.ForEachItem" || taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
             },
             filteredSeries() {
-                return this.partialSeries
+                return this.series
                     .filter(serie =>
                         !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
                     );
@@ -200,10 +203,8 @@
                         setTimeout(repaint, delay);
                     }
                 }
-                setTimeout(repaint);
-                setTimeout(() => {
-                    this.usePartialSerie = false
-                }, 500);
+
+                repaint();
             },
             compute() {
                 this.computeSeries();
@@ -316,72 +317,75 @@
 </script>
 <style lang="scss" scoped>
     .el-card {
-        :deep(.el-card__body) {
+        padding: 0;
+
+        :deep(.el-card__header) {
             padding: 0;
-        }
-
-    }
-
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    table {
-        table-layout: fixed;
-        width: 100%;
-        color: var(--bs-body-color);
-
-        & th, td {
-            padding: calc(var(--spacer) / 2);
-        }
-
-        tr:last-child th, tr:last-child td {
-            border-bottom: 0;
-        }
-
-        thead th, thead td {
-            text-align: right;
-        }
-
-        thead {
             font-size: var(--font-size-sm);
             background-color: var(--bs-gray-200);
 
-            th {
-                background-color: var(--bs-gray-100-darken-5);
-            }
-        }
-        th {
-            min-width: 150px;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            > div {
+                > * {
+                    padding: calc(var(--spacer) / 2);
+                    flex: 1;
+                }
 
-            small {
-                margin-left: 5px;
-            }
+                > .th {
+                    background-color: var(--bs-gray-100-darken-5);
+                }
 
-            small {
-                color: var(--bs-gray-600);
-                font-family: var(--bs-font-monospace);
-                font-size: var(--font-size-xs)
-            }
-        }
-
-        code {
-            font-size: 0.7rem;
-        }
-
-        tbody {
-            th {
-                code {
+                > :not(.th) {
                     font-weight: normal;
                 }
             }
+        }
 
-            td {
-                position: relative;
+        :deep(.el-card__body) {
+            padding: 0;
+
+            .vue-recycle-scroller {
+                max-height: calc(100vh - 223px);
+
+                &::-webkit-scrollbar {
+                    width: 5px;
+                }
+
+                &::-webkit-scrollbar-track {
+                    background: var(--bs-gray-500);
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: var(--bs-primary);
+                }
+            }
+
+            .gantt-row {
+                * {
+                    transition: none !important;
+                    animation: none !important;
+                }
+
+                > * {
+                    padding: calc(var(--spacer) / 2);
+                }
+
+                .el-tooltip__trigger {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    small {
+                        margin-left: 5px;
+                        color: var(--bs-gray-600);
+                        font-family: var(--bs-font-monospace);
+                        font-size: var(--font-size-xs)
+                    }
+
+                    code {
+                        font-size: 0.7rem;
+                    }
+                }
 
                 .task-progress {
                     position: relative;
@@ -403,30 +407,36 @@
                     }
                 }
             }
-
-            tr:nth-child(2) td {
-                padding-bottom: 0 !important;
-            }
         }
     }
 
-    :deep(.log-wrapper .attempt-wrapper) {
-        margin-bottom: 0;
-        border-radius: 0;
-        border: 0;
-        border-top: 1px solid var(--bs-gray-600);
-        border-bottom: 1px solid var(--bs-gray-600);
+    .cursor-pointer {
+        cursor: pointer;
+    }
 
-        tbody:last-child & {
-            border-bottom: 0;
+    :deep(.log-wrapper) {
+        > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
+            padding-bottom: 0;
         }
 
-        .attempt-header {
-            padding: calc(var(--spacer) / 2);
-        }
+        .attempt-wrapper {
+            margin-bottom: 0;
+            border-radius: 0;
+            border: 0;
+            border-top: 1px solid var(--bs-gray-600);
+            border-bottom: 1px solid var(--bs-gray-600);
 
-        .line {
-            padding-left: calc(var(--spacer) / 2);
+            tbody:last-child & {
+                border-bottom: 0;
+            }
+
+            .attempt-header {
+                padding: calc(var(--spacer) / 2);
+            }
+
+            .line {
+                padding-left: calc(var(--spacer) / 2);
+            }
         }
     }
 

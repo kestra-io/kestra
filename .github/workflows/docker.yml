@@ -109,6 +109,11 @@ jobs:
         run: |
           regctl image copy ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }} ${{ format('kestra/kestra:latest{0}', matrix.image.name) }}
 
+      - name: Retag latest to latest-full
+        if: ${{ github.event.inputs.retag-latest == 'true' && matrix.image.name == ''}}
+        run: |
+          regctl image copy kestra/kestra:latest kestra/kestra:latest-full
+
   end:
     runs-on: ubuntu-latest
     needs:

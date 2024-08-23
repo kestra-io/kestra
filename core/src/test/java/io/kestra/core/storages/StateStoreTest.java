@@ -1,5 +1,6 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -45,11 +46,9 @@ public class StateStoreTest {
     }
 
     @Test
-    void getState_FromOldStateStore_ShouldRelocateToKvStore() throws IOException, ResourceExpiredException {
+    void getState_WithOldStateStore_ShouldThrowMigrationException() throws IOException, ResourceExpiredException {
         RunContext runContext = runContext();
-
         String state = IdUtils.create();
-        Assertions.assertThrows(FileNotFoundException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
 
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         URI oldStateStoreFileUri = URI.create("kestra:/" + flowInfo.namespace().replace(".", "/") + "/" + flowInfo.id() + "/states/" + state + "/" + Hashing.hashToString("my-taskrun-value") + "/some-name");
@@ -59,28 +58,10 @@ public class StateStoreTest {
         String key = flowInfo.id() + "_states_" + state + "_some-name_" + Hashing.hashToString("my-taskrun-value");
         assertThat(runContext.storage().getFile(oldStateStoreFileUri).readAllBytes(), is(expectedContent));
 
-        assertThat(runContext.stateStore().getState(state, "some-name", "my-taskrun-value").readAllBytes(), is(expectedContent));
+        MigrationRequiredException migrationRequiredException = Assertions.assertThrows(MigrationRequiredException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
+        assertThat(migrationRequiredException.getMessage(), is("It looks like the State Store migration hasn't been run, please check out the changelog for instructions to do so."));
 
-        Assertions.assertThrows(FileNotFoundException.class, () -> runContext.storage().getFile(oldStateStoreFileUri));
-        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).get().value(), is(expectedContent));
-    }
-
-    @Test
-    void deleteState_FromOldStateStore() throws IOException {
-        RunContext runContext = runContext();
-
-        String state = IdUtils.create();
-
-        RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        URI oldStateStoreFileUri = URI.create("kestra:/" + flowInfo.namespace().replace(".", "/") + "/" + flowInfo.id() + "/states/" + state + "/" + Hashing.hashToString("my-taskrun-value") + "/some-name");
-        byte[] expectedContent = "from-old-state".getBytes();
-        runContext.storage().putFile(new ByteArrayInputStream(expectedContent), oldStateStoreFileUri);
-
-        assertThat(runContext.storage().getFile(oldStateStoreFileUri).readAllBytes(), is(expectedContent));
-
-        runContext.stateStore().deleteState(state, "some-name", "my-taskrun-value");
-
-        Assertions.assertThrows(FileNotFoundException.class, () -> runContext.storage().getFile(oldStateStoreFileUri));
+        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty(), is(true));
     }
 
     @Test

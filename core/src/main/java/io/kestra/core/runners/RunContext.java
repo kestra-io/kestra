@@ -152,7 +152,7 @@ public abstract class RunContext {
     public abstract KVStore namespaceKv(String namespace);
 
     public StateStore stateStore() {
-        return new StateStore(this);
+        return new StateStore(this, true);
     }
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {

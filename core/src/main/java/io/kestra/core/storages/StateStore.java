@@ -1,5 +1,6 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.kv.KVValue;
@@ -16,7 +17,7 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 
-public record StateStore(RunContext runContext) {
+public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
 
     public InputStream getState(String stateName, @Nullable String stateSubName, String taskRunValue) throws IOException, ResourceExpiredException {
         return this.getState(true, stateName, stateSubName, taskRunValue);
@@ -33,27 +34,22 @@ public record StateStore(RunContext runContext) {
      */
     public InputStream getState(boolean flowScoped, String stateName, @Nullable String stateSubName, String taskRunValue) throws IOException, ResourceExpiredException {
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        try {
-            // We relocate the old state store file to KV Store
-            URI oldStateStoreUri = StateStore.oldStateStoreUri(flowInfo.namespace(), flowScoped, flowInfo.id(), stateName, taskRunValue, stateSubName);
-            InputStream file = runContext.storage().getFile(oldStateStoreUri);
-            this.deleteOldStateStoreFile(flowScoped, stateName, stateSubName, taskRunValue);
-            byte[] bytes = file.readAllBytes();
+        // We check if a file containing the state exists in the old state store
+        URI oldStateStoreUri = this.oldStateStoreUri(flowInfo.namespace(), flowScoped, flowInfo.id(), stateName, taskRunValue, stateSubName);
+        if (runContext.storage().isFileExist(oldStateStoreUri)) {
+            throw new MigrationRequiredException("State Store");
+        }
 
-            this.putState(flowScoped, stateName, stateSubName, taskRunValue, bytes);
-            return new ByteArrayInputStream(bytes);
-        } catch (IOException e) {
-            String key = StateStore.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue);
-            Optional<KVValue> kvStateValue = runContext.namespaceKv(flowInfo.namespace()).getValue(key);
-            if (kvStateValue.isEmpty()) {
-                throw new FileNotFoundException("State " + key + " not found");
-            }
-            Object value = kvStateValue.get().value();
-            if (value instanceof String string) {
-                return new ByteArrayInputStream(string.getBytes());
-            } else {
-                return new ByteArrayInputStream(((byte[]) Objects.requireNonNull(value)));
-            }
+        String key = this.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue);
+        Optional<KVValue> kvStateValue = runContext.namespaceKv(flowInfo.namespace()).getValue(key);
+        if (kvStateValue.isEmpty()) {
+            throw new FileNotFoundException("State " + key + " not found");
+        }
+        Object value = kvStateValue.get().value();
+        if (value instanceof String string) {
+            return new ByteArrayInputStream(string.getBytes());
+        } else {
+            return new ByteArrayInputStream(((byte[]) Objects.requireNonNull(value)));
         }
     }
 
@@ -72,11 +68,8 @@ public record StateStore(RunContext runContext) {
      * @return the KV Store key at which the state is stored
      */
     public String putState(boolean flowScoped, String stateName, String stateSubName, String taskRunValue, byte[] value) throws IOException {
-        // We delete the old state store file
-        deleteOldStateStoreFile(flowScoped, stateName, stateSubName, taskRunValue);
-
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        String key = StateStore.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue);
+        String key = this.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue);
         runContext.namespaceKv(flowInfo.namespace()).put(key, new KVValueAndMetadata(null, value));
 
         return key;
@@ -97,26 +90,18 @@ public record StateStore(RunContext runContext) {
     public boolean deleteState(boolean flowScoped, String stateName, String stateSubName, String taskRunValue) throws IOException {
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
 
-        boolean oldStateStoreFileDeleted = deleteOldStateStoreFile(flowScoped, stateName, stateSubName, taskRunValue);
-        if (!oldStateStoreFileDeleted) {
-            return runContext.namespaceKv(flowInfo.namespace()).delete(StateStore.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue));
-        }
-
-        return true;
+        return runContext.namespaceKv(flowInfo.namespace()).delete(
+            this.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue)
+        );
     }
 
-    private static URI oldStateStoreUri(String namespace, boolean flowScoped, String flowId, String stateName, @Nullable String taskRunValue, String name) {
-        return URI.create("kestra:/" + namespace.replace(".", "/") + "/" + StateStore.statePrefix("/", flowScoped, flowId, stateName, taskRunValue) + (name == null ? "" : ("/" + name)));
+    private URI oldStateStoreUri(String namespace, boolean flowScoped, String flowId, String stateName, @Nullable String taskRunValue, String name) {
+        return URI.create("kestra:/" + namespace.replace(".", "/") + "/" + this.statePrefix("/", flowScoped, flowId, stateName, taskRunValue) + (name == null ? "" : ("/" + name)));
     }
 
-    private static String statePrefix(String separator, boolean flowScoped, String flowId, String stateName, @Nullable String taskRunValue) {
+    private String statePrefix(String separator, boolean flowScoped, String flowId, String stateName, @Nullable String taskRunValue) {
         String flowIdPrefix = (!flowScoped || flowId == null) ? "" : (Slugify.of(flowId) + separator);
-        return flowIdPrefix + "states" + separator + stateName + (taskRunValue == null ? "" : (separator + Hashing.hashToString(taskRunValue)));
-    }
-
-    private boolean deleteOldStateStoreFile(boolean flowScoped, String stateName, String stateSubName, String taskRunValue) throws IOException {
-        RunContext.FlowInfo flowInfo = runContext.flowInfo();
-        return runContext.storage().deleteFile(StateStore.oldStateStoreUri(flowInfo.namespace(), flowScoped, flowInfo.id(), stateName, taskRunValue, stateSubName));
+        return flowIdPrefix + "states" + separator + stateName + (taskRunValue == null ? "" : (separator + (hashTaskRunValue ? Hashing.hashToString(taskRunValue) : taskRunValue)));
     }
 
     private static String nameSuffix(String name) {

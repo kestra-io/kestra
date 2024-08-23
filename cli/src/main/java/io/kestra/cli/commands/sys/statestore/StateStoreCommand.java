@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.sys.database;
+package io.kestra.cli.commands.sys.statestore;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
@@ -7,20 +7,20 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "database",
-    description = "Manage Kestra database",
+    name = "state-store",
+    description = "Manage Kestra State Store",
     mixinStandardHelpOptions = true,
     subcommands = {
-        DatabaseMigrateCommand.class,
+        StateStoreMigrateCommand.class,
     }
 )
-public class DatabaseCommand extends AbstractCommand {
+public class StateStoreCommand extends AbstractCommand {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "sys", "database", "--help");
+        PicocliRunner.call(App.class, "sys", "state-store", "--help");
 
         return 0;
     }

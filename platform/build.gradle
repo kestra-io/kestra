@@ -94,7 +94,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
-        api 'org.postgresql:postgresql:42.7.3'
+        api 'org.postgresql:postgresql:42.7.4'
         api 'com.github.docker-java:docker-java:3.4.0'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.0'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")

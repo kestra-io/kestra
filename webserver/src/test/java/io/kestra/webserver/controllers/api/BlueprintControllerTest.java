@@ -55,7 +55,7 @@ class BlueprintControllerTest {
         assertThat(blueprints.get(1).getId(), is("2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
     }
 
     @Test

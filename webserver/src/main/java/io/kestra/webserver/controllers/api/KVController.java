@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.kv.KVType;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
@@ -86,32 +87,6 @@ public class KVController {
 
     private KVStore kvStore(String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
-    }
-
-
-    public enum KVType {
-        STRING,
-        NUMBER,
-        BOOLEAN,
-        DATETIME,
-        DATE,
-        DURATION,
-        JSON;
-
-        public static KVType from(Object value) {
-            if (value == null) return KVType.STRING;
-
-            return switch (value) {
-                case String ignored -> STRING;
-                case Number ignored -> NUMBER;
-                case Boolean ignored -> BOOLEAN;
-                case LocalDateTime ignored -> DATETIME;
-                case Instant ignored -> DATETIME;
-                case LocalDate ignored -> DATE;
-                case Duration ignored -> DURATION;
-                default -> JSON;
-            };
-        }
     }
 
     public record TypedValue(KVType type, Object value) {

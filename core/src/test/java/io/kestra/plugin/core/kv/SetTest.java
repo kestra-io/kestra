@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.kv;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.kv.KVType;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -182,5 +183,33 @@ public class SetTest {
         // When - Then
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> set.run(runContext));
         assertThat(exception.getMessage(), is("Cannot set value for key '" + TEST_KEY + "'. Key already exists and `overwrite` is set to `false`."));
+    }
+
+    @Test
+    void typeSpecified() throws Exception {
+        // Given
+        Set set = Set.builder()
+            .id(Set.class.getSimpleName())
+            .type(Set.class.getName())
+            .key(TEST_KEY)
+            .build();
+
+        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, null);
+
+        final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
+
+        set.toBuilder().value("123.45").kvType(KVType.NUMBER).build().run(runContext);
+        assertThat(kv.getValue(TEST_KEY).get().value(), is(123.45));
+
+        set.toBuilder().value("true").kvType(KVType.BOOLEAN).build().run(runContext);
+        assertThat(kv.getValue(TEST_KEY).get().value(), is(true));
+
+        set.toBuilder().value("2023-05-02T01:02:03Z").kvType(KVType.DATETIME).build().run(runContext);
+        assertThat(kv.getValue(TEST_KEY).get().value(), is(Instant.parse("2023-05-02T01:02:03Z")));
+
+        set.toBuilder().value("P1DT5S").kvType(KVType.DURATION).build().run(runContext);
+        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
+        assertThat((long) Double.parseDouble(kv.getValue(TEST_KEY).get().value().toString()), is(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds()));
+
     }
 }

@@ -649,7 +649,7 @@
     "false": "Faux",
     "undefined": "Non défini",
     "execution-include-non-terminated": "Inclure les exécutions non terminées ?",
-    "execution-warn-deleting-still-running": "Les exécutions en cours ne seront pas arrêtées et doivent être stoppées avant d'être supprimées.",
+    "execution-warn-deleting-still-running": "Avertissement Important : Nous vous recommandons fortement d'annuler cette action et de tuer toutes les exécutions en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
     "originalCreatedDate": "Date de création originale",
     "welcome": {
       "started": {

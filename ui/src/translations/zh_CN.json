@@ -650,7 +650,7 @@
     "false": "假",
     "undefined": "未定义",
     "execution-include-non-terminated": "包括未终止的执行？",
-    "execution-warn-deleting-still-running": "仍在运行的执行不会停止，必须在删除前终止。",
+    "execution-warn-deleting-still-running": "重要警告：我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能会导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全理解这些风险。",
     "originalCreatedDate": "原始创建日期",
     "welcome": {
       "started": {

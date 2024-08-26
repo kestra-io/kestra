@@ -635,7 +635,7 @@
     "false": "False",
     "undefined": "Undefined",
     "execution-include-non-terminated": "종료되지 않은 실행을 포함하시겠습니까?",
-    "execution-warn-deleting-still-running": "아직 RUNNING 상태인 실행은 중지되지 않으며 삭제 전에 강제 종료해야 합니다.",
+    "execution-warn-deleting-still-running": "중요 경고: 이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
     "originalCreatedDate": "원래 생성 날짜",
     "welcome": {
       "started": {

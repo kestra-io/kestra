@@ -635,7 +635,7 @@
     "false": "Falso",
     "undefined": "Non definito",
     "execution-include-non-terminated": "Includere esecuzioni non terminate?",
-    "execution-warn-deleting-still-running": "Le esecuzioni ancora RUNNING non saranno fermate e devono essere kill prima di essere eliminate.",
+    "execution-warn-deleting-still-running": "Avviso Importante: Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concurrency, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
     "originalCreatedDate": "Data di creazione originale",
     "welcome": {
       "started": {

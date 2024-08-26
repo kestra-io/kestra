@@ -21,7 +21,7 @@
     "axios": "^1.7.5",
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
-    "chart.js": "^4.4.3",
+    "chart.js": "^4.4.4",
     "chartjs-chart-treemap": "^2.3.1",
     "core-js": "^3.38.1",
     "cronstrue": "^2.50.0",

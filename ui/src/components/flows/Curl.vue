@@ -36,9 +36,23 @@
                 default: true
             }
         },
+        data() {
+            return {
+                exampleFileName: "kestra.json"
+            }
+        },
         computed: {
             curlCommand() {
-                return this.generateCurlCommand();
+                const mainCommand = this.generateCurlCommand();
+
+                if (this.flow.inputs && this.flow.inputs.find((input) => input.type === "FILE")) {
+                    return `${this.toShell(this.generatePrefix())} && \\\n${this.toShell(mainCommand)}`;
+                } else {
+                    return `${this.toShell(mainCommand)}`;
+                }
+            },
+            exampleFileInputUrl() {
+                return `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${this.exampleFileName}`;
             }
         },
         methods: {
@@ -55,14 +69,23 @@
 
                     switch (input.type) {
                     case "FILE": {
-                        const fileInput = this.inputs[input.id];
-                        if (fileInput) {
-                            inputValue = fileInput.name;
-                        }
+                        inputValue = this.exampleFileName;
                         break;
                     }
                     case "SECRET": {
                         inputValue = this.inputs[input.id] ? "******" : undefined;
+                        break;
+                    }
+                    case "DURATION": {
+                        inputValue = this.$moment.duration(this.$moment(this.inputs[input.id]).format("hh:mm:ss")).toJSON();
+                        break;
+                    }
+                    case "DATE": {
+                        inputValue = this.$moment(this.inputs[input.id]).format("YYYY-MM-DD");
+                        break;
+                    }
+                    case "TIME": {
+                        inputValue = this.$moment(this.inputs[input.id]).format("hh:mm:ss");
                         break;
                     }
                     default:
@@ -115,8 +138,22 @@
 
                 command.push(`'${this.generateUrl()}'`);
 
+                return command
+            },
+            generatePrefix() {
+                return ["curl", "-O", `'${this.exampleFileInputUrl}'`];
+            },
+            toShell(command) {
                 return command.join(" ");
             }
         }
     }
 </script>
+
+<style lang="scss" scoped>
+    /* Allow line-wraps */
+    code {
+        display: block;
+        white-space: pre-wrap;
+    }
+</style>

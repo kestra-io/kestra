@@ -42,7 +42,7 @@
     "moment-timezone": "^0.5.45",
     "nprogress": "^0.2.0",
     "pdfjs-dist": "^4.5.136",
-    "posthog-js": "^1.155.0",
+    "posthog-js": "^1.157.2",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.4.38",
     "vue-axios": "3.5.2",

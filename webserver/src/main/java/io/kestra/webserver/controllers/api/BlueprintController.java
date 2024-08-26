@@ -48,7 +48,7 @@ public class BlueprintController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") Integer size,
         HttpRequest<?> httpRequest
     ) throws URISyntaxException {
-        return fastForwardToKestraApi(httpRequest, "/v1/blueprints", Argument.of(PagedResults.class, BlueprintItem.class));
+        return fastForwardToKestraApi(httpRequest, "/v1/blueprints", Map.of("ee", false), Argument.of(PagedResults.class, BlueprintItem.class));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -92,14 +92,24 @@ public class BlueprintController {
         return fastForwardToKestraApi(httpRequest, "/v1/blueprints/tags", Argument.of(List.class, BlueprintTagItem.class));
     }
 
-    private <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Argument<T> returnType) throws URISyntaxException {
+    protected  <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Argument<T> returnType) throws URISyntaxException {
+        return this.fastForwardToKestraApi(originalRequest, newPath, null, returnType);
+    }
+
+    private <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Map<String, Object> additionalQueryParams, Argument<T> returnType) throws URISyntaxException {
+        UriBuilder uriBuilder = UriBuilder.of(originalRequest.getUri())
+            .replacePath(originalRequest.getUri().getPath().toString().replaceAll("^[^?]*", newPath));
+
+        if (additionalQueryParams != null) {
+            additionalQueryParams.forEach(uriBuilder::queryParam);
+        }
+
         return httpClient
             .toBlocking()
             .exchange(
                 HttpRequest.create(
                     originalRequest.getMethod(),
-                    UriBuilder.of(originalRequest.getUri())
-                        .replacePath(originalRequest.getUri().getPath().toString().replaceAll("^[^?]*", newPath))
+                    uriBuilder
                         .build()
                         .toString()
                 ),

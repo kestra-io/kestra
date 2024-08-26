@@ -140,8 +140,10 @@
             }
         },
         async created() {
-            const URL = this.blueprintBaseUri ?? `${apiUrl(this.$store)}/blueprints/` + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"))
-            this.blueprint = (await this.$http.get(`${URL}/${this.blueprintId}`)).data
+            const TAB = this.$route.query?.tab ?? (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
+            const URL = this.blueprintBaseUri ?? `${apiUrl(this.$store)}/blueprints/` + TAB;
+
+            this.blueprint = (await this.$http.get(`${URL}/${this.blueprintId}`)).data;
 
             try {
                 if (this.blueprintBaseUri?.endsWith("community")) {

@@ -39,7 +39,7 @@
                     <component
                         class="blueprint-link"
                         :is="embed ? 'div' : 'router-link'"
-                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}}"
+                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}, query: {tab}}"
                     >
                         <div class="left">
                             <div>
@@ -107,6 +107,10 @@
             blueprintBaseUri: {
                 type: String,
                 required: true
+            },
+            tab: {
+                type: String,
+                default: undefined,
             },
             embed: {
                 type: Boolean,
@@ -224,7 +228,7 @@
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
-                    if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
+                    if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
                         callback();
                     }
                 })

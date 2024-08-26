@@ -635,7 +635,7 @@
     "false": "False",
     "undefined": "未定義",
     "execution-include-non-terminated": "終了していない実行を含めますか？",
-    "execution-warn-deleting-still-running": "まだRUNNINGの実行は停止されず、削除する前にkillする必要があります。",
+    "execution-warn-deleting-still-running": "重要な警告: このアクションをキャンセルし、進行中の実行をまず停止することを強くお勧めします。未終了の実行を削除すると、concurrencyの問題、flow依存関係管理の不整合、およびインスタンス上のゾンビプロセスが発生し、システムパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
       "started": {

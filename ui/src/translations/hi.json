@@ -635,7 +635,7 @@
     "false": "असत्य",
     "undefined": "अपरिभाषित",
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
-    "execution-warn-deleting-still-running": "अभी भी RUNNING निष्पादन को रोका नहीं जाएगा और उन्हें हटाने से पहले kill करना होगा।",
+    "execution-warn-deleting-still-running": "महत्वपूर्ण चेतावनी: हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency issues, flow dependency management असंगतताएँ, और आपके instance पर zombie processes हो सकते हैं, जो सिस्टम प्रदर्शन को खराब कर सकते हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं इससे पहले कि आप deletion के साथ आगे बढ़ें।",
     "originalCreatedDate": "मूल निर्माण तिथि",
     "welcome": {
       "started": {

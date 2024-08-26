@@ -635,7 +635,7 @@
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
-    "execution-warn-deleting-still-running": "Wykonania nadal trwające nie zostaną zatrzymane i muszą zostać zabite przed usunięciem.",
+    "execution-warn-deleting-still-running": "Ważne Ostrzeżenie: Zdecydowanie zalecamy anulowanie tej akcji i zakończenie wszystkich trwających wykonania najpierw. Usunięcie nieukończonych wykonań może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
       "started": {

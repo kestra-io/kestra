@@ -635,7 +635,7 @@
     "false": "Falsch",
     "undefined": "Nicht definiert",
     "execution-include-non-terminated": "Nicht beendete Ausführungen einbeziehen?",
-    "execution-warn-deleting-still-running": "Ausführungen, die noch laufen, werden nicht gestoppt und müssen vor dem Löschen beendet werden.",
+    "execution-warn-deleting-still-running": "Wichtige Warnung: Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Problemen mit der Nebenläufigkeit, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit der Löschung fortfahren.",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
     "welcome": {
       "started": {

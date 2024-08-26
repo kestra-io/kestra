@@ -16,6 +16,8 @@ import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidatio
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.property.ArrayProperty;
+import io.kestra.core.models.property.DataProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -271,6 +273,8 @@ public class JsonSchemaGenerator {
                 if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
                     memberAttributes.put("format", ".*{{.*}}.*");
                 }
+            } else if (member.getDeclaredType().isInstanceOf(DataProperty.class) || member.getDeclaredType().isInstanceOf(ArrayProperty.class)) {
+                memberAttributes.put("$dynamic", true);
             }
         });
 

@@ -37,7 +37,7 @@ public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
         // We check if a file containing the state exists in the old state store
         URI oldStateStoreUri = this.oldStateStoreUri(flowInfo.namespace(), flowScoped, flowInfo.id(), stateName, taskRunValue, stateSubName);
         if (runContext.storage().isFileExist(oldStateStoreUri)) {
-            throw new MigrationRequiredException("State Store");
+            throw new MigrationRequiredException("State Store", "sys state-store migrate");
         }
 
         String key = this.statePrefix("_", flowScoped, flowInfo.id(), stateName + nameSuffix(stateSubName), taskRunValue);

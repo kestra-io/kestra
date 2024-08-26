@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.kv.KVType;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.storages.kv.*;
@@ -78,22 +79,22 @@ class KVControllerTest extends JdbcH2ControllerTest {
 
     static Stream<Arguments> kvGetArgs() {
         return Stream.of(
-            Arguments.of("{hello:\"world\"}", KVController.KVType.JSON, "{\"hello\":\"world\"}"),
-            Arguments.of("[\"hello\",\"world\"]", KVController.KVType.JSON, "[\"hello\",\"world\"]"),
-            Arguments.of("\"hello\"", KVController.KVType.STRING, "\"hello\""),
-            Arguments.of("1", KVController.KVType.NUMBER, "1"),
-            Arguments.of("1.0", KVController.KVType.NUMBER, "1.0"),
-            Arguments.of("true", KVController.KVType.BOOLEAN, "true"),
-            Arguments.of("false", KVController.KVType.BOOLEAN, "false"),
-            Arguments.of("2021-09-01", KVController.KVType.DATE, "\"2021-09-01\""),
-            Arguments.of("2021-09-01T01:02:03Z", KVController.KVType.DATETIME, "\"2021-09-01T01:02:03Z\""),
-            Arguments.of("\"PT5S\"", KVController.KVType.DURATION, "\"PT5S\"")
+            Arguments.of("{hello:\"world\"}", KVType.JSON, "{\"hello\":\"world\"}"),
+            Arguments.of("[\"hello\",\"world\"]", KVType.JSON, "[\"hello\",\"world\"]"),
+            Arguments.of("\"hello\"", KVType.STRING, "\"hello\""),
+            Arguments.of("1", KVType.NUMBER, "1"),
+            Arguments.of("1.0", KVType.NUMBER, "1.0"),
+            Arguments.of("true", KVType.BOOLEAN, "true"),
+            Arguments.of("false", KVType.BOOLEAN, "false"),
+            Arguments.of("2021-09-01", KVType.DATE, "\"2021-09-01\""),
+            Arguments.of("2021-09-01T01:02:03Z", KVType.DATETIME, "\"2021-09-01T01:02:03Z\""),
+            Arguments.of("\"PT5S\"", KVType.DURATION, "\"PT5S\"")
         );
     }
 
     @ParameterizedTest
     @MethodSource("kvGetArgs")
-    void get(String storedIonValue, KVController.KVType expectedType, String expectedValue) throws IOException {
+    void get(String storedIonValue, KVType expectedType, String expectedValue) throws IOException {
         storageInterface.put(
             null,
             toKVUri(NAMESPACE, "my-key"),

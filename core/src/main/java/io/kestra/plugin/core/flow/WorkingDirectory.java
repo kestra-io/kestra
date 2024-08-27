@@ -329,9 +329,9 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     }
 
                     archive.finish();
-                    File archiveFile = File.createTempFile("archive", ".zip");
-                    Files.write(archiveFile.toPath(), bos.toByteArray());
-                    URI uri = runContext.storage().putCacheFile(archiveFile, getId(), taskRun.getValue());
+                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Files.write(archiveFile, bos.toByteArray());
+                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), getId(), taskRun.getValue());
                     runContext.logger().debug("Caching in {}", uri);
                 }
             } else {

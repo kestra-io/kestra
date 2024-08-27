@@ -20,10 +20,13 @@ import jakarta.inject.Provider;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,7 +62,7 @@ public class DefaultRunContext extends RunContext {
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
-    private Supplier<Logger> logger;
+    private RunContextLogger logger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
     private String triggerExecutionId;
     private Storage storage;
@@ -118,7 +121,7 @@ public class DefaultRunContext extends RunContext {
         this.storage = storage;
     }
 
-    void setLogger(final Supplier<Logger> logger) {
+    void setLogger(final RunContextLogger logger) {
         this.logger = logger;
     }
 
@@ -271,6 +274,31 @@ public class DefaultRunContext extends RunContext {
         return logger.get();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public URI logFileURI() {
+        if (logger.getLogFile() != null) {
+            try {
+                logger.closeLogFile();
+                String logName = "log-" + RandomStringUtils.randomAlphanumeric(5).toLowerCase() + ".txt";
+                Path logFile = this.workingDir.createFile(logName);
+                try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(logFile))) {
+                    Files.copy(logger.getLogFile().toPath(), out);
+                }
+                URI logFileURI = this.storage.putFile(logFile.toFile());
+                if (!logger.getLogFile().delete()) {
+                    logger().warn("Unable to delete the log file {}", logger.getLogFile().toPath());
+                }
+                return logFileURI;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
     // for serialization backward-compatibility
     @Override
     @JsonIgnore
@@ -376,9 +404,9 @@ public class DefaultRunContext extends RunContext {
     @Override
     public void cleanup() {
         try {
-           workingDir.cleanup();
+            workingDir.cleanup();
         } catch (IOException ex) {
-            new RunContextLogger().logger().warn("Unable to cleanup worker task", ex);
+            logger().warn("Unable to cleanup worker task", ex);
         }
     }
 
@@ -458,7 +486,7 @@ public class DefaultRunContext extends RunContext {
         private WorkingDir workingDir;
         private Storage storage;
         private String triggerExecutionId;
-        private Supplier<Logger> logger;
+        private RunContextLogger logger;
         private KVStoreService kvStoreService;
 
         /**

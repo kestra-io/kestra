@@ -1,0 +1,8 @@
+id: log-to-file
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!
+    logToFile: true

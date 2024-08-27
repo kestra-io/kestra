@@ -4,9 +4,11 @@ import lombok.Builder;
 import lombok.Value;
 import io.kestra.core.models.flows.State;
 
+import java.net.URI;
 import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.With;
 
 @Value
 @Builder
@@ -22,9 +24,13 @@ public class TaskRunAttempt {
     @NotNull
     State state;
 
+    @With
+    URI logFile;
+
     public TaskRunAttempt withState(State.Type state) {
         return new TaskRunAttempt(
-            this.state.withState(state)
+            this.state.withState(state),
+            this.logFile
         );
     }
 }

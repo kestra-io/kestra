@@ -48,6 +48,9 @@ abstract public class Task implements TaskInterface {
     @Builder.Default
     private boolean allowFailure = false;
 
+    @Builder.Default
+    private boolean logToFile = false;
+
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
             return Optional.of(this);

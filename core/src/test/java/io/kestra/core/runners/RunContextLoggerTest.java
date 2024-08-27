@@ -43,7 +43,8 @@ class RunContextLoggerTest {
         RunContextLogger runContextLogger = new RunContextLogger(
             logQueue,
             LogEntry.of(execution),
-            Level.TRACE
+            Level.TRACE,
+            false
         );
 
         Logger logger = runContextLogger.logger();
@@ -74,7 +75,8 @@ class RunContextLoggerTest {
         RunContextLogger runContextLogger = new RunContextLogger(
             logQueue,
             LogEntry.of(execution),
-            Level.TRACE
+            Level.TRACE,
+            false
         );
 
         Logger logger = runContextLogger.logger();
@@ -97,7 +99,8 @@ class RunContextLoggerTest {
         RunContextLogger runContextLogger = new RunContextLogger(
             logQueue,
             LogEntry.of(execution),
-            Level.TRACE
+            Level.TRACE,
+            false
         );
 
         runContextLogger.usedSecret("doe.com");

@@ -48,6 +48,13 @@ public interface Storage {
     InputStream getFile(URI uri) throws IOException;
 
     /**
+     * Deletes the file for the given URI.
+     * @param uri the file URI.
+     * @return {@code true} if the file was deleted. Otherwise {@code false}.
+     */
+    boolean deleteFile(URI uri) throws IOException;
+
+    /**
      * Deletes all the files for the current execution.
      *
      * @return The URIs of the deleted files.
@@ -102,26 +109,6 @@ public interface Storage {
     URI putFile(File file, String name) throws IOException;
 
     // ==============================================================
-    //  STATE STORE
-    // ==============================================================
-    InputStream getTaskStateFile(String state, String name) throws IOException;
-
-    InputStream getTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException;
-
-    URI putTaskStateFile(byte[] content, String state, String name) throws IOException;
-
-    URI putTaskStateFile(byte[] content, String state, String name, Boolean namespace, Boolean useTaskRun) throws IOException;
-
-    URI putTaskStateFile(File file, String state, String name) throws IOException;
-
-    URI putTaskStateFile(File file, String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException;
-
-    boolean deleteTaskStateFile(String state, String name) throws IOException;
-
-    boolean deleteTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException;
-
-
-    // ==============================================================
     // CACHING
     // ==============================================================
 
@@ -170,4 +157,10 @@ public interface Storage {
      * @throws IOException if an error occurs during the operation.
      */
     Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException;
+
+    /**
+     * Gets the storage context for current task
+     * @return the task storage context
+     */
+    Optional<StorageContext.Task> getTaskStorageContext();
 }

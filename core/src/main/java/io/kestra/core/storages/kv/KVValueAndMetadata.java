@@ -14,7 +14,7 @@ import java.util.Optional;
  * @param metadata
  * @param value
  */
-public record KVValueAndMetadata(KVMetadata metadata, @Nullable Object value) {
+public record KVValueAndMetadata(@Nullable KVMetadata metadata, @Nullable Object value) {
 
     public Map<String, String> metadataAsMap() {
         return Optional.ofNullable(metadata).map(KVMetadata::toMap).orElse(null);

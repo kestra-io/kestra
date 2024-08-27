@@ -72,16 +72,6 @@ class StorageContextTest {
     }
 
     @Test
-    void shouldGetValidStatePrefixForTaskContext() {
-        StorageContext context = StorageContext.forFlow(Flow.builder().namespace("namespace").id("flowid").build());
-        assertThat(context.getStateStorePrefix("name", false, null), is("/namespace/flowid/states/name"));
-        assertThat(context.getStateStorePrefix("name", false, "aaa"), is("/namespace/flowid/states/name/eb6dd8bbadb13fbe0af798a4f5b2056d"));
-        assertThat(context.getStateStorePrefix("name", true, null), is("/namespace/states/name"));
-        assertThat(context.getStateStorePrefix("name", true, "aaa"), is("/namespace/states/name/eb6dd8bbadb13fbe0af798a4f5b2056d"));
-        assertThat(context.getStateStorePrefix(null, true, null), is("/namespace/states"));
-    }
-
-    @Test
     void shouldGetValidURIForTriggerContext() {
         StorageContext context = StorageContext.forTrigger(
             "???",

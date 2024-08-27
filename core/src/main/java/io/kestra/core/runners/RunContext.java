@@ -4,13 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.FileUtils;
 import org.slf4j.Logger;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
@@ -144,6 +150,10 @@ public abstract class RunContext {
      * @return The {@link KVStore}.
      */
     public abstract KVStore namespaceKv(String namespace);
+
+    public StateStore stateStore() {
+        return new StateStore(this, true);
+    }
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
     }

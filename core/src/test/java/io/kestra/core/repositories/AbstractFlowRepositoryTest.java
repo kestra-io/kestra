@@ -308,7 +308,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void find() {
+    protected void find() {
         List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
 

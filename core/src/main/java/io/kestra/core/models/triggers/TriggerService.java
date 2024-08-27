@@ -17,8 +17,8 @@ public abstract class TriggerService {
         TriggerContext context,
         Map<String, Object> variables
     ) {
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables);
         RunContext runContext = conditionContext.getRunContext();
+        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables, runContext.logFileURI());
 
         return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
     }
@@ -29,8 +29,8 @@ public abstract class TriggerService {
         TriggerContext context,
         Output output
     ) {
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output);
         RunContext runContext = conditionContext.getRunContext();
+        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
         return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
     }
@@ -41,7 +41,8 @@ public abstract class TriggerService {
         TriggerContext context,
         Output output
     ) {
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output);
+        RunContext runContext = conditionContext.getRunContext();
+        ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
         return generateExecution(IdUtils.create(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
     }

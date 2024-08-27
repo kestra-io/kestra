@@ -103,9 +103,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Inject
     private RunContextInitializer runContextInitializer;
 
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
-
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
     @Getter
@@ -332,8 +329,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
                 }
             } finally {
-                this.logTerminated(workerTask);
                 runContext.cleanup();
+                this.logTerminated(workerTask);
             }
         } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
@@ -562,17 +559,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
         // run
-        WorkerTask finalWorkerTask = this.runAttempt(current.get());
+        WorkerTask workerTaskAttempt = this.runAttempt(current.get());
 
         // save dynamic WorkerResults since cleanUpTransient will remove them
-        List<WorkerTaskResult> dynamicWorkerResults = finalWorkerTask.getRunContext().dynamicWorkerResults();
+        List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
 
-        // remove tmp directory
-        if (cleanUp) {
-            finalWorkerTask.getRunContext().cleanup();
-        }
-
-        finalWorkerTask = this.cleanUpTransient(finalWorkerTask);
+        WorkerTask finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
 
         // get last state
         TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
@@ -608,11 +600,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } catch (QueueException e) {
             finalWorkerTask = workerTask.fail();
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
-            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
-            contextLogger.logger().error("Exception while trying to emit the worker task result to the queue", e);
+            finalWorkerTask.logger().error("Exception while trying to emit the worker task result to the queue", e);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } finally {
+            // remove tmp directory
+            if (cleanUp) {
+                workerTaskAttempt.getRunContext().cleanup();
+            }
+
             this.logTerminated(finalWorkerTask);
         }
     }
@@ -707,7 +703,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // attempt
         TaskRunAttempt taskRunAttempt = builder
             .build()
-            .withState(state);
+            .withState(state)
+            .withLogFile(runContext.logFileURI());
 
         // metrics
         runContext.metrics().forEach(metric -> this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric)));

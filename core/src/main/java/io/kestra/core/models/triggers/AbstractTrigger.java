@@ -63,6 +63,9 @@ abstract public class AbstractTrigger implements TriggerInterface {
     )
     private List<State.Type> stopAfter;
 
+    @Builder.Default
+    private boolean logToFile = false;
+
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.
      * @deprecated use {@link #logLevel} instead

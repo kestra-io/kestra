@@ -84,6 +84,14 @@ public abstract class RunContext {
      */
     public abstract Logger logger();
 
+    /**
+     * Gets the log file URI inside the internal storage.
+     * Only populated if the task or trigger is configured to log o a file.<br>
+     *
+     * Warning: this method can be called only once for an attempt.
+     */
+    public abstract URI logFileURI();
+
     // for serialization backward-compatibility
     @JsonIgnore
     public abstract URI getStorageOutputPrefix();

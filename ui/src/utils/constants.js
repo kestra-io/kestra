@@ -1,6 +1,7 @@
 export const SECTIONS = {
     TASKS: "TASKS",
     TRIGGERS: "TRIGGERS",
+    TASK_RUNNERS: "TASK_RUNNERS",
 }
 
 export const stateGlobalChartTypes = {

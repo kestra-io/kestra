@@ -50,6 +50,7 @@ import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
+import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
 
 export default (app, routes, stores, translations) => {
     // charts
@@ -151,6 +152,7 @@ export default (app, routes, stores, translations) => {
     app.component("TaskSubflowNamespace", TaskSubflowNamespace)
     app.component("TaskSubflowId", TaskSubflowId)
     app.component("TaskSubflowInputs", TaskSubflowInputs)
+    app.component("TaskTaskRunner", TaskTaskRunner)
     app.component("LeftMenuLink", LeftMenuLink)
     app.component("RouterMd", RouterMd)
 

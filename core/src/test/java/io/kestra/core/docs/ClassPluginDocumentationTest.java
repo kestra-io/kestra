@@ -138,9 +138,9 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, DynamicPropertyExampleTask.class, null);
 
             assertThat(doc.getCls(), is("io.kestra.core.models.property.DynamicPropertyExampleTask"));
-            assertThat(doc.getDefs(), aMapWithSize(4));
+            assertThat(doc.getDefs(), aMapWithSize(6));
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties, aMapWithSize(15));
+            assertThat(properties, aMapWithSize(16));
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("oneOf"), notNullValue());

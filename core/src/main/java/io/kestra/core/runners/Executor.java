@@ -35,6 +35,7 @@ public class Executor {
     private ExecutionResumed executionResumed;
     private ExecutionResumed joinedExecutionResumed;
     private final List<WorkerTrigger> workerTriggers = new ArrayList<>();
+    private WorkerJob workerJobToResubmit;
 
     /**
      * The sequence id should be incremented each time the execution is persisted after mutation.
@@ -66,11 +67,7 @@ public class Executor {
     }
 
     public Executor(WorkerJob workerJob) {
-        if (workerJob instanceof WorkerTask workerTask) {
-            this.workerTasks.add(workerTask);
-        } else if (workerJob instanceof WorkerTrigger workerTrigger) {
-            this.workerTriggers.add(workerTrigger);
-        }
+        this.workerJobToResubmit = workerJob;
     }
 
     public Executor(ExecutionResumed executionResumed) {

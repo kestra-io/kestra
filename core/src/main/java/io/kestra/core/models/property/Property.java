@@ -182,9 +182,6 @@ public class Property<T> {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        private static final TypeReference<List<String>> LIST_OF_STRING = new TypeReference<>() {};
-        private static final TypeReference<Map<String, String>> MAP_OF_STRING_STRING = new TypeReference<>() {};
-
         protected PropertyDeserializer() {
             super(Property.class);
         }
@@ -193,10 +190,10 @@ public class Property<T> {
         public Property<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String s;
             if (p.isExpectedStartArrayToken()) {
-                List<String> list = p.readValueAs(LIST_OF_STRING);
+                List<Object> list = p.readValueAs(JacksonMapper.LIST_TYPE_REFERENCE);
                 s = MAPPER.writeValueAsString(list);
             } else if (p.isExpectedStartObjectToken()) {
-                Map<String, String> list = p.readValueAs(MAP_OF_STRING_STRING);
+                Map<String, Object> list = p.readValueAs(JacksonMapper.MAP_TYPE_REFERENCE);
                 s = MAPPER.writeValueAsString(list);
             } else {
                 s = p.getValueAsString();

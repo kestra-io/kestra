@@ -16,6 +16,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -71,10 +72,10 @@ public class StateStoreMigrateCommand extends AbstractCommand {
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, Flow flow) {
-        return runContextFactory.of(flow, Map.of("flow", Map.of(
-            "tenantId", flow.getTenantId(),
-            "id", flow.getId(),
-            "namespace", flow.getNamespace()
-        )));
+        Map<String, String> flowVariables = new HashMap<>();
+        flowVariables.put("tenantId", flow.getTenantId());
+        flowVariables.put("id", flow.getId());
+        flowVariables.put("namespace", flow.getNamespace());
+        return runContextFactory.of(flow, Map.of("flow", flowVariables));
     }
 }

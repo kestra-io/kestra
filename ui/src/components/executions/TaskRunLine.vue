@@ -189,7 +189,7 @@
             },
             flow: {
                 type: Object,
-                default: null
+                default: undefined
             },
             forcedAttemptNumber: {
                 type: Number,
@@ -263,7 +263,7 @@
                 return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
             },
             taskType(taskRun) {
-                if(!taskRun) return undefined;        
+                if(!taskRun) return undefined;
 
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
                 const parentTaskRunId = taskRun.parentTaskRunId;

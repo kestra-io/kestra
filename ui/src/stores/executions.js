@@ -241,12 +241,14 @@ export default {
             return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
                 .then(response => {
                     commit("setFlow", response.data)
+                    return response.data;
                 });
         },
         loadFlowForExecutionByExecutionId({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}/flow`)
                 .then(response => {
                     commit("setFlow", response.data)
+                    return response.data;
                 });
         },
         loadGraph({commit}, options) {

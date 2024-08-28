@@ -37,6 +37,8 @@ public class StateStoreMigrateCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
+        super.call();
+
         flowRepository.findAllForAllTenants().stream().map(flow -> Map.entry(flow, List.of(
             URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of(flow.getId()) + "/states"),
             URI.create("/" + flow.getNamespace().replace(".", "/") + "/states")

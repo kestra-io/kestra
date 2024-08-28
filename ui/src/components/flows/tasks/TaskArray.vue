@@ -32,13 +32,13 @@
         mixins: [Task],
         emits: ["update:modelValue"],
         created() {
-            if (!Array.isArray(this.modelValue)) {
+            if (!Array.isArray(this.modelValue) && this.modelValue !== undefined) {
                 this.$emit("update:modelValue", []);
             }
         },
         computed: {
             values() {
-                if (this.modelValue === undefined || (Array.isArray(this.modelValue) && this.modelValue.length === 0)) {
+                if (this.modelValue === undefined) {
                     return this.schema.default || [undefined];
                 }
 

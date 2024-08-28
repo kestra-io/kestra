@@ -8,6 +8,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -27,17 +28,15 @@ import java.util.stream.Stream;
 @Slf4j
 public class StateStoreMigrateCommand extends AbstractCommand {
     @Inject
-    private StorageInterface storageInterface;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    private RunContextFactory runContextFactory;
+    private ApplicationContext applicationContext;
 
     @Override
     public Integer call() throws Exception {
         super.call();
+
+        FlowRepositoryInterface flowRepository = this.applicationContext.getBean(FlowRepositoryInterface.class);
+        StorageInterface storageInterface = this.applicationContext.getBean(StorageInterface.class);
+        RunContextFactory runContextFactory = this.applicationContext.getBean(RunContextFactory.class);
 
         flowRepository.findAllForAllTenants().stream().map(flow -> Map.entry(flow, List.of(
             URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of(flow.getId()) + "/states"),
@@ -57,7 +56,7 @@ public class StateStoreMigrateCommand extends AbstractCommand {
             String taskRunValue = statesUriPart.length > 2 ? statesUriPart[1] : null;
             String stateSubName = statesUriPart[statesUriPart.length - 1];
             boolean flowScoped = flowQualifierWithStateQualifiers[0].endsWith("/" + flow.getId());
-            StateStore stateStore = new StateStore(runContext(flow), false);
+            StateStore stateStore = new StateStore(runContext(runContextFactory, flow), false);
 
             try (InputStream is = storageInterface.get(flow.getTenantId(), stateStoreFileUri)) {
                 stateStore.putState(flowScoped, stateName, stateSubName, taskRunValue, is.readAllBytes());
@@ -71,7 +70,7 @@ public class StateStoreMigrateCommand extends AbstractCommand {
         return 0;
     }
 
-    private RunContext runContext(Flow flow) {
+    private RunContext runContext(RunContextFactory runContextFactory, Flow flow) {
         return runContextFactory.of(flow, Map.of("flow", Map.of(
             "tenantId", flow.getTenantId(),
             "id", flow.getId(),

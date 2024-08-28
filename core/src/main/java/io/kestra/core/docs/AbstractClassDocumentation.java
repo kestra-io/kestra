@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -142,6 +143,10 @@ public abstract class AbstractClassDocumentation<T> {
     private Boolean isTypeToKeep(String key){
         try {
             if (AbstractRetry.class.isAssignableFrom(Class.forName(key))) {
+                return true;
+            }
+
+            if (TaskRunner.class.isAssignableFrom(Class.forName(key))) {
                 return true;
             }
         } catch (ClassNotFoundException ignored) {

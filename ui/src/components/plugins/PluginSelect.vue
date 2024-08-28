@@ -55,12 +55,17 @@
             taskModels() {
                 const taskModels = [];
                 for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[this.section.toLowerCase()]);
+                    taskModels.push.apply(taskModels, plugin[this.upperSnakeToCamelCase(this.section)]);
                 }
                 return taskModels;
             },
         },
         methods: {
+            upperSnakeToCamelCase(str) {
+                return str.toLowerCase().replaceAll(/_([a-z])/g, function (g) {
+                    return g[1].toUpperCase();
+                });
+            },
             onInput(value) {
                 this.$emit("update:modelValue", value);
             },

@@ -58,7 +58,8 @@ tasks:
   - id: upload
     type: io.kestra.plugin.core.namespace.UploadFiles
     filesMap: "{{ outputs.unzip.files }}"
-    namespace: company.team"""
+    namespace: "{{ flow.namespace }}"
+    """
         ),
         @Example(
             title = "Upload a folder using a glob pattern. Note that the Regex syntax requires a `glob` pattern inspired by [Apache Ant patterns](https://ant.apache.org/manual/dirtasks.html#patterns). Make sure that your pattern starts with `glob:`, followed by the pattern. For example, use `glob:**/dbt/**` to upload the entire `dbt` folder (with all files and subdirectories) regardless of that folder's location in the directory structure.",
@@ -78,7 +79,8 @@ tasks:
         type: io.kestra.plugin.core.namespace.UploadFiles
         files:
           - "glob:**/dbt/**"
-        namespace: dwh"""
+        namespace: "{{ flow.namespace }}"
+        """
         ),
         @Example(
             title = "Upload a specific file and rename it.",
@@ -101,7 +103,8 @@ tasks:
     type: io.kestra.plugin.core.namespace.UploadFiles
     filesMap:
       LICENCE: "{{ outputs.unzip.files['scripts-main/LICENSE'] }}"
-    namespace: dwh"""
+    namespace: "{{ flow.namespace }}"
+    """
         )
     }
 )

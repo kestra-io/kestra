@@ -303,17 +303,6 @@
                         </el-table-column>
 
                         <el-table-column
-                            prop="triggers"
-                            v-if="displayColumn('triggers')"
-                            :label="$t('triggers')"
-                            class-name="shrink"
-                        >
-                            <template #default="scope">
-                                <trigger-avatar :execution="scope.row" />
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
@@ -409,7 +398,6 @@
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
-    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
@@ -441,8 +429,6 @@
             Filters,
             StatusFilterButtons,
             StateGlobalChart,
-            TriggerAvatar,
-            DateAgo,
             Kicon,
             Labels,
             Id,

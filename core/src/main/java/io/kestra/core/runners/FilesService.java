@@ -61,7 +61,8 @@ public abstract class FilesService {
      }
 
     public static Map<String, URI> outputFiles(RunContext runContext, List<String> outputs) throws Exception {
-        List<Path> allFilesMatching = runContext.workingDir().findAllFilesMatching(outputs);
+        List<String> renderedOutputs = outputs != null ? runContext.render(outputs) : null;
+        List<Path> allFilesMatching = runContext.workingDir().findAllFilesMatching(renderedOutputs);
         var outputFiles = allFilesMatching.stream()
             .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
                 runContext.workingDir().path().relativize(path).toString(),

@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,6 +48,15 @@ class FilesServiceTest {
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, files.keySet().stream().toList());
+        assertThat(outputs.size(), is(1));
+    }
+
+    @Test
+    void renderOutputFiles() throws Exception {
+        RunContext runContext = runContextFactory.of(Map.of("extension", "txt"));
+        Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
+
+        Map<String, URI> outputs = FilesService.outputFiles(runContext, List.of("*.{{extension}}"));
         assertThat(outputs.size(), is(1));
     }
 }

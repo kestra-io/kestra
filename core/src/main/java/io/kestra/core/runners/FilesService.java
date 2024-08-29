@@ -58,15 +58,19 @@ public abstract class FilesService {
          return inputFiles;
      }
 
-     public static Map<String, URI> outputFiles(RunContext runContext, List<String> outputs) throws Exception {
-         List<Path> allFilesMatching = runContext.workingDir().findAllFilesMatching(outputs);
-         var outputFiles = allFilesMatching.stream()
-             .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
-                 runContext.workingDir().path().relativize(path).toString(),
-                 runContext.storage().putFile(path.toFile(), resolveUniqueNameForFile(path))
-             )))
-             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-         runContext.logger().info("Captured {} output(s).", allFilesMatching.size());
+    public static Map<String, URI> outputFiles(RunContext runContext, List<String> outputs) throws Exception {
+        List<String> renderedOutputs = outputs != null ? runContext.render(outputs) : null;
+        List<Path> allFilesMatching = runContext.workingDir().findAllFilesMatching(renderedOutputs);
+        var outputFiles = allFilesMatching.stream()
+            .map(throwFunction(path -> new AbstractMap.SimpleEntry<>(
+                runContext.workingDir().path().relativize(path).toString(),
+                runContext.storage().putFile(path.toFile(), resolveUniqueNameForFile(path))
+            )))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        if (runContext.logger().isTraceEnabled()) {
+            runContext.logger().trace("Captured {} output(s).", allFilesMatching.size());
+        }
 
         return outputFiles;
     }

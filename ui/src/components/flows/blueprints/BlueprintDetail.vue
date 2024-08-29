@@ -2,7 +2,7 @@
     <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreateFlow">
-                <router-link :to="{name: 'flows/create', query: {blueprintId: blueprint.id}}">
+                <router-link :to="{name: 'flows/create', query: {blueprintId: blueprint.id, blueprintSource: embedFriendlyBlueprintBaseUri.includes('community') ? 'community' : 'custom'}}">
                     <el-button type="primary" v-if="!embed">
                         {{ $t('use') }}
                     </el-button>
@@ -140,14 +140,11 @@
             }
         },
         async created() {
-            const TAB = this.$route.query?.tab ?? (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
-            const URL = this.blueprintBaseUri ?? `${apiUrl(this.$store)}/blueprints/` + TAB;
-
-            this.blueprint = (await this.$http.get(`${URL}/${this.blueprintId}`)).data;
+            this.blueprint = (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${this.blueprintId}`)).data;
 
             try {
-                if (this.blueprintBaseUri?.endsWith("community")) {
-                    this.flowGraph = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}/graph`, {
+                if (this.embedFriendlyBlueprintBaseUri.endsWith("community")) {
+                    this.flowGraph = (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${this.blueprintId}/graph`, {
                         validateStatus: (status) => {
                             return status === 200;
                         }
@@ -176,6 +173,9 @@
                     ...YamlUtils.parse(this.blueprint.flow),
                     source: this.blueprint.flow
                 }
+            },
+            embedFriendlyBlueprintBaseUri() {
+                return this.blueprintBaseUri ?? (`${apiUrl(this.$store)}/blueprints/` + (this?.$route?.params?.tab ?? "community"))
             }
         }
     };

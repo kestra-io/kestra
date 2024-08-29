@@ -98,6 +98,7 @@
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
+    import {apiUrl} from "override/utils/route.js";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -140,7 +141,7 @@
             },
             async copy(blueprintId) {
                 await Utils.copy(
-                    (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
+                    (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${blueprintId}/flow`)).data
                 );
             },
             async blueprintToEditor(blueprintId) {
@@ -150,7 +151,7 @@
                     params: {
                         tenant: this.$route.params.tenant
                     },
-                    query: {blueprintId: blueprintId, blueprintSource: this.blueprintBaseUri.includes("community") ? "community" : "custom"}
+                    query: {blueprintId: blueprintId, blueprintSource: this.embedFriendlyBlueprintBaseUri.includes("community") ? "community" : "custom"}
                 });
             },
             tagsToString(blueprintTags) {
@@ -173,7 +174,7 @@
                     })
                     .then(response => {
                         // Handle switch tab while fetching data
-                        if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
+                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
                             this.tags = this.tagsResponseMapper(response.data);
                         }
                     })
@@ -205,7 +206,7 @@
                     })
                     .then(response => {
                         // Handle switch tab while fetching data
-                        if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
+                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
                             const blueprintsResponse = response.data;
                             this.total = blueprintsResponse.total;
                             this.blueprints = blueprintsResponse.results;
@@ -213,7 +214,7 @@
                     });
             },
             loadData(callback) {
-                const beforeLoadBlueprintBaseUri = this.blueprintBaseUri;
+                const beforeLoadBlueprintBaseUri = this.embedFriendlyBlueprintBaseUri;
 
                 Promise.all([
                     this.loadTags(beforeLoadBlueprintBaseUri),
@@ -228,7 +229,7 @@
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
-                    if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
+                    if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
                         callback();
                     }
                 })
@@ -244,6 +245,9 @@
             ...mapState("plugin", ["icons"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+            },
+            embedFriendlyBlueprintBaseUri() {
+                return this.blueprintBaseUri ?? (`${apiUrl(this.$store)}/blueprints/` + this?.$route?.params?.tab ?? "community")
             }
         },
         watch: {

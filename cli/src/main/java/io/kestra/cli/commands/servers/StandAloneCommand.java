@@ -40,8 +40,8 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
-    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker thread")
-    private Integer workerThread;
+    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to two times the number of available processors. Set it to 0 to avoid starting a worker.")
+    private int workerThread = Runtime.getRuntime().availableProcessors() * 2;
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipExecutions = Collections.emptyList();
@@ -99,9 +99,9 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
 
-        if (this.workerThread != null  && this.workerThread == 0) {
+        if (this.workerThread == 0) {
             standAloneRunner.setWorkerEnabled(false);
-        } else if (this.workerThread != null) {
+        } else {
             standAloneRunner.setWorkerThread(this.workerThread);
         }
 

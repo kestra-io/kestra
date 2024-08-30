@@ -23,7 +23,7 @@ public class WorkerCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of concurrent threads to launch")
+    @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of worker threads, defaults to two times the number of available processors")
     private int thread = Runtime.getRuntime().availableProcessors() * 2;
 
     @CommandLine.Option(names = {"-g", "--worker-group"}, description = "the worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")

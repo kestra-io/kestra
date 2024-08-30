@@ -23,7 +23,8 @@ public enum Type {
     URI(URIInput.class.getName()),
     SECRET(SecretInput.class.getName()),
     ARRAY(ArrayInput.class.getName()),
-    MULTISELECT(MultiselectInput.class.getName());
+    MULTISELECT(MultiselectInput.class.getName()),
+    YAML(YamlInput.class.getName());
 
     private final String clsName;
 

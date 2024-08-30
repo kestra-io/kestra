@@ -56,6 +56,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("validatedTime", "11:27:49")
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
+        .put("yaml", """
+            some: property
+            alist:
+            - of
+            - values""")
         .build();
 
     @Inject
@@ -135,6 +140,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("array"), instanceOf(List.class));
         assertThat((List<String>)typeds.get("array"), hasSize(3));
         assertThat((List<String>)typeds.get("array"), contains(1, 2, 3));
+        assertThat(typeds.get("yaml"), is(Map.of(
+            "some", "property",
+            "alist", List.of("of", "values"))));
     }
 
     @Test
@@ -161,7 +169,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(13));
+        assertThat(execution.getTaskRunList(), hasSize(14));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(
             (String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value"),
@@ -333,7 +341,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> flowIO.typedInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(13));
+        assertThat(execution.getTaskRunList(), hasSize(14));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         assertThat(execution.getInputs().get("json"), instanceOf(Map.class));

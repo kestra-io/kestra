@@ -1,4 +1,5 @@
 import moment from "moment/moment";
+import YamlUtils from "./yamlUtils.js";
 
 export default class Inputs {
     static normalize(type, value) {
@@ -11,7 +12,13 @@ export default class Inputs {
         } else if (type === "DURATION" || type === "TIME") {
             res = moment().startOf("day").add(res, "seconds").toString()
         } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
-            if(typeof res !== "string") res = JSON.stringify(res).toString();
+            if(typeof res !== "string") {
+                res = JSON.stringify(res).toString();
+            }
+        } else if (type === "YAML") {
+            if(typeof res !== "string") {
+                res = YamlUtils.stringify(res).toString();
+            }
         } else if (type === "BOOLEAN" && type === undefined){
             res = "undefined";
         } else if (type === "STRING" && Array.isArray(res)){

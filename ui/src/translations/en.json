@@ -276,6 +276,7 @@
     },
     "blueprints": {
       "title": "Blueprints",
+      "empty": "No blueprints to show.",
       "header": {
         "catch phrase": {
           "1": "The first step is always the hardest.",
@@ -790,6 +791,8 @@
       "false": "{count} trigger(s) enabled"
     },
     "no_namespaces": "Zero namespaces match the search criteria.",
+    "system_namespace": "Keep your platform in check with system flows.",
+    "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
     "plugin defaults": "Plugin defaults",
     "secret": {
       "names": "Secrets",

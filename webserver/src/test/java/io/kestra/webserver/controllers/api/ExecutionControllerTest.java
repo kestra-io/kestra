@@ -110,6 +110,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
         .put("json", "{}")
+        .put("yaml", """
+            some: property
+            alist:
+            - of
+            - values""")
         .build();
 
     @Test
@@ -152,6 +157,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .addPart("secret", "secret")
             .addPart("array", "[1, 2, 3]")
             .addPart("json", "{}")
+            .addPart("yaml", "{}")
             .build();
     }
 
@@ -212,7 +218,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Execution result = triggerInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(result.getTaskRunList().size(), is(13));
+        assertThat(result.getTaskRunList().size(), is(14));
     }
 
     @Test
@@ -571,7 +577,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void downloadFile() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList(), hasSize(13));
+        assertThat(execution.getTaskRunList(), hasSize(14));
 
         String path = (String) execution.getInputs().get("file");
 
@@ -608,7 +614,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     void filePreview() throws TimeoutException {
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList(), hasSize(13));
+        assertThat(defaultExecution.getTaskRunList(), hasSize(14));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -630,10 +636,11 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("secret", "secret")
             .put("array", "[1, 2, 3]")
             .put("json", "{}")
+            .put("yaml", "{}")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList(), hasSize(13));
+        assertThat(latin1Execution.getTaskRunList(), hasSize(14));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

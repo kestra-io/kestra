@@ -129,6 +129,15 @@
                 lang="json"
                 v-model="inputs[input.id]"
             />
+            <editor
+                :full-height="false"
+                :input="true"
+                :navbar="false"
+                v-if="input.type === 'YAML'"
+                lang="yaml"
+                :model-value="inputs[input.id]"
+                @change="onYamlChange(input, $event)"
+            />
 
             <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
         </el-form-item>
@@ -142,8 +151,14 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
+    import YamlUtils from "../../utils/yamlUtils.js";
 
     export default {
+        computed: {
+            YamlUtils() {
+                return YamlUtils
+            }
+        },
         components: {Editor, Markdown},
         props: {
             modelValue: {
@@ -212,6 +227,10 @@
                     return;
                 }
                 this.inputs[input.id] = e.target.files[0];
+                this.onChange();
+            },
+            onYamlChange(input, e) {
+                this.inputs[input.id] = e.target.value;
                 this.onChange();
             },
             numberHint(input){

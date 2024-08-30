@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.models.executions.Execution;
@@ -44,6 +45,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 public class FlowInputOutput {
     public static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+    public static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final StorageInterface storageInterface;
     private final String secretKey;
@@ -281,6 +283,7 @@ public class FlowInputOutput {
                     }
                 }
                 case JSON -> JacksonMapper.toObject(((String) current));
+                case YAML -> YAML_MAPPER.readValue((String) current, JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
                     Matcher matcher = URI_PATTERN.matcher((String) current);
                     if (matcher.matches()) {

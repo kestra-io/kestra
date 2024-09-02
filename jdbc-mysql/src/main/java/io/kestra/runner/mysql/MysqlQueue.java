@@ -7,9 +7,17 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MysqlQueue<T> extends JdbcQueue<T> {
+
+    // TODO - remove once 'queue' table is re-designed
+    private static final MysqlQueueConsumers QUEUE_CONSUMERS = new MysqlQueueConsumers();
+
     public MysqlQueue(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
     }
@@ -59,7 +67,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
-                DSL.condition("NOT(FIND_IN_SET(?, consumers) > 0)", queueType)
+                AbstractJdbcRepository.field("consumers").in(QUEUE_CONSUMERS.allForConsumerNotIn(queueType))
             )));
 
         if (consumerGroup != null) {
@@ -100,5 +108,39 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
         }
 
         update.execute();
+    }
+
+    private static final class MysqlQueueConsumers {
+
+        private static final Set<String> CONSUMERS;
+
+        static {
+            CONSUMERS = new HashSet<>();
+            String[] elements = {"indexer", "executor", "worker", "scheduler"};
+            List<String> results = new ArrayList<>();
+            // Generate all combinations and their permutations
+            generateCombinations(elements, new boolean[elements.length], new ArrayList<>(), results);
+            CONSUMERS.addAll(results);
+        }
+
+        public Set<String> allForConsumerNotIn(String consumer) {
+            return CONSUMERS.stream().filter(s -> !s.contains(consumer)).collect(Collectors.toSet());
+        }
+
+        private static void generateCombinations(String[] elements, boolean[] used, List<String> current, List<String> results) {
+            if (!current.isEmpty()) {
+                results.add(String.join(",", current));
+            }
+
+            for (int i = 0; i < elements.length; i++) {
+                if (!used[i]) {
+                    used[i] = true;
+                    current.add(elements[i]);
+                    generateCombinations(elements, used, current, results);
+                    current.removeLast();
+                    used[i] = false;
+                }
+            }
+        }
     }
 }

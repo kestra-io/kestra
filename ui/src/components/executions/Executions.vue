@@ -107,6 +107,13 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
+                    <el-switch
+                        :model-value="showChart"
+                        @update:model-value="onShowChartChange"
+                        :active-text="$t('show chart')"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <filters :storage-key="filterStorageKey" />
                 </el-form-item>
                 <el-form-item>
@@ -118,7 +125,7 @@
                 </el-form-item>
             </template>
 
-            <template #top v-if="isDisplayedTop">
+            <template #top v-if="showStatChart()">
                 <state-global-chart
                     v-if="daily"
                     class="mb-4"
@@ -303,17 +310,6 @@
                         </el-table-column>
 
                         <el-table-column
-                            prop="triggers"
-                            v-if="displayColumn('triggers')"
-                            :label="$t('triggers')"
-                            class-name="shrink"
-                        >
-                            <template #default="scope">
-                                <trigger-avatar :execution="scope.row" />
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
@@ -409,7 +405,6 @@
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
-    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
@@ -441,8 +436,6 @@
             Filters,
             StatusFilterButtons,
             StateGlobalChart,
-            TriggerAvatar,
-            DateAgo,
             Kicon,
             Labels,
             Id,
@@ -493,6 +486,7 @@
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined,
                 recomputeInterval: false,
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_CHART)),
                 optionalColumns: [
                     {
                         label: "start date",
@@ -568,7 +562,6 @@
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -641,6 +634,17 @@
             displayColumn(column) {
                 return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);
             },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_CHART, value);
+
+                if (this.showChart) {
+                    this.loadStats();
+                }
+            },
+            showStatChart() {
+                return this.isDisplayedTop && this.showChart;
+            },
             refresh() {
                 this.recomputeInterval = !this.recomputeInterval;
                 this.load();
@@ -676,19 +680,22 @@
 
                 return _merge(base, queryFilter)
             },
+            loadStats() {
+                this.dailyReady = false;
+
+                this.$store
+                    .dispatch("stat/daily", this.loadQuery({
+                        startDate: this.$moment(this.startDate).toISOString(true),
+                        endDate: this.$moment(this.endDate).toISOString(true)
+                    }, true))
+                    .then(() => {
+                        this.dailyReady = true;
+                    });
+            },
             loadData(callback) {
                 this.refreshDates = !this.refreshDates;
-                if (this.isDisplayedTop) {
-                    this.dailyReady = false;
-
-                    this.$store
-                        .dispatch("stat/daily", this.loadQuery({
-                            startDate: this.$moment(this.startDate).toISOString(true),
-                            endDate: this.$moment(this.endDate).toISOString(true)
-                        }, true))
-                        .then(() => {
-                            this.dailyReady = true;
-                        });
+                if (this.showStatChart()) {
+                    this.loadStats();
                 }
 
                 this.$store.dispatch("execution/findExecutions", this.loadQuery({
@@ -765,7 +772,7 @@
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);
-                
+
                 const deleteLogs = ref(true);
                 const deleteMetrics = ref(true);
                 const deleteStorage = ref(true);
@@ -784,7 +791,7 @@
                             "onUpdate:modelValue": (val) => {
                                 includeNonTerminated.value = val
                             },
-                        }),                       
+                        }),
                     ]),
                     h(ElAlert, {
                         title: this.$t("execution-warn-deleting-still-running"),

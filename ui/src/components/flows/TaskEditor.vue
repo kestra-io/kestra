@@ -109,7 +109,7 @@
                     type: this.selectedTaskType
                 };
 
-                if (this.section !== SECTIONS.TRIGGERS) {
+                if (this.section !== SECTIONS.TRIGGERS && this.section !== SECTIONS.TASK_RUNNERS) {
                     value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
                 }
 

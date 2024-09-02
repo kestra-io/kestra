@@ -73,9 +73,13 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
         Optional<Flow> flow = flowRepository.findById(null, "io.kestra.unittest", "invalid");
 
-        assertThat(flow.isPresent(), is(true));
-        assertThat(flow.get(), instanceOf(FlowWithException.class));
-        assertThat(((FlowWithException) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
+        try {
+            assertThat(flow.isPresent(), is(true));
+            assertThat(flow.get(), instanceOf(FlowWithException.class));
+            assertThat(((FlowWithException) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
+        } finally {
+            flow.ifPresent(value -> flowRepository.delete(value));
+        }
     }
 
     @BeforeAll

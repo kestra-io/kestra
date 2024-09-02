@@ -10,6 +10,13 @@
         </el-button>
     </el-button-group>
 
+    <el-button-group v-else-if="isURI(value)">
+        <a class="el-button el-button--small el-button--primary" :href="value" target="_blank">
+            <OpenInNew />
+            {{ $t('open') }}
+        </a>        
+    </el-button-group>
+
     <span v-else-if="value === null">
         <em>null</em>
     </span>
@@ -20,6 +27,7 @@
 
 <script setup>
     import Download from "vue-material-design-icons/Download.vue";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import FilePreview from "./FilePreview.vue";
 </script>
 
@@ -36,6 +44,14 @@
         methods: {
             isFile(value) {
                 return typeof(value) === "string" && value.startsWith("kestra:///")
+            },
+            isURI(value) {
+                try {
+                    new URL(value);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
             },
             itemUrl(value) {
                 return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${value}`;

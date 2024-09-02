@@ -19,7 +19,7 @@
             <task-editor
                 ref="editor"
                 :model-value="taskYaml"
-                :section="SECTIONS.TASKS"
+                :section="section"
                 @update:model-value="onInput"
             />
         </el-form>
@@ -34,7 +34,6 @@
 <script setup>
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import {SECTIONS} from "../../../utils/constants.js";
 </script>
 
 <script>
@@ -42,11 +41,18 @@
     import YamlUtils from "../../../utils/yamlUtils";
     import TaskEditor from "../TaskEditor.vue"
     import Drawer from "../../Drawer.vue"
+    import {SECTIONS as SECTION} from "../../../utils/constants.js";
 
     export default {
         mixins: [Task],
         components: {TaskEditor, Drawer},
         emits: ["update:modelValue"],
+        props: {
+            section: {
+                type: String,
+                default: SECTION.TASKS
+            },
+        },
         data() {
             return {
                 isOpen: false,

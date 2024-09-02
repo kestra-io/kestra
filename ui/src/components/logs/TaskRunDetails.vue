@@ -1,8 +1,17 @@
 <template>
-    <div v-if="followedExecution" class="log-wrapper">
-        <div v-for="currentTaskRun in currentTaskRuns" :key="currentTaskRun.id">
-            <template
+    <DynamicScroller
+        v-if="followedExecution"
+        :items="currentTaskRuns"
+        :min-item-size="50"
+        key-field="id"
+        class="log-wrapper"
+    >
+        <template #default="{item: currentTaskRun, index: currentTaskRunId, active: isTaskRunActive}">
+            <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
+                :item="currentTaskRun"
+                :active="isTaskRunActive"
+                :data-index="currentTaskRunId"
             >
                 <el-card class="attempt-wrapper">
                     <task-run-line
@@ -40,12 +49,23 @@
                                 :size-dependencies="[item.message, item.image]"
                                 :data-index="index"
                             >
+                                <el-button-group class="line" v-if="item.logFile">
+                                    <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
+                                        <Download />
+                                        {{ $t('download') }}
+                                    </a>
+                                    <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
+                                    <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
+                                        ({{ logFileSizeByPath[item.logFile] }})
+                                    </el-button>
+                                </el-button-group>
                                 <log-line
+                                    class="line"
                                     :key="index"
                                     :level="level"
                                     :log="item"
                                     :exclude-metas="excludeMetas"
-                                    v-if="filter === '' || item.message?.toLowerCase().includes(filter)"
+                                    v-else-if="filter === '' || item.message?.toLowerCase().includes(filter)"
                                 />
                                 <TaskRunDetails
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
@@ -63,9 +83,9 @@
                         </template>
                     </DynamicScroller>
                 </el-card>
-            </template>
-        </div>
-    </div>
+            </DynamicScrollerItem>
+        </template>
+    </DynamicScroller>
 </template>
 
 <script>
@@ -83,15 +103,20 @@
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
     import throttle from "lodash/throttle";
+    import FilePreview from "../executions/FilePreview.vue";
+    import {apiUrl} from "override/utils/route.js";
+    import Utils from "../../utils/utils.js";
 
     export default {
         name: "TaskRunDetails",
         components: {
+            FilePreview,
             TaskRunLine,
             ForEachStatus,
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
+            Download
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch"],
         props: {
@@ -161,6 +186,7 @@
                 flow: undefined,
                 logsBuffer: [],
                 shownSubflowsIds: [],
+                logFileSizeByPath: {},
                 throttledExecutionUpdate: throttle(function (event) {
                     this.followedExecution = JSON.parse(event.data)
                 }, 500)
@@ -277,8 +303,16 @@
                 return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]));
             },
             logsWithIndexByAttemptUid() {
-                const indexedLogs = this.logs
-                    .filter(logLine => this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
+                const logFilesWrappers = this.currentTaskRuns.flatMap(taskRun =>
+                    this.attempts(taskRun)
+                        .filter(attempt => attempt.logFile !== undefined)
+                        .map((attempt, attemptNumber) => ({logFile: attempt.logFile, taskRunId: taskRun.id, attemptNumber}))
+                );
+
+                logFilesWrappers.forEach(logFileWrapper => this.fetchAndStoreLogFileSize(logFileWrapper.logFile))
+
+                const indexedLogs = [...this.logs, ...logFilesWrappers]
+                    .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
@@ -307,6 +341,19 @@
             }
         },
         methods: {
+            fileUrl(path) {
+                return `${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file?path=${path}`;
+            },
+            async fetchAndStoreLogFileSize(path){
+                if (this.logFileSizeByPath[path] !== undefined) {
+                    return;
+                }
+
+                const axiosResponse = await this.$http(`${apiUrl(this.$store)}/executions/${this.followedExecution.id}/file/metas?path=${path}`, {
+                    validateStatus: (status) => status === 200 || status === 404 || status === 422
+                });
+                this.logFileSizeByPath[path] = Utils.humanFileSize(axiosResponse.data.size);
+            },
             closeExecutionSSE() {
                 if (this.executionSSE) {
                     this.executionSSE.close();
@@ -459,7 +506,7 @@
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },
             loadLogs(executionId) {
-                if(!this.showLogs) {
+                if (!this.showLogs) {
                     return;
                 }
                 this.$store.dispatch("execution/loadLogs", {
@@ -492,7 +539,7 @@
                 this.selectedAttemptNumberByTaskRunId[taskRunId] = newDisplayedAttemptNumber;
             },
             taskType(taskRun) {
-                if(!taskRun) return undefined;        
+                if (!taskRun) return undefined;
 
                 const task = FlowUtils.findTaskById(this.flow, taskRun?.taskId);
                 const parentTaskRunId = taskRun.parentTaskRunId;
@@ -512,6 +559,22 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .log-wrapper {
+        max-height: calc(100vh - 233px);
+
+        &::-webkit-scrollbar {
+            width: 2px;
+            height: 2px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+            border-radius: 0px;
+        }
+
         &.even > div > .el-card {
             background: var(--bs-gray-100);
 
@@ -525,8 +588,8 @@
             }
         }
 
-        :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-border-color);
+        :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
+            padding-bottom: var(--spacer);
         }
 
         :deep(.line) {
@@ -534,8 +597,11 @@
         }
 
         .attempt-wrapper {
-            margin-bottom: var(--spacer);
             background-color: var(--bs-white);
+
+            :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
+                border-top: 1px solid var(--bs-border-color);
+            }
 
             html.dark & {
                 background-color: var(--bs-gray-100);
@@ -562,6 +628,10 @@
             max-height: 50vh;
             transition: max-height 0.2s ease-out;
             margin-top: calc(var(--spacer) / 2);
+
+            .line {
+                padding: calc(var(--spacer) / 2);
+            }
 
             &::-webkit-scrollbar {
                 width: 5px;

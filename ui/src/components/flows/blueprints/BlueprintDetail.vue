@@ -2,7 +2,7 @@
     <top-nav-bar v-if="!embed && blueprint" :title="blueprint.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
         <template #additional-right>
             <ul v-if="userCanCreateFlow">
-                <router-link :to="{name: 'flows/create', query: {blueprintId: blueprint.id}}">
+                <router-link :to="{name: 'flows/create', query: {blueprintId: blueprint.id, blueprintSource: embedFriendlyBlueprintBaseUri.includes('community') ? 'community' : 'custom'}}">
                     <el-button type="primary" v-if="!embed">
                         {{ $t('use') }}
                     </el-button>
@@ -41,8 +41,17 @@
             <el-col :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
                 <el-card>
-                    <editor class="position-relative" :read-only="true" :input="true" :full-height="false" :minimap="false" :model-value="blueprint.flow" lang="yaml">
-                        <template #nav>
+                    <editor
+                        class="position-relative"
+                        :read-only="true"
+                        :input="true"
+                        :full-height="false"
+                        :minimap="false"
+                        :model-value="blueprint.flow"
+                        lang="yaml"
+                        :navbar="false"
+                    >
+                        <template #absolute>
                             <copy-to-clipboard class="position-absolute" :text="blueprint.flow" />
                         </template>
                     </editor>
@@ -91,7 +100,7 @@
                         label: this.$t("blueprints.title"),
                         link: {
                             name: "blueprints",
-                            params: this.$route.params
+                            params: this.$route.params.tab ? this.$route.params.tab : {...this.$route.params, tab: this.tab},
                         }
                     }
                 ]
@@ -109,6 +118,10 @@
             tab: {
                 type: String,
                 default: "community"
+            },
+            blueprintBaseUri: {
+                type: String,
+                default: undefined,
             }
         },
         methods: {
@@ -119,22 +132,23 @@
                     this.$router.push({
                         name: "blueprints",
                         params: {
-                            tenant: this.$route.params.tenant
+                            tenant: this.$route.params.tenant,
+                            tab: this.tab
                         }
                     })
                 }
             }
         },
         async created() {
-            this.blueprint = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}`)).data
+            this.blueprint = (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${this.blueprintId}`)).data;
 
             try {
-                if (this.blueprintBaseUri.endsWith("community")) {
-                    this.flowGraph = (await this.$http.get(`${this.blueprintBaseUri}/${this.blueprintId}/graph`, {
+                if (this.embedFriendlyBlueprintBaseUri.endsWith("community")) {
+                    this.flowGraph = (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${this.blueprintId}/graph`, {
                         validateStatus: (status) => {
                             return status === 200;
                         }
-                    })).data;
+                    }))?.data;
                 } else {
                     this.flowGraph = await this.$store.dispatch("flow/getGraphFromSourceResponse", {
                         flow: this.blueprint.flow, config: {
@@ -160,8 +174,8 @@
                     source: this.blueprint.flow
                 }
             },
-            blueprintBaseUri() {
-                return `${apiUrl(this.$store)}/blueprints/` + (this.embed ? this.tab : (this.$route?.params?.tab ?? "community"));
+            embedFriendlyBlueprintBaseUri() {
+                return this.blueprintBaseUri ?? (`${apiUrl(this.$store)}/blueprints/` + (this?.$route?.params?.tab ?? "community"))
             }
         }
     };

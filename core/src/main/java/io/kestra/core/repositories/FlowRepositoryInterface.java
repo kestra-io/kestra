@@ -32,7 +32,7 @@ public interface FlowRepositoryInterface {
             execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
-            Optional.of(execution.getFlowRevision())
+            Optional.ofNullable(execution.getFlowRevision())
         );
 
         if (find.isEmpty()) {
@@ -50,7 +50,7 @@ public interface FlowRepositoryInterface {
             execution.getTenantId(),
             execution.getNamespace(),
             execution.getFlowId(),
-            Optional.of(execution.getFlowRevision())
+            Optional.ofNullable(execution.getFlowRevision())
         );
 
         if (find.isEmpty()) {

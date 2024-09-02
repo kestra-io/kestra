@@ -28,6 +28,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -198,7 +199,7 @@ public class FlowController {
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws HttpStatusException {
 
         return PagedResults.of(flowRepository.find(
@@ -600,7 +601,7 @@ public class FlowController {
     public HttpResponse<byte[]> exportByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws IOException {
         var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels));
         var bytes = zipFlows(flows);
@@ -649,7 +650,7 @@ public class FlowController {
     public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
         List<Flow> list = flowRepository
             .findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels))
@@ -687,7 +688,7 @@ public class FlowController {
     public HttpResponse<BulkResponse> disableByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
 
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, true).size()).build());
@@ -715,7 +716,7 @@ public class FlowController {
     public HttpResponse<BulkResponse> enableByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
 
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, false).size()).build());

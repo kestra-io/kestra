@@ -14,14 +14,12 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
 
     @Override
     public void accept(String line, Boolean isStdErr) {
-        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext));
+        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr));
 
         if (isStdErr) {
             this.stdErrCount.incrementAndGet();
-            runContext.logger().warn(line);
         } else {
             this.stdOutCount.incrementAndGet();
-            runContext.logger().info(line);
         }
     }
 }

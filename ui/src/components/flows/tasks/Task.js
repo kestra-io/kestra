@@ -49,6 +49,10 @@ export default {
                     return "condition"
                 }
 
+                if (property.$ref.includes("tasks.runners.TaskRunner")) {
+                    return "task-runner"
+                }
+
                 return "complex";
             }
 

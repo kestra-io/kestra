@@ -8,7 +8,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "database",
-    description = "manage Kestra database",
+    description = "Manage Kestra database",
     mixinStandardHelpOptions = true,
     subcommands = {
         DatabaseMigrateCommand.class,

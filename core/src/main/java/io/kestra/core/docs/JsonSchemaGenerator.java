@@ -16,6 +16,7 @@ import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidatio
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
@@ -151,7 +152,6 @@ public class JsonSchemaGenerator {
 
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
         builder
-
             .with(new JakartaValidationModule(
                 JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                 JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
@@ -211,6 +211,39 @@ public class JsonSchemaGenerator {
                 }
             });
 
+        // resolve dynamic types from Property
+        builder.forFields().withTargetTypeOverridesResolver(target -> {
+            ResolvedType javaType = target.getType();
+            if (javaType.isInstanceOf(Property.class)) {
+                TypeContext context = target.getContext();
+                Class<?> erasedType = javaType.getTypeParameters().getFirst().getErasedType();
+                if(String.class.isAssignableFrom(erasedType)) {
+                    return List.of(
+                        context.resolve(String.class)
+                    );
+                } else if(Object.class.equals(erasedType)) {
+                    return List.of(
+                        context.resolve(Object.class)
+                    );
+                } else if (erasedType.isEnum()) {
+                    return List.of(
+                        javaType.getTypeParameters().getFirst()
+                    );
+                } else if (List.class.isAssignableFrom(erasedType) || Map.class.isAssignableFrom(erasedType)) {
+                    return List.of(
+                        javaType.getTypeParameters().getFirst()
+                    );
+                } else {
+                    return List.of(
+                        javaType.getTypeParameters().getFirst(),
+                        context.resolve(String.class)
+                    );
+                }
+            }
+
+            return null;
+        });
+
         // PluginProperty $dynamic && deprecated swagger properties
         builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) -> {
             PluginProperty pluginPropertyAnnotation = member.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
@@ -229,6 +262,15 @@ public class JsonSchemaGenerator {
             Deprecated deprecated = member.getAnnotationConsideringFieldAndGetter(Deprecated.class);
             if (deprecated != null) {
                 memberAttributes.put("$deprecated", true);
+            }
+
+            if (member.getDeclaredType().isInstanceOf(Property.class)) {
+                memberAttributes.put("$dynamic", true);
+                // if we are in the String definition of a Property but the target type is not String: we configure the format
+                Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
+                if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
+                    memberAttributes.put("format", ".*{{.*}}.*");
+                }
             }
         });
 
@@ -287,6 +329,8 @@ public class JsonSchemaGenerator {
 
             return Object.class;
         });
+
+        // Subtype resolver for all plugins
         if(builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
@@ -330,6 +374,7 @@ public class JsonSchemaGenerator {
                     }
                     return null;
                 });
+
             // description as Markdown
             builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
                 this.mutateDescription(collectedTypeAttributes);
@@ -465,7 +510,7 @@ public class JsonSchemaGenerator {
     }
 
     protected Object defaults(FieldScope target) {
-        if (target.getOverriddenType() != null) {
+        if (!target.getDeclaredType().isInstanceOf(Property.class) && target.getOverriddenType() != null) {
             return null;
         }
 

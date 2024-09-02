@@ -377,7 +377,15 @@
                     {value: "en", text: "English"},
                     {value: "fr", text: "French"},
                     {value: "de", text: "German"},
-                    {value: "pl", text: "Polish"}
+                    {value: "pl", text: "Polish"},
+                    {value: "it", text: "Italian"},
+                    {value: "es", text: "Spanish"},
+                    {value: "pt", text: "Portuguese"},
+                    {value: "ru", text: "Russian"},
+                    {value: "zh_CN", text: "Chinese"},
+                    {value: "ja", text: "Japanese"},
+                    {value: "ko", text: "Korean"},
+                    {value: "hi", text: "Hindi"}
                 ];
             },
             themesOptions() {

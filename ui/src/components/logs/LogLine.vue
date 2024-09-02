@@ -159,7 +159,6 @@
         cursor: text;
         white-space: pre-wrap;
         word-break: break-all;
-        padding: calc(var(--spacer) / 2);
         display: flex;
         align-items: start;
         gap: $spacer;

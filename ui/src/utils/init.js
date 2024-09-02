@@ -3,9 +3,17 @@ import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
 import {createI18n} from "vue-i18n";
 import moment from "moment-timezone";
-import "moment/dist/locale/fr"
 import "moment/dist/locale/de"
+import "moment/dist/locale/es"
+import "moment/dist/locale/fr"
+import "moment/dist/locale/hi"
+import "moment/dist/locale/it"
+import "moment/dist/locale/ja"
+import "moment/dist/locale/ko"
 import "moment/dist/locale/pl"
+import "moment/dist/locale/pt"
+import "moment/dist/locale/ru"
+import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {
@@ -52,6 +60,7 @@ import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
+import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
 
 export default (app, routes, stores, translations) => {
     // charts
@@ -153,6 +162,7 @@ export default (app, routes, stores, translations) => {
     app.component("TaskSubflowNamespace", TaskSubflowNamespace)
     app.component("TaskSubflowId", TaskSubflowId)
     app.component("TaskSubflowInputs", TaskSubflowInputs)
+    app.component("TaskTaskRunner", TaskTaskRunner)
     app.component("LeftMenuLink", LeftMenuLink)
     app.component("RouterMd", RouterMd)
 

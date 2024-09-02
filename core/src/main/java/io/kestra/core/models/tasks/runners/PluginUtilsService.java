@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -13,6 +14,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
+import org.slf4j.helpers.BasicMarker;
+import org.slf4j.spi.LoggingEventBuilder;
 
 import java.io.*;
 import java.net.URI;
@@ -20,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +32,7 @@ import java.util.regex.Pattern;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
 
@@ -161,7 +166,7 @@ abstract public class PluginUtilsService {
         }
     }
 
-    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext)  {
+    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr)  {
         Matcher m = PATTERN.matcher(line);
         Map<String, Object> outputs = new HashMap<>();
 
@@ -176,9 +181,29 @@ abstract public class PluginUtilsService {
                 if (bashCommand.getMetrics() != null) {
                     bashCommand.getMetrics().forEach(runContext::metric);
                 }
+
+                if (bashCommand.getLogs() != null) {
+                    bashCommand.getLogs().forEach(logLine -> {
+                        try {
+                            LoggingEventBuilder builder = runContext
+                                .logger()
+                                .atLevel(logLine.getLevel());
+
+                            builder.log(logLine.getMessage());
+                        } catch (Exception e) {
+                            logger.warn("Invalid log '{}'", m.group(1), e);
+                        }
+                    });
+                }
             }
             catch (JsonProcessingException e) {
                 logger.warn("Invalid outputs '{}'", e.getMessage(), e);
+            }
+        } else {
+            if (isStdErr) {
+                runContext.logger().warn(line);
+            } else {
+                runContext.logger().info(line);
             }
         }
 
@@ -190,6 +215,14 @@ abstract public class PluginUtilsService {
     public static class BashCommand <T> {
         private Map<String, Object> outputs;
         private List<AbstractMetricEntry<T>> metrics;
+        private List<LogLine> logs;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class LogLine {
+        private Level level;
+        private String message;
     }
 
     /**

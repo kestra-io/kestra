@@ -148,8 +148,8 @@ The table below lists common Pebble expressions and functions.
 | `{{ range(0, 3) }}`                                                                                | Generates a list from 0 to 3.                                                                                                   |
 | `{{ block("post") }}`                                                                              | Renders the contents of the ["post" block](https://kestra.io/docs/concepts/expression/function#block).                          |
 | `{{ currentEachOutput(outputs.first) }}`                                                           | Retrieves the current output of a sibling task.                                                                                 |
-| `{{ json('{"foo": [666, 1, 2]}').foo[0] }}`                                                        | Converts JSON string to object and accesses its properties.                                                                     |
-| `{{ yaml('foo: [666, 1, 2]').foo[0] }}`                                                            | Converts YAML string to object and accesses its properties.                                                                     |
+| `{{ fromJson('{"foo": [666, 1, 2]}').foo[0] }}`                                                        | Converts a JSON string to an object and accesses its properties.                                                                     |
+| `{{ yaml('foo: [666, 1, 2]').foo[0] }}`                                                            | Converts a YAML string to an object and accesses its properties.                                                                     |
 | `{{ max(user.age, 80) }}`                                                                          | Returns the largest of its numerical arguments.                                                                                 |
 | `{{ min(user.age, 80) }}`                                                                          | Returns the smallest of its numerical arguments.                                                                                |
 | `{{ now() }}`                                                                                      | Returns the current datetime.                                                                                                   |
@@ -209,7 +209,7 @@ The table below lists Pebble filter expressions:
 | `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                               |
 | `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
 | `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
-| `json`           | `{{ myObject \| json }}` — Converts `myObject` into a JSON string.                                                               |
+| `toJson`           | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                               |
 | `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                            |
 | `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                           |
 | `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                   |

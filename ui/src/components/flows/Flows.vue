@@ -118,16 +118,19 @@
                                 :label="$t('id')"
                             >
                                 <template #default="scope">
-                                    <router-link
-                                        :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
-                                    >
-                                        {{ $filters.invisibleSpace(scope.row.id) }}
-                                    </router-link>
-                                    &nbsp;<markdown-tooltip
-                                        :id="scope.row.namespace + '-' + scope.row.id"
-                                        :description="scope.row.description"
-                                        :title="scope.row.namespace + '.' + scope.row.id"
-                                    />
+                                    <div class="flow-id">
+                                        <router-link
+                                            :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                            class="me-1"
+                                        >
+                                            {{ $filters.invisibleSpace(scope.row.id) }}
+                                        </router-link>
+                                        <markdown-tooltip
+                                            :id="scope.row.namespace + '-' + scope.row.id"
+                                            :description="scope.row.description"
+                                            :title="scope.row.namespace + '.' + scope.row.id"
+                                        />
+                                    </div>
                                 </template>
                             </el-table-column>
 
@@ -531,5 +534,9 @@
     :deep(nav .dropdown-menu) {
         display: flex;
         width: 20rem;
+    }
+
+    .flow-id {
+        min-width: 200px;
     }
 </style>

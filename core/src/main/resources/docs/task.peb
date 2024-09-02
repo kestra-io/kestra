@@ -66,7 +66,7 @@ type: "{{ cls }}"
     {%- for entry in inputs %}
 ### `{{ entry.key }}`
 {{ fieldType(entry.value) }}
-* **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
+* **Dynamic:** {{ dynamic(entry.value) -}}
 * **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entry.value) }}
     {%- endfor -%}
@@ -78,7 +78,6 @@ type: "{{ cls }}"
     {%- for entry in outputs %}
 ### `{{ entry.key }}`
 {{ fieldType(entry.value) }}
-* **Dynamic:** {{ entry.value['$dynamic'] == true ? "✔️" : (entry.value['$dynamic'] == false ? "❌" : "❓") }}
 * **Required:** {{ entry.value['$required'] == true ? "✔️" : (entry.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entry.value) }}
     {%- endfor -%}
@@ -94,7 +93,7 @@ type: "{{ cls }}"
     {%- for entryProps in entry.value.properties %}
 ##### `{{ entryProps.key }}`
 {{ fieldType(entryProps.value) }}
-* **Dynamic:** {{ entryProps.value['$dynamic'] == true ? "✔️" : (entryProps.value['$dynamic'] == false ? "❌" : "❓") }}
+* **Dynamic:** {{ dynamic(entryProps.value) }}
 * **Required:** {{ entryProps.value['$required'] == true ? "✔️" : (entryProps.value['$required'] == false ? "❌" : "❓") }}
 {{ fieldDetail(entryProps.value) }}
     {%- endfor -%}

@@ -120,10 +120,10 @@
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
-    const flowErrors = computed(() => {
-        const isFlow = currentTab?.value?.flow;
+    const isFlow = () => currentTab?.value?.flow || props.isCreating;
 
-        if (isFlow) {
+    const flowErrors = computed(() => {
+        if (isFlow()) {
             const flowExistsError =
                 props.flowValidation?.outdated && props.isCreating
                     ? [outdatedMessage.value]
@@ -152,9 +152,7 @@
     });
 
     const flowWarnings = computed(() => {
-        const isFlow = currentTab?.value?.flow;
-
-        if (isFlow) {
+        if (isFlow()) {
             const outdatedWarning =
                 props.flowValidation?.outdated && !props.isCreating
                     ? [outdatedMessage.value]
@@ -283,9 +281,7 @@
     );
 
     const flowHaveTasks = (source) => {
-        const isFlow = currentTab?.value?.flow || props.isCreating; 
-
-        if (isFlow) {
+        if (isFlow()) {
             const flow = props.isCreating ? props.flow.source : (source ? source : flowYaml.value);
             return flow ? YamlUtils.flowHaveTasks(flow) : false;
         } else return false;
@@ -441,10 +437,10 @@
         });
     };
 
-    const onEdit = (event, isFlow = false) => {
+    const onEdit = (event, currentIsFlow = false) => {
         flowYaml.value = event;
 
-        if (isFlow) {
+        if (currentIsFlow) {
             if (
                 flowParsed.value &&
                 !props.isCreating &&
@@ -467,9 +463,20 @@
 
         haveChange.value = true;
         store.dispatch("core/isUnsaved", true);
+
+        if(!props.isCreating){
+            store.commit("editor/changeOpenedTabs", {
+                action: "dirty",
+                ...currentTab.value,
+                name: currentTab.value?.name ?? "Flow",
+                path: currentTab.value?.path ?? "Flow.yaml",
+                dirty: true
+            });
+        }
+
         clearTimeout(timer.value);
 
-        if(!isFlow) return;
+        if(!currentIsFlow) return;
 
         return store
             .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
@@ -591,13 +598,13 @@
     };
 
     const editorUpdate = (event) => {
-        const isFlow = currentTab?.value?.flow;
+        const currentIsFlow = isFlow();
 
         updatedFromEditor.value = true;
         flowYaml.value = event;
 
         clearTimeout(timer.value);
-        timer.value = setTimeout(() => onEdit(event, isFlow), 500);
+        timer.value = setTimeout(() => onEdit(event, currentIsFlow), 500);
     };
 
     const switchViewType = (event, shouldPersist = true) => {
@@ -611,7 +618,7 @@
         ) {
             isHorizontal.value = isHorizontalDefault();
             if (updatedFromEditor.value) {
-                onEdit(flowYaml.value);
+                onEdit(flowYaml.value, true);
                 updatedFromEditor.value = false;
             }
         }
@@ -711,9 +718,7 @@
             }
         }
 
-        const isFlow = currentTab?.value?.flow || props.isCreating;
-
-        if (isFlow) {
+        if (isFlow()) {
             onEdit(flowYaml.value, true).then((validation) => {
                 if (validation.outdated && !props.isCreating) {
                     confirmOutdatedSaveDialog.value = true;

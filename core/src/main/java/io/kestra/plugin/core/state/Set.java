@@ -64,11 +64,11 @@ public class Set extends AbstractState implements RunnableTask<Set.Output> {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        Pair<URI, Map<String, Object>> data = this.merge(runContext, runContext.render(this.data));
+        Pair<String, Map<String, Object>> data = this.merge(runContext, runContext.render(this.data));
 
         return Output.builder()
             .count(data.getRight().size())
-            .uri(data.getLeft().toString())
+            .key(data.getLeft().toString())
             .build();
     }
 
@@ -81,8 +81,8 @@ public class Set extends AbstractState implements RunnableTask<Set.Output> {
         private final int count;
 
         @Schema(
-            title = "The URI of the current state."
+            title = "The key of the current state."
         )
-        private final String uri;
+        private final String key;
     }
 }

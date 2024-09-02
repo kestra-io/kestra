@@ -71,6 +71,7 @@
 #io.kestra.plugin:plugin-pulsar:LATEST
 #io.kestra.plugin:plugin-redis:LATEST
 #io.kestra.plugin:plugin-script-groovy:LATEST
+#io.kestra.plugin:plugin-script-jbang:LATEST
 #io.kestra.plugin:plugin-script-julia:LATEST
 #io.kestra.plugin:plugin-script-jython:LATEST
 #io.kestra.plugin:plugin-script-nashorn:LATEST

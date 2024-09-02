@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -15,10 +16,12 @@ import com.google.common.base.Throwables;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueInterface;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.io.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
@@ -33,13 +36,18 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private LogEntry logEntry;
     private Level loglevel;
     private List<String> useSecrets = new ArrayList<>();
+    private final boolean logToFile;
+    @Getter
+    private File logFile;
+    private OutputStream logFileOS;
 
     @VisibleForTesting
     public RunContextLogger() {
         this.loggerName = "unit-test";
+        this.logToFile = false;
     }
 
-    public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry, org.slf4j.event.Level loglevel) {
+    public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
         if (logEntry.getExecutionId() != null) {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + (logEntry.getTaskRunId() != null ? "." + logEntry.getTaskRunId() : "");
         } else {
@@ -48,6 +56,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.logQueue = logQueue;
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
+        this.logToFile = logToFile;
     }
 
     private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, LogEntry logEntry) {
@@ -142,17 +151,34 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
             this.logger = loggerContext.getLogger(this.loggerName);
 
-            // unit test don't need the logqueue
-            if (this.logQueue != null && this.logEntry != null) {
+            if (this.logEntry != null) {
+                MDC.setContextMap(this.logEntry.toMap());
+            }
+
+            // unit tests don't always have the log queue as we construct a logger directly without it
+            if (this.logQueue != null && !this.logToFile) {
                 ContextAppender contextAppender = new ContextAppender(this, this.logger, this.logQueue, this.logEntry);
                 contextAppender.setContext(loggerContext);
                 contextAppender.start();
 
                 this.logger.addAppender(contextAppender);
-
-                MDC.setContextMap(this.logEntry.toMap());
             }
 
+            if (this.logToFile) {
+                try {
+                    this.logFile = File.createTempFile("log", ".txt");
+                    this.logFileOS = new BufferedOutputStream(new FileOutputStream(logFile));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                FileAppender fileAppender = new FileAppender(this, this.logger, this.logFileOS);
+                fileAppender.setContext(loggerContext);
+                fileAppender.start();
+
+                this.logger.addAppender(fileAppender);
+            }
+
+            // forward flow logs to the server log
             ForwardAppender forwardAppender = new ForwardAppender(this, this.logger);
             forwardAppender.setContext(loggerContext);
             forwardAppender.start();
@@ -168,6 +194,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     @Override
     public org.slf4j.Logger get() {
         return logger();
+    }
+
+    public void closeLogFile() throws IOException {
+        if (this.logFileOS != null) {
+            this.logFileOS.close();
+        }
     }
 
     @Slf4j
@@ -263,6 +295,36 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
             logEntries(e, logEntry)
                 .forEach(logQueue::emitAsync);
+        }
+    }
+
+    public static class FileAppender extends BaseAppender {
+        private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
+        private static final PatternLayout PATTERN_LAYOUT = new PatternLayout();
+        static {
+            // the pattern is the same as in core/src/main/base.xml except that we remove the coloring
+            PATTERN_LAYOUT.setPattern("%d{ISO8601} %-5.5level %-12.36thread %-12.36logger{36} %msg%n");
+            PATTERN_LAYOUT.setContext(LOGGER.getLoggerContext());
+            PATTERN_LAYOUT.start();
+        }
+
+        private final OutputStream fileOS;
+
+        public FileAppender(RunContextLogger runContextLogger, Logger logger, OutputStream fileOS) {
+            super(runContextLogger, logger);
+            this.fileOS = fileOS;
+        }
+
+        @Override
+        protected void append(ILoggingEvent e) {
+            e = this.transform(e);
+
+            try {
+                String line = PATTERN_LAYOUT.doLayout(e);
+                fileOS.write(line.getBytes());
+            } catch (IOException ex) {
+                // silently do nothing, the message will still be forwarded to the server log
+            }
         }
     }
 

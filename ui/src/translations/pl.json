@@ -285,7 +285,7 @@
     "template creation": "Utworzenie szablonu",
     "templates": "Szablony",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
-    "no result": "Brak wyników dla bieżącego wyboru",
+    "no result": "Brak logów do tej pory",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Szczegóły trigger",
@@ -635,7 +635,7 @@
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
-    "execution-warn-deleting-still-running": "Wykonania nadal trwające nie zostaną zatrzymane i muszą zostać zabite przed usunięciem.",
+    "execution-warn-deleting-still-running": "Ważne Ostrzeżenie: Zdecydowanie zalecamy anulowanie tej akcji i zakończenie wszystkich trwających wykonania najpierw. Usunięcie nieukończonych wykonań może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
       "started": {
@@ -808,6 +808,7 @@
       "logs": "Usuń logs",
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
-    }
+    },
+    "show chart": "Pokaż Wykres"
   }
 }

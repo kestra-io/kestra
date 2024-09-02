@@ -31,7 +31,8 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "For each value in the list, execute one or more tasks in parallel.",
-    description = "The list of `tasks` will be executed for each item in parallel. " +
+    description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
+        "The list of `tasks` will be executed for each item in parallel. " +
         "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`.\n" +
         "You can access the current iteration value using the variable `{{ taskrun.value }}`.\n\n" +
         "The task list will be executed in parallel for each item. For example, if you have a list with 3 elements and 2 tasks defined in the list of `tasks`, all " +
@@ -77,13 +78,13 @@ tasks:
         outputFiles:
           - "out/*.txt"
         script: |
-          mkdir out 
+          mkdir out
           echo "{{ taskrun.value }}" > out/file_{{ taskrun.value }}.txt
 
-  - id: process_all_files 
+  - id: process_all_files
     type: io.kestra.plugin.scripts.shell.Script
     inputFiles: "{{ outputs.script | jq('map(.outputFiles) | add') | first }}"
-    script: | 
+    script: |
       ls -h out/
 """
         ),
@@ -118,6 +119,7 @@ tasks:
     },
     aliases = "io.kestra.core.tasks.flows.EachParallel"
 )
+@Deprecated(since = "0.19", forRemoval = true)
 public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default

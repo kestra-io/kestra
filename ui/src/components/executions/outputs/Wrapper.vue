@@ -17,12 +17,12 @@
                 @expand-change="() => scrollRight()"
             >
                 <template #default="{data}">
-                    <div v-if="data.heading" class="pe-none d-flex fs-5">
+                    <div v-if="data.heading" @click="expandedValue = data.path" class="pe-none d-flex fs-5">
                         <component :is="data.component" class="me-2" />
                         <span>{{ data.label }}</span>
                     </div>
 
-                    <div v-else class="w-100 d-flex justify-content-between">
+                    <div v-else @click="expandedValue = data.path" class="w-100 d-flex justify-content-between">
                         <div class="pe-5 d-flex task">
                             <TaskIcon v-if="data.icon" :icons="allIcons" :cls="icons[data.taskId]" only-icon />
                             <span :class="{'ms-3': data.icon}">{{ data.label }}</span>
@@ -92,9 +92,13 @@
                     </el-collapse-item>
                 </el-collapse>
 
-                <el-alert v-if="debugError" type="error" :closable="false">
+                <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
                     <p><strong>{{ debugError }}</strong></p>
-                    <pre class="mb-0">{{ debugStackTrace }}</pre>
+                    <div class="my-2">
+                        <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
+                        <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                    </div>
+                    <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
                 </el-alert>
 
                 <VarValue :value="selectedValue" :execution="execution" />
@@ -116,15 +120,25 @@
 
     import {apiUrl} from "override/utils/route";
 
+    import CopyToClipboard from "../../layout/CopyToClipboard.vue"
+
     import Editor from "../../inputs/Editor.vue";
     const debugEditor = ref(null);
     const debugExpression = ref("");
-    const computedDebugValue = computed(() => `{{ outputs${selectedTask()?.taskId ? `.${selectedTask().taskId}` : ""} }}`);
+    const computedDebugValue = computed(() => {
+        const task = selectedTask()?.taskId;
+        if(!task) return "";
+
+        const path = expandedValue.value;
+        if(!path) return `{{ outputs.${task} }}`
+
+        return `{{ outputs.${path} }}`
+    });
     const debugError = ref("");
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const selectedTask = () => {
-        const filter = selected.value.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
+        const filter = selected.value?.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find(e => e.taskId === filter);
     };
@@ -163,22 +177,41 @@
 
     const execution = computed(() => store.state.execution.execution);
 
-    const processedValue = (data): { label: string, regular: boolean; } => {
+    function isValidURL(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    const processedValue = (data) => {
         const regular = false;
 
-        if (!data.value && !data.children?.length) return {label: data.value, regular};
-        else if (data?.children?.length) {
+        if (!data.value && !data.children?.length) {
+            return {label: data.value, regular};
+        } else if (data?.children?.length) {
             const message = (length) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
             return data.children[0].isFirstPass ? message(length - 1) : message(length);
         }
-        return data.value.toString().startsWith("kestra:///") ? {label: "Internal link", regular} : {label: trim(data.value), regular: true};
+
+        // Check if the value is a valid URL and not an internal "kestra:///" link
+        if (isValidURL(data.value)) {
+            return data.value.startsWith("kestra:///") 
+                ? {label: "Internal link", regular} 
+                : {label: "External link", regular};
+        }
+
+        return {label: trim(data.value), regular: true};
     };
 
+    const expandedValue = ref([])
     const selected = ref([]);
     const selectedValue = computed(() => {
-        if (selected.value.length) return selected.value[selected.value.length - 1];
+        if (selected.value?.length) return selected.value[selected.value.length - 1];
         return undefined;
     });
     const selectedNode = () => {
@@ -191,21 +224,34 @@
         return {label, value};
     };
 
-    const transform = (o, isFirstPass = true) => {
+    const transform = (o, isFirstPass, path = "") => {
         const result = Object.keys(o).map(key => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
+            const currentPath = `${path}["${key}"]`;
+
             // If the value is an array with exactly one element, use that element as the value
             if (Array.isArray(value) && value.length === 1) {
-                return {label: key, value: value[0], children: []};
+                return {label: key, value: value[0], children: [], path: currentPath};
             }
 
-            return {label: key, value: isObject && !Array.isArray(value) ? null : value, children: isObject ? transform(value, false) : []};
+            return {
+                label: key,
+                value: isObject && !Array.isArray(value) ? key : value,
+                children: isObject ? transform(value, false, currentPath) : [],
+                path: currentPath
+            };
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {label: t("outputs"), heading: true, component: shallowRef(TextBoxSearchOutline), isFirstPass: true};
+            const OUTPUTS = {
+                label: t("outputs"),
+                heading: true,
+                component: shallowRef(TextBoxSearchOutline),
+                isFirstPass: true,
+                path: path
+            };
             result.unshift(OUTPUTS);
         }
 
@@ -213,7 +259,7 @@
     };
     const outputs = computed(() => {
         const tasks = store.state.execution.execution.taskRunList.map((task) => {
-            return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs) : []};
+            return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs, true, task.taskId) : []};
         });
 
         const HEADING = {label: t("tasks"), heading: true, component: shallowRef(TimelineTextOutline)};

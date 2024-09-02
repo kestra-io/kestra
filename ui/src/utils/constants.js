@@ -1,6 +1,7 @@
 export const SECTIONS = {
     TASKS: "TASKS",
     TRIGGERS: "TRIGGERS",
+    TASK_RUNNERS: "TASK_RUNNERS",
 }
 
 export const stateGlobalChartTypes = {
@@ -29,6 +30,7 @@ export const storageKeys = {
     DISPLAY_FLOW_EXECUTIONS_COLUMNS: "displayFlowExecutionsColumns",
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
+    SHOW_CHART: "showChart",
     DEFAULT_NAMESPACE: "defaultNamespace",
     LATEST_NAMESPACE: "latestNamespace",
     PAGINATION_SIZE: "paginationSize",

@@ -27,7 +27,7 @@
                 </div>
             </slot>
         </nav>
-
+        <slot name="absolute" />
         <div class="editor-container" ref="container" :class="containerClass">
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
@@ -329,6 +329,7 @@
 
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange(e => {
+                        if(!this.$refs.container) return;                    
                         this.$refs.container.style.height = (e.contentHeight + this.customHeight) + "px";
                     });
                 }

@@ -133,7 +133,7 @@ import java.util.stream.Stream;
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(
         title = "Duration of the pause — useful if you want to pause the execution for a fixed amount of time.",
-        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
+        description = "The delay is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
     )
     @PluginProperty
     private Duration delay;

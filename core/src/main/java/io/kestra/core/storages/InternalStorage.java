@@ -96,6 +96,24 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public InputStream getFile(final URI uri) throws IOException {
+        uriGuard(uri);
+
+        return this.storage.get(context.getTenantId(), uri);
+
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public boolean deleteFile(final URI uri) throws IOException {
+        uriGuard(uri);
+
+        return this.storage.delete(context.getTenantId(), uri);
+
+    }
+
+    private static void uriGuard(URI uri) {
         if (uri == null) {
             throw new IllegalArgumentException("Invalid internal storage uri, got null");
         }
@@ -108,9 +126,6 @@ public class InternalStorage implements Storage {
         if (!scheme.equals("kestra")) {
             throw new IllegalArgumentException("Invalid internal storage scheme, got uri '" + uri + "'");
         }
-
-        return this.storage.get(context.getTenantId(), uri);
-
     }
 
     /**
@@ -171,82 +186,6 @@ public class InternalStorage implements Storage {
                 logger.warn("Failed to delete temporary file '{}'", file.toPath(), e);
             }
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public InputStream getTaskStateFile(String state, String name) throws IOException {
-        return getTaskStateFile(state, name, false, true);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public InputStream getTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        URI uri = URI.create(getStatePrefix(state, isNamespace, useTaskRun));
-        URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.get(context.getTenantId(), resolve);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
-        return this.putTaskStateFile(content, state, name, false, true);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public URI putTaskStateFile(byte[] content, String state, String name, Boolean namespace, Boolean useTaskRun) throws IOException {
-        try (InputStream inputStream = new ByteArrayInputStream(content)) {
-            return this.putFile(inputStream, getStatePrefix(state, namespace, useTaskRun), name);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public URI putTaskStateFile(File file, String state, String name) throws IOException {
-        return this.putTaskStateFile(file, state, name, false, true);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public URI putTaskStateFile(File file, String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        return this.putFileAndDelete(file, getStatePrefix(state, isNamespace, useTaskRun), name);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public boolean deleteTaskStateFile(String state, String name) throws IOException {
-        return this.deleteTaskStateFile(state, name, false, true);
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public boolean deleteTaskStateFile(String state, String name, Boolean isNamespace, Boolean useTaskRun) throws IOException {
-        URI uri = URI.create(getStatePrefix(state, isNamespace, useTaskRun));
-        URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.delete(context.getTenantId(), resolve);
-    }
-
-    private String getStatePrefix(String name, Boolean isNamespace, Boolean useTaskRun) {
-        String value = useTaskRun ? getTaskStorageContext().map(StorageContext.Task::getTaskRunValue).orElse(null) : null;
-        return context.getStateStorePrefix(name, isNamespace, value);
-
     }
 
     /**
@@ -327,7 +266,7 @@ public class InternalStorage implements Storage {
         return this.storage.put(context.getTenantId(), resolve, new BufferedInputStream(inputStream));
     }
 
-    private Optional<StorageContext.Task> getTaskStorageContext() {
+    public Optional<StorageContext.Task> getTaskStorageContext() {
         return Optional.ofNullable((context instanceof StorageContext.Task task) ? task : null);
     }
 }

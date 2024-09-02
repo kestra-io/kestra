@@ -42,7 +42,7 @@
     import NamespaceKV from "./NamespaceKV.vue";
     import NamespaceFlows from "./NamespaceFlows.vue";
     import EditorView from "../inputs/EditorView.vue";
-    import BlueprintsBrowser from "override/components/flows/blueprints/BlueprintsBrowser.vue";
+    import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
     import {apiUrl} from "override/utils/route";
 
     export default {

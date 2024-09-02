@@ -822,6 +822,7 @@
       "logs": "Supprimer les journaux",
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
-    }
+    },
+    "show chart": "Afficher le graphique"
   }
 }

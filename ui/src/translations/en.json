@@ -633,6 +633,7 @@
         "MAIN": "Parent Executions"
       }
     },
+    "show chart": "Show Chart",
     "namespace files": {
       "toggle": {
         "show": "Show namespace files",

@@ -41,7 +41,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     private File flowPath;
 
     @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to two times the number of available processors. Set it to 0 to avoid starting a worker.")
-    private int workerThread = Runtime.getRuntime().availableProcessors() * 2;
+    private int workerThread = defaultWorkerThread();
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipExecutions = Collections.emptyList();

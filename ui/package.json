@@ -1,6 +1,6 @@
 {
   "name": "kestra",
-  "version": "0.18.2",
+  "version": "0.18.4",
   "private": true,
   "type": "module",
   "packageManager": "npm@9.9.3",
@@ -16,9 +16,9 @@
     "@kestra-io/ui-libs": "^0.0.57",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
-    "@vue-flow/core": "^1.40.1",
+    "@vue-flow/core": "^1.41.0",
     "ansi-to-html": "^0.7.2",
-    "axios": "^1.7.5",
+    "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.4",
@@ -41,8 +41,8 @@
     "moment-range": "4.0.2",
     "moment-timezone": "^0.5.45",
     "nprogress": "^0.2.0",
-    "pdfjs-dist": "^4.5.136",
-    "posthog-js": "^1.157.2",
+    "pdfjs-dist": "^4.6.82",
+    "posthog-js": "^1.160.0",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.4.38",
     "vue-axios": "3.5.2",
@@ -63,15 +63,15 @@
   "devDependencies": {
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rushstack/eslint-patch": "^1.10.4",
-    "@shikijs/markdown-it": "^1.14.1",
+    "@shikijs/markdown-it": "^1.16.1",
     "@typescript-eslint/parser": "^8.2.0",
-    "@vitejs/plugin-vue": "^5.1.2",
+    "@vitejs/plugin-vue": "^5.1.3",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.27.0",
-    "jsdom": "^24.1.1",
+    "jsdom": "^25.0.0",
     "monaco-editor": "^0.51.0",
     "monaco-yaml": "^5.2.2",
     "prettier": "^3.3.3",
@@ -84,7 +84,7 @@
     "vitest": "^2.0.5"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.21.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.21.2"
   },
   "overrides": {
     "bootstrap": {

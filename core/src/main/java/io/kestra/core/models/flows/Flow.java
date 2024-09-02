@@ -209,6 +209,7 @@ public class Flow extends AbstractFlow {
     public List<String> allTriggerIds() {
         return this.triggers != null ? this.triggers.stream()
             .map(AbstractTrigger::getId)
+            .filter(id -> id != null) // this can happen when validation a flow under creation
             .collect(Collectors.toList()) : Collections.emptyList();
     }
 

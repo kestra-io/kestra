@@ -808,6 +808,7 @@
       "logs": "Logs 삭제",
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
-    }
+    },
+    "show chart": "차트 보기"
   }
 }

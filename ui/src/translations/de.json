@@ -808,6 +808,7 @@
       "logs": "Logs löschen",
       "metrics": "Metriken löschen",
       "storage": "Interne Speicherdateien löschen"
-    }
+    },
+    "show chart": "Diagramm anzeigen"
   }
 }

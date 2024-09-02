@@ -808,6 +808,7 @@
       "logs": "Eliminar logs",
       "metrics": "Eliminar métricas",
       "storage": "Eliminar archivos de almacenamiento interno"
-    }
+    },
+    "show chart": "Mostrar Gráfico"
   }
 }

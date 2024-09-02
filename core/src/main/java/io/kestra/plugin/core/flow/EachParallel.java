@@ -48,15 +48,15 @@ import java.util.Optional;
         @Example(
             full = true,
             code = {
-                "id: each-parallel",
+                "id: each_parallel",
                 "namespace: company.team",
                 "",
                 "tasks:",
-                "  - id: each-parallel",
+                "  - id: each_parallel",
                 "    type: io.kestra.plugin.core.flow.EachParallel",
                 "    value: '[\"value 1\", \"value 2\", \"value 3\"]'",
                 "    tasks:",
-                "      - id: each-value",
+                "      - id: each_value",
                 "        type: io.kestra.plugin.core.debug.Return",
                 "        format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }

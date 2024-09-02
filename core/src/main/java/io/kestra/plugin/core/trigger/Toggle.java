@@ -39,7 +39,7 @@ import java.util.Optional;
             full = true,
             code = {
                 """
-                    id: trigger-toggle
+                    id: trigger_toggle
                     namespace: company.team
 
                     inputs:

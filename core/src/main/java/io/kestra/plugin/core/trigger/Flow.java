@@ -35,30 +35,30 @@ import jakarta.validation.constraints.NotNull;
 )
 @Plugin(
     examples = @Example(
-        title = "This flow will be triggered after each successful execution of flow `io.kestra.tests.trigger-flow` " +
-            "and forward the `uri` of `myTask` taskId outputs.",
+        title = "This flow will be triggered after each successful execution of flow `io.kestra.tests.trigger_flow` " +
+            "and forward the `uri` of `my_task` taskId outputs.",
         full = true,
-        code = "id: trigger-flow-listener\n" +
+        code = "id: trigger_flow_listener\n" +
             "namespace: company.team\n" +
             "\n" +
             "inputs:\n" +
-            "  - id: from-parent\n" +
+            "  - id: from_parent\n" +
             "    type: STRING\n" +
             "\n" +
             "tasks:\n" +
-            "  - id: only-no-input\n" +
+            "  - id: only_no_input\n" +
             "    type: io.kestra.plugin.core.debug.Return\n" +
             "    format: \"v1: {{ trigger.executionId }}\"\n" +
             "\n" +
             "triggers:\n" +
-            "  - id: listen-flow\n" +
+            "  - id: listen_flow\n" +
             "    type: io.kestra.plugin.core.trigger.Flow\n" +
             "    inputs:\n" +
-            "      from-parent: '{{ outputs.myTask.uri }}'\n" +
+            "      from-parent: '{{ outputs.my_task.uri }}'\n" +
             "    conditions:\n" +
             "      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition\n" +
             "        namespace: company.team\n" +
-            "        flowId: trigger-flow\n" +
+            "        flowId: trigger_flow\n" +
             "      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition\n" +
             "        in:\n" +
             "          - SUCCESS"

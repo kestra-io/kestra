@@ -66,7 +66,7 @@ tasks:
             full = true,
             code = """
 id: upload_dbt_project
-namespace: dwh
+namespace: company.team
 tasks:
   - id: wdir
     type: io.kestra.plugin.core.flow.WorkingDirectory
@@ -87,7 +87,7 @@ tasks:
             full = true,
             code = """
 id: upload_a_file
-namespace: dwh
+namespace: company.team
 
 tasks:
   - id: download

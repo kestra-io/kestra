@@ -60,14 +60,14 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "Clone a Git repository into the Working Directory and run a Python script in a Docker container.",
             code = """
-                id: gitPython
+                id: git_python
                 namespace: company.team
 
                 tasks:
                   - id: wdir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
                     tasks:
-                      - id: cloneRepository
+                      - id: clone_repository
                         type: io.kestra.plugin.git.Clone
                         url: https://github.com/kestra-io/examples
                         branch: main
@@ -84,7 +84,7 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
-                id: apiJSONtoMongoDB
+                id: api_json_to_mongodb
                 namespace: company.team
 
                 tasks:
@@ -97,7 +97,7 @@ import jakarta.validation.constraints.NotNull;
                       SELECT sum(total) as total, avg(quantity) as avg_quantity
                       FROM sales;
                   tasks:
-                    - id: inlineScript
+                    - id: inline_script
                       type: io.kestra.plugin.scripts.python.Script
                       taskRunner:
                         type: io.kestra.plugin.scripts.runner.docker.Docker
@@ -121,7 +121,7 @@ import jakarta.validation.constraints.NotNull;
 
                         Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-                - id: loadToMongoDB
+                - id: load_to_mongodb
                   type: io.kestra.plugin.mongodb.Load
                   connection:
                     uri: mongodb://host.docker.internal:27017/
@@ -133,11 +133,11 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             code = {
-                "id: working-directory",
+                "id: working_directory",
                 "namespace: company.team",
                 "",
                 "tasks:",
-                "  - id: working-directory",
+                "  - id: working_directory",
                 "    type: io.kestra.plugin.core.flow.WorkingDirectory",
                 "    tasks:",
                 "      - id: first",
@@ -155,10 +155,10 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "A working directory with a cache of the node_modules directory.",
             code = """
-                id: node-with-cache
+                id: node_with_cache
                 namespace: company.team
                 tasks:
-                  - id: working-dir
+                  - id: working_dir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
                     cache:
                       patterns:

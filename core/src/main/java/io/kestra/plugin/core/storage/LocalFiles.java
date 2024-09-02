@@ -31,19 +31,19 @@ import java.util.Map;
         full = true,
         title = "Output local files created in a Python task and load them to S3.",
         code = """
-                id: outputsFromPythonTask
+                id: outputs_from_python_task
                 namespace: company.team
 
                 tasks:
                   - id: wdir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
                     tasks:
-                      - id: cloneRepository
+                      - id: clone_repository
                         type: io.kestra.plugin.git.Clone
                         url: https://github.com/kestra-io/examples
                         branch: main
 
-                      - id: gitPythonScripts
+                      - id: git_python_scripts
                         type: io.kestra.plugin.scripts.python.Commands
                         warningOnStdErr: false
                         runner: DOCKER
@@ -52,23 +52,23 @@ import java.util.Map;
                         beforeCommands:
                           - pip install faker > /dev/null
                         commands:
-                          - python scripts/etl_script.py
-                          - python scripts/generate_orders.py
+                          - python examples/scripts/etl_script.py
+                          - python examples/scripts/generate_orders.py
 
-                      - id: exportFiles
+                      - id: export_files
                         type: io.kestra.plugin.core.storage.LocalFiles
                         outputs:
                           - orders.csv
                           - "*.parquet"
 
-                  - id: loadCsvToS3
+                  - id: load_csv_to_s3
                     type: io.kestra.plugin.aws.s3.Upload
                     accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
                     secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
                     region: eu-central-1
                     bucket: kestraio
                     key: stage/orders.csv
-                    from: "{{ outputs.exportFiles.outputFiles['orders.csv'] }}"
+                    from: "{{ outputs.export_files.outputFiles['orders.csv'] }}"
                     disabled: true
             """
     ),
@@ -76,18 +76,18 @@ import java.util.Map;
         full = true,
         title = "Create a local file that will be accessible to a bash task.",
         code = """
-            id: "local-files"
+            id: "local_files"
             namespace: "io.kestra.tests"
 
             tasks:
-              - id: workingDir
+              - id: working_dir
                 type: io.kestra.plugin.core.flow.WorkingDirectory
                 tasks:
-                - id: inputFiles
+                - id: input_files
                   type: io.kestra.plugin.core.storage.LocalFiles
                   inputs:
                     hello.txt: "Hello World\\n"
-                    address.json: "{{ outputs.myTaskId.uri }}"
+                    address.json: "{{ outputs.my_task_id.uri }}"
                 - id: bash
                   type: io.kestra.plugin.scripts.shell.Commands
                   commands:
@@ -98,11 +98,11 @@ import java.util.Map;
         full = true,
         title = "Send local files to Kestra's internal storage.",
         code = """
-            id: "local-files"
+            id: "local_files"
             namespace: "io.kestra.tests"
 
             tasks:
-              - id: workingDir
+              - id: working_dir
                 type: io.kestra.plugin.core.flow.WorkingDirectory
                 tasks:
                 - id: bash
@@ -111,7 +111,7 @@ import java.util.Map;
                     - mkdir -p sub/dir
                     - echo "Hello from Bash" >> sub/dir/bash1.txt
                     - echo "Hello from Bash" >> sub/dir/bash2.txt
-                - id: outputFiles
+                - id: output_files
                   type: io.kestra.plugin.core.storage.LocalFiles
                   outputs:
                     - sub/**

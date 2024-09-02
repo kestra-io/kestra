@@ -43,10 +43,10 @@ import java.util.List;
             code = {
                 "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
                 "logLevels:",
-                "- TRACE",
-                "- DEBUG",
-                "- INFO",
-                "- WARN",
+                "  - TRACE",
+                "  - DEBUG",
+                "  - INFO",
+                "  - WARN",
             }
         )
     }

@@ -25,7 +25,7 @@ import java.util.Map;
         @Example(
             title = "Get the default state file for the current flow.",
             code = {
-                "id: getState",
+                "id: get_state",
                 "type: io.kestra.plugin.core.state.Get",
             },
             full = true
@@ -33,7 +33,7 @@ import java.util.Map;
         @Example(
             title = "Get the `myState` state for the current flow.",
             code = {
-                "id: getState",
+                "id: get_state",
                 "type: io.kestra.plugin.core.state.Get",
                 "name: myState",
             },

@@ -30,12 +30,12 @@ import java.util.Optional;
 @Plugin(
     examples = {
         @Example(
-            title = "Get value for `myvariable` key in `dev` namespace and fail if it's not present.",
+            title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present.",
             full = true,
             code = """
               id: get_kv
               type: io.kestra.plugin.core.kv.Get
-              key: myvariable
+              key: my_variable
               namespace: dev # the current namespace of the flow will be used by default
               errorOnMissing: true"""
         )

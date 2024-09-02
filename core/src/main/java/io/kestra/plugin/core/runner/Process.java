@@ -46,7 +46,7 @@ import java.util.Map;
         @Example(
             title = "Execute a Shell command.",
             code = """
-                id: new-shell
+                id: new_shell
                 namespace: company.team
 
                 tasks:
@@ -55,7 +55,7 @@ import java.util.Map;
                     taskRunner:
                       type: io.kestra.plugin.core.runner.Process
                     commands:
-                    - echo "Hello World\"""",
+                      - echo "Hello World\"""",
             full = true
         ),
         @Example(
@@ -91,7 +91,7 @@ tasks:
         @Example(
             title = "Pass input files to the task, execute a Shell command, then retrieve output files.",
             code = """
-                id: new-shell-with-file
+                id: new_shell_with_file
                 namespace: company.team
 
                 inputs:
@@ -108,7 +108,7 @@ tasks:
                     taskRunner:
                       type: io.kestra.plugin.core.runner.Process
                     commands:
-                    - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
+                      - cp {{workingDir}}/data.txt {{workingDir}}/out.txt""",
             full = true
         )
     }

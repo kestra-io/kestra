@@ -24,7 +24,7 @@ import java.io.FileNotFoundException;
         @Example(
             title = "Delete the default state for the current flow.",
             code = {
-                "id: getState",
+                "id: delete_state",
                 "type: io.kestra.plugin.core.state.Delete",
             },
             full = true
@@ -32,7 +32,7 @@ import java.io.FileNotFoundException;
         @Example(
             title = "Delete the `myState` state for the current flow.",
             code = {
-                "id: getState",
+                "id: delete_state",
                 "type: io.kestra.plugin.core.state.Delete",
                 "name: myState",
             },

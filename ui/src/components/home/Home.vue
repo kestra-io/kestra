@@ -46,6 +46,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <type-filter-buttons
+                        :value="type"
+                        @update:model-value="onTypeSelect"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
                 </el-form-item>
             </collapse>
@@ -172,6 +178,7 @@
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
+    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
     import HomeStartup from "override/mixins/homeStartup"
     import State from "../../utils/state";
 
@@ -179,6 +186,7 @@
         mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
             DateFilter,
+            TypeFilterButtons,
             OnboardingBottom,
             Collapse,
             StateGlobalChart,
@@ -211,6 +219,9 @@
                 this.$router.push({name:"errors/403"});
                 return;
             }
+
+            if(!this.$route.query.type) this.$route.query.type = "user"
+
             this.load();
         },
         watch: {
@@ -236,7 +247,8 @@
                 namespaceRestricted: !!this.namespace,
                 refreshDates: false,
                 canAutoRefresh: false,
-                state: []
+                state: [],
+                type: ["user"]
             };
         },
         methods: {
@@ -367,6 +379,18 @@
                 } else {
                     let query = {...this.$route.query}
                     delete query["state"]
+                    this.$router.push({query: query});
+                }
+
+                this.load(this.onDataLoaded);
+            },
+            onTypeSelect(type) {
+                this.type = type;
+                if (type && type.length > 0) {
+                    this.$router.push({query: {...this.$route.query, type: type}});
+                } else {
+                    let query = {...this.$route.query}
+                    delete query["type"]
                     this.$router.push({query: query});
                 }
 

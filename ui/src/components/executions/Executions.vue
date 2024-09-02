@@ -62,6 +62,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <type-filter-buttons
+                        :value="Utils.asArray($route.query.type)"
+                        @update:model-value="onDataTableValue('type', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <label-filter
                         :model-value="$route.query.labels"
                         @update:model-value="onDataTableValue('labels', $event)"
@@ -447,6 +453,7 @@
     import RefreshButton from "../layout/RefreshButton.vue"
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
+    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
@@ -477,6 +484,7 @@
             RefreshButton,
             Filters,
             StatusFilterButtons,
+            TypeFilterButtons,
             StateGlobalChart,
             Kicon,
             Labels,
@@ -606,6 +614,9 @@
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
+
+
+            if(!this.$route.query.type) this.$route.query.type = "user"
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

@@ -55,6 +55,12 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <type-filter-buttons
+                            :value="Utils.asArray($route.query.type)"
+                            @update:model-value="onDataTableValue('type', $event)"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <label-filter
                             :model-value="$route.query.labels"
                             @update:model-value="onDataTableValue('labels', $event)"
@@ -220,6 +226,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Filters from "../saved-filters/Filters.vue";
+    import Utils from "../../utils/utils";
 </script>
 
 <script>
@@ -246,6 +253,7 @@
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
+    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
     import {storageKeys} from "../../utils/constants";
 
     export default {
@@ -265,6 +273,7 @@
             Labels,
             Upload,
             LabelFilter,
+            TypeFilterButtons,
             TopNavBar
         },
         data() {
@@ -310,6 +319,9 @@
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
             }
+        },
+        created(){
+            if(!this.$route.query.type) this.$route.query.type = "user"
         },
         methods: {
             selectionMapper(element) {
@@ -526,7 +538,7 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             }
-        }
+        }        
     };
 </script>
 

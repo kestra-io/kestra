@@ -56,7 +56,7 @@ jobs:
 
       # Services
       - name: Build the docker-compose stack
-        run: docker-compose -f docker-compose-ci.yml up -d
+        run: docker compose -f docker-compose-ci.yml up -d
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
 
       # Caches

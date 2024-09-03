@@ -9,6 +9,7 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.GraphUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -35,7 +36,7 @@ public class PluginDefaultsCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
 
-    public void taskDefaults() throws TimeoutException {
+    public void taskDefaults() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));

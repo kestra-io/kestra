@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.models.executions.Execution;
@@ -39,7 +40,7 @@ public class MultipleConditionTriggerCaseTest {
     @Inject
     protected ApplicationContext applicationContext;
 
-    public void trigger() throws InterruptedException, TimeoutException {
+    public void trigger() throws InterruptedException, TimeoutException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
         Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger", "trigger-multiplecondition-listener").orElseThrow();
@@ -90,7 +91,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getTrigger().getVariables().get("flowId"), is("trigger-multiplecondition-flow-b"));
     }
 
-    public void failed() throws InterruptedException, TimeoutException {
+    public void failed() throws InterruptedException, TimeoutException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
 

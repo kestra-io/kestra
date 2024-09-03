@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.StandAloneRunner;
@@ -45,102 +46,102 @@ public abstract class JdbcRunnerRetryTest {
     }
 
     @Test
-    void retrySuccess() throws TimeoutException {
+    void retrySuccess() throws TimeoutException, QueueException {
         retryCaseTest.retrySuccess();
     }
 
     @Test
-    void retrySuccessAtFirstAttempt() throws TimeoutException {
+    void retrySuccessAtFirstAttempt() throws TimeoutException, QueueException {
         retryCaseTest.retrySuccessAtFirstAttempt();
     }
 
     @Test
-    void retryFailed() throws TimeoutException {
+    void retryFailed() throws TimeoutException, QueueException {
         retryCaseTest.retryFailed();
     }
 
     @Test
-    void retryRandom() throws TimeoutException {
+    void retryRandom() throws TimeoutException, QueueException {
         retryCaseTest.retryRandom();
     }
 
     @Test
-    void retryExpo() throws TimeoutException {
+    void retryExpo() throws TimeoutException, QueueException {
         retryCaseTest.retryExpo();
     }
 
     @Test
-    void retryFail() throws TimeoutException {
+    void retryFail() throws TimeoutException, QueueException {
         retryCaseTest.retryFail();
     }
 
     @Test
-    void retryNewExecutionTaskDuration() throws TimeoutException {
+    void retryNewExecutionTaskDuration() throws TimeoutException, QueueException {
         retryCaseTest.retryNewExecutionTaskDuration();
     }
 
     @Test
-    void retryNewExecutionTaskAttempts() throws TimeoutException {
+    void retryNewExecutionTaskAttempts() throws TimeoutException, QueueException {
         retryCaseTest.retryNewExecutionTaskAttempts();
     }
 
     @Test
-    void retryNewExecutionFlowDuration() throws TimeoutException {
+    void retryNewExecutionFlowDuration() throws TimeoutException, QueueException {
         retryCaseTest.retryNewExecutionFlowDuration();
     }
 
     @Test
-    void retryNewExecutionFlowAttempts() throws TimeoutException {
+    void retryNewExecutionFlowAttempts() throws TimeoutException, QueueException {
         retryCaseTest.retryNewExecutionFlowAttempts();
     }
 
     @Test
-    void retryFailedTaskDuration() throws TimeoutException {
+    void retryFailedTaskDuration() throws TimeoutException, QueueException {
         retryCaseTest.retryFailedTaskDuration();
     }
 
     @Test
-    void retryFailedTaskAttempts() throws TimeoutException {
+    void retryFailedTaskAttempts() throws TimeoutException, QueueException {
         retryCaseTest.retryFailedTaskAttempts();
     }
 
     @Test
-    void retryFailedFlowDuration() throws TimeoutException {
+    void retryFailedFlowDuration() throws TimeoutException, QueueException {
         retryCaseTest.retryFailedFlowDuration();
     }
 
     @Test
-    void retryFailedFlowAttempts() throws TimeoutException {
+    void retryFailedFlowAttempts() throws TimeoutException, QueueException {
         retryCaseTest.retryFailedFlowAttempts();
     }
 
     @Test
-    void retryFlowable() throws TimeoutException {
+    void retryFlowable() throws TimeoutException, QueueException {
         retryCaseTest.retryFlowable();
     }
 
     @Test
-    void retrySubflow() throws TimeoutException {
+    void retrySubflow() throws TimeoutException, QueueException {
         retryCaseTest.retrySubflow();
     }
 
     @Test
-    void retryFlowableChild() throws TimeoutException {
+    void retryFlowableChild() throws TimeoutException, QueueException {
         retryCaseTest.retryFlowableChild();
     }
 
     @Test
-    void retryFlowableNestedChild() throws TimeoutException {
+    void retryFlowableNestedChild() throws TimeoutException, QueueException {
         retryCaseTest.retryFlowableNestedChild();
     }
 
     @Test
-    void retryFlowableParallel() throws TimeoutException {
+    void retryFlowableParallel() throws TimeoutException, QueueException {
         retryCaseTest.retryFlowableParallel();
     }
 
     @Test
-    void retryDynamicTask() throws TimeoutException {
+    void retryDynamicTask() throws TimeoutException, QueueException {
         retryCaseTest.retryDynamicTask();
     }
 }

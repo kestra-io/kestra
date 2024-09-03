@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
@@ -174,7 +175,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void parallelWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
+    void parallelWithExecution() throws TimeoutException, IllegalVariableEvaluationException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel");
 
         Flow flow = this.parse("flows/valids/parallel.yaml");
@@ -195,7 +196,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
+    void eachWithExecution() throws TimeoutException, IllegalVariableEvaluationException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential");
 
         Flow flow = this.parse("flows/valids/each-sequential.yaml");
@@ -269,7 +270,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException {
+    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException {
         Flow flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));

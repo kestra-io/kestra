@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.queues.QueueException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
@@ -26,7 +27,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void success() throws TimeoutException {
+    void success() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -41,7 +42,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failed() throws TimeoutException {
+    void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -56,7 +57,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowableExecution() throws TimeoutException {
+    void flowableExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -72,7 +73,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void multipleListeners() throws TimeoutException {
+    void multipleListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -85,7 +86,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failedListeners() throws TimeoutException {
+    void failedListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -99,7 +100,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failedMultipleListeners() throws TimeoutException {
+    void failedMultipleListeners() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",

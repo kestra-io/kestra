@@ -2,6 +2,7 @@ package io.kestra.plugin.core.execution;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ import static org.hamcrest.Matchers.is;
 
 public class FailTest extends AbstractMemoryRunnerTest {
     @Test
-    void failOnSwitch() throws TimeoutException {
+    void failOnSwitch() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "fail-on-switch", null,
             (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
@@ -25,7 +26,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failOnCondition() throws TimeoutException {
+    void failOnCondition() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "fail-on-condition", null,
             (f, e) -> Map.of("param", "fail") , Duration.ofSeconds(120));
 
@@ -35,7 +36,7 @@ public class FailTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void dontFailOnCondition() throws TimeoutException {
+    void dontFailOnCondition() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "fail-on-condition", null,
             (f, e) -> Map.of("param", "success") , Duration.ofSeconds(120));
 

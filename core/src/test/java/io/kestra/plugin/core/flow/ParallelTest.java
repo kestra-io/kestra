@@ -12,7 +12,7 @@ import static org.hamcrest.Matchers.hasSize;
 
 class ParallelTest extends AbstractMemoryRunnerTest {
     @Test
-    void parallel() throws TimeoutException {
+    void parallel() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel");
 
         assertThat(execution.getTaskRunList(), hasSize(8));

@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
@@ -60,7 +61,7 @@ class WorkerTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void success() throws TimeoutException {
+    void success() throws TimeoutException, QueueException {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
@@ -87,7 +88,7 @@ class WorkerTest {
     }
 
     @Test
-    void failOnWorkerTaskWithFlowable() throws TimeoutException, JsonProcessingException {
+    void failOnWorkerTaskWithFlowable() throws TimeoutException, QueueException, JsonProcessingException {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
 
@@ -140,7 +141,7 @@ class WorkerTest {
     }
 
     @Test
-    void killed() throws InterruptedException, TimeoutException {
+    void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
 
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);

@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -100,7 +101,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         ) {
             AtomicReference<Execution> last = new AtomicReference<>();
 
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(execution -> {
                 if (execution.getLeft().getFlowId().equals(flow.getId())) {
                     last.set(execution.getLeft());
                     queueCount.countDown();
@@ -109,7 +110,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                         executionQueue.emit(execution.getLeft().withState(State.Type.FAILED));
                     }
                 }
-            });
+            }));
 
             worker.run();
             scheduler.run();

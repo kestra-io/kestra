@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
@@ -80,7 +81,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             flowListenersServiceSpy
         )) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
@@ -91,7 +92,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                     }
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
-            });
+            }));
 
             scheduler.run();
             queueCount.await(30, TimeUnit.SECONDS);

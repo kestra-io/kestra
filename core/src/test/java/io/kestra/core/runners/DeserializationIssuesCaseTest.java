@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.FlowListenersInterface;
@@ -225,7 +226,7 @@ public class DeserializationIssuesCaseTest {
     public record QueueMessage(Class<?> type, String key, String value) {}
 
 
-    public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
+    public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
             if (either != null) {
@@ -246,7 +247,7 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.FAILED));
     }
 
-    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
+    public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
         AtomicReference<WorkerTriggerResult> workerTriggerResult = new AtomicReference<>();
         Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, either -> {
             if (either != null) {
@@ -265,7 +266,7 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
     }
 
-    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException {
+    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
         AtomicReference<List<Flow>> flows = new AtomicReference<>();
         flowListeners.listen(newFlows -> flows.set(newFlows));
 

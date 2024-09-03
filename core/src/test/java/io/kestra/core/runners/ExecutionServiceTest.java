@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -328,7 +329,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void deleteExecution() throws TimeoutException, IOException {
+    void deleteExecution() throws TimeoutException, QueueException, IOException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -339,7 +340,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void deleteExecutionKeepLogs() throws TimeoutException, IOException {
+    void deleteExecutionKeepLogs() throws TimeoutException, QueueException, IOException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 

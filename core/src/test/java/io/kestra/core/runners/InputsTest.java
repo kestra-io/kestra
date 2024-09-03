@@ -5,6 +5,7 @@ import com.google.common.io.CharStreams;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -160,7 +161,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void inputFlow() throws TimeoutException {
+    void inputFlow() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -329,7 +330,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void inputEmptyJsonFlow() throws TimeoutException {
+    void inputEmptyJsonFlow() throws TimeoutException, QueueException {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("json", "{}");
 

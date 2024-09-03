@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ import static org.hamcrest.Matchers.is;
 
 public class BadExecutableTest extends AbstractMemoryRunnerTest {
     @Test
-    void badExecutable() throws TimeoutException {
+    void badExecutable() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "executable-fail");
 
         assertThat(execution.getTaskRunList().size(), is(1));

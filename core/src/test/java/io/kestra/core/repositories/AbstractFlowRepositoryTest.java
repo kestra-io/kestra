@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
@@ -398,7 +399,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void removeTrigger() throws TimeoutException {
+    void removeTrigger() throws TimeoutException, QueueException {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
@@ -436,7 +437,7 @@ public abstract class AbstractFlowRepositoryTest {
 
 
     @Test
-    void removeTriggerDelete() throws TimeoutException {
+    void removeTriggerDelete() throws TimeoutException, QueueException {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()

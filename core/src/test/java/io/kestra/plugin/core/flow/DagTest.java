@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.TestsUtils;
@@ -28,7 +29,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
     ModelValidator modelValidator;
 
     @Test
-    void dag() throws TimeoutException {
+    void dag() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -42,7 +43,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void dagCyclicDependencies() throws TimeoutException {
+    void dagCyclicDependencies() throws TimeoutException, QueueException{
         Flow flow = this.parse("flows/invalids/dag-cyclicdependency.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
@@ -53,7 +54,7 @@ public class DagTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void dagNotExistTask() throws TimeoutException {
+    void dagNotExistTask() throws TimeoutException, QueueException{
         Flow flow = this.parse("flows/invalids/dag-notexist-task.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 

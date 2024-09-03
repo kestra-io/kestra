@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 
 class ForEachTest  extends AbstractMemoryRunnerTest {
     @Test
-    void nonConcurrent() throws TimeoutException {
+    void nonConcurrent() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "foreach-non-concurrent");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -21,7 +22,7 @@ class ForEachTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void concurrent() throws TimeoutException {
+    void concurrent() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "foreach-concurrent");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -29,7 +30,7 @@ class ForEachTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void concurrentWithParallel() throws TimeoutException {
+    void concurrentWithParallel() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "foreach-concurrent-parallel");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -37,7 +38,7 @@ class ForEachTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void concurrentNoLimit() throws TimeoutException {
+    void concurrentNoLimit() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "foreach-concurrent-no-limit");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

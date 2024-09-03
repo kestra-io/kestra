@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.core.annotation.NonNull;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -42,7 +43,7 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
 
     @SuppressWarnings("unchecked")
     @Test
-    void encryptedStringOutput() throws TimeoutException {
+    void encryptedStringOutput() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

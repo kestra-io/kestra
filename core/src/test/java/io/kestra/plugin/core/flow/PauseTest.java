@@ -4,6 +4,7 @@ import com.google.common.io.CharStreams;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -117,7 +119,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
-                () -> executionQueue.emit(restarted),
+                throwRunnable(() -> executionQueue.emit(restarted)),
                 Duration.ofSeconds(5)
             );
 
@@ -142,7 +144,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getTaskRunList(), hasSize(3));
         }
 
-        public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException {
+        public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -186,7 +188,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
-                () -> executionQueue.emit(restarted),
+                throwRunnable(() -> executionQueue.emit(restarted)),
                 Duration.ofSeconds(10)
             );
 
@@ -218,7 +220,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
-                () -> executionQueue.emit(restarted),
+                throwRunnable(() -> executionQueue.emit(restarted)),
                 Duration.ofSeconds(10)
             );
 
@@ -259,7 +261,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
-                () -> executionQueue.emit(restarted),
+                throwRunnable(() -> executionQueue.emit(restarted)),
                 Duration.ofSeconds(10)
             );
 

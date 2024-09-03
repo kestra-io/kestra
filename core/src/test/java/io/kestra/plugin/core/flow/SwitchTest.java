@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 
 class SwitchTest extends AbstractMemoryRunnerTest {
     @Test
-    void switchFirst() throws TimeoutException {
+    void switchFirst() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -28,7 +29,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void switchSecond() throws TimeoutException {
+    void switchSecond() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -44,7 +45,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void switchThird() throws TimeoutException {
+    void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -61,7 +62,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void switchDefault() throws TimeoutException {
+    void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -76,7 +77,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void switchImpossible() throws TimeoutException {
+    void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",

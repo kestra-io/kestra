@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -34,7 +35,7 @@ public class FlowConcurrencyCaseTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
-    public void flowConcurrencyCancel() throws TimeoutException, InterruptedException {
+    public void flowConcurrencyCancel() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-cancel");
 
@@ -58,7 +59,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(receive.blockLast().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
-    public void flowConcurrencyFail() throws TimeoutException, InterruptedException {
+    public void flowConcurrencyFail() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-fail");
 
@@ -82,7 +83,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(receive.blockLast().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
-    public void flowConcurrencyQueue() throws TimeoutException, InterruptedException {
+    public void flowConcurrencyQueue() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
@@ -131,7 +132,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
     }
 
-    public void flowConcurrencyQueuePause() throws TimeoutException, InterruptedException {
+    public void flowConcurrencyQueuePause() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue-pause", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue-pause", Optional.empty())
@@ -180,7 +181,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
     }
 
-    public void flowConcurrencyCancelPause() throws TimeoutException, InterruptedException {
+    public void flowConcurrencyCancelPause() throws TimeoutException, QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel-pause", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-cancel-pause", Optional.empty())

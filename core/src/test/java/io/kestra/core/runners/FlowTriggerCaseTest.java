@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
@@ -34,7 +35,7 @@ public class FlowTriggerCaseTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
-    public void trigger() throws InterruptedException, TimeoutException {
+    public void trigger() throws InterruptedException, TimeoutException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> flowListener = new AtomicReference<>();
         AtomicReference<Execution> flowListenerNoInput = new AtomicReference<>();

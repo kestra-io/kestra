@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
@@ -44,7 +45,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void get() throws TimeoutException, IOException {
+    void get() throws TimeoutException, IOException, QueueException {
         KVStore kv = new InternalKVStore(null, "io.kestra.tests", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
@@ -54,7 +55,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void getKeyNotFound() throws TimeoutException {
+    void getKeyNotFound() throws TimeoutException, QueueException {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue);
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "kv", null, (flow, exec) -> Map.of("errorOnMissing", true));

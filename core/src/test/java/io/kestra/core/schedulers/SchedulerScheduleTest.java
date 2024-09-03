@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -113,7 +114,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, either -> {
+            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
@@ -126,7 +127,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
-            });
+            }));
 
             Flux<LogEntry> receiveLogs = TestsUtils.receive(logQueue, e -> {
                 if (e.getLeft().getMessage().contains("Unknown time-zone ID: Asia/Delhi")) {
@@ -430,7 +431,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // scheduler
         try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
                 assertThat(execution.getInputs().get("def"), is("awesome"));
@@ -440,7 +441,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 }
-            });
+            }));
 
             scheduler.run();
 

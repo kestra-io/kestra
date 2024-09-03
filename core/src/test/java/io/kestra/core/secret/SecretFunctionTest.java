@@ -3,6 +3,7 @@ package io.kestra.core.secret;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -38,7 +39,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = ".*")
-    void getSecret() throws TimeoutException {
+    void getSecret() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 

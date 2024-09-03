@@ -813,6 +813,7 @@
     "change execution status done": "निष्पादन स्थिति अपडेट की गई",
     "change execution status confirm": "क्या आप सुनिश्चित हैं कि आप execution <code>{id}</code> की स्थिति बदलना चाहते हैं?",
     "change status tooltip": "निष्पादन स्थिति बदलें",
-    "executions status changed": "<code>{executionCount}</code> निष्पादन की स्थिति बदल दी गई है"
+    "executions status changed": "<code>{executionCount}</code> निष्पादन की स्थिति बदल दी गई है",
+    "bulk change status": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?"
   }
 }

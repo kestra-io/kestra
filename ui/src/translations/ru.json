@@ -813,6 +813,7 @@
     "change execution status done": "Статус выполнения обновлен",
     "change execution status confirm": "Вы уверены, что хотите изменить статус выполнения <code>{id}</code>?",
     "change status tooltip": "Изменить статус выполнения",
-    "executions status changed": "Статус выполнения <code>{executionCount}</code> был изменен"
+    "executions status changed": "Статус выполнения <code>{executionCount}</code> был изменен",
+    "bulk change status": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?"
   }
 }

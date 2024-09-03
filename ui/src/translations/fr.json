@@ -827,6 +827,7 @@
     "change execution status done": "Statut d'exécution mis à jour",
     "change execution status confirm": "Êtes-vous sûr de vouloir changer le statut de l'exécution <code>{id}</code> ?",
     "change status tooltip": "Changer le statut d'exécution",
-    "executions status changed": "Le statut de <code>{executionCount}</code> exécution(s) a été modifié"
+    "executions status changed": "Le statut de <code>{executionCount}</code> exécution(s) a été modifié",
+    "bulk change status": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?"
   }
 }

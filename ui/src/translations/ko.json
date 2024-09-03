@@ -809,6 +809,10 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
-    "show chart": "차트 보기"
+    "show chart": "차트 보기",
+    "change execution status done": "실행 상태가 업데이트되었습니다",
+    "change execution status confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
+    "change status tooltip": "실행 상태 변경",
+    "executions status changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다"
   }
 }

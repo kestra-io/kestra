@@ -54,6 +54,8 @@
     import State from "../../utils/state";
 
     import {filterLabels} from "./utils"
+    import permission from "../../models/permission.js";
+    import action from "../../models/action.js";
 
     export default {
         components: {LabelInput,},
@@ -79,7 +81,7 @@
                     this.$toast().error(this.$t("wrong labels"))
                     return;
                 }
-                
+
                 this.isOpen = false;
                 this.$store.dispatch("execution/setLabels", {
                     labels: filtered.labels,
@@ -93,6 +95,10 @@
         computed: {
             ...mapState("auth", ["user"]),
             enabled() {
+                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                    return false;
+                }
+
                 if (State.isRunning(this.execution.state.current)) {
                     return false;
                 }

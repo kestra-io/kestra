@@ -2,6 +2,7 @@ package io.kestra.runner.postgres;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;

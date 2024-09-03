@@ -279,27 +279,27 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
+    protected void forEachItem() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
         forEachItemCaseTest.forEachItem();
     }
 
     @Test
-    void forEachItemEmptyItems() throws URISyntaxException, IOException, TimeoutException {
+    protected void forEachItemEmptyItems() throws URISyntaxException, IOException, TimeoutException, QueueException {
         forEachItemCaseTest.forEachItemEmptyItems();
     }
 
     @Test
-    void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+    protected void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
         forEachItemCaseTest.forEachItemNoWait();
     }
 
     @Test
-    void forEachItemFailed() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
+    protected void forEachItemFailed() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
         forEachItemCaseTest.forEachItemFailed();
     }
 
     @Test
-    void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
+    protected void forEachItemSubflowOutputs() throws URISyntaxException, IOException, InterruptedException, TimeoutException, QueueException {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 

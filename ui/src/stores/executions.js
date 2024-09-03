@@ -70,9 +70,27 @@ export default {
                 options.executionsId
             )
         },
+        bulkChangeExecutionStatus(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/change-status/by-ids`,
+                options.executionsId,
+                {
+                    params: {
+                        newStatus: options.newStatus
+                    }
+                }
+            )
+        },
         queryReplayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/replay/by-query`,
+                {},
+                {params: options}
+            )
+        },
+        queryChangeExecutionStatus(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/change-status/by-query`,
                 {},
                 {params: options}
             )
@@ -85,6 +103,16 @@ export default {
                     params: {
                         taskRunId: options.taskRunId,
                         revision: options.revision
+                    }
+                })
+        },
+        changeExecutionStatus(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/${options.executionId}/change-status`,
+                null,
+                {
+                    params: {
+                        status: options.state
                     }
                 })
         },

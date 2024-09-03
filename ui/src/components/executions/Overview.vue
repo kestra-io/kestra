@@ -8,6 +8,7 @@
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
                 <status :status="execution.state.current" class="ms-0" />
@@ -81,9 +82,11 @@
     import Duration from "../layout/Duration.vue";
     import Labels from "../layout/Labels.vue"
     import {toRaw} from "vue";
+    import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
 
     export default {
         components: {
+            ChangeExecutionStatus,
             Duration,
             Status,
             SetLabels,

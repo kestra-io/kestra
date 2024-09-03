@@ -813,6 +813,7 @@
     "change execution status done": "실행 상태가 업데이트되었습니다",
     "change execution status confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change status tooltip": "실행 상태 변경",
-    "executions status changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다"
+    "executions status changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다",
+    "bulk change status": "확실히 <code>{executionCount}</code> 개의 실행 상태를 변경하시겠습니까?"
   }
 }

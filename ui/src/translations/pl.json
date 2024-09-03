@@ -813,6 +813,7 @@
     "change execution status done": "Status wykonania zaktualizowany",
     "change execution status confirm": "Czy na pewno chcesz zmienić status wykonania <code>{id}</code>?",
     "change status tooltip": "Zmień status wykonania",
-    "executions status changed": "Status <code>{executionCount}</code> wykonania/wykonań został zmieniony"
+    "executions status changed": "Status <code>{executionCount}</code> wykonania/wykonań został zmieniony",
+    "bulk change status": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?"
   }
 }

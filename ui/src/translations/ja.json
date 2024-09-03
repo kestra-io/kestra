@@ -813,6 +813,7 @@
     "change execution status done": "実行ステータスが更新されました",
     "change execution status confirm": "実行<code>{id}</code>のステータスを変更してもよろしいですか？",
     "change status tooltip": "実行ステータスを変更",
-    "executions status changed": "<code>{executionCount}</code> 回の実行のステータスが変更されました"
+    "executions status changed": "<code>{executionCount}</code> 回の実行のステータスが変更されました",
+    "bulk change status": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code>"
   }
 }

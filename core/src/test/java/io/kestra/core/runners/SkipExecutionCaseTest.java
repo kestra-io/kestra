@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -35,7 +36,7 @@ public class SkipExecutionCaseTest {
     @Inject
     private SkipExecutionService skipExecutionService;
 
-    public void skipExecution() throws TimeoutException, InterruptedException {
+    public void skipExecution() throws TimeoutException, QueueException, InterruptedException {
         Flow flow = createFlow();
         Execution execution1 = Execution.newExecution(flow, null, null);
         String execution1Id = execution1.getId();

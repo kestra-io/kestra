@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 
 class SequentialTest extends AbstractMemoryRunnerTest {
     @Test
-    void sequential() throws TimeoutException {
+    void sequential() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
@@ -21,7 +22,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void sequentialWithGlobalErrors() throws TimeoutException {
+    void sequentialWithGlobalErrors() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential-with-global-errors");
 
         assertThat(execution.getTaskRunList(), hasSize(6));
@@ -29,7 +30,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void sequentialWithLocalErrors() throws TimeoutException {
+    void sequentialWithLocalErrors() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential-with-local-errors");
 
         assertThat(execution.getTaskRunList(), hasSize(6));

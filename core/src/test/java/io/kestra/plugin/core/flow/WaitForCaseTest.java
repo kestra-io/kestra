@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
 import jakarta.inject.Inject;
@@ -19,33 +20,33 @@ public class WaitForCaseTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
-    public void waitfor() throws TimeoutException {
+    public void waitfor() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList().getFirst().getOutputs(), notNullValue());
     }
 
-    public void waitforMaxIterations() throws TimeoutException {
+    public void waitforMaxIterations() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-max-iterations");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
-    public void waitforMaxDuration() throws TimeoutException {
+    public void waitforMaxDuration() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-max-duration");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
-    public void waitforNoSuccess() throws TimeoutException {
+    public void waitforNoSuccess() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-no-success");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @SuppressWarnings("unchecked")
-    public void waitforMultipleTasks() throws TimeoutException {
+    public void waitforMultipleTasks() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-multiple-tasks");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -54,7 +55,7 @@ public class WaitForCaseTest {
         assertThat(values.get("count"), is("4"));
     }
 
-    public void waitforMultipleTasksFailed() throws TimeoutException {
+    public void waitforMultipleTasksFailed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-multiple-tasks-failed");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

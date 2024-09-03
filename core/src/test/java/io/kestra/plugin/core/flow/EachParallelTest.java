@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.is;
 
 public class EachParallelTest extends AbstractMemoryRunnerTest {
     @Test
-    void parallel() throws TimeoutException {
+    void parallel() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -23,7 +23,7 @@ public class EachParallelTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void parallelNested() throws TimeoutException {
+    void parallelNested() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

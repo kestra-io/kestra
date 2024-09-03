@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
@@ -285,7 +286,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void eval() throws TimeoutException {
+    void eval() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
 
         ExecutionController.EvalResult result = this.eval(execution, "my simple string", 0);
@@ -304,7 +305,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void evalKeepEncryptedValues() throws TimeoutException, JsonProcessingException {
+    void evalKeepEncryptedValues() throws TimeoutException, QueueException, JsonProcessingException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
 
         ExecutionController.EvalResult result = this.eval(execution, "{{outputs.hello.value}}", 0);
@@ -324,7 +325,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void restartFromUnknownTaskId() throws TimeoutException {
+    void restartFromUnknownTaskId() throws TimeoutException, QueueException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "unknownTaskId";
 
@@ -343,7 +344,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void restartWithNoFailure() throws TimeoutException {
+    void restartWithNoFailure() throws TimeoutException, QueueException{
         final String flowId = "restart_with_inputs";
 
         // Run execution until it ends
@@ -444,7 +445,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void restartFromLastFailed() throws TimeoutException {
+    void restartFromLastFailed() throws TimeoutException, QueueException{
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -506,7 +507,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void restartFromLastFailedWithPause() throws TimeoutException {
+    void restartFromLastFailedWithPause() throws TimeoutException, QueueException{
         final String flowId = "restart_pause_last_failed";
 
         // Run execution until it ends
@@ -572,7 +573,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void downloadFile() throws TimeoutException {
+    void downloadFile() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(14));
 
@@ -609,7 +610,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void filePreview() throws TimeoutException {
+    void filePreview() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList(), hasSize(14));
 
@@ -840,7 +841,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void resumePaused() throws TimeoutException, InterruptedException {
+    void resumePaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -860,7 +861,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void resumePausedWithInputs() throws TimeoutException, InterruptedException {
+    void resumePausedWithInputs() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause_on_resume");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -894,7 +895,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void resumeByIds() throws TimeoutException, InterruptedException {
+    void resumeByIds() throws TimeoutException, InterruptedException, QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
 
@@ -936,7 +937,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void resumeByQuery() throws TimeoutException, InterruptedException {
+    void resumeByQuery() throws TimeoutException, InterruptedException, QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
 
@@ -974,7 +975,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void changeStatus() throws TimeoutException {
+    void changeStatus() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -991,7 +992,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void changeStatusByIds() throws TimeoutException {
+    void changeStatusByIds() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
@@ -1022,7 +1023,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void changeStatusByQuery() throws TimeoutException {
+    void changeStatusByQuery() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
@@ -1049,7 +1050,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void replayByIds() throws TimeoutException {
+    void replayByIds() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
@@ -1078,7 +1079,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void replayByQuery() throws TimeoutException {
+    void replayByQuery() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
@@ -1104,7 +1105,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @RetryingTest(5)
-    void killPaused() throws TimeoutException, InterruptedException {
+    void killPaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -1164,7 +1165,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
     @RetryingTest(5)
-    void kill() throws TimeoutException, InterruptedException {
+    void kill() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
         assertThat(runningExecution.getState().isRunning(), is(true));
@@ -1236,7 +1237,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void deleteByIds() throws TimeoutException {
+    void deleteByIds() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1249,7 +1250,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void deleteByQuery() throws TimeoutException {
+    void deleteByQuery() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1287,7 +1288,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void setLabelsByIds() throws TimeoutException {
+    void setLabelsByIds() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1303,7 +1304,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void setLabelsByQuery() throws TimeoutException {
+    void setLabelsByQuery() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");

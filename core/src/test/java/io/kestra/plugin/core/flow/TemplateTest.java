@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -57,7 +58,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         LocalFlowRepositoryLoader repositoryLoader,
         QueueInterface<LogEntry> logQueue,
         FlowInputOutput flowIO
-    ) throws TimeoutException, IOException, URISyntaxException {
+    ) throws TimeoutException, IOException, URISyntaxException, QueueException {
         templateRepository.create(TEMPLATE_1);
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
             "flows/templates/with-template.yaml")));
@@ -85,12 +86,12 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void withTemplate() throws TimeoutException, IOException, URISyntaxException {
+    void withTemplate() throws TimeoutException, IOException, URISyntaxException, QueueException {
         TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue, flowIO);
     }
 
 
-    public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
+    public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException, QueueException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
             "flows/templates/with-failed-template.yaml")));
 
@@ -107,7 +108,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void withFailedTemplate() throws TimeoutException, IOException, URISyntaxException {
+    void withFailedTemplate() throws TimeoutException, IOException, URISyntaxException, QueueException {
         TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
     }
 }

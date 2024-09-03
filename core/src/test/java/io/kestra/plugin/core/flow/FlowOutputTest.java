@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ class FlowOutputTest extends AbstractMemoryRunnerTest {
     static final String NAMESPACE = "io.kestra.tests";
 
     @Test
-    void shouldGetSuccessExecutionForFlowWithOutputs() throws TimeoutException {
+    void shouldGetSuccessExecutionForFlowWithOutputs() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-outputs", null, null);
         assertThat(execution.getOutputs(), aMapWithSize(1));
         assertThat(execution.getOutputs().get("key"), is("{\"value\":\"flow-with-outputs\"}"));
@@ -25,7 +26,7 @@ class FlowOutputTest extends AbstractMemoryRunnerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldGetSuccessExecutionForFlowWithArrayOutputs() throws TimeoutException {
+    void shouldGetSuccessExecutionForFlowWithArrayOutputs() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-array-outputs", null, null);
         assertThat(execution.getOutputs(), aMapWithSize(1));
         assertThat((List<String>) execution.getOutputs().get("myout"), hasItems("1rstValue", "2ndValue"));
@@ -33,7 +34,7 @@ class FlowOutputTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void shouldGetFailExecutionForFlowWithInvalidOutputs() throws TimeoutException {
+    void shouldGetFailExecutionForFlowWithInvalidOutputs() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-outputs-failed", null, null);
         assertThat(execution.getOutputs(), nullValue());
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

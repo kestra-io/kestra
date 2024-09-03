@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
@@ -41,37 +42,37 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void success() throws TimeoutException {
+    void success() throws TimeoutException, QueueException {
        suite.success(runnerUtils);
     }
 
     @Test
-    void failed() throws TimeoutException {
+    void failed() throws TimeoutException, QueueException {
         suite.failed(runnerUtils);
     }
 
     @Test
-    void each() throws TimeoutException {
+    void each() throws TimeoutException, QueueException {
         suite.each(runnerUtils);
     }
 
     @Test
-    void cache() throws TimeoutException, IOException {
+    void cache() throws TimeoutException, IOException, QueueException {
         suite.cache(runnerUtils);
     }
 
     @Test
-    void taskrun() throws TimeoutException, InternalException {
+    void taskrun() throws TimeoutException, InternalException, QueueException {
         suite.taskRun(runnerUtils);
     }
 
     @Test
-    void taskrunNested() throws TimeoutException, InternalException {
+    void taskrunNested() throws TimeoutException, InternalException, QueueException {
         suite.taskRunNested(runnerUtils);
     }
 
     @RetryingTest(5)
-    void namespaceFiles() throws TimeoutException, IOException {
+    void namespaceFiles() throws TimeoutException, IOException, QueueException {
         suite.namespaceFiles(runnerUtils);
     }
 
@@ -95,7 +96,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         @Inject
         StorageInterface storageInterface;
 
-        public void success(RunnerUtils runnerUtils) throws TimeoutException {
+        public void success(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
@@ -105,7 +106,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value"), startsWith("kestra://"));
         }
 
-        public void failed(RunnerUtils runnerUtils) throws TimeoutException {
+        public void failed(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory", null,
                 (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60)
             );
@@ -115,7 +116,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.findTaskRunsByTaskId("error-t1"), hasSize(1));
         }
 
-        public void each(RunnerUtils runnerUtils) throws TimeoutException {
+        public void each(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-each", Duration.ofSeconds(60));
 
             assertThat(execution.getTaskRunList(), hasSize(8));
@@ -124,7 +125,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         @SuppressWarnings("unchecked")
-        public void outputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+        public void outputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-outputs");
 
@@ -151,7 +152,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         @SuppressWarnings("unchecked")
-        public void inputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+        public void inputFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-inputs");
 
@@ -177,7 +178,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
-        public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+        public void cache(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
             // make sure the cache didn't exist
             StorageContext storageContext = StorageContext.forFlow(Flow
                 .builder()
@@ -223,7 +224,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         }
 
-        public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException {
+        public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun");
 
             assertThat(execution.getTaskRunList(), hasSize(3));
@@ -231,7 +232,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-taskrun", List.of("1")).getOutputs().get("value")), containsString("1"));
         }
 
-        public void taskRunNested(RunnerUtils runnerUtils) throws TimeoutException, InternalException {
+        public void taskRunNested(RunnerUtils runnerUtils) throws TimeoutException, InternalException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-nested");
 
             assertThat(execution.getTaskRunList(), hasSize(6));
@@ -239,7 +240,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
         }
 
-        public void namespaceFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException {
+        public void namespaceFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
             put("/test/a/b/c/1.txt", "first");
             put("/a/b/c/2.txt", "second");
             put("/a/b/3.txt", "third");
@@ -256,7 +257,7 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         @SuppressWarnings("unchecked")
-        public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException {
+        public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
 
             assertThat(execution.getTaskRunList(), hasSize(3));

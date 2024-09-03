@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ import static org.hamcrest.Matchers.*;
 public class CurrentEachOutputFunctionTest extends AbstractMemoryRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
-    void parallel() throws TimeoutException {
+    void parallel() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "test-current-output", Duration.ofSeconds(30));
 
         var output1 = (Map<String, Object>) execution.outputs().get("1-1-1_return");

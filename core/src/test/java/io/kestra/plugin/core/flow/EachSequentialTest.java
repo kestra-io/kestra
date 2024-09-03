@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.InternalException;
@@ -31,7 +32,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     QueueInterface<LogEntry> logQueue;
 
     @Test
-    void sequential() throws TimeoutException {
+    void sequential() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
@@ -39,7 +40,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void object() throws TimeoutException {
+    void object() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-object");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
@@ -48,7 +49,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void objectInList() throws TimeoutException {
+    void objectInList() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-object-in-list");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
@@ -57,7 +58,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void sequentialNested() throws TimeoutException, InternalException {
+    void sequentialNested() throws TimeoutException, InternalException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
 
         assertThat(execution.getTaskRunList(), hasSize(23));
@@ -78,7 +79,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachEmpty() throws TimeoutException {
+    void eachEmpty() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-empty");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
@@ -86,11 +87,11 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachNull() throws TimeoutException {
+    void eachNull() throws TimeoutException, QueueException {
         EachSequentialTest.eachNullTest(runnerUtils, logQueue);
     }
 
-    public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException {
+    public static void eachNullTest(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
@@ -104,7 +105,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachSwitch() throws TimeoutException, InternalException {
+    void eachSwitch() throws TimeoutException, InternalException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-switch");
 
         assertThat(execution.getTaskRunList(), hasSize(12));

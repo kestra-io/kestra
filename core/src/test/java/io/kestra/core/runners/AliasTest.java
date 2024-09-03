@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -11,7 +12,7 @@ import static org.hamcrest.Matchers.is;
 
 public class AliasTest extends AbstractMemoryRunnerTest {
     @Test
-    void taskAlias() throws TimeoutException {
+    void taskAlias() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "alias-task");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -19,7 +20,7 @@ public class AliasTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void triggerAlias() throws TimeoutException {
+    void triggerAlias() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "alias-trigger");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

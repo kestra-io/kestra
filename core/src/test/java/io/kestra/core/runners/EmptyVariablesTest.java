@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ public class EmptyVariablesTest extends AbstractMemoryRunnerTest {
     private FlowInputOutput flowIO;
 
     @Test
-    void emptyVariables() throws TimeoutException {
+    void emptyVariables() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",

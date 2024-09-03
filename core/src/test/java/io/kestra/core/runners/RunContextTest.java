@@ -20,6 +20,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.storages.StorageInterface;
@@ -93,7 +94,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     private FlowInputOutput flowIO;
 
     @Test
-    void logs() throws TimeoutException {
+    void logs() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
@@ -123,7 +124,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void inputsLarge() throws TimeoutException {
+    void inputsLarge() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
@@ -153,7 +154,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void variables() throws TimeoutException {
+    void variables() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "return");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -167,7 +168,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
+    void taskDefaults() throws TimeoutException, QueueException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
         pluginDefaultsCaseTest.taskDefaults();
     }
@@ -229,7 +230,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void encryptedStringOutput() throws TimeoutException {
+    void encryptedStringOutput() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

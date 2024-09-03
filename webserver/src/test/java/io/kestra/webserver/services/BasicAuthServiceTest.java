@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.models.Setting;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
@@ -57,7 +58,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void initFromYamlConfig() throws TimeoutException {
+    void initFromYamlConfig() throws TimeoutException, QueueException {
         assertThat(basicAuthService.isEnabled(), is(true));
 
         assertConfigurationMatchesApplicationYaml();
@@ -66,7 +67,7 @@ class BasicAuthServiceTest {
     }
 
     @Test
-    void secure() throws TimeoutException {
+    void secure() throws TimeoutException, QueueException {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(
             IllegalArgumentException.class,
             () -> basicAuthService.save(basicAuthConfiguration.withUsernamePassword("not-an-email", "password"))

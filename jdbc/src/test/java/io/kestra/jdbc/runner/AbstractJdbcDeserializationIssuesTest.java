@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.DeserializationIssuesCaseTest;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.IdUtils;
@@ -58,7 +59,7 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     }
 
     @Test
-    void flowDeserializationIssue() throws TimeoutException {
+    void flowDeserializationIssue() throws TimeoutException, QueueException {
         deserializationIssuesCaseTest.flowDeserializationIssue(queueMessage -> sendToQueue(queueMessage));
     }
 

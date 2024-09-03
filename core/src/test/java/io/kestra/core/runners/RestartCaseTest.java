@@ -190,7 +190,7 @@ public class RestartCaseTest {
 
         Execution restartEnded = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.FAILED,
-            () -> executionQueue.emit(restart),
+            throwRunnable(() -> executionQueue.emit(restart)),
             Duration.ofSeconds(120)
         );
 
@@ -200,7 +200,7 @@ public class RestartCaseTest {
 
         restartEnded = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.FAILED,
-            () -> executionQueue.emit(newRestart),
+            throwRunnable(() -> executionQueue.emit(newRestart)),
             Duration.ofSeconds(120)
         );
 

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
@@ -60,7 +61,7 @@ public class ForEachItemCaseTest {
     private FlowInputOutput flowIO;
 
     @SuppressWarnings("unchecked")
-    public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+    public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -102,8 +103,7 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
     }
 
-    @SuppressWarnings("unchecked")
-    public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException {
+    public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException, QueueException {
         URI file = emptyItems();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
@@ -118,7 +118,7 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemNoWait() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+    public void forEachItemNoWait() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -168,7 +168,7 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemFailed() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+    public void forEachItemFailed() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -211,7 +211,7 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemWithSubflowOutputs() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
+    public void forEachItemWithSubflowOutputs() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 

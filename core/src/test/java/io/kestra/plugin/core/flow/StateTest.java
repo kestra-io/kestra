@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import static org.hamcrest.Matchers.is;
 class StateTest extends AbstractMemoryRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
-    void set() throws TimeoutException {
+    void set() throws TimeoutException, QueueException {
         String stateName = IdUtils.create();
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
@@ -40,7 +41,7 @@ class StateTest extends AbstractMemoryRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void each() throws TimeoutException, InternalException {
+    void each() throws TimeoutException, InternalException, QueueException {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
         assertThat(execution.getTaskRunList(), hasSize(17));

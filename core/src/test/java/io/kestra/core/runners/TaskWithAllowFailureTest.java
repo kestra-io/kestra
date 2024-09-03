@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +32,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     private FlowInputOutput flowIO;
 
     @Test
-    void runnableTask() throws TimeoutException {
+    void runnableTask() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-runnable");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
@@ -40,7 +41,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void executableTask_Flow() throws TimeoutException {
+    void executableTask_Flow() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-flow");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
@@ -48,7 +49,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void executableTask_ForEachItem() throws TimeoutException, URISyntaxException, IOException {
+    void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-executable-foreachitem", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
@@ -58,7 +59,7 @@ public class TaskWithAllowFailureTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowableTask() throws TimeoutException {
+    void flowableTask() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-failure-flowable");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));

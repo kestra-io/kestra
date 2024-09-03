@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -40,7 +41,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // wait for execution
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
             Execution execution = either.getLeft();
 
             assertThat(execution.getFlowId(), is(flow.getId()));
@@ -49,7 +50,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
                 executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 queueCount.countDown();
             }
-        });
+        }));
 
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

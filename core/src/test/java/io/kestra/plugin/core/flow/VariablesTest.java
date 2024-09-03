@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -29,7 +30,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     @Test
     @EnabledIfEnvironmentVariable(named = "KESTRA_TEST1", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "KESTRA_TEST2", matches = ".*")
-    void recursiveVars() throws TimeoutException {
+    void recursiveVars() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "variables");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -39,7 +40,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void invalidVars() throws TimeoutException {
+    void invalidVars() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
@@ -58,7 +59,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void failedFirst() throws TimeoutException {
+    void failedFirst() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "failed-first");
 
         assertThat(execution.getTaskRunList(), hasSize(1));

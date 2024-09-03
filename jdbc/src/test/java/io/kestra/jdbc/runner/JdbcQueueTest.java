@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Indexer;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -32,17 +34,17 @@ abstract public class JdbcQueueTest {
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    void noGroup() throws InterruptedException {
+    void noGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<Flow> receive = TestsUtils.receive(flowQueue, either -> {
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
             Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
 
             countDownLatch.countDown();
-        });
+        }));
 
         flowQueue.emit(builder("io.kestra.f1"));
 
@@ -53,17 +55,17 @@ abstract public class JdbcQueueTest {
     }
 
     @Test
-    void withGroup() throws InterruptedException {
+    void withGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<Flow> receive = TestsUtils.receive(flowQueue, "consumer_group", either -> {
+        Flux<Flow> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
             Flow flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit("consumer_group", builder("io.kestra.f2"));
             }
 
             countDownLatch.countDown();
-        });
+        }));
 
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
@@ -74,7 +76,7 @@ abstract public class JdbcQueueTest {
     }
 
     @Test
-    void withType() throws InterruptedException {
+    void withType() throws InterruptedException, QueueException {
         // first one
         flowQueue.emit(builder("io.kestra.f1"));
 
@@ -100,7 +102,7 @@ abstract public class JdbcQueueTest {
     }
 
     @Test
-    void withGroupAndType() throws InterruptedException {
+    void withGroupAndType() throws InterruptedException, QueueException {
         // first one
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 

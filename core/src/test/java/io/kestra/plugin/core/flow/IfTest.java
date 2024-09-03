@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ import static org.hamcrest.Matchers.*;
 
 class IfTest  extends AbstractMemoryRunnerTest {
     @Test
-    void ifTruthy() throws TimeoutException {
+    void ifTruthy() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
@@ -38,7 +39,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void ifFalsy() throws TimeoutException {
+    void ifFalsy() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
 
@@ -71,7 +72,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void ifWithoutElse() throws TimeoutException {
+    void ifWithoutElse() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-without-else", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 

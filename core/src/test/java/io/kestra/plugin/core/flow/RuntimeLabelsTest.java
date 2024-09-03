@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ import static org.hamcrest.Matchers.*;
 
 class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
     @Test
-    void update() throws TimeoutException {
+    void update() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
@@ -52,7 +53,7 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
 
 
     @Test
-    void noNpeOnNullPreviousExecutionLabels() throws TimeoutException {
+    void noNpeOnNullPreviousExecutionLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",

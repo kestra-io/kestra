@@ -911,7 +911,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void changeStatus() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         // replay executions
@@ -928,8 +928,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void changeStatusByIds() throws TimeoutException {
-        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         assertThat(execution1.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -959,8 +959,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     @Test
     @SuppressWarnings("unchecked")
     void changeStatusByQuery() throws TimeoutException {
-        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         assertThat(execution1.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -986,8 +986,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void replayByIds() throws TimeoutException {
-        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         assertThat(execution1.getState().isTerminated(), is(true));
         assertThat(execution2.getState().isTerminated(), is(true));
@@ -1015,8 +1015,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void replayByQuery() throws TimeoutException {
-        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         assertThat(execution1.getState().isTerminated(), is(true));
         assertThat(execution2.getState().isTerminated(), is(true));
@@ -1172,10 +1172,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void deleteByIds() {
-        Execution result1 = triggerInputsFlowExecution(true);
-        Execution result2 = triggerInputsFlowExecution(true);
-        Execution result3 = triggerInputsFlowExecution(true);
+    void deleteByIds() throws TimeoutException {
+        Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.DELETE("/api/v1/executions/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
@@ -1185,10 +1185,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void deleteByQuery() {
-        Execution result1 = triggerInputsFlowExecution(true);
-        Execution result2 = triggerInputsFlowExecution(true);
-        Execution result3 = triggerInputsFlowExecution(true);
+    void deleteByQuery() throws TimeoutException {
+        Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.DELETE("/api/v1/executions/by-query?namespace=" + result1.getNamespace()),
@@ -1223,10 +1223,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void setLabelsByIds() {
-        Execution result1 = triggerInputsFlowExecution(true);
-        Execution result2 = triggerInputsFlowExecution(true);
-        Execution result3 = triggerInputsFlowExecution(true);
+    void setLabelsByIds() throws TimeoutException {
+        Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/executions/labels/by-ids",
@@ -1239,10 +1239,10 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void setLabelsByQuery() {
-        Execution result1 = triggerInputsFlowExecution(true);
-        Execution result2 = triggerInputsFlowExecution(true);
-        Execution result3 = triggerInputsFlowExecution(true);
+    void setLabelsByQuery() throws TimeoutException {
+        Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/executions/labels/by-query?namespace=" + result1.getNamespace(),

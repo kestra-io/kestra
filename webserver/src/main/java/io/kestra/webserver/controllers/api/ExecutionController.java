@@ -876,6 +876,135 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/change-status")
+    @Operation(tags = {"Executions"}, summary = "Change the status of an execution")
+    public Execution changeStatus(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new status of the execution") @NotNull @QueryValue State.Type status
+    ) {
+        if (!status.isTerminated()) {
+            throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
+        }
+
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        if (!execution.get().getState().isTerminated()) {
+            throw new IllegalArgumentException("You can only change the status of a terminated execution.");
+        }
+
+        Execution updated = execution.get().withState(status);
+
+        executionQueue.emit(updated);
+        eventPublisher.publishEvent(new CrudEvent<>(updated, execution.get(), CrudEventType.UPDATE));
+
+        return updated;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/change-status/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Change status of executions by id")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Changed status with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public HttpResponse<?> changeStatusById(
+        @Parameter(description = "The execution id") @Body List<String> executionsId,
+        @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
+    ) {
+        if (!newStatus.isTerminated()) {
+            throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
+        }
+
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not in a terminated state",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk change execution status")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        for (Execution execution : executions) {
+            Execution replay = execution.withState(newStatus);
+
+            executionQueue.emit(replay);
+            eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.UPDATE));
+        }
+
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/change-status/by-query")
+    @Operation(tags = {"Executions"}, summary = "Change executions status by query parameters")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Changed status with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public HttpResponse<?> changeStatusByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
+    ) {
+        validateTimeline(startDate, endDate);
+
+        var ids = executionRepository
+            .find(
+                query,
+                tenantService.resolveTenant(),
+                namespace,
+                flowId,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+                endDate,
+                state,
+                RequestUtils.toMap(labels),
+                triggerExecutionId,
+                childFilter
+            )
+            .map(Execution::getId)
+            .collectList()
+            .block();
+
+        return changeStatusById(ids, newStatus);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill an execution")
     @ApiResponse(responseCode = "202", description = "Execution kill was requested successfully")

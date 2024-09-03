@@ -36,10 +36,8 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
-import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -66,8 +64,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ExecutionControllerTest extends JdbcH2ControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
-    @Inject
-    EmbeddedServer embeddedServer;
+
     @Inject
     ExecutionController executionController;
 
@@ -910,6 +907,81 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             ))
         );
         assertThat(e.getStatus(), is(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void changeStatus() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // replay executions
+        Execution changedStatus = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/" + execution.getId() + "/change-status?status=WARNING",
+                null
+            ),
+            Execution.class
+        );
+        assertThat(changedStatus.getState().getCurrent(), is (State.Type.WARNING));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void changeStatusByIds() throws TimeoutException {
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+
+        assertThat(execution1.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        PagedResults<Execution> executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search"), Argument.of(PagedResults.class, Execution.class)
+        );
+        assertThat(executions.getTotal(), is(2L));
+
+        // change status of executions
+        BulkResponse changeStatus = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/change-status/by-ids?newStatus=WARNING",
+                List.of(execution1.getId(), execution2.getId())
+            ),
+            BulkResponse.class
+        );
+        assertThat(changeStatus.getCount(), is(2));
+
+        executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search"), Argument.of(PagedResults.class, Execution.class)
+        );
+        assertThat(executions.getResults().getFirst().getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(executions.getResults().get(1).getState().getCurrent(), is(State.Type.WARNING));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void changeStatusByQuery() throws TimeoutException {
+        Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
+
+        assertThat(execution1.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        PagedResults<Execution> executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search"), Argument.of(PagedResults.class, Execution.class)
+        );
+        assertThat(executions.getTotal(), is(2L));
+
+        // change status of  executions
+        BulkResponse changeStatus = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/change-status/by-query?namespace=io.kestra.tests&newStatus=WARNING", null),
+            BulkResponse.class
+        );
+        assertThat(changeStatus.getCount(), is(2));
+
+        executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search"), Argument.of(PagedResults.class, Execution.class)
+        );
+        assertThat(executions.getResults().getFirst().getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(executions.getResults().get(1).getState().getCurrent(), is(State.Type.WARNING));;
     }
 
     @Test

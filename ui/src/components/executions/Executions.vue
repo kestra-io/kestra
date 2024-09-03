@@ -165,6 +165,9 @@
                             <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
                                 {{ $t("replay") }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                                {{ $t("change status") }}
+                            </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
                             </el-button>
@@ -372,6 +375,45 @@
             </template>
         </data-table>
     </section>
+
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeStatusToast()" />
+
+            <el-select
+                :required="true"
+                v-model="selectedStatus"
+                :persistent="false"
+            >
+                <el-option
+                    v-for="item in states"
+                    :key="item.code"
+                    :value="item.code"
+                >
+                    <template #default>
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <span v-html="item.label" />
+                    </template>
+                </el-option>
+            </el-select>
+        </template>
+
+        <template #footer>
+            <el-button @click="changeStatusDialogVisible = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="changeStatus()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -386,6 +428,7 @@
     import Import from "vue-material-design-icons/Import.vue";
     import Utils from "../../utils/utils";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
 </script>
 
 <script>
@@ -405,7 +448,6 @@
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
-    import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -477,7 +519,7 @@
                 type: String,
                 required: false,
                 default: undefined
-            },
+            }
         },
         data() {
             return {
@@ -551,7 +593,9 @@
                 isOpenLabelsModal: false,
                 executionLabels: [],
                 actionOptions: {},
-                refreshDates: false
+                refreshDates: false,
+                changeStatusDialogVisible: false,
+                selectedStatus: undefined
             };
         },
         created() {
@@ -617,7 +661,15 @@
             },
             filterStorageKey() {
                 return storageKeys.EXECUTIONS_FILTERS
-            }
+            },
+            states() {
+                return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {
+                    return {
+                        code: value,
+                        label: this.$t("mark as", {status: value})
+                    };
+                });
+            },
         },
         methods: {
             executionParams(row) {
@@ -769,6 +821,19 @@
                     "execution/bulkReplayExecution",
                     "executions replayed"
                 );
+            },
+            changeStatus() {
+                this.changeStatusDialogVisible = false;
+                this.actionOptions.newStatus = this.selectedStatus;
+
+                this.genericConfirmCallback(
+                    "execution/queryChangeExecutionStatus",
+                    "execution/bulkChangeExecutionStatus",
+                    "executions status changed"
+                );
+            },
+            changeStatusToast() {
+                return this.$t("bulk change execution status", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);

@@ -114,11 +114,16 @@ def flatten_dict(d, parent_key="", sep="|"):
     return dict(items)
 
 
-def load_en_changes_from_last_commit(input_file):
+def load_en_changes_from_last_commits(input_file, commit_range=10):
     repo = git.Repo(".")
-    previous_commit = repo.head.commit.parents[0]  # Get the previous commit
-    previous_version = previous_commit.tree / input_file
-    return json.loads(previous_version.data_stream.read())
+    commits = list(repo.iter_commits('HEAD', max_count=commit_range))
+    
+    # Iterate over commits and compare to find the last one that modified the file
+    for commit in commits[1:]:
+        previous_version = commit.tree / input_file
+        if previous_version:
+            return json.loads(previous_version.data_stream.read())
+    return {}
 
 
 def load_en_dict(file_path):
@@ -145,7 +150,7 @@ def detect_changes(current_dict, previous_dict):
 
 def get_keys_to_translate(file_path="ui/src/translations/en.json"):
     current_en_dict = load_en_dict(file_path)
-    previous_en_dict = load_en_changes_from_last_commit(file_path)
+    previous_en_dict = load_en_changes_from_last_commits(file_path)
 
     keys_to_translate = detect_changes(current_en_dict, previous_en_dict)
     en_flat = flatten_dict(current_en_dict)

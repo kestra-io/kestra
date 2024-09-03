@@ -18,7 +18,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 2  # Ensures that at least two commits are fetched for comparison
+        fetch-depth: 10  # Ensures that at least 10 commits are fetched for comparison
 
     - name: Set up Python
       uses: actions/setup-python@v5

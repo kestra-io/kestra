@@ -809,6 +809,10 @@
       "metrics": "Elimina metriche",
       "storage": "Elimina file di storage interni"
     },
-    "show chart": "Mostra Grafico"
+    "show chart": "Mostra Grafico",
+    "change execution status done": "Stato di esecuzione aggiornato",
+    "change execution status confirm": "Sei sicuro di voler cambiare lo stato dell'esecuzione <code>{id}</code>?",
+    "change status tooltip": "Cambia lo stato di esecuzione",
+    "executions status changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato"
   }
 }

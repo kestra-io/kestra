@@ -809,6 +809,10 @@
       "metrics": "Удалить метрики",
       "storage": "Удалить внутренние файлы хранения"
     },
-    "show chart": "Показать диаграмму"
+    "show chart": "Показать диаграмму",
+    "change execution status done": "Статус выполнения обновлен",
+    "change execution status confirm": "Вы уверены, что хотите изменить статус выполнения <code>{id}</code>?",
+    "change status tooltip": "Изменить статус выполнения",
+    "executions status changed": "Статус выполнения <code>{executionCount}</code> был изменен"
   }
 }

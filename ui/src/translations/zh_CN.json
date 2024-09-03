@@ -824,6 +824,10 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
-    "show chart": "显示图表"
+    "show chart": "显示图表",
+    "change execution status done": "执行状态已更新",
+    "change execution status confirm": "您确定要更改执行 <code>{id}</code> 的状态吗？",
+    "change status tooltip": "更改执行状态",
+    "executions status changed": "<code>{executionCount}</code> 次执行的状态已更改"
   }
 }

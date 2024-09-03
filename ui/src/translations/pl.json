@@ -809,6 +809,10 @@
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
     },
-    "show chart": "Pokaż Wykres"
+    "show chart": "Pokaż Wykres",
+    "change execution status done": "Status wykonania zaktualizowany",
+    "change execution status confirm": "Czy na pewno chcesz zmienić status wykonania <code>{id}</code>?",
+    "change status tooltip": "Zmień status wykonania",
+    "executions status changed": "Status <code>{executionCount}</code> wykonania/wykonań został zmieniony"
   }
 }

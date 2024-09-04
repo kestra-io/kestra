@@ -115,7 +115,32 @@
                         query: {
                             id: this.$route.query.id
                         }
-                    },                   
+                    },   
+                    {
+                        name: "dependencies",
+                        component: NamespaceDependenciesWrapper,
+                        title: this.$t("dependencies"),
+                        props: {
+                            type: "dependencies",
+                            tab: "dependencies",
+                        },
+                        query: {
+                            id: this.$route.query.id
+                        }
+                    },      
+                    {
+                        name: "kv",
+                        component: NamespaceKV,
+                        title: this.$t("kv.name"),
+                        props: {
+                            addKvModalVisible: this.modalAddKvVisible,
+                        },
+                        "v-on": {
+                            "update:addKvModalVisible": (value) => {
+                                this.modalAddKvVisible = value
+                            }
+                        }
+                    },          
                     {
                         name: "edit",
                         component: "",
@@ -152,19 +177,7 @@
                         },
                         disabled: true,
                         locked: true
-                    },
-                    {
-                        name: "dependencies",
-                        component: NamespaceDependenciesWrapper,
-                        title: this.$t("dependencies"),
-                        props: {
-                            type: "dependencies",
-                            tab: "dependencies",
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
+                    },              
                     {
                         name: "secrets",
                         component: "",
@@ -193,20 +206,7 @@
                         },
                         disabled: true,
                         locked: true
-                    },
-                    {
-                        name: "kv",
-                        component: NamespaceKV,
-                        title: this.$t("kv.name"),
-                        props: {
-                            addKvModalVisible: this.modalAddKvVisible,
-                        },
-                        "v-on": {
-                            "update:addKvModalVisible": (value) => {
-                                this.modalAddKvVisible = value
-                            }
-                        }
-                    }
+                    }             
                 ])
 
                 return tabs;

@@ -1,5 +1,5 @@
 <template>
-    <div class="line font-monospace" v-if="filtered">
+    <div class="py-2 line font-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "").capitalize() }}</span>

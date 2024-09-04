@@ -171,10 +171,10 @@
     "replay confirm": "Вы уверены, что хотите повторить это выполнение <code>{id}</code> и создать новое?",
     "prefill inputs": "Предзаполнение",
     "current": "текущий",
-    "change status": "Изменить статус",
-    "change status done": "Статус task был обновлен",
-    "change status confirm": "Вы уверены, что хотите изменить статус task <code>{task}</code> для выполнения <code>{id}</code>?",
-    "change status hint": {
+    "change state": "Изменить статус",
+    "change state done": "Статус task был обновлен",
+    "change state confirm": "Вы уверены, что хотите изменить статус task <code>{task}</code> для выполнения <code>{id}</code>?",
+    "change state hint": {
       "WARNING": "['Flow будет помечен как WARNING.', 'Следующие tasks будут выполнены.', 'Tasks с ошибками будут выполнены.']",
       "FAILED": "['Flow будет помечен как FAILED.', 'Другие tasks не будут выполнены.', 'Tasks с ошибками будут выполнены.']",
       "SUCCESS": "['Flow перезапустится, так как этот task был успешным.', 'Все заблокированные tasks будут выполнены.', 'Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными.']",
@@ -272,7 +272,7 @@
       "please": "Пожалуйста, выберите task справа, чтобы увидеть его документацию"
     },
     "last execution date": "Дата последнего выполнения",
-    "last execution status": "Последний статус",
+    "last execution state": "Последний статус",
     "last X days count": "{count} за последние {days} дней",
     "date range count": "{count} между {startDate} и {endDate}",
     "date count": "{count} на {date}",
@@ -810,10 +810,10 @@
       "storage": "Удалить внутренние файлы хранения"
     },
     "show chart": "Показать диаграмму",
-    "change execution status done": "Статус выполнения обновлен",
-    "change execution status confirm": "Вы уверены, что хотите изменить статус выполнения <code>{id}</code>?",
-    "change status tooltip": "Изменить статус выполнения",
-    "executions status changed": "Статус выполнения <code>{executionCount}</code> был изменен",
-    "bulk change status": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?"
+    "change execution state done": "Статус выполнения обновлен",
+    "change execution state confirm": "Вы уверены, что хотите изменить статус выполнения <code>{id}</code>?",
+    "change state tooltip": "Изменить статус выполнения",
+    "executions state changed": "Статус выполнения <code>{executionCount}</code> был изменен",
+    "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?"
   }
 }

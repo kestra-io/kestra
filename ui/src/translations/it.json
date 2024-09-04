@@ -171,10 +171,10 @@
     "replay confirm": "Sei sicuro di voler ripetere questa esecuzione <code>{id}</code> e crearne una nuova?",
     "prefill inputs": "Precompila",
     "current": "corrente",
-    "change status": "Cambia stato",
-    "change status done": "Lo stato del task è stato aggiornato",
-    "change status confirm": "Sei sicuro di voler cambiare lo stato del task <code>{task}</code> per l'esecuzione <code>{id}</code>?",
-    "change status hint": {
+    "change state": "Cambia stato",
+    "change state done": "Lo stato del task è stato aggiornato",
+    "change state confirm": "Sei sicuro di voler cambiare lo stato del task <code>{task}</code> per l'esecuzione <code>{id}</code>?",
+    "change state hint": {
       "WARNING": "['Il flow sarà contrassegnato come WARNING.', 'I prossimi tasks verranno eseguiti.', 'I tasks di errore verranno eseguiti.']",
       "FAILED": "['Il flow sarà contrassegnato come FAILED.', 'Nessun altro task verrà eseguito.', 'I tasks di errore verranno eseguiti.']",
       "SUCCESS": "['Il flow verrà riavviato poiché questo task è stato completato con successo.', 'Tutti i tasks bloccati verranno eseguiti.', 'Il flow sarà in stato di SUCCESS se tutte le esecuzioni dei tasks saranno completate con successo.']",
@@ -272,7 +272,7 @@
       "please": "Per favore scegli un task a destra per vedere la sua documentazione"
     },
     "last execution date": "Data ultima esecuzione",
-    "last execution status": "Ultimo stato",
+    "last execution state": "Ultimo stato",
     "last X days count": "{count} negli ultimi {days} giorni",
     "date range count": "{count} tra il {startDate} e il {endDate}",
     "date count": "{count} il {date}",
@@ -810,10 +810,10 @@
       "storage": "Elimina file di storage interni"
     },
     "show chart": "Mostra Grafico",
-    "change execution status done": "Stato di esecuzione aggiornato",
-    "change execution status confirm": "Sei sicuro di voler cambiare lo stato dell'esecuzione <code>{id}</code>?",
-    "change status tooltip": "Cambia lo stato di esecuzione",
-    "executions status changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
-    "bulk change status": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?"
+    "change execution state done": "Stato di esecuzione aggiornato",
+    "change execution state confirm": "Sei sicuro di voler cambiare lo stato dell'esecuzione <code>{id}</code>?",
+    "change state tooltip": "Cambia lo stato di esecuzione",
+    "executions state changed": "Lo stato di <code>{executionCount}</code> esecuzione/i è stato cambiato",
+    "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?"
   }
 }

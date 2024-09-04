@@ -127,7 +127,7 @@
                             });
                         }
 
-                        this.$toast().success(this.$t("change execution status done"));
+                        this.$toast().success(this.$t("change execution state done"));
                     })
             },
         },

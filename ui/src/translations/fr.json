@@ -170,10 +170,10 @@
     "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle exécution ?",
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
-    "change status": "Changer le statut",
-    "change status done": "Le statut de la tâche a été mis à jour",
-    "change status confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
-    "change status hint": {
+    "change state": "Changer le statut",
+    "change state done": "Le statut de la tâche a été mis à jour",
+    "change state confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
+    "change state hint": {
       "WARNING": [
         "Le flow serra marqué en état WARNING.",
         "Les tâches suivantes seront executées.",
@@ -287,7 +287,7 @@
     },
     "last X days count": "{count} lors des {days} derniers jours",
     "last execution date": "Dernière exécution",
-    "last execution status": "Dernier statut",
+    "last execution state": "Dernier statut",
     "date range count": "{count} entre le {startDate} et le {endDate}",
     "date count": "{count} le {date}",
     "revisions": "Révisions",
@@ -824,10 +824,10 @@
       "storage": "Supprimer les fichiers de stockage interne"
     },
     "show chart": "Afficher le graphique",
-    "change execution status done": "Statut d'exécution mis à jour",
-    "change execution status confirm": "Êtes-vous sûr de vouloir changer le statut de l'exécution <code>{id}</code> ?",
-    "change status tooltip": "Changer le statut d'exécution",
-    "executions status changed": "Le statut de <code>{executionCount}</code> exécution(s) a été modifié",
-    "bulk change status": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?"
+    "change execution state done": "Statut d'exécution mis à jour",
+    "change execution state confirm": "Êtes-vous sûr de vouloir changer le statut de l'exécution <code>{id}</code> ?",
+    "change state tooltip": "Changer le statut d'exécution",
+    "executions state changed": "Le statut de <code>{executionCount}</code> exécution(s) a été modifié",
+    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?"
   }
 }

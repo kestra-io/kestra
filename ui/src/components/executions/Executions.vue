@@ -172,7 +172,7 @@
                                 {{ $t("replay") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                {{ $t("change status") }}
+                                {{ $t("change state") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
@@ -840,7 +840,7 @@
                 this.genericConfirmCallback(
                     "execution/queryChangeExecutionStatus",
                     "execution/bulkChangeExecutionStatus",
-                    "executions status changed"
+                    "executions state changed"
                 );
             },
             changeStatusToast() {

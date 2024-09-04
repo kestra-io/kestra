@@ -171,10 +171,10 @@
     "replay confirm": "确定要重放此执行 <code>{id}</code> 并创建一个新的吗？",
     "prefill inputs": "预填",
     "current": "当前",
-    "change status": "更改状态",
-    "change status done": "任务状态已更新",
-    "change status confirm": "确定要更改执行 <code>{id}</code> 的任务 <code>{task}</code> 的状态吗？",
-    "change status hint": {
+    "change state": "更改状态",
+    "change state done": "任务状态已更新",
+    "change state confirm": "确定要更改执行 <code>{id}</code> 的任务 <code>{task}</code> 的状态吗？",
+    "change state hint": {
       "WARNING": [
         "流程将标记为警告。",
         "将执行下一个任务。",
@@ -287,7 +287,7 @@
       "please": "请选择右侧的一个任务以查看其文档"
     },
     "last execution date": "最后执行日期",
-    "last execution status": "最后状态",
+    "last execution state": "最后状态",
     "last X days count": "{days}天内的{count}",
     "date range count": "{startDate}到{endDate}之间的{count}",
     "date count": "{date}的{count}",
@@ -825,10 +825,10 @@
       "storage": "删除内部存储文件"
     },
     "show chart": "显示图表",
-    "change execution status done": "执行状态已更新",
-    "change execution status confirm": "您确定要更改执行 <code>{id}</code> 的状态吗？",
-    "change status tooltip": "更改执行状态",
-    "executions status changed": "<code>{executionCount}</code> 次执行的状态已更改",
-    "bulk change status": "您确定要更改<code>{executionCount}</code>次执行的状态吗？"
+    "change execution state done": "执行状态已更新",
+    "change execution state confirm": "您确定要更改执行 <code>{id}</code> 的状态吗？",
+    "change state tooltip": "更改执行状态",
+    "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
+    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？"
   }
 }

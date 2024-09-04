@@ -171,13 +171,13 @@
     "replay confirm": "Czy na pewno chcesz odtworzyć to wykonanie <code>{id}</code> i utworzyć nowe?",
     "prefill inputs": "Wypełnij",
     "current": "bieżący",
-    "change state": "Zmień status",
-    "change state done": "Status task został zaktualizowany",
-    "change state confirm": "Czy na pewno chcesz zmienić status task <code>{task}</code> dla wykonania <code>{id}</code>?",
+    "change state": "Zmień stan",
+    "change state done": "Stan task został zaktualizowany",
+    "change state confirm": "Czy na pewno chcesz zmienić stan uruchomienia task dla task <code>{task}</code> w wykonaniu <code>{id}</code>?",
     "change state hint": {
       "WARNING": "['Flow zostanie oznaczony jako WARNING.', 'Następne taski zostaną wykonane.', 'Taski błędów zostaną wykonane.']",
-      "FAILED": "['Flow zostanie oznaczony jako FAILED.', 'Żaden inny task nie zostanie wykonany.', 'Taski błędów zostaną wykonane.']",
-      "SUCCESS": "['Flow zostanie ponownie uruchomiony, ponieważ ten task zakończył się sukcesem.', 'Wszystkie zablokowane taski zostaną wykonane.', 'Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia task zakończą się sukcesem.']",
+      "FAILED": "['Flow zostanie oznaczony jako FAILED.', 'Żadne inne task nie będą wykonane.', 'Task błędów będą wykonane.']",
+      "SUCCESS": "['Flow zostanie uruchomiony ponownie, ponieważ ten task zakończył się sukcesem.', 'Wszystkie zablokowane taski zostaną wykonane.', 'Flow będzie w stanie SUCCESS, jeśli wszystkie uruchomienia tasków zakończą się sukcesem.']",
       "RUNNING": "['Flow zostanie ponownie uruchomiony i wykona wszystkie następne taski.', 'Wszystkie zablokowane taski zostaną wykonane.']"
     },
     "mark as": "Oznacz jako <code>{status}</code>",
@@ -272,7 +272,7 @@
       "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację"
     },
     "last execution date": "Data ostatniego wykonania",
-    "last execution state": "Ostatni status",
+    "last execution state": "Ostatni stan",
     "last X days count": "{count} w ostatnich {days} dniach",
     "date range count": "{count} między {startDate} a {endDate}",
     "date count": "{count} w dniu {date}",
@@ -810,10 +810,10 @@
       "storage": "Usuń wewnętrzne pliki storage"
     },
     "show chart": "Pokaż Wykres",
-    "change execution state done": "Status wykonania zaktualizowany",
-    "change execution state confirm": "Czy na pewno chcesz zmienić status wykonania <code>{id}</code>?",
-    "change state tooltip": "Zmień status wykonania",
-    "executions state changed": "Status <code>{executionCount}</code> wykonania/wykonań został zmieniony",
+    "change execution state done": "Stan wykonania zaktualizowany",
+    "change execution state confirm": "Czy na pewno chcesz zmienić stan wykonania <code>{id}</code>?",
+    "change state tooltip": "Zmień stan wykonania",
+    "executions state changed": "Stan wykonania <code>{executionCount}</code> został zmieniony",
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?"
   }
 }

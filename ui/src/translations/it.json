@@ -173,12 +173,12 @@
     "current": "corrente",
     "change state": "Cambia stato",
     "change state done": "Lo stato del task è stato aggiornato",
-    "change state confirm": "Sei sicuro di voler cambiare lo stato del task <code>{task}</code> per l'esecuzione <code>{id}</code>?",
+    "change state confirm": "Sei sicuro di voler cambiare lo stato di esecuzione del task <code>{task}</code> nell'esecuzione <code>{id}</code>?",
     "change state hint": {
-      "WARNING": "['Il flow sarà contrassegnato come WARNING.', 'I prossimi tasks verranno eseguiti.', 'I tasks di errore verranno eseguiti.']",
-      "FAILED": "['Il flow sarà contrassegnato come FAILED.', 'Nessun altro task verrà eseguito.', 'I tasks di errore verranno eseguiti.']",
-      "SUCCESS": "['Il flow verrà riavviato poiché questo task è stato completato con successo.', 'Tutti i tasks bloccati verranno eseguiti.', 'Il flow sarà in stato di SUCCESS se tutte le esecuzioni dei tasks saranno completate con successo.']",
-      "RUNNING": "['Il flow verrà riavviato e verranno eseguiti tutti i tasks successivi.', 'Tutti i tasks bloccati verranno eseguiti.']"
+      "WARNING": "['Il flow sarà contrassegnato come WARNING.', 'I prossimi task saranno eseguiti.', 'I task di errore saranno eseguiti.']",
+      "FAILED": "['Il flow sarà contrassegnato come FAILED.', 'Nessun altro task verrà eseguito.', 'I task di errore verranno eseguiti.']",
+      "SUCCESS": "['Il flow verrà riavviato poiché questo task è stato completato con successo.', 'Tutti i task bloccati verranno eseguiti.', 'Il flow sarà in stato SUCCESS se tutte le esecuzioni dei task avranno successo.']",
+      "RUNNING": "['Il flow si riavvierà ed eseguirà tutti i task successivi.', 'Tutti i task bloccati verranno eseguiti.']"
     },
     "mark as": "Contrassegna come <code>{status}</code>",
     "kill": "Termina",

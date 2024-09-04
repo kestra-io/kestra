@@ -172,13 +172,13 @@
     "prefill inputs": "미리 채우기",
     "current": "현재",
     "change state": "상태 변경",
-    "change state done": "Task 상태가 업데이트되었습니다.",
-    "change state confirm": "실행 <code>{id}</code>의 task <code>{task}</code>의 상태를 변경하시겠습니까?",
+    "change state done": "작업 상태가 업데이트되었습니다",
+    "change state confirm": "----------\n                \n정말로 실행 <code>{id}</code>에서 <code>{task}</code> task의 상태를 변경하시겠습니까?",
     "change state hint": {
-      "WARNING": "['Flow가 WARNING으로 표시됩니다.', '다음 Task가 실행됩니다.', 'Error Tasks가 실행됩니다.']",
-      "FAILED": "['Flow가 FAILED로 표시됩니다.', '다른 Task는 실행되지 않습니다.', 'Error Tasks가 실행됩니다.']",
-      "SUCCESS": "['해당ask가 성공했기 때문에 Flow가 재시작됩니다.', '모든 Block된 Tasks가 실행됩니다.', '모든 Task 실행이 성공하면 Flow가 SUCCESS 상태가 됩니다.']",
-      "RUNNING": "['Flow가 재시작되고 다음 Tasks가 모두 실행됩니다.', 'Block된 모든 Tasks가 실행됩니다.']"
+      "WARNING": "['Flow가 WARNING으로 표시됩니다.', '다음 tasks가 실행됩니다.', '오류 tasks가 실행됩니다.']",
+      "FAILED": "['Flow가 FAILED로 표시됩니다.', '다른 task는 실행되지 않습니다.', '오류 task가 실행됩니다.']",
+      "SUCCESS": "['이 task가 성공했기 때문에 flow가 재시작됩니다.', '모든 차단된 task가 실행됩니다.', '모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다.']",
+      "RUNNING": "['Flow가 재시작되며 모든 다음 task가 실행됩니다.', '모든 차단된 task가 실행됩니다.']"
     },
     "mark as": "<code>{status}</code>로 표시",
     "kill": "종료",
@@ -814,6 +814,6 @@
     "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change state tooltip": "실행 상태 변경",
     "executions state changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다",
-    "bulk change state": "확실히 <code>{executionCount}</code> 개의 실행 상태를 변경하시겠습니까?"
+    "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?"
   }
 }

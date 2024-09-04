@@ -561,6 +561,11 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             // get the list of splits from the outputs of the split task
             String taskId = this.id.substring(0, this.id.lastIndexOf('_')) + ForEachItemExecutable.SUFFIX;
             var taskOutput = extractOutput(runContext, taskId);
+            if (taskOutput == null) {
+                // there were no subflow executions
+                return null;
+            }
+
             Integer iterations = (Integer) taskOutput.get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES);
             String subflowOutputsBaseUri = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);
 

@@ -277,6 +277,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void forEachItemEmptyItems() throws URISyntaxException, IOException, TimeoutException {
+        forEachItemCaseTest.forEachItemEmptyItems();
+    }
+
+    @Test
     void forEachItemNoWait() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
         forEachItemCaseTest.forEachItemNoWait();
     }

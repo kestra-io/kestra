@@ -171,10 +171,10 @@
     "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one?",
     "prefill inputs": "Prefill",
     "current": "current",
-    "change status": "Change status",
-    "change status done": "Task status has been updated",
-    "change status confirm": "Are you sure to change the status on task <code>{task}</code> for execution <code>{id}</code>?",
-    "change status hint": {
+    "change state": "Change state",
+    "change state done": "Task state has been updated",
+    "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?",
+    "change state hint": {
       "WARNING": [
         "The flow will be marked as WARNING.",
         "The next tasks will be executed.",
@@ -195,9 +195,9 @@
         "All blocked tasks will be executed."
       ]
     },
-    "change status tooltip": "Change the execution status",
-    "change execution status confirm": "Are you sure you want to change the status of the execution <code>{id}</code>?",
-    "change execution status done": "Execution status updated",
+    "change state tooltip": "Change the execution state",
+    "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
+    "change execution state done": "Execution state updated",
     "mark as": "Mark as <code>{status}</code>",
     "kill": "Kill",
     "kill parents and subflow": "Kill parents and subflows",
@@ -290,7 +290,7 @@
       "please": "Please choose a task on the right to see its documentation"
     },
     "last execution date": "Last execution date",
-    "last execution status": "Last status",
+    "last execution state": "Last state",
     "last X days count": "{count} in last {days} days",
     "date range count": "{count} between the {startDate} and the {endDate}",
     "date count": "{count} on the {date}",
@@ -366,7 +366,7 @@
     "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
     "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
-    "bulk change status": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
+    "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
@@ -388,7 +388,7 @@
       "no executions": "Ready to see your flow in action?"
     },
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
-    "executions status changed": "The status of <code>{executionCount}</code> execution(s) has been changed",
+    "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",

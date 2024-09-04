@@ -129,7 +129,7 @@
                             });
                         }
 
-                        this.$toast().success(this.$t("change status done"));
+                        this.$toast().success(this.$t("change state done"));
                     })
             },
         },

@@ -172,13 +172,13 @@
     "prefill inputs": "Prefill",
     "current": "actual",
     "change state": "Cambiar estado",
-    "change state done": "El estado de la tarea se ha actualizado",
-    "change state confirm": "¿Estás seguro de cambiar el estado en la tarea <code>{task}</code> para la ejecución <code>{id}</code>?",
+    "change state done": "El estado del task ha sido actualizado",
+    "change state confirm": "¿Está seguro de que desea cambiar el estado de ejecución de la tarea <code>{task}</code> en la ejecución <code>{id}</code>?",
     "change state hint": {
-      "WARNING": "['El flujo será marcado como WARNING.', 'Las siguientes tareas serán ejecutadas.', 'Las tareas de error serán ejecutadas.']",
-      "FAILED": "['El flujo será marcado como FAILED.', 'No se ejecutará ninguna otra tarea.', 'Las tareas de error serán ejecutadas.']",
-      "SUCCESS": "['El flujo se reiniciará ya que esta tarea fue exitosa.', 'Todas las tareas bloqueadas serán ejecutadas.', 'El flujo estará en estado SUCCESS si todas las ejecuciones de tareas son exitosas.']",
-      "RUNNING": "['El flujo se reiniciará y ejecutará todas las siguientes tareas.', 'Todas las tareas bloqueadas serán ejecutadas.']"
+      "WARNING": "['El flow se marcará como WARNING.', 'Las próximas tasks se ejecutarán.', 'Las tasks con error se ejecutarán.']",
+      "FAILED": "['El flow se marcará como FAILED.', 'No se ejecutará ninguna otra task.', 'Se ejecutarán las tasks de error.']",
+      "SUCCESS": "['El flow se reiniciará ya que esta task fue exitosa.', 'Todas las tasks bloqueadas serán ejecutadas.', 'El flow estará en un estado de SUCCESS si todas las ejecuciones de tasks son exitosas.']",
+      "RUNNING": "['El flow se reiniciará y ejecutará todas las siguientes tasks.', 'Todas las tasks bloqueadas serán ejecutadas.']"
     },
     "mark as": "Marcar como <code>{status}</code>",
     "kill": "Terminar",
@@ -812,7 +812,7 @@
     "show chart": "Mostrar Gráfico",
     "change execution state done": "Estado de ejecución actualizado",
     "change execution state confirm": "¿Está seguro de que desea cambiar el estado de la ejecución <code>{id}</code>?",
-    "change state tooltip": "Cambia el estado de ejecución",
+    "change state tooltip": "Cambiar el estado de ejecución",
     "executions state changed": "El estado de <code>{executionCount}</code> ejecución(es) ha sido cambiado",
     "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?"
   }

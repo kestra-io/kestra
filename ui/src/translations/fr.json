@@ -170,29 +170,14 @@
     "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle exécution ?",
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
-    "change state": "Changer le statut",
-    "change state done": "Le statut de la tâche a été mis à jour",
-    "change state confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
+    "change state": "Changer l'état",
+    "change state done": "L'état de la task a été mis à jour",
+    "change state confirm": "Êtes-vous sûr de vouloir changer l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?",
     "change state hint": {
-      "WARNING": [
-        "Le flow serra marqué en état WARNING.",
-        "Les tâches suivantes seront executées.",
-        "Les tâches d'erreurs seront executées."
-      ],
-      "FAILED": [
-        "Le flow serra marqué en état FAILED.",
-        "Aucune autre tâche ne serra executée.",
-        "Les tâches d'erreurs seront executées."
-      ],
-      "SUCCESS": [
-        "Le flow redémerra comme si cette tâche était en SUCCESS",
-        "Tous les tâches bloqués seront executées.",
-        "Le flow passera en état SUCCESS si tous les taches sont aussi SUCCESS"
-      ],
-      "RUNNING": [
-        "Le flow redémerra et executera les tâches suivantes",
-        "Tous les tâches bloqués seront executées."
-      ]
+      "WARNING": "['Le flow sera marqué comme WARNING.', 'Les prochaines tasks seront exécutées.', 'Les tasks d\\'erreur seront exécutées.']",
+      "FAILED": "['Le flow sera marqué comme FAILED.', 'Aucune autre task ne sera exécutée.', 'Les tasks d'erreur seront exécutées.']",
+      "SUCCESS": "['Le flow redémarrera car cette task a réussi.', 'Toutes les tasks bloquées seront exécutées.', 'Le flow sera en état SUCCESS si toutes les exécutions de task réussissent.']",
+      "RUNNING": "['Le flow redémarrera et exécutera toutes les tâches suivantes.', 'Toutes les tâches bloquées seront exécutées.']"
     },
     "mark as": "Marqué comme <code>{status}</code>",
     "kill": "Arrêter",
@@ -287,7 +272,7 @@
     },
     "last X days count": "{count} lors des {days} derniers jours",
     "last execution date": "Dernière exécution",
-    "last execution state": "Dernier statut",
+    "last execution state": "Dernier état",
     "date range count": "{count} entre le {startDate} et le {endDate}",
     "date count": "{count} le {date}",
     "revisions": "Révisions",
@@ -824,10 +809,10 @@
       "storage": "Supprimer les fichiers de stockage interne"
     },
     "show chart": "Afficher le graphique",
-    "change execution state done": "Statut d'exécution mis à jour",
-    "change execution state confirm": "Êtes-vous sûr de vouloir changer le statut de l'exécution <code>{id}</code> ?",
-    "change state tooltip": "Changer le statut d'exécution",
-    "executions state changed": "Le statut de <code>{executionCount}</code> exécution(s) a été modifié",
+    "change execution state done": "État d'exécution mis à jour",
+    "change execution state confirm": "Êtes-vous sûr de vouloir changer l'état de l'exécution <code>{id}</code> ?",
+    "change state tooltip": "Changer l'état d'exécution",
+    "executions state changed": "L'état de <code>{executionCount}</code> exécution(s) a été modifié",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?"
   }
 }

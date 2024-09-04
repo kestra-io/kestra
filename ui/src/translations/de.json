@@ -171,13 +171,13 @@
     "replay confirm": "Sind Sie sicher, dass Sie diese Ausführung <code>{id}</code> wiederholen und eine neue erstellen möchten?",
     "prefill inputs": "Vorausfüllen",
     "current": "aktuell",
-    "change state": "Status ändern",
-    "change state done": "Task-Status wurde aktualisiert",
-    "change state confirm": "Sind Sie sicher, dass Sie den Status des Tasks <code>{task}</code> für die Ausführung <code>{id}</code> ändern möchten?",
+    "change state": "Zustand ändern",
+    "change state done": "Der Task-Zustand wurde aktualisiert",
+    "change state confirm": "Sind Sie sicher, dass Sie den Task-Laufzustand für den <code>{task}</code>-Task in der Ausführung <code>{id}</code> ändern möchten?",
     "change state hint": {
       "WARNING": "['Der Flow wird als WARNING markiert.', 'Die nächsten Tasks werden ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']",
-      "FAILED": "['Der Flow wird als FAILED markiert.', 'Keine weiteren Tasks werden ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']",
-      "SUCCESS": "['Der Flow wird neu gestartet, da dieser Task erfolgreich war.', 'Alle blockierten Tasks werden ausgeführt.', 'Der Flow wird im SUCCESS-Zustand sein, wenn alle Task-Ausführungen erfolgreich sind.']",
+      "FAILED": "['Der Flow wird als FAILED markiert.', 'Keine andere Task wird ausgeführt.', 'Die Fehler-Tasks werden ausgeführt.']",
+      "SUCCESS": "['Der Flow wird neu gestartet, da dieser Task erfolgreich war.', 'Alle blockierten Tasks werden ausgeführt.', 'Der Flow wird im Zustand SUCCESS sein, wenn alle Task-Ausführungen erfolgreich sind.']",
       "RUNNING": "['Der Flow wird neu gestartet und alle nächsten Tasks werden ausgeführt.', 'Alle blockierten Tasks werden ausgeführt.']"
     },
     "mark as": "Als <code>{status}</code> markieren",
@@ -272,7 +272,7 @@
       "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen"
     },
     "last execution date": "Letztes Ausführungsdatum",
-    "last execution state": "Letzter Status",
+    "last execution state": "Letzter Zustand",
     "last X days count": "{count} in den letzten {days} Tagen",
     "date range count": "{count} zwischen dem {startDate} und dem {endDate}",
     "date count": "{count} am {date}",
@@ -810,10 +810,10 @@
       "storage": "Interne Speicherdateien löschen"
     },
     "show chart": "Diagramm anzeigen",
-    "change execution state done": "Ausführungsstatus aktualisiert",
-    "change execution state confirm": "Sind Sie sicher, dass Sie den Status der Ausführung <code>{id}</code> ändern möchten?",
-    "change state tooltip": "Ändere den Ausführungsstatus",
-    "executions state changed": "Der Status von <code>{executionCount}</code> Ausführung(en) wurde geändert",
+    "change execution state done": "Ausführungszustand aktualisiert",
+    "change execution state confirm": "Sind Sie sicher, dass Sie den Zustand der Ausführung <code>{id}</code> ändern möchten?",
+    "change state tooltip": "Ändern Sie den Ausführungszustand",
+    "executions state changed": "Der Zustand von <code>{executionCount}</code> Ausführung(en) wurde geändert",
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?"
   }
 }

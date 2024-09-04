@@ -173,27 +173,12 @@
     "current": "当前",
     "change state": "更改状态",
     "change state done": "任务状态已更新",
-    "change state confirm": "确定要更改执行 <code>{id}</code> 的任务 <code>{task}</code> 的状态吗？",
+    "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> 任务的任务运行状态吗？",
     "change state hint": {
-      "WARNING": [
-        "流程将标记为警告。",
-        "将执行下一个任务。",
-        "将执行错误任务。"
-      ],
-      "FAILED": [
-        "流程将标记为失败。",
-        "不会执行其他任务。",
-        "将执行错误任务。"
-      ],
-      "SUCCESS": [
-        "流程将重新开始，因为此任务已成功。",
-        "所有被阻止的任务将被执行。",
-        "如果所有任务运行都成功，流程将处于成功状态。"
-      ],
-      "RUNNING": [
-        "流程将重新开始并执行所有下一个任务。",
-        "所有被阻止的任务将被执行。"
-      ]
+      "WARNING": "['流程将被标记为WARNING。', '接下来的tasks将被执行。', '错误的tasks将被执行。']",
+      "FAILED": "['该flow将被标记为FAILED。', '不会执行其他task。', '将执行错误tasks。']",
+      "SUCCESS": "['由于此任务成功，flow 将重新启动。', '所有被阻止的任务将被执行。', '如果所有任务运行都成功，flow 将处于 SUCCESS 状态。']",
+      "RUNNING": "流程将重新启动，并将执行所有下一个任务。所有被阻止的任务将被执行。"
     },
     "mark as": "标记为 <code>{status}</code>",
     "kill": "终止",
@@ -287,7 +272,7 @@
       "please": "请选择右侧的一个任务以查看其文档"
     },
     "last execution date": "最后执行日期",
-    "last execution state": "最后状态",
+    "last execution state": "上一次状态",
     "last X days count": "{days}天内的{count}",
     "date range count": "{startDate}到{endDate}之间的{count}",
     "date count": "{date}的{count}",
@@ -826,7 +811,7 @@
     },
     "show chart": "显示图表",
     "change execution state done": "执行状态已更新",
-    "change execution state confirm": "您确定要更改执行 <code>{id}</code> 的状态吗？",
+    "change execution state confirm": "您确定要更改执行<code>{id}</code>的状态吗？",
     "change state tooltip": "更改执行状态",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？"

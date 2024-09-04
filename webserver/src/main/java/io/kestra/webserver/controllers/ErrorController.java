@@ -13,6 +13,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
@@ -136,6 +137,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, UnsatisfiedBodyRouteException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid route params");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, HttpStatusException e) {
+        return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
     }
 
     @Error(global = true)

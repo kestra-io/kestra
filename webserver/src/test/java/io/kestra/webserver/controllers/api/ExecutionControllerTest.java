@@ -718,6 +718,70 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void webhookFlowNotFound() {
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        ImmutableMap.of("a", 1, "b", true)
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+
+        exception = assertThrows(HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .PUT(
+                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        Collections.singletonList(ImmutableMap.of("a", 1, "b", true))
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+
+        exception = assertThrows(HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "bla"
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+
+        exception = assertThrows(HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13"),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+
+        exception = assertThrows(HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST(
+                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+    }
+
+    @Test
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
             GET(

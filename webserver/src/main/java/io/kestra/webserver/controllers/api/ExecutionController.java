@@ -459,7 +459,7 @@ public class ExecutionController {
         HttpRequest<String> request
     ) {
         if (maybeFlow.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
         }
 
         var flow = maybeFlow.get();
@@ -490,13 +490,13 @@ public class ExecutionController {
             .findFirst();
 
         if (webhook.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
 
         Optional<Execution> execution = webhook.get().evaluate(request, flow);
 
         if (execution.isEmpty()) {
-            return HttpResponse.notFound();
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
         }
 
         var result = execution.get();

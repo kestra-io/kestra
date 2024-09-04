@@ -171,10 +171,10 @@
     "replay confirm": "この実行<code>{id}</code>をリプレイして新しいものを作成してもよろしいですか？",
     "prefill inputs": "自動入力",
     "current": "現在",
-    "change status": "ステータスを変更",
-    "change status done": "Taskステータスが更新されました",
-    "change status confirm": "実行<code>{id}</code>のTask <code>{task}</code>のステータスを変更してもよろしいですか？",
-    "change status hint": {
+    "change state": "ステータスを変更",
+    "change state done": "Taskステータスが更新されました",
+    "change state confirm": "実行<code>{id}</code>のTask <code>{task}</code>のステータスを変更してもよろしいですか？",
+    "change state hint": {
       "WARNING": "['FlowはWARNINGとしてマークされます。', '次のタスクが実行されます。', 'エラータスクが実行されます。']",
       "FAILED": "['FlowはFAILEDとしてマークされます。', '他のタスクは実行されません。', 'エラータスクが実行されます。']",
       "SUCCESS": "['このタスクが成功したため、Flowは再起動します。', 'すべてのブロックされたタスクが実行されます。', 'すべてのタスク実行が成功した場合、FlowはSUCCESS状態になります。']",
@@ -272,7 +272,7 @@
       "please": "ドキュメントを見るには右側のTaskを選択してください"
     },
     "last execution date": "最後の実行日",
-    "last execution status": "最後のステータス",
+    "last execution state": "最後のステータス",
     "last X days count": "過去{days}日間に{count}",
     "date range count": "{startDate}から{endDate}の間に{count}",
     "date count": "{date}に{count}",
@@ -810,10 +810,10 @@
       "storage": "内部ストレージファイルを削除"
     },
     "show chart": "チャートを表示",
-    "change execution status done": "実行ステータスが更新されました",
-    "change execution status confirm": "実行<code>{id}</code>のステータスを変更してもよろしいですか？",
-    "change status tooltip": "実行ステータスを変更",
-    "executions status changed": "<code>{executionCount}</code> 回の実行のステータスが変更されました",
-    "bulk change status": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code>"
+    "change execution state done": "実行ステータスが更新されました",
+    "change execution state confirm": "実行<code>{id}</code>のステータスを変更してもよろしいですか？",
+    "change state tooltip": "実行ステータスを変更",
+    "executions state changed": "<code>{executionCount}</code> 回の実行のステータスが変更されました",
+    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code>"
   }
 }

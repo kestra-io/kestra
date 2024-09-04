@@ -172,13 +172,13 @@
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",
     "change state": "स्थिति बदलें",
-    "change state done": "Task स्थिति को अपडेट किया गया है",
-    "change state confirm": "क्या आप वाकई निष्पादन <code>{id}</code> के लिए Task <code>{task}</code> पर स्थिति बदलना चाहते हैं?",
+    "change state done": "कार्य की स्थिति को अपडेट किया गया है",
+    "change state confirm": "क्या आप सुनिश्चित हैं कि आप execution <code>{id}</code> में <code>{task}</code> task का run state बदलना चाहते हैं?",
     "change state hint": {
       "WARNING": "['Flow को WARNING के रूप में चिह्नित किया जाएगा।', 'अगले tasks निष्पादित किए जाएंगे।', 'त्रुटि tasks निष्पादित किए जाएंगे।']",
-      "FAILED": "['Flow को FAILED के रूप में चिह्नित किया जाएगा।', 'कोई अन्य task निष्पादित नहीं किया जाएगा।', 'त्रुटि tasks निष्पादित किए जाएंगे।']",
-      "SUCCESS": "['Flow पुनः प्रारंभ होगा क्योंकि यह task सफल था।', 'सभी अवरुद्ध tasks निष्पादित किए जाएंगे।', 'यदि सभी task रन सफल होते हैं तो Flow SUCCESS स्थिति में होगा।']",
-      "RUNNING": "['Flow पुनः प्रारंभ होगा और सभी अगले tasks निष्पादित करेगा।', 'सभी अवरुद्ध tasks निष्पादित किए जाएंगे।']"
+      "FAILED": "['Flow को FAILED के रूप में चिह्नित किया जाएगा।', 'कोई अन्य task निष्पादित नहीं किया जाएगा।', 'Error tasks निष्पादित किए जाएंगे।']",
+      "SUCCESS": "['Flow पुनः शुरू होगा क्योंकि यह task सफल रहा।', 'सभी अवरुद्ध tasks निष्पादित किए जाएंगे।', 'यदि सभी task रन सफल होते हैं, तो Flow SUCCESS स्थिति में होगा।']",
+      "RUNNING": "['Flow पुनः शुरू होगा और सभी अगले tasks निष्पादित होंगे।', 'सभी अवरुद्ध tasks निष्पादित होंगे।']"
     },
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "kill": "समाप्त करें",
@@ -811,7 +811,7 @@
     },
     "show chart": "चार्ट दिखाएं",
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
-    "change execution state confirm": "क्या आप सुनिश्चित हैं कि आप execution <code>{id}</code> की स्थिति बदलना चाहते हैं?",
+    "change execution state confirm": "क्या आप वाकई <code>{id}</code> की execution की state बदलना चाहते हैं?",
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "executions state changed": "<code>{executionCount}</code> निष्पादन की स्थिति बदल दी गई है",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?"

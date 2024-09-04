@@ -171,13 +171,13 @@
     "replay confirm": "Вы уверены, что хотите повторить это выполнение <code>{id}</code> и создать новое?",
     "prefill inputs": "Предзаполнение",
     "current": "текущий",
-    "change state": "Изменить статус",
-    "change state done": "Статус task был обновлен",
-    "change state confirm": "Вы уверены, что хотите изменить статус task <code>{task}</code> для выполнения <code>{id}</code>?",
+    "change state": "Изменить состояние",
+    "change state done": "Состояние task было обновлено",
+    "change state confirm": "Вы уверены, что хотите изменить состояние выполнения задачи <code>{task}</code> в исполнении <code>{id}</code>?",
     "change state hint": {
-      "WARNING": "['Flow будет помечен как WARNING.', 'Следующие tasks будут выполнены.', 'Tasks с ошибками будут выполнены.']",
-      "FAILED": "['Flow будет помечен как FAILED.', 'Другие tasks не будут выполнены.', 'Tasks с ошибками будут выполнены.']",
-      "SUCCESS": "['Flow перезапустится, так как этот task был успешным.', 'Все заблокированные tasks будут выполнены.', 'Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными.']",
+      "WARNING": "['Flow будет помечен как WARNING.', 'Следующие tasks будут выполнены.', 'Ошибка tasks будет выполнена.']",
+      "FAILED": "['Flow будет помечен как FAILED.', 'Никакие другие task не будут выполнены.', 'Ошибочные tasks будут выполнены.']",
+      "SUCCESS": "['Flow будет перезапущен, так как этот task был успешным.', 'Все заблокированные tasks будут выполнены.', 'Flow будет в состоянии SUCCESS, если все запуски tasks будут успешными.']",
       "RUNNING": "['Flow перезапустится и выполнит все следующие tasks.', 'Все заблокированные tasks будут выполнены.']"
     },
     "mark as": "Пометить как <code>{status}</code>",
@@ -272,7 +272,7 @@
       "please": "Пожалуйста, выберите task справа, чтобы увидеть его документацию"
     },
     "last execution date": "Дата последнего выполнения",
-    "last execution state": "Последний статус",
+    "last execution state": "Последнее состояние",
     "last X days count": "{count} за последние {days} дней",
     "date range count": "{count} между {startDate} и {endDate}",
     "date count": "{count} на {date}",
@@ -810,10 +810,10 @@
       "storage": "Удалить внутренние файлы хранения"
     },
     "show chart": "Показать диаграмму",
-    "change execution state done": "Статус выполнения обновлен",
-    "change execution state confirm": "Вы уверены, что хотите изменить статус выполнения <code>{id}</code>?",
-    "change state tooltip": "Изменить статус выполнения",
-    "executions state changed": "Статус выполнения <code>{executionCount}</code> был изменен",
+    "change execution state done": "Состояние выполнения обновлено",
+    "change execution state confirm": "Вы уверены, что хотите изменить состояние выполнения <code>{id}</code>?",
+    "change state tooltip": "Изменить состояние выполнения",
+    "executions state changed": "Состояние выполнения <code>{executionCount}</code> было изменено",
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?"
   }
 }

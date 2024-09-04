@@ -171,14 +171,14 @@
     "replay confirm": "この実行<code>{id}</code>をリプレイして新しいものを作成してもよろしいですか？",
     "prefill inputs": "自動入力",
     "current": "現在",
-    "change state": "ステータスを変更",
-    "change state done": "Taskステータスが更新されました",
-    "change state confirm": "実行<code>{id}</code>のTask <code>{task}</code>のステータスを変更してもよろしいですか？",
+    "change state": "状態を変更",
+    "change state done": "タスクの状態が更新されました",
+    "change state confirm": "タスク <code>{task}</code> の実行 <code>{id}</code> のタスク実行状態を変更してもよろしいですか？",
     "change state hint": {
-      "WARNING": "['FlowはWARNINGとしてマークされます。', '次のタスクが実行されます。', 'エラータスクが実行されます。']",
-      "FAILED": "['FlowはFAILEDとしてマークされます。', '他のタスクは実行されません。', 'エラータスクが実行されます。']",
-      "SUCCESS": "['このタスクが成功したため、Flowは再起動します。', 'すべてのブロックされたタスクが実行されます。', 'すべてのタスク実行が成功した場合、FlowはSUCCESS状態になります。']",
-      "RUNNING": "['Flowは再起動し、すべての次のタスクを実行します。', 'すべてのブロックされたタスクが実行されます。']"
+      "WARNING": "['このflowはWARNINGとしてマークされます。', '次のtasksが実行されます。', 'エラーtasksが実行されます。']",
+      "FAILED": "['FlowはFAILEDとしてマークされます。', '他のTaskは実行されません。', 'エラーTaskが実行されます。']",
+      "SUCCESS": "['このflowはこのtaskが成功したため再起動します。', 'すべてのブロックされたtaskが実行されます。', 'すべてのtaskの実行が成功した場合、flowはSUCCESS状態になります。']",
+      "RUNNING": "フローが再起動し、次のすべてのタスクが実行されます。すべてのブロックされたタスクが実行されます。"
     },
     "mark as": "<code>{status}</code>としてマーク",
     "kill": "キル",
@@ -272,7 +272,7 @@
       "please": "ドキュメントを見るには右側のTaskを選択してください"
     },
     "last execution date": "最後の実行日",
-    "last execution state": "最後のステータス",
+    "last execution state": "最終状態",
     "last X days count": "過去{days}日間に{count}",
     "date range count": "{startDate}から{endDate}の間に{count}",
     "date count": "{date}に{count}",
@@ -810,10 +810,10 @@
       "storage": "内部ストレージファイルを削除"
     },
     "show chart": "チャートを表示",
-    "change execution state done": "実行ステータスが更新されました",
-    "change execution state confirm": "実行<code>{id}</code>のステータスを変更してもよろしいですか？",
-    "change state tooltip": "実行ステータスを変更",
-    "executions state changed": "<code>{executionCount}</code> 回の実行のステータスが変更されました",
-    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code>"
+    "change execution state done": "実行状態が更新されました",
+    "change execution state confirm": "実行<code>{id}</code>の状態を変更してもよろしいですか？",
+    "change state tooltip": "実行状態を変更",
+    "executions state changed": "<code>{executionCount}</code> 回の実行の状態が変更されました",
+    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。"
   }
 }

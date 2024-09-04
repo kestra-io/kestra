@@ -279,6 +279,7 @@
             border-radius: var(--bs-border-radius-lg);
             overflow: hidden;
             padding: $spacer;
+            padding-top: calc($spacer/2);
             background-color: var(--bs-white);
             border: 1px solid var(--bs-border-color);
 

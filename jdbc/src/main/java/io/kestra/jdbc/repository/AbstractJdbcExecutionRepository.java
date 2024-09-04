@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.ExecutionStatistics;
 import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -16,6 +17,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.context.ApplicationContext;
@@ -252,7 +254,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
-        select = filteringQuery(select, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
+        select = filteringQuery(select, null, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -351,6 +353,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -369,6 +372,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             ),
             query,
             tenantId,
+            scope,
             namespace,
             flowId,
             null,
@@ -431,6 +435,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             this.defaultFilter(),
             fields,
             query,
+            null,
             namespace,
             flowId,
             flows,
@@ -445,6 +450,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<Field<?>> fields,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -457,6 +463,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             this.defaultFilter(tenantId),
             fields,
             query,
+            scope,
             namespace,
             flowId,
             flows,
@@ -471,6 +478,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Condition defaultFilter,
         List<Field<?>> fields,
         @Nullable String query,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -504,7 +512,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                select = filteringQuery(select, namespace, flowId, flows, query, null, null, null);
+                select = filteringQuery(select, scope, namespace, flowId, flows, query, null, null, null);
 
                 if (state != null) {
                     select = select.and(this.statesFilter(state));
@@ -523,6 +531,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
         SelectConditionStep<T> select,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
@@ -531,6 +540,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter
     ) {
+        if (scope != null) {
+            if (scope.equals(FlowScope.USER)) {
+                select = select.and(field("namespace").ne(NamespaceUtils.SYSTEM_NAMESPACE));
+            } else if (scope.equals(FlowScope.SYSTEM)) {
+                select = select.and(field("namespace").eq(NamespaceUtils.SYSTEM_NAMESPACE));
+            }
+        }
+
         if (namespace != null) {
             if (flowId != null) {
                 select = select.and(field("namespace").eq(namespace));
@@ -597,6 +614,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             fields,
             query,
             tenantId,
+            null,
             namespace,
             flowId,
             flows,

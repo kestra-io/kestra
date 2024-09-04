@@ -3,6 +3,8 @@ package io.kestra.core.utils;
 import java.util.*;
 
 public abstract class NamespaceUtils {
+    public static final String SYSTEM_NAMESPACE = "system";
+
     public static List<String> asTree(String namespace) {
         List<String> split = Arrays.asList(namespace.split("\\."));
         List<String> terms = new ArrayList<>();

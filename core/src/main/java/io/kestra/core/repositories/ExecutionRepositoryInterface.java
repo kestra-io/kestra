@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
 import io.micronaut.data.model.Pageable;
@@ -117,6 +118,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,

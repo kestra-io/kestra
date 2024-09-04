@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.LogStatistics;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -26,6 +27,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Validated
 @Controller("/api/v1/stats")
@@ -47,6 +49,7 @@ public class StatsController {
         return executionRepository.dailyStatistics(
             statisticRequest.q(),
             tenantService.resolveTenant(),
+            statisticRequest.scope(),
             statisticRequest.namespace(),
             statisticRequest.flowId(),
             statisticRequest.startDate() != null ? statisticRequest.startDate().withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -63,6 +66,7 @@ public class StatsController {
         return executionRepository.dailyStatistics(
             statisticRequest.q(),
             tenantService.resolveTenant(),
+            statisticRequest.scope(),
             statisticRequest.namespace(),
             statisticRequest.flowId(),
             statisticRequest.startDate() != null ? statisticRequest.startDate().withZoneSameInstant(ZoneId.systemDefault()) : null,
@@ -119,6 +123,7 @@ public class StatsController {
     @Introspected
     public record StatisticRequest(
         @Parameter(description = "A string filter") @Nullable String q,
+        @Parameter(description = "the scope of the executions to include") @Nullable FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,

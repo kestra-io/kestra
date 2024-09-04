@@ -8,8 +8,10 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
@@ -416,10 +418,16 @@ public abstract class AbstractExecutionRepositoryTest {
             ).build());
         }
 
+        executionRepository.save(builder(
+            State.Type.SUCCESS,
+            "second"
+        ).namespace(NamespaceUtils.SYSTEM_NAMESPACE).build());
+
         // mysql need some time ...
         Thread.sleep(500);
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
             null,
             null,
             null,
@@ -436,7 +444,35 @@ public abstract class AbstractExecutionRepositoryTest {
 
         assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L));
         assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(21L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            FlowScope.USER,
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            false);
+        assertThat(result.size(), is(11));
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(20L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            FlowScope.SYSTEM,
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            false);
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(1L));
     }
 
     @Test
@@ -448,7 +484,13 @@ public abstract class AbstractExecutionRepositoryTest {
             ).build());
         }
 
+        executionRepository.save(builder(
+            State.Type.SUCCESS,
+            "second"
+        ).namespace(NamespaceUtils.SYSTEM_NAMESPACE).build());
+
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
             null,
             null,
             null,
@@ -465,7 +507,35 @@ public abstract class AbstractExecutionRepositoryTest {
 
         assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L * 2));
         assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L * 2));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(57L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            FlowScope.USER,
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            true);
+        assertThat(result.size(), is(11));
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(55L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            FlowScope.SYSTEM,
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            true);
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(2L));
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

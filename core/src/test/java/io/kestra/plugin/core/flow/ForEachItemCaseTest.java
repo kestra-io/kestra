@@ -103,6 +103,21 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
+    public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException {
+        URI file = emptyItems();
+        Map<String, Object> inputs = Map.of("file", file.toString());
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
+            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
+        assertThat(outputs, nullValue());
+    }
+
+    @SuppressWarnings("unchecked")
     public void forEachItemNoWait() throws TimeoutException, InterruptedException, URISyntaxException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
         AtomicReference<Execution> triggered = new AtomicReference<>();
@@ -253,6 +268,16 @@ public class ForEachItemCaseTest {
         File tempFile = File.createTempFile("file", ".txt");
 
         Files.write(tempFile.toPath(), content());
+
+        return storageInterface.put(
+            null,
+            new URI("/file/storage/file.txt"),
+            new FileInputStream(tempFile)
+        );
+    }
+
+    private URI emptyItems() throws URISyntaxException, IOException {
+        File tempFile = File.createTempFile("file", ".txt");
 
         return storageInterface.put(
             null,

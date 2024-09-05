@@ -12,6 +12,7 @@ import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
@@ -24,6 +25,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
+    public static final Field<Object> NAMESPACE_FIELD = field("namespace");
+
     protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;
 
     public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository) {
@@ -74,6 +77,33 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
                 return this.jdbcRepository.fetch(select);
             });
+    }
+
+    @Override
+    public int count(@Nullable String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectCount()
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .fetchOne(0, int.class));
+    }
+
+    @Override
+    public int countForNamespace(@Nullable String tenantId, @Nullable String namespace) {
+        if (namespace == null) return count(tenantId);
+
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectCount()
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(NAMESPACE_FIELD.eq(namespace))
+                .fetchOne(0, int.class));
     }
 
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
@@ -246,7 +276,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .and(this.defaultFilter(tenantId));
 
                 if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 if (flowId != null) {
@@ -279,7 +309,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                         .from(this.jdbcRepository.getTable())
                         .where(this.defaultFilter(tenantId));
                     if (namespace != null) {
-                        select =  select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                        select =  select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                     }
                     if (query != null) {
                         select = select.and(this.fullTextCondition(query));

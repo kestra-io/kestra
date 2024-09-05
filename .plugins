@@ -15,6 +15,7 @@
 #io.kestra.plugin:plugin-couchbase:LATEST
 #io.kestra.plugin:plugin-crypto:LATEST
 #io.kestra.plugin:plugin-databricks:LATEST
+#io.kestra.plugin:plugin-datahub:LATEST
 #io.kestra.plugin:plugin-dataform:LATEST
 #io.kestra.plugin:plugin-dbt:LATEST
 #io.kestra.plugin:plugin-debezium-db2:LATEST

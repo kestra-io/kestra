@@ -19,7 +19,8 @@ icon: {{ icon }}
 
 {% if deprecated %}
 ::alert{type="warning"}
-⚠ Deprecated {% if replacement %}use `{{ replacement }}` instead {%- endif %}
+⚠ This feature is deprecated and will be removed in the future. We encourage you to migrate to the new plugin, but you can still use the deprecated version.
+{% if replacement %}Please use `{{ replacement }}` instead. {%- endif %}
 ::
 {%- endif %}
 

@@ -34,6 +34,8 @@ import java.util.*;
 
 @Slf4j
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
+    private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
+
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
@@ -83,7 +85,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .select(field("value", String.class))
                         .from(jdbcRepository.getTable())
                         .where(this.revisionDefaultFilter(tenantId))
-                        .and(field("namespace").eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(revision.get()));
                 } else {
@@ -91,7 +93,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .select(field("value", String.class))
                         .from(fromLastRevision(true))
                         .where(allowDeleted ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId))
-                        .and(field("namespace", String.class).eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id));
                 }
 
@@ -112,7 +114,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .select(field("value", String.class))
                         .from(jdbcRepository.getTable())
                         .where(this.noAclDefaultFilter(tenantId))
-                        .and(field("namespace").eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(revision.get()));
                 } else {
@@ -120,7 +122,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .select(field("value", String.class))
                         .from(fromLastRevision(true))
                         .where(this.noAclDefaultFilter(tenantId))
-                        .and(field("namespace", String.class).eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id));
                 }
 
@@ -160,7 +162,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         )
                         .from(jdbcRepository.getTable())
                         .where(this.revisionDefaultFilter(tenantId))
-                        .and(field("namespace").eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(integer)))
                     .orElseGet(() -> context
@@ -170,7 +172,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         )
                         .from(fromLastRevision(true))
                         .where(allowDeleted ? this.revisionDefaultFilter(tenantId) :this.defaultFilter(tenantId))
-                        .and(field("namespace", String.class).eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
                 Record2<String, String> fetched = from.fetchAny();
 
@@ -200,7 +202,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     )
                     .from(jdbcRepository.getTable())
                     .where(this.revisionDefaultFilter(tenantId))
-                    .and(field("namespace", String.class).eq(namespace))
+                    .and(NAMESPACE_FIELD.eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .orderBy(field("revision", Integer.class).asc());
 
@@ -211,6 +213,33 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         record.get("source_code", String.class)
                     ));
             });
+    }
+
+    @Override
+    public int count(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectCount()
+                .from(fromLastRevision(true))
+                .where(this.defaultFilter(tenantId))
+                .fetchOne(0, int.class));
+    }
+
+    @Override
+    public int countForNamespace(String tenantId, @Nullable String namespace) {
+        if (namespace == null) return count(tenantId);
+
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectCount()
+                .from(fromLastRevision(true))
+                .where(this.defaultFilter(tenantId))
+                .and(NAMESPACE_FIELD.eq(namespace))
+                .fetchOne(0, int.class));
     }
 
     @Override
@@ -302,7 +331,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .using(configuration)
                 .select(field("value"))
                 .from(fromLastRevision(true))
-                .where(field("namespace").eq(namespace)));
+                .where(NAMESPACE_FIELD.eq(namespace)));
     }
 
     private SelectConditionStep<Record1<Object>> findByNamespacePrefixSelect(String namespacePrefix) {
@@ -312,7 +341,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .using(configuration)
                 .select(field("value"))
                 .from(fromLastRevision(true))
-                .where(DSL.or(field("namespace").eq(namespacePrefix), field("namespace").likeIgnoreCase(namespacePrefix + ".%"))));
+                .where(DSL.or(NAMESPACE_FIELD.eq(namespacePrefix), NAMESPACE_FIELD.likeIgnoreCase(namespacePrefix + ".%"))));
     }
 
     @Override
@@ -327,7 +356,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         field("value", String.class)
                     )
                     .from(fromLastRevision(true))
-                    .where(field("namespace").eq(namespace))
+                    .where(NAMESPACE_FIELD.eq(namespace))
                     .and(this.defaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
@@ -385,7 +414,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -418,7 +447,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 return select.fetch().map(record -> FlowWithSource.of(
@@ -445,7 +474,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 return this.jdbcRepository.fetchPage(
@@ -572,10 +601,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
-                .select(field("namespace"))
+                .select(NAMESPACE_FIELD)
                 .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId))
-                .groupBy(field("namespace"))
+                .groupBy(NAMESPACE_FIELD)
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );
@@ -587,10 +616,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
-                .select(field("namespace"))
+                .select(NAMESPACE_FIELD)
                 .from(fromLastRevision(true))
                 .where(this.defaultExecutionFilter(tenantId))
-                .groupBy(field("namespace"))
+                .groupBy(NAMESPACE_FIELD)
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );
@@ -606,7 +635,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     DSL.select(field("revision", Integer.class))
                         .from(fromLastRevision(true))
                         .where(this.defaultFilter(tenantId))
-                        .and(field("namespace").eq(namespace))
+                        .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .limit(1)
                 )

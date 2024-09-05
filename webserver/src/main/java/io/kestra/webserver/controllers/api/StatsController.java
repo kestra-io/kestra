@@ -2,11 +2,15 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
+import io.kestra.core.models.executions.statistics.ExecutionCountStatistics;
 import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.stats.SummaryStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
@@ -39,7 +43,23 @@ public class StatsController {
     protected LogRepositoryInterface logRepositoryInterface;
 
     @Inject
+    protected FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject
+    protected TriggerRepositoryInterface triggerRepositoryInterface;
+
+    @Inject
     private TenantService tenantService;
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "summary")
+    @Operation(tags = {"Stats"}, summary = "Get summary statistics")
+    public SummaryStatistics summary(@Body @Valid SummaryRequest request) {
+        return new SummaryStatistics(
+            flowRepositoryInterface.countForNamespace(tenantService.resolveTenant(), request.namespace()),
+            triggerRepositoryInterface.countForNamespace(tenantService.resolveTenant(), request.namespace())
+        );
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily")
@@ -93,6 +113,18 @@ public class StatsController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/daily/group-by-namespace")
+    @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions grouped by namespace")
+    public Map<String, ExecutionCountStatistics> dailyStatisticsGroupByNamespace(@Body @Valid ByNamespaceStatisticRequest request) {
+        return executionRepository.executionCountsGroupedByNamespace(
+            tenantService.resolveTenant(),
+            request.namespace(),
+            request.startDate() != null ? request.startDate().withZoneSameInstant(ZoneId.systemDefault()) : null,
+            request.endDate() != null ? request.endDate().withZoneSameInstant(ZoneId.systemDefault()) : null
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/latest/group-by-flow")
     @Operation(tags = {"Stats"}, summary = "Get latest execution by flows")
     public List<Execution> lastExecutions(
@@ -121,6 +153,14 @@ public class StatsController {
     }
 
     @Introspected
+    public record SummaryRequest(
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "The start datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]")ZonedDateTime endDate
+    ) {}
+
+
+    @Introspected
     public record StatisticRequest(
         @Parameter(description = "A string filter") @Nullable String q,
         @Parameter(description = "The scope of the executions to include") @Nullable FlowScope scope,
@@ -137,6 +177,13 @@ public class StatsController {
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "A log level filter") @Nullable Level logLevel,
+        @Parameter(description = "The start datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]")ZonedDateTime endDate
+    ) {}
+
+    @Introspected
+    public record ByNamespaceStatisticRequest(
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "The start datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]")ZonedDateTime endDate
     ) {}

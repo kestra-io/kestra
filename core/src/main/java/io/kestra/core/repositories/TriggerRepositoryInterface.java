@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -26,6 +27,23 @@ public interface TriggerRepositoryInterface {
     Trigger lock(String triggerUid, Function<Trigger, Trigger> function);
 
     ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId, String workerId);
+
+    /**
+     * Counts the total number of triggers.
+     *
+     * @param tenantId the tenant of the triggers
+     * @return The count.
+     */
+    int count(@Nullable String tenantId);
+
+    /**
+     * Counts the total number of triggers for the given namespace.
+     *
+     * @param tenantId  the tenant of the triggers
+     * @param namespace the namespace
+     * @return The count.
+     */
+    int countForNamespace(@Nullable String tenantId, @Nullable String namespace);
 
     /**
      * Find all triggers that match the query, return a flux of triggers

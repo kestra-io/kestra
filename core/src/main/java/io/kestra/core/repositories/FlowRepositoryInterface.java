@@ -84,6 +84,22 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findAll(String tenantId);
 
+    /**
+     * Counts the total number of flows.
+     *
+     * @param tenantId the tenant ID.
+     * @return The count.
+     */
+    int count(@Nullable  String tenantId);
+
+    /**
+     * Counts the total number of flows for the given namespace.
+     *
+     * @param tenantId the tenant ID.
+     * @return The count.
+     */
+    int countForNamespace(@Nullable  String tenantId, @Nullable String namespace);
+
     List<Flow> findAllForAllTenants();
 
     List<Flow> findByNamespace(String tenantId, String namespace);

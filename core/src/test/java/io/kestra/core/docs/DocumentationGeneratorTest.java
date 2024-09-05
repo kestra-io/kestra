@@ -132,7 +132,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Echo"));
-        assertThat(render, containsString("Deprecated"));
+        assertThat(render, containsString("This feature is deprecated and will be removed in the future"));
     }
 
     @SuppressWarnings("unchecked")

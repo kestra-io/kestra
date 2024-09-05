@@ -7,10 +7,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MysqlQueue<T> extends JdbcQueue<T> {
@@ -126,10 +123,16 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                     used[i] = true;
                     current.add(elements[i]);
                     generateCombinations(elements, used, current, results);
-                    current.removeLast();
+                    if (current.isEmpty()) {
+                        throw new NoSuchElementException();
+                    } else {
+                        current.remove(current.size() - 1);
+                    }
                     used[i] = false;
                 }
             }
         }
+
+
     }
 }

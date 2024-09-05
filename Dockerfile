@@ -17,7 +17,7 @@ RUN apt-get update -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
     if [ -n "${KESTRA_PLUGINS}" ]; then /app/kestra plugins install ${KESTRA_PLUGINS} && rm -rf /tmp/*; fi && \
-    if [ -n "${PYTHON_LIBRARIES}" ]; then pip install ${PYTHON_LIBRARIES} --break-system-packages; fi && \
+    if [ -n "${PYTHON_LIBRARIES}" ]; then pip install ${PYTHON_LIBRARIES}; fi && \
     chown -R kestra:kestra /app
 
 USER kestra

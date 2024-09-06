@@ -37,39 +37,38 @@ import java.util.Optional;
         @Example(
             title = "Toggle a trigger on flow input.",
             full = true,
-            code = {
+            code = """
+                id: trigger_toggle
+                namespace: company.team
+
+                inputs:
+                  - id: toggle
+                    type: BOOLEAN
+                    defaults: true
+
+                tasks:
+                  - id: if
+                    type: io.kestra.plugin.core.flow.If
+                    condition: "{{inputs.toggle}}"
+                    then:
+                      - id: enable
+                        type: io.kestra.plugin.core.trigger.Toggle
+                        trigger: schedule
+                        enabled: true
+                    else:
+                      - id: disable
+                        type: io.kestra.plugin.core.trigger.Toggle
+                        trigger: schedule
+                        enabled: false
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "* * * * *"
                 """
-                    id: trigger_toggle
-                    namespace: company.team
-
-                    inputs:
-                      - id: toggle
-                        type: BOOLEAN
-                        defaults: true
-
-                    tasks:
-                      - id: if
-                        type: io.kestra.plugin.core.flow.If
-                        condition: "{{inputs.toggle}}"
-                        then:
-                        - id: enable
-                          type: io.kestra.plugin.core.trigger.Toggle
-                          trigger: schedule
-                          enabled: true
-                        else:
-                        - id: disable
-                          type: io.kestra.plugin.core.trigger.Toggle
-                          trigger: schedule
-                          enabled: false
-                      - id: log
-                        type: io.kestra.plugin.core.log.Log
-                        message: Hello World
-
-                    triggers:
-                      - id: schedule
-                        type: io.kestra.plugin.core.trigger.Schedule
-                        cron: "* * * * *\""""
-            }
         )
     },
     aliases = "io.kestra.core.tasks.trigger.Toggle"

@@ -54,27 +54,43 @@ import jakarta.validation.constraints.Size;
     examples = {
         @Example(
             title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`, the webhook will be available at the URI `/api/v1/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
-            code = {
-                "triggers:",
-                "  - id: webhook",
-                "    type: io.kestra.plugin.core.trigger.Webhook",
-                "    key: 4wjtkzwVGBM9yKnjm3yv8r"
-            },
+            code = """
+                id: webhook_flow
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+                
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                """,
             full = true
         ),
         @Example(
             title = """
                 Add a trigger matching specific webhook event condition. The flow will be executed only if the condition is met.`.
                 """,
-            code = {
-                "triggers:",
-                "  - id: webhook",
-                "    type: io.kestra.plugin.core.trigger.Webhook",
-                "    key: 4wjtkzwVGBM9yKnjm3yv8r",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.ExpressionCondition",
-                "        expression: \"{{ trigger.body.hello == 'world' }}\""
-            },
+            code = """
+                id: condition_based_webhook_flow
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+                
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExpressionCondition
+                        expression: "{{ trigger.body.hello == 'world' }}"
+                """,
             full = true
         )
     },

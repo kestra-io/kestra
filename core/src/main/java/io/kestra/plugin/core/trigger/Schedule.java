@@ -72,30 +72,47 @@ import java.util.stream.Stream;
             triggers:
               - id: every_15_minutes
                 type: io.kestra.plugin.core.trigger.Schedule
-                cron: '*/15 * * * *'"""
+                cron: '*/15 * * * *'
+            """
         ),
         @Example(
             title = "Schedule a flow every hour using the cron nickname `@hourly`.",
-            code = {
-                "triggers:",
-                "  - id: hourly",
-                "    type: io.kestra.plugin.core.trigger.Schedule",
-                "    cron: \"@hourly\"",
-            },
+            code = """
+                id: scheduled_flow
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+
+                triggers:
+                  - id: hourly
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "@hourly"
+                """,
             full = true
         ),
         @Example(
             title = "Schedule a flow on the first Monday of the month at 11 AM.",
-            code = {
-                "triggers:",
-                "  - id: schedule",
-                "    cron: \"0 11 * * 1\"",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.DayWeekInMonthCondition",
-                "        date: \"{{ trigger.date }}\"",
-                "        dayOfWeek: \"MONDAY\"",
-                "        dayInMonth: \"FIRST\"",
-            },
+            code = """
+                id: scheduled_flow
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+                
+                triggers:
+                  - id: schedule
+                    cron: "0 11 * * 1"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DayWeekInMonthCondition
+                        date: "{{ trigger.date }}"
+                        dayOfWeek: "MONDAY"
+                        dayInMonth: "FIRST"
+                """,
             full = true
         ),
         @Example(

@@ -41,117 +41,150 @@ import java.util.OptionalInt;
             title = "Execute a Kestra flow via an HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
             full = true,
             code = """
-            id: api_call
-            namespace: company.team
-            tasks:
-              - id: basic_auth_api
-                type: io.kestra.plugin.core.http.Request
-                uri: http://host.docker.internal:8080/api/v1/executions/dev/inputs_demo
-                options:
-                  basicAuthUser: admin
-                  basicAuthPassword: admin
-                method: POST
-                contentType: multipart/form-data
-                formData:
-                  user: John Doe
-            """
+                id: api_call
+                namespace: company.team
+
+                tasks:
+                  - id: basic_auth_api
+                    type: io.kestra.plugin.core.http.Request
+                    uri: http://host.docker.internal:8080/api/v1/executions/dev/inputs_demo
+                    options:
+                      basicAuthUser: admin
+                      basicAuthPassword: admin
+                    method: POST
+                    contentType: multipart/form-data
+                    formData:
+                      user: John Doe
+                """
         ),
         @Example(
             title = "Execute a Kestra flow via an HTTP request authenticated with a Bearer auth token.",
             full = true,
             code = """
-            id: api_auth_call
-            namespace: company.team
-            tasks:
-              - id: auth_token_api
-                type: io.kestra.plugin.core.http.Request
-                uri: https://dummyjson.com/user/me
-                method: GET
-                headers:
-                  authorization: 'Bearer <TOKEN>'
-            """
+                id: api_auth_call
+                namespace: company.team
+
+                tasks:
+                  - id: auth_token_api
+                    type: io.kestra.plugin.core.http.Request
+                    uri: https://dummyjson.com/user/me
+                    method: GET
+                    headers:
+                      authorization: 'Bearer <TOKEN>'
+                """
         ),
         @Example(
             title = "Make an HTTP GET request with a timeout. The `timeout` property specifies the maximum time allowed for the entire task to run, while the `options.connectTimeout`, `options.readTimeout`, `options.connectionPoolIdleTimeout`, and `options.readIdleTimeout` properties specify the time allowed for establishing a connection, reading data from the server, keeping an idle connection in the client's connection pool, and keeping a read connection idle before closing it, respectively.",
             full = true,
             code = """
-            id: timeout
-            namespace: company.team
+                id: timeout
+                namespace: company.team
 
-            tasks:
-              - id: http
-                type: io.kestra.plugin.core.http.Request
-                uri: https://reqres.in/api/long-request
-                timeout: PT10M # no default
-                method: GET
-                options:
-                  connectTimeout: PT1M # no default
-                  readTimeout: PT30S # 10 seconds by default
-                  connectionPoolIdleTimeout: PT10S # 0 seconds by default
-                  readIdleTimeout: PT10M # 300 seconds by default"""
+                tasks:
+                  - id: http
+                    type: io.kestra.plugin.core.http.Request
+                    uri: https://reqres.in/api/long-request
+                    timeout: PT10M # no default
+                    method: GET
+                    options:
+                      connectTimeout: PT1M # no default
+                      readTimeout: PT30S # 10 seconds by default
+                      connectionPoolIdleTimeout: PT10S # 0 seconds by default
+                      readIdleTimeout: PT10M # 300 seconds by default
+                """
         ),        
         @Example(
             title = "Make a HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
             full = true,
             code = """
-id: http_post_request_example
-namespace: company.team
-
-inputs:
-  - id: payload
-    type: JSON
-    defaults: |
-      {"title": "Kestra Pen"}
-
-tasks:
-  - id: send_data
-    type: io.kestra.plugin.core.http.Request
-    uri: https://dummyjson.com/products/add
-    method: POST
-    contentType: application/json
-    body: "{{ inputs.payload }}"
-
-  - id: print_status
-    type: io.kestra.plugin.core.log.Log
-    message: '{{ outputs.send_data.body }}'"""
+                id: http_post_request_example
+                namespace: company.team
+                
+                inputs:
+                  - id: payload
+                    type: JSON
+                    defaults: |
+                      {"title": "Kestra Pen"}
+                
+                tasks:
+                  - id: send_data
+                    type: io.kestra.plugin.core.http.Request
+                    uri: https://dummyjson.com/products/add
+                    method: POST
+                    contentType: application/json
+                    body: "{{ inputs.payload }}"
+                
+                  - id: print_status
+                    type: io.kestra.plugin.core.log.Log
+                    message: '{{ outputs.send_data.body }}'
+                """
         ),
         @Example(
             title = "Send an HTTP POST request to a webserver.",
-            code = {
-                "uri: \"https://server.com/login\"",
-                "headers: ",
-                "  user-agent: \"kestra-io\"",
-                "method: \"POST\"",
-                "formData:",
-                "  user: \"user\"",
-                "  password: \"pass\""
-            }
+            full = true,
+            code = """
+                id: http_post_request_example
+                namespace: company.team
+                
+                tasks:
+                  - id: send_data
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/login"
+                    headers:
+                      user-agent: "kestra-io"
+                    method: "POST"
+                    formData:
+                      user: "user"
+                      password: "pass"
+                """
         ),
         @Example(
             title = "Send a multipart HTTP POST request to a webserver.",
-            code = {
-                "uri: \"https://server.com/upload\"",
-                "headers: ",
-                "  user-agent: \"kestra-io\"",
-                "method: \"POST\"",
-                "contentType: \"multipart/form-data\"",
-                "formData:",
-                "  user: \"{{ inputs.file }}\"",
-            }
+            full = true,
+            code = """
+                id: http_post_multipart_example
+                namespace: company.team
+                
+                inputs:
+                  - id: file
+                    type: FILE
+                
+                tasks:
+                  - id: send_data
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/upload"
+                    headers:
+                      user-agent: "kestra-io"
+                    method: "POST"
+                    contentType: "multipart/form-data"
+                    formData:
+                      user: "{{ inputs.file }}"
+                """
         ),
         @Example(
             title = "Send a multipart HTTP POST request to a webserver and set a custom file name.",
-            code = {
-                "uri: \"https://server.com/upload\"",
-                "headers: ",
-                "  user-agent: \"kestra-io\"",
-                "method: \"POST\"",
-                "contentType: \"multipart/form-data\"",
-                "formData:",
-                "  user:",
-                "    name: \"my-file.txt\"",
-                "    content: \"{{ inputs.file }}\"",
-            }
+            full = true,
+            code = """
+                id: http_post_multipart_example
+                namespace: company.team
+                
+                inputs:
+                  - id: file
+                    type: FILE
+                
+                tasks:
+                  - id: send_data
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/upload"
+                    headers:
+                      user-agent: "kestra-io"
+                    method: "POST"
+                    contentType: "multipart/form-data"
+                    formData:
+                      user:
+                        name: "my-file.txt"
+                        content: "{{ inputs.file }}"
+                """
         )
     },
     aliases = "io.kestra.plugin.fs.http.Request"

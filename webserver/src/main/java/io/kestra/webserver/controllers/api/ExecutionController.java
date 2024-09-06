@@ -597,14 +597,6 @@ public class ExecutionController {
                 } catch (IOException e) {
                     sink.error(new RuntimeException(e));
                 }
-            })
-            .doOnError(t -> {
-                // need to consume the inputs in case of error, that can failed, but we ignored
-                try {
-                    Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast();
-                } catch (IllegalStateException ignored) {
-
-                }
             });
     }
 

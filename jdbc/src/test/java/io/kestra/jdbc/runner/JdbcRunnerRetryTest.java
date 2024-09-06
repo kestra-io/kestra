@@ -120,6 +120,11 @@ public abstract class JdbcRunnerRetryTest {
     }
 
     @Test
+    void retrySubflow() throws TimeoutException {
+        retryCaseTest.retrySubflow();
+    }
+
+    @Test
     void retryFlowableChild() throws TimeoutException {
         retryCaseTest.retryFlowableChild();
     }

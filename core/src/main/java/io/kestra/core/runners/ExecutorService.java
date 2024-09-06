@@ -12,6 +12,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WaitFor;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -483,7 +484,7 @@ public class ExecutorService {
              */
             if (!executor.getExecution().getState().isRetrying() &&
                 taskRun.getState().isFailed() &&
-                task instanceof RunnableTask<?> &&
+                (task instanceof RunnableTask<?> || task instanceof Subflow) &&
                 (task.getRetry() != null || executor.getFlow().getRetry() != null || (parentTask != null && parentTask.getRetry() != null))
             ) {
                 Instant nextRetryDate;

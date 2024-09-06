@@ -16,11 +16,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.storages.Storage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 public final class ExecutableUtils {
@@ -44,12 +40,12 @@ public final class ExecutableUtils {
     }
 
     public static SubflowExecutionResult subflowExecutionResult(TaskRun parentTaskrun, Execution execution) {
+        List<TaskRunAttempt> attempts = parentTaskrun.getAttempts() == null ? new ArrayList<>() : new ArrayList<>(parentTaskrun.getAttempts());
+        attempts.add(TaskRunAttempt.builder().state(parentTaskrun.getState()).build());
         return SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(parentTaskrun.getState().getCurrent())
-            .parentTaskRun(parentTaskrun.withAttempts(
-                Collections.singletonList(TaskRunAttempt.builder().state(parentTaskrun.getState()).build())
-            ))
+            .parentTaskRun(parentTaskrun.withAttempts(attempts))
             .build();
     }
 

@@ -257,6 +257,19 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
     }
 
+    public void retrySubflow() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "retry-subflow",
+            null,
+            null
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().size(), is(3));
+    }
+
     public void retryFlowableChild() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
             null,

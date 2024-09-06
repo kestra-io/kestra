@@ -9,8 +9,6 @@
 @import "bootstrap/scss/vendor/rfs";
 @import "bootstrap/scss/variables";
 
-
-
 html.dark {
     #{--bs-gray}: #{map.get($grays, "600")};
     @each $key, $value in $grays {
@@ -23,13 +21,21 @@ html.dark {
     }
 
     #{--bs-heading-color}: var(--bs-white);
-    #{--bs-body-color}: $body-color;
+    #{--bs-body-color}: white;
     #{--bs-body-bg}: $body-bg;
     #{--bs-border-color}: $border-color;
     #{--bs-link-color}: $secondary;
     #{--bs-link-color-rgb}: to-rgb($secondary);
-    #{--bs-secondary-color}: var(--bs-gray-700);
+
+    $levels: info, running, danger, warning, success;
+    @each $level in $levels {
+        .bg-#{$level} {
+            #{--bs-bg-opacity}: 0.2;
+        }
+    }
+
     --bs-link-hover-color: #D0CDF9;
+
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;
 
@@ -43,7 +49,7 @@ html.dark {
     --el-text-color-primary: var(--bs-primary);
     --el-text-color-regular: var(--bs-body-color);
     --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-gray-800);
+    --el-text-color-placeholder: var(--bs-body-color);
     --el-text-color-disabled: var(--bs-gray-400);
 
     --el-border-color: var(--bs-border-color);
@@ -70,4 +76,67 @@ html.dark {
 
     --input-suffix-color: #C6C1D9;
     --white-black-font-color: #{$white};
+
+    $content-information: #c7f0ff;
+    $content-running: #bbbbff;
+    $content-alert: #fd7278;
+    $content-warning: #f3c4a1;
+    $content-success: #7cdfc4;
+    #{--background-failed}: #26000233;
+    #{--background-success}: #00231933;
+    #{--content-information}: $content-information;
+    #{--border-failed}: #ab0009;
+    #{--border-information}: #1761fd;
+    #{--background-information}: #0e3b9a33;
+    #{--content-alert}: $content-alert;
+    #{--content-success}: $content-success;
+    #{--border-success}: #029e73;
+    #{--chart-success}: #21ce9c;
+    #{--chart-failed}: #cd38fb;
+    #{--chart-warning}: #e1ba80;
+    #{--chart-created}: #5bb8ff;
+    #{--chart-running}: #7fbaff;
+    #{--chart-killed}: #3991ff;
+    #{--chart-paused}: #9a8eb4;
+    #{--border-warning}: #dd5f00;
+    #{--content-warning}: $content-warning;
+    #{--background-warning}: #6f300033;
+    #{--background-created}: #6f300033;
+    #{--content-created}: #7fbaff;
+    #{--border-created}: #1761fd;
+    #{--border-killed}: #fce07c;
+    #{--content-killed}: #fdeaa8;
+    #{--background-killed}: #7e703e33;
+    #{--background-running}: #42008033;
+    #{--content-running}: $content-running;
+    #{--border-running}: #8405ff;
+    #{--content-paused}: #ffffff;
+    #{--border-paused}: #9a8eb4;
+    #{--background-paused}: #a6a4ca;
+    #{--log-content-trace}: #e3dbff;
+    #{--log-border-trace}: #9a8eb4;
+    #{--log-chart-trace}: #a6a4ca;
+    #{--log-background-trace}: #d1cfe933;
+    #{--log-background-info}: #7cdfc433;
+    #{--log-content-info}: #7cdfc4;
+    #{--log-chart-info}: #21ce9c;
+    #{--log-border-info}: #02be8a;
+    #{--log-background-warn}: #e5823833;
+    #{--log-border-warn}: #e9985b;
+    #{--log-content-warn}: #fae7da;
+    #{--log-chart-warn}: #f3c4a1;
+    #{--log-background-error}: #fd727833;
+    #{--log-border-error}: #fd7278;
+    #{--log-content-error}: #fec9cb;
+    #{--log-chart-error}: #fd7278;
+    #{--log-background-debug}: #5bb8ff33;
+    #{--log-border-debug}: #5bb8ff;
+    #{--log-content-debug}: #7fbaff;
+    #{--log-chart-debug}: #3991ff;
+
+    #{--bs-info-rgb}: to_rgb($content-information);
+    #{--bs-running-rgb}: to_rgb($content-running);
+    #{--bs-danger-rgb}: to_rgb($content-alert);
+    #{--bs-warning-rgb}: to_rgb($content-warning);
+    #{--bs-success-rgb}: to_rgb($content-success);
 }

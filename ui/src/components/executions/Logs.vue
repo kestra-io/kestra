@@ -18,6 +18,9 @@
                     @update:model-value="onChange"
                 />
             </el-form-item>
+            <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel.name">
+                <log-level-navigator :cursor-idx="cursorLogLevel?.name === logLevel.name ? cursorIdxForLevel : undefined" :level="logLevel" :total-count="countByLogLevel[logLevel.name]" @previous="previousLogForLevel(logLevel.name)" @next="nextLogForLevel(logLevel.name)" />
+            </el-form-item>
             <el-form-item>
                 <el-button @click="expandCollapseAll()">
                     {{ logDisplayButtonText }}
@@ -33,7 +36,7 @@
                 </el-tooltip>
             </el-form-item>
             <el-form-item>
-                <el-button-group>
+                <el-button-group class="min-w-auto">
                     <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
@@ -50,8 +53,12 @@
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
+            :level-to-highlight="cursorLogLevel"
+            @log-cursor="logCursor = $event"
+            :log-cursor="logCursor"
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
+            @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :target-execution="execution"
             :target-flow="flow"
             :show-progress-bar="false"
@@ -76,17 +83,20 @@
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import Kicon from "../Kicon.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
+    import LogUtils from "../../utils/logs";
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
             LogLevelSelector,
+            LogLevelNavigator,
             Kicon,
             Download,
             Magnify,
@@ -99,7 +109,9 @@
                 level: undefined,
                 filter: undefined,
                 openedTaskrunsCount: 0,
-                raw_view: false
+                raw_view: false,
+                logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level.name, []])),
+                logCursor: undefined
             };
         },
         created() {
@@ -116,6 +128,18 @@
             },
             logDisplayButtonText() {
                 return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
+            },
+            currentLevelOrLower() {
+                return LogUtils.levelOrLower(this.level);
+            },
+            countByLogLevel() {
+                return Object.fromEntries(Object.entries(this.logIndicesByLevel).map(([level, indices]) => [level, indices.length]));
+            },
+            cursorLogLevel() {
+                return LogUtils.fromName(Object.entries(this.logIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0]);
+            },
+            cursorIdxForLevel() {
+                return this.logIndicesByLevel?.[this.cursorLogLevel?.name]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
             }
         },
         methods: {
@@ -149,6 +173,43 @@
                         minLevel: this.level
                     })
                 }
+            },
+            sortLogsByViewOrder(a, b) {
+                const aSplit = a.split("/");
+                const taskRunIndexA = aSplit?.[0];
+                const bSplit = b.split("/");
+                const taskRunIndexB = bSplit?.[0];
+                if (taskRunIndexA === undefined) {
+                    return taskRunIndexB === undefined ? 0 : -1;
+                }
+                if (taskRunIndexB === undefined) {
+                    return 1;
+                }
+                if (taskRunIndexA === taskRunIndexB) {
+                    return this.sortLogsByViewOrder(aSplit.slice(1).join("/"), bSplit.slice(1).join("/"));
+                }
+
+                return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
+            },
+            previousLogForLevel(level) {
+                const logIndicesForLevel = this.logIndicesByLevel[level];
+                if (this.logCursor === undefined) {
+                    this.logCursor = logIndicesForLevel?.[logIndicesForLevel.length - 1];
+                    return;
+                }
+
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
+            },
+            nextLogForLevel(level) {
+                const logIndicesForLevel = this.logIndicesByLevel[level];
+                if (this.logCursor === undefined) {
+                    this.logCursor = logIndicesForLevel?.[0];
+                    return;
+                }
+
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             }
         }
     };

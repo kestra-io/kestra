@@ -58,7 +58,7 @@
 
                     <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
                         <TrashCan class="me-2" />
-                        <span>{{ $t("delete logs") }}</span>                     
+                        <span>{{ $t("delete logs") }}</span>
                     </el-button>
                 </template>
 
@@ -225,13 +225,13 @@
             load() {
                 this.isLoading = true
 
-                const data = this.filters 
-                    ? {page: this.internalPageNumber, size: this.internalPageSize, ...this.filters} 
+                const data = this.filters
+                    ? {page: this.internalPageNumber, size: this.internalPageSize, ...this.filters}
                     : {page: this.$route.query.page || this.internalPageNumber, size: this.$route.query.size || this.internalPageSize}
 
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({
-                        ...data,                      
+                        ...data,
                         minLevel: this.filters ? null : this.selectedLogLevel,
                         sort: "timestamp:desc"
                     }))

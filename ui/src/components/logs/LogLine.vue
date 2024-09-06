@@ -1,13 +1,14 @@
 <template>
-    <div class="py-2 line font-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge log-level el-tag noselect fw-bold">{{ log.level }}</span>
+    <div class="py-2 line font-monospace" :class="{'border-start': cursor, ['log-border-' + log.level.toLowerCase()]: cursor}" v-if="filtered">
+        <span v-if="cursor" class="cursor" :class="'log-border-' + log.level.toLowerCase()" />
+        <span :class="levelClasses" class="border header-badge log-level el-tag noselect">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "").capitalize() }}</span>
             <div
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
-                <span class="header-badge">
+                <span class="header-badge text-secondary">
                     {{ $filters.date(log.timestamp, "iso") }}
                 </span>
                 <span v-for="(meta, x) in metaWithValue" :key="x">
@@ -39,6 +40,10 @@
             VRuntimeTemplate
         },
         props: {
+            cursor: {
+                type: Boolean,
+                default: false
+            },
             log: {
                 type: Object,
                 required: true,
@@ -111,14 +116,9 @@
                 }
                 return metaWithValue;
             },
-            levelClass() {
-                return {
-                    TRACE: "",
-                    DEBUG: "el-tag--info",
-                    INFO: "el-tag--success",
-                    WARN: "el-tag--warning",
-                    ERROR: "el-tag--danger",
-                }[this.log.level];
+            levelClasses() {
+                const lowerCaseLevel = this.log.level.toLowerCase();
+                return `log-content-${lowerCaseLevel} log-border-${lowerCaseLevel} log-bg-${lowerCaseLevel}`;
             },
             filtered() {
                 return (
@@ -160,30 +160,33 @@
         white-space: pre-wrap;
         word-break: break-all;
         display: flex;
-        align-items: start;
+        align-items: center;
         gap: $spacer;
+
+        &.border-start {
+            border-left-width: 2px !important;
+        }
+
+        .cursor {
+            height : 0;
+            width : 0;
+            border: 7px solid;
+            border-top-color: transparent !important;
+            border-bottom-color: transparent !important;
+            border-right: 0;
+        }
 
         .log-level {
             padding: calc(var(--spacer) / 4);
         }
 
         .log-content {
-            .header {
-                color: var(--bs-gray-500);
-
-                html.dark & {
-                    color: var(--bs-gray-700);
-                }
-
-                > * + * {
-                    margin-left: $spacer;
-                }
+            .header > * + * {
+                margin-left: $spacer;
             }
         }
 
         .el-tag {
-            border-radius: 0;
-            border: 0;
             height: auto;
         }
 
@@ -210,8 +213,7 @@
 
             &.log-level {
                 white-space: pre;
-                border-radius: 2px;
-                color: $black;
+                border-radius: 4px;
             }
         }
 

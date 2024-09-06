@@ -93,7 +93,7 @@
                             if (accumulator[state] === undefined) {
                                 accumulator[state] = {
                                     label: state,
-                                    backgroundColor: Logs.backgroundFromLevel(state),
+                                    backgroundColor: Logs.chartColorFromLevel(state),
                                     borderRadius: 4,
                                     yAxisID: "y",
                                     data: []

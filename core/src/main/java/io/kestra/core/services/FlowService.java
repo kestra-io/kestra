@@ -144,10 +144,6 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>();
-        if (flow.getNamespace() != null && flow.getNamespace().equals(systemFlowNamespace)) {
-            warnings.add("The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.");
-        }
-
         List<AbstractTrigger> triggers = flow.getTriggers();
         if (
             triggers != null &&

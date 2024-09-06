@@ -35,7 +35,7 @@ import jakarta.validation.constraints.NotNull;
 )
 @Plugin(
     examples = @Example(
-        title = "This flow will be triggered after each successful execution of flow `compnay.team.trigger_flow` " +
+        title = "This flow will be triggered after each successful execution of flow `company.team.trigger_flow` " +
             "and forward the `uri` of `my_task` taskId outputs.",
         full = true,
         code = """

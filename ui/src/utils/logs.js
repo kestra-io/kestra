@@ -4,23 +4,23 @@ import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 const LEVELS = Object.freeze({
     ERROR: {
         name: "ERROR",
-        colorClass: "red",
+        fullName: "ERROR",
     },
     WARN: {
         name: "WARN",
-        colorClass: "orange",
+        fullName: "WARNING",
     },
     INFO: {
         name: "INFO",
-        colorClass: "cyan",
+        fullName: "INFO",
     },
     DEBUG: {
         name: "DEBUG",
-        colorClass: "purple",
+        fullName: "DEBUG",
     },
     TRACE: {
         name: "TRACE",
-        colorClass: "gray",
+        fullName: "TRACE",
     },
 });
 
@@ -46,10 +46,10 @@ export default class Logs {
     }
 
     static color() {
-        return _mapValues(LEVELS, level => cssVariable("--bs-" + level.colorClass));
+        return _mapValues(LEVELS, level => cssVariable("--log-chart-" + level.name.toLowerCase()));
     }
 
-    static backgroundFromLevel(level, alpha = 1) {
+    static chartColorFromLevel(level, alpha = 1) {
         const hex = Logs.color()[level];
         if (!hex) {
             return null;
@@ -79,5 +79,20 @@ export default class Logs {
         const index = based.indexOf(value);
 
         return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    }
+
+    static fromName(name) {
+        return LEVELS?.[name];
+    }
+
+    static levelOrLower(level) {
+        const levels = [];
+        for (const [key, value] of Object.entries(LEVELS)) {
+            levels.push(value);
+            if (key === level) {
+                break;
+            }
+        }
+        return levels.reverse();
     }
 }

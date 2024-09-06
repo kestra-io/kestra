@@ -13,7 +13,7 @@
     --el-text-color-primary: var(--bs-primary);
     --el-text-color-regular: var(--bs-body-color);
     --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-gray-600);
+    --el-text-color-placeholder: var(--bs-body-color);
     --el-text-color-disabled: var(--bs-gray-300-darken-5);
 
     --el-border-color: var(--bs-border-color);
@@ -56,7 +56,9 @@
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;
 
+    #{--bs-body-color}: black;
     #{--bs-heading-color}: var(--bs-black);
+    #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
     #{--bs-tertiary}: $tertiary;
 
     #{--bs-gray}: #{map.get($grays, "600")};
@@ -75,7 +77,94 @@
         }
     }
 
-    &:not(.dark){
-        #{--bs-warning-rgb}: 221, 95, 0;
+
+    $content-information: #134ecc;
+    $content-running: #7400df;
+    $content-alert: #ab0009;
+    $content-warning: #c15300;
+    $content-success: #017f5c;
+    #{--background-failed}: #fed6d9;
+    #{--background-success}: #e4f9f3;
+    #{--content-information}: $content-information;
+    #{--border-failed}: #fec9cb;
+    #{--border-information}: #7fbaff;
+    #{--background-information}: #c7f0ff;
+    #{--content-alert}: $content-alert;
+    #{--content-success}: $content-success;
+    #{--border-success}: #beefe2;
+    #{--chart-success}: #02be8a;
+    #{--chart-failed}: #fd9297;
+    #{--chart-warning}: #f3c4a1;
+    #{--chart-created}: #5bb8ff;
+    #{--chart-running}: #bbbbff;
+    #{--chart-killed}: #7fbaff;
+    #{--chart-paused}: #d1cfe9;
+    #{--border-warning}: #f3c4a1;
+    #{--content-warning}: $content-warning;
+    #{--background-warning}: #fae7da;
+    #{--background-created}: #c7f0ff;
+    #{--content-created}: #134ecc;
+    #{--border-created}: #a2cdff;
+    #{--border-killed}: #fde592;
+    #{--content-killed}: #7e703e;
+    #{--background-killed}: #fef0be;
+    #{--background-running}: #e0e0ff;
+    #{--content-running}: $content-running;
+    #{--border-running}: #bbbbff;
+    #{--content-paused}: #564a75;
+    #{--border-paused}: #e5e4f7;
+    #{--background-paused}: #f5f5ff;
+    #{--log-content-trace}: #26282d;
+    #{--log-border-trace}: #b8b6d9;
+    #{--log-chart-trace}: #d1cfe9;
+    #{--log-background-trace}: #e5e4f7;
+    #{--log-background-info}: #e4f9f3;
+    #{--log-content-info}: #017f5c;
+    #{--log-chart-info}: #21ce9c;
+    #{--log-border-info}: #02be8a;
+    #{--log-background-warn}: #fae7da;
+    #{--log-border-warn}: #e58238;
+    #{--log-content-warn}: #8a3b00;
+    #{--log-chart-warn}: #eeae7e;
+    #{--log-background-error}: #fed6d9;
+    #{--log-border-error}: #e3262f;
+    #{--log-content-error}: #ab0009;
+    #{--log-chart-error}: #fd7278;
+    #{--log-background-debug}: #c7f0ff;
+    #{--log-border-debug}: #3991ff;
+    #{--log-content-debug}: #134ecc;
+    #{--log-chart-debug}: #7fbaff;
+
+    #{--bs-info-rgb}: to_rgb($content-information);
+    #{--bs-running-rgb}: to_rgb($content-running);
+    #{--bs-danger-rgb}: to_rgb($content-alert);
+    #{--bs-warning-rgb}: to_rgb($content-warning);
+    #{--bs-success-rgb}: to_rgb($content-success);
+
+    #{--bs-border-info}: var(--border-information);
+    #{--bs-border-running}: var(--border-running);
+    #{--bs-border-danger}: var(--border-failed);
+    #{--bs-border-warning}: var(--border-warning);
+    #{--bs-border-success}: var(--border-success);
+}
+
+$logLevels: "trace", "debug", "info", "warn", "error";
+@each $logLevel in $logLevels {
+    .log-border-#{$logLevel} {
+        border-color: var(--log-border-#{$logLevel}) !important;
     }
+    .log-bg-#{$logLevel} {
+        background-color: var(--log-background-#{$logLevel}) !important;
+    }
+    .log-content-#{$logLevel} {
+        color: var(--log-content-#{$logLevel}) !important;
+    }
+}
+
+.opacity-40 {
+    opacity: 40%;
+}
+
+.min-w-auto {
+    min-width: auto !important;
 }

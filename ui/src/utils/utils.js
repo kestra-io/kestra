@@ -230,4 +230,8 @@ export default class Utils {
 
         document.body.removeChild(node);
     }
+
+    static distinctFilter(value, index, array) {
+        return array.indexOf(value) === index;
+    }
 }

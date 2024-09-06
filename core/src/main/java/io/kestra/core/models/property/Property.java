@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -41,8 +42,9 @@ public class Property<T> {
     private String expression;
     private T value;
 
-    // used only by the deserializer
-    Property(String expression) {
+    // used only by the deserializer and in tests
+    @VisibleForTesting
+    public Property(String expression) {
         this.expression = expression;
     }
 
@@ -53,7 +55,17 @@ public class Property<T> {
      */
     public static <V> Property<V> of(V value) {
         // trick the serializer so the property would not be null at deserialization time
-        Property<V> p = new Property<>(MAPPER.convertValue(value, String.class));
+        String expression;
+        if (value instanceof Map<?, ?> map) {
+            try {
+                expression = MAPPER.writeValueAsString(map);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        } else {
+            expression = MAPPER.convertValue(value, String.class);
+        }
+        Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
     }
@@ -129,7 +141,7 @@ public class Property<T> {
     }
 
     /**
-     * Render a property then convert it as a list of target type.<br>
+     * Render a property then convert it as a map of target types.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
@@ -149,7 +161,7 @@ public class Property<T> {
     }
 
     /**
-     * Render a property with additional variables, then convert it as a list of target type.<br>
+     * Render a property with additional variables, then convert it as a map of target types.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.

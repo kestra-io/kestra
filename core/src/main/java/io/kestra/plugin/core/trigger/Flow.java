@@ -35,34 +35,35 @@ import jakarta.validation.constraints.NotNull;
 )
 @Plugin(
     examples = @Example(
-        title = "This flow will be triggered after each successful execution of flow `io.kestra.tests.trigger_flow` " +
+        title = "This flow will be triggered after each successful execution of flow `compnay.team.trigger_flow` " +
             "and forward the `uri` of `my_task` taskId outputs.",
         full = true,
-        code = "id: trigger_flow_listener\n" +
-            "namespace: company.team\n" +
-            "\n" +
-            "inputs:\n" +
-            "  - id: from_parent\n" +
-            "    type: STRING\n" +
-            "\n" +
-            "tasks:\n" +
-            "  - id: only_no_input\n" +
-            "    type: io.kestra.plugin.core.debug.Return\n" +
-            "    format: \"v1: {{ trigger.executionId }}\"\n" +
-            "\n" +
-            "triggers:\n" +
-            "  - id: listen_flow\n" +
-            "    type: io.kestra.plugin.core.trigger.Flow\n" +
-            "    inputs:\n" +
-            "      from-parent: '{{ outputs.my_task.uri }}'\n" +
-            "    conditions:\n" +
-            "      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition\n" +
-            "        namespace: company.team\n" +
-            "        flowId: trigger_flow\n" +
-            "      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition\n" +
-            "        in:\n" +
-            "          - SUCCESS"
-
+        code = """
+            id: trigger_flow_listener
+            namespace: company.team
+            
+            inputs:
+              - id: from_parent
+                type: STRING
+            
+            tasks:
+              - id: only_no_input
+                type: io.kestra.plugin.core.debug.Return
+                format: "v1: {{ trigger.executionId }}"
+            
+            triggers:
+              - id: listen_flow
+                type: io.kestra.plugin.core.trigger.Flow
+                inputs:
+                  from-parent: '{{ outputs.my_task.uri }}'
+                conditions: 
+                  - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+                    namespace: company.team
+                    flowId: trigger_flow 
+                  - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+                    in: 
+                      - SUCCESS
+            """
     ),
     aliases = "io.kestra.core.models.triggers.types.Flow"
 )

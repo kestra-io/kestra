@@ -30,7 +30,15 @@ import java.util.Optional;
 @Plugin(
     examples = {
         @Example(
-            code = "format: \"{{ task.id }} > {{ taskrun.startDate }}\""
+            code = """
+                id:return_flow
+                namespace: company.team
+
+                tasks:
+                  - id: return
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                """
         )
     },
     metrics = {

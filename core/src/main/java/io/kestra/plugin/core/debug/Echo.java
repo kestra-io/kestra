@@ -29,10 +29,17 @@ import jakarta.validation.constraints.NotBlank;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: WARN",
-                "format: \"{{task.id}} > {{taskrun.startDate}}\""
-            }
+            full = true,
+            code = """
+                id: echo_flow
+                namespace: company.team
+
+                tasks:
+                  - id: echo
+                    type: io.kestra.plugin.core.debug.Echo
+                    level: WARN
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.debugs.Echo"

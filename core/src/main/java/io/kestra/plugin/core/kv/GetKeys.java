@@ -32,10 +32,15 @@ import java.util.*;
             title = "Get keys that are prefixed by `my_var`.",
             full = true,
             code = """
-              id: keys_kv
-              type: io.kestra.plugin.core.kv.GetKeys
-              prefix: my_var
-              namespace: dev # the current namespace of the flow will be used by default"""
+                id: kv_store_getkeys
+                namespace: company.team
+
+                tasks:
+                  - id: kv_getkeys
+                    type: io.kestra.plugin.core.kv.GetKeys
+                    prefix: my_var
+                    namespace: dev # the current namespace of the flow will be used by default
+                """
         )
     }
 )

@@ -43,24 +43,26 @@ import java.util.stream.Stream;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: sequential",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: sequential",
-                "    type: io.kestra.plugin.core.flow.Sequential",
-                "    tasks:",
-                "      - id: first_task",
-                "        type: io.kestra.plugin.core.debug.Return",
-                "        format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
-                "      - id: second_task",
-                "        type: io.kestra.plugin.core.debug.Return",
-                "        format: \"{{ task.id }} > {{ taskrun.id }}\"",
-                "  - id: last",
-                "    type: io.kestra.plugin.core.debug.Return",
-                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
-            }
+            code = """
+                id: sequential
+                namespace: company.team
+                
+                tasks:
+                  - id: sequential
+                    type: io.kestra.plugin.core.flow.Sequential
+                    tasks:
+                      - id: first_task
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    
+                      - id: second_task
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "{{ task.id }} > {{ taskrun.id }}"
+
+                  - id: last
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Sequential"

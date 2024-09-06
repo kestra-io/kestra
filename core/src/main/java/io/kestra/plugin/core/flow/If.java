@@ -47,28 +47,28 @@ import java.util.stream.Stream;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: if",
-                "namespace: company.team",
-                "",
-                "inputs:",
-                "  - id: string",
-                "    type: STRING",
-                "    required: true",
-                "",
-                "tasks:",
-                "  - id: if",
-                "    type: io.kestra.plugin.core.flow.If",
-                "    condition: \"{{ inputs.string == 'Condition' }}\"",
-                "    then:",
-                "      - id: when_true",
-                "        type: io.kestra.plugin.core.log.Log",
-                "        message: 'Condition was true'",
-                "    else:",
-                "      - id: when_false",
-                "        type: io.kestra.plugin.core.log.Log",
-                "        message: 'Condition was false'",
-            }
+            code = """
+                id: if
+                namespace: company.team
+                
+                inputs:
+                  - id: string
+                    type: STRING
+                    required: true
+                
+                tasks:
+                  - id: if
+                    type: io.kestra.plugin.core.flow.If
+                    condition: "{{ inputs.string == 'Condition' }}"
+                    then:
+                      - id: when_true
+                        type: io.kestra.plugin.core.log.Log
+                        message: "Condition was true"
+                    else:
+                      - id: when_false
+                        type: io.kestra.plugin.core.log.Log
+                        message: "Condition was false"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.If"

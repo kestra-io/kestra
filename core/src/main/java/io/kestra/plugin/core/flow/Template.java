@@ -58,28 +58,30 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: template",
-                "namespace: company.team",
-                "",
-                "inputs:",
-                "  - id: with_string",
-                "    type: STRING",
-                "",
-                "tasks:",
-                "  - id: 1_return",
-                "    type: io.kestra.plugin.core.debug.Return",
-                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"",
-                "  - id: 2_template",
-                "    type: io.kestra.plugin.core.flow.Template",
-                "    namespace: company.team",
-                "    templateId: template",
-                "    args:",
-                "      my-forward: \"{{ inputs.with_string }}\"",
-                "  - id: 3_end",
-                "    type: io.kestra.plugin.core.debug.Return",
-                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\"\n"
-            }
+            code = """
+                id: template
+                namespace: company.team
+                
+                inputs:
+                  - id: with_string
+                    type: STRING
+                
+                tasks:
+                  - id: 1_return
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                
+                  - id: 2_template
+                    type: io.kestra.plugin.core.flow.Template
+                    namespace: company.team
+                    templateId: template
+                    args:
+                      my_forward: "{{ inputs.with_string }}"
+                
+                  - id: 3_end
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Template"

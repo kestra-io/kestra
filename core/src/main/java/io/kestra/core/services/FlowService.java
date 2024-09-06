@@ -12,7 +12,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.ListUtils;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -53,9 +52,6 @@ public class FlowService {
 
     @Inject
     PluginRegistry pluginRegistry;
-
-    @Value("${kestra.system-flows.namespace:system}")
-    private String systemFlowNamespace;
 
     public FlowWithSource importFlow(String tenantId, String source) {
         return this.importFlow(tenantId, source, false);

@@ -4,6 +4,7 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.micronaut.data.model.Pageable;
 
@@ -97,6 +98,7 @@ public interface FlowRepositoryInterface {
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );
@@ -104,6 +106,7 @@ public interface FlowRepositoryInterface {
     List<FlowWithSource> findWithSource(
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );

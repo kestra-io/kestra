@@ -69,6 +69,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     protected final AbstractJdbcExecutorStateStorage executorStateStorage;
 
     private QueueInterface<Execution> executionQueue;
+    private NamespaceUtils namespaceUtils;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
@@ -79,6 +80,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         this.jdbcRepository = jdbcRepository;
         this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
 
         // we inject ApplicationContext in order to get the ExecutionQueue lazy to avoid StackOverflowError
         this.applicationContext = applicationContext;
@@ -152,6 +154,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -170,6 +173,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     context,
                     query,
                     tenantId,
+                    scope,
                     namespace,
                     flowId,
                     startDate,
@@ -189,6 +193,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -209,6 +214,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         context,
                         query,
                         tenantId,
+                        scope,
                         namespace,
                         flowId,
                         startDate,
@@ -236,6 +242,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DSLContext context,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -254,7 +261,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
-        select = filteringQuery(select, null, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
+        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
 
         if (startDate != null) {
             select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -542,9 +549,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     ) {
         if (scope != null) {
             if (scope.equals(FlowScope.USER)) {
-                select = select.and(field("namespace").ne(NamespaceUtils.SYSTEM_NAMESPACE));
+                select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
             } else if (scope.equals(FlowScope.SYSTEM)) {
-                select = select.and(field("namespace").eq(NamespaceUtils.SYSTEM_NAMESPACE));
+                select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
             }
         }
 

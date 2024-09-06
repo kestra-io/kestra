@@ -135,26 +135,26 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
         assertThat(executions.getTotal(), is(8L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
         assertThat(executions.getTotal(), is(1L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, Map.of("key", "value2"), null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, Map.of("key", "value2"), null, null);
         assertThat(executions.getTotal(), is(0L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, "second", null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, "second", null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(13L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, NAMESPACE, "second", null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, NAMESPACE, "second", null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(13L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, "io.kestra", null, null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, "io.kestra", null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
     }
 
@@ -165,22 +165,22 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(executionTriggerId);
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, executionTriggerId, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), null, null, null, null, null, null, null, null, null, executionTriggerId, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.CHILD);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.CHILD);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.MAIN);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.MAIN);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.getFirst().getTrigger(), is(nullValue()));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(56L));
     }
 
@@ -188,11 +188,11 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
         assertThat(executions.getTotal(), is(8L));
     }
 
@@ -421,7 +421,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(builder(
             State.Type.SUCCESS,
             "second"
-        ).namespace(NamespaceUtils.SYSTEM_NAMESPACE).build());
+        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -487,7 +487,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(builder(
             State.Type.SUCCESS,
             "second"
-        ).namespace(NamespaceUtils.SYSTEM_NAMESPACE).build());
+        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             null,

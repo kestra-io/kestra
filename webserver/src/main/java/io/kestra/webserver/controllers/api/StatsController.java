@@ -123,7 +123,7 @@ public class StatsController {
     @Introspected
     public record StatisticRequest(
         @Parameter(description = "A string filter") @Nullable String q,
-        @Parameter(description = "the scope of the executions to include") @Nullable FlowScope scope,
+        @Parameter(description = "The scope of the executions to include") @Nullable FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,

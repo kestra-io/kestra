@@ -1,0 +1,11 @@
+id: retry-subflow
+namespace: io.kestra.tests
+retry:
+  type: constant
+  interval: PT1S
+  maxAttempt: 3
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: failed-first

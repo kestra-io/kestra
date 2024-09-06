@@ -25,61 +25,59 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-        title = "Trigger a flow based on an HTTP response"
+    title = "Trigger a flow based on an HTTP response"
 )
 @Plugin(
-        examples = {
-                @Example(
-                        title = "Send a Slack alert if the price is below a certain threshold. The flow will be triggered every 30 seconds until the condition is met. Then, the `stopAfter` property will disable the trigger to avoid unnecessary API calls and alerts.",
-                        full = true,
-                        code = {
-                                """
-                                id: http_price_alert
-                                namespace: company.team
+    examples = {
+        @Example(
+            title = "Send a Slack alert if the price is below a certain threshold. The flow will be triggered every 30 seconds until the condition is met. Then, the `stopAfter` property will disable the trigger to avoid unnecessary API calls and alerts.",
+            full = true,
+            code = """
+                id: http_price_alert
+                namespace: company.team
 
-                                tasks:
-                                  - id: send_slack_alert
-                                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
-                                    url: "{{ secret('SLACK_WEBHOOK') }}"
-                                    payload: |
-                                      {
-                                        "channel": "#price-alerts",
-                                        "text": "The price is now: {{ json(trigger.body).price }}"
-                                      }
+                tasks:
+                  - id: send_slack_alert
+                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    url: "{{ secret('SLACK_WEBHOOK') }}"
+                    payload: |
+                      {
+                        "channel": "#price-alerts",
+                        "text": "The price is now: {{ json(trigger.body).price }}"
+                      }
 
-                                triggers:
-                                  - id: http
-                                    type: io.kestra.plugin.core.http.Trigger
-                                    uri: https://fakestoreapi.com/products/1
-                                    responseCondition: "{{ json(response.body).price <= 110 }}"
-                                    interval: PT30S
-                                    stopAfter:
-                                      - SUCCESS"""
-                        }
-                ),
-                @Example(
-                        title = "Trigger a flow if an HTTP endpoint returns a status code equals to 200",
-                        full = true,
-                        code = {
-                                """
-                                id: http_trigger
-                                namespace: company.team
+                triggers:
+                  - id: http
+                    type: io.kestra.plugin.core.http.Trigger
+                    uri: https://fakestoreapi.com/products/1
+                    responseCondition: "{{ json(response.body).price <= 110 }}"
+                    interval: PT30S
+                    stopAfter:
+                      - SUCCESS
+                """
+        ),
+        @Example(
+            title = "Trigger a flow if an HTTP endpoint returns a status code equals to 200",
+            full = true,
+            code = """
+                id: http_trigger
+                namespace: company.team
 
-                                triggers:
-                                  - id: http
-                                    type: io.kestra.plugin.core.http.Trigger
-                                    uri: https://api.chucknorris.io/jokes/random
-                                    responseCondition: "{{ response.statusCode == 200 }}"
-                                    stopAfter:
-                                      - SUCCESS
-
-                                tasks:
-                                  - id: log_response
-                                    type: io.kestra.plugin.core.log.Log
-                                    message: '{{ trigger.body }}'"""
-                        }
-                )
-        },
+                tasks:
+                  - id: log_response
+                    type: io.kestra.plugin.core.log.Log
+                    message: '{{ trigger.body }}'
+                
+                triggers:
+                  - id: http
+                    type: io.kestra.plugin.core.http.Trigger
+                    uri: https://api.chucknorris.io/jokes/random
+                    responseCondition: "{{ response.statusCode == 200 }}"
+                    stopAfter:
+                      - SUCCESS
+                """
+        )
+    },
     aliases = "io.kestra.plugin.fs.http.Trigger"
 )
 public class Trigger extends AbstractTrigger implements PollingTriggerInterface, HttpInterface, TriggerOutput<Request.Output> {

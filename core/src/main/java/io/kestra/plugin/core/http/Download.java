@@ -41,12 +41,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             title = "Download a CSV file.",
             full = true,
             code = """
-id: download
-namespace: company.team
-tasks:
-  - id: extract
-    type: io.kestra.plugin.core.http.Download
-    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv"""            
+                id: download
+                namespace: company.team
+                
+                tasks:
+                  - id: extract
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv"""            
         )
     },
     metrics = {

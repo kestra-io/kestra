@@ -8,3 +8,10 @@ tasks:
       output1: xyz
       output2: abc
       taskInfo: "{{ task.id }} > {{ taskrun.startDate }}"
+
+  - id: read
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      output1: "{{ outputs.return.values.output1 }}"
+      output2: "{{ outputs.return.values.output2 }}"
+      taskInfo: "{{ outputs.return.values.taskInfo }}"

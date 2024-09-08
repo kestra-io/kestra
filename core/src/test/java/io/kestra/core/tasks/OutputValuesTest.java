@@ -24,9 +24,15 @@ public class OutputValuesTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "output-values");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList(), hasSize(2));
+
         TaskRun outputValues = execution.getTaskRunList().getFirst();
         Map<String, Object> values = (Map<String, Object>) outputValues.getOutputs().get("values");
+        assertThat(values.get("output1"), is("xyz"));
+        assertThat(values.get("output2"), is("abc"));
+
+        outputValues = execution.getTaskRunList().getLast();
+        values = (Map<String, Object>) outputValues.getOutputs().get("values");
         assertThat(values.get("output1"), is("xyz"));
         assertThat(values.get("output2"), is("abc"));
     }

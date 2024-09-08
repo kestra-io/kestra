@@ -58,7 +58,7 @@
     "vue3-tour": "github:kestra-io/vue3-tour",
     "vuex": "^4.1.0",
     "xss": "^1.0.15",
-    "yaml": "^2.5.0"
+    "yaml": "^2.5.1"
   },
   "devDependencies": {
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",

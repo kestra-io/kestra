@@ -4,8 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.executions.metrics.Counter;
-import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 
@@ -30,9 +29,9 @@ class ExecutionFixture {
                     TaskRunAttempt.builder()
                         .build()
                 ))
-                .outputs(ImmutableMap.of(
+                .outputs(Variables.of(ImmutableMap.of(
                     "out", "value"
-                ))
+                )))
                 .build()
         ))
         .build();
@@ -54,9 +53,9 @@ class ExecutionFixture {
                     TaskRunAttempt.builder()
                         .build()
                 ))
-                .outputs(ImmutableMap.of(
+                .outputs(Variables.of(ImmutableMap.of(
                     "out", 1
-                ))
+                )))
                 .build()
         ))
         .build();

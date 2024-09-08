@@ -50,8 +50,7 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     @With
-    @JsonInclude(JsonInclude.Include.ALWAYS) // always include outputs so it's easier to reason about in expressions
-    Map<String, Object> outputs;
+    Variables outputs;
 
     @NotNull
     State state;

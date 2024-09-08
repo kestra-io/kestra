@@ -171,7 +171,7 @@ public final class ExecutableUtils {
 
             return previousTaskRun
                 .withIteration(taskRun.getIteration())
-                .withOutputs(outputs)
+                .withOutputs(Variables.of(outputs))
                 .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                 .withState(state);
         }
@@ -179,10 +179,10 @@ public final class ExecutableUtils {
         // else we update the previous taskRun as it's the same taskRun that is still running
         return previousTaskRun
             .withIteration(taskRun.getIteration())
-            .withOutputs(Map.of(
+            .withOutputs(Variables.of(Map.of(
                 TASK_VARIABLE_ITERATIONS, iterations,
                 TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches
-            ));
+            )));
     }
 
     private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure, boolean allowWarning) {

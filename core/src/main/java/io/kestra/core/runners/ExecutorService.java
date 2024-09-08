@@ -3,11 +3,7 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.NextTaskRun;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -249,7 +245,7 @@ public class ExecutorService {
                         Output outputs = flowableParent.outputs(runContext);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
-                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
+                            .withOutputs(Variables.of(outputs != null ? outputs.toMap() : ImmutableMap.of())))
                         );
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
@@ -360,7 +356,7 @@ public class ExecutorService {
                     );
 
                     Output outputs = flowableTask.outputs(runContext);
-                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
+                    taskRun = taskRun.withOutputs(Variables.of(outputs != null ? outputs.toMap() : ImmutableMap.of()));
                 } catch (Exception e) {
                     executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
@@ -560,7 +556,7 @@ public class ExecutorService {
             else if (task instanceof WaitFor waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    TaskRun updatedTaskRun = taskRun.withOutputs(Variables.of(newOutput.toMap()));
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);

@@ -49,7 +49,7 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     @With
-    Map<String, Object> outputs;
+    Variables outputs;
 
     @NotNull
     State state;

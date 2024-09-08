@@ -63,7 +63,7 @@
   "devDependencies": {
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rushstack/eslint-patch": "^1.10.4",
-    "@shikijs/markdown-it": "^1.16.1",
+    "@shikijs/markdown-it": "^1.16.2",
     "@typescript-eslint/parser": "^8.2.0",
     "@vitejs/plugin-vue": "^5.1.3",
     "@vue/eslint-config-prettier": "^9.0.0",

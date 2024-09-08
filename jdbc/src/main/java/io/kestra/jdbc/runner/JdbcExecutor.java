@@ -622,7 +622,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
         if (either.isRight()) {
-            log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage());
+            log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
 

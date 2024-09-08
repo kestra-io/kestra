@@ -680,7 +680,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             TaskRun failed = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
-                failed = failed.withOutputs(Collections.emptyMap());
+                failed = failed.withOutputs(Variables.of(Collections.emptyMap()));
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
             RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
@@ -816,7 +816,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withAttempts(attempts);
 
         try {
-            taskRun = taskRun.withOutputs(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of());
+            taskRun = taskRun.withOutputs(Variables.of(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of()));
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }

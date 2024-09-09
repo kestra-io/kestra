@@ -100,7 +100,11 @@ public interface FlowRepositoryInterface {
      */
     int countForNamespace(@Nullable  String tenantId, @Nullable String namespace);
 
+    List<FlowWithSource> findAllWithSource(String tenantId);
+
     List<Flow> findAllForAllTenants();
+
+    List<FlowWithSource> findAllWithSourceForAllTenants();
 
     List<Flow> findByNamespace(String tenantId, String namespace);
 

@@ -16,6 +16,8 @@ public interface TriggerRepositoryInterface {
 
     Optional<Trigger> findByExecution(Execution execution);
 
+    List<Trigger> findAll(String tenantId);
+
     List<Trigger> findAllForAllTenants();
 
     Trigger save(Trigger trigger);

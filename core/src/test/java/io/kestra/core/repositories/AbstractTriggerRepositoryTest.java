@@ -62,6 +62,10 @@ public abstract class AbstractTriggerRepositoryTest {
 
         assertThat(all.size(), is(4));
 
+        all = triggerRepository.findAll(null);
+
+        assertThat(all.size(), is(4));
+
         String namespacePrefix = "io.kestra.another";
         String namespace = namespacePrefix + ".ns";
         Trigger trigger = trigger().namespace(namespace).build();

@@ -289,6 +289,51 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public List<FlowWithSource> findAllWithSource(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"), field("source_code", String.class))
+                    .from(fromLastRevision(true))
+                    .where(this.defaultFilter(tenantId));
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    jdbcRepository.map(record),
+                    record.get("source_code", String.class)
+                ));
+            });
+    }
+
+    @Override
+    public List<FlowWithSource> findAllWithSourceForAllTenants() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"), field("source_code", String.class))
+                    .from(fromLastRevision(true))
+                    .where(this.defaultFilter());
+
+                // findAllWithSourceForAllTenants() is used in the backend, so we want it to work even if messy plugins exist.
+                // That's why we will try to deserialize each flow and log an error but not crash in case of exception.
+                return select.fetch().map(record -> {
+                    try {
+                        return FlowWithSource.of(
+                            jdbcRepository.map(record),
+                            record.get("source_code", String.class)
+                        );
+                    } catch (Exception e) {
+                        log.error("Unable to load the following flow:\n{}", record.get("value", String.class), e);
+                        return null;
+                    }
+                });
+            });
+    }
+
+    @Override
     public List<Flow> findByNamespace(String tenantId, String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()

@@ -260,8 +260,22 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findAllWithSource() {
+        List<FlowWithSource> save = flowRepository.findAllWithSource(null);
+
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+    }
+
+    @Test
     void findAllForAllTenants() {
         List<Flow> save = flowRepository.findAllForAllTenants();
+
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+    }
+
+    @Test
+    void findAllWithSourceForAllTenants() {
+        List<FlowWithSource> save = flowRepository.findAllWithSourceForAllTenants();
 
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
     }

@@ -56,9 +56,9 @@ public class Property<T> {
     public static <V> Property<V> of(V value) {
         // trick the serializer so the property would not be null at deserialization time
         String expression;
-        if (value instanceof Map<?, ?> map) {
+        if (value instanceof Map<?, ?> || value instanceof List<?>) {
             try {
-                expression = MAPPER.writeValueAsString(map);
+                expression = MAPPER.writeValueAsString(value);
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException(e);
             }

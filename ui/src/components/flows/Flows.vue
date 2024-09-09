@@ -320,7 +320,9 @@
             }
         },
         created(){
-            if(!this.$route.query.scope) this.$route.query.scope = "USER"
+            if(!this.$route.query.scope) {
+                this.$route.query.scope = "USER"
+            }
         },
         methods: {
             selectionMapper(element) {

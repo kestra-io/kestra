@@ -617,7 +617,9 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
 
 
-            if(!this.$route.query.scope) this.$route.query.scope = "USER"
+            if(!this.$route.query.scope) {
+                this.$route.query.scope = "USER"
+            }
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

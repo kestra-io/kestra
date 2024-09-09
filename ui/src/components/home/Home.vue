@@ -223,14 +223,9 @@
             this.load();
         },
         watch: {
-            $route: {
-                immediate: true,
-                handler(newValue, oldValue) {
-                    if(!newValue.query.scope) newValue.query.scope = "USER"
-
-                    if (oldValue?.name === newValue.name && newValue.query !== oldValue.query) {
-                        this.loadStats();
-                    }
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
+                    this.loadStats();
                 }
             },
             flowId() {
@@ -273,6 +268,10 @@
 
                 if (this.flowId) {
                     queryFilter["flowId"] = this.flowId;
+                }
+
+                if(this.scope) {
+                    queryFilter["scope"] = this.scope;
                 }
 
                 return _merge(base, queryFilter)
@@ -394,7 +393,7 @@
                 } else {
                     let query = {...this.$route.query}
                     delete query["scope"]
-                    this.$router.push({query: query});
+                    this.$router.push({query});
                 }
 
                 this.load(this.onDataLoaded);

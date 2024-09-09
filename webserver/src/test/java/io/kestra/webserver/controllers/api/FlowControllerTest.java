@@ -721,8 +721,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.getFirst().isOutdated(), is(true));
         assertThat(body.getFirst().getDeprecationPaths(), hasSize(3));
         assertThat(body.getFirst().getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
-        assertThat(body.getFirst().getWarnings().size(), is(1));
-        assertThat(body.getFirst().getWarnings().getFirst(), containsString("The system namespace is reserved for background workflows"));
+        assertThat(body.getFirst().getWarnings().size(), is(0));
         assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), containsInAnyOrder("tasks[0]", "tasks[1]"));
         assertThat(body, everyItem(

@@ -34,13 +34,22 @@ import java.time.Instant;
             title = "Set `query` task `uri` output as value for `my_variable` key in `dev` namespace.",
             full = true,
             code = """
-              id: set_kv
-              type: io.kestra.plugin.core.kv.Set
-              key: my_variable
-              value: "{{ outputs.query.uri }}"
-              namespace: dev # the current namespace of the flow will be used by default
-              overwrite: true # whether to overwrite or fail if a value for that key already exists; default true
-              ttl: P30D # optional TTL"""
+                id: kv_store_set
+                namespace: company.team
+
+                tasks:
+                  - id: http_download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv  
+
+                  - id: kv_set
+                    type: io.kestra.plugin.core.kv.Set
+                    key: orders_file
+                    value: "{{ outputs.http_download.uri }}"
+                    namespace: dev # the current namespace of the flow will be used by default
+                    overwrite: true # whether to overwrite or fail if a value for that key already exists; default true
+                    ttl: P30D # optional TTL
+                """
         )
     }
 )

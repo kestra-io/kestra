@@ -78,7 +78,8 @@ import jakarta.validation.constraints.NotNull;
                           type: io.kestra.plugin.scripts.runner.docker.Docker
                         containerImage: ghcr.io/kestra-io/pydata:latest
                         commands:
-                          - python scripts/etl_script.py"""
+                          - python scripts/etl_script.py
+                """
         ),
         @Example(
             full = true,
@@ -88,68 +89,68 @@ import jakarta.validation.constraints.NotNull;
                 namespace: company.team
 
                 tasks:
-                - id: wdir
-                  type: io.kestra.plugin.core.flow.WorkingDirectory
-                  outputFiles:
-                    - output.json
-                  inputFiles:
-                    query.sql: |
-                      SELECT sum(total) as total, avg(quantity) as avg_quantity
-                      FROM sales;
-                  tasks:
-                    - id: inline_script
-                      type: io.kestra.plugin.scripts.python.Script
-                      taskRunner:
-                        type: io.kestra.plugin.scripts.runner.docker.Docker
-                      containerImage: python:3.11-slim
-                      beforeCommands:
-                        - pip install requests kestra > /dev/null
-                      warningOnStdErr: false
-                      script: |
-                        import requests
-                        import json
-                        from kestra import Kestra
-
-                        with open('query.sql', 'r') as input_file:
-                            sql = input_file.read()
-
-                        response = requests.get('https://api.github.com')
-                        data = response.json()
-
-                        with open('output.json', 'w') as output_file:
-                            json.dump(data, output_file)
-
-                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
-
-                - id: load_to_mongodb
-                  type: io.kestra.plugin.mongodb.Load
-                  connection:
-                    uri: mongodb://host.docker.internal:27017/
-                  database: local
-                  collection: github
-                  from: "{{ outputs.wdir.uris['output.json'] }}"
+                  - id: wdir
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    outputFiles:
+                      - output.json
+                    inputFiles:
+                      query.sql: |
+                        SELECT sum(total) as total, avg(quantity) as avg_quantity
+                        FROM sales;
+                    tasks:
+                      - id: inline_script
+                        type: io.kestra.plugin.scripts.python.Script
+                        taskRunner:
+                          type: io.kestra.plugin.scripts.runner.docker.Docker
+                        containerImage: python:3.11-slim
+                        beforeCommands:
+                          - pip install requests kestra > /dev/null
+                        warningOnStdErr: false
+                        script: |
+                          import requests
+                          import json
+                          from kestra import Kestra
+  
+                          with open('query.sql', 'r') as input_file:
+                              sql = input_file.read()
+  
+                          response = requests.get('https://api.github.com')
+                          data = response.json()
+  
+                          with open('output.json', 'w') as output_file:
+                              json.dump(data, output_file)
+  
+                          Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+  
+                  - id: load_to_mongodb
+                    type: io.kestra.plugin.mongodb.Load
+                    connection:
+                      uri: mongodb://host.docker.internal:27017/
+                    database: local
+                    collection: github
+                    from: "{{ outputs.wdir.uris['output.json'] }}"
             """
         ),
         @Example(
             full = true,
-            code = {
-                "id: working_directory",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: working_directory",
-                "    type: io.kestra.plugin.core.flow.WorkingDirectory",
-                "    tasks:",
-                "      - id: first",
-                "        type: io.kestra.plugin.scripts.shell.Commands",
-                "        commands:",
-                "        - 'echo \"{{ taskrun.id }}\" > {{ workingDir }}/stay.txt'",
-                "      - id: second",
-                "        type: io.kestra.plugin.scripts.shell.Commands",
-                "        commands:",
-                "        - |",
-                "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"
-            }
+            code = """
+                id: working_directory
+                namespace: company.team
+                
+                tasks:
+                  - id: working_directory
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    tasks:
+                      - id: first
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                        - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                      - id: second
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                        - |
+                          echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
+                """
         ),
         @Example(
             full = true,
@@ -157,6 +158,7 @@ import jakarta.validation.constraints.NotNull;
             code = """
                 id: node_with_cache
                 namespace: company.team
+
                 tasks:
                   - id: working_dir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
@@ -165,13 +167,14 @@ import jakarta.validation.constraints.NotNull;
                         - node_modules/**
                       ttl: PT1H
                     tasks:
-                    - id: script
-                      type: io.kestra.plugin.scripts.node.Script
-                      beforeCommands:
-                        - npm install colors
-                      script: |
-                        const colors = require("colors");
-                        console.log(colors.red("Hello"));"""
+                      - id: script
+                        type: io.kestra.plugin.scripts.node.Script
+                        beforeCommands:
+                          - npm install colors
+                        script: |
+                          const colors = require("colors");
+                          console.log(colors.red("Hello"));
+                """
         )
     },
     aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}

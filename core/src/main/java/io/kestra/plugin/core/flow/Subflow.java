@@ -50,15 +50,21 @@ import java.util.stream.Collectors;
     examples = {
         @Example(
             title = "Run a subflow with custom inputs.",
-            code = {
-                "namespace: company.team",
-                "flowId: subflow",
-                "inputs:",
-                "  user: \"Rick Astley\"",
-                "  favorite_song: \"Never Gonna Give You Up\"",
-                "wait: true",
-                "transmitFailed: true"
-            }
+            code = """
+                id: running_subflow
+                namespace: company.team
+
+                tasks:
+                  - id: call_subflow
+                    type: io.kestra.plugin.core.flow.Subflow
+                    namespace: company.team
+                    flowId: subflow
+                    inputs:
+                      user: "Rick Astley"
+                      favorite_song: "Never Gonna Give You Up"
+                    wait: true
+                    transmitFailed: true
+                """
         )
     },
     aliases = {"io.kestra.core.tasks.flows.Subflow", "io.kestra.core.tasks.flows.Flow"}

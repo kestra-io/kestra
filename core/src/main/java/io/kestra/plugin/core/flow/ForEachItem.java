@@ -168,7 +168,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     wait: true
                     transmitFailed: true
                     inputs:
-                      json: '{{ json(read(taskrun.items)) }}'"""
+                      json: "{{ json(read(taskrun.items)) }}"
+                """
         ),
         @Example(
             title = """
@@ -219,7 +220,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     region: "us-east-1"
                     bucket: "my_bucket"
                     prefix: "sub-dir"
-                    action: NONE"""
+                    action: NONE
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.ForEachItem"

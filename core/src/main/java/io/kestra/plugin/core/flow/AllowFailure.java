@@ -34,22 +34,22 @@ import java.util.Optional;
     examples = {
         @Example(
             full = true,
-            code = {
-                "id: allow_failure",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: sequential",
-                "    type: io.kestra.plugin.core.flow.AllowFailure",
-                "    tasks:",
-                "     - id: ko",
-                "       type: io.kestra.plugin.scripts.shell.Commands",
-                "       commands:",
-                "        - 'exit 1'",
-                "  - id: last",
-                "    type: io.kestra.plugin.core.debug.Return",
-                "    format: \"{{ task.id }} > {{ taskrun.startDate }}\""
-            }
+            code = """
+                id: allow_failure
+                namespace: company.team
+                
+                tasks:
+                  - id: sequential
+                    type: io.kestra.plugin.core.flow.AllowFailure
+                    tasks:
+                     - id: ko
+                       type: io.kestra.plugin.scripts.shell.Commands
+                       commands:
+                        - 'exit 1'
+                  - id: last
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} > {{ taskrun.startDate }}" 
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.AllowFailure"

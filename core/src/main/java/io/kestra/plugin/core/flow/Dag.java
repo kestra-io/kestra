@@ -46,42 +46,42 @@ import java.util.stream.Stream;
             title = "Run a series of tasks for which the execution order is defined by their upstream dependencies.",
             full = true,
             code = """
-                  id: dag_flow
-                  namespace: company.team
-                  tasks:
-                    - id: dag
-                      type: io.kestra.plugin.core.flow.Dag
-                      tasks:
-                        - task:
-                            id: task1
-                            type: io.kestra.plugin.core.log.Log
-                            message: task 1
-                        - task:
-                            id: task2
-                            type: io.kestra.plugin.core.log.Log
-                            message: task 2
-                          dependsOn:
-                            - task1
-                        - task:
-                            id: task3
-                            type: io.kestra.plugin.core.log.Log
-                            message: task 3
-                          dependsOn:
-                            - task1
-                        - task:
-                            id: task4
-                            type: io.kestra.plugin.core.log.Log
-                            message: task 4
-                          dependsOn:
-                            - task2
-                        - task:
-                            id: task5
-                            type: io.kestra.plugin.core.log.Log
-                            message: task 5
-                          dependsOn:
-                            - task4
-                            - task3
-                  """
+                id: dag_flow
+                namespace: company.team
+                tasks:
+                  - id: dag
+                    type: io.kestra.plugin.core.flow.Dag
+                    tasks:
+                      - task:
+                          id: task1
+                          type: io.kestra.plugin.core.log.Log
+                          message: task 1
+                      - task:
+                          id: task2
+                          type: io.kestra.plugin.core.log.Log
+                          message: task 2
+                        dependsOn:
+                          - task1
+                      - task:
+                          id: task3
+                          type: io.kestra.plugin.core.log.Log
+                          message: task 3
+                        dependsOn:
+                          - task1
+                      - task:
+                          id: task4
+                          type: io.kestra.plugin.core.log.Log
+                          message: task 4
+                        dependsOn:
+                          - task2
+                      - task:
+                          id: task5
+                          type: io.kestra.plugin.core.log.Log
+                          message: task 5
+                        dependsOn:
+                          - task4
+                          - task3
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Dag"

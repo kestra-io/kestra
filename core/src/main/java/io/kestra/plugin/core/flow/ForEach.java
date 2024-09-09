@@ -72,14 +72,15 @@ import java.util.Optional;
                     tasks:
                       - id: before_if
                         type: io.kestra.plugin.core.debug.Return
-                        format: 'Before if {{ taskrun.value }}'
+                        format: "Before if {{ taskrun.value }}"
                       - id: if
                         type: io.kestra.plugin.core.flow.If
                         condition: '{{ taskrun.value == "value 2" }}'
                         then:
                           - id: after_if
                             type: io.kestra.plugin.core.debug.Return
-                            format: 'After if {{ parent.taskrun.value }}'"""
+                            format: "After if {{ parent.taskrun.value }}"
+                """
         ),
         @Example(
             full = true,
@@ -89,24 +90,24 @@ import java.util.Optional;
                 so the `return` task will run concurrently for the first two values in the list at first. \
                 The `return` task will run for the next two values only after the task runs for the first two values \
                 have completed.""",
-            code = {
-                "id: for_each_value",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: for_each",
-                "    type: io.kestra.plugin.core.flow.ForEach",
-                "    values: ",
-                "      - value 1",
-                "      - value 2",
-                "      - value 3",
-                "      - value 4",
-                "    concurrencyLimit: 2",
-                "    tasks:",
-                "      - id: return",
-                "        type: io.kestra.plugin.core.debug.Return",
-                "        format: \"{{ task.id }} with value '{{ taskrun.value }}'\"",
-            }
+            code = """
+                id: for_each_value
+                namespace: company.team
+                
+                tasks:
+                  - id: for_each
+                    type: io.kestra.plugin.core.flow.ForEach
+                    values: 
+                      - value 1
+                      - value 2
+                      - value 3
+                      - value 4
+                    concurrencyLimit: 2
+                    tasks:
+                      - id: return
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "{{ task.id }} with value {{ taskrun.value }}"
+                """
         ),
         @Example(
             full = true,
@@ -134,7 +135,8 @@ import java.util.Optional;
                         - id: shell
                           type: io.kestra.plugin.scripts.shell.Commands
                           commands:
-                            - sleep {{ parent.taskrun.value }}"""
+                            - sleep {{ parent.taskrun.value }}
+                """
         ),
     }
 )

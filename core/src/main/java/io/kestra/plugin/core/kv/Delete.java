@@ -29,10 +29,15 @@ import java.util.NoSuchElementException;
             title = "Delete a KV pair.",
             full = true,
             code = """
-              id: delete_kv
-              type: io.kestra.plugin.core.kv.Delete
-              key: my_variable
-              namespace: dev # the current namespace of the flow will be used by default"""
+                id: kv_store_delete
+                namespace: company.team
+                
+                tasks:
+                  - id: kv_delete
+                    type: io.kestra.plugin.core.kv.Delete
+                    key: my_variable
+                    namespace: dev # the current namespace of the flow will be used by default
+                """
         )
     }
 )

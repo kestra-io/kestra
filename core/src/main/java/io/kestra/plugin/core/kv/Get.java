@@ -33,11 +33,16 @@ import java.util.Optional;
             title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present.",
             full = true,
             code = """
-              id: get_kv
-              type: io.kestra.plugin.core.kv.Get
-              key: my_variable
-              namespace: dev # the current namespace of the flow will be used by default
-              errorOnMissing: true"""
+                id: kv_store_get
+                namespace: company.team
+
+                tasks:
+                  - id: kv_get
+                    type: io.kestra.plugin.core.kv.Get
+                    key: my_variable
+                    namespace: dev # the current namespace of the flow will be used by default
+                    errorOnMissing: true
+                """
         )
     }
 )

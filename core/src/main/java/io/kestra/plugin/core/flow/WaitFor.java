@@ -52,7 +52,7 @@ import java.util.stream.Stream;
             full = true,
             title = "Run a task until it returns a specific value. Note how you don't need to take care of incrementing the iteration count. The task will loop and keep track of the iteration outputs behind the scenes — you only need to specify the exit condition for the loop.",
             code = """
-                id: example
+                id: wait_for
                 namespace: company.team
 
                 tasks:

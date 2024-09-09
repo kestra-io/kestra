@@ -869,10 +869,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     return true;
                 }
 
-                log.warn(
-                    "Waiting for all worker threads to terminate (remaining: {}).",
-                    this.workerThreadReferences.size()
-                );
+                if (this.workerThreadReferences.isEmpty()) {
+                    log.debug("All worker threads is terminated.");
+                } else {
+                    log.warn(
+                        "Waiting for all worker threads to terminate (remaining: {}).",
+                        this.workerThreadReferences.size()
+                    );
+                }
+
                 return false;
             },
             Duration.ofSeconds(1)

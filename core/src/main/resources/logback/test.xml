@@ -3,6 +3,7 @@
     <logger name="org.flywaydb" level="WARN" />
     <logger name="io.kestra.core.plugins.PluginScanner" level="WARN" />
     <logger name="org.flywaydb.core.internal.database.base.Database" level="ERROR" />
+    <logger name="io.kestra.core.server.AbstractServiceLivenessTask" level="ERROR" />
 
     <logger name="io.kestra" level="INFO" />
     <logger name="flow" level="INFO" />

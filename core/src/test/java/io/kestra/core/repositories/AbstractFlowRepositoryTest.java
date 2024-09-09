@@ -309,34 +309,34 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, null, null, null);
+        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, null, null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
 
-        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), null, null, null, null);
+        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), null, null, null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
-        save = flowRepository.find(Pageable.from(1), null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
+        save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
 
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, Map.of("country", "FR"));
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, null, Map.of("country", "FR"));
         assertThat(save.size(), is(1));
 
-        save = flowRepository.find(Pageable.from(1), null, null, "io.kestra.tests", Map.of("key2", "value2"));
+        save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests", Map.of("key2", "value2"));
         assertThat((long) save.size(), is(1L));
 
-        save = flowRepository.find(Pageable.from(1), null, null, "io.kestra.tests", Map.of("key1", "value2"));
+        save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests", Map.of("key1", "value2"));
         assertThat((long) save.size(), is(0L));
     }
 
     @Test
     void findWithSource() {
-        List<FlowWithSource> save = flowRepository.findWithSource(null, null, "io.kestra.tests", Collections.emptyMap());
+        List<FlowWithSource> save = flowRepository.findWithSource(null, null, null, "io.kestra.tests", Collections.emptyMap());
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
 
-        save = flowRepository.findWithSource(null, null, "io.kestra.tests2", Collections.emptyMap());
+        save = flowRepository.findWithSource(null, null, null, "io.kestra.tests2", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
 
-        save = flowRepository.findWithSource(null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
+        save = flowRepository.findWithSource(null, null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
     }
 

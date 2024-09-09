@@ -29,7 +29,7 @@ class StatsControllerTest extends JdbcH2ControllerTest {
     void dailyStatistics() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/daily", new StatsController.StatisticRequest(null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), null))
+                .POST("/api/v1/stats/executions/daily", new StatsController.StatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), null))
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.listOf(DailyExecutionStatistics.class)
         );

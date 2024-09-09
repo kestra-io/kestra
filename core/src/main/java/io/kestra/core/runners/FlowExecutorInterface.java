@@ -42,6 +42,10 @@ public interface FlowExecutorInterface {
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
      */
     default Optional<Flow> findByExecution(Execution execution) {
+        if (execution.getFlowRevision() == null) {
+            return Optional.empty();
+        }
+
         return this.findById(
             execution.getTenantId(),
             execution.getNamespace(),

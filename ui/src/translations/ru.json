@@ -263,7 +263,8 @@
           "1": "Первый шаг всегда самый трудный.",
           "2": "Исследуйте blueprints, чтобы начать ваш следующий flow."
         }
-      }
+      },
+      "empty": "Нет blueprints для отображения."
     },
     "use": "Использовать",
     "plugins": {
@@ -814,6 +815,14 @@
     "change execution state confirm": "Вы уверены, что хотите изменить состояние выполнения <code>{id}</code>?",
     "change state tooltip": "Изменить состояние выполнения",
     "executions state changed": "Состояние выполнения <code>{executionCount}</code> было изменено",
-    "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?"
+    "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
+    "system_namespace": "Держите вашу платформу под контролем с помощью system flows.",
+    "scope_filter": {
+      "all": "Все данные",
+      "user": "Только пользователь",
+      "system": "Только System"
+    },
+    "last execution status": "Последний статус выполнения",
+    "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки."
   }
 }

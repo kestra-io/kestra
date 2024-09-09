@@ -263,7 +263,8 @@
           "1": "第一步总是最难的。",
           "2": "探索蓝图以启动你的下一个流程。"
         }
-      }
+      },
+      "empty": "没有可显示的blueprints。"
     },
     "use": "使用",
     "plugins": {
@@ -814,6 +815,14 @@
     "change execution state confirm": "您确定要更改执行<code>{id}</code>的状态吗？",
     "change state tooltip": "更改执行状态",
     "executions state changed": "<code>{executionCount}</code> 次执行的状态已更改",
-    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？"
+    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
+    "system_namespace": "保持您的平台通过系统flows进行检查。",
+    "scope_filter": {
+      "all": "所有数据",
+      "user": "仅用户",
+      "system": "仅系统"
+    },
+    "last execution status": "上次执行状态",
+    "system_namespace_description": "自动化维护任务，从故障警报到自动清理。"
   }
 }

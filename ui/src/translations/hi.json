@@ -263,7 +263,8 @@
           "1": "पहला कदम हमेशा सबसे कठिन होता है।",
           "2": "अपने अगले flow को किक-स्टार्ट करने के लिए Blueprints का अन्वेषण करें।"
         }
-      }
+      },
+      "empty": "कोई blueprints दिखाने के लिए नहीं हैं।"
     },
     "use": "उपयोग करें",
     "plugins": {
@@ -814,6 +815,14 @@
     "change execution state confirm": "क्या आप वाकई <code>{id}</code> की execution की state बदलना चाहते हैं?",
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "executions state changed": "<code>{executionCount}</code> निष्पादन की स्थिति बदल दी गई है",
-    "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?"
+    "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
+    "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
+    "scope_filter": {
+      "all": "सभी डेटा",
+      "user": "केवल उपयोगकर्ता",
+      "system": "केवल System"
+    },
+    "last execution status": "अंतिम निष्पादन स्थिति",
+    "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।"
   }
 }

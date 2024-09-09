@@ -263,7 +263,8 @@
           "1": "El primer paso siempre es el más difícil.",
           "2": "Explora blueprints para iniciar tu próximo flujo."
         }
-      }
+      },
+      "empty": "No hay blueprints para mostrar."
     },
     "use": "Usar",
     "plugins": {
@@ -814,6 +815,14 @@
     "change execution state confirm": "¿Está seguro de que desea cambiar el estado de la ejecución <code>{id}</code>?",
     "change state tooltip": "Cambiar el estado de ejecución",
     "executions state changed": "El estado de <code>{executionCount}</code> ejecución(es) ha sido cambiado",
-    "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?"
+    "bulk change state": "¿Está seguro de que desea cambiar el estado de <code>{executionCount}</code> ejecución(es)?",
+    "system_namespace": "Mantén tu plataforma bajo control con los system flows.",
+    "scope_filter": {
+      "all": "Todos los Datos",
+      "user": "Solo Usuario",
+      "system": "Solo Sistema"
+    },
+    "last execution status": "Último estado de ejecución",
+    "system_namespace_description": "Automatiza tareas de mantenimiento, desde alertas de fallo hasta limpiezas automatizadas."
   }
 }

@@ -167,6 +167,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(last.get(), notNullValue());
+            assertThat(last.get().getFlowRevision(), notNullValue());
             assertThat(last.get().getState().getCurrent(), is(State.Type.FAILED));
         }
     }

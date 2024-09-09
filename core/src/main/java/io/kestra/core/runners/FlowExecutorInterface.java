@@ -23,6 +23,10 @@ public interface FlowExecutorInterface {
     }
 
     default Optional<Flow> findByExecution(Execution execution) {
+        if (execution.getFlowRevision() == null) {
+            return Optional.empty();
+        }
+
         return this.findById(
             execution.getTenantId(),
             execution.getNamespace(),

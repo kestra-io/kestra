@@ -6,7 +6,7 @@
 <script>
     export default {
         props: {
-            value: {type: Array, default: undefined}
+            value: {type: String, default: undefined}
         },
         emits: ["update:modelValue"],
         data() {

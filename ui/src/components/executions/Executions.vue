@@ -62,9 +62,9 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <type-filter-buttons
-                        :value="Utils.asArray($route.query.type)"
-                        @update:model-value="onDataTableValue('type', $event)"
+                    <scope-filter-buttons
+                        :value="$route.query.scope"
+                        @update:model-value="onDataTableValue('scope', $event)"
                     />
                 </el-form-item>
                 <el-form-item>
@@ -453,7 +453,7 @@
     import RefreshButton from "../layout/RefreshButton.vue"
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
-    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
@@ -485,7 +485,7 @@
             RefreshButton,
             Filters,
             StatusFilterButtons,
-            TypeFilterButtons,
+            ScopeFilterButtons,
             StateGlobalChart,
             Kicon,
             Labels,
@@ -617,7 +617,7 @@
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
 
 
-            if(!this.$route.query.type) this.$route.query.type = "user"
+            if(!this.$route.query.scope) this.$route.query.scope = "USER"
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

@@ -55,9 +55,9 @@
                         />
                     </el-form-item>
                     <el-form-item>
-                        <type-filter-buttons
-                            :value="Utils.asArray($route.query.type)"
-                            @update:model-value="onDataTableValue('type', $event)"
+                        <scope-filter-buttons
+                            :value="$route.query.scope"
+                            @update:model-value="onDataTableValue('scope', $event)"
                         />
                     </el-form-item>
                     <el-form-item>
@@ -226,7 +226,6 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Filters from "../saved-filters/Filters.vue";
-    import Utils from "../../utils/utils";
 </script>
 
 <script>
@@ -253,7 +252,7 @@
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
-    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import {storageKeys} from "../../utils/constants";
 
     export default {
@@ -273,7 +272,7 @@
             Labels,
             Upload,
             LabelFilter,
-            TypeFilterButtons,
+            ScopeFilterButtons,
             TopNavBar
         },
         data() {
@@ -321,7 +320,7 @@
             }
         },
         created(){
-            if(!this.$route.query.type) this.$route.query.type = "user"
+            if(!this.$route.query.scope) this.$route.query.scope = "USER"
         },
         methods: {
             selectionMapper(element) {

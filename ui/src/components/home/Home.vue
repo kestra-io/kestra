@@ -46,9 +46,9 @@
                     />
                 </el-form-item>
                 <el-form-item>
-                    <type-filter-buttons
-                        :value="type"
-                        @update:model-value="onTypeSelect"
+                    <scope-filter-buttons
+                        :value="scope"
+                        @update:model-value="onScopeSelect"
                     />
                 </el-form-item>
                 <el-form-item>
@@ -178,7 +178,7 @@
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
-    import TypeFilterButtons from "../layout/TypeFilterButtons.vue"
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import HomeStartup from "override/mixins/homeStartup"
     import State from "../../utils/state";
 
@@ -186,7 +186,7 @@
         mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
             DateFilter,
-            TypeFilterButtons,
+            ScopeFilterButtons,
             OnboardingBottom,
             Collapse,
             StateGlobalChart,
@@ -220,14 +220,17 @@
                 return;
             }
 
-            if(!this.$route.query.type) this.$route.query.type = "user"
-
             this.load();
         },
         watch: {
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
-                    this.loadStats();
+            $route: {
+                immediate: true,
+                handler(newValue, oldValue) {
+                    if(!newValue.query.scope) newValue.query.scope = "USER"
+
+                    if (oldValue?.name === newValue.name && newValue.query !== oldValue.query) {
+                        this.loadStats();
+                    }
                 }
             },
             flowId() {
@@ -248,7 +251,7 @@
                 refreshDates: false,
                 canAutoRefresh: false,
                 state: [],
-                type: ["user"]
+                scope: "USER"
             };
         },
         methods: {
@@ -384,13 +387,13 @@
 
                 this.load(this.onDataLoaded);
             },
-            onTypeSelect(type) {
-                this.type = type;
-                if (type && type.length > 0) {
-                    this.$router.push({query: {...this.$route.query, type: type}});
+            onScopeSelect(scope) {
+                this.scope = scope;
+                if (scope) {
+                    this.$router.push({query: {...this.$route.query, scope}});
                 } else {
                     let query = {...this.$route.query}
-                    delete query["type"]
+                    delete query["scope"]
                     this.$router.push({query: query});
                 }
 

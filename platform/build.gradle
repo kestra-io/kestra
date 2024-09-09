@@ -61,7 +61,7 @@ dependencies {
         // Other libs
         api("org.projectlombok:lombok:1.18.34")
         api("org.codehaus.janino:janino:3.1.12")
-        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.23.1'
+        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.0'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'

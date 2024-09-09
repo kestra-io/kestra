@@ -527,6 +527,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .tenantId(f.getTriggerContext().getTenantId())
                             .namespace(f.getTriggerContext().getNamespace())
                             .flowId(f.getTriggerContext().getFlowId())
+                            .flowRevision(f.getFlow().getRevision())
                             .labels(f.getFlow().getLabels())
                             .state(new State().withState(State.Type.FAILED))
                             .build();

@@ -417,7 +417,6 @@
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
-    import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";

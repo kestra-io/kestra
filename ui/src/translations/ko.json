@@ -263,7 +263,8 @@
           "1": "첫 번째 단계가 항상 가장 어렵습니다.",
           "2": "다음 flow를 시작하기 위해 blueprints를 탐색하세요."
         }
-      }
+      },
+      "empty": "블루프린트가 없습니다."
     },
     "use": "사용",
     "plugins": {
@@ -814,6 +815,14 @@
     "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change state tooltip": "실행 상태 변경",
     "executions state changed": "<code>{executionCount}</code> 실행 상태가 변경되었습니다",
-    "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?"
+    "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
+    "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
+    "scope_filter": {
+      "all": "모든 데이터",
+      "user": "오직 사용자",
+      "system": "오직 시스템"
+    },
+    "last execution status": "마지막 실행 상태",
+    "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지."
   }
 }

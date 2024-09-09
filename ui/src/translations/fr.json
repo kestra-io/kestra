@@ -262,7 +262,8 @@
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour créer rapidement vos flows."
         }
-      }
+      },
+      "empty": "Aucun blueprint à afficher."
     },
     "use": "Utiliser",
     "plugins": {
@@ -813,6 +814,14 @@
     "change execution state confirm": "Êtes-vous sûr de vouloir changer l'état de l'exécution <code>{id}</code> ?",
     "change state tooltip": "Changer l'état d'exécution",
     "executions state changed": "L'état de <code>{executionCount}</code> exécution(s) a été modifié",
-    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?"
+    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
+    "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
+    "scope_filter": {
+      "all": "Toutes les données",
+      "user": "Seulement Utilisateur",
+      "system": "Seulement Système"
+    },
+    "last execution status": "Statut de la dernière exécution",
+    "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés."
   }
 }

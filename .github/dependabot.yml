@@ -27,11 +27,12 @@ updates:
     directory: "/ui"
     schedule:
       interval: "weekly"
-      day: "sunday"
-      time: "09:00"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Paris"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade"]
+    reviewers: ["MilosPaunovic"]
     ignore:
       # Ignore updates of version 1.x, as we're using beta of 2.x
       - dependency-name: "vue-virtual-scroller"

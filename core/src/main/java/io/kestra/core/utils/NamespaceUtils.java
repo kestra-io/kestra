@@ -11,7 +11,7 @@ public class NamespaceUtils {
     public static final String SYSTEM_FLOWS_DEFAULT_NAMESPACE = "system";
 
     @Getter
-    @Value("${kestra.system-flows.namespace:" + "my.ns" + "}")
+    @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
     private String systemFlowNamespace;
 
     public static List<String> asTree(String namespace) {

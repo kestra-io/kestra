@@ -43,7 +43,6 @@ class FlowValidateCommandTest {
 
             assertThat(call, is(0));
             assertThat(out.toString(), containsString("tasks[0] is deprecated"));
-            assertThat(out.toString(), containsString("The system namespace is reserved for background workflows"));
         }
     }
 }

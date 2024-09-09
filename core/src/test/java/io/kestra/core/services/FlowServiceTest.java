@@ -198,9 +198,8 @@ class FlowServiceTest {
 
         List<String> warnings = flowService.warnings(flow);
 
-        assertThat(warnings.size(), is(2));
+        assertThat(warnings.size(), is(1));
         assertThat(warnings, containsInAnyOrder(
-            "The system namespace is reserved for background workflows intended to perform routine tasks such as sending alerts and purging logs. Please use another namespace name.",
             "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the conditions property to the Flow trigger."
         ));
     }

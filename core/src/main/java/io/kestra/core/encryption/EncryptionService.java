@@ -24,9 +24,27 @@ public class EncryptionService {
      * Encrypt a String using the AES/GCM/NoPadding algorithm and the provided key.
      * The key must be base64 encoded.
      * The IV is concatenated at the beginning of the string.
+     *
+     * @see #encrypt(String, byte[])
      */
     public static String encrypt(String key, String plainText) throws GeneralSecurityException {
         if (plainText == null || plainText.isEmpty()) {
+            return plainText;
+        }
+
+        byte[] output = encrypt(key, plainText.getBytes());
+        return Base64.getEncoder().encodeToString(output);
+    }
+
+    /**
+     * Encrypt a byte array using the AES/GCM/NoPadding algorithm and the provided key.
+     * The key must be base64 encoded.
+     * The IV is concatenated at the beginning of the string.
+     *
+     * @see #encrypt(String, String)
+     */
+    public static byte[] encrypt(String key, byte[] plainText) throws GeneralSecurityException {
+        if (plainText == null) {
             return plainText;
         }
 
@@ -36,31 +54,47 @@ public class EncryptionService {
         byte[] iv = generateIv();
         GCMParameterSpec ivParameter= new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameter);
-        byte[] encrypted = cipher.doFinal(plainText.getBytes());
-        byte[] output = Bytes.concat(iv, encrypted);
-        return Base64.getEncoder().encodeToString(output);
+        byte[] encrypted = cipher.doFinal(plainText);
+        return Bytes.concat(iv, encrypted);
     }
 
     /**
      * Decrypt a String using the AES/GCM/NoPadding algorithm and the provided key.
      * The key must be base64 encoded.
      * The IV is recovered from the beginning of the string.
+     *
+     * @see #decrypt(String, byte[])
      */
     public static String decrypt(String key, String cipherText) throws GeneralSecurityException {
         if (cipherText == null || cipherText.isEmpty()) {
             return cipherText;
         }
 
+        byte[] input = Base64.getDecoder().decode(cipherText);
+        byte[] plainText = decrypt(key, input);
+        return new String(plainText);
+    }
+
+    /**
+     * Decrypt a byte array using the AES/GCM/NoPadding algorithm and the provided key.
+     * The key must be base64 encoded.
+     * The IV is recovered from the beginning of the byte array.
+     *
+     * @see #decrypt(String, String)
+     */
+    public static byte[] decrypt(String key, byte[] cipherText) throws GeneralSecurityException {
+        if (cipherText == null) {
+            return cipherText;
+        }
+
         byte[] keyBytes = Base64.getDecoder().decode(key);
         SecretKey secretKey = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
-        byte[] input = Base64.getDecoder().decode(cipherText);
-        byte[] iv = Arrays.copyOf(input, IV_LENGTH);
-        byte[] encrypted =Arrays.copyOfRange(input, IV_LENGTH, input.length);
+        byte[] iv = Arrays.copyOf(cipherText, IV_LENGTH);
+        byte[] encrypted =Arrays.copyOfRange(cipherText, IV_LENGTH, cipherText.length);
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         GCMParameterSpec ivParameter= new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameter);
-        byte[] plainText = cipher.doFinal(encrypted);
-        return new String(plainText);
+        return cipher.doFinal(encrypted);
     }
 
     private static byte[] generateIv() {

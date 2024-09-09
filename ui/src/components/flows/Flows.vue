@@ -55,6 +55,12 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <scope-filter-buttons
+                            :value="$route.query.scope"
+                            @update:model-value="onDataTableValue('scope', $event)"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <label-filter
                             :model-value="$route.query.labels"
                             @update:model-value="onDataTableValue('labels', $event)"
@@ -246,6 +252,7 @@
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import {storageKeys} from "../../utils/constants";
 
     export default {
@@ -265,6 +272,7 @@
             Labels,
             Upload,
             LabelFilter,
+            ScopeFilterButtons,
             TopNavBar
         },
         data() {
@@ -309,6 +317,11 @@
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
+            }
+        },
+        created(){
+            if(!this.$route.query.scope) {
+                this.$route.query.scope = "USER"
             }
         },
         methods: {
@@ -526,7 +539,7 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             }
-        }
+        }        
     };
 </script>
 

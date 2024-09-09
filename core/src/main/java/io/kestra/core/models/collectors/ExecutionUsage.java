@@ -32,6 +32,7 @@ public class ExecutionUsage {
                 tenantId,
                 null,
                 null,
+                null,
                 from,
                 to,
                 DateUtils.GroupType.DAY,
@@ -45,6 +46,7 @@ public class ExecutionUsage {
             .dailyExecutionsCount(executionRepository.dailyStatistics(
                 null,
                 tenantId,
+                null,
                 null,
                 null,
                 from,

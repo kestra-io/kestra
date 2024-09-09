@@ -115,6 +115,7 @@
     "started date": "Started date",
     "healthcheck date": "HealthCheck Date",
     "next execution date": "Next execution date",
+    "last execution status": "Last execution status",
     "jump to...": "Jump to...",
     "source": "Source",
     "home": "Home",
@@ -276,6 +277,7 @@
     },
     "blueprints": {
       "title": "Blueprints",
+      "empty": "No blueprints to show.",
       "header": {
         "catch phrase": {
           "1": "The first step is always the hardest.",
@@ -790,6 +792,8 @@
       "false": "{count} trigger(s) enabled"
     },
     "no_namespaces": "Zero namespaces match the search criteria.",
+    "system_namespace": "Keep your platform in check with system flows.",
+    "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
     "plugin defaults": "Plugin defaults",
     "secret": {
       "names": "Secrets",
@@ -829,6 +833,11 @@
       "logs": "Delete logs",
       "metrics": "Delete metrics",
       "storage": "Delete internal storage files"
+    },
+    "scope_filter": {
+      "all": "All Data",
+      "user": "Only User",
+      "system": "Only System"
     }
   }
 }

@@ -10,10 +10,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.Task;
@@ -156,6 +153,7 @@ public class ExecutionController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -176,6 +174,7 @@ public class ExecutionController {
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
+            scope,
             namespace,
             flowId,
             resolveAbsoluteDateTime(startDate, timeRange, now),
@@ -350,6 +349,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Delete executions filter by query parameters")
     public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -373,6 +373,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -761,6 +762,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Restart executions filter by query parameters")
     public HttpResponse<BulkResponse> restartByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -780,6 +782,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -960,6 +963,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Changed status with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public HttpResponse<?> changeStatusByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -980,6 +984,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -1181,6 +1186,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Resume executions filter by query parameters")
     public HttpResponse<?> resumeByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -1200,6 +1206,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -1221,6 +1228,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
     public HttpResponse<?> killByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -1240,6 +1248,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -1261,6 +1270,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Create new executions from old ones filter by query parameters. Keep the flow revision")
     public HttpResponse<?> replayByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -1280,6 +1290,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
@@ -1551,6 +1562,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Set label on executions filter by query parameters")
     public HttpResponse<?> setLabelsByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
@@ -1571,6 +1583,7 @@ public class ExecutionController {
             .find(
                 query,
                 tenantService.resolveTenant(),
+                scope,
                 namespace,
                 flowId,
                 resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),

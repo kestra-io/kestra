@@ -4,7 +4,7 @@
         <slot name="nav" />
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
-                <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">
+                <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
                     <el-radio-button
                         :key="0"
                         :value="0"
@@ -21,13 +21,21 @@
                         {{ tag.name }}
                     </el-radio-button>
                 </el-radio-group>
+                <nav v-else-if="system" class="header pb-3">
+                    <p class="mb-0 fw-lighter">
+                        {{ $t("system_namespace") }}
+                    </p>
+                    <p class="fs-5 fw-semibold">
+                        {{ $t("system_namespace_description") }}
+                    </p>
+                </nav>
             </template>
             <template #search>
                 <search-field :router="!embed" placeholder="search blueprint" @search="s => q = s" class="blueprints-search" />
             </template>
             <template #table>
                 <el-alert type="info" v-if="!blueprints || blueprints.length === 0" :closable="false">
-                    {{ $t('no result') }}
+                    {{ $t('blueprints.empty') }}
                 </el-alert>
                 <el-card
                     class="blueprint-card"
@@ -46,7 +54,7 @@
                                 <div class="title">
                                     {{ blueprint.title }}
                                 </div>
-                                <div class="tags text-uppercase">
+                                <div class="tags text-uppercase" :class="{system}">
                                     {{ tagsToString(blueprint.tags) }}
                                 </div>
                             </div>
@@ -72,7 +80,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -114,6 +122,10 @@
                 default: undefined,
             },
             embed: {
+                type: Boolean,
+                default: false
+            },
+            system: {
                 type: Boolean,
                 default: false
             },
@@ -195,9 +207,10 @@
                     query.q = this.$route.query.q || this.q;
                 }
 
-
-                if (this.$route.query.selectedTag || this.selectedTag) {
-                    query.tags = this.$route.query.selectedTag || this.selectedTag;
+                if (this.system) {
+                    query.tags = "54";
+                } else if (this.$route.query.selectedTag || this.selectedTag) {
+                    query.tags =this.$route.query.selectedTag || this.selectedTag;
                 }
 
                 return this.$http
@@ -362,6 +375,10 @@
 
                         html.dark & {
                             color: $pink;
+
+                            &.system {
+                                color: var(--bs-purple);
+                            }
                         }
                     }
 

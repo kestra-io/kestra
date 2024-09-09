@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.FlowGraph;
@@ -198,6 +199,7 @@ public class FlowController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws HttpStatusException {
@@ -206,6 +208,7 @@ public class FlowController {
             PageableUtils.from(page, size, sort),
             query,
             tenantService.resolveTenant(),
+            scope,
             namespace,
             RequestUtils.toMap(labels)
         ));
@@ -600,10 +603,11 @@ public class FlowController {
     )
     public HttpResponse<byte[]> exportByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws IOException {
-        var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels));
+        var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels));
         var bytes = zipFlows(flows);
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -649,11 +653,12 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
         List<Flow> list = flowRepository
-            .findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels))
+            .findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels))
             .stream()
             .peek(flowRepository::delete)
             .collect(Collectors.toList());
@@ -687,11 +692,12 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> disableByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
 
-        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, true).size()).build());
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, scope, namespace, labels, true).size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -715,11 +721,12 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> enableByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue FlowScope scope,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
 
-        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, namespace, labels, false).size()).build());
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, scope, namespace, labels, false).size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -798,9 +805,9 @@ public class FlowController {
             .toList();
     }
 
-    protected List<FlowWithSource> setFlowsDisableByQuery(String query, String namespace, List<String> labels, boolean disable) {
+    protected List<FlowWithSource> setFlowsDisableByQuery(String query, FlowScope scope, String namespace, List<String> labels, boolean disable) {
         return flowRepository
-            .findWithSource(query, tenantService.resolveTenant(), namespace, RequestUtils.toMap(labels))
+            .findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels))
             .stream()
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(flow -> {

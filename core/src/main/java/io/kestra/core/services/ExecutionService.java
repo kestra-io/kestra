@@ -336,6 +336,7 @@ public class ExecutionService {
             .find(
                 null,
                 tenantId,
+                null,
                 namespace,
                 flowId,
                 startDate,

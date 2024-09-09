@@ -22,12 +22,6 @@ export default {
         flowsExecutable: []
     },
     actions: {
-        loadExecutions({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/executions`, {params: options}).then(response => {
-                commit("setExecutions", response.data.results)
-                commit("setTotal", response.data.total)
-            })
-        },
         restartExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/restart`,

@@ -25,13 +25,15 @@
             :key="index"
             :span="24"
             class="my-1 py-2 px-4 namespaces"
+            :class="{system: namespace.id === 'system'}"
         >
             <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto">
                 <template #default="{data}">
-                    <router-link :to="{name: 'namespaces/update', params: {id: data.id}}" tag="div" class="node">
+                    <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
                             <VectorIntersection class="me-2 icon" />
-                            <span>{{ data.label }}</span>
+                            <span class="pe-3">{{ data.label }}</span>
+                            <span v-if="data.system" class="system">{{ $t("system_namespace") }}</span>
                         </div>
                         <el-button size="small">
                             <TextSearch />
@@ -73,6 +75,7 @@
         label: string;
         disabled: boolean;
         children?: Node[];
+        system?: boolean;
     }
 
     const route = computed(() => ({title: t("namespaces")}));
@@ -120,13 +123,23 @@
             });
         };
 
-        return build(map);
+        const result = build(map);
+
+        const system = result.findIndex(namespace => namespace.id === "system");
+
+        if (system !== -1) {
+            const [systemItem] = result.splice(system, 1);
+            result.unshift({...systemItem, system: true});
+        }
+
+        return result;
     };
 </script>
 
 <style lang="scss">
 $width: 200px;
 $active: #A396FF;
+$system: #5BB8FF;
 
 .filter {
     min-width: $width;
@@ -147,6 +160,14 @@ $active: #A396FF;
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--bs-border-color);
     background: var(--bs-body-bg);
+
+    &.system {
+        border-color: $system;
+
+        .el-tree-node__content .icon {
+            color: $system;
+        }
+    }
 
     &.empty {
         font-size: var(--font-size-sm);
@@ -172,10 +193,18 @@ $active: #A396FF;
         align-items: center;
         justify-content: space-between;
         color: var(--el-text-color-regular);
-    
+
+        &.system {
+            color: $system;
+        }
+
         &:hover {
             background: var(--bs-body-bg);
-            color: $active;
+        }
+
+        & .system {
+            color: var(--el-text-color-placeholder);
+            font-size: var(--font-size-sm);
         }
     }
 }

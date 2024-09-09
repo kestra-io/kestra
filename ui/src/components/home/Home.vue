@@ -46,6 +46,12 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <scope-filter-buttons
+                        :value="scope"
+                        @update:model-value="onScopeSelect"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
                 </el-form-item>
             </collapse>
@@ -172,6 +178,7 @@
     import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import HomeStartup from "override/mixins/homeStartup"
     import State from "../../utils/state";
 
@@ -179,6 +186,7 @@
         mixins: [RouteContext, RestoreUrl, HomeStartup],
         components: {
             DateFilter,
+            ScopeFilterButtons,
             OnboardingBottom,
             Collapse,
             StateGlobalChart,
@@ -211,6 +219,7 @@
                 this.$router.push({name:"errors/403"});
                 return;
             }
+
             this.load();
         },
         watch: {
@@ -236,7 +245,8 @@
                 namespaceRestricted: !!this.namespace,
                 refreshDates: false,
                 canAutoRefresh: false,
-                state: []
+                state: [],
+                scope: "USER"
             };
         },
         methods: {
@@ -258,6 +268,10 @@
 
                 if (this.flowId) {
                     queryFilter["flowId"] = this.flowId;
+                }
+
+                if(this.scope) {
+                    queryFilter["scope"] = this.scope;
                 }
 
                 return _merge(base, queryFilter)
@@ -368,6 +382,18 @@
                     let query = {...this.$route.query}
                     delete query["state"]
                     this.$router.push({query: query});
+                }
+
+                this.load(this.onDataLoaded);
+            },
+            onScopeSelect(scope) {
+                this.scope = scope;
+                if (scope) {
+                    this.$router.push({query: {...this.$route.query, scope}});
+                } else {
+                    let query = {...this.$route.query}
+                    delete query["scope"]
+                    this.$router.push({query});
                 }
 
                 this.load(this.onDataLoaded);

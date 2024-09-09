@@ -6,10 +6,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
@@ -19,6 +16,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -40,6 +38,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
     private final ModelValidator modelValidator;
+    private final NamespaceUtils namespaceUtils;
     protected io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository;
 
     @SuppressWarnings("unchecked")
@@ -49,6 +48,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
+        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
 
@@ -363,6 +363,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     ) {
@@ -374,6 +375,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, Collections.emptyList());
 
                 select.and(this.findCondition(query, labels));
+
+                if (scope != null) {
+                    if (scope.equals(FlowScope.USER)) {
+                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
+                    } else if (scope.equals(FlowScope.SYSTEM)) {
+                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
+                    }
+                }
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
@@ -387,6 +396,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     public List<FlowWithSource> findWithSource(
         @Nullable String query,
         @Nullable String tenantId,
+        @Nullable FlowScope scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     ) {
@@ -398,6 +408,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, fields);
 
                 select.and(this.findCondition(query, labels));
+
+                if (scope != null) {
+                    if (scope.equals(FlowScope.USER)) {
+                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
+                    } else if (scope.equals(FlowScope.SYSTEM)) {
+                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
+                    }
+                }
 
                 if (namespace != null) {
                     select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));

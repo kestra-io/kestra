@@ -6,6 +6,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,14 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     @Builder.Default
     private Type itemType = Type.STRING;
 
+
+    @Schema(
+        title = "If the user can provide customs value."
+    )
+    @NotNull
+    @Builder.Default
+    Boolean allowInput = false;
+
     @Override
     public void validate(List<String> inputs) throws ConstraintViolationException {
         if (values != null && options != null) {
@@ -50,16 +59,18 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
             );
         }
 
-        for(String input : inputs){
-            List<@Regex String> finalValues = this.values != null ? this.values : this.options;
-            if (!finalValues.contains(input)) {
-                throw ManualConstraintViolation.toConstraintViolationException(
-                    "it must match the values `" + finalValues + "`",
-                    this,
-                    MultiselectInput.class,
-                    getId(),
-                    input
-                );
+        if (!this.getAllowInput()) {
+            for (String input : inputs) {
+                List<@Regex String> finalValues = this.values != null ? this.values : this.options;
+                if (!finalValues.contains(input)) {
+                    throw ManualConstraintViolation.toConstraintViolationException(
+                        "it must match the values `" + finalValues + "`",
+                        this,
+                        MultiselectInput.class,
+                        getId(),
+                        input
+                    );
+                }
             }
         }
     }

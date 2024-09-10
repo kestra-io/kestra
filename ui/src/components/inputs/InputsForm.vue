@@ -22,6 +22,8 @@
                 v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
+                :allow-create="input.allowInput"
+                filterable
             >
                 <el-option
                     v-for="item in input.values"
@@ -40,6 +42,8 @@
                 v-model="multiSelectInputs[input.id]"
                 @update:model-value="onMultiSelectChange(input.id, $event)"
                 multiple
+                filterable
+                :allow-create="input.allowInput"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"

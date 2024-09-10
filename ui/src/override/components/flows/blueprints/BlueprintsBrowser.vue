@@ -47,7 +47,7 @@
                     <component
                         class="blueprint-link"
                         :is="embed ? 'div' : 'router-link'"
-                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}, query: {tab}}"
+                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab}}"
                     >
                         <div class="left">
                             <div>
@@ -260,7 +260,12 @@
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
             embedFriendlyBlueprintBaseUri() {
-                return this.blueprintBaseUri ?? (`${apiUrl(this.$store)}/blueprints/` + this?.$route?.params?.tab ?? "community")
+                const tab = this.tab ?? this?.$route?.params?.tab ?? "community";
+                let base = this.blueprintBaseUri;
+
+                return base
+                    ? (base.endsWith("/undefined") ? base.replace("/undefined", `/${tab}`) : base)
+                    : `${apiUrl(this.$store)}/blueprints/${tab}`;
             }
         },
         watch: {
@@ -301,6 +306,9 @@
             },
             blueprintBaseUri() {
                 this.loadData();
+            },
+            tab() {
+                this.loadData()
             }
         }
     };

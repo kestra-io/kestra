@@ -818,11 +818,12 @@
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "scope_filter": {
-      "all": "所有数据",
-      "user": "仅用户",
-      "system": "仅系统"
+      "all": "所有 {label}",
+      "user": "仅用户 {label}",
+      "system": "仅系统 {label}"
     },
     "last execution status": "上次执行状态",
-    "system_namespace_description": "自动化维护任务，从故障警报到自动清理。"
+    "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
+    "data": "数据"
   }
 }

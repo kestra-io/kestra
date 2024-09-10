@@ -818,11 +818,12 @@
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "system_namespace": "Держите вашу платформу под контролем с помощью system flows.",
     "scope_filter": {
-      "all": "Все данные",
-      "user": "Только пользователь",
-      "system": "Только System"
+      "all": "Все {label}",
+      "user": "Только пользователь {label}",
+      "system": "Только System {label}"
     },
     "last execution status": "Последний статус выполнения",
-    "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки."
+    "system_namespace_description": "Автоматизируйте задачи обслуживания, от предупреждений о сбоях до автоматической очистки.",
+    "data": "Данные"
   }
 }

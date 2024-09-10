@@ -818,11 +818,12 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "scope_filter": {
-      "all": "모든 데이터",
-      "user": "오직 사용자",
-      "system": "오직 시스템"
+      "all": "모든 {label}",
+      "user": "오직 사용자 {label}",
+      "system": "시스템 {label}만"
     },
     "last execution status": "마지막 실행 상태",
-    "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지."
+    "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
+    "data": "데이터"
   }
 }

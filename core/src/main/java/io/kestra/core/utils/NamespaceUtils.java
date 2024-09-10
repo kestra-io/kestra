@@ -5,9 +5,12 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Singleton
 public class NamespaceUtils {
+    public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);
+
     public static final String SYSTEM_FLOWS_DEFAULT_NAMESPACE = "system";
 
     @Getter

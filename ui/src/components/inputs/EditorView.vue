@@ -739,7 +739,7 @@
             });
         } else {
             await store.dispatch("namespace/createFile", {
-                namespace: props.namespace,
+                namespace: props.namespace ?? routeParams.id,
                 path: currentTab.value.path ?? currentTab.value.name,
                 content: editorDomElement.value.$refs.monacoEditor.value,
             });

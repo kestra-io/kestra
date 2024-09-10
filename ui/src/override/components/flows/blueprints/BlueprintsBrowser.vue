@@ -4,7 +4,7 @@
         <slot name="nav" />
         <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
             <template #navbar>
-                <el-radio-group v-if="ready" v-model="selectedTag" class="tags-selection">
+                <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
                     <el-radio-button
                         :key="0"
                         :value="0"
@@ -21,13 +21,21 @@
                         {{ tag.name }}
                     </el-radio-button>
                 </el-radio-group>
+                <nav v-else-if="system" class="header pb-3">
+                    <p class="mb-0 fw-lighter">
+                        {{ $t("system_namespace") }}
+                    </p>
+                    <p class="fs-5 fw-semibold">
+                        {{ $t("system_namespace_description") }}
+                    </p>
+                </nav>
             </template>
             <template #search>
                 <search-field :router="!embed" placeholder="search blueprint" @search="s => q = s" class="blueprints-search" />
             </template>
             <template #table>
                 <el-alert type="info" v-if="!blueprints || blueprints.length === 0" :closable="false">
-                    {{ $t('no result') }}
+                    {{ $t('blueprints.empty') }}
                 </el-alert>
                 <el-card
                     class="blueprint-card"
@@ -39,14 +47,14 @@
                     <component
                         class="blueprint-link"
                         :is="embed ? 'div' : 'router-link'"
-                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id}, query: {tab}}"
+                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab}}"
                     >
                         <div class="left">
                             <div>
                                 <div class="title">
                                     {{ blueprint.title }}
                                 </div>
-                                <div class="tags text-uppercase">
+                                <div class="tags text-uppercase" :class="{system}">
                                     {{ tagsToString(blueprint.tags) }}
                                 </div>
                             </div>
@@ -72,7 +80,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else-if="userCanCreateFlow" size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -98,6 +106,7 @@
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
+    import {apiUrl} from "override/utils/route.js";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -113,6 +122,10 @@
                 default: undefined,
             },
             embed: {
+                type: Boolean,
+                default: false
+            },
+            system: {
                 type: Boolean,
                 default: false
             },
@@ -140,7 +153,7 @@
             },
             async copy(blueprintId) {
                 await Utils.copy(
-                    (await this.$http.get(`${this.blueprintBaseUri}/${blueprintId}/flow`)).data
+                    (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${blueprintId}/flow`)).data
                 );
             },
             async blueprintToEditor(blueprintId) {
@@ -150,7 +163,7 @@
                     params: {
                         tenant: this.$route.params.tenant
                     },
-                    query: {blueprintId: blueprintId, blueprintSource: this.blueprintBaseUri.includes("community") ? "community" : "custom"}
+                    query: {blueprintId: blueprintId, blueprintSource: this.embedFriendlyBlueprintBaseUri.includes("community") ? "community" : "custom"}
                 });
             },
             tagsToString(blueprintTags) {
@@ -173,7 +186,7 @@
                     })
                     .then(response => {
                         // Handle switch tab while fetching data
-                        if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
+                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
                             this.tags = this.tagsResponseMapper(response.data);
                         }
                     })
@@ -194,9 +207,10 @@
                     query.q = this.$route.query.q || this.q;
                 }
 
-
-                if (this.$route.query.selectedTag || this.selectedTag) {
-                    query.tags = this.$route.query.selectedTag || this.selectedTag;
+                if (this.system) {
+                    query.tags = "54";
+                } else if (this.$route.query.selectedTag || this.selectedTag) {
+                    query.tags =this.$route.query.selectedTag || this.selectedTag;
                 }
 
                 return this.$http
@@ -205,7 +219,7 @@
                     })
                     .then(response => {
                         // Handle switch tab while fetching data
-                        if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri) {
+                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
                             const blueprintsResponse = response.data;
                             this.total = blueprintsResponse.total;
                             this.blueprints = blueprintsResponse.results;
@@ -213,7 +227,7 @@
                     });
             },
             loadData(callback) {
-                const beforeLoadBlueprintBaseUri = this.blueprintBaseUri;
+                const beforeLoadBlueprintBaseUri = this.embedFriendlyBlueprintBaseUri;
 
                 Promise.all([
                     this.loadTags(beforeLoadBlueprintBaseUri),
@@ -228,7 +242,7 @@
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
-                    if (this.blueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
+                    if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
                         callback();
                     }
                 })
@@ -244,6 +258,14 @@
             ...mapState("plugin", ["icons"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
+            },
+            embedFriendlyBlueprintBaseUri() {
+                const tab = this.tab ?? this?.$route?.params?.tab ?? "community";
+                let base = this.blueprintBaseUri;
+
+                return base
+                    ? (base.endsWith("/undefined") ? base.replace("/undefined", `/${tab}`) : base)
+                    : `${apiUrl(this.$store)}/blueprints/${tab}`;
             }
         },
         watch: {
@@ -281,6 +303,12 @@
                 if(!Object.prototype.hasOwnProperty.call(this.tags, this.selectedTag)) {
                     this.selectedTag = 0;
                 }
+            },
+            blueprintBaseUri() {
+                this.loadData();
+            },
+            tab() {
+                this.loadData()
             }
         }
     };
@@ -355,6 +383,10 @@
 
                         html.dark & {
                             color: $pink;
+
+                            &.system {
+                                color: var(--bs-purple);
+                            }
                         }
                     }
 

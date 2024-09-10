@@ -114,7 +114,7 @@ public interface FlowRepositoryInterface {
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );
@@ -122,7 +122,7 @@ public interface FlowRepositoryInterface {
     List<FlowWithSource> findWithSource(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     );

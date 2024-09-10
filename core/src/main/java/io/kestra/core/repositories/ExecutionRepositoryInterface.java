@@ -47,7 +47,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -61,7 +61,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     default Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -77,7 +77,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -122,7 +122,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,

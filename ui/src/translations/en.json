@@ -835,9 +835,10 @@
       "storage": "Delete internal storage files"
     },
     "scope_filter": {
-      "all": "All Data",
-      "user": "Only User",
-      "system": "Only System"
-    }
+      "all": "All {label}",
+      "user": "Only User {label}",
+      "system": "Only System {label}"
+    },
+    "data": "Data"
   }
 }

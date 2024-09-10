@@ -47,6 +47,7 @@
                 </el-form-item>
                 <el-form-item>
                     <scope-filter-buttons
+                        :label="$t('data')"
                         :value="scope"
                         @update:model-value="onScopeSelect"
                     />
@@ -246,7 +247,7 @@
                 refreshDates: false,
                 canAutoRefresh: false,
                 state: [],
-                scope: "USER"
+                scope: ["USER"]
             };
         },
         methods: {
@@ -270,8 +271,10 @@
                     queryFilter["flowId"] = this.flowId;
                 }
 
-                if(this.scope) {
+                if(this.scope?.length) {
                     queryFilter["scope"] = this.scope;
+                } else {
+                    delete queryFilter["scope"]
                 }
 
                 return _merge(base, queryFilter)

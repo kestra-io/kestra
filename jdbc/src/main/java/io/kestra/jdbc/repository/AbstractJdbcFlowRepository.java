@@ -392,7 +392,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     ) {
@@ -405,10 +405,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 select.and(this.findCondition(query, labels));
 
-                if (scope != null) {
-                    if (scope.equals(FlowScope.USER)) {
+                if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
+                    if (scope.contains(FlowScope.USER)) {
                         select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.equals(FlowScope.SYSTEM)) {
+                    } else if (scope.contains(FlowScope.SYSTEM)) {
                         select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
                     }
                 }
@@ -425,7 +425,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     public List<FlowWithSource> findWithSource(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     ) {
@@ -438,10 +438,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 select.and(this.findCondition(query, labels));
 
-                if (scope != null) {
-                    if (scope.equals(FlowScope.USER)) {
+                if (scope != null && !new HashSet<>(scope).containsAll(Arrays.stream(FlowScope.values()).toList())) {
+                    if (scope.contains(FlowScope.USER)) {
                         select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.equals(FlowScope.SYSTEM)) {
+                    } else if (scope.contains(FlowScope.SYSTEM)) {
                         select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
                     }
                 }

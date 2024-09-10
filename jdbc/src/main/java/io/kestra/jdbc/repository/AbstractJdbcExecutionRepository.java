@@ -53,12 +53,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -159,7 +154,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Pageable pageable,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -198,7 +193,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -247,7 +242,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DSLContext context,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -365,7 +360,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
@@ -462,7 +457,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<Field<?>> fields,
         @Nullable String query,
         @Nullable String tenantId,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -490,7 +485,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Condition defaultFilter,
         List<Field<?>> fields,
         @Nullable String query,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         List<FlowFilter> flows,
@@ -543,7 +538,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
         SelectConditionStep<T> select,
-        @Nullable FlowScope scope,
+        @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable String flowId,
         @Nullable List<FlowFilter> flows,
@@ -552,10 +547,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter
     ) {
-        if (scope != null) {
-            if (scope.equals(FlowScope.USER)) {
+        if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
+            if (scope.contains(FlowScope.USER)) {
                 select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-            } else if (scope.equals(FlowScope.SYSTEM)) {
+            } else if (scope.contains(FlowScope.SYSTEM)) {
                 select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
             }
         }

@@ -449,7 +449,22 @@ public abstract class AbstractExecutionRepositoryTest {
         result = executionRepository.dailyStatistics(
             null,
             null,
-            FlowScope.USER,
+            List.of(FlowScope.USER, FlowScope.SYSTEM),
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            false);
+
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(21L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            List.of(FlowScope.USER),
             null,
             null,
             ZonedDateTime.now().minusDays(10),
@@ -463,7 +478,7 @@ public abstract class AbstractExecutionRepositoryTest {
         result = executionRepository.dailyStatistics(
             null,
             null,
-            FlowScope.SYSTEM,
+            List.of(FlowScope.SYSTEM),
             null,
             null,
             ZonedDateTime.now().minusDays(10),
@@ -512,7 +527,22 @@ public abstract class AbstractExecutionRepositoryTest {
         result = executionRepository.dailyStatistics(
             null,
             null,
-            FlowScope.USER,
+            List.of(FlowScope.USER, FlowScope.SYSTEM),
+            null,
+            null,
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            null,
+            null,
+            true);
+
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(57L));
+
+        result = executionRepository.dailyStatistics(
+            null,
+            null,
+            List.of(FlowScope.USER),
             null,
             null,
             ZonedDateTime.now().minusDays(10),
@@ -526,7 +556,7 @@ public abstract class AbstractExecutionRepositoryTest {
         result = executionRepository.dailyStatistics(
             null,
             null,
-            FlowScope.SYSTEM,
+            List.of(FlowScope.SYSTEM),
             null,
             null,
             ZonedDateTime.now().minusDays(10),

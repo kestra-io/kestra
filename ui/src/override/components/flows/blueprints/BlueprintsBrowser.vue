@@ -17,6 +17,7 @@
                         :key="tag.id"
                         :value="tag.id"
                         class="hoverable"
+                        @dblclick.stop="selectedTag = 0"
                     >
                         {{ tag.name }}
                     </el-radio-button>

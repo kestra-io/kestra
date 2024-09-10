@@ -818,11 +818,12 @@
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "system_namespace": "Mantieni la tua piattaforma sotto controllo con i system flows.",
     "scope_filter": {
-      "all": "Tutti i Dati",
-      "user": "Solo Utente",
-      "system": "Solo Sistema"
+      "all": "Tutte le {label}",
+      "user": "Solo Utente {label}",
+      "system": "Solo Sistema {label}"
     },
     "last execution status": "Ultimo stato di esecuzione",
-    "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche."
+    "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche.",
+    "data": "Dati"
   }
 }

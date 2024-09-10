@@ -818,11 +818,12 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "scope_filter": {
-      "all": "すべてのデータ",
-      "user": "ユーザーのみ",
-      "system": "システムのみ"
+      "all": "すべての{label}",
+      "user": "ユーザー {label} のみ",
+      "system": "システムのみ {label}"
     },
     "last execution status": "最後の実行ステータス",
-    "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。"
+    "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
+    "data": "データ"
   }
 }

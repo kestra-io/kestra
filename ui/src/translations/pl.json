@@ -818,11 +818,12 @@
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
     "system_namespace": "Zachowaj kontrolę nad swoją platformą dzięki systemowym flows.",
     "scope_filter": {
-      "all": "Wszystkie dane",
-      "user": "Tylko użytkownik",
-      "system": "Tylko System"
+      "all": "Wszystkie {label}",
+      "user": "Tylko użytkownik {label}",
+      "system": "Tylko System {label}"
     },
     "last execution status": "Ostatni status wykonania",
-    "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie."
+    "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie.",
+    "data": "Dane"
   }
 }

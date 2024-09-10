@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.webserver.annotation.WebServerEnabled;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintItem;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintTagItem;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -32,8 +34,9 @@ import java.util.function.Function;
 @WebServerEnabled
 @Requires(property = "kestra.tutorial-flows.enabled", value = "true", defaultValue = "true")
 public class FlowAutoLoaderService {
-
     private static final Logger log = LoggerFactory.getLogger(FlowAutoLoaderService.class);
+
+    public static final String PURGE_SYSTEM_FLOW_BLUEPRINT_ID = "234";
 
     @Inject
     protected FlowRepositoryInterface repository;
@@ -47,6 +50,9 @@ public class FlowAutoLoaderService {
 
     @Inject
     private YamlFlowParser yamlFlowParser;
+
+    @Inject
+    private NamespaceUtils namespaceUtils;
 
     @SuppressWarnings("unchecked")
     public void load() {
@@ -78,13 +84,19 @@ public class FlowAutoLoaderService {
                     ))
                 .map(response -> ((PagedResults<BlueprintItem>)response.body()).getResults())
                 .flatMapIterable(Function.identity())
-                .flatMap(it -> httpClient
+                .mergeWith(Mono.just(BlueprintItem.builder().id(PURGE_SYSTEM_FLOW_BLUEPRINT_ID).build()))
+                .flatMap(it -> Mono.from(httpClient
                     .exchange(
                         HttpRequest.create(HttpMethod.GET, "/v1/blueprints/" + it.getId() + "/flow"),
                         Argument.STRING
-                    )
+                    )).mapNotNull(response -> {
+                        String body = response.body();
+                        if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
+                            return NamespaceUtils.NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + namespaceUtils.getSystemFlowNamespace());
+                        }
+                        return body;
+                    })
                 )
-                .map(HttpResponse::body)
                 .map(source -> {
                     Flow flow = yamlFlowParser.parse(source, Flow.class);
                     repository.create(flow, source, pluginDefaultService.injectDefaults(flow));

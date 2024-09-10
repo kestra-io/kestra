@@ -63,6 +63,7 @@
                 </el-form-item>
                 <el-form-item>
                     <scope-filter-buttons
+                        :label="$t('executions')"
                         :value="$route.query.scope"
                         @update:model-value="onDataTableValue('scope', $event)"
                     />
@@ -607,6 +608,11 @@
                 selectedStatus: undefined
             };
         },
+        beforeCreate(){
+            if(!this.$route.query.scope) {
+                this.$route.query.scope = ["USER"]
+            }
+        },
         created() {
             // allow to have different storage key for flow executions list
             if (this.$route.name === "flows/update") {
@@ -614,12 +620,7 @@
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
-                || this.optionalColumns.filter(col => col.default).map(col => col.prop);
-
-
-            if(!this.$route.query.scope) {
-                this.$route.query.scope = "USER"
-            }
+                || this.optionalColumns.filter(col => col.default).map(col => col.prop);            
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

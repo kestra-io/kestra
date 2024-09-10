@@ -56,6 +56,7 @@
                     </el-form-item>
                     <el-form-item>
                         <scope-filter-buttons
+                            :label="$t('flows')"
                             :value="$route.query.scope"
                             @update:model-value="onDataTableValue('scope', $event)"
                         />
@@ -319,9 +320,9 @@
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
             }
         },
-        created(){
+        beforeCreate(){
             if(!this.$route.query.scope) {
-                this.$route.query.scope = "USER"
+                this.$route.query.scope = ["USER"]
             }
         },
         methods: {

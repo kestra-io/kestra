@@ -1,5 +1,8 @@
 package io.kestra.runner.postgres;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
@@ -123,5 +126,17 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         }
 
         update.execute();
+    }
+
+    @Override
+    protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
+        return fetch
+            .map(record -> {
+                try {
+                    return Either.left(MAPPER.readValue(record.get("value", JSONB.class).data(), cls));
+                } catch (JsonProcessingException e) {
+                    return Either.right(new DeserializationException(e, record.get("value", String.class)));
+                }
+            });
     }
 }

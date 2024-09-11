@@ -66,6 +66,10 @@ public class PluginDefaultService {
     protected List<PluginDefault> mergeAllDefaults(Flow flow) {
         List<PluginDefault> list = new ArrayList<>();
 
+        if (flow.getPluginDefaults() != null) {
+            list.addAll(flow.getPluginDefaults());
+        }
+
         if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
             if (warnOnce.compareAndSet(false, true)) {
                 log.warn("Global Task Defaults are deprecated, please use Global Plugin Defaults instead via the 'kestra.plugins.defaults' property.");
@@ -75,10 +79,6 @@ public class PluginDefaultService {
 
         if (pluginGlobalDefault != null && pluginGlobalDefault.getDefaults() != null) {
             list.addAll(pluginGlobalDefault.getDefaults());
-        }
-
-        if (flow.getPluginDefaults() != null) {
-            list.addAll(flow.getPluginDefaults());
         }
 
         return list;

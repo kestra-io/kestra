@@ -836,8 +836,8 @@
     },
     "scope_filter": {
       "all": "All {label}",
-      "user": "Only User {label}",
-      "system": "Only System {label}"
+      "user": "User {label}",
+      "system": "System {label}"
     },
     "data": "Data"
   }

@@ -52,6 +52,11 @@ def translate_text(text, target_language):
                 - "Log level" and "log_level" should be translated to "Log-Ebene" in German, rather than "Protokoll-Ebene".
                 - "Task logs" should be translated to "Task Logs" in German, rather than "Aufgabenprotokolle".
 
+                Never translate variables provided within curly braces like {{label}} or {{key}}. 
+                They should remain fully unchanged in the translation. For example, the string "System {{label}}"
+                should remain unchanged and be translated to "System {{label}}" in German, 
+                rather than "System {{Etikett}}" or "System {{Label}}". 
+
                 Here is the text to translate:
                 ----------
                 \n\n{text}

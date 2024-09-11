@@ -110,18 +110,18 @@ import jakarta.validation.constraints.NotNull;
                           import requests
                           import json
                           from kestra import Kestra
-  
+
                           with open('query.sql', 'r') as input_file:
                               sql = input_file.read()
-  
+
                           response = requests.get('https://api.github.com')
                           data = response.json()
-  
+
                           with open('output.json', 'w') as output_file:
                               json.dump(data, output_file)
-  
+
                           Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
-  
+
                   - id: load_to_mongodb
                     type: io.kestra.plugin.mongodb.Load
                     connection:
@@ -136,7 +136,7 @@ import jakarta.validation.constraints.NotNull;
             code = """
                 id: working_directory
                 namespace: company.team
-                
+
                 tasks:
                   - id: working_directory
                     type: io.kestra.plugin.core.flow.WorkingDirectory
@@ -262,7 +262,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
             runContext.storage()
                 .namespace()
                 .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())

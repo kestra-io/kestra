@@ -22,6 +22,7 @@ micronaut:
     idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
+      max-header-size: 32768 # increased from the default of 8k
       responses:
         file:
           cache-seconds: 86400

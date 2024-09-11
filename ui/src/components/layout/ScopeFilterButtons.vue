@@ -1,6 +1,6 @@
 <template>
     <el-select
-        :model-value="value"
+        v-model="scope"
         @update:model-value="onInput"
         collapse-tags
         multiple
@@ -16,13 +16,11 @@
 </template>
 <script>
     export default {
-        props: {
-            value: {type: Array, default: () => []},
-            label: {type: String, required: true},
-        },
+        props: {label: {type: String, required: true}},
         emits: ["update:modelValue"],
         data() {
             return {
+                scope: [],
                 options: [
                     {
                         name: this.$t("scope_filter.user", {label: this.label}),
@@ -39,6 +37,10 @@
             onInput(value) {
                 this.$emit("update:modelValue", value);
             },
+        },
+        created() {
+            const QUERY = this.$route.query.scope;
+            this.scope = QUERY ? [].concat(QUERY) : ["USER"];
         },
     };
 </script>

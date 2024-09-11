@@ -132,7 +132,7 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     public ScriptOutput run() throws Exception {
-        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
 
             List<NamespaceFile> matchedNamespaceFiles = runContext.storage()
                 .namespace()

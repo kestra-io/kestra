@@ -28,11 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,14 +60,14 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             title = "Clone a Git repository into the Working Directory and run a Python script in a Docker container.",
             code = """
-                id: gitPython
+                id: git_python
                 namespace: company.team
 
                 tasks:
                   - id: wdir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
                     tasks:
-                      - id: cloneRepository
+                      - id: clone_repository
                         type: io.kestra.plugin.git.Clone
                         url: https://github.com/kestra-io/examples
                         branch: main
@@ -82,100 +78,103 @@ import jakarta.validation.constraints.NotNull;
                           type: io.kestra.plugin.scripts.runner.docker.Docker
                         containerImage: ghcr.io/kestra-io/pydata:latest
                         commands:
-                          - python scripts/etl_script.py"""
+                          - python scripts/etl_script.py
+                """
         ),
         @Example(
             full = true,
             title = "Add input and output files within a Working Directory to use them in a Python script.",
             code = """
-                id: apiJSONtoMongoDB
+                id: api_json_to_mongodb
                 namespace: company.team
 
                 tasks:
-                - id: wdir
-                  type: io.kestra.plugin.core.flow.WorkingDirectory
-                  outputFiles:
-                    - output.json
-                  inputFiles:
-                    query.sql: |
-                      SELECT sum(total) as total, avg(quantity) as avg_quantity
-                      FROM sales;
-                  tasks:
-                    - id: inlineScript
-                      type: io.kestra.plugin.scripts.python.Script
-                      taskRunner:
-                        type: io.kestra.plugin.scripts.runner.docker.Docker
-                      containerImage: python:3.11-slim
-                      beforeCommands:
-                        - pip install requests kestra > /dev/null
-                      warningOnStdErr: false
-                      script: |
-                        import requests
-                        import json
-                        from kestra import Kestra
+                  - id: wdir
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    outputFiles:
+                      - output.json
+                    inputFiles:
+                      query.sql: |
+                        SELECT sum(total) as total, avg(quantity) as avg_quantity
+                        FROM sales;
+                    tasks:
+                      - id: inline_script
+                        type: io.kestra.plugin.scripts.python.Script
+                        taskRunner:
+                          type: io.kestra.plugin.scripts.runner.docker.Docker
+                        containerImage: python:3.11-slim
+                        beforeCommands:
+                          - pip install requests kestra > /dev/null
+                        warningOnStdErr: false
+                        script: |
+                          import requests
+                          import json
+                          from kestra import Kestra
 
-                        with open('query.sql', 'r') as input_file:
-                            sql = input_file.read()
+                          with open('query.sql', 'r') as input_file:
+                              sql = input_file.read()
 
-                        response = requests.get('https://api.github.com')
-                        data = response.json()
+                          response = requests.get('https://api.github.com')
+                          data = response.json()
 
-                        with open('output.json', 'w') as output_file:
-                            json.dump(data, output_file)
+                          with open('output.json', 'w') as output_file:
+                              json.dump(data, output_file)
 
-                        Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
+                          Kestra.outputs({'receivedSQL': sql, 'status': response.status_code})
 
-                - id: loadToMongoDB
-                  type: io.kestra.plugin.mongodb.Load
-                  connection:
-                    uri: mongodb://host.docker.internal:27017/
-                  database: local
-                  collection: github
-                  from: "{{ outputs.wdir.uris['output.json'] }}"
+                  - id: load_to_mongodb
+                    type: io.kestra.plugin.mongodb.Load
+                    connection:
+                      uri: mongodb://host.docker.internal:27017/
+                    database: local
+                    collection: github
+                    from: "{{ outputs.wdir.uris['output.json'] }}"
             """
         ),
         @Example(
             full = true,
-            code = {
-                "id: working-directory",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: working-directory",
-                "    type: io.kestra.plugin.core.flow.WorkingDirectory",
-                "    tasks:",
-                "      - id: first",
-                "        type: io.kestra.plugin.scripts.shell.Commands",
-                "        commands:",
-                "        - 'echo \"{{ taskrun.id }}\" > {{ workingDir }}/stay.txt'",
-                "      - id: second",
-                "        type: io.kestra.plugin.scripts.shell.Commands",
-                "        commands:",
-                "        - |",
-                "          echo '::{\"outputs\": {\"stay\":\"'$(cat {{ workingDir }}/stay.txt)'\"}}::'"
-            }
+            code = """
+                id: working_directory
+                namespace: company.team
+
+                tasks:
+                  - id: working_directory
+                    type: io.kestra.plugin.core.flow.WorkingDirectory
+                    tasks:
+                      - id: first
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                        - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                      - id: second
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        commands:
+                        - |
+                          echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
+                """
         ),
         @Example(
             full = true,
             title = "A working directory with a cache of the node_modules directory.",
             code = """
-                id: node-with-cache
+                id: node_with_cache
                 namespace: company.team
+
                 tasks:
-                  - id: working-dir
+                  - id: working_dir
                     type: io.kestra.plugin.core.flow.WorkingDirectory
                     cache:
                       patterns:
                         - node_modules/**
                       ttl: PT1H
                     tasks:
-                    - id: script
-                      type: io.kestra.plugin.scripts.node.Script
-                      beforeCommands:
-                        - npm install colors
-                      script: |
-                        const colors = require("colors");
-                        console.log(colors.red("Hello"));"""
+                      - id: script
+                        type: io.kestra.plugin.scripts.node.Script
+                        beforeCommands:
+                          - npm install colors
+                        script: |
+                          const colors = require("colors");
+                          console.log(colors.red("Hello"));
+                """
         )
     },
     aliases = {"io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker"}
@@ -263,7 +262,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
             runContext.storage()
                 .namespace()
                 .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
@@ -333,9 +332,9 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     }
 
                     archive.finish();
-                    File archiveFile = File.createTempFile("archive", ".zip");
-                    Files.write(archiveFile.toPath(), bos.toByteArray());
-                    URI uri = runContext.storage().putCacheFile(archiveFile, getId(), taskRun.getValue());
+                    Path archiveFile = runContext.workingDir().createTempFile( ".zip");
+                    Files.write(archiveFile, bos.toByteArray());
+                    URI uri = runContext.storage().putCacheFile(archiveFile.toFile(), getId(), taskRun.getValue());
                     runContext.logger().debug("Caching in {}", uri);
                 }
             } else {
@@ -355,7 +354,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             return null;
         }
 
-        try(InputStream is = runContext.storage().getFile(uri)) {
+        try(Reader is = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)))) {
             Map<String, URI> outputs = FileSerde
                 .readAll(is, new TypeReference<Map<String, URI>>() {})
                 .blockFirst();

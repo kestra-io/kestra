@@ -86,6 +86,8 @@ export default {
             this.$router.push({query: query})
         },
         onPageChanged(item) {
+            if(this.internalPageSize === item.size && this.internalPageNumber === item.page) return;
+
             this.internalPageSize = item.size;
             this.internalPageNumber = item.page;
 

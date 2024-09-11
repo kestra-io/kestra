@@ -204,7 +204,9 @@
                 this.load();
             },
             loadQuery(base) {
-                let queryFilter = this.filters ? this.filters : this.queryWithFilter();
+                // eslint-disable-next-line no-unused-vars
+                const {triggerId, ...rest} = this.filters || {};
+                let queryFilter = this.filters ? rest : this.queryWithFilter();
 
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
@@ -225,9 +227,13 @@
             load() {
                 this.isLoading = true
 
-                const data = this.filters
-                    ? {page: this.internalPageNumber, size: this.internalPageSize, ...this.filters}
-                    : {page: this.$route.query.page || this.internalPageNumber, size: this.$route.query.size || this.internalPageSize}
+                // eslint-disable-next-line no-unused-vars
+                const {triggerId, ...rest} = this.filters || {};
+                const data = {
+                    page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
+                    size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
+                    ...rest
+                };
 
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({

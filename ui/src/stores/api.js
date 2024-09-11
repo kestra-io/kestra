@@ -81,7 +81,7 @@ export default {
             }
         },
         pluginIcons(_, __) {
-            return axios.get(API_URL + "/v1/plugins/icons", {})
+            return axios.get(API_URL + "/v1/plugins/icons", {withCredentials: true})
         }
     },
     mutations: {

@@ -819,8 +819,8 @@
     "system_namespace": "Behalten Sie Ihre Plattform mit Systemflows im Blick.",
     "scope_filter": {
       "all": "Alle {label}",
-      "user": "Nur Benutzer {label}",
-      "system": "Nur System {label}"
+      "user": "Benutzer {label}",
+      "system": "System {Label}"
     },
     "last execution status": "Letzter Ausführungsstatus",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",

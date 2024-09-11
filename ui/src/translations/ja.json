@@ -819,8 +819,8 @@
     "system_namespace": "プラットフォームをシステムフローで管理しましょう。",
     "scope_filter": {
       "all": "すべての{label}",
-      "user": "ユーザー {label} のみ",
-      "system": "システムのみ {label}"
+      "user": "ユーザー {label}",
+      "system": "システム {label}"
     },
     "last execution status": "最後の実行ステータス",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",

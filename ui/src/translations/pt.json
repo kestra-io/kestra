@@ -819,8 +819,8 @@
     "system_namespace": "Mantenha sua plataforma sob controle com system flows.",
     "scope_filter": {
       "all": "Todos os {label}",
-      "user": "Somente Usuário {label}",
-      "system": "Somente Sistema {label}"
+      "user": "Usuário {label}",
+      "system": "Sistema {label}"
     },
     "last execution status": "Último status de execução",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",

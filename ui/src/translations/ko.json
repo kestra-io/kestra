@@ -819,8 +819,8 @@
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "scope_filter": {
       "all": "모든 {label}",
-      "user": "오직 사용자 {label}",
-      "system": "시스템 {label}만"
+      "user": "사용자 {label}",
+      "system": "시스템 {label}"
     },
     "last execution status": "마지막 실행 상태",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",

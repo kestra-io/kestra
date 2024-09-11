@@ -818,8 +818,8 @@
     "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
     "scope_filter": {
       "all": "Tout {label}",
-      "user": "Seulement Utilisateur {label}",
-      "system": "Seul le système {label}"
+      "user": "Utilisateur {label}",
+      "system": "Système {label}"
     },
     "last execution status": "Statut de la dernière exécution",
     "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés.",

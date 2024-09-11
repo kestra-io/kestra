@@ -58,7 +58,7 @@
 
                     <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
                         <TrashCan class="me-2" />
-                        <span>{{ $t("delete logs") }}</span>                     
+                        <span>{{ $t("delete logs") }}</span>
                     </el-button>
                 </template>
 
@@ -126,7 +126,11 @@
             filters: {
                 type: Object,
                 default: null
-            }
+            },
+            purgeFilters: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {
@@ -204,7 +208,9 @@
                 this.load();
             },
             loadQuery(base) {
-                let queryFilter = this.filters ? this.filters : this.queryWithFilter();
+                // eslint-disable-next-line no-unused-vars
+                const {triggerId, ...rest} = this.filters || {};
+                let queryFilter = this.filters ? (this.purgeFilters ? rest : this.filters) : this.queryWithFilter();
 
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
@@ -225,13 +231,17 @@
             load() {
                 this.isLoading = true
 
-                const data = this.filters 
-                    ? {page: this.internalPageNumber, size: this.internalPageSize, ...this.filters} 
-                    : {page: this.$route.query.page || this.internalPageNumber, size: this.$route.query.size || this.internalPageSize}
+                // eslint-disable-next-line no-unused-vars
+                const {triggerId, ...rest} = this.filters || {};
+                const data = {
+                    page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
+                    size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
+                    ...(this.purgeFilters ? rest : this.filters)
+                };
 
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({
-                        ...data,                      
+                        ...data,
                         minLevel: this.filters ? null : this.selectedLogLevel,
                         sort: "timestamp:desc"
                     }))

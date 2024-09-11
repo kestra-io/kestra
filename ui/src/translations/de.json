@@ -820,7 +820,7 @@
     "scope_filter": {
       "all": "Alle {label}",
       "user": "Benutzer {label}",
-      "system": "System {Label}"
+      "system": "System {label}"
     },
     "last execution status": "Letzter Ausführungsstatus",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",

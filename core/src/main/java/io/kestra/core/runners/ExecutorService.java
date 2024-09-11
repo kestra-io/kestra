@@ -358,11 +358,11 @@ public class ExecutorService {
             .withState(executor.getExecution().guessFinalState(flow));
 
         if (flow.getOutputs() != null) {
+            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             try {
                 Map<String, Object> outputs = flow.getOutputs()
                     .stream()
                     .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
-                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
@@ -374,8 +374,8 @@ public class ExecutorService {
                     "Failed to render output values",
                     e
                 );
-                newExecution = newExecution
-                    .withState(State.Type.FAILED);
+                runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
+                newExecution = newExecution.withState(State.Type.FAILED);
             }
         }
 

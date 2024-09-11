@@ -5,22 +5,30 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.aMapWithSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 class FlowOutputTest extends AbstractMemoryRunnerTest {
 
     static final String NAMESPACE = "io.kestra.tests";
 
     @Test
-    void shouldGetSuccessExecutionForFlowFlowWithOutputs() throws TimeoutException {
+    void shouldGetSuccessExecutionForFlowWithOutputs() throws TimeoutException {
         Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-outputs", null, null);
         assertThat(execution.getOutputs(), aMapWithSize(1));
         assertThat(execution.getOutputs().get("key"), is("{\"value\":\"flow-with-outputs\"}"));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldGetSuccessExecutionForFlowWithArrayOutputs() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-array-outputs", null, null);
+        assertThat(execution.getOutputs(), aMapWithSize(1));
+        assertThat((List<String>) execution.getOutputs().get("myout"), hasItems("1rstValue", "2ndValue"));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 

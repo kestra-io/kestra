@@ -290,10 +290,16 @@ public class FlowInputOutput {
                     }
                 }
                 case ARRAY, MULTISELECT -> {
+                    List<?> asList;
+                    if (current instanceof List<?> list) {
+                        asList = list;
+                    } else {
+                        asList = JacksonMapper.toList(((String) current));
+                    }
+
                     if (elementType != null) {
                         // recursively parse the elements only once
-                        yield JacksonMapper.toList(((String) current))
-                            .stream()
+                        yield asList.stream()
                             .map(throwFunction(element -> {
                                 try {
                                     return parseType(execution, elementType, id, null, element);
@@ -303,7 +309,7 @@ public class FlowInputOutput {
                             }))
                             .toList();
                     } else {
-                        yield JacksonMapper.toList(((String) current));
+                        yield asList;
                     }
                 }
             };

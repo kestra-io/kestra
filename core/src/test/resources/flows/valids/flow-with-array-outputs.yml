@@ -1,0 +1,16 @@
+id: flow-with-array-outputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: return
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      one: "1rstValue"
+      two: "2ndValue"
+
+outputs:
+  - id: myout
+    type: ARRAY
+    value:
+      - "{{ outputs.return.values.one }}"
+      - "{{ outputs.return.values.two }}"

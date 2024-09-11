@@ -25,12 +25,16 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -97,6 +101,51 @@ class PluginDefaultServiceTest {
                 )
             )
         ), result);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) {
+        final DefaultPrecedenceTester task = DefaultPrecedenceTester.builder()
+            .id("test")
+            .type(DefaultPrecedenceTester.class.getName())
+            .propBaz("taskValue")
+            .build();
+
+        final PluginDefault flowDefault = new PluginDefault(DefaultPrecedenceTester.class.getName(), flowDefaultForced, ImmutableMap.of(
+            "propBar", "flowValue",
+            "propBaz", "flowValue"
+        ));
+        final PluginDefault globalDefault = new PluginDefault(DefaultPrecedenceTester.class.getName(), globalDefaultForced, ImmutableMap.of(
+            "propFoo", "globalValue",
+            "propBar", "globalValue",
+            "propBaz", "globalValue"
+        ));
+
+        final Flow flowWithPluginDefault = Flow.builder()
+            .tasks(Collections.singletonList(task))
+            .pluginDefaults(List.of(flowDefault))
+            .build();
+
+        final PluginGlobalDefaultConfiguration pluginGlobalDefaultConfiguration = new PluginGlobalDefaultConfiguration();
+        pluginGlobalDefaultConfiguration.defaults = List.of(globalDefault);
+
+        pluginDefaultService.pluginGlobalDefault = pluginGlobalDefaultConfiguration;
+
+        final Flow injected = pluginDefaultService.injectDefaults(flowWithPluginDefault);
+
+        assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropFoo(), is(fooValue));
+        assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropBar(), is(barValue));
+        assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropBaz(), is(bazValue));
+    }
+
+    private static Stream<Arguments> flowDefaultsOverrideGlobalDefaults() {
+        return Stream.of(
+            Arguments.of(false, false, "globalValue", "flowValue", "taskValue"),
+            Arguments.of(false, true, "globalValue", "globalValue", "globalValue"),
+            Arguments.of(true, false, "globalValue", "flowValue", "flowValue"),
+            Arguments.of(true, true, "globalValue", "flowValue", "flowValue")
+        );
     }
 
     @Test
@@ -295,6 +344,25 @@ class PluginDefaultServiceTest {
         @Getter
         public static class Lists {
             private Map<String, String> val;
+        }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin(aliases = "io.kestra.core.services.DefaultPrecedenceTesterAlias")
+    public static class DefaultPrecedenceTester extends Task implements RunnableTask<VoidOutput> {
+        private String propFoo;
+
+        private String propBar;
+
+        private String propBaz;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
         }
     }
 }

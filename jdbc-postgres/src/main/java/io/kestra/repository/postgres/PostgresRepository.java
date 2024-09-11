@@ -61,6 +61,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     }
 
     @SneakyThrows
+    @Override
     public void persist(T entity, DSLContext context, @Nullable  Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
@@ -75,6 +76,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
         Result<Record> results = this.limit(
             context.select(DSL.asterisk(), DSL.count().over().as("total_count"))
@@ -93,5 +95,14 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .map((Record record) -> mapper.map((R) record));
 
         return new ArrayListTotal<>(map, totalCount);
+    }
+
+    @Override
+    public <R extends Record> T map(R record) {
+        if (deserializer != null) {
+            return deserializer.apply(record);
+        } else {
+            return this.deserialize(record.get("value", JSONB.class).data());
+        }
     }
 }

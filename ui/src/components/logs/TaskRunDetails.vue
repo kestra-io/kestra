@@ -25,7 +25,7 @@
                         @swap-displayed-attempt="swapDisplayedAttempt"
                         :selected-attempt-number-by-task-run-id="selectedAttemptNumberByTaskRunId"
                         :shown-attempts-uid="shownAttemptsUid"
-                        :logs="logs"
+                        :logs="filteredLogs"
                         @update-logs="loadLogs"
                     />
                     <for-each-status
@@ -230,6 +230,7 @@
                 handler(taskRuns) {
                     // by default we preselect the last attempt for each task run
                     this.selectedAttemptNumberByTaskRunId = Object.fromEntries(taskRuns.map(taskRun => [taskRun.id, this.forcedAttemptNumber ?? this.attempts(taskRun).length - 1]));
+                    this.autoExpandBasedOnSettings();
                 },
                 immediate: true,
                 deep: true
@@ -349,7 +350,7 @@
 
                 logFilesWrappers.forEach(logFileWrapper => this.fetchAndStoreLogFileSize(logFileWrapper.logFile))
 
-                const indexedLogs = [...this.logs, ...logFilesWrappers]
+                const indexedLogs = [...this.filteredLogs, ...logFilesWrappers]
                     .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
                     .map((logLine, index) => ({...logLine, index}));
 
@@ -398,6 +399,12 @@
 
                     return allLogIndicesByLevel;
                 }, currentTaskRunsLogIndicesByLevel);
+            },
+            levelOrLower() {
+                return LogUtils.levelOrLower(this.level);
+            },
+            filteredLogs() {
+                return this.logs.filter(log => this.levelOrLower.includes(log.level));
             }
         },
         methods: {
@@ -444,7 +451,7 @@
                     }
 
                     if (this.taskRunId === taskRun.id || this.autoExpandTaskrunStates.includes(taskRun.state.current)) {
-                        this.toggleShowAttempt(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id]));
+                        this.showAttempt(this.attemptUid(taskRun.id, this.selectedAttemptNumberByTaskRunId[taskRun.id]));
                     }
                 });
             },
@@ -585,6 +592,11 @@
                 }
 
                 return taskRun.attempts ? [taskRun.attempts[this.forcedAttemptNumber]] : [];
+            },
+            showAttempt(attemptUid) {
+                if (!this.shownAttemptsUid.includes(attemptUid)) {
+                    this.shownAttemptsUid.push(attemptUid);
+                }
             },
             toggleShowAttempt(attemptUid) {
                 this.shownAttemptsUid = _xor(this.shownAttemptsUid, [attemptUid])

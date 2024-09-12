@@ -37,13 +37,16 @@ public class Plugin {
     public static Plugin of(RegisteredPlugin registeredPlugin, @Nullable String subgroup) {
         Plugin plugin = new Plugin();
         plugin.name = registeredPlugin.name();
+        PluginSubGroup subGroupInfos = null;
         if (subgroup == null) {
             plugin.title = registeredPlugin.title();
         } else {
-            plugin.title = subgroup.substring(subgroup.lastIndexOf('.') + 1);
+            subGroupInfos = registeredPlugin.allClass().stream().filter(c -> c.getName().contains(subgroup)).map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class)).toList().getFirst();
+            plugin.title = !subGroupInfos.title().isEmpty() ? subGroupInfos.title() : subgroup.substring(subgroup.lastIndexOf('.') + 1);;
+
         }
         plugin.group = registeredPlugin.group();
-        plugin.description = registeredPlugin.description();
+        plugin.description = subGroupInfos != null && !subGroupInfos.description().isEmpty() ? subGroupInfos.description() : registeredPlugin.description();
         plugin.license = registeredPlugin.license();
         plugin.longDescription = registeredPlugin.longDescription();
         plugin.version = registeredPlugin.version();
@@ -59,7 +62,9 @@ public class Plugin {
                 e.getValue().toString()
             ))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        plugin.categories =  registeredPlugin
+        plugin.categories = subGroupInfos != null ?
+            Arrays.stream(subGroupInfos.categories()).toList() :
+            registeredPlugin
             .allClass()
             .stream()
             .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))

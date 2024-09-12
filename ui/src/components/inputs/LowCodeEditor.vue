@@ -156,7 +156,7 @@
                     });
                     return;
                 }
-                emit("on-edit", YamlUtils.deleteTask(props.source, event.id, section))
+                emit("on-edit", YamlUtils.deleteTask(props.source, event.id, section), true)
             },
             () => {
             }
@@ -197,17 +197,17 @@
         if (task === undefined || (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)) {
             switch (taskEditData.value.action) {
             case("create_task"):
-                emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]))
+                emit("on-edit", YamlUtils.insertTask(source, taskEditData.value.insertionDetails[0], event, taskEditData.value.insertionDetails[1]), true)
                 return;
             case("edit_task"):
                 emit("on-edit", YamlUtils.replaceTaskInDocument(
                     source,
                     taskEditData.value.oldTaskId,
                     event
-                ))
+                ), true)
                 return;
             case("add_flowable_error"):
-                emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId))
+                emit("on-edit", YamlUtils.insertErrorInFlowable(props.source, event, taskEditData.value.taskId), true)
                 return;
             }
         } else {
@@ -276,7 +276,7 @@
 
     const onSwappedTask = (event) => {
         emit("swapped-task", event.swappedTasks);
-        emit("on-edit", event.newSource);
+        emit("on-edit", event.newSource, true);
     }
 
     const message = (event) => {

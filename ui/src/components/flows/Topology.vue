@@ -11,6 +11,7 @@
                 :expanded-subflows="expandedSubflows"
                 view-type="topology"
                 @expand-subflow="onExpandSubflow($event)"
+                @on-edit="(event) => emit('on-edit', event, true)"
             />
             <el-alert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
@@ -27,7 +28,7 @@
             LowCodeEditor,
         },
         emits: [
-            "expand-subflow"
+            "expand-subflow", "on-edit"
         ],
         props: {
             isReadOnly: {

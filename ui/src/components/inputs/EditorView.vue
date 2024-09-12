@@ -438,7 +438,7 @@
     };
 
     const onEdit = (event, currentIsFlow = false) => {
-        flowYaml.value = event;
+        editorUpdate(event)
 
         if (currentIsFlow) {
             if (
@@ -1034,6 +1034,7 @@
                 @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                 :read-only="isReadOnly"
                 :navbar="false"
+                input
             />
             <section v-else class="no-tabs-opened">
                 <div class="img" />
@@ -1069,7 +1070,7 @@
                     v-if="flowGraph"
                     ref="lowCodeEditorRef"
                     @follow="forwardEvent('follow', $event)"
-                    @on-edit="(e) => onEdit(e, true)"
+                    @on-edit="(event, isFlow) => onEdit(event, isFlow)"
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"

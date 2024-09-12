@@ -55,6 +55,7 @@ The following core properties are available in all tasks.
 | `workerGroup`  | The [group of workers](https://kestra.io/docs/enterprise/worker-group) that are eligible to execute the task; you can specify a `workerGroup.key`                                     |
 | `allowFailure` | A boolean flag allowing to continue the execution even if this task fails                                                                                                             |
 | `logLevel`     | The level of log detail to be stored.                                                                                                                                                 |
+| `logToFile`     | A boolean that lets you store logs as a file in internal storage. That file can be previewed and downloaded from the Logs and Gantt Execution tabs. When set to true, logs aren’t saved in the database, useful for tasks generate a lot of logs that would otherwise take up too much space. The same property can be set on triggers. |
 
 
 

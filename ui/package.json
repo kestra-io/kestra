@@ -1,6 +1,6 @@
 {
   "name": "kestra",
-  "version": "0.18.5",
+  "version": "0.18.6",
   "private": true,
   "type": "module",
   "packageManager": "npm@9.9.3",
@@ -13,7 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
   },
   "dependencies": {
-    "@kestra-io/ui-libs": "^0.0.58",
+    "@kestra-io/ui-libs": "^0.0.59",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
     "@vue-flow/core": "^1.41.1",

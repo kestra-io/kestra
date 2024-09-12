@@ -438,7 +438,7 @@
     };
 
     const onEdit = (event, currentIsFlow = false) => {
-        editorUpdate(event)
+        flowYaml.value = event;
 
         if (currentIsFlow) {
             if (

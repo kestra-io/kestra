@@ -103,7 +103,7 @@ public class App implements Callable<Integer> {
 
             // if class have propertiesOverrides, add force properties for this class
             Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);
-            if (propertiesOverrides != null) {
+            if (propertiesOverrides != null && isPracticalCommand(commandLine)) {
                 properties.putAll(propertiesOverrides);
             }
 
@@ -138,5 +138,13 @@ public class App implements Callable<Integer> {
         }
 
         return null;
+    }
+
+    /**
+     * @param commandLine parsed command
+     * @return false if the command is a help or version request, true otherwise
+     */
+    private static boolean isPracticalCommand(CommandLine commandLine) {
+        return !(commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested());
     }
 }

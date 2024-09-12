@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import jakarta.inject.Inject;
 
 @CommandLine.Command(
+    versionProvider = VersionProvider.class,
     mixinStandardHelpOptions = true,
     showDefaultValues = true
 )
@@ -43,9 +44,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Inject
     private StartupHookInterface startupHook;
-    
+
     private PluginRegistry pluginRegistry;
-    
+
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     private boolean[] verbose = new boolean[0];
 
@@ -86,7 +87,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
         startWebserver();
         return 0;
     }
-    
+
     /**
      * Specifies whether external plugins must be loaded.
      * This method can be overridden by concrete commands.
@@ -96,7 +97,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
     protected boolean loadExternalPlugins() {
         return true;
     }
-    
+
     protected PluginRegistry pluginRegistry() {
         return KestraContext.getContext().getPluginRegistry(); // Lazy init
     }

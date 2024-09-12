@@ -18,8 +18,8 @@
                     @update:model-value="onChange"
                 />
             </el-form-item>
-            <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel.name">
-                <log-level-navigator :cursor-idx="cursorLogLevel?.name === logLevel.name ? cursorIdxForLevel : undefined" :level="logLevel" :total-count="countByLogLevel[logLevel.name]" @previous="previousLogForLevel(logLevel.name)" @next="nextLogForLevel(logLevel.name)" />
+            <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                <log-level-navigator :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined" :level="logLevel" :total-count="countByLogLevel[logLevel]" @previous="previousLogForLevel(logLevel)" @next="nextLogForLevel(logLevel)" />
             </el-form-item>
             <el-form-item>
                 <el-button @click="expandCollapseAll()">
@@ -110,7 +110,7 @@
                 filter: undefined,
                 openedTaskrunsCount: 0,
                 raw_view: false,
-                logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level.name, []])),
+                logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
                 logCursor: undefined
             };
         },
@@ -136,10 +136,10 @@
                 return Object.fromEntries(Object.entries(this.logIndicesByLevel).map(([level, indices]) => [level, indices.length]));
             },
             cursorLogLevel() {
-                return LogUtils.fromName(Object.entries(this.logIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0]);
+                return Object.entries(this.logIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
             },
             cursorIdxForLevel() {
-                return this.logIndicesByLevel?.[this.cursorLogLevel?.name]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
+                return this.logIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
             }
         },
         methods: {

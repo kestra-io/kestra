@@ -1,8 +1,8 @@
 <template>
-    <div class="d-flex ms-2 me-2 el-select__wrapper space-between" :class="{border: isSelected, ['log-border-' + level.name.toLowerCase()]: isSelected, 'shadow-none': isSelected}">
+    <div class="d-flex ms-2 me-2 el-select__wrapper space-between" :class="{border: isSelected, ['log-border-' + level.toLowerCase()]: isSelected, 'shadow-none': isSelected}">
         <div class="d-flex align-items-center gap-2">
-            <span :class="'circle log-bg-' + level.name.toLowerCase()" />
-            <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level.fullName.toLowerCase() }}</span>
+            <span :class="'circle log-bg-' + level.toLowerCase()" />
+            <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level }}</span>
         </div>
         <div class="d-flex align-items-center gap-2">
             <chevron-up class="medium-icon nav-button" @click="forwardEvent('previous')" />
@@ -27,7 +27,7 @@
                 required: true
             },
             level: {
-                type: Object,
+                type: String,
                 required: true
             }
         },

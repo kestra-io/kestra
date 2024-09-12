@@ -64,7 +64,7 @@
                                     @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
                                     :cursor="this.logCursor === `${currentTaskRunIndex}/${index}`"
-                                    :class="{['log-bg-' + levelToHighlight?.name?.toLowerCase()]: levelToHighlight?.name === item.level, 'opacity-40': levelToHighlight && levelToHighlight.name !== item.level}"
+                                    :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
                                     :key="index"
                                     :level="level"
                                     :log="item"
@@ -114,6 +114,7 @@
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route.js";
     import Utils from "../../utils/utils.js";
+    import LogUtils from "../../utils/logs.js";
 
     export default {
         name: "TaskRunDetails",
@@ -133,7 +134,7 @@
                 default: undefined,
             },
             levelToHighlight: {
-                type: Object,
+                type: String,
                 default: undefined
             },
             level: {

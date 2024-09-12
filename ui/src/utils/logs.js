@@ -1,52 +1,16 @@
-import _mapValues from "lodash/mapValues";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
-const LEVELS = Object.freeze({
-    ERROR: {
-        name: "ERROR",
-        fullName: "ERROR",
-    },
-    WARN: {
-        name: "WARN",
-        fullName: "WARNING",
-    },
-    INFO: {
-        name: "INFO",
-        fullName: "INFO",
-    },
-    DEBUG: {
-        name: "DEBUG",
-        fullName: "DEBUG",
-    },
-    TRACE: {
-        name: "TRACE",
-        fullName: "TRACE",
-    },
-});
+const LEVELS = [
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DEBUG",
+    "TRACE"
+];
 
 export default class Logs {
-    static get ERROR() {
-        return LEVELS.ERROR.name;
-    }
-
-    static get WARN() {
-        return LEVELS.WARN.name;
-    }
-
-    static get INFO() {
-        return LEVELS.INFO.name;
-    }
-
-    static get DEBUG() {
-        return LEVELS.DEBUG.name;
-    }
-
-    static get TRACE() {
-        return LEVELS.TRACE.name;
-    }
-
     static color() {
-        return _mapValues(LEVELS, level => cssVariable("--log-chart-" + level.name.toLowerCase()));
+        return Object.fromEntries(LEVELS.map(level => [level, cssVariable("--log-chart-" + level.toLowerCase())]));
     }
 
     static chartColorFromLevel(level, alpha = 1) {
@@ -60,11 +24,9 @@ export default class Logs {
     }
 
     static sort(value) {
-        const SORT_FIELDS = Object.keys(LEVELS)
-
         return Object.keys(value)
             .sort((a, b) => {
-                return Logs.index(SORT_FIELDS, a) - Logs.index(SORT_FIELDS, b);
+                return Logs.index(LEVELS, a) - Logs.index(LEVELS, b);
             })
             .reduce(
                 (obj, key) => {
@@ -81,15 +43,11 @@ export default class Logs {
         return index === -1 ? Number.MAX_SAFE_INTEGER : index;
     }
 
-    static fromName(name) {
-        return LEVELS?.[name];
-    }
-
     static levelOrLower(level) {
         const levels = [];
-        for (const [key, value] of Object.entries(LEVELS)) {
-            levels.push(value);
-            if (key === level) {
+        for (const currentLevel of LEVELS) {
+            levels.push(currentLevel);
+            if (currentLevel === level) {
                 break;
             }
         }

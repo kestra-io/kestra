@@ -1,6 +1,5 @@
 <template>
     <div class="py-2 line font-monospace" :class="{'border-start': cursor, ['log-border-' + log.level.toLowerCase()]: cursor}" v-if="filtered">
-        <span v-if="cursor" class="cursor" :class="'log-border-' + log.level.toLowerCase()" />
         <span :class="levelClasses" class="border header-badge log-level el-tag noselect">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "").capitalize() }}</span>
@@ -165,15 +164,6 @@
 
         &.border-start {
             border-left-width: 2px !important;
-        }
-
-        .cursor {
-            height : 0;
-            width : 0;
-            border: 7px solid;
-            border-top-color: transparent !important;
-            border-bottom-color: transparent !important;
-            border-right: 0;
         }
 
         .log-level {

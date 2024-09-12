@@ -354,7 +354,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             return null;
         }
 
-        try(Reader is = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)))) {
+        try(InputStream is = runContext.storage().getFile(uri)) {
             Map<String, URI> outputs = FileSerde
                 .readAll(is, new TypeReference<Map<String, URI>>() {})
                 .blockFirst();

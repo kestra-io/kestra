@@ -839,6 +839,7 @@
       "user": "User {label}",
       "system": "System {label}"
     },
-    "data": "Data"
+    "data": "Data",
+    "webhook link copied": "Webhook link copied."
   }
 }

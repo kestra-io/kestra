@@ -129,6 +129,12 @@
             </template>
         </el-table-column>
 
+        <el-table-column>
+            <template #default="scope">
+                <trigger-avatar :flow="flow" :trigger-id="scope.row.id" />
+            </template>
+        </el-table-column>
+
         <el-table-column column-key="action" class-name="row-action">
             <template #default="scope">
                 <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
@@ -210,6 +216,7 @@
     import FlowRun from "./FlowRun.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
     import Id from "../Id.vue";
+    import TriggerAvatar from "./TriggerAvatar.vue";
 </script>
 
 <script>

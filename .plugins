@@ -60,6 +60,7 @@
 #io.kestra.plugin:plugin-ldap:LATEST
 #io.kestra.plugin:plugin-linear:LATEST
 #io.kestra.plugin:plugin-malloy:LATEST
+#io.kestra.plugin:plugin-meilisearch:LATEST
 #io.kestra.plugin:plugin-minio:LATEST
 #io.kestra.plugin:plugin-modal:LATEST
 #io.kestra.plugin:plugin-mongodb:LATEST

@@ -824,6 +824,7 @@
     },
     "last execution status": "마지막 실행 상태",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
-    "data": "데이터"
+    "data": "데이터",
+    "webhook link copied": "웹훅 링크가 복사되었습니다."
   }
 }

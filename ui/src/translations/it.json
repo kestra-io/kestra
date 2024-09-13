@@ -824,6 +824,7 @@
     },
     "last execution status": "Ultimo stato di esecuzione",
     "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche.",
-    "data": "Dati"
+    "data": "Dati",
+    "webhook link copied": "Link del Webhook copiato."
   }
 }

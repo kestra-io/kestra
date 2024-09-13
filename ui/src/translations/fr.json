@@ -823,6 +823,7 @@
     },
     "last execution status": "Statut de la dernière exécution",
     "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés.",
-    "data": "Données"
+    "data": "Données",
+    "webhook link copied": "Lien du webhook copié."
   }
 }

@@ -55,7 +55,7 @@
                                 <div class="title">
                                     {{ blueprint.title }}
                                 </div>
-                                <div class="tags text-uppercase" :class="{system}">
+                                <div v-if="!system" class="tags text-uppercase">
                                     {{ tagsToString(blueprint.tags) }}
                                 </div>
                             </div>
@@ -384,10 +384,6 @@
 
                         html.dark & {
                             color: $pink;
-
-                            &.system {
-                                color: var(--bs-purple);
-                            }
                         }
                     }
 

@@ -620,10 +620,10 @@
                     this.editor = monaco.editor.create(this.$el, options);
 
                     if(!this.input){
-                        const name = this.currentTab?.path ?? this.currentTab?.name;            
+                        const name = this.currentTab?.path ?? this.currentTab?.name;
                         const value = this.currentTab?.flow || this.creating ? this.value : this.readFile({namespace: this.$route.params.namespace || this.$route.params.id, path: name})
 
-                        await this.changeTab(name, () => value);
+                        await this.changeTab(name, () => value, false);
                     }
                 }
 

@@ -74,7 +74,7 @@
         computed: {
             link() {
 
-                let link = "https://kestra.io/demo?utm_source=app&utm_content=ee-tooltip";
+                let link = "https://kestra.io/demo?utm_source=app&utm_campaign=ee-tooltip";
 
                 if (this.term) {
                     link = link + "&utm_term=" + this.term;

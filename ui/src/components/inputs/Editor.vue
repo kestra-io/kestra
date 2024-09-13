@@ -155,10 +155,13 @@
                         vertical: "hidden",
                         horizontal: "hidden",
                         alwaysConsumeMouseWheel: false,
-                        handleMouseWheel: false,
+                        handleMouseWheel: true,
                         horizontalScrollbarSize: 0,
                         verticalScrollbarSize: 0,
                         useShadows: false,
+                    };
+                    options.stickyScroll = {
+                        enabled: false
                     };
                     options.find = {
                         addExtraSpaceOnTop: false,

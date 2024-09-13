@@ -49,6 +49,7 @@
                     <scope-filter-buttons
                         :label="$t('data')"
                         :value="scope"
+                        :system="namespace === 'system'"
                         @update:model-value="onScopeSelect"
                     />
                 </el-form-item>
@@ -247,7 +248,7 @@
                 refreshDates: false,
                 canAutoRefresh: false,
                 state: [],
-                scope: ["USER"]
+                scope: []
             };
         },
         methods: {

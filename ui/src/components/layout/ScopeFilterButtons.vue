@@ -16,7 +16,10 @@
 </template>
 <script>
     export default {
-        props: {label: {type: String, required: true}},
+        props: {
+            label: {type: String, required: true},
+            system: {type: Boolean, default: false},
+        },
         emits: ["update:modelValue"],
         data() {
             return {
@@ -40,7 +43,11 @@
         },
         created() {
             const QUERY = this.$route.query.scope;
-            this.scope = QUERY ? [].concat(QUERY) : ["USER"];
+            this.scope = this.system
+                ? ["SYSTEM"]
+                : QUERY
+                    ? [].concat(QUERY)
+                    : ["USER"];
         },
     };
 </script>

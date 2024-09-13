@@ -1034,7 +1034,6 @@
                 @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                 :read-only="isReadOnly"
                 :navbar="false"
-                input
             />
             <section v-else class="no-tabs-opened">
                 <div class="img" />

@@ -11,7 +11,7 @@
                     :hide-after="0"
                 >
                     <template #reference>
-                        <el-button>
+                        <el-button @click="copyLink(trigger)">
                             <task-icon :only-icon="true" :cls="trigger?.type" :icons="icons" />
                         </el-button>
                     </template>
@@ -38,6 +38,10 @@
                 type: Object,
                 default: () => undefined,
             },
+            triggerId: {
+                type: String,
+                default: null
+            }
         },
         components: {
             TaskIcon,
@@ -52,12 +56,24 @@
 
                 return split[split.length - 1].substr(0, 1).toUpperCase();
             },
+            copyLink(trigger) {
+                if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && this.flow) {
+                    const url = new URL(window.location.href).origin + `/api/v1/${this.$route.params.tenant ? this.$route.params.tenant +"/" : ""}executions/webhook/${this.flow.namespace}/${this.flow.id}/${trigger.key}`;
+
+                    navigator.clipboard.writeText(url).then(() => {
+                        this.$message({
+                            message: this.$t("webhook link copied"),
+                            type: "success"
+                        });
+                    });
+                }
+            }
         },
         computed: {
             ...mapState("plugin", ["icons"]),
             triggers() {
                 if (this.flow && this.flow.triggers) {
-                    return this.flow.triggers
+                    return this.flow.triggers.filter(trigger => this.triggerId === null || this.triggerId === trigger.id)
                 } else if (this.execution && this.execution.trigger) {
                     return [this.execution.trigger]
                 } else {

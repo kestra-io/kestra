@@ -604,7 +604,7 @@
                 };
 
                 if (this.diffEditor) {
-                    this.editor = monaco.editor.createDiffEditor(this.$el, options);
+                    this.editor = monaco.editor.createDiffEditor(this.$el, {...options, ignoreTrimWhitespace: false});
                     let originalModel = monaco.editor.createModel(this.original, this.language);
                     let modifiedModel = monaco.editor.createModel(this.value, this.language);
                     this.editor.setModel({

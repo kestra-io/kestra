@@ -65,6 +65,7 @@
                     <scope-filter-buttons
                         :label="$t('executions')"
                         :value="$route.query.scope"
+                        :system="namespace === 'system'"
                         @update:model-value="onDataTableValue('scope', $event)"
                     />
                 </el-form-item>

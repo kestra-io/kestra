@@ -68,6 +68,7 @@
         },
         methods: {
             changeVisibility(visible = true) {
+                if (visible) document.querySelector(".ee-tooltip")?.remove();
                 this.visible = visible
             }
         },

@@ -86,6 +86,7 @@
                             :label="$t('id')"
                         />
                         <el-table-column
+                            prop="flowId"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('flow')"

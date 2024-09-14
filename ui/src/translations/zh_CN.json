@@ -824,6 +824,7 @@
     },
     "last execution status": "上次执行状态",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
-    "data": "数据"
+    "data": "数据",
+    "webhook link copied": "Webhook链接已复制。"
   }
 }

@@ -824,6 +824,7 @@
     },
     "last execution status": "Letzter Ausführungsstatus",
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
-    "data": "Daten"
+    "data": "Daten",
+    "webhook link copied": "Webhook-Link kopiert."
   }
 }

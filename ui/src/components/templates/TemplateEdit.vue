@@ -17,9 +17,9 @@
         </template>
     </top-nav-bar>
     <templates-deprecated />
-    <section class="container">
-        <editor @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
-    </section>
+    <div>
+        <editor class="main-editor" @save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" @cursor="updatePluginDocumentation" />
+    </div>
 </template>
 
 <script setup>
@@ -68,3 +68,10 @@
         }
     };
 </script>
+<style lang="scss" scoped>
+    .main-editor {
+        height: 100vh;
+
+    }
+
+</style>

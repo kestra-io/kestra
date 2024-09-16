@@ -4,7 +4,7 @@ configurations {
 
 dependencies {
     testImplementation project(':tests')
-    testImplementation("com.microsoft.playwright:playwright:1.46.0")
+    testImplementation("com.microsoft.playwright:playwright:1.47.0")
 }
 
 /**********************************************************************************************************************\

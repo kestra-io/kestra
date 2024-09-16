@@ -391,7 +391,7 @@ public abstract class JdbcRunnerTest {
             "io.kestra.tests",
             "inputs-large",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(120)
         );
 
@@ -415,7 +415,7 @@ public abstract class JdbcRunnerTest {
             "io.kestra.tests",
             "inputs-large",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(60)
         ));
 

@@ -91,7 +91,7 @@ public abstract class TriggerService {
         // add inputs and inject defaults
         if (!allInputs.isEmpty()) {
             FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-            execution = execution.withInputs(flowInputOutput.typedInputs(conditionContext.getFlow(), execution, allInputs));
+            execution = execution.withInputs(flowInputOutput.readExecutionInputs(conditionContext.getFlow(), execution, allInputs));
         }
 
         return execution;

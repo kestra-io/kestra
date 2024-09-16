@@ -555,8 +555,8 @@
       },
       "filter": "Filtro",
       "no_items": {
-        "heading": "Não há arquivos aqui!",
-        "paragraph": "Crie ou importe seus arquivos para começar."
+        "heading": "Nenhum arquivo encontrado no seu namespace ainda.",
+        "paragraph": "Crie ou importe arquivos para compartilhar código entre flows no seu namespace."
       },
       "tree": {
         "expand": "Expandir todas as pastas",

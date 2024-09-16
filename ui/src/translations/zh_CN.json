@@ -555,8 +555,8 @@
       },
       "filter": "过滤",
       "no_items": {
-        "heading": "这里没有文件！",
-        "paragraph": "创建或导入文件以开始。"
+        "heading": "尚未在您的namespace中找到文件。",
+        "paragraph": "创建或导入文件以在您的namespace中跨flow共享代码。"
       },
       "tree": {
         "expand": "展开所有文件夹",

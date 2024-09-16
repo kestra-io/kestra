@@ -538,7 +538,7 @@ public class ExecutionController {
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        return this.create(namespace, id, inputs, labels, wait, revision);
+        return this.create(namespace, id, inputs, labels, wait, revision, Optional.empty());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -552,7 +552,8 @@ public class ExecutionController {
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
-        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
+        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision,
+        @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
     ) throws IOException {
         return Mono.<Execution>create(
             sink -> {
@@ -577,7 +578,8 @@ public class ExecutionController {
                     Execution current = Execution.newExecution(
                         found,
                         throwBiFunction((flow, execution) -> flowInputOutput.typedInputs(flow, execution, inputs)),
-                        parseLabels(labels)
+                        parseLabels(labels),
+                        scheduleDate
                     );
 
                     executionQueue.emit(current);

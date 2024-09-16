@@ -160,7 +160,8 @@ export default {
                     "content-type": "multipart/form-data"
                 },
                 params: {
-                    labels: options.labels ?? []
+                    labels: options.labels ?? [],
+                    scheduleDate: options.scheduleDate
                 }
             })
         },

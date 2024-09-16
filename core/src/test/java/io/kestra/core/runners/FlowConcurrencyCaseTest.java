@@ -88,7 +88,7 @@ public class FlowConcurrencyCaseTest {
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue", Optional.empty())
             .orElseThrow();
-        Execution execution2 = Execution.newExecution(flow, null, null);
+        Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
         assertThat(execution1.getState().isRunning(), is(true));
@@ -137,7 +137,7 @@ public class FlowConcurrencyCaseTest {
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue-pause", Optional.empty())
             .orElseThrow();
-        Execution execution2 = Execution.newExecution(flow, null, null);
+        Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
         assertThat(execution1.getState().isRunning(), is(true));
@@ -186,7 +186,7 @@ public class FlowConcurrencyCaseTest {
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-cancel-pause", Optional.empty())
             .orElseThrow();
-        Execution execution2 = Execution.newExecution(flow, null, null);
+        Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
         assertThat(execution1.getState().isRunning(), is(true));

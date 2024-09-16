@@ -20,10 +20,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -172,7 +169,7 @@ public class FlowTopologyService {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
         // simulated execution
-        Execution execution = Execution.newExecution(parent, (f, e) -> null, null);
+        Execution execution = Execution.newExecution(parent, (f, e) -> null, null, Optional.empty());
 
         // keep only flow trigger
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = triggers

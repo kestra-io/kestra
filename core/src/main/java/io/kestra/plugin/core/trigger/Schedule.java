@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -14,10 +15,8 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ConditionService;
@@ -103,7 +102,7 @@ import java.util.stream.Stream;
                   - id: log_hello_world
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                
+
                 triggers:
                   - id: schedule
                     cron: "0 11 * * 1"
@@ -138,9 +137,7 @@ import java.util.stream.Stream;
     aliases = "io.kestra.core.models.triggers.types.Schedule"
 )
 @ScheduleValidation
-public class Schedule extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
-    private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
-
+public class Schedule extends AbstractTrigger implements Schedulable, TriggerOutput<Schedule.Output> {
     private static final CronDefinitionBuilder CRON_DEFINITION_BUILDER = CronDefinitionBuilder.defineCron()
         .withMinutes().withValidRange(0, 59).withStrictRange().and()
         .withHours().withValidRange(0, 23).withStrictRange().and()
@@ -312,6 +309,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return computeNextEvaluationDate(executionTime, convertDateTime(ZonedDateTime.now())).orElse(convertDateTime(ZonedDateTime.now()));
     }
 
+    @Override
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
         if (this.getConditions() != null) {
@@ -395,63 +393,31 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             scheduleDates = this.trueOutputWithCondition(executionTime, conditionContext, scheduleDates);
         }
 
-        Map<String, Object> inputs = new HashMap<>();
-
-        // add flow inputs with default value
-        var flow = conditionContext.getFlow();
-        if (flow.getInputs() != null) {
-            flow.getInputs().stream()
-                .filter(input -> input.getDefaults() != null)
-                .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
-        }
-
-        if (this.inputs != null) {
-            inputs.putAll(runContext.render(this.inputs));
-        }
-
-        if (backfill != null && backfill.getInputs() != null) {
-            inputs.putAll(runContext.render(backfill.getInputs()));
-        }
-
         Map<String, Object> variables;
         if (this.timezone != null) {
             variables = scheduleDates.toMap(ZoneId.of(this.timezone));
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = generateLabels(conditionContext, backfill);
 
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
+        Execution execution = TriggerService.generateScheduledExecution(
+            this,
+            conditionContext,
+            triggerContext,
+            generateLabels(conditionContext, backfill),
+            generateInputs(runContext, backfill),
+            variables,
+            Optional.empty()
+        );
 
-        Execution execution = Execution.builder()
-            .id(runContext.getTriggerExecutionId())
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(conditionContext.getFlow().getRevision())
-            .labels(labels)
-            .state(new State())
-            .trigger(executionTrigger)
+       execution = execution.toBuilder()
             // keep to avoid breaking compatibility
             .variables(ImmutableMap.of(
-                "schedule", executionTrigger.getVariables()
+                "schedule", execution.getTrigger().getVariables()
             ))
             .build();
 
-        // add inputs and inject defaults
-        if (!inputs.isEmpty()) {
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-            execution = execution.withInputs(flowInputOutput.typedInputs(conditionContext.getFlow(), execution, inputs));
-        }
-
-        return Optional.of(execution);
-    }
-
-    public RecoverMissedSchedules defaultRecoverMissedSchedules(RunContext runContext) {
-        return runContext
-            .<String>pluginConfiguration(PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES)
-            .map(conf -> RecoverMissedSchedules.valueOf(conf))
-            .orElse(RecoverMissedSchedules.ALL);
+       return Optional.of(execution);
     }
 
     public Cron parseCron() {
@@ -477,6 +443,19 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         return labels;
     }
 
+    private Map<String, Object> generateInputs(RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {
+        Map<String, Object> inputs = new HashMap<>();
+
+        if (this.inputs != null) {
+            inputs.putAll(runContext.render(this.inputs));
+        }
+
+        if (backfill != null && backfill.getInputs() != null) {
+            inputs.putAll(runContext.render(backfill.getInputs()));
+        }
+
+        return inputs;
+    }
     private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
         Optional<ZonedDateTime> next = executionTime.nextExecution(date.minus(Duration.ofSeconds(1)));
 
@@ -632,11 +611,5 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         @Schema(title = "The date of the previous schedule.")
         @NotNull
         private ZonedDateTime previous;
-    }
-
-    public enum RecoverMissedSchedules {
-        LAST,
-        NONE,
-        ALL
     }
 }

@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -231,7 +232,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverLASTMissing", false)
-            .recoverMissedSchedules(Schedule.RecoverMissedSchedules.LAST)
+            .recoverMissedSchedules(RecoverMissedSchedules.LAST)
             .build();
         Flow flow = createFlow(List.of(schedule));
         doReturn(List.of(flow))
@@ -277,7 +278,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverNONEMissing", false)
-            .recoverMissedSchedules(Schedule.RecoverMissedSchedules.NONE)
+            .recoverMissedSchedules(RecoverMissedSchedules.NONE)
             .build();
         Flow flow = createFlow(List.of(schedule));
         doReturn(List.of(flow))

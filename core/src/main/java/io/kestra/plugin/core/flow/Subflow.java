@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
@@ -30,6 +31,8 @@ import lombok.ToString;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -142,6 +145,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Deprecated(since = "0.15.0")
     private Map<String, Object> outputs;
 
+    @Schema(
+        title = "Don't trigger the subflow now but schedule it on a specific date."
+   )
+    private Property<ZonedDateTime> scheduleDate;
+
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
                                                              FlowExecutorInterface flowExecutorInterface,
@@ -172,7 +180,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             this,
             currentTaskRun,
             inputs,
-            labels
+            labels,
+            scheduleDate
         ));
     }
 

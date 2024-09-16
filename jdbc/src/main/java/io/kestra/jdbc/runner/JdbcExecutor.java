@@ -49,7 +49,7 @@ import org.jooq.Configuration;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
-import java.time.Duration;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -358,6 +358,21 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
                 Executor executor = new Executor(execution, null).withFlow(flow);
+
+                // schedule it for later if needed
+                if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
+                    ExecutionDelay executionDelay = ExecutionDelay.builder()
+                        .executionId(executor.getExecution().getId())
+                        .date(execution.getScheduleDate())
+                        .state(State.Type.RUNNING)
+                        .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                        .build();
+                    executionDelayStorage.save(executionDelay);
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
+                }
 
                 // queue execution if needed (limit concurrency)
                 if (execution.getState().getCurrent() == State.Type.CREATED && flow.getConcurrency() != null) {
@@ -904,15 +919,21 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     // Handle paused tasks
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
+                        if (executionDelay.getTaskRunId() == null) {
+                            // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
+                            Execution markAsExecution = pair.getKey().withState(executionDelay.getState());
+                            executor = executor.withExecution(markAsExecution, "pausedRestart");
+                        } else {
+                            // if there is a taskRun it means we restart a paused task
+                            Execution markAsExecution = executionService.markAs(
+                                pair.getKey(),
+                                flow,
+                                executionDelay.getTaskRunId(),
+                                executionDelay.getState()
+                            );
 
-                        Execution markAsExecution = executionService.markAs(
-                            pair.getKey(),
-                            flow,
-                            executionDelay.getTaskRunId(),
-                            executionDelay.getState()
-                        );
-
-                        executor = executor.withExecution(markAsExecution, "pausedRestart");
+                            executor = executor.withExecution(markAsExecution, "pausedRestart");
+                        }
                     }
                     // Handle failed tasks
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
@@ -990,7 +1011,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts().size() + 1);
+            log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1);
             return false;
         } else {
             executorState.getSubflowExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());

@@ -16,6 +16,7 @@ import jakarta.inject.Singleton;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,7 +39,7 @@ public class SkipExecutionCaseTest {
 
     public void skipExecution() throws TimeoutException, QueueException, InterruptedException {
         Flow flow = createFlow();
-        Execution execution1 = Execution.newExecution(flow, null, null);
+        Execution execution1 = Execution.newExecution(flow, null, null, Optional.empty());
         String execution1Id = execution1.getId();
         skipExecutionService.setSkipExecutions(List.of(execution1Id));
 

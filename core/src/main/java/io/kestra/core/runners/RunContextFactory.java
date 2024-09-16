@@ -15,12 +15,15 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Singleton
 public class RunContextFactory {
@@ -63,6 +66,10 @@ public class RunContextFactory {
     }
 
     public RunContext of(Flow flow, Execution execution) {
+        return of(flow, execution, Function.identity());
+    }
+
+    public RunContext of(Flow flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(execution);
 
         return newBuilder()
@@ -71,10 +78,12 @@ public class RunContextFactory {
             // Execution
             .withPluginConfiguration(Map.of())
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, flowService))
-            .withVariables(newRunVariablesBuilder()
-                .withFlow(flow)
-                .withExecution(execution)
-                .withDecryptVariables(true)
+            .withVariables(runVariableModifier.apply(
+                newRunVariablesBuilder()
+                    .withFlow(flow)
+                    .withExecution(execution)
+                    .withDecryptVariables(true)
+                )
                 .build(runContextLogger))
             .build();
     }

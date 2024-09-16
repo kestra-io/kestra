@@ -95,7 +95,7 @@ public final class ExecutableUtils {
         Execution execution = Execution
             .newExecution(
                 flow,
-                (f, e) -> flowInputOutput.typedInputs(f, e, inputs),
+                (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
                 labels,
                 Optional.empty())
             .withTrigger(ExecutionTrigger.builder()

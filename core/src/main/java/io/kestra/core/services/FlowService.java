@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -22,7 +23,17 @@ import org.apache.commons.lang3.ClassUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -423,5 +434,33 @@ public class FlowService {
         if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
             throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
         }
+    }
+
+    /**
+     * Gets the executable flow for the given namespace, id, and revision.
+     *
+     * @param tenant    Rhe tenant ID.
+     * @param namespace The flow's namespace.
+     * @param id        The flow's ID.
+     * @param revision  The flow's revision.
+     * @return The {@link Flow}.
+     * @throws NoSuchElementException if the requested flow does not exist.
+     * @throws IllegalStateException  if the requested flow is not executable.
+     */
+    public Flow getFlowIfExecutableOrThrow(final String tenant, final String namespace, final String id, final Optional<Integer> revision) {
+        Optional<Flow> optional = flowRepository.get().findById(tenant, namespace, id, revision);
+        if (optional.isEmpty()) {
+            throw new NoSuchElementException("Requested Flow is not found.");
+        }
+
+        Flow flow = optional.get();
+        if (flow.isDisabled()) {
+            throw new IllegalStateException("Requested Flow is disabled.");
+        }
+
+        if (flow instanceof FlowWithException fwe ) {
+            throw new IllegalStateException("Requested Flow is not valid. Error: " + fwe.getException());
+        }
+        return flow;
     }
 }

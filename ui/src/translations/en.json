@@ -577,8 +577,8 @@
       },
       "filter": "Filter",
       "no_items": {
-        "heading": "There are no files here!",
-        "paragraph": "Create or import your files to get started."
+        "heading": "No files found in your namespace yet.",
+        "paragraph": "Create or import files to share code across flows in your namespace."
       },
       "tree": {
         "expand": "Expand all folders",

@@ -825,6 +825,7 @@
     "last execution status": "Ostatni status wykonania",
     "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie.",
     "data": "Dane",
-    "webhook link copied": "Link Webhook skopiowany."
+    "webhook link copied": "Link Webhook skopiowany.",
+    "copy url": "Kopiuj URL"
   }
 }

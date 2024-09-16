@@ -840,6 +840,7 @@
       "system": "System {label}"
     },
     "data": "Data",
-    "webhook link copied": "Webhook link copied."
+    "webhook link copied": "Webhook link copied.",
+    "copy url": "Copy URL"
   }
 }

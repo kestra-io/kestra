@@ -16,7 +16,7 @@
                         </el-button>
                     </template>
                     <template #default>
-                        <trigger-vars :data="trigger" :execution="execution" />
+                        <trigger-vars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
                 </el-popover>
             </template>

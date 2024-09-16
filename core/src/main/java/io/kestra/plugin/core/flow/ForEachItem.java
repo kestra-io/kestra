@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
@@ -33,6 +34,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.*;
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -294,6 +296,12 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @PluginProperty
     private final Boolean inheritLabels = false;
 
+    @Schema(
+        title = "Don't trigger the subflow now but schedule it on a specific date."
+    )
+    @PluginProperty
+    private Property<ZonedDateTime> scheduleDate;
+
     @Valid
     private List<Task> errors;
 
@@ -340,7 +348,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     public List<Task> getTasks() {
         return List.of(
             new ForEachItemSplit(this.getId(), this.items, this.batch),
-            new ForEachItemExecutable(this.getId(), this.inputs, this.inheritLabels, this.labels, this.wait, this.transmitFailed,
+            new ForEachItemExecutable(this.getId(), this.inputs, this.inheritLabels, this.labels, this.wait, this.transmitFailed, this.scheduleDate,
                 new ExecutableTask.SubflowId(this.namespace, this.flowId, Optional.ofNullable(this.revision))
             ),
             new ForEachItemMergeOutputs(this.getId())
@@ -404,14 +412,16 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         private Map<String, String> labels;
         private Boolean wait;
         private Boolean transmitFailed;
+        private Property<ZonedDateTime> scheduleOn;
         private SubflowId subflowId;
 
-        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, Map<String, String> labels, Boolean wait, Boolean transmitFailed, SubflowId subflowId) {
+        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, Map<String, String> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId) {
             this.inputs = inputs;
             this.inheritLabels = inheritLabels;
             this.labels = labels;
             this.wait = wait;
             this.transmitFailed = transmitFailed;
+            this.scheduleOn = scheduleOn;
             this.subflowId = subflowId;
 
             this.id = parentId + SUFFIX;
@@ -466,18 +476,20 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                 // the passed URI may be used by the subflow to write execution outputs.
                                 .uri(URI.create(runContext.getStorageOutputPrefix().toString() + "/" + iteration + "/outputs.ion"))
                                 .build();
-                            return ExecutableUtils.subflowExecution(
-                                runContext,
-                                flowExecutorInterface,
-                                currentExecution,
-                                currentFlow,
-                                this,
-                                currentTaskRun
-                                    .withOutputs(outputs.toMap())
-                                    .withIteration(iteration),
-                                inputs,
-                                labels
-                            );
+
+                                return ExecutableUtils.subflowExecution(
+                                    runContext,
+                                    flowExecutorInterface,
+                                    currentExecution,
+                                    currentFlow,
+                                    this,
+                                    currentTaskRun
+                                        .withOutputs(outputs.toMap())
+                                        .withIteration(iteration),
+                                    inputs,
+                                    labels,
+                                    scheduleOn
+                                );
                         }
                     ))
                     .toList();

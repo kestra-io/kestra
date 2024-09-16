@@ -193,7 +193,7 @@ public class ExecutionService {
                     .toList()
             );
 
-        if (finalTaskRunToRestart.size() == 0) {
+        if (finalTaskRunToRestart.isEmpty()) {
             throw new IllegalArgumentException("No task found to restart execution from!");
         }
 

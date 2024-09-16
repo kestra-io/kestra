@@ -48,8 +48,11 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1226,8 +1229,8 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void delete() {
-        Execution result = triggerInputsFlowExecution(true);
+    void delete() throws QueueException, TimeoutException {
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         var response = client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/executions/" + result.getId()));
         assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
@@ -1263,9 +1266,9 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void setLabels() {
+    void setLabels() throws QueueException, TimeoutException {
         // update label on a terminated execution
-        Execution result = triggerInputsFlowExecution(true);
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
         Execution response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("key", "value"))),
@@ -1469,5 +1472,21 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         MutableHttpRequest<Object> searchRequest = HttpRequest
             .GET("/api/v1/executions/search?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel);
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(1L));
+    }
+
+    @Test
+    void scheduleDate() {
+        // given
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
+        String scheduleDate = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(now), StandardCharsets.UTF_8);
+
+        // when
+        MutableHttpRequest<?> createRequest = HttpRequest
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + scheduleDate, null)
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        Execution execution = client.toBlocking().retrieve(createRequest, Execution.class);
+
+        // then
+        assertThat(execution.getScheduleDate(), is(now.toInstant()));
     }
 }

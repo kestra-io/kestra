@@ -490,9 +490,7 @@ public class ExecutorService {
                 Instant nextRetryDate;
                 AbstractRetry retry;
                 AbstractRetry.Behavior behavior;
-                ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
-                    .taskRunId(taskRun.getId())
-                    .executionId(executor.getExecution().getId());
+
                 // Case task has a retry
                 if (task.getRetry() != null) {
                     retry = task.getRetry();
@@ -518,7 +516,9 @@ public class ExecutorService {
                         taskRun.nextRetryDate(retry);
                 }
                 if (nextRetryDate != null) {
-                    executionDelayBuilder
+                    ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
+                        .taskRunId(taskRun.getId())
+                        .executionId(executor.getExecution().getId())
                         .date(nextRetryDate)
                         .state(State.Type.RUNNING)
                         .delayType(behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?

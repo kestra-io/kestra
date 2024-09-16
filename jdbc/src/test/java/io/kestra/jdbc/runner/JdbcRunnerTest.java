@@ -86,6 +86,9 @@ public abstract class JdbcRunnerTest {
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
     @Inject
+    private ScheduleDateCaseTest scheduleDateCaseTest;
+
+    @Inject
     private FlowInputOutput flowIO;
 
     @BeforeAll
@@ -445,5 +448,10 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().size(), is(1));
 
+    }
+
+    @Test
+    void shouldScheduleOnDate() throws QueueException, InterruptedException {
+        scheduleDateCaseTest.shouldScheduleOnDate();
     }
 }

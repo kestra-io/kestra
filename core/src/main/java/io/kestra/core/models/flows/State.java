@@ -178,7 +178,7 @@ public class State {
 
     @JsonIgnore
     public boolean isResumable() {
-        return this.current.isPaused() || this.current.isRetrying();
+        return this.current.isPaused() || this.current.isRetrying() || this.current.isCreated();
     }
 
 

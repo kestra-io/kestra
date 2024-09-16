@@ -555,8 +555,8 @@
       },
       "filter": "Filter",
       "no_items": {
-        "heading": "Hier sind keine Dateien!",
-        "paragraph": "Erstellen oder importieren Sie Ihre Dateien, um loszulegen."
+        "heading": "Noch keine Dateien in Ihrem Namespace gefunden.",
+        "paragraph": "Erstellen oder importieren Sie Dateien, um Code zwischen Flows in Ihrem Namespace zu teilen."
       },
       "tree": {
         "expand": "Alle Ordner ausklappen",

@@ -555,8 +555,8 @@
       },
       "filter": "필터",
       "no_items": {
-        "heading": "여기에 파일이 없습니다!",
-        "paragraph": "파일을 생성하거나 가져와서 시작하세요."
+        "heading": "아직 namespace에 파일이 없습니다.",
+        "paragraph": "파일을 생성하거나 가져와서 namespace 내의 flow 간에 코드를 공유하세요."
       },
       "tree": {
         "expand": "모든 폴더 확장",

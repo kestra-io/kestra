@@ -825,6 +825,7 @@
     "last execution status": "Último status de execução",
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "data": "Dados",
-    "webhook link copied": "Link do Webhook copiado."
+    "webhook link copied": "Link do Webhook copiado.",
+    "copy url": "Copiar URL"
   }
 }

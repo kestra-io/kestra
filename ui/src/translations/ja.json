@@ -825,6 +825,7 @@
     "last execution status": "最後の実行ステータス",
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "data": "データ",
-    "webhook link copied": "Webhookリンクがコピーされました。"
+    "webhook link copied": "Webhookリンクがコピーされました。",
+    "copy url": "URLをコピー"
   }
 }

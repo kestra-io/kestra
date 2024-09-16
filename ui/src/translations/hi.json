@@ -825,6 +825,7 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
     "data": "डेटा",
-    "webhook link copied": "Webhook लिंक कॉपी किया गया।"
+    "webhook link copied": "Webhook लिंक कॉपी किया गया।",
+    "copy url": "URL कॉपी करें"
   }
 }

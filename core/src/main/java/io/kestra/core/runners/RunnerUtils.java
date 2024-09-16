@@ -83,7 +83,7 @@ public class RunnerUtils {
             duration = Duration.ofSeconds(15);
         }
 
-        Execution execution = Execution.newExecution(flow, inputs, labels);
+        Execution execution = Execution.newExecution(flow, inputs, labels, Optional.empty());
 
         return this.awaitExecution(isTerminatedExecution(execution, flow), throwRunnable(() -> {
             this.executionQueue.emit(execution);
@@ -109,7 +109,7 @@ public class RunnerUtils {
             duration = DEFAULT_MAX_WAIT_DURATION;
         }
 
-        Execution execution = Execution.newExecution(flow, inputs, null);
+        Execution execution = Execution.newExecution(flow, inputs, null, Optional.empty());
 
         return this.awaitExecution(isPausedExecution(execution), throwRunnable(() -> {
             this.executionQueue.emit(execution);
@@ -135,7 +135,7 @@ public class RunnerUtils {
             duration = DEFAULT_MAX_WAIT_DURATION;
         }
 
-        Execution execution = Execution.newExecution(flow, inputs, null);
+        Execution execution = Execution.newExecution(flow, inputs, null, Optional.empty());
 
         return this.awaitExecution(isRunningExecution(execution), throwRunnable(() -> {
             this.executionQueue.emit(execution);

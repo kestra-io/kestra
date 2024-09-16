@@ -847,6 +847,7 @@
       "failure_ratio": "Failure Ratio",
       "per_day": " (per day)",
       "total_executions": "Total Executions"
-    }
+    },
+    "scheduleDate": "Schedule date"
   }
 }

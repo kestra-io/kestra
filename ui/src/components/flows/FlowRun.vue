@@ -18,6 +18,15 @@
                             v-model:labels="executionLabels"
                         />
                     </el-form-item>
+                    <el-form-item
+                        :label="$t('scheduleDate')"
+                    >
+                        <el-date-picker
+                            :key="scheduleDate"
+                            v-model="scheduleDate"
+                            type="datetime"
+                        />
+                    </el-form-item>
                 </el-collapse-item>
                 <el-collapse-item :title="$t('curl.command')" name="curl">
                     <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
@@ -69,6 +78,8 @@
     import Curl from "./Curl.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
+    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
+    import moment from "moment-timezone";
 
     export default {
         components: {LabelInput, InputsForm, Curl},
@@ -87,6 +98,7 @@
                 inputs: {},
                 inputNewLabel: "",
                 executionLabels: [],
+                scheduleDate: undefined,
                 inputVisible: false,
                 collapseName: undefined,
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB
@@ -156,6 +168,7 @@
                             labels: this.executionLabels
                                 .filter(label => label.key && label.value)
                                 .map(label => `${label.key}:${label.value}`),
+                            scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                             nextStep: true
                         })
                         this.$emit("executionTrigger");

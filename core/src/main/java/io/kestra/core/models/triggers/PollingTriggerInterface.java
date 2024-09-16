@@ -20,12 +20,23 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
     @PluginProperty
     Duration getInterval();
 
+    /**
+     * Evaluate the trigger and create an execution if needed.
+     */
     Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception;
 
+    /**
+     * Compute the next evaluation date of the trigger based on the existing trigger context: by default, it uses the current date and the interval.
+     * Schedulable triggers must override this method.
+     */
     default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
         return ZonedDateTime.now().plus(this.getInterval());
     }
 
+    /**
+     * Compute the next evaluation date of the trigger: by default, it uses the current date and the interval.
+     * Schedulable triggers must override this method as it's used to init them when there is no evaluation date.
+     */
     default ZonedDateTime nextEvaluationDate() {
         return ZonedDateTime.now().plus(this.getInterval());
     }

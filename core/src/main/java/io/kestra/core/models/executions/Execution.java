@@ -32,6 +32,7 @@ import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -96,6 +97,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @With
     ExecutionMetadata metadata;
 
+    @With
+    @Nullable
+    Instant scheduleDate;
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and inputs.
      *
@@ -106,7 +111,8 @@ public class Execution implements DeletedInterface, TenantInterface {
      */
     public static Execution newExecution(final Flow flow,
                                          final BiFunction<Flow, Execution, Map<String, Object>> inputs,
-                                         final List<Label> labels) {
+                                         final List<Label> labels,
+                                         final Optional<ZonedDateTime> scheduleDate) {
         Execution execution = builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -114,6 +120,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .state(new State())
+            .scheduleDate(scheduleDate.map(date -> date.toInstant()).orElse(null))
             .build();
 
         if (inputs != null) {
@@ -172,7 +179,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.metadata
+            this.metadata,
+            this.scheduleDate
         );
     }
 
@@ -205,7 +213,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.metadata
+            this.metadata,
+            this.scheduleDate
         );
     }
 
@@ -226,7 +235,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.originalId,
             this.trigger,
             this.deleted,
-            this.metadata
+            this.metadata,
+            this.scheduleDate
         );
     }
 

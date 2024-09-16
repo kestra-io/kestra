@@ -4,18 +4,18 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.storages.Storage;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Slf4j
@@ -57,7 +57,8 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        List<Label> labels
+        List<Label> labels,
+        Property<ZonedDateTime> scheduleDate
     ) throws IllegalVariableEvaluationException {
         String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
         String subflowId = runContext.render(currentTask.subflowId().flowId());
@@ -90,18 +91,20 @@ public final class ExecutableUtils {
         );
 
         FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
+        Instant scheduleOnDate = scheduleDate != null ? scheduleDate.as(runContext, ZonedDateTime.class).toInstant() : null;
         Execution execution = Execution
             .newExecution(
                 flow,
                 (f, e) -> flowInputOutput.typedInputs(f, e, inputs),
-                labels)
+                labels,
+                Optional.empty())
             .withTrigger(ExecutionTrigger.builder()
                 .id(currentTask.getId())
                 .type(currentTask.getType())
                 .variables(variables)
                 .build()
-            );
-
+            )
+            .withScheduleDate(scheduleOnDate);
         return SubflowExecution.builder()
             .parentTask(currentTask)
             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))

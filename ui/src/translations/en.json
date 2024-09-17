@@ -849,6 +849,10 @@
       "total_executions": "Total Executions"
     },
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable."
+    "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
+    "dashboard": {
+      "success_ratio": "Success Ratio",
+      "failure_ratio": "Failure Ratio"
+    }
   }
 }

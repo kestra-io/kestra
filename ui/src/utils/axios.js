@@ -67,10 +67,13 @@ export default (callback, store, router) => {
     instance.interceptors.request.use(requestInterceptor)
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor);
 
+    let toRefreshQueue = [];
+    let refreshing = false;
+
     instance.interceptors.response.use(
         response => {
             return response
-        }, errorResponse => {
+        }, async errorResponse => {
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse,
@@ -93,7 +96,7 @@ export default (callback, store, router) => {
 
             if (errorResponse.response.status === 401
                 && !store.getters["auth/isLogged"]) {
-                if(window.location.pathname.startsWith("/ui/login")){
+                if (window.location.pathname.startsWith("/ui/login")) {
                     return Promise.reject(errorResponse);
                 }
 
@@ -105,20 +108,41 @@ export default (callback, store, router) => {
             if (errorResponse.response.status === 401 &&
                 store.getters["auth/isLogged"] &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")) {
-                document.body.classList.add("login")
+                // Keep original request
+                const originalRequest = errorResponse.config
 
-                store.dispatch("core/isUnsaved", false);
-                store.commit("layout/setTopNavbar", undefined);
-                router.push({
-                    name: "login",
-                    query: {
-                        expired: 1,
-                        from: window.location.pathname + (window.location.search ?? "")
+                if (!refreshing) {
+                    refreshing = true;
+                    try {
+                        await instance.post("/oauth/access_token?grant_type=refresh_token");
+                        toRefreshQueue.forEach(({config, resolve, reject}) => {
+                            instance.request(config).then(response => { resolve(response) }).catch(error => { reject(error) })
+                        })
+                        toRefreshQueue = [];
+                        refreshing = false;
+
+                        return instance(originalRequest)
+                    } catch (refreshError) {
+                        document.body.classList.add("login");
+                        store.dispatch("core/isUnsaved", false);
+                        store.commit("layout/setTopNavbar", undefined);
+                        router.push({
+                            name: "login",
+                            query: {
+                                expired: 1,
+                                from: window.location.pathname + (window.location.search ?? "")
+                            }
+                        })
+                        refreshing = false;
                     }
-                })
+                } else {
+                    toRefreshQueue.push(originalRequest);
+                    
+                    return;
+                }
             }
 
-            if (errorResponse.response.status === 400){
+            if (errorResponse.response.status === 400) {
                 return Promise.reject(errorResponse.response.data)
             }
 

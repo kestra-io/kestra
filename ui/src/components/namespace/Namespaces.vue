@@ -32,7 +32,7 @@
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
                             <VectorIntersection class="me-2 icon" />
-                            <span class="pe-3">{{ data.label }}</span>
+                            <span class="pe-3">{{ namespaceLabel(data.label) }}</span>
                             <span v-if="data.system" class="system">{{ $t("system_namespace") }}</span>
                         </div>
                         <el-button size="small">
@@ -133,6 +133,11 @@
         }
 
         return result;
+    };
+
+    const namespaceLabel = (path) => {
+        const segments = path.split(".");
+        return segments.length > 1 ? segments[segments.length - 1] : path;
     };
 </script>
 

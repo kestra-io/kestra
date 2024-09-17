@@ -76,10 +76,6 @@
                         inputValue = this.inputs[input.id] ? "******" : undefined;
                         break;
                     }
-                    case "DURATION": {
-                        inputValue = this.$moment.duration(this.$moment(this.inputs[input.id]).format("hh:mm:ss")).toJSON();
-                        break;
-                    }
                     case "DATE": {
                         inputValue = this.$moment(this.inputs[input.id]).format("YYYY-MM-DD");
                         break;

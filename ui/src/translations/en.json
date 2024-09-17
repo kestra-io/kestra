@@ -841,6 +841,10 @@
     },
     "data": "Data",
     "webhook link copied": "Webhook link copied.",
-    "copy url": "Copy URL"
+    "copy url": "Copy URL",
+    "dashboard": {
+      "success_ratio": "Success Ratio",
+      "failure_ratio": "Failure Ratio"
+    }
   }
 }

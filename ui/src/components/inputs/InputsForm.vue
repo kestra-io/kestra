@@ -104,7 +104,7 @@
                 type="date"
             />
             <el-time-picker
-                v-if="input.type === 'TIME' || input.type === 'DURATION'"
+                v-if="input.type === 'TIME'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 type="time"
@@ -142,7 +142,11 @@
                 :model-value="inputs[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-
+            <duration-picker
+                v-if="input.type === 'DURATION'"
+                v-model="inputs[input.id]"
+                @update:model-value="onChange"
+            />
             <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
         </el-form-item>
     </template>
@@ -156,6 +160,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import YamlUtils from "../../utils/yamlUtils.js";
+    import DurationPicker from "./DurationPicker.vue";
 
     export default {
         computed: {
@@ -163,7 +168,7 @@
                 return YamlUtils
             }
         },
-        components: {Editor, Markdown},
+        components: {Editor, Markdown, DurationPicker},
         props: {
             modelValue: {
                 default: undefined,

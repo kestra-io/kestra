@@ -147,6 +147,7 @@
                         }
 
                         const inputs = this.purgeInputs(this.inputs)
+
                         executeTask(this, this.flow, inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,

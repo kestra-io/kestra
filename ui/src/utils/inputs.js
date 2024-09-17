@@ -9,7 +9,7 @@ export default class Inputs {
             res = undefined;
         } else if (type === "DATE" || type === "DATETIME") {
             res = moment(res).toISOString()
-        } else if (type === "DURATION" || type === "TIME") {
+        } else if (type === "TIME") {
             res = moment().startOf("day").add(res, "seconds").toString()
         } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
             if(typeof res !== "string") {
@@ -34,7 +34,7 @@ export default class Inputs {
             res = undefined;
         } else if (type === "DATE" || type === "DATETIME") {
             res = moment(res).toISOString()
-        } else if (type === "DURATION" || type === "TIME") {
+        } else if (type === "TIME") {
             res = moment().startOf("day").add(res, "seconds").toString()
         } else if (type === "ARRAY") {
             res = JSON.stringify(res).toString();

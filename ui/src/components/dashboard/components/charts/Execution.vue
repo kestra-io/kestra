@@ -14,7 +14,7 @@
             </div>
 
             <div>
-                <div>
+                <div class="d-flex justify-content-end align-items-center">
                     <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
@@ -22,10 +22,15 @@
                         inline-prompt
                     />
                 </div>
-                <div>sss</div>
+                <div id="executions" />
             </div>
         </div>
-        <Bar :data="parsedData" :options="options" class="tall" />
+        <Bar
+            :data="parsedData"
+            :options="options"
+            :plugins="[customLegend]"
+            class="tall"
+        />
     </div>
 </template>
 
@@ -35,6 +40,8 @@
 
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+
+    import {customLegend} from "./legend.js";
 
     import Utils from "../../../../utils/utils";
     import {
@@ -107,6 +114,11 @@
 
     const options = computed(() =>
         defaultConfig({
+            plugins: {
+                customLegend: {
+                    containerID: "executions",
+                },
+            },
             scales: {
                 x: {
                     title: {

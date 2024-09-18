@@ -827,6 +827,7 @@
     "data": "データ",
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
+    "scheduleDate": "スケジュール日付",
     "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。"
   }
 }

@@ -38,7 +38,7 @@ class CollectorServiceTest {
             assertThat(metrics.getUuid(), notNullValue());
             assertThat(metrics.getVersion(), notNullValue());
             assertThat(metrics.getStartTime(), notNullValue());
-            assertThat(metrics.getEnvironments(), contains("test"));
+            assertThat(metrics.getEnvironments(), hasItem("test"));
             assertThat(metrics.getStartTime(), notNullValue());
             assertThat(metrics.getHost().getUuid(), notNullValue());
             assertThat(metrics.getHost().getHardware().getLogicalProcessorCount(), notNullValue());

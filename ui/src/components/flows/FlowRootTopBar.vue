@@ -29,6 +29,7 @@
                         :disabled="flow.disabled"
                         :flow-id="flow.id"
                         :namespace="flow.namespace"
+                        :flow-source="flow.source"
                     />
                 </li>
             </ul>

@@ -845,7 +845,8 @@
     "dashboard": {
       "success_ratio": "Success Ratio",
       "failure_ratio": "Failure Ratio",
-      "per_day": " (per day)"
+      "per_day": " (per day)",
+      "total_executions": "Total Executions"
     }
   }
 }

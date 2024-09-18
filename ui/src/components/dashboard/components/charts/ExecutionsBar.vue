@@ -43,7 +43,7 @@
 
     import {customLegend} from "./legend.js";
 
-    import Utils from "../../../../utils/utils";
+    import Utils from "../../../../utils/utils.js";
     import {
         defaultConfig,
         backgroundFromState,

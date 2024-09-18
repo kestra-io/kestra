@@ -50,10 +50,10 @@
 
         <el-row :gutter="20" class="mx-0">
             <el-col :xs="24" :lg="16">
-                <ExecutionChart :data="graphData" :total="stats.total" />
+                <ExecutionsBar :data="graphData" :total="stats.total" />
             </el-col>
             <el-col :xs="24" :lg="8">
-                <div>2</div>
+                <ExecutionsDoughnut :data="graphData" :total="stats.total" />
             </el-col>
         </el-row>
 
@@ -81,7 +81,9 @@
 
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
-    import ExecutionChart from "./components/charts/Execution.vue";
+
+    import ExecutionsBar from "./components/charts/ExecutionsBar.vue";
+    import ExecutionsDoughnut from "./components/charts/ExecutionsDoughnut.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";

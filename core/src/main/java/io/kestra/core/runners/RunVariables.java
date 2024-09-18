@@ -274,9 +274,10 @@ public final class RunVariables {
             // adds any additional variables
             if (variables != null) {
                 builder.putAll(variables);
-                if (logger != null && !variables.containsKey(RunVariables.SECRET_CONSUMER_VARIABLE_NAME)) {
-                    builder.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
-                }
+            }
+
+            if (logger != null && (variables == null || !variables.containsKey(RunVariables.SECRET_CONSUMER_VARIABLE_NAME))) {
+                builder.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
             }
 
             return builder.build();

@@ -8,12 +8,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 class RunVariablesTest {
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder().build(new RunContextLogger());
-        Assertions.assertEquals(Map.of("envs", Map.of(), "globals", Map.of()), variables);
+        assertThat(variables.size(), is(3));
+        assertThat((Map<String, Object>) variables.get("envs"), is(Map.of()));
+        assertThat((Map<String, Object>) variables.get("globals"), is(Map.of()));
+        assertThat(variables.get("addSecretConsumer"), notNullValue());
     }
 
     @Test

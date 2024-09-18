@@ -81,6 +81,7 @@
 
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
+    import ExecutionChart from "./components/charts/Execution.vue";
 
     import ExecutionsBar from "./components/charts/ExecutionsBar.vue";
     import ExecutionsDoughnut from "./components/charts/ExecutionsDoughnut.vue";

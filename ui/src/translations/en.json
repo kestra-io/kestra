@@ -852,7 +852,8 @@
     "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
     "dashboard": {
       "success_ratio": "Success Ratio",
-      "failure_ratio": "Failure Ratio"
+      "failure_ratio": "Failure Ratio",
+      "per_day": " (per day)"
     }
   }
 }

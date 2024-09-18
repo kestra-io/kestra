@@ -4,47 +4,68 @@
             {{ t("dashboard.total_executions") }}
         </span>
 
-        <div class="d-flex align-items-center h-100">
-            <Doughnut
-                :data="{
-                    labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
-                    datasets: [
-                        {
-                            backgroundColor: [
-                                '#41B883',
-                                '#E46651',
-                                '#00D8FF',
-                                '#DD1B16',
-                            ],
-                            data: [40, 20, 80, 10],
-                        },
-                    ],
-                }"
-                :options="options"
-                class="tall"
-            />
+        <div class="d-flex flex-row align-items-center h-100">
+            <div class="w-75">
+                <Doughnut
+                    :data="parsedData"
+                    :options="options"
+                    :plugins="[totalsLegend]"
+                    class="tall"
+                />
+            </div>
+            <div id="totals" />
         </div>
     </div>
 </template>
 
 <script setup>
+    import {computed} from "vue";
     import {useI18n} from "vue-i18n";
 
     import {Doughnut} from "vue-chartjs";
 
+    import {totalsLegend} from "./legend.js";
+
+    import {defaultConfig, getStateColor} from "../../../../utils/charts.js";
+
     const {t} = useI18n({useScope: "global"});
 
-    defineProps({
+    const props = defineProps({
         data: {
             type: Object,
             required: true,
         },
     });
 
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-    };
+    const parsedData = computed(() => {
+        let stateCounts = Object.create(null);
+
+        props.data.forEach((value) => {
+            Object.keys(value.executionCounts).forEach((state) => {
+                if (stateCounts[state] === undefined) {
+                    stateCounts[state] = 0;
+                }
+
+                stateCounts[state] += value.executionCounts[state];
+            });
+        });
+
+        const labels = Object.keys(stateCounts);
+        const data = labels.map((state) => stateCounts[state]);
+        const backgroundColor = labels.map((state) => getStateColor(state));
+
+        return {labels, datasets: [{data, backgroundColor, borderWidth: 0}]};
+    });
+
+    const options = computed(() =>
+        defaultConfig({
+            plugins: {
+                totalsLegend: {
+                    containerID: "totals",
+                },
+            },
+        }),
+    );
 </script>
 
 <style lang="scss" scoped>

@@ -28,7 +28,7 @@
         <Bar
             :data="parsedData"
             :options="options"
-            :plugins="[customLegend]"
+            :plugins="[executionsLegend]"
             class="tall"
         />
     </div>
@@ -41,12 +41,12 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {customLegend} from "./legend.js";
+    import {executionsLegend} from "./legend.js";
 
     import Utils from "../../../../utils/utils.js";
     import {
         defaultConfig,
-        backgroundFromState,
+        getStateColor,
         getFormat,
     } from "../../../../utils/charts.js";
 
@@ -73,7 +73,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: backgroundFromState(state),
+                        backgroundColor: getStateColor(state),
                         borderRadius: 4,
                         yAxisID: "y",
                         data: [],
@@ -115,7 +115,7 @@
     const options = computed(() =>
         defaultConfig({
             plugins: {
-                customLegend: {
+                executionsLegend: {
                     containerID: "executions",
                 },
             },

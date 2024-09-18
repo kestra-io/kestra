@@ -15,6 +15,7 @@ import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 const STATE = Object.freeze({
     CREATED: {
         name: "CREATED",
+        color: "#1761FD",
         colorClass: "cyan",
         icon: DotsVerticalCircle,
         isRunning: true,
@@ -23,6 +24,7 @@ const STATE = Object.freeze({
     },
     RESTARTED: {
         name: "RESTARTED",
+        color: "#1761FD",
         colorClass: "cyan",
         icon: SkipPreviousCircle,
         isRunning: false,
@@ -31,6 +33,7 @@ const STATE = Object.freeze({
     },
     SUCCESS: {
         name: "SUCCESS",
+        color: "#029E73",
         colorClass: "green",
         icon: CheckCircle,
         isRunning: false,
@@ -39,6 +42,7 @@ const STATE = Object.freeze({
     },
     RUNNING: {
         name: "RUNNING",
+        color: "#8405FF",
         colorClass: "purple",
         icon: PlayCircle,
         isRunning: true,
@@ -47,6 +51,7 @@ const STATE = Object.freeze({
     },
     KILLING: {
         name: "KILLING",
+        color: "#FCE07C",
         colorClass: "yellow",
         icon: CloseCircle,
         isRunning: true,
@@ -55,6 +60,7 @@ const STATE = Object.freeze({
     },
     KILLED: {
         name: "KILLED",
+        color: "#FCE07C",
         colorClass: "yellow",
         icon: StopCircle,
         isRunning: false,
@@ -63,6 +69,7 @@ const STATE = Object.freeze({
     },
     WARNING: {
         name: "WARNING",
+        color: "#DD5F00",
         colorClass: "orange",
         icon: AlertCircle,
         isRunning: false,
@@ -71,6 +78,7 @@ const STATE = Object.freeze({
     },
     FAILED: {
         name: "FAILED",
+        color: "#AB0009",
         colorClass: "red",
         icon: CloseCircle,
         isRunning: false,
@@ -79,6 +87,7 @@ const STATE = Object.freeze({
     },
     PAUSED: {
         name: "PAUSED",
+        color: "#918BA9",
         colorClass: "indigo",
         icon: PauseCircle,
         isRunning: true,
@@ -87,6 +96,7 @@ const STATE = Object.freeze({
     },
     CANCELLED: {
         name: "CANCELLED",
+        color: "#918BA9",
         colorClass: "gray",
         icon: Cancel,
         isRunning: false,
@@ -95,6 +105,7 @@ const STATE = Object.freeze({
     },
     QUEUED: {
         name: "QUEUED",
+        color: "#918BA9",
         colorClass: "gray",
         icon: MotionPauseOutline,
         isRunning: false,
@@ -103,6 +114,7 @@ const STATE = Object.freeze({
     },
     RETRYING: {
         name: "RETRYING",
+        color: "#918BA9",
         colorClass: "gray",
         icon: Refresh,
         isRunning: false,
@@ -111,6 +123,7 @@ const STATE = Object.freeze({
     },
     RETRIED: {
         name: "RETRIED",
+        color: "#918BA9",
         colorClass: "gray",
         icon: Refresh,
         isRunning: false,
@@ -209,6 +222,10 @@ export default class State {
 
     static color() {
         return _mapValues(STATE, state => cssVariable("--bs-" + state.colorClass));
+    }
+
+    static getStateColor(state) {
+        return STATE[state].color;
     }
 
     static icon() {

@@ -147,7 +147,8 @@ public class PluginScanner {
             log.error("Unable to load all plugin classes from '{}'. Cause: [{}] {}",
                 location,
                 e.getClass().getSimpleName(),
-                e.getMessage()
+                e.getMessage(),
+                e
             );
         }
 

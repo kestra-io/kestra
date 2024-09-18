@@ -9,7 +9,7 @@
                 <Doughnut
                     :data="parsedData"
                     :options="options"
-                    :plugins="[totalsLegend]"
+                    :plugins="[totalsLegend, centerPlugin]"
                     class="tall"
                 />
             </div>
@@ -26,6 +26,7 @@
 
     import {totalsLegend} from "./legend.js";
 
+    import Utils from "../../../../utils/utils.js";
     import {defaultConfig, getStateColor} from "../../../../utils/charts.js";
 
     const {t} = useI18n({useScope: "global"});
@@ -66,6 +67,29 @@
             },
         }),
     );
+
+    const centerPlugin = {
+        id: "centerPlugin",
+        beforeDraw(chart) {
+            const darkTheme = Utils.getTheme() === "dark";
+
+            const ctx = chart.ctx;
+            const dataset = chart.data.datasets[0];
+            const total = dataset.data.reduce((acc, val) => acc + val, 0);
+            const centerX = chart.width / 2;
+            const centerY = chart.height / 2;
+
+            ctx.save();
+            ctx.font = "700 16px Public Sans";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = darkTheme ? "FFFFFF" : "000000";
+
+            ctx.fillText(total, centerX, centerY);
+
+            ctx.restore();
+        },
+    };
 </script>
 
 <style lang="scss" scoped>

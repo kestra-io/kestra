@@ -76,6 +76,10 @@
             type: {
                 type: String,
                 default: "primary"
+            },
+            flowSource: {
+                type: String,
+                default: null
             }
         },
         data() {
@@ -104,9 +108,19 @@
                     });
                     this.isOpen = !this.isOpen;
                     return;
-                } else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
+                }
+                else if (this.checkForTrigger) {
+                    this.$toast().confirm(
+                        this.$t("trigger_check_warning"),
+                        () => {
+                            this.isOpen = !this.isOpen;
+                        },
+                        () => {});
+                }
+                else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;
-                } else {
+                }
+                else {
                     this.$store.dispatch("execution/loadNamespaces");
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
@@ -146,6 +160,13 @@
             },
             computedNamespace() {
                 return this.namespace || this.localNamespace;
+            },
+            checkForTrigger() {
+                if (this.flowSource) {
+                    const triggerRegex = /\{\{\s*\(?\s*(\|\||&&)?\s*trigger\s*(\.\w+|\|\s*\w+)?\s*\}\}/;
+                    return triggerRegex.test(this.flowSource);
+                }
+                return false;
             }
         },
         watch: {

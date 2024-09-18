@@ -827,6 +827,7 @@
     "data": "数据",
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
+    "scheduleDate": "计划日期",
     "trigger_check_warning": "警告：检测到使用 `trigger` 变量，手动执行您的 flow 不会满足 trigger 变量。"
   }
 }

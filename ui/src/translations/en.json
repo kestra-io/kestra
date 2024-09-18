@@ -848,6 +848,7 @@
       "per_day": " (per day)",
       "total_executions": "Total Executions"
     },
-    "scheduleDate": "Schedule date"
+    "scheduleDate": "Schedule date",
+    "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable."
   }
 }

@@ -3,7 +3,7 @@
 
     <div class="dashboard">
         <el-row :gutter="20" class="mx-0">
-            <el-col :xs="24" :md="12" :lg="6">
+            <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="CheckBold"
                     :label="t('dashboard.success_ratio')"
@@ -14,7 +14,7 @@
                     }"
                 />
             </el-col>
-            <el-col :xs="24" :md="12" :lg="6">
+            <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="Alert"
                     :label="t('dashboard.failure_ratio')"
@@ -25,7 +25,7 @@
                     }"
                 />
             </el-col>
-            <el-col :xs="24" :md="12" :lg="6">
+            <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="FileTree"
                     :label="t('flows')"
@@ -36,7 +36,7 @@
                     }"
                 />
             </el-col>
-            <el-col :xs="24" :md="12" :lg="6">
+            <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="LightningBolt"
                     :label="t('triggers')"

@@ -827,6 +827,7 @@
     "data": "Daten",
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
+    "scheduleDate": "Geplantes Datum",
     "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen."
   }
 }

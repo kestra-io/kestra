@@ -23,7 +23,7 @@ class MiscUsageControllerTest {
                 assertThat(response.getUuid(), notNullValue());
                 assertThat(response.getVersion(), notNullValue());
                 assertThat(response.getStartTime(), notNullValue());
-                assertThat(response.getEnvironments(), contains("test"));
+                assertThat(response.getEnvironments(), containsInAnyOrder("test"));
                 assertThat(response.getStartTime(), notNullValue());
                 assertThat(response.getHost().getUuid(), notNullValue());
                 assertThat(response.getHost().getHardware().getLogicalProcessorCount(), notNullValue());

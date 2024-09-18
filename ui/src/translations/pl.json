@@ -827,6 +827,7 @@
     "data": "Dane",
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
+    "scheduleDate": "Data harmonogramu",
     "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger."
   }
 }

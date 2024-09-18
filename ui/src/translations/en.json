@@ -844,7 +844,8 @@
     "copy url": "Copy URL",
     "dashboard": {
       "success_ratio": "Success Ratio",
-      "failure_ratio": "Failure Ratio"
+      "failure_ratio": "Failure Ratio",
+      "per_day": " (per day)"
     }
   }
 }

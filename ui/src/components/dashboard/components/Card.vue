@@ -1,7 +1,7 @@
 <template>
     <div class="p-4 card">
         <div class="d-flex pb-2 justify-content-between">
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
                 <component :is="icon" class="me-2 fs-4 icons" />
 
                 <p class="m-0 fs-6 label">
@@ -9,7 +9,9 @@
                 </p>
             </div>
 
-            <TextSearchVariant class="fs-4 icons" />
+            <RouterLink :to="redirect" class="d-flex align-items-center">
+                <TextSearchVariant class="fs-4 icons" />
+            </RouterLink>
         </div>
         <p class="m-0 fs-2 fw-bold">
             {{ value }}
@@ -30,22 +32,30 @@
             required: true,
         },
         value: {
-            type: String,
+            type: [String, Number],
+            required: true,
+        },
+        redirect: {
+            type: Object,
             required: true,
         },
     });
 </script>
 
 <style lang="scss" scoped>
-$color: #c182ff;
+@import "@kestra-io/ui-libs/src/scss/variables";
 
 .card {
     & .icons {
-        color: $color;
+        color: $secondary;
     }
 
     & .label {
-        color: var(--el-text-color-regular);
+        color: $gray-700;
+
+        html.dark & {
+            color: $gray-300;
+        }
     }
 }
 </style>

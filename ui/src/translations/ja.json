@@ -826,6 +826,7 @@
     "system_namespace_description": "メンテナンスタスクを自動化し、FAILUREアラートから自動クリーンアップまで対応します。",
     "data": "データ",
     "webhook link copied": "Webhookリンクがコピーされました。",
-    "copy url": "URLをコピー"
+    "copy url": "URLをコピー",
+    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。"
   }
 }

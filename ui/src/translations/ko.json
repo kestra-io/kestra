@@ -827,6 +827,7 @@
     "data": "데이터",
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
+    "scheduleDate": "일정 날짜",
     "trigger_check_warning": "경고: `trigger` 변수가 감지되었습니다. flow를 수동으로 실행해도 trigger 변수를 충족하지 않습니다."
   }
 }

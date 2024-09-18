@@ -827,6 +827,7 @@
     "data": "डेटा",
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
+    "scheduleDate": "अनुसूची तिथि",
     "trigger_check_warning": "चेतावनी: `trigger` वेरिएबल का उपयोग पाया गया है, आपके flow को मैन्युअली निष्पादित करने से trigger वेरिएबल पूरा नहीं होगा।"
   }
 }

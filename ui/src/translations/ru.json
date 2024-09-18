@@ -827,6 +827,7 @@
     "data": "Данные",
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
+    "scheduleDate": "Дата расписания",
     "trigger_check_warning": "Предупреждение: Обнаружено использование переменной `trigger`, выполнение вашего flow вручную не выполнит переменную trigger."
   }
 }

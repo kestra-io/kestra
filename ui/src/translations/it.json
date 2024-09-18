@@ -827,6 +827,7 @@
     "data": "Dati",
     "webhook link copied": "Link del Webhook copiato.",
     "copy url": "Copia URL",
+    "scheduleDate": "Data di pianificazione",
     "trigger_check_warning": "Avviso: Rilevato l'uso della variabile `trigger`, l'esecuzione manuale del tuo flow non soddisferà la variabile trigger."
   }
 }

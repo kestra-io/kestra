@@ -826,6 +826,7 @@
     "system_namespace_description": "Automatize tarefas de manutenção, desde alertas de falha até limpezas automatizadas.",
     "data": "Dados",
     "webhook link copied": "Link do Webhook copiado.",
-    "copy url": "Copiar URL"
+    "copy url": "Copiar URL",
+    "trigger_check_warning": "Aviso: Detecção do uso da variável `trigger`, a execução manual do seu flow não atenderá a variável trigger."
   }
 }

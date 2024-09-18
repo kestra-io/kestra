@@ -826,6 +826,7 @@
     "system_namespace_description": "Automatisieren Sie Wartungsaufgaben, von Fehlerwarnungen bis hin zu automatisierten Bereinigungen.",
     "data": "Daten",
     "webhook link copied": "Webhook-Link kopiert.",
-    "copy url": "URL kopieren"
+    "copy url": "URL kopieren",
+    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen."
   }
 }

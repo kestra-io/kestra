@@ -826,6 +826,7 @@
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
     "data": "数据",
     "webhook link copied": "Webhook链接已复制。",
-    "copy url": "复制 URL"
+    "copy url": "复制 URL",
+    "trigger_check_warning": "警告：检测到使用 `trigger` 变量，手动执行您的 flow 不会满足 trigger 变量。"
   }
 }

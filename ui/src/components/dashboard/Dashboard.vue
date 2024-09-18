@@ -150,9 +150,12 @@
 
     const graphData = computed(() => store.state.stat.daily || []);
 
-    onBeforeMount(() => {
-        fetchNumbers();
-        fetchExecutions();
+    onBeforeMount(async () => {
+        try {
+            await Promise.any([fetchNumbers(), fetchExecutions()]);
+        } catch (error) {
+            console.error("All promises failed:", error);
+        }
     });
 </script>
 

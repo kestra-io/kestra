@@ -14,8 +14,15 @@
             </div>
 
             <div>
-                <div>right top</div>
-                <div>right bototm</div>
+                <div>
+                    <span class="pe-2 fw-light small">{{ t("duration") }}</span>
+                    <el-switch
+                        v-model="duration"
+                        :active-icon="Check"
+                        inline-prompt
+                    />
+                </div>
+                <div>sss</div>
             </div>
         </div>
         <Bar :data="parsedData" :options="options" class="tall" />
@@ -23,7 +30,7 @@
 </template>
 
 <script setup>
-    import {computed} from "vue";
+    import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
@@ -35,6 +42,8 @@
         backgroundFromState,
         getFormat,
     } from "../../../../utils/charts.js";
+
+    import Check from "vue-material-design-icons/Check.vue";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -74,23 +83,25 @@
             labels: props.data.map((r) =>
                 moment(r.startDate).format(getFormat(r.groupBy)),
             ),
-            datasets: [
-                {
-                    type: "line",
-                    label: false,
-                    fill: "start",
-                    pointRadius: 0,
-                    borderWidth: 0.2,
-                    borderColor: !darkTheme ? "#7081b9" : "#7989b4",
-                    yAxisID: "yB",
-                    data: props.data.map((value) => {
-                        return value.duration.avg === 0
-                            ? 0
-                            : Utils.duration(value.duration.avg);
-                    }),
-                },
-                ...Object.values(datasets),
-            ],
+            datasets: duration.value
+                ? [
+                    {
+                        type: "line",
+                        label: false,
+                        fill: "start",
+                        pointRadius: 0,
+                        borderWidth: 0.2,
+                        borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                        yAxisID: "yB",
+                        data: props.data.map((value) => {
+                            return value.duration.avg === 0
+                                ? 0
+                                : Utils.duration(value.duration.avg);
+                        }),
+                    },
+                    ...Object.values(datasets),
+                ]
+                : Object.values(datasets),
         };
     });
 
@@ -105,6 +116,7 @@
                     grid: {
                         display: false,
                     },
+                    position: "bottom",
                     display: true,
                     stacked: true,
                     ticks: {
@@ -132,12 +144,27 @@
                     },
                 },
                 yB: {
-                    display: false,
+                    title: {
+                        display: duration.value,
+                        text: t("duration"),
+                    },
+                    grid: {
+                        display: false,
+                    },
+                    display: duration.value,
                     position: "right",
+                    ticks: {
+                        maxTicksLimit: 8,
+                        callback: function (value) {
+                            return `${this.getLabelForValue(value)}s`;
+                        },
+                    },
                 },
             },
         }),
     );
+
+    const duration = ref(true);
 </script>
 
 <style lang="scss" scoped>

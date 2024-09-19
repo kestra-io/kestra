@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -16,6 +17,7 @@ import io.kestra.core.utils.IdUtils;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import io.micronaut.core.annotation.Nullable;
@@ -83,6 +85,23 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     )
     @PluginProperty
     private Map<String, Object> inputs;
+
+    @Nullable
+    @Schema(
+        title = "List of execution states that will be evaluated by the trigger",
+        description = """
+            By default, only executions in a terminal state will be evaluated.
+            If you use a condition of type `ExecutionStatusCondition` it will be evaluated after this list.
+            ::alert{type="info"}
+            The trigger will be evaluated on each execution state change, this means that, for non-terminal state, they can be observed multiple times.
+            For example, if a flow has two `Pause` tasks, the execution will transition two times from PAUSED to RUNNING so theses states will be observed two times.
+            ::
+            ::alert{type="warning"}
+            You cannot evaluate on the CREATED state.
+            ::"""
+    )
+    @Builder.Default
+    private List<State.Type> states = State.Type.terminatedTypes();
 
     public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();

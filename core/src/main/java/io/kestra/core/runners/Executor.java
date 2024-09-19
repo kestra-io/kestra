@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.State;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -36,6 +37,7 @@ public class Executor {
     private ExecutionResumed joinedExecutionResumed;
     private final List<WorkerTrigger> workerTriggers = new ArrayList<>();
     private WorkerJob workerJobToResubmit;
+    private State.Type originalState;
 
     /**
      * The sequence id should be incremented each time the execution is persisted after mutation.
@@ -50,12 +52,14 @@ public class Executor {
     public Executor(Execution execution, Long offset) {
         this.execution = execution;
         this.offset = offset;
+        this.originalState = execution.getState().getCurrent();
     }
 
     public Executor(Execution execution, Long offset, long seqId) {
         this.execution = execution;
         this.offset = offset;
         this.seqId = seqId;
+        this.originalState = execution.getState().getCurrent();
     }
 
     public Executor(WorkerTaskResult workerTaskResult) {

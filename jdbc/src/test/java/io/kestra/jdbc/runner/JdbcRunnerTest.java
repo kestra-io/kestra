@@ -199,6 +199,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void flowTriggerWithPause() throws Exception {
+        flowTriggerCaseTest.triggerWithPause();
+    }
+
+    @Test
     void multipleConditionTrigger() throws Exception {
         multipleConditionTriggerCaseTest.trigger();
     }

@@ -1,0 +1,13 @@
+id: trigger-flow-with-pause
+namespace: io.kestra.tests.trigger.pause
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+  - id: pause
+    type: io.kestra.plugin.core.flow.Pause
+    delay: PT0.5S
+  - id: hello_again
+    type: io.kestra.plugin.core.log.Log
+    message: I'm restarted

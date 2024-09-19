@@ -1,0 +1,21 @@
+id: trigger-flow-listener-with-pause
+namespace: io.kestra.tests.trigger.pause
+
+outputs:
+  - id: status
+    type: STRING
+    value: "{{trigger.state}}"
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello {{trigger.executionId}} you're in {{trigger.state}}
+
+triggers:
+  - id: listen-flow
+    type: io.kestra.plugin.core.trigger.Flow
+    states: [RUNNING, PAUSED, SUCCESS, WARNING, FAILED]
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+        namespace: io.kestra.tests.trigger.pause
+        flowId: trigger-flow-with-pause

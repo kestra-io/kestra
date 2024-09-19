@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Value
 @Slf4j
@@ -226,6 +227,9 @@ public class State {
             return this == Type.SUCCESS;
         }
 
+        public static List<Type> terminatedTypes() {
+            return Stream.of(Type.values()).filter(type -> type.isTerminated()).toList();
+        }
     }
 
     @Value

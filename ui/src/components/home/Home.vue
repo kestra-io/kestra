@@ -46,6 +46,14 @@
                     />
                 </el-form-item>
                 <el-form-item>
+                    <scope-filter-buttons
+                        :label="$t('data')"
+                        :value="scope"
+                        :system="namespace === 'system'"
+                        @update:model-value="onScopeSelect"
+                    />
+                </el-form-item>
+                <el-form-item>
                     <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
                 </el-form-item>
             </collapse>
@@ -236,7 +244,8 @@
                 namespaceRestricted: !!this.namespace,
                 refreshDates: false,
                 canAutoRefresh: false,
-                state: []
+                state: [],
+                scope: []
             };
         },
         methods: {

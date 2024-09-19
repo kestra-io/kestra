@@ -862,6 +862,7 @@
       "next_execution_date": "Next Execution Date",
       "id": "ID",
       "trigger_disabled": "This trigger can only be enabled through code."
-    }
+    },
+    "stop impersonate": "Stop impersonate {username}"
   }
 }

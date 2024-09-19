@@ -81,6 +81,17 @@
                     </template>
                 </el-dropdown>
                 <news />
+                <a
+                    v-if="impersonateUser.length > 0"
+                    target="_blank"
+                    class="d-flex gap-2 el-dropdown-menu__item"
+                >
+                    <el-tooltip :content="$t('stop impersonate', {username: impersonateUser})">
+                        <el-button>
+                            <AccountAlert @click="stopImpersonate()" />
+                        </el-button>
+                    </el-tooltip>
+                </a>
                 <auth />
             </div>
         </div>
@@ -97,7 +108,9 @@
     import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
     import Update from "vue-material-design-icons/Update.vue";
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
-    import GlobalSearch from "./GlobalSearch.vue"
+    import GlobalSearch from "./GlobalSearch.vue";
+    import {storageKeys} from "../../utils/constants.js";
+    import AccountAlert from "vue-material-design-icons/AccountAlert.vue";
 
     export default {
         components: {
@@ -110,7 +123,8 @@
             EmailHeartOutline,
             Update,
             ProgressQuestion,
-            GlobalSearch
+            GlobalSearch,
+            AccountAlert
         },
         props: {
             title: {
@@ -127,6 +141,9 @@
             ...mapState("core", ["tutorialFlows"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
+            impersonateUser() {
+                return localStorage.getItem(storageKeys.IMPERSONATE);
+            },
             displayNavBar() {
                 return this.$route?.name !== "welcome";
             },
@@ -141,10 +158,19 @@
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
 
                 this.$tours["guidedTour"]?.start();
+            },
+            stopImpersonate(){
+                localStorage.setItem(storageKeys.IMPERSONATE, "");
+                this.$store.dispatch("user/refresh");
+                this.moveToHome();
+            },
+            async moveToHome() {
+                await this.$router.push({name: "home"});
+                location.reload();
             }
         }
     };
-</script>
+</script>,
 <style lang="scss" scoped>
     nav {
         top: 0;

@@ -81,6 +81,7 @@
                     </template>
                 </el-dropdown>
                 <news />
+                <impersonating />
                 <auth />
             </div>
         </div>
@@ -89,6 +90,7 @@
 <script>
     import {mapState, mapGetters} from "vuex";
     import Auth from "override/components/auth/Auth.vue";
+    import Impersonating from "override/components/auth/Impersonating.vue";
     import News from "./News.vue";
     import HelpBox from "vue-material-design-icons/HelpBox.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
@@ -97,7 +99,7 @@
     import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
     import Update from "vue-material-design-icons/Update.vue";
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
-    import GlobalSearch from "./GlobalSearch.vue"
+    import GlobalSearch from "./GlobalSearch.vue";
 
     export default {
         components: {
@@ -110,7 +112,8 @@
             EmailHeartOutline,
             Update,
             ProgressQuestion,
-            GlobalSearch
+            GlobalSearch,
+            Impersonating
         },
         props: {
             title: {
@@ -144,7 +147,7 @@
             }
         }
     };
-</script>
+</script>,
 <style lang="scss" scoped>
     nav {
         top: 0;

@@ -28,4 +28,5 @@ public class CrudEvent<T> {
         this.type = type;
         this.request = ServerRequestContext.currentRequest().orElse(null);
     }
+
 }

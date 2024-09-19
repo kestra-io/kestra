@@ -65,15 +65,6 @@
                 <ExecutionsNextScheduled />
             </el-col>
         </el-row>
-
-        <el-row :gutter="20" class="mx-0">
-            <el-col :xs="24">
-                <ExecutionsNamespace
-                    :data="namespaceExecutions"
-                    :total="stats.total"
-                />
-            </el-col>
-        </el-row>
     </div>
 </template>
 
@@ -93,7 +84,6 @@
 
     import ExecutionsBar from "./components/charts/executions/Bar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
-    import ExecutionsNamespace from "./components/charts/executions/Namespace.vue";
 
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
@@ -165,29 +155,9 @@
 
     const graphData = computed(() => store.state.stat.daily || []);
 
-    const namespaceExecutions = ref({});
-    const fetchNamespaceExecutions = () => {
-        const startDate = moment().subtract(30, "days").toISOString();
-        const endDate = moment().toISOString();
-
-        store
-            .dispatch("stat/dailyGroupByFlow", {
-                startDate,
-                endDate,
-                namespaceOnly: true,
-            })
-            .then((response) => {
-                namespaceExecutions.value = response;
-            });
-    };
-
     onBeforeMount(async () => {
         try {
-            await Promise.any([
-                fetchNumbers(),
-                fetchExecutions(),
-                fetchNamespaceExecutions(),
-            ]);
+            await Promise.any([fetchNumbers(), fetchExecutions()]);
         } catch (error) {
             console.error("All promises failed:", error);
         }

@@ -119,7 +119,7 @@ const STATE = Object.freeze({
         icon: Refresh,
         isRunning: false,
         isKillable: true,
-        isFailed: false
+        isFailed: false,
     },
     RETRIED: {
         name: "RETRIED",
@@ -128,8 +128,8 @@ const STATE = Object.freeze({
         icon: Refresh,
         isRunning: false,
         isKillable: false,
-        isFailed: false
-    }
+        isFailed: false,
+    },
 });
 
 export default class State {
@@ -202,13 +202,13 @@ export default class State {
     }
 
     static allStates() {
-        return _mapValues(STATE, state => {
+        return _mapValues(STATE, (state) => {
             return {
                 key: state.name,
                 icon: state.icon,
                 color: cssVariable("--bs-" + state.colorClass),
-                colorClass: state.colorClass
-            }
+                colorClass: state.colorClass,
+            };
         });
     }
 
@@ -217,11 +217,13 @@ export default class State {
     }
 
     static colorClass() {
-        return _mapValues(STATE, state => state.colorClass);
+        return _mapValues(STATE, (state) => state.colorClass);
     }
 
     static color() {
-        return _mapValues(STATE, state => cssVariable("--bs-" + state.colorClass));
+        return _mapValues(STATE, (state) =>
+            cssVariable("--bs-" + state.colorClass),
+        );
     }
 
     static getStateColor(state) {
@@ -229,6 +231,6 @@ export default class State {
     }
 
     static icon() {
-        return _mapValues(STATE, state => state.icon);
+        return _mapValues(STATE, (state) => state.icon);
     }
 }

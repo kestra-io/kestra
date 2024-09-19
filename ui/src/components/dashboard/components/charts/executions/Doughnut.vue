@@ -24,10 +24,10 @@
 
     import {Doughnut} from "vue-chartjs";
 
-    import {totalsLegend} from "./legend.js";
+    import {totalsLegend} from "../legend.js";
 
-    import Utils from "../../../../utils/utils.js";
-    import {defaultConfig, getStateColor} from "../../../../utils/charts.js";
+    import Utils from "../../../../../utils/utils.js";
+    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -83,7 +83,7 @@
             ctx.font = "700 16px Public Sans";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillStyle = darkTheme ? "FFFFFF" : "000000";
+            ctx.fillStyle = darkTheme ? "#FFFFFF" : "#000000";
 
             ctx.fillText(total, centerX, centerY);
 

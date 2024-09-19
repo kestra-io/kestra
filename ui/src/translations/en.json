@@ -842,18 +842,19 @@
     "data": "Data",
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
-    "dashboard": {
-      "success_ratio": "Success Ratio",
-      "failure_ratio": "Failure Ratio",
-      "per_day": " (per day)",
-      "total_executions": "Total Executions"
-    },
+  
     "scheduleDate": "Schedule date",
     "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "failure_ratio": "Failure Ratio",
-      "per_day": " (per day)"
+      "per_day": " (per day)",
+      "per_namespace": " (per namespace)",
+      "total_executions": "Total Executions",
+      "executions_in_progress": "Executions In Progress",
+      "next_scheduled_executions": "Next Scheduled Executions",
+      "next_execution_date": "Next Execution Date",
+      "id": "ID"
     }
   }
 }

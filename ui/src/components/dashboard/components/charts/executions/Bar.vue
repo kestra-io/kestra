@@ -41,14 +41,14 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {executionsLegend} from "./legend.js";
+    import {executionsLegend} from "../legend.js";
 
-    import Utils from "../../../../utils/utils.js";
+    import Utils from "../../../../../utils/utils.js";
     import {
         defaultConfig,
         getStateColor,
         getFormat,
-    } from "../../../../utils/charts.js";
+    } from "../../../../../utils/charts.js";
 
     import Check from "vue-material-design-icons/Check.vue";
 

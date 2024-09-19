@@ -1166,6 +1166,20 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?page=1&size=-1"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?page=0"))
+        );
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow

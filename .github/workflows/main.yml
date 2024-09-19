@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - releases/*
     tags:
       - v*
   pull_request:

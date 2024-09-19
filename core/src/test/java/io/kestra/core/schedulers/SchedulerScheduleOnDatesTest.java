@@ -12,6 +12,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -251,7 +252,9 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             Await.until(() -> scheduler.isReady(), Duration.ofMillis(100), Duration.ofSeconds(5));
 
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS), is(now.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)));
+            // depending on the exact timing of events, the next date can be now or after
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime().truncatedTo(ChronoUnit.SECONDS),
+                oneOf(now.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS), after.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)));
         }
     }
 }

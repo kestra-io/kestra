@@ -828,6 +828,17 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: `trigger` 변수가 감지되었습니다. flow를 수동으로 실행해도 trigger 변수를 충족하지 않습니다."
+    "trigger_check_warning": "경고: `trigger` 변수가 감지되었습니다. flow를 수동으로 실행해도 trigger 변수를 충족하지 않습니다.",
+    "dashboard": {
+      "per_namespace": "(네임스페이스별)",
+      "id": "ID",
+      "per_day": "(하루당)",
+      "total_executions": "총 실행 횟수",
+      "success_ratio": "성공 비율",
+      "next_scheduled_executions": "다음 예정된 실행",
+      "executions_in_progress": "진행 중인 실행",
+      "next_execution_date": "다음 실행 날짜",
+      "failure_ratio": "실패 비율"
+    }
   }
 }

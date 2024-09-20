@@ -828,6 +828,17 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "चेतावनी: `trigger` वेरिएबल का उपयोग पाया गया है, आपके flow को मैन्युअली निष्पादित करने से trigger वेरिएबल पूरा नहीं होगा।"
+    "trigger_check_warning": "चेतावनी: `trigger` वेरिएबल का उपयोग पाया गया है, आपके flow को मैन्युअली निष्पादित करने से trigger वेरिएबल पूरा नहीं होगा।",
+    "dashboard": {
+      "per_namespace": "(प्रति namespace)",
+      "id": "आईडी",
+      "per_day": "(प्रति दिन)",
+      "total_executions": "कुल Executions",
+      "success_ratio": "सफलता अनुपात",
+      "next_scheduled_executions": "अगली निर्धारित Executions",
+      "executions_in_progress": "प्रगति में Executions",
+      "next_execution_date": "अगली Execution Date",
+      "failure_ratio": "विफलता अनुपात"
+    }
   }
 }

@@ -828,6 +828,17 @@
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
-    "trigger_check_warning": "Предупреждение: Обнаружено использование переменной `trigger`, выполнение вашего flow вручную не выполнит переменную trigger."
+    "trigger_check_warning": "Предупреждение: Обнаружено использование переменной `trigger`, выполнение вашего flow вручную не выполнит переменную trigger.",
+    "dashboard": {
+      "per_namespace": "(на namespace)",
+      "id": "ID",
+      "per_day": "(в день)",
+      "total_executions": "Общее количество выполнений",
+      "success_ratio": "Коэффициент Успеха",
+      "next_scheduled_executions": "Следующие запланированные выполнения",
+      "executions_in_progress": "Выполняемые задачи",
+      "next_execution_date": "Следующая дата выполнения",
+      "failure_ratio": "Коэффициент отказов"
+    }
   }
 }

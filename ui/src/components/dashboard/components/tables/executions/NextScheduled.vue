@@ -97,6 +97,19 @@
 
     import Check from "vue-material-design-icons/Check.vue";
 
+    const props = defineProps({
+        flow: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        namespace: {
+            type: String,
+            required: false,
+            default: null,
+        },
+    });
+
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
@@ -106,6 +119,8 @@
     const loadExecutions = (page = 1) => {
         store
             .dispatch("trigger/search", {
+                namespace: props.namespace,
+                flowId: props.flow,
                 size: 5,
                 page,
                 sort: "next_execution_date:asc",

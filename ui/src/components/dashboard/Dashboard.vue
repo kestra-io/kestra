@@ -1,5 +1,5 @@
 <template>
-    <Header />
+    <Header v-if="!embed" />
 
     <div class="filters">
         <el-row :gutter="10" class="mx-0">
@@ -7,6 +7,7 @@
                 <namespace-select
                     v-model="filters.namespace"
                     :data-type="'flow'"
+                    :disabled="!!props.flow || !!props.namespace"
                     @update:model-value="updateParams()"
                 />
             </el-col>
@@ -111,10 +112,16 @@
 
         <el-row :gutter="20" class="mx-0">
             <el-col :xs="24" :lg="12">
-                <ExecutionsInProgress />
+                <ExecutionsInProgress
+                    :flow="props.flow"
+                    :namespace="props.namespace"
+                />
             </el-col>
             <el-col :xs="24" :lg="12">
-                <ExecutionsNextScheduled />
+                <ExecutionsNextScheduled
+                    :flow="props.flow"
+                    :namespace="props.namespace"
+                />
             </el-col>
         </el-row>
 
@@ -171,6 +178,23 @@
     const router = useRouter();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
+
+    const props = defineProps({
+        embed: {
+            type: Boolean,
+            default: false,
+        },
+        flow: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        namespace: {
+            type: String,
+            required: false,
+            default: null,
+        },
+    });
 
     const filters = ref({
         namespace: null,
@@ -289,7 +313,8 @@
         });
 
         filters.value = {
-            namespace: completeParams.namespace,
+            namespace: props.namespace ?? completeParams.namespace,
+            flowId: props.flow ?? null,
             state: completeParams.state?.filter(Boolean).length
                 ? [].concat(completeParams.state)
                 : undefined,
@@ -299,6 +324,8 @@
                 ? [].concat(completeParams.scope)
                 : undefined,
         };
+
+        completeParams.flowId = props.flow ?? null;
 
         delete completeParams.timeRange;
         for (const key in completeParams) {

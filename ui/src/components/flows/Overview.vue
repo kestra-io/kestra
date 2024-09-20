@@ -1,25 +1,16 @@
 <template>
-    <div>
-        <home
-            v-if="flow"
-            :namespace="flow.namespace"
-            :flow-id="flow.id"
-            :restore-url="false"
-            embed
-        />
-    </div>
+    <Dashboard :flow="flow.id" embed />
 </template>
 
 <script>
-    import Home from "../home/Home.vue";
+    import Dashboard from "../dashboard/Dashboard.vue";
     import {mapGetters} from "vuex";
 
     export default {
-        components: {
-            Home
-        },
+        components: {Dashboard},
+        emits: ["expandSubflow"],
         computed: {
             ...mapGetters("flow", ["flow"]),
-        }
-    }
+        },
+    };
 </script>

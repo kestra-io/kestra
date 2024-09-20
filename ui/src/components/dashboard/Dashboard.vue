@@ -1,6 +1,58 @@
 <template>
     <Header />
 
+    <div class="filters">
+        <el-row :gutter="10" class="mx-0">
+            <el-col :xs="24" :lg="4">
+                <namespace-select
+                    v-model="filters.namespace"
+                    :data-type="'flow'"
+                    @update:model-value="updateParams()"
+                />
+            </el-col>
+            <el-col :xs="24" :lg="4">
+                <el-select
+                    v-model="filters.state"
+                    clearable
+                    filterable
+                    collapse-tags
+                    multiple
+                    :placeholder="$t('state')"
+                    @update:model-value="updateParams()"
+                >
+                    <el-option
+                        v-for="item in State.allStates()"
+                        :key="item.key"
+                        :label="item.key"
+                        :value="item.key"
+                    />
+                </el-select>
+            </el-col>
+            <el-col :xs="24" :lg="8">
+                <date-filter
+                    @update:is-relative="toggleAutoRefresh"
+                    @update:filter-value="(dates) => updateParams(dates)"
+                    absolute
+                    class="d-flex flex-row"
+                />
+            </el-col>
+            <el-col :xs="24" :sm="16" :lg="4">
+                <scope-filter-buttons
+                    v-model="filters.scope"
+                    :label="$t('data')"
+                    @update:model-value="updateParams()"
+                />
+            </el-col>
+            <el-col :xs="24" :sm="8" :lg="4">
+                <refresh-button
+                    class="float-right"
+                    @refresh="fetchAll()"
+                    :can-auto-refresh="canAutoRefresh"
+                />
+            </el-col>
+        </el-row>
+    </div>
+
     <div class="dashboard">
         <el-row :gutter="20" class="mx-0">
             <el-col :xs="24" :sm="12" :lg="6">
@@ -85,6 +137,7 @@
 
 <script setup>
     import {onBeforeMount, ref, computed} from "vue";
+    import {useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -96,6 +149,11 @@
 
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
+
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import DateFilter from "../executions/date-select/DateFilter.vue";
+    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue";
+    import RefreshButton from "../layout/RefreshButton.vue";
 
     import ExecutionsBar from "./components/charts/executions/Bar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
@@ -110,15 +168,32 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
 
+    const router = useRouter();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
+    const filters = ref({
+        namespace: null,
+        state: [],
+        startDate: null,
+        endDate: null,
+        timeRange: "PT720H",
+        scope: ["USER"],
+    });
+
+    const canAutoRefresh = ref(false);
+    const toggleAutoRefresh = (event) => {
+        canAutoRefresh.value = event;
+    };
+
     const numbers = ref({flows: 0, triggers: 0});
     const fetchNumbers = () => {
-        store.$http.post(`${apiUrl(store)}/stats/summary`, {}).then((response) => {
-            if (!response.data) return;
-            numbers.value = response.data;
-        });
+        store.$http
+            .post(`${apiUrl(store)}/stats/summary`, filters.value)
+            .then((response) => {
+                if (!response.data) return;
+                numbers.value = response.data;
+            });
     };
 
     const executions = ref({raw: {}, all: {}, yesterday: {}, today: {}});
@@ -153,10 +228,7 @@
         }, null);
     };
     const fetchExecutions = () => {
-        const startDate = moment().subtract(30, "days").toISOString();
-        const endDate = moment().toISOString();
-
-        store.dispatch("stat/daily", {startDate, endDate}).then((response) => {
+        store.dispatch("stat/daily", filters.value).then((response) => {
             const sorted = response.sort(
                 (a, b) => new Date(b.date) - new Date(a.date),
             );
@@ -174,13 +246,9 @@
 
     const namespaceExecutions = ref({});
     const fetchNamespaceExecutions = () => {
-        const startDate = moment().subtract(30, "days").toISOString();
-        const endDate = moment().toISOString();
-
         store
             .dispatch("stat/dailyGroupByFlow", {
-                startDate,
-                endDate,
+                ...filters.value,
                 namespaceOnly: true,
             })
             .then((response) => {
@@ -190,15 +258,59 @@
 
     const logs = ref([]);
     const fetchLogs = () => {
-        const startDate = moment().subtract(30, "days").toISOString();
-        const endDate = moment().toISOString();
-
-        store.dispatch("stat/logDaily", {startDate, endDate}).then((response) => {
+        store.dispatch("stat/logDaily", filters.value).then((response) => {
             logs.value = response;
         });
     };
 
-    onBeforeMount(async () => {
+    const handleDatesUpdate = (dates) => {
+        const {startDate, endDate, timeRange} = dates;
+
+        if (startDate && endDate) {
+            filters.value = {...filters.value, startDate, endDate, timeRange};
+        } else if (timeRange) {
+            filters.value = {
+                ...filters.value,
+                startDate: moment()
+                    .subtract(moment.duration(timeRange).as("milliseconds"))
+                    .toISOString(true),
+                endDate: moment().toISOString(true),
+                timeRange,
+            };
+        }
+
+        return Promise.resolve(filters.value);
+    };
+
+    const updateParams = async (params) => {
+        const completeParams = await handleDatesUpdate({
+            ...filters.value,
+            ...params,
+        });
+
+        filters.value = {
+            namespace: completeParams.namespace,
+            state: completeParams.state?.filter(Boolean).length
+                ? [].concat(completeParams.state)
+                : undefined,
+            startDate: completeParams.startDate,
+            endDate: completeParams.endDate,
+            scope: completeParams.scope?.filter(Boolean).length
+                ? [].concat(completeParams.scope)
+                : undefined,
+        };
+
+        delete completeParams.timeRange;
+        for (const key in completeParams) {
+            if (completeParams[key] == null) {
+                delete completeParams[key];
+            }
+        }
+
+        router.push({query: completeParams}).then(fetchAll());
+    };
+
+    const fetchAll = async () => {
         try {
             await Promise.any([
                 fetchNumbers(),
@@ -209,7 +321,9 @@
         } catch (error) {
             console.error("All promises failed:", error);
         }
-    });
+    };
+
+    onBeforeMount(() => updateParams());
 </script>
 
 <style lang="scss" scoped>
@@ -217,6 +331,7 @@
 
 $spacing: 20px;
 
+.filters,
 .dashboard {
     padding: $spacing;
 
@@ -231,6 +346,18 @@ $spacing: 20px;
                 background: var(--card-bg);
             }
         }
+    }
+}
+
+.filters {
+    padding-bottom: 0;
+
+    & .el-row {
+        padding: 0 5px;
+    }
+
+    & .el-col {
+        padding-bottom: 0 !important;
     }
 }
 </style>

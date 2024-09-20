@@ -44,11 +44,15 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
+
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
+    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors() * 2;
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ExecutorService poolExecutor;
+    private final ExecutorService asyncPoolExecutor;
 
     protected final QueueService queueService;
 
@@ -69,6 +73,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
+        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
@@ -143,7 +148,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void emitAsync(String consumerGroup, T message) throws QueueException {
-        this.emit(consumerGroup, message);
+        this.asyncPoolExecutor.submit(throwRunnable(() -> this.emit(consumerGroup, message)));
     }
 
     @Override
@@ -334,7 +339,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         if (!this.isClosed.compareAndSet(false, true)) {
             return;
         }
-        poolExecutor.shutdown();
+        this.poolExecutor.shutdown();
+        this.asyncPoolExecutor.shutdown();
     }
 
     @ConfigurationProperties("kestra.jdbc.queues")

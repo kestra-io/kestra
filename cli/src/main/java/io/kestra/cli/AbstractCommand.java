@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import jakarta.inject.Inject;
@@ -44,6 +45,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Inject
     private StartupHookInterface startupHook;
+
+    @Inject
+    private io.kestra.core.utils.VersionProvider versionProvider;
 
     private PluginRegistry pluginRegistry;
 
@@ -123,8 +127,25 @@ abstract public class AbstractCommand implements Callable<Integer> {
             this.logLevel = LogLevel.TRACE;
         }
 
+
         if (this instanceof ServerCommandInterface) {
-            log.info("Starting Kestra with environments {}", applicationContext.getEnvironment().getActiveNames());
+            String buildInfo = "";
+            if (versionProvider.getRevision() != null) {
+                buildInfo += " [revision " + versionProvider.getRevision();
+
+                if (versionProvider.getDate() != null) {
+                    buildInfo += " / " + versionProvider.getDate().toLocalDateTime().truncatedTo(ChronoUnit.MINUTES);
+                }
+
+                buildInfo += "]";
+            }
+
+            log.info(
+                "Starting Kestra {} with environments {}{}",
+                versionProvider.getVersion(),
+                applicationContext.getEnvironment().getActiveNames(),
+                buildInfo
+            );
         }
 
         ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())

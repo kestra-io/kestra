@@ -841,8 +841,7 @@
     },
     "data": "Data",
     "webhook link copied": "Webhook link copied.",
-    "copy url": "Copy URL",
-  
+    "copy url": "Copy URL",  
     "scheduleDate": "Schedule date",
     "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
     "dashboard": {

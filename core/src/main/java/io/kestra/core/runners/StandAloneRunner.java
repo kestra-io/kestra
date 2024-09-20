@@ -29,6 +29,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     @Setter protected boolean schedulerEnabled = true;
     @Setter protected boolean workerEnabled = true;
+    @Setter protected boolean indexerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -65,7 +66,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
             servers.add(scheduler);
         }
 
-        if (applicationContext.containsBean(IndexerInterface.class)) {
+        if (indexerEnabled) {
             IndexerInterface indexer = applicationContext.getBean(IndexerInterface.class);
             poolExecutor.execute(indexer);
             servers.add(indexer);

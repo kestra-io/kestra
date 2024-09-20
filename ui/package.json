@@ -45,7 +45,7 @@
     "pdfjs-dist": "^4.6.82",
     "posthog-js": "^1.161.3",
     "throttle-debounce": "^5.0.2",
-    "vue": "^3.5.5",
+    "vue": "^3.5.6",
     "vue-axios": "3.5.2",
     "vue-chartjs": "^5.3.1",
     "vue-gtag": "^2.0.1",

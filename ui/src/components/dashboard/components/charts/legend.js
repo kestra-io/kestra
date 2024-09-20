@@ -18,8 +18,8 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
     return listContainer;
 };
 
-export const executionsLegend = {
-    id: "executionsLegend",
+export const barLegend = {
+    id: "barLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 

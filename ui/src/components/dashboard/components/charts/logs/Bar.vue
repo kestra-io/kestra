@@ -3,18 +3,12 @@
         <div class="d-flex flex justify-content-between pb-4">
             <div>
                 <p class="m-0 fs-6">
-                    <span class="fw-bold">{{ t("executions") }}</span>
-                    <span class="fw-light small">
-                        {{ t("dashboard.per_namespace") }}
-                    </span>
-                </p>
-                <p class="m-0 fs-2">
-                    {{ total }}
+                    <span class="fw-bold">{{ t("logs") }}</span>
                 </p>
             </div>
 
             <div>
-                <div id="pernamespace" />
+                <div id="logs" />
             </div>
         </div>
         <Bar
@@ -30,79 +24,64 @@
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
 
+    import moment from "moment";
     import {Bar} from "vue-chartjs";
 
     import {barLegend} from "../legend.js";
 
-    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
+    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import Logs from "../../../../../utils/logs.js";
 
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({
         data: {
-            type: Object,
-            required: true,
-        },
-        total: {
-            type: Number,
+            type: Array,
             required: true,
         },
     });
 
     const parsedData = computed(() => {
-        const labels = Object.keys(props.data);
-        const executionData = {};
-
-        // eslint-disable-next-line no-unused-vars
-        for (const [namespace, values] of Object.entries(props.data)) {
-            let totalCounts = {};
-
-            for (const item of values["*"]) {
-                for (const [status, count] of Object.entries(
-                    item.executionCounts,
-                )) {
-                    totalCounts[status] = (totalCounts[status] || 0) + count;
-
-                    if (!executionData[status]) {
-                        executionData[status] = [];
-                    }
+        let datasets = props.data.reduce(function (accumulator, value) {
+            Object.keys(value.counts).forEach(function (state) {
+                if (accumulator[state] === undefined) {
+                    accumulator[state] = {
+                        label: state,
+                        backgroundColor: Logs.graphColors(state),
+                        borderRadius: 4,
+                        yAxisID: "y",
+                        data: [],
+                    };
                 }
-            }
 
-            for (const [status, count] of Object.entries(totalCounts)) {
-                executionData[status].push(count);
-            }
-        }
+                accumulator[state].data.push(value.counts[state]);
+            });
 
-        const datasets = Object.entries(executionData)
-            .map(([label, data]) => ({
-                label,
-                data: data.map((item) => (item === 0 ? null : item)),
-                backgroundColor: getStateColor(label),
-                stack: label,
-            }))
-            .filter((dataset) => dataset.data.some((count) => count > 0));
+            return accumulator;
+        }, Object.create(null));
+
+        datasets = Logs.sort(datasets);
 
         return {
-            labels: labels,
-            datasets: datasets,
+            labels: props.data.map((r) =>
+                moment(r.timestamp).format(getFormat(r.groupBy)),
+            ),
+            datasets: Object.values(datasets),
         };
     });
 
     const options = computed(() =>
         defaultConfig({
-            barThickness: 20,
-            skipNull: true,
             plugins: {
                 barLegend: {
-                    containerID: "pernamespace",
+                    containerID: "logs",
                 },
             },
             scales: {
                 x: {
                     title: {
-                        display: false,
-                        text: t("namespace"),
+                        display: true,
+                        text: t("date"),
                     },
                     grid: {
                         display: false,
@@ -110,6 +89,14 @@
                     position: "bottom",
                     display: true,
                     stacked: true,
+                    ticks: {
+                        maxTicksLimit: 8,
+                        callback: function (value) {
+                            return moment(
+                                new Date(this.getLabelForValue(value)),
+                            ).format("MM/DD");
+                        },
+                    },
                 },
                 y: {
                     title: {

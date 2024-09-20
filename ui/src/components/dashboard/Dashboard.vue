@@ -74,6 +74,12 @@
                 />
             </el-col>
         </el-row>
+
+        <el-row :gutter="20" class="mx-0">
+            <el-col :xs="24">
+                <Logs :data="logs" />
+            </el-col>
+        </el-row>
     </div>
 </template>
 
@@ -94,6 +100,7 @@
     import ExecutionsBar from "./components/charts/executions/Bar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
     import ExecutionsNamespace from "./components/charts/executions/Namespace.vue";
+    import Logs from "./components/charts/logs/Bar.vue";
 
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
@@ -181,12 +188,23 @@
             });
     };
 
+    const logs = ref([]);
+    const fetchLogs = () => {
+        const startDate = moment().subtract(30, "days").toISOString();
+        const endDate = moment().toISOString();
+
+        store.dispatch("stat/logDaily", {startDate, endDate}).then((response) => {
+            logs.value = response;
+        });
+    };
+
     onBeforeMount(async () => {
         try {
             await Promise.any([
                 fetchNumbers(),
                 fetchExecutions(),
                 fetchNamespaceExecutions(),
+                fetchLogs(),
             ]);
         } catch (error) {
             console.error("All promises failed:", error);

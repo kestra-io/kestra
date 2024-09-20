@@ -28,7 +28,7 @@
         <Bar
             :data="parsedData"
             :options="options"
-            :plugins="[executionsLegend]"
+            :plugins="[barLegend]"
             class="tall"
         />
     </div>
@@ -41,7 +41,7 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {executionsLegend} from "../legend.js";
+    import {barLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
     import {
@@ -115,7 +115,7 @@
     const options = computed(() =>
         defaultConfig({
             plugins: {
-                executionsLegend: {
+                barLegend: {
                     containerID: "executions",
                 },
             },

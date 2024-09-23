@@ -5,6 +5,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -349,14 +350,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                List<Label> labels = generateLabels(conditionContext, backfill);
                 Execution execution = Execution.builder()
                     .id(runContext.getTriggerExecutionId())
                     .tenantId(triggerContext.getTenantId())
                     .namespace(triggerContext.getNamespace())
                     .flowId(triggerContext.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())
-                    .labels(labels)
+                    .labels(generateLabels(runContext, conditionContext, backfill))
                     .state(new State().withState(State.Type.FAILED))
                     .build();
                 return Optional.of(execution);
@@ -390,7 +390,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         } else {
             variables = scheduleDates.toMap();
         }
-        List<Label> labels = generateLabels(conditionContext, backfill);
+        List<Label> labels = generateLabels(runContext, conditionContext, backfill);
 
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
@@ -425,19 +425,29 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .orElse(RecoverMissedSchedules.ALL);
     }
 
-    private List<Label> generateLabels(ConditionContext conditionContext, Backfill backfill) {
+    private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext, Backfill backfill) throws IllegalVariableEvaluationException {
         List<Label> labels = new ArrayList<>();
 
         if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels());
+            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
         }
 
         if (backfill != null && backfill.getLabels() != null) {
-            labels.addAll(backfill.getLabels());
+            for (Label label : backfill.getLabels()) {
+                final var value = runContext.render(label.value());
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
         }
 
         if (this.getLabels() != null) {
-            labels.addAll(this.getLabels());
+            for (Label label : this.getLabels()) {
+                final var value = runContext.render(label.value());
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
         }
 
         return labels;

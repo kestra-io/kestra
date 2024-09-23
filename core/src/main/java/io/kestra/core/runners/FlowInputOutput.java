@@ -14,7 +14,9 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
@@ -224,18 +226,25 @@ public class FlowInputOutput {
             return Collections.emptyList();
         }
 
+        RunContext runContext = runContextFactory.of(null, execution);
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(inputs.stream()
             .map(input -> {
                 Object value = Optional.ofNullable((Object) data.get(input.getId())).orElseGet(input::getDefaults);
-                RunContext runContext = runContextFactory.of(null, execution);
-                input = RenderableInput.mayRenderInput(input, template -> {
-                    try {
-                        return runContext.renderTyped(template);
-                    } catch (IllegalVariableEvaluationException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return ResolvableInput.of(input, value);
+                ResolvableInput res;
+                try {
+                    input = RenderableInput.mayRenderInput(input, expression -> {
+                        try {
+                            return runContext.renderTyped(expression);
+                        } catch (IllegalVariableEvaluationException e) {
+                            throw new RuntimeException(e.getMessage(), e);
+                        }
+                    });
+                    res = ResolvableInput.of(input, value);
+                } catch (ConstraintViolationException e) {
+                    res = ResolvableInput.of(input, value);
+                    res.resolveWithError(e);
+                }
+                return res;
             })
             .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)));
 
@@ -268,9 +277,14 @@ public class FlowInputOutput {
                         RunContext runContext = runContextFactory.of(null, execution);
                         mustBeResolved = Boolean.parseBoolean(runContext.render(dependsOnCondition));
                     } catch (Exception e) {
-                        // disable input if an error is thrown during condition rendering
-                        resolvable.resolveWithEnabled(false);
-                        throw e;
+                        resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
+                            "Invalid condition: " + e.getMessage(),
+                            input,
+                            (Class<Input>)input.getClass(),
+                            input.getId(),
+                            this
+                        ));
+                        mustBeResolved = false;
                     }
                 } else {
                     // resolve all dependent inputs
@@ -294,10 +308,15 @@ public class FlowInputOutput {
                         try {
                             RunContext runContext = runContextFactory.of(null, execution, vars -> vars.withInputs(flattenInputs));
                             mustBeResolved = Boolean.parseBoolean(runContext.render(dependsOnCondition));
-                        } catch (Exception e) {
-                            // disable input if an error is thrown during condition rendering
-                            resolvable.resolveWithEnabled(false);
-                            throw e;
+                        } catch (IllegalVariableEvaluationException e) {
+                            resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
+                                "Invalid condition: " + e.getMessage(),
+                                input,
+                                (Class<Input>)input.getClass(),
+                                input.getId(),
+                                this
+                            ));
+                            mustBeResolved = false;
                         }
                     }
                 }
@@ -483,17 +502,17 @@ public class FlowInputOutput {
         }
 
         public void resolveWithEnabled(@Nullable boolean enabled) {
-            this.input = new InputAndValue(input.input(), input.value(), enabled, null);
+            this.input = new InputAndValue(input.input(), input.value(), enabled, input.exception());
             markAsResolved();
         }
 
         public void resolveWithValue(@Nullable Object value) {
-            this.input = new InputAndValue(input.input(), value, true, null);
+            this.input = new InputAndValue(input.input(), value, input.enabled(), input.exception());
             markAsResolved();
         }
 
         public void resolveWithError(@Nullable ConstraintViolationException exception) {
-            this.input  =new InputAndValue(input.input(), input.value(), input.enabled(), exception);
+            this.input = new InputAndValue(input.input(), input.value(), input.enabled(), exception);
             markAsResolved();
         }
 

@@ -45,6 +45,9 @@ import lombok.experimental.SuperBuilder;
 })
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Input<T> implements Data {
+    @Schema(
+        title = "The ID of the input."
+    )
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][.a-zA-Z0-9_-]*")
@@ -53,17 +56,29 @@ public abstract class Input<T> implements Data {
     @Deprecated
     String name;
 
+    @Schema(
+        title = "The type of the input."
+    )
     @NotNull
     @Valid
     Type type;
 
+    @Schema(
+        title = "The description of the input."
+    )
     String description;
 
+    @Schema(
+        title = "The dependencies of the input."
+    )
     DependsOn dependsOn;
 
     @Builder.Default
     Boolean required = true;
 
+    @Schema(
+        title = "The default value to use if no value is specified."
+    )
     Object defaults;
 
     @Schema(

@@ -20,7 +20,7 @@ class MultiselectInputTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void shouldRenderInputGivenExpression() {
+    void shouldRenderInputGivenExpressionReturningStrings() {
         // Given
         RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
         MultiselectInput input = MultiselectInput
@@ -38,5 +38,26 @@ class MultiselectInputTest {
         });
         // Then
         Assertions.assertEquals(((MultiselectInput)renderInput).getValues(), List.of("V1", "V2"));
+    }
+
+    @Test
+    void shouldRenderInputGivenExpressionReturningIntegers() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of(1, 2)));
+        MultiselectInput input = MultiselectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .build();
+        // When
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s -> {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        // Then
+        Assertions.assertEquals(((MultiselectInput)renderInput).getValues(), List.of("1", "2"));
     }
 }

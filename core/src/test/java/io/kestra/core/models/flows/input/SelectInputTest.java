@@ -20,7 +20,7 @@ class SelectInputTest {
     RunContextFactory runContextFactory;
 
     @Test
-    void shouldRenderInputGivenExpression() {
+    void shouldRenderInputGivenExpressionReturningStrings() {
         // Given
         RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
         SelectInput input = SelectInput
@@ -38,5 +38,26 @@ class SelectInputTest {
         });
         // Then
         Assertions.assertEquals(((SelectInput)renderInput).getValues(), List.of("V1", "V2"));
+    }
+
+    @Test
+    void shouldRenderInputGivenExpressionReturningIntegers() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of(1, 2)));
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .build();
+        // When
+        Input<?> renderInput = RenderableInput.mayRenderInput(input, s -> {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        // Then
+        Assertions.assertEquals(((SelectInput)renderInput).getValues(), List.of("1", "2"));
     }
 }

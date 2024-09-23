@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -74,7 +75,6 @@ public class SelectInput extends Input<String> implements RenderableInput {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     private List<String> renderExpressionValues(final Function<String, Object> renderer) {
         Object result;
         try {
@@ -90,8 +90,9 @@ public class SelectInput extends Input<String> implements RenderableInput {
         }
 
         if (result instanceof List<?> list) {
-            return (List<String>) list;
+            return list.stream().filter(Objects::nonNull).map(Object::toString).toList();
         }
+
         String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
         throw ManualConstraintViolation.toConstraintViolationException(
             "Invalid expression result. Expected a list of strings, but received " + type,

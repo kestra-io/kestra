@@ -39,6 +39,7 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -321,7 +322,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(resultMap.get("type"), is("io.kestra.datatype:aes_encrypted"));
         assertThat(resultMap.get("value"), notNullValue());
 
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         result = this.eval(execution, "{{inputs.secret}}", 0);
         assertThat(result.getResult(), not(inputs.get("secret")));
@@ -333,7 +334,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "unknownTaskId";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -351,7 +352,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String flowId = "restart_with_inputs";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -370,7 +371,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         final String referenceTaskId = "instant";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
 
@@ -421,7 +422,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, flowId, null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent(), is(true));
@@ -577,7 +578,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void downloadFile() throws TimeoutException, QueueException{
-        Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(14));
 
         String path = (String) execution.getInputs().get("file");
@@ -614,7 +615,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void filePreview() throws TimeoutException, QueueException{
-        Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs));
+        Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList(), hasSize(14));
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
@@ -640,7 +641,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
             .put("yaml", "{}")
             .build();
 
-        Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.typedInputs(flow, execution1, latin1FileInputs));
+        Execution latin1Execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, latin1FileInputs));
         assertThat(latin1Execution.getTaskRunList(), hasSize(14));
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
@@ -1488,5 +1489,30 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         // then
         assertThat(execution.getScheduleDate(), is(now.toInstant()));
+    }
+
+    @Test
+    void shouldValidateInputsForCreateGivenSimpleInputs() {
+        // given
+        String namespace = "io.kestra.tests";
+        String flowId = "inputs";
+
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("string", "myString")
+            .build();
+        // when
+        ExecutionController.ApiValidateExecutionInputsResponse response = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + namespace + "/" + flowId + "/validate", requestBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            ExecutionController.ApiValidateExecutionInputsResponse.class
+        );
+
+        // then
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(flowId, response.id());
+        Assertions.assertEquals(namespace, response.namespace());
+        Assertions.assertFalse(response.inputs().isEmpty());
+        Assertions.assertTrue(response.inputs().stream().allMatch(ExecutionController.ApiValidateExecutionInputsResponse.ApiInputAndValue::enabled));
     }
 }

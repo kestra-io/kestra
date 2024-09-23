@@ -3,7 +3,7 @@
         <el-form-item
             v-for="input in inputsList || []"
             :key="input.id"
-            :label="input.id"
+            :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :prop="input.id"
         >

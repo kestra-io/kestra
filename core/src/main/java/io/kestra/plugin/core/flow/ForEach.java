@@ -93,11 +93,11 @@ import java.util.Optional;
             code = """
                 id: for_each_value
                 namespace: company.team
-                
+
                 tasks:
                   - id: for_each
                     type: io.kestra.plugin.core.flow.ForEach
-                    values: 
+                    values:
                       - value 1
                       - value 2
                       - value 3

@@ -9,7 +9,6 @@ const cleanInputs = (inputsList, values) => {
     return inputs;
 }
 
-
 export const inputsToFormDate = (submitor, inputsList, values) => {
     values = cleanInputs(inputsList, values);
 

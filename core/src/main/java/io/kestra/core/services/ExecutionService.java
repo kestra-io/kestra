@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
@@ -25,10 +26,12 @@ import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -77,6 +80,20 @@ public class ExecutionService {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+
+    public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId) {
+        Optional<Execution> maybeExecution = executionRepository.findById(tenant, executionId);
+        if (maybeExecution.isEmpty()) {
+            throw new NoSuchElementException("Execution '"+ executionId + "' not found.");
+        }
+
+        var execution = maybeExecution.get();
+        if (!execution.getState().isPaused()) {
+            throw new IllegalStateException("Execution '"+ executionId + "' is not paused, can't resume it");
+        }
+
+        return execution;
+    }
 
     /**
      * Retry set the given taskRun in created state
@@ -427,6 +444,29 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
+     * @param flow      the flow of the execution
+     * @param inputs    the onResume inputs
+     * @return the execution in the new state.
+     * @throws Exception if the state of the execution cannot be updated
+     */
+    public List<InputAndValue> validateForResume(final Execution execution, Flow flow, @Nullable Publisher<CompletedPart> inputs) throws Exception {
+        Task task = getFirstPausedTaskOrThrow(execution, flow);
+        if (task instanceof Pause pauseTask) {
+            return flowInputOutput.validateExecutionInputs(
+                pauseTask.getOnResume(),
+                execution,
+                inputs,
+                true
+            );
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Resume a paused execution to a new state.
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
      * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
      * @param flow      the flow of the execution
      * @param inputs    the onResume inputs
@@ -434,14 +474,10 @@ public class ExecutionService {
      * @throws Exception if the state of the execution cannot be updated
      */
     public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs) throws Exception {
-        var runningTaskRun = execution
-            .findFirstByState(State.Type.PAUSED)
-            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
-
-        var task = flow.findTaskByTaskId(runningTaskRun.getTaskId());
+        var task = getFirstPausedTaskOrThrow(execution, flow);
         Map<String, Object> pauseOutputs = Collections.emptyMap();
         if (task instanceof Pause pauseTask) {
-            pauseOutputs = flowInputOutput.typedInputs(
+            pauseOutputs = flowInputOutput.readExecutionInputs(
                 pauseTask.getOnResume(),
                 execution,
                 inputs
@@ -449,6 +485,13 @@ public class ExecutionService {
         }
 
         return resume(execution, flow, newState, pauseOutputs);
+    }
+
+    private static Task getFirstPausedTaskOrThrow(Execution execution, Flow flow) throws InternalException {
+        var runningTaskRun = execution
+            .findFirstByState(State.Type.PAUSED)
+            .orElseThrow(() -> new IllegalArgumentException("No paused task found on execution " + execution.getId()));
+        return flow.findTaskByTaskId(runningTaskRun.getTaskId());
     }
 
     /**

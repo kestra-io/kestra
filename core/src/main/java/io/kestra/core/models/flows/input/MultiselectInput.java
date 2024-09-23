@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows.input;
 
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.validations.Regex;
@@ -13,11 +14,12 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.function.Function;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface {
+public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface, RenderableInput {
     @Schema(
         title = "Deprecated, please use `values` instead."
     )
@@ -31,6 +33,11 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     // FIXME: REMOVE `options` in 0.20 and bring back the NotNull
     // @NotNull
     List<@Regex String> values;
+
+    @Schema(
+        title = "Expression to be used for dynamically generating the list of values"
+    )
+    String expression;
 
     @Schema(
         title = "Type of the different values available.",
@@ -73,5 +80,26 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 }
             }
         }
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    public Input<?> render(final Function<String, Object> renderer) {
+        if (expression != null) {
+            return MultiselectInput
+                .builder()
+                .values((List<String>)renderer.apply(expression))
+                .id(getId())
+                .type(getType())
+                .allowInput(getAllowInput())
+                .required(getRequired())
+                .defaults(getDefaults())
+                .description(getDescription())
+                .dependsOn(getDependsOn())
+                .itemType(getItemType())
+                .displayName(getDisplayName())
+                .build();
+        }
+        return this;
     }
 }

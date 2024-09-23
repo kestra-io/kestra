@@ -6,11 +6,13 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,10 +58,18 @@ public abstract class Input<T> implements Data {
 
     String description;
 
+    DependsOn dependsOn;
+
     @Builder.Default
     Boolean required = true;
 
     Object defaults;
+
+    @Schema(
+        title = "The display name of the input."
+    )
+    @Size(max = 64)
+    String displayName;
 
     public abstract void validate(T input) throws ConstraintViolationException;
 

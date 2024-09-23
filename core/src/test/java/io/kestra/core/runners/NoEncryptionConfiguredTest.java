@@ -71,6 +71,6 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
             .flowId(flow.getId())
             .build();
 
-        assertThrows(ConstraintViolationException.class, () -> flowIO.typedInputs(flow, execution, InputsTest.inputs));
+        assertThrows(ConstraintViolationException.class, () -> flowIO.readExecutionInputs(flow, execution, InputsTest.inputs));
     }
 }

@@ -71,7 +71,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "with-template",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, ImmutableMap.of(
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, ImmutableMap.of(
                 "with-string", "myString",
                 "with-optional", "myOpt"
             )),

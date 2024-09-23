@@ -226,7 +226,7 @@
         const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
 
         function percentage(count, total) {
-            return total ? Math.round((count / total) * 100) : 0;
+            return total ? ((count / total) * 100).toFixed(2) : "0.00";
         }
 
         return {
@@ -270,14 +270,9 @@
 
     const namespaceExecutions = ref({});
     const fetchNamespaceExecutions = () => {
-        store
-            .dispatch("stat/dailyGroupByFlow", {
-                ...filters.value,
-                namespaceOnly: true,
-            })
-            .then((response) => {
-                namespaceExecutions.value = response;
-            });
+        store.dispatch("stat/dailyGroupByNamespace").then((response) => {
+            namespaceExecutions.value = response;
+        });
     };
 
     const logs = ref([]);

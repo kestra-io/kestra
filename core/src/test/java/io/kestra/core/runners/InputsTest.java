@@ -9,6 +9,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
+import org.jcodings.util.Hash;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.ConstraintViolationException;
@@ -78,7 +79,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
-        return flowIO.typedInputs(
+        return flowIO.readExecutionInputs(
             flow,
             Execution.builder()
                 .id("test")
@@ -92,8 +93,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void missingRequired() {
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(new HashMap<>()));
-
+        HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", null);
+        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(inputs));
         assertThat(e.getMessage(), containsString("Invalid input for `string`, missing required input, but received `null`"));
     }
 
@@ -167,7 +169,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs)
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(14));
@@ -339,7 +341,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, map)
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, map)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(14));

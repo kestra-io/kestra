@@ -46,7 +46,7 @@ import java.util.stream.Stream;
             code = """
                 id: sequential
                 namespace: company.team
-                
+
                 tasks:
                   - id: sequential
                     type: io.kestra.plugin.core.flow.Sequential
@@ -54,7 +54,7 @@ import java.util.stream.Stream;
                       - id: first_task
                         type: io.kestra.plugin.core.debug.Return
                         format: "{{ task.id }} > {{ taskrun.startDate }}"
-                    
+
                       - id: second_task
                         type: io.kestra.plugin.core.debug.Return
                         format: "{{ task.id }} > {{ taskrun.id }}"

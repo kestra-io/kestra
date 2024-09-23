@@ -75,6 +75,7 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
                         type: io.kestra.plugin.git.Clone
                         url: https://github.com/kestra-io/dbt-example
                         branch: master
+
                       - id: upload
                         type: io.kestra.plugin.core.namespace.UploadFiles
                         files:

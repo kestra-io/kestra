@@ -97,6 +97,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .description(getDescription())
                 .dependsOn(getDependsOn())
                 .itemType(getItemType())
+                .displayName(getDisplayName())
                 .build();
         }
         return this;

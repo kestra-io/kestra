@@ -87,7 +87,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Map<String, Object> inputs;
 
-    public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) throws Exception {
+    public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
         Execution.ExecutionBuilder builder = Execution.builder()
@@ -133,7 +133,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         }
     }
 
-    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) throws IllegalVariableEvaluationException {
+    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) {
         final List<Label> labels = new ArrayList<>();
 
         if (flow.getLabels() != null) {
@@ -142,7 +142,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
         if (this.getLabels() != null) {
             for (Label label : this.getLabels()) {
-                final var value = runContext.render(label.value());
+                final var value = renderLabelValue(runContext, label);
                 if (value != null) {
                     labels.add(new Label(label.key(), value));
                 }
@@ -150,6 +150,17 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         }
 
         return labels;
+    }
+
+    private String renderLabelValue(RunContext runContext, Label label) {
+        String value;
+        try {
+            value = runContext.render(label.value());
+        } catch (IllegalVariableEvaluationException e) {
+            runContext.logger().warn("Unable to render the value of label '{}', using the raw value instead", label.key(), e);
+            value = label.value();
+        }
+        return value;
     }
 
     @Builder

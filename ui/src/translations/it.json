@@ -838,7 +838,8 @@
       "next_scheduled_executions": "Prossime Esecuzioni Pianificate",
       "executions_in_progress": "Esecuzioni In Corso",
       "next_execution_date": "Prossima Data di Esecuzione",
-      "failure_ratio": "Rapporto di Failure"
+      "failure_ratio": "Rapporto di Failure",
+      "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice."
     }
   }
 }

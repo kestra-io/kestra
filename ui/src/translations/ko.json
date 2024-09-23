@@ -838,7 +838,8 @@
       "next_scheduled_executions": "다음 예정된 실행",
       "executions_in_progress": "진행 중인 실행",
       "next_execution_date": "다음 실행 날짜",
-      "failure_ratio": "실패 비율"
+      "failure_ratio": "실패 비율",
+      "trigger_disabled": "이 trigger는 코드로만 활성화할 수 있습니다."
     }
   }
 }

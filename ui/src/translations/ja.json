@@ -838,7 +838,8 @@
       "next_scheduled_executions": "次回予定実行",
       "executions_in_progress": "進行中のExecutions",
       "next_execution_date": "次回実行日",
-      "failure_ratio": "失敗率"
+      "failure_ratio": "失敗率",
+      "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。"
     }
   }
 }

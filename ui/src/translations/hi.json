@@ -838,7 +838,8 @@
       "next_scheduled_executions": "अगली निर्धारित Executions",
       "executions_in_progress": "प्रगति में Executions",
       "next_execution_date": "अगली Execution Date",
-      "failure_ratio": "विफलता अनुपात"
+      "failure_ratio": "विफलता अनुपात",
+      "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।"
     }
   }
 }

@@ -14,6 +14,6 @@ public class AuthUtils {
     }
 
     public static String generateSalt() {
-        return RandomStringUtils.random(32, true, true);
+        return RandomStringUtils.secure().next(32, true, true);
     }
 }

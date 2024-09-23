@@ -239,7 +239,7 @@ public final class ScriptService {
         }
 
         // we add a suffix of 5 chars, this should be enough as it's the standard k8s way
-        String suffix = RandomStringUtils.randomAlphanumeric(5).toLowerCase();
+        String suffix = RandomStringUtils.secure().nextAlphanumeric(5).toLowerCase();
         return normalized + "-" + suffix;
     }
 }

@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :inputs-list="flow.inputs" v-model="inputs" />
+            <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" />
 
             <el-collapse class="mt-4" v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -140,7 +140,7 @@
                     .filter(input => nonEmptyInputNames.includes(input.id))
                     .forEach(input => {
                         let value = this.execution.inputs[input.id];
-                        this.inputs[input.id] =  Inputs.normalize(input.type, value);
+                        this.inputs[input.id] = Inputs.normalize(input.type, value);
                     });
             },
             purgeInputs(inputs){

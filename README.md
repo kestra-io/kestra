@@ -61,9 +61,9 @@ Kestra offers a versatile set of **language-agnostic** developer tools while sim
 5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/workflow-components/inputs#input-validation).
 
 
-## Extensible platform via plugins
+## Extensible platform
 
-Most tasks in Kestra are available as [plugins](https://kestra.io/plugins), but many type of tasks are available in the core library, including a.o. script tasks supporting various programming languages (e.g., Python, Node, Bash) and the ability to orchestrate your business logic packaged into Docker container images.
+Most tasks in Kestra are available as [plugins](https://kestra.io/plugins) including plugins reacting to events from external systems in real-time (Kafka, Redis, Pulsar, AMQP, MQTT, NATS, AWS SQS, Google Pub/Sub, Azure Event Hubs) and script tasks supporting many programming languages (a.o., Python, R, Node.js, Shell, Go) and Docker containers.
 
 To create your own plugins, check the [plugin developer guide](https://kestra.io/docs/plugin-developer-guide).
 
@@ -88,54 +88,68 @@ Kestra provides a variety of tasks to handle both simple and complex business lo
 
 ```yaml
 id: getting_started
-namespace: dev
+namespace: company.team
 
-description: |
-  # Getting Started
-  Let's `write` some **markdown** - [first flow](https://t.ly/Vemr0) 🚀
+description: Let's `write` some **markdown** - [first flow](https://t.ly/Vemr0) 🚀
 
 labels:
   owner: rick.astley
   project: never-gonna-give-you-up
+  environment: dev
+  country: US
+
+inputs:
+  - id: user
+    type: STRING
+    required: false
+    defaults: Rick Astley
+    description: This is an optional input. If not set at runtime, it will use the default value "Rick Astley".
+
+variables:
+  first: 1
+  second: "{{ vars.first }} < 2"
 
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello world!
-    description: a *very* important task
-    disabled: false
-    timeout: PT10M
-    retry:
-      type: constant # type: string
-      interval: PT15M # type: Duration
-      maxDuration: PT1H # type: Duration
-      maxAttempt: 5 # type: int
-      warningOnRetry: true # type: boolean, default is false
+    description: this is a *task* documentation
+    message: |
+      The variables we used are {{ vars.first }} and {{ render(vars.second) }}.
+      The input is {{ inputs.user }} and the task was started at {{ taskrun.startDate }} from flow {{ flow.id }}.
 
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
-    concurrent: 3
+    disabled: false
+    timeout: PT10M
+    concurrent: 2
     tasks:
       - id: task1
         type: io.kestra.plugin.scripts.shell.Commands
         commands:
-          - 'echo "running {{task.id}}"'
-          - 'sleep 2'
+          - echo "running {{task.id}}"
+          - sleep 2
+
       - id: task2
         type: io.kestra.plugin.scripts.shell.Commands
         commands:
-          - 'echo "running {{task.id}}"'
-          - 'sleep 1'
-      - id: task3
-        type: io.kestra.plugin.scripts.shell.Commands
-        commands:
-          - 'echo "running {{task.id}}"'
-          - 'sleep 3'
+          - echo "running {{task.id}}"
+          - sleep 3
+
+pluginDefaults:
+  - type: io.kestra.plugin.core.log.Log
+    values:
+      level: TRACE
+      retry:
+        type: constant # type: string
+        interval: PT15M # type: Duration
+        maxDuration: PT1H # type: Duration
+        maxAttempt: 5 # type: int
+        warningOnRetry: true # type: boolean, default is false
 
 triggers:
-  - id: schedule
+  - id: monthly
     type: io.kestra.plugin.core.trigger.Schedule
-    cron: "*/15 * * * *"
+    cron: "0 9 1 * *" # every first day of the month at 9am
 ```
 
 
@@ -145,13 +159,13 @@ You can write workflows directly from the UI. When writing your workflows, the U
 - autocompletion
 - syntax validation
 - embedded plugin documentation
-- example flows provided as blueprints
-- topology view (view of your dependencies in a Directed Acyclic Graph) that get updated live as you modify and add new tasks.
+- example flows provided as [blueprints](https://kestra.io/blueprints)
+- topology view (view of your dependencies in a Directed Acyclic Graph) that gets updated live as you modify and add new tasks.
 
 
 ## Stay up to date
 
-We release new versions every month. Give the repository a star to stay up to date with the latest releases and get notified about future updates.
+We release new versions every first Tuesday of every second month. Give the repository a star to stay up to date with the latest releases and get notified about future updates.
 
 ![Star the repo](https://kestra.io/star.gif)
 
@@ -171,7 +185,7 @@ Make sure that Docker is installed and running on your system. The default insta
 
 Download the Docker Compose file:
 
-```sh
+```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
 ```
 
@@ -180,7 +194,7 @@ Alternatively, you can use `wget https://raw.githubusercontent.com/kestra-io/kes
 
 Start Kestra:
 
-```sh
+```bash
 docker compose up -d
 ```
 
@@ -205,13 +219,10 @@ tasks:
 For more information:
 
 - Follow the [getting started tutorial](https://kestra.io/docs/getting-started/).
-- Read the [documentation](https://kestra.io/docs/) to understand how to:
+- Read the [documentation](https://kestra.io/docs/) to learn how to:
     - [Develop your flows](https://kestra.io/docs/developer-guide/)
     - [Deploy Kestra](https://kestra.io/docs/installation/)
-    - Use the official [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows
-    - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/).
-
-
+    - Use the official [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows.
 
 
 ## Plugins
@@ -363,7 +374,6 @@ Here are some examples of the available plugins:
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vertica">Vertica</a></td>
     </tr>
 </table>
-
 
 
 This list is growing quickly and we welcome contributions.

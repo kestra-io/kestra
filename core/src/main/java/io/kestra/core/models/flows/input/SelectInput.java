@@ -66,6 +66,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .defaults(getDefaults())
                 .description(getDescription())
                 .dependsOn(getDependsOn())
+                .displayName(getDisplayName())
                 .build();
         }
         return this;

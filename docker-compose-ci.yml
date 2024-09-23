@@ -14,7 +14,7 @@ services:
     restart: on-failure
 
   postgres:
-    image: postgres
+    image: postgres:14.13
     environment:
       POSTGRES_DB: kestra_unit
       POSTGRES_USER: kestra

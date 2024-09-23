@@ -1,8 +1,12 @@
 package io.kestra.plugin.core.trigger;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
@@ -112,7 +116,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(flow.getLabels())
+            .labels(generateLabels(runContext, flow))
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,
@@ -146,6 +150,34 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 e
             );
             return Optional.empty();
+        }
+    }
+
+    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) {
+        final List<Label> labels = new ArrayList<>();
+
+        if (flow.getLabels() != null) {
+            labels.addAll(flow.getLabels()); // no need for rendering
+        }
+
+        if (this.getLabels() != null) {
+            for (Label label : this.getLabels()) {
+                final var value = renderLabelValue(runContext, label);
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
+        }
+
+        return labels;
+    }
+
+    private String renderLabelValue(RunContext runContext, Label label) {
+        try {
+            return runContext.render(label.value());
+        } catch (IllegalVariableEvaluationException e) {
+            runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
+            return null;
         }
     }
 

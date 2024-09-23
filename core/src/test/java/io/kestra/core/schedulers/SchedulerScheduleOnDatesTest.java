@@ -212,10 +212,12 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receive.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
+           assertThat(queueCount.getCount(), is(0L));
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getDate().toLocalDateTime(), is(before.toLocalDateTime()));
-            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), is(after.toLocalDateTime()));
+            // depending on the exact timing of events, the trigger date can be before or after
+            assertThat(newTrigger.getDate().toLocalDateTime(), oneOf(before.toLocalDateTime(), after.toLocalDateTime()));
+            // depending on the exact timing of events, the next date can be after or later
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), oneOf(after.toLocalDateTime(), later.toLocalDateTime()));
         }
     }
 

@@ -7,6 +7,7 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,20 +26,63 @@ public class EscapeCharFilter implements Filter {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {
         if (input == null) {
             return null;
         }
 
-        final String inputValue = input.toString();
-
-        return switch (argsToType(args, self, lineNumber)) {
-            case SHELL -> escape(inputValue, "'", "'\\''");
-            case SINGLE -> escape(inputValue, "'", "\\'");
-            case DOUBLE -> escape(inputValue, "\"", "\\\"");
-        };
+        if (input instanceof Map) {
+            return processMap((Map<String, Object>) input, args, self, lineNumber);
+        } else if (input instanceof List) {
+            return processList((List<Object>) input, args, self, lineNumber);
+        } else {
+            return escapeString(input.toString(), args, self, lineNumber);
+        }
     }
 
+    @SuppressWarnings("unchecked")
+    private Object processMap(Map<String, Object> inputMap, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
+        Map<String, Object> resultMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                resultMap.put(entry.getKey(), escapeString((String) value, args, self, lineNumber));
+            } else if (value instanceof Map) {
+                resultMap.put(entry.getKey(), processMap((Map<String, Object>) value, args, self, lineNumber));
+            } else if (value instanceof List<?>) {
+                resultMap.put(entry.getKey(), processList((List<Object>) value, args, self, lineNumber));
+            } else {
+                resultMap.put(entry.getKey(), escapeString(value.toString(), args, self, lineNumber));
+            }
+        }
+        return resultMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object processList(List<Object> inputList, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
+        List<Object> resultList = new ArrayList<>();
+        for (Object item : inputList) {
+            if (item instanceof String) {
+                resultList.add(escapeString((String) item, args, self, lineNumber));
+            } else if (item instanceof Map) {
+                resultList.add(processMap((Map<String, Object>) item, args, self, lineNumber));
+            } else if (item instanceof List<?>) {
+                resultList.add(processList((List<Object>) item, args, self, lineNumber));
+            } else {
+                resultList.add(escapeString(item.toString(), args, self, lineNumber));
+            }
+        }
+        return resultList;
+    }
+
+    private String escapeString(String input, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
+        return switch (argsToType(args, self, lineNumber)) {
+            case SHELL -> escape(input, "'", "'\\''");
+            case SINGLE -> escape(input, "'", "\\'");
+            case DOUBLE -> escape(input, "\"", "\\\"");
+        };
+    }
     private FilterType argsToType(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         if (!args.containsKey(ARG_NAME)) {
             throw new PebbleException(null, "The 'escapeChar' filter expects an argument '" + ARG_NAME + "'.", lineNumber, self.getName());

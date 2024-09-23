@@ -139,6 +139,10 @@ export function backgroundFromState(state, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
+export function getStateColor(state) {
+    return State.getStateColor(state);
+}
+
 export function getFormat(groupBy) {
     switch (groupBy) {
         case "minute":

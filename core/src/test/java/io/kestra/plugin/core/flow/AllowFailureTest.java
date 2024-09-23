@@ -38,7 +38,7 @@ class AllowFailureTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "allow-failure",
             null,
-            (f, e) -> flowIO.typedInputs(f, e, ImmutableMap.of("crash", "1"))
+            (f, e) -> flowIO.readExecutionInputs(f, e, ImmutableMap.of("crash", "1"))
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));

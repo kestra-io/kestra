@@ -76,7 +76,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
@@ -107,7 +107,7 @@ public class ForEachItemCaseTest {
         URI file = emptyItems();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // assert on the main flow execution
@@ -136,7 +136,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-no-wait", null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // assert that not all subflows ran (depending on the speed of execution, there can be some)
@@ -183,7 +183,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
@@ -226,7 +226,7 @@ public class ForEachItemCaseTest {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-outputs", null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs),
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows

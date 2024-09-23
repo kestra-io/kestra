@@ -1,7 +1,11 @@
 package io.kestra.plugin.core.trigger;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
@@ -83,7 +87,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Map<String, Object> inputs;
 
-    public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) throws Exception {
         Logger logger = runContext.logger();
 
         Execution.ExecutionBuilder builder = Execution.builder()
@@ -92,7 +96,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(flow.getLabels())
+            .labels(generateLabels(runContext, flow))
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,
@@ -127,6 +131,25 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             );
             return Optional.empty();
         }
+    }
+
+    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) throws IllegalVariableEvaluationException {
+        final List<Label> labels = new ArrayList<>();
+
+        if (flow.getLabels() != null) {
+            labels.addAll(flow.getLabels()); // no need for rendering
+        }
+
+        if (this.getLabels() != null) {
+            for (Label label : this.getLabels()) {
+                final var value = runContext.render(label.value());
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
+        }
+
+        return labels;
     }
 
     @Builder

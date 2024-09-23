@@ -50,42 +50,38 @@
     });
 
     const parsedData = computed(() => {
-        const labels = Object.keys(props.data);
+        const labels = Object.entries(props.data)
+            .sort(([, a], [, b]) => b.total - a.total)
+            .map(([namespace]) => namespace);
+
         const executionData = {};
 
-        // eslint-disable-next-line no-unused-vars
-        for (const [namespace, values] of Object.entries(props.data)) {
-            let totalCounts = {};
+        labels.forEach((namespace) => {
+            const counts = props.data[namespace].counts;
 
-            for (const item of values["*"]) {
-                for (const [status, count] of Object.entries(
-                    item.executionCounts,
-                )) {
-                    totalCounts[status] = (totalCounts[status] || 0) + count;
-
-                    if (!executionData[status]) {
-                        executionData[status] = [];
-                    }
+            for (const [state, count] of Object.entries(counts)) {
+                if (!executionData[state]) {
+                    executionData[state] = {
+                        label: state,
+                        data: [],
+                        backgroundColor: getStateColor(state),
+                        stack: state,
+                    };
                 }
+                executionData[state].data.push(count);
             }
+        });
 
-            for (const [status, count] of Object.entries(totalCounts)) {
-                executionData[status].push(count);
-            }
-        }
-
-        const datasets = Object.entries(executionData)
-            .map(([label, data]) => ({
-                label,
-                data: data.map((item) => (item === 0 ? null : item)),
-                backgroundColor: getStateColor(label),
-                stack: label,
+        const datasets = Object.values(executionData)
+            .map((dataset) => ({
+                ...dataset,
+                data: dataset.data.map((item) => (item === 0 ? null : item)),
             }))
             .filter((dataset) => dataset.data.some((count) => count > 0));
 
         return {
-            labels: labels,
-            datasets: datasets,
+            labels,
+            datasets,
         };
     });
 

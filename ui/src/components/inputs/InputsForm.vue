@@ -166,7 +166,7 @@
 
     export default {
         computed: {
-            ...mapState("execution"),
+            ...mapState("auth", ["user"]),
             YamlUtils() {
                 return YamlUtils
             },

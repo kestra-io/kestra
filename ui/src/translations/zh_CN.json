@@ -838,7 +838,8 @@
       "next_scheduled_executions": "下一次计划执行",
       "executions_in_progress": "执行中",
       "next_execution_date": "下次执行日期",
-      "failure_ratio": "失败率"
+      "failure_ratio": "失败率",
+      "trigger_disabled": "此trigger只能通过代码启用。"
     }
   }
 }

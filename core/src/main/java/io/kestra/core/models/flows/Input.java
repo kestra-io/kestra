@@ -56,6 +56,8 @@ public abstract class Input<T> implements Data {
 
     String description;
 
+    DependsOn dependsOn;
+
     @Builder.Default
     Boolean required = true;
 

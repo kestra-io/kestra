@@ -37,7 +37,7 @@ import java.util.Optional;
             code = """
                 id: allow_failure
                 namespace: company.team
-                
+
                 tasks:
                   - id: sequential
                     type: io.kestra.plugin.core.flow.AllowFailure
@@ -48,7 +48,7 @@ import java.util.Optional;
                         - 'exit 1'
                   - id: last
                     type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}" 
+                    format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
     },

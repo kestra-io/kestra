@@ -29,9 +29,10 @@ import jakarta.validation.constraints.NotNull;
 @Schema(
     title = "Kestra is able to trigger flow after another one. This allows chaining flows without need to update the base flows.\n" +
         "With that, you can break the responsibility between different flows, and thus to different teams.",
-    description = "::alert{type=\"warning\"}\n" +
-        "If you don't provide any conditions, the flow will be triggered for **EVERY execution** of **EVERY flow** on your instance.\n" +
-        "::"
+    description = """
+        ::alert{type="warning"}
+        If you don't provide any conditions, the flow will be triggered for **EVERY execution** of **EVERY flow** on your instance.
+        ::"""
 )
 @Plugin(
     examples = @Example(
@@ -41,27 +42,27 @@ import jakarta.validation.constraints.NotNull;
         code = """
             id: trigger_flow_listener
             namespace: company.team
-            
+
             inputs:
               - id: from_parent
                 type: STRING
-            
+
             tasks:
               - id: only_no_input
                 type: io.kestra.plugin.core.debug.Return
                 format: "v1: {{ trigger.executionId }}"
-            
+
             triggers:
               - id: listen_flow
                 type: io.kestra.plugin.core.trigger.Flow
                 inputs:
                   from-parent: '{{ outputs.my_task.uri }}'
-                conditions: 
+                conditions:
                   - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
                     namespace: company.team
-                    flowId: trigger_flow 
+                    flowId: trigger_flow
                   - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
-                    in: 
+                    in:
                       - SUCCESS
             """
     ),

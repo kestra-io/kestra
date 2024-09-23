@@ -1,24 +1,15 @@
 <template>
-    <div>
-        <home
-            :namespace="$route.params.id || $route.query.id"
-            :restore-url="false"
-            :description="$route.params.id ? namespace?.description : undefined"
-            embed
-        />
-    </div>
+    <Dashboard :namespace="$route.params.id || $route.query.id" embed />
 </template>
 
 <script>
-    import Home from "../home/Home.vue"
+    import Dashboard from "../dashboard/Dashboard.vue";
     import {mapState} from "vuex";
 
     export default {
-        components: {
-            Home
-        },
+        components: {Dashboard},
         computed: {
             ...mapState("namespace", ["namespace"]),
-        }
-    }
+        },
+    };
 </script>

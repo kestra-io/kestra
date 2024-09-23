@@ -828,6 +828,17 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
-    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen."
+    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen.",
+    "dashboard": {
+      "per_namespace": "(pro Namespace)",
+      "id": "ID",
+      "per_day": "(pro Tag)",
+      "total_executions": "Gesamte Ausführungen",
+      "success_ratio": "Erfolgsquote",
+      "next_scheduled_executions": "Nächste geplante Ausführungen",
+      "executions_in_progress": "Ausführungen in Bearbeitung",
+      "next_execution_date": "Nächstes Ausführungsdatum",
+      "failure_ratio": "Fehlerrate"
+    }
   }
 }

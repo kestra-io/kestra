@@ -1,9 +1,14 @@
 package io.kestra.core.utils;
 
 import com.google.common.collect.Lists;
+import jakarta.validation.constraints.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MapUtils {
@@ -147,5 +152,39 @@ public class MapUtils {
 
         int hashMapCapacity = (int) Math.ceil(numMappings / 0.75d);
         return new HashMap<>(hashMapCapacity);
+    }
+
+    /**
+     * Utility method nested a flatten map.
+     *
+     * @param flatMap the flatten map.
+     * @return the nested map.
+     *
+     * @throws IllegalArgumentException if the given map contains conflicting keys.
+     */
+    public static Map<String, Object> flattenToNestedMap(@NotNull Map<String, ?> flatMap) {
+        Map<String, Object> result = new TreeMap<>();
+
+        for (Map.Entry<String, ?> entry : flatMap.entrySet()) {
+            String[] keys = entry.getKey().split("\\.");
+            Map<String, Object> currentMap = result;
+
+            for (int i = 0; i < keys.length - 1; ++i) {
+                String key = keys[i];
+                if (!currentMap.containsKey(key)) {
+                    currentMap.put(key, new HashMap<>());
+                } else if (!(currentMap.get(key) instanceof Map)) {
+                    var invalidKey = String.join(",", Arrays.copyOfRange(keys, 0, i));
+                    throw new IllegalArgumentException("Conflict at key: '" + invalidKey + "'. Map keys are: " + flatMap.keySet());
+                }
+                currentMap = (Map<String, Object>) currentMap.get(key);
+            }
+            String lastKey = keys[keys.length - 1];
+            if (currentMap.containsKey(lastKey)) {
+                throw new IllegalArgumentException("Conflict at key: '" + lastKey + "', Map keys are: " + flatMap.keySet());
+            }
+            currentMap.put(lastKey, entry.getValue());
+        }
+        return result;
     }
 }

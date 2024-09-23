@@ -139,7 +139,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "inputs-large",
             null,
-            (flow, execution1) -> flowIO.typedInputs(flow, execution1, inputs)
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));

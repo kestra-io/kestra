@@ -16,8 +16,26 @@
                     class-name="next-toggle"
                 >
                     <template #default="scope">
+                        <el-tooltip
+                            v-if="scope.row.tooltip"
+                            :content="t('dashboard.trigger_disabled')"
+                        >
+                            <el-switch
+                                disabled
+                                :model-value="!scope.row.disabled"
+                                @change="
+                                    toggleState(scope.row.triggerContext);
+                                    scope.row.triggerContext.disabled =
+                                        !scope.row.triggerContext.disabled;
+                                "
+                                :active-icon="Check"
+                                size="small"
+                                inline-prompt
+                            />
+                        </el-tooltip>
                         <el-switch
-                            :model-value="!scope.row.triggerContext.disabled"
+                            v-else
+                            :model-value="!scope.row.disabled"
                             @change="
                                 toggleState(scope.row.triggerContext);
                                 scope.row.triggerContext.disabled =
@@ -71,9 +89,12 @@
                 <el-table-column :label="$t('dashboard.next_execution_date')">
                     <template #default="scope">
                         {{
-                            moment(
-                                scope.row.triggerContext.nextExecutionDate,
-                            ).format("lll")
+                            !scope.row.disabled
+                                ? moment(
+                                    scope.row.triggerContext
+                                        .nextExecutionDate,
+                                ).format("lll")
+                                : "-"
                         }}
                     </template>
                 </el-table-column>
@@ -132,7 +153,24 @@
             })
             .then((response) => {
                 if (!response) return;
-                executions.value = response;
+                executions.value = {
+                    total: response.total,
+                    results: response.results?.map(
+                        ({abstractTrigger, triggerContext, ...rest}) => {
+                            const disabled =
+                                abstractTrigger.disabled || triggerContext.disabled;
+                            const tooltip = !!abstractTrigger.disabled;
+
+                            return {
+                                ...rest,
+                                abstractTrigger,
+                                triggerContext,
+                                disabled,
+                                tooltip,
+                            };
+                        },
+                    ),
+                };
             });
     };
 

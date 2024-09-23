@@ -853,7 +853,8 @@
       "executions_in_progress": "Executions In Progress",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
-      "id": "ID"
+      "id": "ID",
+      "trigger_disabled": "This trigger can only be enabled through code."
     }
   }
 }

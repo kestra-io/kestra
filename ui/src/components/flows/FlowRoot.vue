@@ -128,6 +128,7 @@
                             name: undefined,
                             component: Overview,
                             title: this.$t("overview"),
+                            containerClass: "full-container",
                         },
                     ].concat(tabs);
                 }

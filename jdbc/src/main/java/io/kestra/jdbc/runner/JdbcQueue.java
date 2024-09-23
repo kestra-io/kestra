@@ -94,7 +94,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + bytes.length + " exceed the configured limit of " + messageProtectionConfiguration.limit);
+                    throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
             }
         }
 

@@ -828,6 +828,17 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: Se detectó el uso de la variable `trigger`, ejecutar tu flow manualmente no cumplirá con la variable trigger."
+    "trigger_check_warning": "Advertencia: Se detectó el uso de la variable `trigger`, ejecutar tu flow manualmente no cumplirá con la variable trigger.",
+    "dashboard": {
+      "per_namespace": "(per namespace)",
+      "id": "ID",
+      "per_day": "(por día)",
+      "total_executions": "Total de Ejecuciones",
+      "success_ratio": "Ratio de Éxito",
+      "next_scheduled_executions": "Próximas Ejecuciones Programadas",
+      "executions_in_progress": "Ejecuciones en Progreso",
+      "next_execution_date": "Próxima Fecha de Ejecución",
+      "failure_ratio": "Ratio de Fallos"
+    }
   }
 }

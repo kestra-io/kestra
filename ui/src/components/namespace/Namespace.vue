@@ -102,6 +102,7 @@
                         name: undefined,
                         component: Overview,
                         title: this.$t("overview"),
+                        containerClass: "full-container",
                         query: {
                             id: this.$route.query.id
                         }

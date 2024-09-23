@@ -1,14 +1,7 @@
 <template>
-    <NamespaceDependencies :namespace="namespace" />
+    <NamespaceDependencies :namespace="$route.params.id" />
 </template>
 
 <script setup>
-    import {computed} from "vue";
-
-    import {useRoute} from "vue-router";
-    const route = useRoute();
-
-    const namespace = computed(() => route.params.id);
-
     import NamespaceDependencies from "./NamespaceDependencies.vue";
 </script>

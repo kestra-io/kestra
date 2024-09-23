@@ -30,6 +30,7 @@ jackson:
     FAIL_ON_UNKNOWN_PROPERTIES: false
 
 kestra:
+  url: http://localhost:8081
   encryption:
     secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
   server-type: STANDALONE

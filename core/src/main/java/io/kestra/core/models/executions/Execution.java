@@ -26,9 +26,8 @@ import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
-import lombok.Value;
-import lombok.With;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -40,9 +39,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-@Value
 @Builder(toBuilder = true)
 @Slf4j
+@Getter
+@FieldDefaults(makeFinal=true, level=AccessLevel. PRIVATE)
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class Execution implements DeletedInterface, TenantInterface {
     @With
     @Hidden

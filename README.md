@@ -56,9 +56,9 @@ Kestra offers a versatile set of **language-agnostic** developer tools while sim
     - a regular time-based **schedule**
     - an **API** call (*webhook trigger*)
     - ad-hoc execution from the **UI**
-    - a **flow trigger** - flows can be triggered from other flows using a [flow trigger](https://kestra.io/docs/developer-guide/triggers/flow) or a [subflow](https://kestra.io/docs/flow-examples/subflow), enabling highly modular workflows.
+    - a **flow trigger** - flows can be triggered from other flows using a [flow trigger](https://kestra.io/docs/workflow-components/triggers/flow-trigger) or a [subflow](https://kestra.io/docs/workflow-components/subflows), enabling highly modular workflows.
     - **custom events**, including a new file arrival (*file detection event*), a new message in a message bus, query completion, and more.
-5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/developer-guide/inputs#input-validation).
+5. `Inputs` allow you to pass runtime-specific variables to a flow. They are strongly typed, and allow additional [validation rules](https://kestra.io/docs/workflow-components/inputs#input-validation).
 
 
 ## Extensible platform via plugins
@@ -207,18 +207,17 @@ For more information:
 - Follow the [getting started tutorial](https://kestra.io/docs/getting-started/).
 - Read the [documentation](https://kestra.io/docs/) to understand how to:
     - [Develop your flows](https://kestra.io/docs/developer-guide/)
-    - [Deploy Kestra](https://kestra.io/docs/administrator-guide/)
-    - Use our [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows
+    - [Deploy Kestra](https://kestra.io/docs/installation/)
+    - Use the official [Terraform provider](https://kestra.io/docs/terraform/) to deploy your flows
     - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/).
 
 
 
 
 ## Plugins
-Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin.
 
+Kestra is built on top of a [plugin ecosystem](https://kestra.io/plugins/). You can browse through hundreds of pre-built plugins or [build your own](https://kestra.io/docs/plugin-developer-guide/).
 
-For a full list of plugins, check the [plugins page](https://kestra.io/plugins/).
 
 Here are some examples of the available plugins:
 

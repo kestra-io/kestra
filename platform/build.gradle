@@ -13,7 +13,7 @@ javaPlatform {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.16"
-    def protobufVersion = "3.25.3"
+    def protobufVersion = "3.25.5"
     def bouncycastleVersion = "1.78.1"
     def aetherVersion = "1.1.0"
     def jollydayVersion = "0.29.0"

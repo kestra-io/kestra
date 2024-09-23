@@ -85,7 +85,7 @@ dependencies {
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.6.0'
+        api 'nl.basjes.gitignore:gitignore-reader:1.7.0'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion

@@ -15,11 +15,11 @@ export default class Logs {
 
     static graphColors(state) {
         const COLORS = {
-            ERROR: "#FD7278",
-            WARN: "#EEAE7E",
-            INFO: "#21CE9C",
-            DEBUG: "#3991FF",
-            TRACE: "#A6A4CA",
+            ERROR: "#AB0009",
+            WARN: "#DD5F00",
+            INFO: "#029E73",
+            DEBUG: "#1761FD",
+            TRACE: "#8405FF",
         };
 
         return COLORS[state];

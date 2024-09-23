@@ -135,6 +135,35 @@ class ScheduleTest {
         assertThat(inputs.get("input2"), is("default"));
     }
 
+    @Test
+    void success_withLabels() throws Exception {
+        var scheduleTrigger = Schedule.builder()
+            .id("schedule")
+            .cron("0 0 1 * *")
+            .labels(List.of(
+                new Label("trigger-label-1", "trigger-label-1"),
+                new Label("trigger-label-2", "{{ 'trigger-label-2' }}"),
+                new Label("trigger-label-3", "{{ null }}")
+            ))
+            .build();
+        var conditionContext = conditionContext(scheduleTrigger);
+        var date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+        var triggerContext = triggerContext(date, scheduleTrigger);
+
+        Optional<Execution> evaluate = scheduleTrigger.evaluate(conditionContext, triggerContext);
+
+        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-1", "trigger-label-1")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-2", "trigger-label-2")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-3", "")));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void everyMinute() throws Exception {

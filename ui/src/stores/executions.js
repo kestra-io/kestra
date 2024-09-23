@@ -135,7 +135,14 @@ export default {
                 }
             });
         },
-
+        validateResume(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume/validate`, options.formData, {
+                timeout: 60 * 60 * 1000,
+                headers: {
+                    "content-type": "multipart/form-data"
+                }
+            });
+        },
         loadExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
@@ -151,6 +158,18 @@ export default {
                 }
 
                 return response.data
+            })
+        },
+        validateExecution(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}/validate`, options.formData, {
+                timeout: 60 * 60 * 1000,
+                headers: {
+                    "content-type": "multipart/form-data"
+                },
+                params: {
+                    labels: options.labels ?? [],
+                    scheduleDate: options.scheduleDate
+                }
             })
         },
         triggerExecution(_, options) {

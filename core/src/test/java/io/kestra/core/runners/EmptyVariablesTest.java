@@ -24,7 +24,7 @@ public class EmptyVariablesTest extends AbstractMemoryRunnerTest {
             "io.kestra.tests",
             "empty-variables",
             null,
-            (flow, exec) -> flowIO.typedInputs(flow, exec, Map.of("emptyKey", "{ \"foo\": \"\" }", "emptySubObject", "{\"json\":{\"someEmptyObject\":{}}}"))
+            (flow, exec) -> flowIO.readExecutionInputs(flow, exec, Map.of("emptyKey", "{ \"foo\": \"\" }", "emptySubObject", "{\"json\":{\"someEmptyObject\":{}}}"))
         );
 
         assertThat(execution, notNullValue());

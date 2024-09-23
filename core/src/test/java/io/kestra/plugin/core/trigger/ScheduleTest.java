@@ -334,6 +334,8 @@ class ScheduleTest {
             conditionContext(trigger),
             TriggerContext.builder()
                 .date(date)
+                .namespace("io.kestra.tests")
+                .flowId(IdUtils.create())
                 .build()
         );
 

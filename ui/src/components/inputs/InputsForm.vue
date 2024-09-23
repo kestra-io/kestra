@@ -161,12 +161,15 @@
     import Inputs from "../../utils/inputs";
     import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
+    import {inputsToFormDate} from "../../utils/submitTask"
+    import {mapState} from "vuex";
 
     export default {
         computed: {
+            ...mapState("execution"),
             YamlUtils() {
                 return YamlUtils
-            }
+            },
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -174,20 +177,30 @@
                 default: undefined,
                 type: Object
             },
-            inputsList: {
+            initialInputs: {
                 type: Array,
                 default: undefined
+            },
+            flow: {
+                type: Object,
+                default: undefined,
+            },
+            execution: {
+                type: Object,
+                default: undefined,
             },
         },
         data() {
             return {
                 inputs: {},
-                multiSelectInputs: {}
+                inputsList: [],
+                multiSelectInputs: {},
             };
         },
         emits: ["update:modelValue"],
         created() {
-            this.updateDefaults();
+            this.inputsList.push(this.initialInputs);
+            this.validateInputs();
         },
         mounted() {
             setTimeout(() => {
@@ -212,11 +225,12 @@
         methods: {
             updateDefaults() {
                 for (const input of this.inputsList || []) {
-                    if (input.type === "MULTISELECT") {
-                        this.multiSelectInputs[input.id] = input.defaults;
+                    if (this.inputs[input.id] === undefined) {
+                        if (input.type === "MULTISELECT") {
+                            this.multiSelectInputs[input.id] = input.defaults;
+                        }
+                        this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
                     }
-                    this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
-                    this.onChange();
                 }
             },
             onChange() {
@@ -253,18 +267,45 @@
                 } else if (max !== undefined) {
                     return `Maximum value is ${max}.`;
                 } else return false;
+            },
+            validateInputs() {
+                const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+                if (this.flow !== undefined) {
+                    const options = {namespace: this.flow.namespace, id: this.flow.id};
+                    this.$store.dispatch("execution/validateExecution", {...options, formData})
+                        .then(response => {
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.updateDefaults();
+                        });
+                }
+
+                if (this.execution !== undefined) {
+                    const options = {id: this.execution.id};
+                    this.$store.dispatch("execution/validateResume", {...options, formData})
+                        .then(response => {
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.updateDefaults();
+                        });
+                }
             }
         },
         watch: {
             inputs: {
                 handler() {
+                    this.validateInputs();
                     this.$emit("update:modelValue", this.inputs);
                 },
+                deep: true
             },
-            inputsList: {
+            flow: {
                 handler() {
-                    this.updateDefaults();
-                },
+                    this.validateInputs()
+                }
+            },
+            execution: {
+                handler() {
+                    this.validateInputs()
+                }
             }
         }
     };

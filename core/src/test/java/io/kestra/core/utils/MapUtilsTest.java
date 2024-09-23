@@ -103,4 +103,26 @@ class MapUtilsTest {
         assertThat(map, notNullValue());
         assertThat(map.size(), is(1));
     }
+
+    @Test
+    void shouldReturnMapWhenNestingMapGivenFlattenMap() {
+        Map<String, Object> results = MapUtils.flattenToNestedMap(Map.of(
+            "k1.k2.k3", "v1",
+            "k1.k2.k4", "v2"
+        ));
+        Assertions.assertEquals(
+            Map.of("k1", Map.of("k2", Map.of("k3", "v1", "k4", "v2"))),
+            results
+        );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenNestingMapGivenFlattenMapWithConflicts() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            MapUtils.flattenToNestedMap(Map.of(
+                "k1.k2", "v1",
+                "k1.k2.k3", "v2"
+            ));
+        });
+    }
 }

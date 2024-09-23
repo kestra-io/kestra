@@ -60,9 +60,9 @@
                 <el-table-column :label="$t('duration')" width="100">
                     <template #default="scope">
                         {{
-                            moment
+                            (moment
                                 .duration(scope.row.state.duration)
-                                .milliseconds() / 1000
+                                .milliseconds() / 1000 || 0).toFixed(3)
                         }}s
                     </template>
                 </el-table-column>

@@ -153,14 +153,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     }
 
     private String renderLabelValue(RunContext runContext, Label label) {
-        String value;
         try {
-            value = runContext.render(label.value());
+            return runContext.render(label.value());
         } catch (IllegalVariableEvaluationException e) {
-            runContext.logger().warn("Unable to render the value of label '{}', using the raw value instead", label.key(), e);
-            value = label.value();
+            runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
+            return null;
         }
-        return value;
     }
 
     @Builder

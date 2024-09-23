@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
@@ -139,14 +140,15 @@ class FlowTest {
             .labels(List.of(
                 new Label("trigger-label-1", "trigger-label-1"),
                 new Label("trigger-label-2", "{{ 'trigger-label-2' }}"),
-                new Label("trigger-label-3", "{{ null }}")
+                new Label("trigger-label-3", "{{ null }}"), // should return an empty string
+                new Label("trigger-label-4", "{{ foobar }}") // should fail
             ))
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(runContextFactory.of(), flow, execution);
 
         assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
+        assertThat(evaluate.get().getLabels(), hasSize(5));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-1", "trigger-label-1")));

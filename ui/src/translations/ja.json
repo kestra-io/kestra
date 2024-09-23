@@ -828,6 +828,17 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。"
+    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。",
+    "dashboard": {
+      "per_namespace": "（namespaceごと）",
+      "id": "ID",
+      "per_day": "（日ごと）",
+      "total_executions": "総実行数",
+      "success_ratio": "成功率",
+      "next_scheduled_executions": "次回予定実行",
+      "executions_in_progress": "進行中のExecutions",
+      "next_execution_date": "次回実行日",
+      "failure_ratio": "失敗率"
+    }
   }
 }

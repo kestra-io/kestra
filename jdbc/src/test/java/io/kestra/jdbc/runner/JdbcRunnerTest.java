@@ -421,7 +421,7 @@ public abstract class JdbcRunnerTest {
 
         // the size is different on all runs, so we cannot assert on the exact message size
         assertThat(exception.getMessage(), containsString("Message of size"));
-        assertThat(exception.getMessage(), containsString("exceed the configured limit of 1048576"));
+        assertThat(exception.getMessage(), containsString("has exceeded the configured limit of 1048576"));
         assertThat(exception, instanceOf(MessageTooBigException.class));
     }
 
@@ -443,7 +443,7 @@ public abstract class JdbcRunnerTest {
         assertThat(matchingLog.getLevel(), is(Level.ERROR));
         // the size is different on all runs, so we cannot assert on the exact message size
         assertThat(matchingLog.getMessage(), containsString("Message of size"));
-        assertThat(matchingLog.getMessage(), containsString("exceed the configured limit of 1048576"));
+        assertThat(matchingLog.getMessage(), containsString("has exceeded the configured limit of 1048576"));
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().size(), is(1));

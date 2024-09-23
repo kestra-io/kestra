@@ -13,6 +13,18 @@ export default class Logs {
         return Object.fromEntries(LEVELS.map(level => [level, cssVariable("--log-chart-" + level.toLowerCase())]));
     }
 
+    static graphColors(state) {
+        const COLORS = {
+            ERROR: "#FD7278",
+            WARN: "#EEAE7E",
+            INFO: "#21CE9C",
+            DEBUG: "#3991FF",
+            TRACE: "#A6A4CA",
+        };
+
+        return COLORS[state];
+    }
+
     static chartColorFromLevel(level, alpha = 1) {
         const hex = Logs.color()[level];
         if (!hex) {

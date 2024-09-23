@@ -828,6 +828,17 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "Aviso: Detecção do uso da variável `trigger`, a execução manual do seu flow não atenderá a variável trigger."
+    "trigger_check_warning": "Aviso: Detecção do uso da variável `trigger`, a execução manual do seu flow não atenderá a variável trigger.",
+    "dashboard": {
+      "per_namespace": "(per namespace)",
+      "id": "ID",
+      "per_day": "(por dia)",
+      "total_executions": "Total de Execuções",
+      "success_ratio": "Taxa de Sucesso",
+      "next_scheduled_executions": "Próximas Execuções Agendadas",
+      "executions_in_progress": "Execuções em Progresso",
+      "next_execution_date": "Próxima Data de Execução",
+      "failure_ratio": "Taxa de Falhas"
+    }
   }
 }

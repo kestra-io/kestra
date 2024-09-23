@@ -17,6 +17,9 @@ export default {
                 return response.data;
             })
         },
+        dailyGroupByNamespace() {
+            return this.$http.post(`${apiUrl(this)}/stats/executions/daily/group-by-namespace`, {}).then(response => response.data)
+        },
         daily({commit}, payload) {
             return this.$http.post(`${apiUrl(this)}/stats/executions/daily`, payload).then(response => {
                 commit("setDaily", response.data)

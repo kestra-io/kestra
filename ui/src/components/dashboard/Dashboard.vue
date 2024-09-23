@@ -270,14 +270,9 @@
 
     const namespaceExecutions = ref({});
     const fetchNamespaceExecutions = () => {
-        store
-            .dispatch("stat/dailyGroupByFlow", {
-                ...filters.value,
-                namespaceOnly: true,
-            })
-            .then((response) => {
-                namespaceExecutions.value = response;
-            });
+        store.dispatch("stat/dailyGroupByNamespace").then((response) => {
+            namespaceExecutions.value = response;
+        });
     };
 
     const logs = ref([]);

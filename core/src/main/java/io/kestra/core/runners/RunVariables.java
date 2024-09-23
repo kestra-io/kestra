@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -74,15 +75,14 @@ public final class RunVariables {
      */
     static Map<String, Object> of(final Flow flow) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-        builder
-            .put("id", flow.getId())
-            .put("namespace", flow.getNamespace())
-            .put("revision", flow.getRevision()
-            );
+        builder.put("id", flow.getId())
+               .put("namespace", flow.getNamespace());
 
-        if (flow.getTenantId() != null) {
-            builder.put("tenantId", flow.getTenantId());
-        }
+        Optional.ofNullable(flow.getRevision())
+            .ifPresent(revision ->  builder.put("revision", revision));
+
+        Optional.ofNullable(flow.getTenantId())
+            .ifPresent(tenantId ->  builder.put("tenantId", tenantId));
 
         return builder.build();
     }
@@ -106,6 +106,8 @@ public final class RunVariables {
     public interface Builder {
 
         Builder withFlow(Flow flow);
+
+        Builder withInputs(Map<String, Object> inputs);
 
         Builder withTask(Task task);
 
@@ -146,6 +148,7 @@ public final class RunVariables {
         protected AbstractTrigger trigger;
         protected boolean decryptVariables = true;
         protected Map<String, Object> variables;
+        protected Map<String, Object> inputs;
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
@@ -199,13 +202,15 @@ public final class RunVariables {
 
             // Execution
             if (execution != null) {
-                ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.<String, Object>builder()
-                    .put("id", execution.getId())
-                    .put("startDate", execution.getState().getStartDate());
+                ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.builder();
 
-                if (execution.getOriginalId() != null) {
-                    executionMap.put("originalId", execution.getOriginalId());
-                }
+                executionMap.put("id", execution.getId());
+
+                Optional.ofNullable(execution.getState()).map(State::getStartDate)
+                    .ifPresent(startDate -> executionMap.put("startDate", startDate));
+
+                Optional.ofNullable(execution.getOriginalId())
+                    .ifPresent(originalId -> executionMap.put("originalId", originalId));
 
                 builder.put("execution", executionMap.build());
 
@@ -219,7 +224,7 @@ public final class RunVariables {
                 }
 
                 // Inputs
-                Map<String, Object> inputs = new HashMap<>();
+                Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {
                     inputs.putAll(execution.getInputs());
                     if (decryptVariables && flow != null && flow.getInputs() != null) {
@@ -268,6 +273,16 @@ public final class RunVariables {
 
                 if (execution.getVariables() != null) {
                     builder.putAll(execution.getVariables());
+                }
+
+                if (flow == null) {
+                    Flow flowFromExecution = Flow.builder()
+                        .id(execution.getFlowId())
+                        .tenantId(execution.getTenantId())
+                        .revision(execution.getFlowRevision())
+                        .namespace(execution.getNamespace())
+                        .build();
+                    builder.put("flow", RunVariables.of(flowFromExecution));
                 }
             }
 

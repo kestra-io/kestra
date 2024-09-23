@@ -828,6 +828,17 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
-    "trigger_check_warning": "警告：检测到使用 `trigger` 变量，手动执行您的 flow 不会满足 trigger 变量。"
+    "trigger_check_warning": "警告：检测到使用 `trigger` 变量，手动执行您的 flow 不会满足 trigger 变量。",
+    "dashboard": {
+      "per_namespace": "（每个namespace）",
+      "id": "ID",
+      "per_day": "（每天）",
+      "total_executions": "总执行次数",
+      "success_ratio": "成功率",
+      "next_scheduled_executions": "下一次计划执行",
+      "executions_in_progress": "执行中",
+      "next_execution_date": "下次执行日期",
+      "failure_ratio": "失败率"
+    }
   }
 }

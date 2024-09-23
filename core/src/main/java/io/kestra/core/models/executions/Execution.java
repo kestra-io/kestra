@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -102,6 +103,17 @@ public class Execution implements DeletedInterface, TenantInterface {
     Instant scheduleDate;
 
     /**
+     * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
+     *
+     * @param flow   The Flow.
+     * @param labels The Flow labels.
+     * @return a new {@link Execution}.
+     */
+    public static Execution newExecution(final Flow flow, final List<Label> labels) {
+        return newExecution(flow, null, labels, Optional.empty());
+    }
+
+    /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and inputs.
      *
      * @param flow   The Flow.
@@ -120,22 +132,23 @@ public class Execution implements DeletedInterface, TenantInterface {
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .state(new State())
-            .scheduleDate(scheduleDate.map(date -> date.toInstant()).orElse(null))
+            .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
-
-        if (inputs != null) {
-            execution = execution.withInputs(inputs.apply(flow, execution));
-        }
 
         List<Label> executionLabels = new ArrayList<>();
         if (flow.getLabels() != null) {
             executionLabels.addAll(flow.getLabels());
         }
+
         if (labels != null) {
             executionLabels.addAll(labels);
         }
         if (!executionLabels.isEmpty()) {
             execution = execution.withLabels(executionLabels);
+        }
+
+        if (inputs != null) {
+            execution = execution.withInputs(inputs.apply(flow, execution));
         }
 
         return execution;

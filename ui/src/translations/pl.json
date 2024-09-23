@@ -828,6 +828,17 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger."
+    "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger.",
+    "dashboard": {
+      "per_namespace": "(per namespace)",
+      "id": "ID",
+      "per_day": "(dziennie)",
+      "total_executions": "Całkowita liczba wykonań",
+      "success_ratio": "Wskaźnik Sukcesu",
+      "next_scheduled_executions": "Następne Zaplanowane Wykonania",
+      "executions_in_progress": "Wykonania w toku",
+      "next_execution_date": "Następna Data Wykonania",
+      "failure_ratio": "Wskaźnik Niepowodzeń"
+    }
   }
 }

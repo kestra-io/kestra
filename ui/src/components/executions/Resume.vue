@@ -14,7 +14,7 @@
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
         <el-form :model="inputs" label-position="top" ref="form" @submit.prevent="false">
-            <inputs-form :inputs-list="inputsList" v-model="inputs" />
+            <inputs-form :initial-inputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
             <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" native-type="submit">
@@ -65,7 +65,6 @@
             click() {
                 if (this.needInputs) {
                     this.isDrawerOpen = true;
-
                     return;
                 }
 

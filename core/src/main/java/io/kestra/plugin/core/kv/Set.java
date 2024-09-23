@@ -40,7 +40,7 @@ import java.time.Instant;
                 tasks:
                   - id: http_download
                     type: io.kestra.plugin.core.http.Download
-                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv  
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
 
                   - id: kv_set
                     type: io.kestra.plugin.core.kv.Set

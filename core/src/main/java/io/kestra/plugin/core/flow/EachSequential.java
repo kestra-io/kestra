@@ -76,11 +76,11 @@ import java.util.Optional;
             code = """
                 id: each_sequential_flow
                 namespace: company.team
-                
+
                 tasks:
                   - id: each_sequential
                     type: io.kestra.plugin.core.flow.EachSequential
-                    value: 
+                    value:
                       - value 1
                       - value 2
                       - value 3

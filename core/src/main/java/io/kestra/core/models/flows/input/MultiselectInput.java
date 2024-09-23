@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 @SuperBuilder
@@ -88,7 +89,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
         if (expression != null) {
             return MultiselectInput
                 .builder()
-                .values((List<String>)renderer.apply(expression))
+                .values(renderExpressionValues(renderer))
                 .id(getId())
                 .type(getType())
                 .allowInput(getAllowInput())
@@ -101,5 +102,33 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .build();
         }
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> renderExpressionValues(final Function<String, Object> renderer) {
+        Object result;
+        try {
+            result = renderer.apply(expression);
+        } catch (Exception e) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "Cannot render 'expression'. Cause: " + e.getMessage(),
+                this,
+                MultiselectInput.class,
+                getId(),
+                this
+            );
+        }
+
+        if (result instanceof List<?> list) {
+            return (List<String>) list;
+        }
+        String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
+        throw ManualConstraintViolation.toConstraintViolationException(
+            "Invalid expression result. Expected a list of strings, but received " + type,
+            this,
+            MultiselectInput.class,
+            getId(),
+            this
+        );
     }
 }

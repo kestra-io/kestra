@@ -199,7 +199,7 @@
         },
         emits: ["update:modelValue"],
         created() {
-            this.inputsList.push(this.initialInputs);
+            this.inputsList.push(...(this.initialInputs ?? []));
             this.validateInputs();
         },
         mounted() {
@@ -269,6 +269,10 @@
                 } else return false;
             },
             validateInputs() {
+                if (this.inputsList === undefined || this.inputsList.length === 0) {
+                    return;
+                }
+
                 const formData = inputsToFormDate(this, this.inputsList, this.inputs);
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};

@@ -128,7 +128,7 @@
                 flowId: props.flow,
                 size: 5,
                 page,
-                sort: "next_execution_date:asc",
+                sort: "nextExecutionDate:asc",
             })
             .then((response) => {
                 if (!response) return;

@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@SuppressWarnings("deprecation")
 @SuperBuilder
 @Getter
 @NoArgsConstructor

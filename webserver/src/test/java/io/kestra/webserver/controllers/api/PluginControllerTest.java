@@ -229,7 +229,7 @@ class PluginControllerTest {
 
             assertThat(doc.getSchema().getProperties().size(), is(3));
             Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-            assertThat(properties.size(), is(7));
+            assertThat(properties.size(), is(8));
 //            assertThat(((Map<String, Object>) properties.get("name")).get("$deprecated"), is(true));
         });
     }

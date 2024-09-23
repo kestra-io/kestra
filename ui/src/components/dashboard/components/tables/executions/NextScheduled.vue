@@ -10,7 +10,11 @@
                 class="inprogress"
                 :height="240"
             >
-                <el-table-column :label="$t('state')" width="100">
+                <el-table-column
+                    :label="$t('state')"
+                    width="100"
+                    class-name="next-toggle"
+                >
                     <template #default="scope">
                         <el-switch
                             :model-value="!scope.row.triggerContext.disabled"
@@ -20,6 +24,7 @@
                                     !scope.row.triggerContext.disabled;
                             "
                             :active-icon="Check"
+                            size="small"
                             inline-prompt
                         />
                     </template>
@@ -143,7 +148,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 code {
     color: var(--bs-code-color);
 }
@@ -159,5 +164,9 @@ code {
     html.dark & {
         --el-table-tr-bg-color: transparent;
     }
+}
+
+.next-toggle {
+    padding: 8px 0 0 0 !important;
 }
 </style>

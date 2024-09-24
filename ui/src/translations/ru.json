@@ -838,7 +838,8 @@
       "next_scheduled_executions": "Следующие запланированные выполнения",
       "executions_in_progress": "Выполняемые задачи",
       "next_execution_date": "Следующая дата выполнения",
-      "failure_ratio": "Коэффициент отказов"
+      "failure_ratio": "Коэффициент отказов",
+      "trigger_disabled": "Этот trigger может быть включен только через код."
     }
   }
 }

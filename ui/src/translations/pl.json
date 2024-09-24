@@ -838,7 +838,8 @@
       "next_scheduled_executions": "Następne Zaplanowane Wykonania",
       "executions_in_progress": "Wykonania w toku",
       "next_execution_date": "Następna Data Wykonania",
-      "failure_ratio": "Wskaźnik Niepowodzeń"
+      "failure_ratio": "Wskaźnik Niepowodzeń",
+      "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu."
     }
   }
 }

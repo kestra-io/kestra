@@ -13,12 +13,15 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 public class SelectInput extends Input<String> implements RenderableInput {
+
     @Schema(
         title = "List of values."
     )
@@ -58,7 +61,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
         if (expression != null) {
             return SelectInput
                 .builder()
-                .values((List<String>)renderer.apply(expression))
+                .values(renderExpressionValues(renderer))
                 .id(getId())
                 .type(getType())
                 .allowInput(getAllowInput())
@@ -70,5 +73,33 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .build();
         }
         return this;
+    }
+
+    private List<String> renderExpressionValues(final Function<String, Object> renderer) {
+        Object result;
+        try {
+            result = renderer.apply(expression);
+        } catch (Exception e) {
+            throw ManualConstraintViolation.toConstraintViolationException(
+                "Cannot render 'expression'. Cause: " + e.getMessage(),
+                this,
+                SelectInput.class,
+                getId(),
+                this
+            );
+        }
+
+        if (result instanceof List<?> list) {
+            return list.stream().filter(Objects::nonNull).map(Object::toString).toList();
+        }
+
+        String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
+        throw ManualConstraintViolation.toConstraintViolationException(
+            "Invalid expression result. Expected a list of strings, but received " + type,
+            this,
+            SelectInput.class,
+            getId(),
+            this
+        );
     }
 }

@@ -9,6 +9,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -18,7 +19,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class AbstractFlowTriggerService {
+@Singleton
+public class FlowTriggerService {
     @Inject
     private ConditionService conditionService;
 
@@ -50,8 +52,10 @@ public abstract class AbstractFlowTriggerService {
             // ensure flow & triggers are enabled
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
-            // validate flow triggers conditions excluding multiple conditions
             .flatMap(flow -> flowTriggers(flow).map(trigger -> new FlowWithFlowTrigger(flow, trigger)))
+            // filter on the execution state the flow listen to
+            .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getStates().contains(execution.getState().getCurrent()))
+            // validate flow triggers conditions excluding multiple conditions
             .filter(flowWithFlowTrigger -> conditionService.valid(
                 flowWithFlowTrigger.getFlow(),
                 Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)

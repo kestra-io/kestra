@@ -83,7 +83,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
                 this,
                 conditionContext,
                 triggerContext,
-                generateLabels(conditionContext),
+                generateLabels(runContext, conditionContext),
                 this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
                 nextDate
@@ -133,15 +133,20 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
     }
 
-    private List<Label> generateLabels(ConditionContext conditionContext) {
+    private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext) throws IllegalVariableEvaluationException {
         List<Label> labels = new ArrayList<>();
 
         if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels());
+            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
         }
 
         if (this.getLabels() != null) {
-            labels.addAll(this.getLabels());
+            for (Label label : this.getLabels()) {
+                final var value = runContext.render(label.value());
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
         }
 
         return labels;

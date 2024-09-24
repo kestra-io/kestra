@@ -38,6 +38,36 @@ public class Data<T> {
     private Property<List<Map<String, Object>>> fromList;
 
     /**
+     * Convenient factory method to create a Data object from a URI, mainly for testing purpose.
+     *
+     * @see #ofMap(Map)
+     * @see #ofList(List)
+     */
+    public static Data<?> ofURI(URI uri) {
+        return Data.builder().fromURI(Property.of(uri)).build();
+    }
+
+    /**
+     * Convenient factory method to create a Data object from a Map, mainly for testing purpose.
+     *
+     * @see #ofURI(URI)
+     * @see #ofList(List)
+     */
+    public static Data<?> ofMap(Map<String, Object> map) {
+        return Data.builder().fromMap(Property.of(map)).build();
+    }
+
+    /**
+     * Convenient factory method to create a Data object from a List, mainly for testing purpose.
+     *
+     * @see #ofURI(URI)
+     * @see #ofMap(Map)
+     */
+    public static Data<?> ofList(List<Map<String, Object>> list) {
+        return Data.builder().fromList(Property.of(list)).build();
+    }
+
+    /**
      * Generates a flux of objects for the data property, using either of its three properties.
      * The mapper passed to this method will be used to map the map to the desired type when using 'fromMap' or 'fromList',
      * it can be omitted when using 'fromURI'.

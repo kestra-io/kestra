@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -211,5 +212,7 @@ public class SetTest {
         // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
         assertThat((long) Double.parseDouble(kv.getValue(TEST_KEY).get().value().toString()), is(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds()));
 
+        set.toBuilder().value("[{\"some\":\"value\"},{\"another\":\"value\"}]").kvType(KVType.JSON).build().run(runContext);
+        assertThat(kv.getValue(TEST_KEY).get().value(), is(List.of(Map.of("some", "value"), Map.of("another", "value"))));
     }
 }

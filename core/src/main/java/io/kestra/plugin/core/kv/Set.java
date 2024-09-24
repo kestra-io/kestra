@@ -26,12 +26,12 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Sets (or modifies) a KV pair."
+    title = "Create or modify a Key-Value pair."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Set `query` task `uri` output as value for `my_variable` key in `dev` namespace.",
+            title = "Set the task's `uri` output as a value for `orders_file` key.",
             full = true,
             code = """
                 id: kv_store_set
@@ -46,9 +46,7 @@ import java.time.Instant;
                     type: io.kestra.plugin.core.kv.Set
                     key: orders_file
                     value: "{{ outputs.http_download.uri }}"
-                    namespace: dev # the current namespace of the flow will be used by default
-                    overwrite: true # whether to overwrite or fail if a value for that key already exists; default true
-                    ttl: P30D # optional TTL
+                    kvType: STRING
                 """
         )
     }
@@ -70,7 +68,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
 
     @NotNull
     @Schema(
-        title = "The namespace on which to set the value."
+        title = "The namespace in which the KV pair will be stored. By default, Kestra will use the namespace of the flow."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -85,13 +83,13 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     private boolean overwrite = true;
 
     @Schema(
-        title = "Optional time-to-live for the key-value pair."
+        title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
     )
     @PluginProperty
     private Duration ttl;
 
     @Schema(
-        title = "Type to save value as."
+        title = "Enum representing the data type of the KV pair. If not set, the value will be stored as a string."
     )
     @PluginProperty
     private KVType kvType;
@@ -112,6 +110,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
                     case DURATION -> Duration.parse(renderedValueStr);
+                    case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };
             }

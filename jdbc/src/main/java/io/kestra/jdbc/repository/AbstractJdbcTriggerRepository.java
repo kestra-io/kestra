@@ -360,7 +360,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         Map<String, String> mapper = Map.of(
             "flowId", "flow_id",
             "triggerId", "trigger_id",
-            "executionId", "execution_id"
+            "executionId", "execution_id",
+            "nextExecutionDate", "next_execution_date"
         );
 
         return s -> mapper.getOrDefault(s, s);

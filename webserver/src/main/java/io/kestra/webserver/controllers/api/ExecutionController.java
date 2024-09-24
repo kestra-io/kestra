@@ -6,10 +6,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowScope;
@@ -83,8 +80,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -103,6 +99,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -175,6 +172,9 @@ public class ExecutionController {
 
     @Inject
     private TenantService tenantService;
+
+    @Value("${kestra.url}")
+    private Optional<String> kestraUrl;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -561,7 +561,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
     @SingleResult
     @Deprecated
-    public Publisher<Execution> trigger(
+    public Publisher<ExecutionResponse> trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @Nullable @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
@@ -609,7 +609,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Create a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
     @SingleResult
-    public Publisher<Execution> create(
+    public Publisher<ExecutionResponse> create(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
@@ -641,7 +641,7 @@ public class ExecutionController {
                     eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
 
                     if (!wait) {
-                        sink.success(current);
+                        sink.success(ExecutionResponse.fromExecution(current, executionUrl(current)));
                     } else {
                         Runnable receive = this.executionQueue.receive(either -> {
                             if (either.isRight()) {
@@ -651,7 +651,7 @@ public class ExecutionController {
 
                             Execution item = either.getLeft();
                             if (item.getId().equals(current.getId()) && this.isStopFollow(flow, item)) {
-                                sink.success(item);
+                                sink.success(ExecutionResponse.fromExecution(item, executionUrl(item)));
                             }
                         });
 
@@ -661,6 +661,50 @@ public class ExecutionController {
                     sink.error(new RuntimeException(e));
                 }
             });
+    }
+
+    private URI executionUrl(Execution execution) {
+        return URI.create(kestraUrl.orElse("") + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId(): "")
+            + "/executions/"
+            + execution.getNamespace() + "/"
+            + execution.getFlowId() + "/"
+            + execution.getId()
+        );
+    }
+
+    @Getter
+    public static class ExecutionResponse extends Execution {
+        private final URI url;
+
+        // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, URI url) {
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate);
+
+            this.url = url;
+        }
+
+        public static ExecutionResponse fromExecution(Execution execution, URI url) {
+            return new ExecutionResponse(
+                execution.getTenantId(),
+                execution.getId(),
+                execution.getNamespace(),
+                execution.getFlowId(),
+                execution.getFlowRevision(),
+                execution.getTaskRunList(),
+                execution.getInputs(),
+                execution.outputs(),
+                execution.getLabels(),
+                execution.getVariables(),
+                execution.getState(),
+                execution.getParentId(),
+                execution.getOriginalId(),
+                execution.getTrigger(),
+                execution.isDeleted(),
+                execution.getMetadata(),
+                execution.getScheduleDate(),
+                url
+            );
+        }
     }
 
     private List<Label> parseLabels(List<String> labels) {

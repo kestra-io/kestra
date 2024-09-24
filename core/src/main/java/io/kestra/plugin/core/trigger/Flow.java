@@ -1,7 +1,12 @@
 package io.kestra.plugin.core.trigger;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
@@ -16,6 +21,7 @@ import io.kestra.core.utils.IdUtils;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import io.micronaut.core.annotation.Nullable;
@@ -84,6 +90,23 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Map<String, Object> inputs;
 
+    @Nullable
+    @Schema(
+        title = "List of execution states that will be evaluated by the trigger",
+        description = """
+            By default, only executions in a terminal state will be evaluated.
+            If you use a condition of type `ExecutionStatusCondition` it will be evaluated after this list.
+            ::alert{type="info"}
+            The trigger will be evaluated on each execution state change, this means that, for non-terminal state, they can be observed multiple times.
+            For example, if a flow has two `Pause` tasks, the execution will transition two times from PAUSED to RUNNING so theses states will be observed two times.
+            ::
+            ::alert{type="warning"}
+            You cannot evaluate on the CREATED state.
+            ::"""
+    )
+    @Builder.Default
+    private List<State.Type> states = State.Type.terminatedTypes();
+
     public Optional<Execution> evaluate(RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
@@ -93,7 +116,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(flow.getLabels())
+            .labels(generateLabels(runContext, flow))
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,
@@ -127,6 +150,34 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 e
             );
             return Optional.empty();
+        }
+    }
+
+    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) {
+        final List<Label> labels = new ArrayList<>();
+
+        if (flow.getLabels() != null) {
+            labels.addAll(flow.getLabels()); // no need for rendering
+        }
+
+        if (this.getLabels() != null) {
+            for (Label label : this.getLabels()) {
+                final var value = renderLabelValue(runContext, label);
+                if (value != null) {
+                    labels.add(new Label(label.key(), value));
+                }
+            }
+        }
+
+        return labels;
+    }
+
+    private String renderLabelValue(RunContext runContext, Label label) {
+        try {
+            return runContext.render(label.value());
+        } catch (IllegalVariableEvaluationException e) {
+            runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
+            return null;
         }
     }
 

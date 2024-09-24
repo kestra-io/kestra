@@ -12,6 +12,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,10 +29,6 @@ public class FlowTriggerCaseTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logEntryQueue;
 
     @Inject
     protected RunnerUtils runnerUtils;
@@ -82,5 +80,33 @@ public class FlowTriggerCaseTest {
         assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
         // it will be triggered for 'trigger-flow' or any of the 'trigger-flow-listener*', so we only assert that it's one of them
         assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("flowId"), anyOf(is("trigger-flow"), is("trigger-flow-listener-no-inputs"), is("trigger-flow-listener")));
+    }
+
+    public void triggerWithPause() throws InterruptedException, TimeoutException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(4);
+        List<Execution> flowListeners = new ArrayList<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId().equals("trigger-flow-listener-with-pause")) {
+                flowListeners.add(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
+
+        assertThat(execution.getTaskRunList().size(), is(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
+        receive.blockLast();
+
+        assertThat(flowListeners.size(), is(4));
+        System.out.println(flowListeners.get(0).getOutputs());
+        assertThat(flowListeners.get(0).getOutputs().get("status"), is("RUNNING"));
+        assertThat(flowListeners.get(1).getOutputs().get("status"), is("PAUSED"));
+        assertThat(flowListeners.get(2).getOutputs().get("status"), is("RUNNING"));
+        assertThat(flowListeners.get(3).getOutputs().get("status"), is("SUCCESS"));
     }
 }

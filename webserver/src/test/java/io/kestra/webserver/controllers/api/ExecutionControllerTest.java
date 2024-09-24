@@ -46,6 +46,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -1514,5 +1515,20 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         Assertions.assertEquals(namespace, response.namespace());
         Assertions.assertFalse(response.inputs().isEmpty());
         Assertions.assertTrue(response.inputs().stream().allMatch(ExecutionController.ApiValidateExecutionInputsResponse.ApiInputAndValue::enabled));
+    }
+
+    @Test
+   void shouldHaveAnUrlWhenCreated() {
+        // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
+        // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
+        Map<?, ?> executionResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/minimal", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Map.class
+        );
+
+        assertThat(executionResult, notNullValue());
+        assertThat(executionResult.get("url"), is("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id")));
     }
 }

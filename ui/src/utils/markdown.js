@@ -33,8 +33,15 @@ export default class Markdown {
 
         const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
-        let md = new markdownIt()
-            .use(mark)
+        let md;
+        if (options.onlyLink) {
+            md = new markdownIt("zero");
+            md.enable(["link", "linkify", "entity"]);
+        } else {
+            md = new markdownIt();
+        }
+
+        md.use(mark)
             .use(meta)
             .use(anchor, {permalink: options.permalink ? anchor.permalink.ariaHidden({placement: "before"}) : undefined})
             .use(container, "warning")

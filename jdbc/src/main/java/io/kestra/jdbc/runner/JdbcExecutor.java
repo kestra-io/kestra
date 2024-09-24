@@ -120,7 +120,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private MultipleConditionStorageInterface multipleConditionStorage;
 
     @Inject
-    private AbstractFlowTriggerService flowTriggerService;
+    private FlowTriggerService flowTriggerService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -495,8 +495,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     executor,
                     executorState
                 );
-            }
-            catch (QueueException e) {
+            } catch (QueueException e) {
                 try {
                     this.executionQueue.emit(
                         message.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED)
@@ -839,14 +838,16 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 executorStateStorage.delete(executor.getExecution());
             }
 
+            Execution execution = executor.getExecution();
+            // handle flow triggers on state change
+            if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
+                    .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
+            }
+
             // handle actions on terminated state
             // the terminated state can only come from the execution queue, and in this case we always have a flow in the executor
             if (executor.getFlow() != null && conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
-                Execution execution = executor.getExecution();
-                // handle flow triggers
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
-                    .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
-
                 // purge subflow execution storage
                 subflowExecutionStorage.get(execution.getId())
                     .ifPresent(subflowExecution -> {

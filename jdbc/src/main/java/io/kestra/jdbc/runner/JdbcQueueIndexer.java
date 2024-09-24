@@ -1,11 +1,13 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
@@ -41,7 +43,17 @@ public class JdbcQueueIndexer {
             this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", item.getClass().getName()).increment();
 
             this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, "type", item.getClass().getName()).record(() -> {
-                repositories.get(item.getClass()).save(context, cast(item));
+                JdbcIndexerInterface<?> jdbcIndexerInterface = repositories.get(item.getClass());
+                if (jdbcIndexerInterface instanceof FlowTopologyRepositoryInterface) {
+                    // we allow flow topology to fail indexation
+                    try {
+                        jdbcIndexerInterface.save(context, cast(item));
+                    } catch (DataAccessException e) {
+                        log.error("Unable to index a flow topology, skipping it", e);
+                    }
+                } else {
+                    jdbcIndexerInterface.save(context, cast(item));
+                }
 
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", item.getClass().getName()).increment();
             });

@@ -84,7 +84,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> all(final String prefix, final boolean includeDirectories) throws IOException {
-        URI namespacePrefix = URI.create(NamespaceFile.of(namespace, Optional.ofNullable(prefix).map(Path::of).orElse(null)).storagePath() + "/");
+        URI namespacePrefix = URI.create(NamespaceFile.of(namespace, Optional.ofNullable(prefix).map(Path::of).orElse(null)).storagePath().toString().replace("\\","/") + "/");
         return storage.allByPrefix(tenant, namespacePrefix, includeDirectories)
             .stream()
             .map(uri -> new NamespaceFile(relativize(uri), uri, namespace))

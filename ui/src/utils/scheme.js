@@ -50,7 +50,7 @@ const OPTIONS = Object.freeze({
             },
         },
     },
-    kestra: {
+    purple: {
         light: {
             executions: {
                 CANCELLED: "#fec9cb",

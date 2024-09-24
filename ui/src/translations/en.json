@@ -706,9 +706,8 @@
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
-              "cbs": "CBS stands for Color Blind Safe scheme",
               "default": "Default",
-              "kestra": "Kestra (CBS)"
+              "purple": "Purple"
             }
           }
         },
@@ -861,7 +860,9 @@
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",
-      "trigger_disabled": "This trigger can only be enabled through code."
+      "trigger_disabled": "This trigger can only be enabled through code.",
+      "description": "Description",
+      "no_flow_description": "This flow has no description."
     }
   }
 }

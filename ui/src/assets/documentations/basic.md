@@ -259,7 +259,7 @@ The table below lists Pebble filter expressions:
 
 * Follow the step-by-step [tutorial](https://kestra.io/docs/tutorial)
 * Check the [documentation](https://kestra.io/docs)
-* Watch a 10-minute video explanation of key concepts on the [Kestra's YouTube channel](https://youtu.be/yuV_rgnpXU8?si=tdMnZlovgHgnwx0K)
+* Watch a 15-minute video explanation of key concepts on the [Kestra's YouTube channel](https://youtu.be/a2BZ7vOihjg?si=NYfeUFDoE29ahhW0)
 * Submit a feature request or a bug report on [GitHub](https://github.com/kestra-io/kestra/issues/new/choose)
 * Need help? [Join the community](https://kestra.io/slack)
 * Do you like the project? Give us a ⭐️ on [GitHub](https://github.com/kestra-io/kestra).

@@ -9,7 +9,7 @@
                 <Doughnut
                     :data="parsedData"
                     :options="options"
-                    :plugins="[totalsLegend, centerPlugin]"
+                    :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
             </div>
@@ -55,7 +55,15 @@
         const data = labels.map((state) => stateCounts[state]);
         const backgroundColor = labels.map((state) => getStateColor(state));
 
-        return {labels, datasets: [{data, backgroundColor, borderWidth: 0}]};
+        const maxDataValue = Math.max(...data);
+        const thicknessScale = data.map(
+            (value) => 21 + (value / maxDataValue) * 28,
+        );
+
+        return {
+            labels,
+            datasets: [{data, backgroundColor, thicknessScale, borderWidth: 0}],
+        };
     });
 
     const options = computed(() =>
@@ -88,6 +96,26 @@
             ctx.fillText(total, centerX, centerY);
 
             ctx.restore();
+        },
+    };
+
+    const thicknessPlugin = {
+        id: "thicknessPlugin",
+        beforeDatasetsDraw(chart) {
+            const {ctx} = chart;
+            const dataset = chart.data.datasets[0];
+            const meta = chart.getDatasetMeta(0);
+
+            const thicknessScale = dataset.thicknessScale;
+
+            meta.data.forEach((arc, index) => {
+                const baseRadius = arc.innerRadius;
+                const additionalThickness = thicknessScale[index];
+                arc.outerRadius = baseRadius + additionalThickness;
+                arc.innerRadius = baseRadius;
+
+                arc.draw(ctx);
+            });
         },
     };
 </script>

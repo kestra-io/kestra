@@ -192,16 +192,8 @@ code {
 }
 
 .inprogress {
-    --el-table-header-bg-color: transparent;
-    --el-table-header-text-color: var(--bs-body-color);
-    --el-table-tr-bg-color: white;
-    outline: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
-    background-color: transparent;
-
-    html.dark & {
-        --el-table-tr-bg-color: transparent;
-    }
+    --el-table-tr-bg-color: var(--bs-body-bg) !important;
+    background: var(--bs-body-bg);
 }
 
 .next-toggle {

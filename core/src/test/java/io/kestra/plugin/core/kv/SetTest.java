@@ -103,13 +103,13 @@ public class SetTest {
             .type(Set.class.getName())
             .key("{{ inputs.key }}")
             .value("{{ inputs.value }}")
-            .namespace("io.kestra.test.unit")
+            .namespace("io.kestra")
             .build();
         // When
         set.run(runContext);
 
         // then
-        final KVStore kv = runContext.namespaceKv("io.kestra.test.unit");
+        final KVStore kv = runContext.namespaceKv("io.kestra");
         assertThat(kv.getValue(TEST_KEY), is(Optional.of(new KVValue("test-value"))));
         assertThat(kv.list().getFirst().expirationDate(), nullValue());
     }

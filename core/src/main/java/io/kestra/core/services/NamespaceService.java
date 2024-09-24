@@ -30,7 +30,7 @@ public class NamespaceService {
 
         if (flowRepository.isPresent()) {
             List<String> namespaces = flowRepository.get().findDistinctNamespace(tenant);
-            return namespaces.stream().anyMatch(ns -> ns.equals(namespace));
+            return namespaces.stream().anyMatch(ns -> ns.equals(namespace) || ns.startsWith(namespace));
         }
         return false;
     }

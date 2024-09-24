@@ -8,6 +8,8 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -20,10 +22,13 @@ public class DataValidationTest {
 
     @Test
     void valid() throws Exception {
-        Data<?> data = Data.builder()
-            .fromURI(Property.of(URI.create("kestra:///uri")))
-            .build();
+        Data<?> data = Data.ofURI(URI.create("kestra:///uri"));
+        assertThat(modelValidator.isValid(data).isEmpty(), is(true));
 
+        data = Data.ofMap(Map.of("key", "value"));
+        assertThat(modelValidator.isValid(data).isEmpty(), is(true));
+
+        data = Data.ofList(List.of(Map.of("key1", "value11"), Map.of("key2", "value2")));
         assertThat(modelValidator.isValid(data).isEmpty(), is(true));
     }
 

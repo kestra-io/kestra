@@ -44,7 +44,6 @@
 #io.kestra.plugin:plugin-jdbc-pinot:LATEST
 #io.kestra.plugin:plugin-jdbc-postgres:LATEST
 #io.kestra.plugin:plugin-jdbc-redshift:LATEST
-#io.kestra.plugin:plugin-jdbc-rockset:LATEST
 #io.kestra.plugin:plugin-jdbc-snowflake:LATEST
 #io.kestra.plugin:plugin-jdbc-sqlserver:LATEST
 #io.kestra.plugin:plugin-jdbc-trino:LATEST

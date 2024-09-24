@@ -686,7 +686,8 @@
               "label": "Schemat kolorów wykresu",
               "classic": "Klasyczny",
               "cbs": "CBS oznacza Color Blind Safe scheme",
-              "kestra": "Kestra (CBS)"
+              "kestra": "Kestra (CBS)",
+              "purple": "Fioletowy"
             }
           }
         },
@@ -846,7 +847,9 @@
       "executions_in_progress": "Wykonania w toku",
       "next_execution_date": "Następna Data Wykonania",
       "failure_ratio": "Wskaźnik Niepowodzeń",
-      "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu."
+      "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu.",
+      "no_flow_description": "Ten flow nie ma opisu.",
+      "description": "Opis"
     }
   }
 }

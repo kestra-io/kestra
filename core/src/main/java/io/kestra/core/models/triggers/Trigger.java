@@ -229,6 +229,7 @@ public class Trigger extends TriggerContext {
             .stopAfter(this.getStopAfter())
             .backfill(this.getBackfill())
             .disabled(disabled)
+            .evaluateRunningDate(this.getEvaluateRunningDate())
             .build();
     }
 

@@ -93,6 +93,16 @@
                 barLegend: {
                     containerID: "pernamespace",
                 },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}`;
+                        },
+                    },
+                },
             },
             scales: {
                 x: {

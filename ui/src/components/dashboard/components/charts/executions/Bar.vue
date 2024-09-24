@@ -92,7 +92,7 @@
                 ? [
                     {
                         type: "line",
-                        label: false,
+                        label: t("duration"),
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
@@ -115,6 +115,16 @@
             plugins: {
                 barLegend: {
                     containerID: "executions",
+                },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label, yAxisID} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
+                        },
+                    },
                 },
             },
             scales: {

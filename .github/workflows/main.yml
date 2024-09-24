@@ -30,14 +30,17 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 env:
   JAVA_VERSION: '21'
   DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
   DOCKER_PYTHON_LIBRARIES: kestra
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+
 jobs:
   build-artifacts:
     name: Build Artifacts
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
@@ -170,6 +173,7 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
   check:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -419,6 +423,7 @@ jobs:
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
           ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+
   end:
     runs-on: ubuntu-latest
     needs:

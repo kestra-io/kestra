@@ -685,7 +685,8 @@
               "label": "Schéma de Couleurs du Graphique",
               "classic": "Classique",
               "cbs": "CBS signifie schéma Color Blind Safe",
-              "kestra": "Kestra (CBS)"
+              "kestra": "Kestra (CBS)",
+              "purple": "Violet"
             }
           }
         },
@@ -845,7 +846,9 @@
       "executions_in_progress": "Exécutions en cours",
       "next_execution_date": "Prochaine Date d'Exécution",
       "failure_ratio": "Ratio d'échec",
-      "trigger_disabled": "Ce trigger ne peut être activé que par le code."
+      "trigger_disabled": "Ce trigger ne peut être activé que par le code.",
+      "no_flow_description": "Ce flow n'a pas de description.",
+      "description": "Description"
     }
   }
 }

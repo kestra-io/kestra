@@ -686,7 +686,8 @@
               "label": "Цветовая схема диаграммы",
               "classic": "Классический",
               "cbs": "CBS означает схему Color Blind Safe",
-              "kestra": "Kestra (CBS)"
+              "kestra": "Kestra (CBS)",
+              "purple": "Фиолетовый"
             }
           }
         },
@@ -846,7 +847,9 @@
       "executions_in_progress": "Выполняемые задачи",
       "next_execution_date": "Следующая дата выполнения",
       "failure_ratio": "Коэффициент отказов",
-      "trigger_disabled": "Этот trigger может быть включен только через код."
+      "trigger_disabled": "Этот trigger может быть включен только через код.",
+      "no_flow_description": "Этот flow не имеет описания.",
+      "description": "Описание"
     }
   }
 }

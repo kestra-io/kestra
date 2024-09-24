@@ -686,7 +686,8 @@
               "label": "Esquema de Cores do Gráfico",
               "classic": "Clássico",
               "cbs": "CBS significa esquema Seguro para Daltônicos",
-              "kestra": "Kestra (CBS)"
+              "kestra": "Kestra (CBS)",
+              "purple": "Roxo"
             }
           }
         },
@@ -846,7 +847,9 @@
       "executions_in_progress": "Execuções em Progresso",
       "next_execution_date": "Próxima Data de Execução",
       "failure_ratio": "Taxa de Falhas",
-      "trigger_disabled": "Este trigger só pode ser habilitado através de código."
+      "trigger_disabled": "Este trigger só pode ser habilitado através de código.",
+      "no_flow_description": "Este flow não tem descrição.",
+      "description": "Descrição"
     }
   }
 }

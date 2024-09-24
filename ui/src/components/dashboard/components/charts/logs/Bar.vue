@@ -30,6 +30,7 @@
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 
     const {t} = useI18n({useScope: "global"});
@@ -47,7 +48,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: Logs.graphColors(state),
+                        backgroundColor: getScheme(state, "logs"),
                         borderRadius: 4,
                         yAxisID: "y",
                         data: [],

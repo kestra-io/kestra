@@ -702,7 +702,12 @@
             "editor_font_family": "Editor Font Family",
             "editor_folding_stratgy": "Automatic Code Folding in the Editor",
             "environment_name": "Environment Name",
-            "environment_color": "Environment Color"
+            "environment_color": "Environment Color",
+            "chart_color_scheme": {
+              "label": "Chart Color Scheme",
+              "default": "Default",
+              "classic": "Classic"
+            }
           }
         },
         "localization": {

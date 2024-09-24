@@ -44,11 +44,8 @@
     import {barLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
-    import {
-        defaultConfig,
-        getStateColor,
-        getFormat,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     import Check from "vue-material-design-icons/Check.vue";
 
@@ -71,7 +68,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getStateColor(state),
+                        backgroundColor: getScheme(state),
                         borderRadius: 4,
                         yAxisID: "y",
                         data: [],

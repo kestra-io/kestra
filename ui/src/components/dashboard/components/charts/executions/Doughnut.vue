@@ -27,7 +27,8 @@
     import {totalsLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
-    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
+    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -53,7 +54,7 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getStateColor(state));
+        const backgroundColor = labels.map((state) => getScheme(state));
 
         const maxDataValue = Math.max(...data);
         const thicknessScale = data.map(

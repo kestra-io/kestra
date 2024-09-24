@@ -160,7 +160,7 @@
                         </el-table-column>
                         <el-table-column :label="$t('evaluation lock date')">
                             <template #default="scope">
-                                <date-ago :inverted="true" :date="scope.row.nextExecutionDatevaluateRunningDate" />
+                                <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
                             </template>
                         </el-table-column>
                         <el-table-column

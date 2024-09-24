@@ -76,6 +76,20 @@
                 barLegend: {
                     containerID: "logs",
                 },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}`;
+                        },
+                        footer: (value) => {
+                            const total = value.reduce((a, c) => a + c.raw, 0);
+                            return `${t("Total")}: ${total}`;
+                        },
+                    },
+                },
             },
             scales: {
                 x: {

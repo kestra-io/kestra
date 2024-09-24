@@ -77,7 +77,7 @@
             datasets: [
                 {
                     type: "line",
-                    label: false,
+                    label: t("duration"),
                     fill: "start",
                     pointRadius: 0,
                     borderWidth: 0.2,

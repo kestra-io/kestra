@@ -12,8 +12,8 @@
             >
                 <el-table-column
                     :label="$t('state')"
-                    width="100"
                     class-name="next-toggle"
+                    width="50"
                 >
                     <template #default="scope">
                         <el-tooltip
@@ -50,9 +50,14 @@
                 <el-table-column :label="$t('dashboard.id')" width="100">
                     <template #default="scope">
                         <RouterLink :to="{name: 'admin/triggers'}">
-                            <code>
-                                {{ scope.row.triggerContext.triggerId }}
-                            </code>
+                            <el-tooltip
+                                :content="scope.row.triggerContext.triggerId"
+                                placement="right"
+                            >
+                                <code class="text-truncate">
+                                    {{ scope.row.triggerContext.triggerId }}
+                                </code>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
@@ -66,7 +71,14 @@
                                 },
                             }"
                         >
-                            {{ scope.row.triggerContext.namespace }}
+                            <el-tooltip
+                                :content="scope.row.triggerContext.namespace"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.triggerContext.namespace }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
@@ -82,20 +94,34 @@
                                 },
                             }"
                         >
-                            {{ scope.row.triggerContext.flowId }}
+                            <el-tooltip
+                                :content="scope.row.triggerContext.flowId"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.triggerContext.flowId }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
                 <el-table-column :label="$t('dashboard.next_execution_date')">
                     <template #default="scope">
-                        {{
-                            !scope.row.disabled
-                                ? moment(
-                                    scope.row.triggerContext
-                                        .nextExecutionDate,
-                                ).format("lll")
-                                : "-"
-                        }}
+                        <el-tooltip
+                            v-if="!scope.row.disabled"
+                            :content="scope.row.triggerContext.flowId"
+                            placement="right"
+                        >
+                            <span class="text-truncate">
+                                {{
+                                    moment(
+                                        scope.row.triggerContext
+                                            .nextExecutionDate,
+                                    ).format("lll")
+                                }}
+                            </span>
+                        </el-tooltip>
+                        <span v-else>-</span>
                     </template>
                 </el-table-column>
             </el-table>
@@ -192,16 +218,8 @@ code {
 }
 
 .inprogress {
-    --el-table-header-bg-color: transparent;
-    --el-table-header-text-color: var(--bs-body-color);
-    --el-table-tr-bg-color: white;
-    outline: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
-    background-color: transparent;
-
-    html.dark & {
-        --el-table-tr-bg-color: transparent;
-    }
+    --el-table-tr-bg-color: var(--bs-body-bg) !important;
+    background: var(--bs-body-bg);
 }
 
 .next-toggle {

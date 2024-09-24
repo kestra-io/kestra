@@ -10,7 +10,7 @@
                 class="inprogress"
                 :height="240"
             >
-                <el-table-column :label="$t('dashboard.id')" width="100">
+                <el-table-column :label="$t('dashboard.id')" width="80">
                     <template #default="scope">
                         <RouterLink
                             :to="{
@@ -38,7 +38,14 @@
                                 },
                             }"
                         >
-                            {{ scope.row.namespace }}
+                            <el-tooltip
+                                :content="scope.row.namespace"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.namespace }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
@@ -53,16 +60,25 @@
                                 },
                             }"
                         >
-                            {{ scope.row.flowId }}
+                            <el-tooltip
+                                :content="scope.row.flowId"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.flowId }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
                 <el-table-column :label="$t('duration')" width="100">
                     <template #default="scope">
                         {{
-                            (moment
-                                .duration(scope.row.state.duration)
-                                .milliseconds() / 1000 || 0).toFixed(3)
+                            (
+                                moment
+                                    .duration(scope.row.state.duration)
+                                    .milliseconds() / 1000 || 0
+                            ).toFixed(3)
                         }}s
                     </template>
                 </el-table-column>
@@ -149,15 +165,7 @@ code {
 }
 
 .inprogress {
-    --el-table-header-bg-color: transparent;
-    --el-table-header-text-color: var(--bs-body-color);
-    --el-table-tr-bg-color: white;
-    outline: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
-    background-color: transparent;
-
-    html.dark & {
-        --el-table-tr-bg-color: transparent;
-    }
+    --el-table-tr-bg-color: var(--bs-body-bg) !important;
+    background: var(--bs-body-bg);
 }
 </style>

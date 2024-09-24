@@ -10,7 +10,7 @@
                 class="inprogress"
                 :height="240"
             >
-                <el-table-column :label="$t('dashboard.id')" width="100">
+                <el-table-column :label="$t('dashboard.id')" width="80">
                     <template #default="scope">
                         <RouterLink
                             :to="{
@@ -38,7 +38,14 @@
                                 },
                             }"
                         >
-                            {{ scope.row.namespace }}
+                            <el-tooltip
+                                :content="scope.row.namespace"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.namespace }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>
@@ -53,7 +60,14 @@
                                 },
                             }"
                         >
-                            {{ scope.row.flowId }}
+                            <el-tooltip
+                                :content="scope.row.flowId"
+                                placement="right"
+                            >
+                                <span class="text-truncate">
+                                    {{ scope.row.flowId }}
+                                </span>
+                            </el-tooltip>
                         </RouterLink>
                     </template>
                 </el-table-column>

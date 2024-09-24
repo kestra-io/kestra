@@ -7,7 +7,19 @@
         :xl="layout.xl"
         class="column"
     >
-        <p v-if="label" v-text="label" class="label" />
+        <p v-if="label" class="label">
+            <el-popover
+                v-if="!!popover"
+                :content="popover"
+                trigger="hover"
+                :width="324"
+            >
+                <template #reference>
+                    <InformationOutline />
+                </template>
+            </el-popover>
+            <span>{{ label }}</span>
+        </p>
         <slot />
     </el-col>
 </template>
@@ -15,9 +27,12 @@
 <script setup lang="ts">
     import {computed} from "vue";
 
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
+
     const props = defineProps({
         overrides: {type: Object, default: () => {}},
         label: {type: String, default: undefined},
+        popover: {type: String, default: undefined},
     });
 
     const layout = computed(() => {
@@ -41,6 +56,11 @@
         margin-bottom: calc($spacer / 3);
         font-size: $font-size-sm;
         font-weight: 500;
+
+        & > span.el-tooltip__trigger {
+            cursor: pointer;
+            margin-right: calc($spacer / 2);
+        }
     }
 }
 </style>

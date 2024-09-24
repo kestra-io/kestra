@@ -10,7 +10,7 @@
             </div>
 
             <RouterLink :to="redirect" class="d-flex align-items-center">
-                <TextSearchVariant class="fs-4 icons" />
+                <TextSearchVariant class="fs-4 icons url" />
             </RouterLink>
         </div>
         <p class="m-0 fs-2 fw-bold">
@@ -47,7 +47,11 @@
 
 .card {
     & .icons {
-        color: #7e719f;
+        color: $secondary;
+
+        &.url {
+            color: #7e719f;
+        }
     }
 
     & .label {

@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "デフォルト",
               "label": "チャートのカラースキーム",
-              "classic": "クラシック"
+              "classic": "クラシック",
+              "cbs": "CBSはColor Blind Safeスキームの略です",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

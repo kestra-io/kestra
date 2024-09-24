@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "डिफ़ॉल्ट",
               "label": "चार्ट रंग योजना",
-              "classic": "क्लासिक"
+              "classic": "क्लासिक",
+              "cbs": "CBS का मतलब है Color Blind Safe योजना",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

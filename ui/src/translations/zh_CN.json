@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "默认",
               "label": "图表配色方案",
-              "classic": "经典"
+              "classic": "经典",
+              "cbs": "CBS代表色盲安全方案",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

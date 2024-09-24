@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "Predefinito",
               "label": "Schema Colori Grafico",
-              "classic": "Classico"
+              "classic": "Classico",
+              "cbs": "CBS sta per schema Color Blind Safe",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

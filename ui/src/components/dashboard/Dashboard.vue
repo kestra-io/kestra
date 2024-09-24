@@ -364,8 +364,13 @@ $spacing: 20px;
             padding-bottom: $spacing;
 
             & div {
-                border-radius: $border-radius;
                 background: var(--card-bg);
+                border: 1px solid var(--bs-gray-300);
+                border-radius: $border-radius;
+
+                html.dark & {
+                    border-color: var(--bs-gray-600);
+                }
             }
         }
     }

@@ -34,7 +34,8 @@
 
     import {barLegend} from "../legend.js";
 
-    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
+    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -64,7 +65,7 @@
                     executionData[state] = {
                         label: state,
                         data: [],
-                        backgroundColor: getStateColor(state),
+                        backgroundColor: getScheme(state),
                         stack: state,
                     };
                 }

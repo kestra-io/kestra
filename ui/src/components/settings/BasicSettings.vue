@@ -121,6 +121,22 @@
                         />
                     </Column>
                 </Row>
+
+                <Row>
+                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
+                        <el-select :model-value="chartColor" @update:model-value="onChartColor">
+                            <el-option
+                                v-for="item in [
+                                    {value: 'default', text: $t('settings.blocks.theme.fields.chart_color_scheme.default')},
+                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')}
+                                ]"
+                                :key="item.value"
+                                :label="item.text"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+                </Row>
             </template>
         </Block>
 
@@ -219,6 +235,7 @@
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
+                chartColor: undefined,
                 dateFormat: undefined,
                 timezone: undefined,
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
@@ -249,6 +266,7 @@
             this.lang = Utils.getLang();
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.chartColor = localStorage.getItem("scheme") || "default";
             this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
@@ -306,6 +324,11 @@
             onEditorTheme(value) {
                 localStorage.setItem("editorTheme", value);
                 this.editorTheme = value;
+                this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
+            },
+            onChartColor(value) {
+                localStorage.setItem("scheme", value);
+                this.chartColor = value;
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             },
             onAutofoldTextEditor(value) {

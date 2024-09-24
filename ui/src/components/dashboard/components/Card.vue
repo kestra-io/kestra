@@ -47,7 +47,7 @@
 
 .card {
     & .icons {
-        color: $secondary;
+        color: #7e719f;
     }
 
     & .label {

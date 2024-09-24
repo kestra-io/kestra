@@ -705,8 +705,9 @@
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
+              "cbs": "CBS stands for Color Blind Safe scheme",
               "default": "Default",
-              "classic": "Classic"
+              "kestra": "Kestra (CBS)"
             }
           }
         },

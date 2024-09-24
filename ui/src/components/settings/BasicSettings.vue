@@ -123,12 +123,15 @@
                 </Row>
 
                 <Row>
-                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
+                    <Column
+                        :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')"
+                        :popover="$t('settings.blocks.theme.fields.chart_color_scheme.cbs')"
+                    >
                         <el-select :model-value="chartColor" @update:model-value="onChartColor">
                             <el-option
                                 v-for="item in [
                                     {value: 'default', text: $t('settings.blocks.theme.fields.chart_color_scheme.default')},
-                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')}
+                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
                                 ]"
                                 :key="item.value"
                                 :label="item.text"

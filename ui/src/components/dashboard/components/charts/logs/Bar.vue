@@ -49,7 +49,6 @@
                     accumulator[state] = {
                         label: state,
                         backgroundColor: getScheme(state, "logs"),
-                        borderRadius: 4,
                         yAxisID: "y",
                         data: [],
                     };

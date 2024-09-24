@@ -58,7 +58,6 @@
                     accumulator[state] = {
                         label: state,
                         backgroundColor: backgroundFromState(state),
-                        borderRadius: 4,
                         yAxisID: "y",
                         data: [],
                     };

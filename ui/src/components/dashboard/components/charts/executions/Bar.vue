@@ -66,8 +66,6 @@
     });
 
     const parsedData = computed(() => {
-        const darkTheme = Utils.getTheme() === "dark";
-
         let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.executionCounts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
@@ -95,10 +93,10 @@
                     {
                         type: "line",
                         label: false,
-                        fill: "start",
+                        fill: false,
                         pointRadius: 0,
-                        borderWidth: 0.2,
-                        borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                        borderWidth: 0.75,
+                        borderColor: "#A2CDFF",
                         yAxisID: "yB",
                         data: props.data.map((value) => {
                             return value.duration.avg === 0

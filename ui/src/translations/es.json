@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "Predeterminado",
               "label": "Esquema de Colores del Gráfico",
-              "classic": "Clásico"
+              "classic": "Clásico",
+              "cbs": "CBS significa esquema Seguro para Daltónicos",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

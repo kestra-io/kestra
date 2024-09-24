@@ -684,7 +684,9 @@
             "chart_color_scheme": {
               "default": "Domyślny",
               "label": "Schemat kolorów wykresu",
-              "classic": "Klasyczny"
+              "classic": "Klasyczny",
+              "cbs": "CBS oznacza Color Blind Safe scheme",
+              "kestra": "Kestra (CBS)"
             }
           }
         },

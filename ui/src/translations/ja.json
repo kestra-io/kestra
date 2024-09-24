@@ -680,7 +680,12 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "environment_name": "環境名",
-            "environment_color": "環境色"
+            "environment_color": "環境色",
+            "chart_color_scheme": {
+              "default": "デフォルト",
+              "label": "チャートのカラースキーム",
+              "classic": "クラシック"
+            }
           }
         },
         "localization": {

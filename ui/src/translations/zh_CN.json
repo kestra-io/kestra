@@ -680,7 +680,12 @@
             "editor_font_family": "编辑器字体家族",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
             "environment_name": "环境名称",
-            "environment_color": "环境颜色"
+            "environment_color": "环境颜色",
+            "chart_color_scheme": {
+              "default": "默认",
+              "label": "图表配色方案",
+              "classic": "经典"
+            }
           }
         },
         "localization": {

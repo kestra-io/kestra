@@ -680,7 +680,12 @@
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "environment_name": "Nazwa Środowiska",
-            "environment_color": "Kolor Środowiska"
+            "environment_color": "Kolor Środowiska",
+            "chart_color_scheme": {
+              "default": "Domyślny",
+              "label": "Schemat kolorów wykresu",
+              "classic": "Klasyczny"
+            }
           }
         },
         "localization": {

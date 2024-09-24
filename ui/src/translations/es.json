@@ -680,7 +680,12 @@
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
             "environment_name": "Nombre del Entorno",
-            "environment_color": "Color del Entorno"
+            "environment_color": "Color del Entorno",
+            "chart_color_scheme": {
+              "default": "Predeterminado",
+              "label": "Esquema de Colores del Gráfico",
+              "classic": "Clásico"
+            }
           }
         },
         "localization": {

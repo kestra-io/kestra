@@ -679,7 +679,12 @@
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
             "environment_name": "Nom de l'Environnement",
-            "environment_color": "Couleur de l'Environnement"
+            "environment_color": "Couleur de l'Environnement",
+            "chart_color_scheme": {
+              "default": "Par défaut",
+              "label": "Schéma de Couleurs du Graphique",
+              "classic": "Classique"
+            }
           }
         },
         "localization": {

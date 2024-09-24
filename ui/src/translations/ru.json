@@ -680,7 +680,12 @@
             "editor_font_family": "Шрифт редактора",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "environment_name": "Имя окружения",
-            "environment_color": "Цвет окружения"
+            "environment_color": "Цвет окружения",
+            "chart_color_scheme": {
+              "default": "По умолчанию",
+              "label": "Цветовая схема диаграммы",
+              "classic": "Классический"
+            }
           }
         },
         "localization": {

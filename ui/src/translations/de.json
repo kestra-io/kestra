@@ -680,7 +680,12 @@
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "environment_name": "Umgebungsname",
-            "environment_color": "Umgebungsfarbe"
+            "environment_color": "Umgebungsfarbe",
+            "chart_color_scheme": {
+              "default": "Standard",
+              "label": "Diagramm-Farbschema",
+              "classic": "Klassisch"
+            }
           }
         },
         "localization": {

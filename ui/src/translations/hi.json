@@ -680,7 +680,12 @@
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
             "environment_name": "पर्यावरण नाम",
-            "environment_color": "पर्यावरण रंग"
+            "environment_color": "पर्यावरण रंग",
+            "chart_color_scheme": {
+              "default": "डिफ़ॉल्ट",
+              "label": "चार्ट रंग योजना",
+              "classic": "क्लासिक"
+            }
           }
         },
         "localization": {

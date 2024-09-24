@@ -680,7 +680,12 @@
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "environment_name": "환경 이름",
-            "environment_color": "환경 색상"
+            "environment_color": "환경 색상",
+            "chart_color_scheme": {
+              "default": "기본값",
+              "label": "차트 색상 구성표",
+              "classic": "클래식"
+            }
           }
         },
         "localization": {

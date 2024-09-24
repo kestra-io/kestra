@@ -680,7 +680,12 @@
             "editor_font_family": "Família de Fonte do Editor",
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "environment_name": "Nome do Ambiente",
-            "environment_color": "Cor do Ambiente"
+            "environment_color": "Cor do Ambiente",
+            "chart_color_scheme": {
+              "default": "Padrão",
+              "label": "Esquema de Cores do Gráfico",
+              "classic": "Clássico"
+            }
           }
         },
         "localization": {

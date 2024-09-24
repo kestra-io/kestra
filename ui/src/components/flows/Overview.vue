@@ -1,5 +1,5 @@
 <template>
-    <Dashboard :flow="flow ? flow.id : undefined" embed />
+    <Dashboard flow :flow-i-d="flow ? flow.id : undefined" embed />
 </template>
 
 <script>

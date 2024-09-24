@@ -6,8 +6,8 @@
             <el-col :xs="24" :lg="4">
                 <namespace-select
                     v-model="filters.namespace"
-                    :data-type="'flow'"
-                    :disabled="!!props.flow || !!props.namespace"
+                    data-type="flow"
+                    :disabled="props.flow || !!props.namespace"
                     @update:model-value="updateParams()"
                 />
             </el-col>
@@ -55,7 +55,7 @@
     </div>
 
     <div class="dashboard">
-        <el-row :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
             <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="CheckBold"
@@ -102,30 +102,69 @@
         </el-row>
 
         <el-row :gutter="20" class="mx-0">
-            <el-col :xs="24" :lg="16">
+            <el-col :xs="24" :lg="props.flow ? 24 : 16">
                 <ExecutionsBar :data="graphData" :total="stats.total" />
             </el-col>
-            <el-col :xs="24" :lg="8">
+            <el-col v-if="!props.flow" :xs="24" :lg="8">
                 <ExecutionsDoughnut :data="graphData" :total="stats.total" />
             </el-col>
         </el-row>
 
         <el-row :gutter="20" class="mx-0">
-            <el-col :xs="24" :lg="12">
+            <el-col :xs="24" :lg="props.flow ? 7 : 12">
+                <div v-if="props.flow" class="h-100 p-4">
+                    <span class="d-flex justify-content-between">
+                        <span class="fs-6 fw-bold">
+                            {{ t("dashboard.description") }}
+                        </span>
+                        <el-button
+                            :icon="BookOpenOutline"
+                            @click="descriptionDialog = true"
+                        >
+                            {{ t("open") }}
+                        </el-button>
+
+                        <el-dialog
+                            v-model="descriptionDialog"
+                            :title="$t('description')"
+                        >
+                            <p class="pt-4">
+                                {{ description }}
+                            </p>
+                        </el-dialog>
+                    </span>
+
+                    <p class="pt-4 description">
+                        {{ description }}
+                    </p>
+                </div>
                 <ExecutionsInProgress
-                    :flow="props.flow"
+                    v-else
+                    :flow="props.flowID"
                     :namespace="props.namespace"
                 />
             </el-col>
-            <el-col :xs="24" :lg="12">
+            <el-col v-if="props.flow" :xs="24" :lg="10">
                 <ExecutionsNextScheduled
-                    :flow="props.flow"
+                    :flow="props.flowID"
+                    :namespace="props.namespace"
+                />
+            </el-col>
+            <el-col :xs="24" :lg="props.flow ? 7 : 12">
+                <ExecutionsDoughnut
+                    v-if="props.flow"
+                    :data="graphData"
+                    :total="stats.total"
+                />
+                <ExecutionsNextScheduled
+                    v-else
+                    :flow="props.flowID"
                     :namespace="props.namespace"
                 />
             </el-col>
         </el-row>
 
-        <el-row :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
             <el-col :xs="24">
                 <ExecutionsNamespace
                     :data="namespaceExecutions"
@@ -134,7 +173,7 @@
             </el-col>
         </el-row>
 
-        <el-row :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
             <el-col :xs="24">
                 <Logs :data="logs" />
             </el-col>
@@ -174,6 +213,7 @@
     import Alert from "vue-material-design-icons/Alert.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
+    import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
 
     const router = useRouter();
     const store = useStore();
@@ -185,6 +225,10 @@
             default: false,
         },
         flow: {
+            type: Boolean,
+            default: false,
+        },
+        flowID: {
             type: String,
             required: false,
             default: null,
@@ -195,6 +239,11 @@
             default: null,
         },
     });
+
+    const descriptionDialog = ref(false);
+    const description = props.flow
+        ? (store.state.flow.flow.description ?? t("dashboard.no_flow_description"))
+        : undefined;
 
     const filters = ref({
         namespace: null,
@@ -309,7 +358,7 @@
 
         filters.value = {
             namespace: props.namespace ?? completeParams.namespace,
-            flowId: props.flow ?? null,
+            flowId: props.flowID ?? null,
             state: completeParams.state?.filter(Boolean).length
                 ? [].concat(completeParams.state)
                 : undefined,
@@ -320,7 +369,7 @@
                 : undefined,
         };
 
-        completeParams.flowId = props.flow ?? null;
+        completeParams.flowId = props.flowID ?? null;
 
         delete completeParams.timeRange;
         for (const key in completeParams) {
@@ -372,6 +421,14 @@ $spacing: 20px;
                     border-color: var(--bs-gray-600);
                 }
             }
+        }
+    }
+
+    .description {
+        color: #564a75;
+
+        html.dark & {
+            color: #e3dbff;
         }
     }
 }

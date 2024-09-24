@@ -110,6 +110,7 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
                     case DURATION -> Duration.parse(renderedValueStr);
+                    case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };
             }

@@ -27,7 +27,7 @@ updates:
     directory: "/ui"
     schedule:
       interval: "weekly"
-      day: "friday"
+      day: "wednesday"
       time: "08:00"
       timezone: "Europe/Paris"
     open-pull-requests-limit: 50

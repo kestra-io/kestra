@@ -113,7 +113,7 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.19.11")
+        api ("org.jooq:jooq:3.19.12")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.2.0"

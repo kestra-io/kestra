@@ -682,12 +682,9 @@
             "environment_name": "Nazwa Środowiska",
             "environment_color": "Kolor Środowiska",
             "chart_color_scheme": {
-              "default": "Domyślny",
               "label": "Schemat kolorów wykresu",
-              "classic": "Klasyczny",
-              "cbs": "CBS oznacza Color Blind Safe scheme",
-              "kestra": "Kestra",
-              "purple": "Fioletowy"
+              "default": "Domyślny",
+              "kestra": "Kestra"
             }
           }
         },

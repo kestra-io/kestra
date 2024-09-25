@@ -682,12 +682,9 @@
             "environment_name": "Имя окружения",
             "environment_color": "Цвет окружения",
             "chart_color_scheme": {
-              "default": "По умолчанию",
               "label": "Цветовая схема диаграммы",
-              "classic": "Классический",
-              "cbs": "CBS означает схему Color Blind Safe",
-              "kestra": "Kestra",
-              "purple": "Фиолетовый"
+              "default": "По умолчанию",
+              "kestra": "Kestra"
             }
           }
         },

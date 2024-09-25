@@ -682,12 +682,9 @@
             "environment_name": "環境名",
             "environment_color": "環境色",
             "chart_color_scheme": {
-              "default": "デフォルト",
               "label": "チャートのカラースキーム",
-              "classic": "クラシック",
-              "cbs": "CBSはColor Blind Safeスキームの略です",
-              "kestra": "Kestra",
-              "purple": "パープル"
+              "default": "デフォルト",
+              "kestra": "Kestra"
             }
           }
         },

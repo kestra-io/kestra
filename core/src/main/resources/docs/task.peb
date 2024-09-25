@@ -42,7 +42,7 @@ type: "{{ cls }}"
 ```
 
 {% if docDescription -%}
-<span style="font-size:1.5em;">{{ docDescription }}</span>
+<span style="font-size:1.25em;">{{ docDescription }}</span>
 {%- endif %}
 
 {% if docBody -%}

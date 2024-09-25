@@ -847,6 +847,7 @@
       "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।",
       "no_flow_description": "इस flow का कोई विवरण नहीं है।",
       "description": "विवरण"
-    }
+    },
+    "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?"
   }
 }

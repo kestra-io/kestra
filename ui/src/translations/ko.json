@@ -847,6 +847,7 @@
       "trigger_disabled": "이 trigger는 코드로만 활성화할 수 있습니다.",
       "no_flow_description": "이 flow에는 설명이 없습니다.",
       "description": "설명"
-    }
+    },
+    "delete_log": "로그를 삭제하시겠습니까?"
   }
 }

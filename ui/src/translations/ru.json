@@ -686,7 +686,7 @@
               "label": "Цветовая схема диаграммы",
               "classic": "Классический",
               "cbs": "CBS означает схему Color Blind Safe",
-              "kestra": "Kestra (CBS)",
+              "kestra": "Kestra",
               "purple": "Фиолетовый"
             }
           }

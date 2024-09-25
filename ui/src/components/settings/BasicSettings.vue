@@ -61,6 +61,20 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
+                        <el-select :model-value="chartColor" @update:model-value="onChartColor">
+                            <el-option
+                                v-for="item in [
+                                    {value: 'default', text: $t('settings.blocks.theme.fields.chart_color_scheme.default')},
+                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
+                                ]"
+                                :key="item.value"
+                                :label="item.text"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
                 </Row>
 
                 <Row>
@@ -119,22 +133,6 @@
                             @change="onEnvColorChange"
                             show-alpha
                         />
-                    </Column>
-                </Row>
-
-                <Row>
-                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
-                        <el-select :model-value="chartColor" @update:model-value="onChartColor">
-                            <el-option
-                                v-for="item in [
-                                    {value: 'default', text: $t('settings.blocks.theme.fields.chart_color_scheme.default')},
-                                    {value: 'purple', text: $t('settings.blocks.theme.fields.chart_color_scheme.purple')}
-                                ]"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
                     </Column>
                 </Row>
             </template>

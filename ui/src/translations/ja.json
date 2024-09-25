@@ -686,7 +686,7 @@
               "label": "チャートのカラースキーム",
               "classic": "クラシック",
               "cbs": "CBSはColor Blind Safeスキームの略です",
-              "kestra": "Kestra (CBS)",
+              "kestra": "Kestra",
               "purple": "パープル"
             }
           }

@@ -225,7 +225,7 @@
         methods: {
             updateDefaults() {
                 for (const input of this.inputsList || []) {
-                    if (this.inputs[input.id] === undefined) {
+                    if (this.inputs[input.id] === undefined || this.inputs[input.id] === null) {
                         if (input.type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }

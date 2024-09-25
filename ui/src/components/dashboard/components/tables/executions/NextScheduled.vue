@@ -10,11 +10,7 @@
                 class="inprogress"
                 :height="240"
             >
-                <el-table-column
-                    :label="$t('state')"
-                    class-name="next-toggle"
-                    width="50"
-                >
+                <el-table-column class-name="next-toggle" width="50">
                     <template #default="scope">
                         <el-tooltip
                             v-if="scope.row.tooltip"

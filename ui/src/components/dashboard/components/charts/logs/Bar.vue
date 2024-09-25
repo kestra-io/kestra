@@ -72,6 +72,11 @@
 
     const options = computed(() =>
         defaultConfig({
+            barThickness: 12,
+            skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
             plugins: {
                 barLegend: {
                     containerID: "logs",

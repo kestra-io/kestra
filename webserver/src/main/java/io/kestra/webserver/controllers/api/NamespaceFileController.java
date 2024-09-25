@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,11 +70,15 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "Get namespace file content")
     public StreamedFile file(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path
+        @Parameter(description = "The internal storage uri") @QueryValue String path
     ) throws IOException, URISyntaxException {
-        forbiddenPathsGuard(path);
+        URI encodedPath = null;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        }
+        forbiddenPathsGuard(encodedPath);
 
-        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
+        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
@@ -81,19 +87,23 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "Get namespace file stats such as size, creation & modification dates and type")
     public FileAttributes stats(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
-        forbiddenPathsGuard(path);
+        URI encodedPath = null;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        }
+        forbiddenPathsGuard(encodedPath);
 
         // if stats is performed upon namespace root, and it doesn't exist yet, we create it
-        if (path == null) {
+        if (path == null || path.isEmpty()) {
             if(!storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
                 storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
             }
             return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
         }
 
-        return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
+        return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -101,11 +111,15 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "List directory content")
     public List<FileAttributes> list(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
-        forbiddenPathsGuard(path);
+        URI encodedPath = null;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        }
+        forbiddenPathsGuard(encodedPath);
 
-        NamespaceFile namespaceFile = NamespaceFile.of(namespace, path);
+        NamespaceFile namespaceFile = NamespaceFile.of(namespace, encodedPath);
 
         if (namespaceFile.isRootDirectory() && !storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
             storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
@@ -120,11 +134,15 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "Create a directory")
     public void createDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @Nullable @QueryValue URI path
+        @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
-        forbiddenPathsGuard(path);
+        URI encodedPath = null;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        }
+        forbiddenPathsGuard(encodedPath);
 
-        storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace, path).uri());
+        storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -132,7 +150,7 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "Create a file")
     public void createFile(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path,
+        @Parameter(description = "The internal storage uri") @QueryValue String path,
         @Part CompletedFileUpload fileContent
     ) throws IOException, URISyntaxException {
         String tenantId = tenantService.resolveTenant();
@@ -155,7 +173,7 @@ public class NamespaceFileController {
                     return (int) fileContent.getSize();
                 }
             }) {
-                putNamespaceFile(tenantId, namespace, path, inputStream);
+                putNamespaceFile(tenantId, namespace, new URI(URLEncoder.encode(path, StandardCharsets.UTF_8)), inputStream);
             }
         }
     }
@@ -234,11 +252,15 @@ public class NamespaceFileController {
     @Operation(tags = {"Files"}, summary = "Delete a file or directory")
     public void delete(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
-        @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue URI path
+        @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {
-        ensureWritableNamespaceFile(path);
+        URI encodedPath = null;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        }
+        ensureWritableNamespaceFile(encodedPath);
 
-        String pathWithoutScheme = path.getPath();
+        String pathWithoutScheme = encodedPath.getPath();
 
         List<String> allNamespaceFilesPaths = storageInterface.allByPrefix(tenantService.resolveTenant(), NamespaceFile.of(namespace).storagePath().toUri(), true)
             .stream()

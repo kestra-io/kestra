@@ -6,5 +6,7 @@ public enum CrudEventType {
     UPDATE,
     DELETE,
     LOGIN,
-    LOGOUT
+    LOGOUT,
+    IMPERSONATE
 }
+

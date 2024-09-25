@@ -37,6 +37,7 @@ export const storageKeys = {
     EXECUTIONS_FILTERS: "executionsSavedFilters",
     FLOWS_FILTERS: "flowsSavedFilters",
     LOGS_FILTERS: "logsSavedFilters",
+    IMPERSONATE: "impersonate"
 }
 
 export const executeFlowBehaviours = {

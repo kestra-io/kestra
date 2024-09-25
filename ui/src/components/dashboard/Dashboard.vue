@@ -64,7 +64,12 @@
                     :value="stats.success"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.SUCCESS, scope: 'USER'},
+                        query: {
+                            state: State.SUCCESS,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -75,7 +80,12 @@
                     :value="stats.failed"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.FAILED, scope: 'USER'},
+                        query: {
+                            state: State.FAILED,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -86,7 +96,7 @@
                     :value="numbers.flows"
                     :redirect="{
                         name: 'flows/list',
-                        query: {scope: 'USER'},
+                        query: {scope: 'USER', size: 100, page: 1},
                     }"
                 />
             </el-col>
@@ -97,6 +107,7 @@
                     :value="numbers.triggers"
                     :redirect="{
                         name: 'admin/triggers',
+                        query: {size: 100, page: 1},
                     }"
                 />
             </el-col>

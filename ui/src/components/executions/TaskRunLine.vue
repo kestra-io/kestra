@@ -283,12 +283,19 @@
             },
             deleteLogs(currentTaskRunId) {
                 const params = this.params
-                this.$store.dispatch("execution/deleteLogs", {
-                    executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
-                }).then((_) => {
-                    this.forwardEvent("update-logs", this.followedExecution.id)
-                });
+                this.$toast().confirm(
+                    this.$t("delete_log"),
+                    () => {
+                        this.$store.dispatch("execution/deleteLogs", {
+                            executionId: this.followedExecution.id,
+                            params: {...params, taskRunId: currentTaskRunId}
+                        }).then((_) => {
+                            this.forwardEvent("update-logs", this.followedExecution.id)
+                        });
+                    },
+                    () => {}
+                )
+
             },
             forwardEvent(type, event) {
                 this.$emit(type, event);

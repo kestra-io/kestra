@@ -30,10 +30,11 @@
                 </el-select>
             </el-col>
             <el-col :xs="24" :lg="8">
-                <date-filter
+                <DateFilter
                     @update:is-relative="toggleAutoRefresh"
                     @update:filter-value="(dates) => updateParams(dates)"
                     absolute
+                    wrap
                     class="d-flex flex-row"
                 />
             </el-col>
@@ -63,7 +64,12 @@
                     :value="stats.success"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.SUCCESS, scope: 'USER'},
+                        query: {
+                            state: State.SUCCESS,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -74,7 +80,12 @@
                     :value="stats.failed"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.FAILED, scope: 'USER'},
+                        query: {
+                            state: State.FAILED,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -85,7 +96,7 @@
                     :value="numbers.flows"
                     :redirect="{
                         name: 'flows/list',
-                        query: {scope: 'USER'},
+                        query: {scope: 'USER', size: 100, page: 1},
                     }"
                 />
             </el-col>
@@ -96,6 +107,7 @@
                     :value="numbers.triggers"
                     :redirect="{
                         name: 'admin/triggers',
+                        query: {size: 100, page: 1},
                     }"
                 />
             </el-col>

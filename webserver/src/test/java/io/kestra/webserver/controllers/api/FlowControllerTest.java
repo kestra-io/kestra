@@ -778,6 +778,96 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(flows.getTotal(), is(1L));
     }
 
+    @Test
+    void validateTask() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("tasks/validTask.json");
+
+        String task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate/task", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        List<ValidateConstraintViolation> body = response.body();
+        assertThat(body.size(), is(1));
+        assertThat(body, everyItem(
+            Matchers.hasProperty("constraints", is(nullValue()))
+        ));
+
+        resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskUnknownType.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/task", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+
+        resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskUnknownProp.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/task", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("Unrecognized field \"unknownProp\""));
+
+        resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskMissingProp.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/task", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("message: must not be null"));
+    }
+
+    @Test
+    void validateTrigger() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("triggers/validTrigger.json");
+
+        String task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate/trigger", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        List<ValidateConstraintViolation> body = response.body();
+        assertThat(body.size(), is(1));
+        assertThat(body, everyItem(
+            Matchers.hasProperty("constraints", is(nullValue()))
+        ));
+
+        resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerUnknownType.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/trigger", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("Invalid type: io.kestra.plugin.core.debug.UnknownTrigger"));
+
+        resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerUnknownProp.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/trigger", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("Unrecognized field \"unknownProp\""));
+
+        resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerMissingProp.json");
+        task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        response = client.toBlocking().exchange(POST("/api/v1/flows/validate/trigger", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
+
+        body = response.body();
+
+        assertThat(body.size(), is(1));
+        assertThat(body.get(0).getConstraints(), containsString("cron: must not be null"));
+    }
+
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);
     }

@@ -73,12 +73,9 @@
             }
         });
 
-        const datasets = Object.values(executionData)
-            .map((dataset) => ({
-                ...dataset,
-                data: dataset.data.map((item) => (item === 0 ? null : item)),
-            }))
-            .filter((dataset) => dataset.data.some((count) => count > 0));
+        const datasets = Object.values(executionData).filter((dataset) =>
+            dataset.data.some((count) => count > 0),
+        );
 
         return {
             labels,
@@ -88,8 +85,11 @@
 
     const options = computed(() =>
         defaultConfig({
-            barThickness: 20,
+            barThickness: 25,
             skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
             plugins: {
                 barLegend: {
                     containerID: "pernamespace",

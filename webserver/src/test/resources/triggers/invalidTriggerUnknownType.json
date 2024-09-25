@@ -1,0 +1,4 @@
+{
+  "id": "unknown-trigger",
+  "type": "io.kestra.plugin.core.debug.UnknownTrigger"
+}

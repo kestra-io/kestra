@@ -259,13 +259,14 @@
         canAutoRefresh.value = event;
     };
 
-    const numbers = ref({flows: 0, triggers: 0});
+    const defaultNumbers = {flows: 0, triggers: 0};
+    const numbers = ref({...defaultNumbers});
     const fetchNumbers = () => {
         store.$http
             .post(`${apiUrl(store)}/stats/summary`, filters.value)
             .then((response) => {
                 if (!response.data) return;
-                numbers.value = response.data;
+                numbers.value = {...defaultNumbers, ...response.data};
             });
     };
 

@@ -847,6 +847,7 @@
       "trigger_disabled": "Этот trigger может быть включен только через код.",
       "no_flow_description": "Этот flow не имеет описания.",
       "description": "Описание"
-    }
+    },
+    "delete_log": "Вы уверены, что хотите удалить log?"
   }
 }

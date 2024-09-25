@@ -685,7 +685,7 @@
               "label": "Diagramm-Farbschema",
               "default": "Standard",
               "classic": "Klassisch",
-              "kestra": "Kestra"             
+              "kestra": "Kestra"
             }
           }
         },
@@ -848,6 +848,7 @@
       "trigger_disabled": "Dieser Trigger kann nur durch Code aktiviert werden.",
       "no_flow_description": "Dieser Flow hat keine Beschreibung.",
       "description": "Beschreibung"
-    }
+    },
+    "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?"
   }
 }

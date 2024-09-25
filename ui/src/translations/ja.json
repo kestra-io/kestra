@@ -847,6 +847,7 @@
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
       "description": "説明"
-    }
+    },
+    "delete_log": "ログを削除してもよろしいですか？"
   }
 }

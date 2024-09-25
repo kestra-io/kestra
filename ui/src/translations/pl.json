@@ -847,6 +847,7 @@
       "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu.",
       "no_flow_description": "Ten flow nie ma opisu.",
       "description": "Opis"
-    }
+    },
+    "delete_log": "Czy na pewno chcesz usunąć log?"
   }
 }

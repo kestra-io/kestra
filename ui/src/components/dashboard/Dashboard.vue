@@ -30,10 +30,11 @@
                 </el-select>
             </el-col>
             <el-col :xs="24" :lg="8">
-                <date-filter
+                <DateFilter
                     @update:is-relative="toggleAutoRefresh"
                     @update:filter-value="(dates) => updateParams(dates)"
                     absolute
+                    wrap
                     class="d-flex flex-row"
                 />
             </el-col>

@@ -143,9 +143,14 @@
                     ticks: {
                         maxTicksLimit: 8,
                         callback: function (value) {
-                            return moment(
-                                new Date(this.getLabelForValue(value)),
-                            ).format("MM/DD");
+                            const label = this.getLabelForValue(value);
+                            const date = moment(new Date(label));
+
+                            const isCurrentYear = date.year() === moment().year();
+
+                            return date.format(
+                                isCurrentYear ? "MM/DD" : "MM/DD/YY",
+                            );
                         },
                     },
                 },

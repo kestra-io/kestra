@@ -17,6 +17,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.services.FlowService;
@@ -57,6 +58,10 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -561,6 +566,55 @@ public class FlowController {
             .collect(Collectors.toList());
     }
 
+    // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_JSON)
+    @Operation(tags = {"Flows"}, summary = "Validate task")
+    public ValidateConstraintViolation validateTask(
+        @Parameter(description = "Task") @Body String task
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            var taskParse = parseTaskTrigger(task, Task.class);
+            modelValidator.validate(taskParse);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the task", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the task: " + re.getMessage());
+        }
+
+        return validateConstraintViolationBuilder.build();
+    }
+
+    // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/trigger", consumes = MediaType.APPLICATION_JSON)
+    @Operation(tags = {"Flows"}, summary = "Validate trigger")
+    public ValidateConstraintViolation validateTrigger(
+        @Parameter(description = "Trigger") @Body String trigger
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            var triggerParse = parseTaskTrigger(trigger, AbstractTrigger.class);
+            modelValidator.validate(triggerParse);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the trigger", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the trigger: " + re.getMessage());
+        }
+        return validateConstraintViolationBuilder.build();
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
@@ -824,5 +878,65 @@ public class FlowController {
                 );
             })
             .toList();
+    }
+
+    protected <T> T parseTaskTrigger(String input, Class<T> cls) throws ConstraintViolationException {
+        try {
+            return JacksonMapper.ofJson().readValue(input, cls);
+        } catch (JsonProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
+                throw constraintViolationException;
+            }
+            else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
+                // This error is thrown when a non-existing task is used
+                throw new ConstraintViolationException(
+                    "Invalid type: " + invalidTypeIdException.getTypeId(),
+                    Set.of(
+                        ManualConstraintViolation.of(
+                            "Invalid type: " + invalidTypeIdException.getTypeId(),
+                            input,
+                            String.class,
+                            invalidTypeIdException.getPathReference(),
+                            null
+                        ),
+                        ManualConstraintViolation.of(
+                            e.getMessage(),
+                            input,
+                            String.class,
+                            invalidTypeIdException.getPathReference(),
+                            null
+                        )
+                    )
+                );
+            }
+            else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+                var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
+                throw new ConstraintViolationException(
+                    message,
+                    Collections.singleton(
+                        ManualConstraintViolation.of(
+                            e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
+                            input,
+                            String.class,
+                            unrecognizedPropertyException.getPathReference(),
+                            null
+                        )
+                    ));
+            }
+            else {
+                throw new ConstraintViolationException(
+                    "Illegal source: " + e.getMessage(),
+                    Collections.singleton(
+                        ManualConstraintViolation.of(
+                            e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
+                            input,
+                            String.class,
+                            "flow",
+                            null
+                        )
+                    )
+                );
+            }
+        }
     }
 }

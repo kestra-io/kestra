@@ -3,9 +3,8 @@ package io.kestra.core.services;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.kv.KVStoreException;
-import io.micronaut.context.annotation.Replaces;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -38,8 +37,7 @@ class KVStoreServiceTest {
         Assertions.assertNotNull(storeService.get(null, "io.kestra", TEST_EXISTING_NAMESPACE));
     }
 
-    @Replaces(NamespaceService.class)
-    @Singleton
+    @MockBean(NamespaceService.class)
     public static class MockNamespaceService extends NamespaceService {
 
         public MockNamespaceService() {

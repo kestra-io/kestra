@@ -91,6 +91,12 @@
             this.parseDuration(this.modelValue);
             this.updateDuration();
         },
+        updated() {
+            if (this.modelValue) {
+                this.parseDuration(this.modelValue);
+                this.updateDuration();
+            }
+        },
         data() {
             return {
                 years: 0,

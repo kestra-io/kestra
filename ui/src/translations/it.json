@@ -682,12 +682,9 @@
             "environment_name": "Nome dell'Ambiente",
             "environment_color": "Colore dell'Ambiente",
             "chart_color_scheme": {
-              "default": "Predefinito",
               "label": "Schema Colori Grafico",
-              "classic": "Classico",
-              "cbs": "CBS sta per schema Color Blind Safe",
-              "kestra": "Kestra",
-              "purple": "Viola"
+              "default": "Predefinito",
+              "kestra": "Kestra"
             }
           }
         },

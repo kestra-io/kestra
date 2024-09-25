@@ -682,12 +682,9 @@
             "environment_name": "पर्यावरण नाम",
             "environment_color": "पर्यावरण रंग",
             "chart_color_scheme": {
-              "default": "डिफ़ॉल्ट",
               "label": "चार्ट रंग योजना",
-              "classic": "क्लासिक",
-              "cbs": "CBS का मतलब है Color Blind Safe योजना",
-              "kestra": "Kestra",
-              "purple": "बैंगनी"
+              "default": "डिफ़ॉल्ट",
+              "kestra": "Kestra"
             }
           }
         },

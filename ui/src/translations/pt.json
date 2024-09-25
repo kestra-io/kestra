@@ -682,12 +682,9 @@
             "environment_name": "Nome do Ambiente",
             "environment_color": "Cor do Ambiente",
             "chart_color_scheme": {
-              "default": "Padrão",
               "label": "Esquema de Cores do Gráfico",
-              "classic": "Clássico",
-              "cbs": "CBS significa esquema Seguro para Daltônicos",
-              "kestra": "Kestra",
-              "purple": "Roxo"
+              "default": "Padrão",
+              "kestra": "Kestra"
             }
           }
         },

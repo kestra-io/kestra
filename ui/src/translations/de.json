@@ -682,12 +682,10 @@
             "environment_name": "Umgebungsname",
             "environment_color": "Umgebungsfarbe",
             "chart_color_scheme": {
-              "default": "Standard",
               "label": "Diagramm-Farbschema",
+              "default": "Standard",
               "classic": "Klassisch",
-              "cbs": "CBS steht für das Color Blind Safe-Schema",
-              "kestra": "Kestra",
-              "purple": "Lila"
+              "kestra": "Kestra"             
             }
           }
         },

@@ -566,6 +566,7 @@ public class FlowController {
             .collect(Collectors.toList());
     }
 
+    // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_JSON)
     @Operation(tags = {"Flows"}, summary = "Validate task")
@@ -590,6 +591,7 @@ public class FlowController {
         return validateConstraintViolationBuilder.build();
     }
 
+    // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/validate/trigger", consumes = MediaType.APPLICATION_JSON)
     @Operation(tags = {"Flows"}, summary = "Validate trigger")

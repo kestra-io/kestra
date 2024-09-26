@@ -54,7 +54,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     )
     @NotNull
     @Builder.Default
-    Boolean allowInput = false;
+    Boolean allowCustomValue = false;
 
     @Override
     public void validate(List<String> inputs) throws ConstraintViolationException {
@@ -68,7 +68,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
             );
         }
 
-        if (!this.getAllowInput()) {
+        if (!this.getAllowCustomValue()) {
             for (String input : inputs) {
                 List<@Regex String> finalValues = this.values != null ? this.values : this.options;
                 if (!finalValues.contains(input)) {
@@ -93,7 +93,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .values(renderExpressionValues(renderer))
                 .id(getId())
                 .type(getType())
-                .allowInput(getAllowInput())
+                .allowCustomValue(getAllowCustomValue())
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())

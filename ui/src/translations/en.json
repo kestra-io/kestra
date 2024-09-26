@@ -865,6 +865,13 @@
       "description": "Description",
       "no_flow_description": "This flow has no description."
     },
-    "docs": "Docs"
+    "docs": "Docs",
+    "active-slots": "Active slots",
+    "behavior": "Behavior",
+    "concurrency": "Concurrency",
+    "concurrency-view": {
+      "title_no_limit": "No limits are set for this Flow.",
+      "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
+    }
   }
 }

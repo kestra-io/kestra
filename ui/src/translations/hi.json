@@ -684,7 +684,8 @@
             "chart_color_scheme": {
               "label": "चार्ट रंग योजना",
               "default": "डिफ़ॉल्ट",
-              "kestra": "Kestra"
+              "kestra": "Kestra",
+              "classic": "क्लासिक"
             }
           }
         },

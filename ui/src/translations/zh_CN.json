@@ -684,7 +684,8 @@
             "chart_color_scheme": {
               "label": "图表配色方案",
               "default": "默认",
-              "kestra": "Kestra"
+              "kestra": "Kestra",
+              "classic": "经典"
             }
           }
         },

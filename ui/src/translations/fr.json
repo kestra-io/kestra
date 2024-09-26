@@ -683,7 +683,8 @@
             "chart_color_scheme": {
               "label": "Schéma de Couleurs du Graphique",
               "default": "Par défaut",
-              "kestra": "Kestra"
+              "kestra": "Kestra",
+              "classic": "Classique"
             }
           }
         },

@@ -684,7 +684,8 @@
             "chart_color_scheme": {
               "label": "チャートのカラースキーム",
               "default": "デフォルト",
-              "kestra": "Kestra"
+              "kestra": "Kestra",
+              "classic": "クラシック"
             }
           }
         },

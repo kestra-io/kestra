@@ -92,6 +92,9 @@ export default {
 
         // Create a file
         async createFile(_, payload) {
+            console.log({
+                ...payload
+            })
             const DATA = new FormData();
             const BLOB = new Blob([payload.content], {type: "text/plain"});
             DATA.append("fileContent", BLOB);

@@ -707,7 +707,7 @@
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
-              "default": "Default",
+              "classic": "Classic",
               "kestra": "Kestra"
             }
           }

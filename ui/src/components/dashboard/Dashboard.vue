@@ -254,7 +254,7 @@
 
     const descriptionDialog = ref(false);
     const description = props.flow
-        ? (store.state.flow.flow.description ?? t("dashboard.no_flow_description"))
+        ? (store.state?.flow?.flow?.description ?? t("dashboard.no_flow_description"))
         : undefined;
 
     const filters = ref({

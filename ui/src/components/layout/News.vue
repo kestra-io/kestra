@@ -12,7 +12,7 @@
             <h5>
                 {{ feed.title }}
             </h5>
-            <date-ago class-name="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
+            <date-ago class-name="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
 
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
@@ -144,4 +144,10 @@
             font-weight: bold;
         }
     }
+</style>
+
+<style style="scss">
+.news-date {
+    color: var(--bs-gray-700);
+}
 </style>

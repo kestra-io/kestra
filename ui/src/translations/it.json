@@ -684,7 +684,8 @@
             "chart_color_scheme": {
               "label": "Schema Colori Grafico",
               "default": "Predefinito",
-              "kestra": "Kestra"
+              "kestra": "Kestra",
+              "classic": "Classico"
             }
           }
         },

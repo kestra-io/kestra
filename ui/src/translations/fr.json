@@ -682,9 +682,8 @@
             "environment_color": "Couleur de l'Environnement",
             "chart_color_scheme": {
               "label": "Schéma de Couleurs du Graphique",
-              "default": "Par défaut",
-              "kestra": "Kestra",
-              "classic": "Classique"
+              "classic": "Classique",
+              "kestra": "Kestra"
             }
           }
         },

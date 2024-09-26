@@ -683,9 +683,8 @@
             "environment_color": "Kolor Środowiska",
             "chart_color_scheme": {
               "label": "Schemat kolorów wykresu",
-              "default": "Domyślny",
-              "kestra": "Kestra",
-              "classic": "Klasyczny"
+              "classic": "Klasyczny",
+              "kestra": "Kestra"
             }
           }
         },

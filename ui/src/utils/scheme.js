@@ -1,6 +1,6 @@
 const SCHEME = "scheme";
 const OPTIONS = Object.freeze({
-    default: {
+    classic: {
         light: {
             executions: {
                 CANCELLED: "#d1cfe9",

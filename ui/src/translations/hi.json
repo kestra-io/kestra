@@ -683,9 +683,8 @@
             "environment_color": "पर्यावरण रंग",
             "chart_color_scheme": {
               "label": "चार्ट रंग योजना",
-              "default": "डिफ़ॉल्ट",
-              "kestra": "Kestra",
-              "classic": "क्लासिक"
+              "classic": "क्लासिक",
+              "kestra": "Kestra"
             }
           }
         },

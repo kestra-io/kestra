@@ -683,9 +683,8 @@
             "environment_color": "環境色",
             "chart_color_scheme": {
               "label": "チャートのカラースキーム",
-              "default": "デフォルト",
-              "kestra": "Kestra",
-              "classic": "クラシック"
+              "classic": "クラシック",
+              "kestra": "Kestra"
             }
           }
         },

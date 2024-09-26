@@ -683,9 +683,8 @@
             "environment_color": "Цвет окружения",
             "chart_color_scheme": {
               "label": "Цветовая схема диаграммы",
-              "default": "По умолчанию",
-              "kestra": "Kestra",
-              "classic": "Классический"
+              "classic": "Классический",
+              "kestra": "Kestra"
             }
           }
         },

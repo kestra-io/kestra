@@ -683,7 +683,6 @@
             "environment_color": "Umgebungsfarbe",
             "chart_color_scheme": {
               "label": "Diagramm-Farbschema",
-              "default": "Standard",
               "classic": "Klassisch",
               "kestra": "Kestra"
             }

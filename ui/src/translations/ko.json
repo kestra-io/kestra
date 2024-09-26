@@ -683,9 +683,8 @@
             "environment_color": "환경 색상",
             "chart_color_scheme": {
               "label": "차트 색상 구성표",
-              "default": "기본값",
-              "kestra": "Kestra",
-              "classic": "클래식"
+              "classic": "클래식",
+              "kestra": "Kestra"
             }
           }
         },

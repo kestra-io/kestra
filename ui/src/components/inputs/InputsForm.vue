@@ -22,7 +22,7 @@
                 v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
-                :allow-create="input.allowInput"
+                :allow-create="input.allowCustomValue"
                 filterable
             >
                 <el-option
@@ -43,7 +43,7 @@
                 @update:model-value="onMultiSelectChange(input.id, $event)"
                 multiple
                 filterable
-                :allow-create="input.allowInput"
+                :allow-create="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"

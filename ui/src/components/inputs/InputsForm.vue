@@ -147,7 +147,7 @@
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
             />
-            <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
         </el-form-item>
     </template>
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
@@ -317,6 +317,11 @@
 
 <style scoped lang="scss">
 .hint {
+    font-size: var(--font-size-xs);
+    color: var(--bs-gray-700);
+}
+
+.text-description {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }

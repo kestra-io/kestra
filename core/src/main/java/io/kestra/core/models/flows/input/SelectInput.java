@@ -41,7 +41,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (!values.contains(input) & this.getRequired()) {
+        if (!values.contains(input) && this.getRequired()) {
             if (this.getAllowCustomValue()) {
                 return;
             }

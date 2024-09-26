@@ -848,6 +848,7 @@
       "no_flow_description": "此flow没有描述。",
       "description": "描述"
     },
-    "delete_log": "您确定要删除这个log吗？"
+    "delete_log": "您确定要删除这个log吗？",
+    "docs": "文档"
   }
 }

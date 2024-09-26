@@ -848,6 +848,7 @@
       "no_flow_description": "इस flow का कोई विवरण नहीं है।",
       "description": "विवरण"
     },
-    "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?"
+    "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
+    "docs": "डॉक्स"
   }
 }

@@ -132,6 +132,7 @@
 
                 this.$store.dispatch("plugin/icons")
                 const config = await this.$store.dispatch("misc/loadConfigs");
+                await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
 
                 this.$store.dispatch("api/loadFeeds", {
                     version: config.version,

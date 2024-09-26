@@ -19,11 +19,6 @@
                             <el-switch
                                 disabled
                                 :model-value="!scope.row.disabled"
-                                @change="
-                                    toggleState(scope.row.triggerContext);
-                                    scope.row.triggerContext.disabled =
-                                        !scope.row.triggerContext.disabled;
-                                "
                                 :active-icon="Check"
                                 size="small"
                                 inline-prompt
@@ -34,8 +29,7 @@
                             :model-value="!scope.row.disabled"
                             @change="
                                 toggleState(scope.row.triggerContext);
-                                scope.row.triggerContext.disabled =
-                                    !scope.row.triggerContext.disabled;
+                                scope.row.disabled = !scope.row.disabled;
                             "
                             :active-icon="Check"
                             size="small"

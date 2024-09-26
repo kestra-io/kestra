@@ -148,6 +148,11 @@
                 @update:model-value="onChange"
             />
             <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <template v-for="err in input.errors ?? []" :key="err">
+                <el-text type="warning">
+                    {{ err.message }}
+                </el-text>
+            </template>
         </el-form-item>
     </template>
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
@@ -194,6 +199,7 @@
             return {
                 inputs: {},
                 inputsList: [],
+                inputsValidation: [],
                 multiSelectInputs: {},
             };
         },
@@ -278,9 +284,13 @@
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
                     this.$store.dispatch("execution/validateExecution", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         });
+
+                    return;
                 }
 
                 if (this.execution !== undefined) {

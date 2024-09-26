@@ -849,6 +849,13 @@
       "description": "描述"
     },
     "delete_log": "您确定要删除这个log吗？",
-    "docs": "文档"
+    "docs": "文档",
+    "behavior": "行为",
+    "concurrency-view": {
+      "desc_no_limit": "了解更多关于<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">并发限制</a>的信息，请参阅我们的文档。",
+      "title_no_limit": "没有为此 Flow 设置限制。"
+    },
+    "active-slots": "活动槽位",
+    "concurrency": "并发"
   }
 }

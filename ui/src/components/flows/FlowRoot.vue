@@ -27,6 +27,7 @@
     import FlowTriggers from "./FlowTriggers.vue";
     import {apiUrl} from "override/utils/route";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
+    import FlowConcurrency from "./FlowConcurrency.vue";
 
     export default {
         mixins: [RouteContext],
@@ -257,6 +258,12 @@
                     title: this.$t("auditlogs"),
                     locked: true
                 });
+
+                tabs.push({
+                    name: "concurrency",
+                    title: this.$t("concurrency"),
+                    component: FlowConcurrency
+                })
 
                 return tabs;
             },

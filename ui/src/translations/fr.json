@@ -847,6 +847,7 @@
       "no_flow_description": "Ce flow n'a pas de description.",
       "description": "Description"
     },
-    "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?"
+    "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
+    "docs": "Documentation"
   }
 }

@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.templates;
 
 import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpRequest;
@@ -52,7 +53,7 @@ public class TemplateExportCommand extends AbstractApiCommand {
 
             stdOut("Exporting template(s) for namespace '" + namespace + "' successfully done !");
         } catch (HttpClientResponseException e) {
-            TemplateValidateCommand.handleHttpException(e, "template");
+            AbstractValidateCommand.handleHttpException(e, "template");
             return 1;
         }
 

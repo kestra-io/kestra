@@ -95,13 +95,13 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                             warnings.forEach(warning -> stdOut("@|bold,yellow \u26A0|@ - " + warning));
                         } catch (ConstraintViolationException e) {
                             stdErr("@|red \u2718|@ - " + path);
-                            FlowValidateCommand.handleException(e, clsName);
+                            AbstractValidateCommand.handleException(e, clsName);
                             returnCode.set(1);
                         }
                     });
             }
         } else {
-            String body = FlowValidateCommand.buildYamlBody(directory);
+            String body = AbstractValidateCommand.buildYamlBody(directory);
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
@@ -118,12 +118,12 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                             stdOut("@|green \u2713|@ - " + validation.getIdentity());
                         } else {
                             stdErr("@|red \u2718|@ - " + validation.getIdentity(directory));
-                            FlowValidateCommand.handleValidateConstraintViolation(validation, clsName);
+                            AbstractValidateCommand.handleValidateConstraintViolation(validation, clsName);
                             returnCode.set(1);
                         }
                     }));
             } catch (HttpClientResponseException e){
-                FlowValidateCommand.handleHttpException(e, clsName);
+                AbstractValidateCommand.handleHttpException(e, clsName);
 
                 return 1;
             }

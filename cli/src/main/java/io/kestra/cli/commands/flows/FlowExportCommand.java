@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.AbstractValidateCommand;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -50,7 +51,7 @@ public class FlowExportCommand extends AbstractApiCommand {
 
             stdOut("Exporting flow(s) for namespace '" + namespace + "' successfully done !");
         } catch (HttpClientResponseException e) {
-            FlowValidateCommand.handleHttpException(e, "flow");
+            AbstractValidateCommand.handleHttpException(e, "flow");
             return 1;
         }
 

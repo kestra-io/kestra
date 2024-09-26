@@ -848,6 +848,13 @@
       "description": "Description"
     },
     "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
-    "docs": "Documentation"
+    "docs": "Documentation",
+    "behavior": "Comportement",
+    "concurrency-view": {
+      "desc_no_limit": "Lisez-en plus sur <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">les limites de Concurrency</a> dans notre documentation.",
+      "title_no_limit": "Aucune limite n'est définie pour ce Flow."
+    },
+    "active-slots": "Slots actifs",
+    "concurrency": "Concurrence"
   }
 }

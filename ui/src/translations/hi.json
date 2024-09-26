@@ -849,6 +849,13 @@
       "description": "विवरण"
     },
     "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
-    "docs": "डॉक्स"
+    "docs": "डॉक्स",
+    "behavior": "व्यवहार",
+    "concurrency-view": {
+      "desc_no_limit": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> के बारे में और पढ़ें।",
+      "title_no_limit": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं की गई हैं।"
+    },
+    "active-slots": "सक्रिय स्लॉट्स",
+    "concurrency": "समानांतरता"
   }
 }

@@ -849,6 +849,13 @@
       "description": "Beschreibung"
     },
     "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
-    "docs": "Dokumentation"
+    "docs": "Dokumentation",
+    "behavior": "Verhalten",
+    "concurrency-view": {
+      "desc_no_limit": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a> in unserer Dokumentation.",
+      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
+    },
+    "active-slots": "Aktive Slots",
+    "concurrency": "Nebenläufigkeit"
   }
 }

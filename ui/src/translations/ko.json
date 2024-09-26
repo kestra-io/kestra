@@ -849,6 +849,13 @@
       "description": "설명"
     },
     "delete_log": "로그를 삭제하시겠습니까?",
-    "docs": "문서"
+    "docs": "문서",
+    "behavior": "동작",
+    "concurrency-view": {
+      "desc_no_limit": "<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">동시성 제한</a>에 대해 자세히 알아보려면 문서를 참조하십시오.",
+      "title_no_limit": "이 Flow에 대한 제한이 설정되지 않았습니다."
+    },
+    "active-slots": "활성 슬롯",
+    "concurrency": "동시성"
   }
 }

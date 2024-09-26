@@ -864,6 +864,7 @@
       "trigger_disabled": "This trigger can only be enabled through code.",
       "description": "Description",
       "no_flow_description": "This flow has no description."
-    }
+    },
+    "docs": "Docs"
   }
 }

@@ -67,6 +67,7 @@
     import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
     import DateAgo from "../../components/layout/DateAgo.vue"
+    import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
 
     export default {
         components: {
@@ -272,6 +273,15 @@
                                 },
                             }
                         ]
+                    },
+                    {
+                        href: {name: "docs/view"},
+                        routes: this.routeStartWith("docs/view"),
+                        title: this.$t("docs"),
+                        icon: {
+                            element: shallowRef(FileTableOutline),
+                            class: "menu-icon"
+                        }
                     },
                     {
                         href: {name: "settings"},

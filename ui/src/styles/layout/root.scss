@@ -56,9 +56,13 @@
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;
 
+    #{--bs-border-color}: #E5E4F7;
+    #{--bs-border-secondary-color}: #E5E4F7;
+
     #{--bs-body-color}: black;
     #{--bs-heading-color}: var(--bs-black);
     #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
+    #{--bs-tertiary-color}: #7E719F;
     #{--bs-tertiary}: $tertiary;
 
     #{--bs-gray}: #{map.get($grays, "600")};
@@ -167,4 +171,8 @@ $logLevels: "trace", "debug", "info", "warn", "error";
 
 .min-w-auto {
     min-width: auto !important;
+}
+
+.text-tertiary {
+    color: var(--bs-tertiary-color);
 }

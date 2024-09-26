@@ -23,9 +23,11 @@ html.dark {
     #{--bs-heading-color}: var(--bs-white);
     #{--bs-body-color}: white;
     #{--bs-body-bg}: $body-bg;
-    #{--bs-border-color}: $border-color;
+    #{--bs-border-color}: #404559;
+    #{--bs-border-secondary-color}: #2F3342;
     #{--bs-link-color}: $secondary;
     #{--bs-link-color-rgb}: to-rgb($secondary);
+    #{--bs-tertiary-color}: #C3BBE3;
 
     $levels: info, running, danger, warning, success;
     @each $level in $levels {

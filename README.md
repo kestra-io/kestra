@@ -1,14 +1,14 @@
-<p style="text-align: center">
+<p align="center">
   <a href="https://www.kestra.io">
     <img src="https://kestra.io/banner.png"  alt="Kestra workflow orchestrator" />
   </a>
 </p>
 
-<h1 style="border-bottom: none; text-align: center">
+<h1 align="center" style="border-bottom: none">
     Event-Driven Declarative Orchestrator
 </h1>
 
-<div style="text-align: center">
+<div align="center">
  <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Last Version" /></a>
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
@@ -18,18 +18,18 @@
 
 <br />
 
-<p style="text-align: center">
+<p align="center">
     <a href="https://twitter.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="twitter" /></a> &nbsp;
     <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
 <a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
 </p>
 
-<p style="text-align: center">
+<p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
         <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
 </p>
-<p style="color:grey; text-align: center"><i>Click on the image to get started with Kestra in 4 minutes.</i></p>
+<p align="center" style="color:grey;"><i>Click on the image to get started with Kestra in 4 minutes.</i></p>
 
 ## Live Demo
 

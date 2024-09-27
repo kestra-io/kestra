@@ -27,6 +27,7 @@ import java.util.Set;
 @Singleton
 @Introspected
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
+
     @Override
     public boolean isValid(
         @Nullable Flow value,

@@ -1,7 +1,6 @@
 package io.kestra.core.services;
 
 import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerTask;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,6 +10,15 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class WorkerGroupService {
+
+    public boolean isWorkerGroupExistForKey(String key) {
+        return true;
+    }
+
+    public boolean isWorkerGroupAvailableForKey(String key) {
+        return true;
+    }
+
     public String resolveGroupFromKey(String workerGroupKey) {
         // Worker Group is an EE functionality, setting a worker group key when starting the Worker is a no-op.
         return null;

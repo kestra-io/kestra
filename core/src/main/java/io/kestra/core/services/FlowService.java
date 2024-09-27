@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -469,5 +470,17 @@ public class FlowService {
 
     private IllegalStateException noRepositoryException() {
         return new IllegalStateException("No flow repository found. Make sure the `kestra.repository.type` property is set.");
+    }
+
+    /**
+     * Validates that a given flow is valid and could be executed.
+     *
+     * @param tenant  The tenant ID.
+     * @param flow    The flow to validate.
+     *
+     * @throws InvalidException if the given flow is not valid.
+     */
+    public void verifyFlowIsValidAndExecutable(final String tenant, final Flow flow) throws InvalidException {
+        // noop - by default, we always expect a flow to be valid.
     }
 }

@@ -270,6 +270,7 @@ public class FlowController {
     }
 
     protected FlowWithSource doCreate(Flow flow, String source) {
+        flowService.verifyFlowIsValidAndExecutable(tenantService.resolveTenant(), flow);
         return flowRepository.create(flow, source, pluginDefaultService.injectDefaults(flow));
     }
 
@@ -441,6 +442,7 @@ public class FlowController {
     }
 
     protected FlowWithSource update(Flow current, Flow previous, String source) {
+        flowService.verifyFlowIsValidAndExecutable(tenantService.resolveTenant(), current);
         return flowRepository.update(current, previous, source, pluginDefaultService.injectDefaults(current));
     }
 

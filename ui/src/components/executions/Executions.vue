@@ -628,7 +628,7 @@
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
             if (this.isConcurrency) {
-                this.emitStateCount(State.RUNNING)
+                this.emitStateCount([State.RUNNING, State.PAUSED])
             }
         },
         computed: {
@@ -982,12 +982,11 @@
                     }
                 })
             },
-            emitStateCount(state) {
+            emitStateCount(states) {
                 this.$store.dispatch("execution/findExecutions", this.loadQuery({
-                    size: parseInt(this.$route.query.size || this.internalPageSize),
-                    page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: [state]
+                    size: 0,
+                    page: 1,
+                    state: states
                 }, false)).then(() => {
                     this.$emit("state-count", this.total);
                 });

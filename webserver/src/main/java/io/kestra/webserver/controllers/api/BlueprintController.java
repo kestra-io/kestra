@@ -18,6 +18,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
@@ -44,8 +45,8 @@ public class BlueprintController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") Optional<String> q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
         @Parameter(description = "A tags filter") @Nullable @QueryValue(value = "tags") Optional<List<String>> tags,
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") Integer page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") Integer size,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) Integer size,
         HttpRequest<?> httpRequest
     ) throws URISyntaxException {
         return fastForwardToKestraApi(httpRequest, "/v1/blueprints", Map.of("ee", false), Argument.of(PagedResults.class, BlueprintItem.class));

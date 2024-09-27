@@ -45,6 +45,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.validation.ConstraintViolationException;
@@ -200,8 +201,8 @@ public class FlowController {
     @Get(uri = "/search")
     @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
@@ -232,8 +233,8 @@ public class FlowController {
     @Get(uri = "/source")
     @Operation(tags = {"Flows"}, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> source(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace

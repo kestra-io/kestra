@@ -7,23 +7,31 @@ import io.micronaut.http.exceptions.HttpStatusException;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class PageableUtils {
+    private PageableUtils() {
+    }
+
     public static Pageable from(int page, int size, List<String> sort, Function<String, String> sortMapper) throws HttpStatusException {
-        return Pageable.from(
+        final Pageable pageable = Pageable.from(
             page,
             size,
             sort(sort, sortMapper)
         );
+
+        if (pageable.isUnpaged()) {
+            throw new IllegalArgumentException("Unpaged data are not supported");
+        }
+
+        return pageable;
     }
 
     public static Pageable from(int page, int size, List<String> sort) throws HttpStatusException {
-        return Pageable.from(
-            page,
-            size,
-            sort(sort, null)
-        );
+        return from(page, size, sort, null);
+    }
+
+    public static Pageable from(int page, int size) throws HttpStatusException {
+        return from(page, size, null, null);
     }
 
     protected static Sort sort(List<String> sort, Function<String, String> sortMapper) {

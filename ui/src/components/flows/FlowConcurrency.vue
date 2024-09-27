@@ -50,7 +50,7 @@
                 :namespace="flow.namespace"
                 :flow-id="flow.id"
                 is-concurrency
-                :statuses="[State.QUEUED, State.RUNNING, State.CANCELLED, State.FAILED]"
+                :statuses="[State.QUEUED, State.RUNNING, State.PAUSED]"
                 @state-count="setRunningCount"
             />
         </el-card>

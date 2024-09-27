@@ -58,6 +58,10 @@
                 this.executions = response?.total ?? 0;
             })
 
+            if (!this.executions && !this.overallTotal && this.$route.name === "home") {
+                this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
+            }
+
             if (this.created === false) {
                 await this.loadGeneralResources();
                 this.displayApp();
@@ -200,12 +204,7 @@
                 }
             },
         },
-        watch: {
-            $route(to) {
-                if (!this.executions && to.name === "home" && !this.overallTotal) {
-                    this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                }
-            },
+        watch: {       
             envName() {
                 this.setTitleEnvSuffix();
             }

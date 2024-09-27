@@ -46,8 +46,6 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Slf4j
 public class FlowService {
-    private final IllegalStateException NO_REPOSITORY_EXCEPTION = new IllegalStateException("No flow repository found. Make sure the `kestra.repository.type` property is set.");
-
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
@@ -69,13 +67,13 @@ public class FlowService {
     }
 
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
         Flow withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
             .tenantId(tenantId)
             .build();
-
-        if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
-        }
 
         FlowRepositoryInterface flowRepository = this.flowRepository.get();
         Optional<FlowWithSource> flowWithSource = flowRepository
@@ -99,7 +97,7 @@ public class FlowService {
 
     public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
         if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
+            throw noRepositoryException();
         }
 
         return flowRepository.get().findByNamespaceWithSource(tenantId, namespace);
@@ -107,7 +105,7 @@ public class FlowService {
 
     public List<Flow> findAll(String tenantId) {
         if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
+            throw noRepositoryException();
         }
 
         return flowRepository.get().findAll(tenantId);
@@ -115,7 +113,7 @@ public class FlowService {
 
     public List<Flow> findByNamespace(String tenantId, String namespace) {
         if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
+            throw noRepositoryException();
         }
 
         return flowRepository.get().findByNamespace(tenantId, namespace);
@@ -123,7 +121,7 @@ public class FlowService {
 
     public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
         if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
+            throw noRepositoryException();
         }
 
         return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
@@ -131,7 +129,7 @@ public class FlowService {
 
     public Flow delete(Flow flow) {
         if (flowRepository.isEmpty()) {
-            throw NO_REPOSITORY_EXCEPTION;
+            throw noRepositoryException();
         }
 
         return flowRepository.get().delete(flow);
@@ -438,6 +436,7 @@ public class FlowService {
 
     /**
      * Gets the executable flow for the given namespace, id, and revision.
+     * Warning: this method bypasses ACL so someone with only execution right can create a flow execution
      *
      * @param tenant    Rhe tenant ID.
      * @param namespace The flow's namespace.
@@ -448,7 +447,11 @@ public class FlowService {
      * @throws IllegalStateException  if the requested flow is not executable.
      */
     public Flow getFlowIfExecutableOrThrow(final String tenant, final String namespace, final String id, final Optional<Integer> revision) {
-        Optional<Flow> optional = flowRepository.get().findById(tenant, namespace, id, revision);
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        Optional<Flow> optional = flowRepository.get().findByIdWithoutAcl(tenant, namespace, id, revision);
         if (optional.isEmpty()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
@@ -462,5 +465,9 @@ public class FlowService {
             throw new IllegalStateException("Requested Flow is not valid. Error: " + fwe.getException());
         }
         return flow;
+    }
+
+    private IllegalStateException noRepositoryException() {
+        return new IllegalStateException("No flow repository found. Make sure the `kestra.repository.type` property is set.");
     }
 }

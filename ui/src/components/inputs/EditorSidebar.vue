@@ -500,6 +500,7 @@
 
                 const results = await this.searchFiles({namespace: this.currentNS ?? this.$route.params.namespace, query: value});
                 this.searchResults = results.map(result => result.replace(/^\/*/, ""));
+                return this.searchResults;
             },
             chooseSearchResults(item){
                 this.changeOpenedTabs({
@@ -735,8 +736,13 @@
                     type: "File"
                 };
 
+                const path = `${this.dialog.folder ? `${this.dialog.folder}/` : ""}${NAME}`;
                 if (creation) {
-                    const path = `${this.dialog.folder ? `${this.dialog.folder}/` : ""}${NAME}`;
+
+                    if ((await this.searchFilesList(path)).includes(path)) {
+                        this.$toast().error(this.$t("namespace files.create.already_exists"));
+                        return;
+                    }
                     await this.createFile({
                         namespace: this.currentNS ?? this.$route.params.namespace,
                         path,

@@ -129,7 +129,7 @@
                             name: undefined,
                             component: Overview,
                             title: this.$t("overview"),
-                            containerClass: "full-container flex-0",
+                            containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
                         },
                     ].concat(tabs);
                 }

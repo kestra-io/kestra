@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
 public abstract class StorageTestSuite {
-    private static final String contentString = "Content";
+    private static final String CONTENT_STRING = "Content";
 
     @Inject
     protected StorageInterface storageInterface;
@@ -59,13 +59,13 @@ public abstract class StorageTestSuite {
 
         URI with = new URI(withTenant);
         InputStream get = storageInterface.get(tenantId, with);
-        assertThat(CharStreams.toString(new InputStreamReader(get)), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is(CONTENT_STRING));
         assertTrue(storageInterface.exists(tenantId, with));
         assertThrows(FileNotFoundException.class, () -> storageInterface.get(null, with));
 
         URI without = new URI(nullTenant);
         get = storageInterface.get(null, without);
-        assertThat(CharStreams.toString(new InputStreamReader(get)), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is(CONTENT_STRING));
         assertTrue(storageInterface.exists(null, without));
         assertThrows(FileNotFoundException.class, () -> storageInterface.get(tenantId, without));
 
@@ -78,7 +78,7 @@ public abstract class StorageTestSuite {
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
         InputStream getScheme = storageInterface.get(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(CONTENT_STRING));
     }
 
     private void get(String tenantId, String prefix) throws Exception {
@@ -87,7 +87,7 @@ public abstract class StorageTestSuite {
 
         URI item = new URI("/" + prefix + "/storage/get.yml");
         InputStream get = storageInterface.get(tenantId, item);
-        assertThat(CharStreams.toString(new InputStreamReader(get)), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is(CONTENT_STRING));
         assertTrue(storageInterface.exists(tenantId, item));
     }
 
@@ -372,7 +372,7 @@ public abstract class StorageTestSuite {
 
     private void size(String prefix, String tenantId) throws Exception {
         URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
-        assertThat(storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/put.yml")).getSize(), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/put.yml")).getSize(), is((long) CONTENT_STRING.length()));
     }
 
     @Test
@@ -412,13 +412,13 @@ public abstract class StorageTestSuite {
         putFile(null, nullTenant);
 
         URI with = new URI(withTenant);
-        assertThat(storageInterface.getAttributes(tenantId, with).getSize(), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, with).getSize(), is((long) CONTENT_STRING.length()));
         assertThrows(FileNotFoundException.class, () -> {
             storageInterface.getAttributes(null, with).getSize();
         });
 
         URI without = new URI(nullTenant);
-        assertThat(storageInterface.getAttributes(null, without).getSize(), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(null, without).getSize(), is((long) CONTENT_STRING.length()));
         assertThrows(FileNotFoundException.class, () -> {
             storageInterface.getAttributes(tenantId, without).getSize();
         });
@@ -431,7 +431,7 @@ public abstract class StorageTestSuite {
         String tenantId = IdUtils.create();
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
-        assertThat(storageInterface.getAttributes(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")).getSize(), is((long) contentString.length()));
+        assertThat(storageInterface.getAttributes(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml")).getSize(), is((long) CONTENT_STRING.length()));
     }
     //endregion
 
@@ -544,7 +544,7 @@ public abstract class StorageTestSuite {
         FileAttributes attr = storageInterface.getAttributes(tenantId, new URI("/" + prefix + "/storage/root.yml"));
         assertThat(attr.getFileName(), is("root.yml"));
         assertThat(attr.getType(), is(FileAttributes.FileType.File));
-        assertThat(attr.getSize(), is((long) contentString.length()));
+        assertThat(attr.getSize(), is((long) CONTENT_STRING.length()));
         Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
         assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1))), is(true));
         assertThat(lastModifiedInstant.isBefore(Instant.now()), is(true));
@@ -651,10 +651,10 @@ public abstract class StorageTestSuite {
         storageInterface.put(
             tenantId,
             uri,
-            new ByteArrayInputStream(contentString.getBytes())
+            new ByteArrayInputStream(CONTENT_STRING.getBytes())
         );
         InputStream getScheme = storageInterface.get(tenantId, new URI("/" + prefix + "/storage/get.yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(getScheme)), is(CONTENT_STRING));
     }
 
     @Test
@@ -668,7 +668,7 @@ public abstract class StorageTestSuite {
             storageInterface.put(
                 tenantId,
                 new URI("kestra:///" + prefix + "/storage/level1/../get2.yml"),
-                new ByteArrayInputStream(contentString.getBytes())
+                new ByteArrayInputStream(CONTENT_STRING.getBytes())
             );
         });
 
@@ -681,7 +681,7 @@ public abstract class StorageTestSuite {
         assertThat(put.toString(), is(new URI("kestra:///" + prefix + "/storage/put.yml").toString()));
         assertThat(
             CharStreams.toString(new InputStreamReader(get)),
-            is(contentString)
+            is(CONTENT_STRING)
         );
     }
     //endregion
@@ -1033,7 +1033,7 @@ public abstract class StorageTestSuite {
         );
         putFile(tenantId, "/" + prefix + "/storage/get.yml", expectedMetadata);
         StorageObject withMetadata = storageInterface.getWithMetadata(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(withMetadata.inputStream())), is(contentString));
+        assertThat(CharStreams.toString(new InputStreamReader(withMetadata.inputStream())), is(CONTENT_STRING));
         assertThat(withMetadata.metadata(), is(expectedMetadata));
     }
 
@@ -1041,7 +1041,7 @@ public abstract class StorageTestSuite {
         return storageInterface.put(
             tenantId,
             new URI(path),
-            new ByteArrayInputStream(contentString.getBytes())
+            new ByteArrayInputStream(CONTENT_STRING.getBytes())
         );
     }
 
@@ -1051,7 +1051,7 @@ public abstract class StorageTestSuite {
             new URI(path),
             new StorageObject(
                 metadata,
-                new ByteArrayInputStream(contentString.getBytes())
+                new ByteArrayInputStream(CONTENT_STRING.getBytes())
             )
         );
     }

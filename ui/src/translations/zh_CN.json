@@ -847,7 +847,8 @@
       "failure_ratio": "失败率",
       "trigger_disabled": "此trigger只能通过代码启用。",
       "no_flow_description": "此flow没有描述。",
-      "description": "描述"
+      "description": "描述",
+      "not_auth": "您没有查看此小部件的必要权限。"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",

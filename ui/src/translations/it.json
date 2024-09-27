@@ -847,7 +847,8 @@
       "failure_ratio": "Rapporto di Failure",
       "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice.",
       "no_flow_description": "Questo flow non ha descrizione.",
-      "description": "Descrizione"
+      "description": "Descrizione",
+      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget."
     },
     "delete_log": "Sei sicuro di voler eliminare il log?",
     "docs": "Documenti",

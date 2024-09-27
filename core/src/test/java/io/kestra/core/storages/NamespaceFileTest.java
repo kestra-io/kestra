@@ -8,15 +8,15 @@ import java.nio.file.Path;
 
 class NamespaceFileTest {
 
-    private static final String namespace = "io.kestra.test";
+    private static final String NAMESPACE = "io.kestra.test";
 
     @Test
     void shouldReturnTrueForIsRootDirectoryGivenRootDirectory() {
-        Assertions.assertTrue(NamespaceFile.of(namespace, URI.create("/")).isRootDirectory());
+        Assertions.assertTrue(NamespaceFile.of(NAMESPACE, URI.create("/")).isRootDirectory());
     }
     @Test
     void shouldReturnFalseForIsRootDirectoryGivenNonRootDirectory() {
-        Assertions.assertFalse(NamespaceFile.of(namespace, URI.create("/my/sub/dir")).isRootDirectory());
+        Assertions.assertFalse(NamespaceFile.of(NAMESPACE, URI.create("/my/sub/dir")).isRootDirectory());
     }
 
     @Test
@@ -24,14 +24,14 @@ class NamespaceFileTest {
         NamespaceFile expected = new NamespaceFile(
             Path.of(""),
             URI.create("kestra:///io/kestra/test/_files/"),
-            namespace
+            NAMESPACE
         );
 
         // Given URI
-        Assertions.assertEquals(expected, NamespaceFile.of(namespace, URI.create("/")));
+        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, URI.create("/")));
 
         // Given Path
-        Assertions.assertEquals(expected, NamespaceFile.of(namespace, Path.of("/"))
+        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, Path.of("/"))
         );
     }
 
@@ -42,12 +42,12 @@ class NamespaceFileTest {
 
     @Test
     void shouldThrowExceptionGivenInvalidScheme() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.of(namespace, URI.create("file:///io/kestra/test/_files/sub/dir/file.txt")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.of(NAMESPACE, URI.create("file:///io/kestra/test/_files/sub/dir/file.txt")));
     }
 
     @Test
     void shouldThrowExceptionGivenInvalidNamespace() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.of(namespace, URI.create("kestra:///com/acme/_files/sub/dir/file.txt")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.of(NAMESPACE, URI.create("kestra:///com/acme/_files/sub/dir/file.txt")));
     }
 
     @Test
@@ -55,8 +55,8 @@ class NamespaceFileTest {
         Assertions.assertEquals(new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-                namespace
-            ), NamespaceFile.of(namespace, URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"))
+            NAMESPACE
+            ), NamespaceFile.of(NAMESPACE, URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"))
         );
     }
 
@@ -65,8 +65,8 @@ class NamespaceFileTest {
         Assertions.assertEquals(new NamespaceFile(
                 Path.of("sub/dir/file.txt"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-                namespace
-            ), NamespaceFile.of(namespace, URI.create("/sub/dir/file.txt"))
+            NAMESPACE
+            ), NamespaceFile.of(NAMESPACE, URI.create("/sub/dir/file.txt"))
         );
     }
 
@@ -75,12 +75,12 @@ class NamespaceFileTest {
         NamespaceFile expected = new NamespaceFile(
             Path.of("sub/dir/file.txt"),
             URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-            namespace
+            NAMESPACE
         );
 
-        Assertions.assertEquals(expected, NamespaceFile.of(namespace, Path.of("sub/dir/file.txt")));
-        Assertions.assertEquals(expected, NamespaceFile.of(namespace, Path.of("/sub/dir/file.txt")));
-        Assertions.assertEquals(expected, NamespaceFile.of(namespace, Path.of("./sub/dir/file.txt")));
+        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, Path.of("sub/dir/file.txt")));
+        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, Path.of("/sub/dir/file.txt")));
+        Assertions.assertEquals(expected, NamespaceFile.of(NAMESPACE, Path.of("./sub/dir/file.txt")));
     }
 
     @Test
@@ -88,8 +88,8 @@ class NamespaceFileTest {
         Assertions.assertEquals(new NamespaceFile(
                 Path.of(""),
                 URI.create("kestra:///io/kestra/test/_files/"),
-                namespace
-            ), NamespaceFile.of(namespace)
+            NAMESPACE
+            ), NamespaceFile.of(NAMESPACE)
         );
     }
 
@@ -98,8 +98,8 @@ class NamespaceFileTest {
         Assertions.assertEquals(new NamespaceFile(
                 Path.of(""),
                 URI.create("kestra:///io/kestra/test/_files/"),
-                namespace
-            ), NamespaceFile.of(namespace, Path.of("/"))
+            NAMESPACE
+            ), NamespaceFile.of(NAMESPACE, Path.of("/"))
         );
     }
 
@@ -108,18 +108,18 @@ class NamespaceFileTest {
         NamespaceFile namespaceFile = new NamespaceFile(
             Path.of("sub/dir/file.txt"),
             URI.create("kestra:///io/kestra/test/_files/sub/dir/file.txt"),
-            namespace
+            NAMESPACE
         );
         Assertions.assertEquals(Path.of("/io/kestra/test/_files/sub/dir/file.txt"), namespaceFile.storagePath());
     }
 
     @Test
     void shouldPreserveTrailingSlashForUri() {
-        NamespaceFile namespaceFile = NamespaceFile.of(namespace, URI.create("/sub/dir/"));
+        NamespaceFile namespaceFile = NamespaceFile.of(NAMESPACE, URI.create("/sub/dir/"));
         Assertions.assertEquals(new NamespaceFile(
                 Path.of("sub/dir"),
                 URI.create("kestra:///io/kestra/test/_files/sub/dir/"),
-                namespace
+            NAMESPACE
             ), namespaceFile
         );
         Assertions.assertTrue(namespaceFile.isDirectory());

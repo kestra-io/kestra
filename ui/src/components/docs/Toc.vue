@@ -8,7 +8,27 @@
             <span v-if="!collapsed" class="close-btn text-body-tertiary">CLOSE SIDEBAR</span>
         </div>
         <div v-if="!collapsed" class="d-flex flex-column gap-3">
-            <search-field icon-placement="before" />
+            <el-autocomplete
+                ref="search"
+                class="flex-shrink-0"
+                v-model="query"
+                :fetch-suggestions="search"
+                popper-class="doc-toc-search-popper"
+                :placeholder="$t('search')"
+            >
+                <template #prefix>
+                    <magnify />
+                </template>
+                <template #default="{item}">
+                    <router-link
+                        :to="{path: '/' + item.parsedUrl}"
+                        class="d-flex gap-2"
+                    >
+                        {{ item.title }}
+                        <arrow-right class="is-justify-end" />
+                    </router-link>
+                </template>
+            </el-autocomplete>
             <ul class="list-unstyled d-flex flex-column gap-3">
                 <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
                     <span class="text-secondary">
@@ -24,8 +44,9 @@
 <script setup>
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import SearchField from "../layout/SearchField.vue";
     import RecursiveToc from "./RecursiveToc.vue";
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
 </script>
 
 <script>
@@ -59,7 +80,8 @@
                         "API Reference"
                     ]
                 },
-                rawStructure: undefined
+                rawStructure: undefined,
+                query: undefined
             }
         },
         computed: {
@@ -97,6 +119,11 @@
         },
         async mounted() {
             this.rawStructure = await this.$store.dispatch("doc/children");
+        },
+        methods: {
+            async search(query, cb) {
+                cb(await this.$store.dispatch("doc/search", query));
+            }
         }
     };
 </script>

@@ -27,6 +27,10 @@ export default {
                     }
                 });
         },
+        async search({getters}, q) {
+            return axios.get(getters["resourceUrl"]() + "/search?q=" + q)
+                .then(response => response.data);
+        },
         initResourceUrlTemplate({commit}, version) {
             commit("setResourceUrlTemplate", `${API_URL}/v1/docs${PATH_PLACEHOLDER}/versions/${version}`);
         }

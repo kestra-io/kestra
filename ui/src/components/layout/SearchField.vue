@@ -7,14 +7,12 @@
         :readonly="readonly"
     >
         <template #prefix>
-            <slot name="prefix">
-                <magnify v-if="iconPlacement === 'before'" />
-            </slot>
+            <slot name="prefix" />
         </template>
         <template #suffix>
             <div class="shortcut d-flex">
                 <slot name="suffix">
-                    <magnify v-if="iconPlacement === 'after'" />
+                    <magnify />
                 </slot>
             </div>
         </template>
@@ -43,10 +41,6 @@
             },
             readonly: {
                 type: Boolean
-            },
-            iconPlacement: {
-                type: String,
-                default: "after"
             }
         },
         watch: {

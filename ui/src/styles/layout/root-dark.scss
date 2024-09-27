@@ -20,11 +20,14 @@ html.dark {
         }
     }
 
+    #{--bs-card-bg}: #2F3342;
     #{--bs-heading-color}: var(--bs-white);
     #{--bs-body-color}: white;
     #{--bs-body-bg}: $body-bg;
     #{--bs-border-color}: #404559;
     #{--bs-border-secondary-color}: #2F3342;
+    #{--bs-secondary}: #E3DBFF;
+    #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
     #{--bs-link-color}: $secondary;
     #{--bs-link-color-rgb}: to-rgb($secondary);
     #{--bs-tertiary-color}: #C3BBE3;
@@ -107,6 +110,7 @@ html.dark {
     #{--content-created}: #7fbaff;
     #{--border-created}: #1761fd;
     #{--border-killed}: #fce07c;
+    #{--border-killing}: #918ba9;
     #{--content-killed}: #fdeaa8;
     #{--background-killed}: #7e703e33;
     #{--background-running}: #42008033;
@@ -141,4 +145,12 @@ html.dark {
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
+
+    .shiki, .shiki span {
+        color: var(--shiki-dark) !important;
+        background-color: var(--shiki-dark-bg) !important;
+        font-style: var(--shiki-dark-font-style) !important;
+        font-weight: var(--shiki-dark-font-weight) !important;
+        text-decoration: var(--shiki-dark-text-decoration) !important;
+    }
 }

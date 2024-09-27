@@ -5,7 +5,7 @@
                 <chevron-right v-if="collapsed" />
                 <chevron-left v-else />
             </el-button>
-            <span v-if="!collapsed" class="close-btn text-body-tertiary">CLOSE SIDEBAR</span>
+            <span class="toggle-btn text-body-tertiary">{{ $t((collapsed ? 'open' : 'close') + ' sidebar').toUpperCase() }}</span>
         </div>
         <div v-if="!collapsed" class="d-flex flex-column gap-3">
             <el-autocomplete
@@ -138,9 +138,11 @@
 
         &.collapsed {
             padding: calc(var(--spacer) * 2) calc(var(--spacer) * 0.5);
+            background: transparent;
         }
 
-        .close-btn {
+        .toggle-btn {
+            white-space:nowrap;
             font-size: 12px;
         }
 

@@ -74,10 +74,10 @@
             }
 
             a {
-                color: var(--el-collapse-header-text-color);
+                color: var(--bs-body-color);
 
                 &.router-link-exact-active {
-                    color: var(--bs-purple);
+                    font-weight: 700;
                 }
             }
         }

@@ -58,6 +58,8 @@
         const executionData = {};
 
         labels.forEach((namespace) => {
+            if (!props.data[namespace]) return;
+
             const counts = props.data[namespace].counts;
 
             for (const [state, count] of Object.entries(counts)) {

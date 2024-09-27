@@ -180,7 +180,7 @@
         <el-row v-if="!props.flow" :gutter="20" class="mx-0">
             <el-col :xs="24">
                 <ExecutionsNamespace
-                    :data="namespaceExecutions"
+                    :data="filteredNamespaceExecutions"
                     :total="stats.total"
                 />
             </el-col>
@@ -221,7 +221,7 @@
 
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
-    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue"
+    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -338,6 +338,13 @@
     const graphData = computed(() => store.state.stat.daily || []);
 
     const namespaceExecutions = ref({});
+    const filteredNamespaceExecutions = computed(() => {
+        const namespace = filters.value.namespace;
+
+        return !namespace
+            ? namespaceExecutions.value
+            : {[namespace]: namespaceExecutions.value[namespace]};
+    });
     const fetchNamespaceExecutions = () => {
         store.dispatch("stat/dailyGroupByNamespace").then((response) => {
             namespaceExecutions.value = response;
@@ -416,7 +423,8 @@
 
     const isAllowedTriggers = computed(() => {
         return (
-            user && user.isAllowed(permission.FLOW, action.READ, filters.value.namespace)
+            user &&
+            user.isAllowed(permission.FLOW, action.READ, filters.value.namespace)
         );
     });
 

@@ -16,7 +16,7 @@ public class Slugify {
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
         String slug = NONLATIN.matcher(normalized).replaceAll("");
 
-        slug = slug.replaceAll("_", "-");
+        slug = slug.replace("_", "-");
 
         while (slug.contains("--")) {
             slug = slug.replace("--", "-");

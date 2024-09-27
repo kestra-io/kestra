@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 class ServiceInstanceTest {
@@ -89,5 +90,36 @@ class ServiceInstanceTest {
         Assertions.assertNotEquals(instance, result);
         Assertions.assertEquals(List.of(
             new ServiceInstance.TimestampedEvent(now, "Disconnected", "service.state.updated", Service.ServiceState.DISCONNECTED)), result.events());
+    }
+
+    @Test
+    void shouldGroupInstanceGivenAnExistingProperty() {
+        List<ServiceInstance> instances = List.of(
+            createServiceInstanceWithProperties(Map.of("prop", "A")),
+            createServiceInstanceWithProperties(Map.of("prop", "A")),
+            createServiceInstanceWithProperties(Map.of("prop", "B")),
+            createServiceInstanceWithProperties(Map.of())
+        );
+
+        Map<String, List<ServiceInstance>> grouped = ServiceInstance.groupByProperty(instances, "prop");
+        Assertions.assertEquals(grouped.size(), 2);
+        Assertions.assertEquals(grouped.get("A").size(), 2);
+        Assertions.assertEquals(grouped.get("B").size(), 1);
+    }
+
+    private static ServiceInstance createServiceInstanceWithProperties(Map<String, Object> properties) {
+        Instant now = Instant.now();
+        return new ServiceInstance(
+            IdUtils.create(),
+            Service.ServiceType.WORKER,
+            Service.ServiceState.RUNNING,
+            null,
+            now,
+            now,
+            List.of(),
+            CONFIG,
+            properties,
+            Set.of()
+        );
     }
 }

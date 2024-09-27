@@ -131,7 +131,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref} from "vue";
+    import {onBeforeMount, watch, ref} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -189,6 +189,10 @@
                 };
             });
     };
+    watch(
+        () => props.namespace,
+        () => loadExecutions(),
+    );
 
     const toggleState = (trigger) => {
         store.dispatch("trigger/update", {

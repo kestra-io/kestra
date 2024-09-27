@@ -8,7 +8,7 @@
                     v-model="filters.namespace"
                     data-type="flow"
                     :disabled="props.flow || !!props.namespace"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 />
             </el-col>
             <el-col :xs="24" :lg="4">
@@ -19,7 +19,7 @@
                     collapse-tags
                     multiple
                     :placeholder="$t('state')"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 >
                     <el-option
                         v-for="item in State.allStates()"
@@ -42,7 +42,7 @@
                 <scope-filter-buttons
                     v-model="filters.scope"
                     :label="$t('data')"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 />
             </el-col>
             <el-col :xs="24" :sm="8" :lg="4">
@@ -159,7 +159,7 @@
             <el-col v-if="props.flow" :xs="24" :lg="10">
                 <ExecutionsNextScheduled
                     :flow="props.flowID"
-                    :namespace="props.namespace"
+                    :namespace="filters.namespace"
                 />
             </el-col>
             <el-col :xs="24" :lg="props.flow ? 7 : 12">
@@ -171,7 +171,7 @@
                 <ExecutionsNextScheduled
                     v-else
                     :flow="props.flowID"
-                    :namespace="props.namespace"
+                    :namespace="filters.namespace"
                 />
             </el-col>
         </el-row>
@@ -195,7 +195,7 @@
 
 <script setup>
     import {onBeforeMount, ref, computed} from "vue";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -228,6 +228,7 @@
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
 
     const router = useRouter();
+    const route = useRoute();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
@@ -254,7 +255,8 @@
 
     const descriptionDialog = ref(false);
     const description = props.flow
-        ? (store.state?.flow?.flow?.description ?? t("dashboard.no_flow_description"))
+        ? (store.state?.flow?.flow?.description ??
+            t("dashboard.no_flow_description"))
         : undefined;
 
     const filters = ref({
@@ -407,7 +409,10 @@
         }
     };
 
-    onBeforeMount(() => updateParams());
+    onBeforeMount(() => {
+        filters.value.namespace = route.query.namespace ?? null;
+        updateParams();
+    });
 </script>
 
 <style lang="scss" scoped>

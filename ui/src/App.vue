@@ -39,6 +39,7 @@
                 fullPage: false,
                 created: false,
                 loaded: false,
+                executions: 0,
             };
         },
         computed: {
@@ -52,10 +53,14 @@
             },
         },
         async created() {
+            this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
+            this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
+                this.executions = response?.total ?? 0;
+            })
+
             if (this.created === false) {
                 await this.loadGeneralResources();
                 this.displayApp();
-                this.initGuidedTour();
             }
             this.setTitleEnvSuffix();
 
@@ -194,29 +199,11 @@
                     }
                 }
             },
-            initGuidedTour() {
-                this.$store.dispatch("flow/findFlows", {size: 1})
-                    .then(flows => {
-                        if (flows.total === 0 && this.$route.name === "home") {
-                            this.$router.push({
-                                name: "welcome",
-                                params: {
-                                    tenant: this.$route.params.tenant
-                                }
-                            });
-                        }
-                    });
-            },
         },
         watch: {
             $route(to) {
-                if (to.name === "home" && this.overallTotal === 0) {
-                    this.$router.push({
-                        name: "welcome",
-                        params: {
-                            tenant: this.$route.params.tenant
-                        }
-                    });
+                if (!this.executions && to.name === "home" && !this.overallTotal) {
+                    this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
                 }
             },
             envName() {

@@ -565,7 +565,8 @@
       "create": {
         "label": "创建",
         "file": "创建文件",
-        "folder": "创建文件夹"
+        "folder": "创建文件夹",
+        "already_exists": "文件名已存在"
       },
       "rename": {
         "label": "重命名",

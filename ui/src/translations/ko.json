@@ -565,7 +565,8 @@
       "create": {
         "label": "생성",
         "file": "파일 생성",
-        "folder": "폴더 생성"
+        "folder": "폴더 생성",
+        "already_exists": "파일 이름이 이미 존재합니다"
       },
       "rename": {
         "label": "이름 변경",

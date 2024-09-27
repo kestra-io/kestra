@@ -565,7 +565,8 @@
       "create": {
         "label": "Stwórz",
         "file": "Stwórz plik",
-        "folder": "Stwórz folder"
+        "folder": "Stwórz folder",
+        "already_exists": "Plik o tej nazwie już istnieje"
       },
       "rename": {
         "label": "Zmień nazwę",

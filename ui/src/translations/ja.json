@@ -858,6 +858,8 @@
       "title_no_limit": "このFlowには制限が設定されていません。"
     },
     "active-slots": "アクティブスロット",
-    "concurrency": "並行性"
+    "concurrency": "並行性",
+    "open sidebar": "サイドバーを開く",
+    "close sidebar": "サイドバーを閉じる"
   }
 }

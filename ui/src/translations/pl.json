@@ -858,6 +858,8 @@
       "title_no_limit": "Brak limitów ustawionych dla tego Flow."
     },
     "active-slots": "Aktywne sloty",
-    "concurrency": "Współbieżność"
+    "concurrency": "Współbieżność",
+    "open sidebar": "otwórz pasek boczny",
+    "close sidebar": "zamknij pasek boczny"
   }
 }

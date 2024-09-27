@@ -858,6 +858,8 @@
       "title_no_limit": "이 Flow에 대한 제한이 설정되지 않았습니다."
     },
     "active-slots": "활성 슬롯",
-    "concurrency": "동시성"
+    "concurrency": "동시성",
+    "open sidebar": "사이드바 열기",
+    "close sidebar": "사이드바 닫기"
   }
 }

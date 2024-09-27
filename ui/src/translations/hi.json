@@ -858,6 +858,8 @@
       "title_no_limit": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं की गई हैं।"
     },
     "active-slots": "सक्रिय स्लॉट्स",
-    "concurrency": "समानांतरता"
+    "concurrency": "समानांतरता",
+    "open sidebar": "साइडबार खोलें",
+    "close sidebar": "साइडबार बंद करें"
   }
 }

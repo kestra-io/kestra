@@ -616,7 +616,7 @@
         },
         beforeCreate(){
             if(!this.$route.query.scope) {
-                this.$route.query.scope = ["USER"]
+                this.$route.query.scope = this.namespace === "system" ? ["SYSTEM"] : ["USER"];
             }
         },
         created() {

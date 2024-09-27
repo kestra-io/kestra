@@ -80,7 +80,7 @@
                     callbacks: {
                         title: () => "",
                         label: (value) =>
-                            `${value.raw} ${value.label.toLowerCase().capitalize()}}`,
+                            `${value.raw} ${value.label.toLowerCase().capitalize()}`,
                     },
                 },
             },

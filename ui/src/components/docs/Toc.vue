@@ -135,6 +135,20 @@
         height: calc(100vh - 80px);
         top: 80px;
         position: sticky;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        &::-webkit-scrollbar-track {
+            -webkit-border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            -webkit-border-radius: 10px;
+            background: var(--bs-gray-600);
+        }
 
         &.collapsed {
             padding: calc(var(--spacer) * 2) calc(var(--spacer) * 0.5);

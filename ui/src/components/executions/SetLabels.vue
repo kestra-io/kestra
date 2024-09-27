@@ -37,7 +37,7 @@
             <el-form-item :label="$t('execution labels')">
                 <label-input
                     v-model:labels="executionLabels"
-                    :existing-labels="this.execution.labels"
+                    :existing-labels="execution.labels"
                 />
             </el-form-item>
         </el-form>

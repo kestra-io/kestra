@@ -858,6 +858,8 @@
       "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
     },
     "active-slots": "Aktive Slots",
-    "concurrency": "Nebenläufigkeit"
+    "concurrency": "Nebenläufigkeit",
+    "open sidebar": "Seitenleiste öffnen",
+    "close sidebar": "Seitenleiste schließen"
   }
 }

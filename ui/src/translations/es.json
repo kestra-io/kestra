@@ -858,6 +858,8 @@
       "title_no_limit": "No se han establecido límites para este Flow."
     },
     "active-slots": "Ranuras activas",
-    "concurrency": "Concurrente"
+    "concurrency": "Concurrente",
+    "open sidebar": "abrir barra lateral",
+    "close sidebar": "cerrar barra lateral"
   }
 }

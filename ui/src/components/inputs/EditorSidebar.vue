@@ -766,7 +766,8 @@
                     this.items = this.sorted(this.items);
                 } else {
                     const SELF = this;
-                    (function pushItemToFolder(basePath = "", array) {
+                    (function pushItemToFolder(basePath = "", array, pathParts) {
+
                         for (const item of array) {
                             const folderPath = `${basePath}${item.fileName}`;
 
@@ -775,13 +776,32 @@
                                 return true; // Return true if the folder is found and item is pushed
                             }
 
-                            if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children)) {
-                                return true; // Return true if the folder is found and item is pushed in recursive call
+                            if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                                // Return true if the folder is found and item is pushed in recursive call
+                                return true;
                             }
                         }
 
+                        // If the folder does not exist, create it
+                        if (pathParts && pathParts.length > 0 && pathParts[0]) {
+                            const folderPath = `${basePath}${pathParts[0]}`;
+
+                            if (folderPath === SELF.dialog.folder) {
+                                const newFolder = SELF.folderNode(pathParts[0], [NEW]);
+                                array.push(newFolder);
+                                array = SELF.sorted(array);
+
+                                return true; // Return true if the folder is found and item is pushed
+                            }
+                            const newFolder = SELF.folderNode(pathParts[0], []);
+                            array.push(newFolder);
+                            array = SELF.sorted(array);
+
+                            return pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1));
+                        }
+
                         return false;
-                    })(undefined, this.items);
+                    })(undefined, this.items, path.split("/"));
                 }
 
                 if (shouldReset) {
@@ -822,13 +842,7 @@
                         fileName: this.dialog.name,
                     };
 
-                const NEW = {
-                    id: Utils.uid(),
-                    fileName,
-                    leaf: false,
-                    children: folder?.children ?? [],
-                    type: "Directory"
-                };
+                const NEW = this.folderNode(fileName, folder?.children ?? [])
 
                 if (creation) {
                     const path = `${
@@ -870,7 +884,15 @@
 
                 this.dialog = {...DIALOG_DEFAULTS};
             },
-
+            folderNode(fileName, children) {
+                return {
+                    id: Utils.uid(),
+                    fileName,
+                    leaf: false,
+                    children: children ?? [],
+                    type: "Directory"
+                }
+            },
             getPath(name) {
                 const nodes = this.$refs.tree.getNodePath(name);
                 return nodes.map((obj) => obj.fileName).join("/");
@@ -884,7 +906,7 @@
                 } catch (_error) {
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
-            },
+            }
         },
         watch: {
             flow: {

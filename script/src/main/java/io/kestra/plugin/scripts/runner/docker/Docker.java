@@ -482,7 +482,7 @@ public class Docker extends TaskRunner {
                 if (exitCode != 0) {
                     throw new TaskException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
                 } else if (logger.isDebugEnabled()) {
-                    logger.debug("Command succeed with code " + exitCode);
+                    logger.debug("Command succeed with code {}", exitCode);
                 }
 
                 // download output files

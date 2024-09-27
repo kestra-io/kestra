@@ -565,7 +565,8 @@
       "create": {
         "label": "Criar",
         "file": "Criar arquivo",
-        "folder": "Criar pasta"
+        "folder": "Criar pasta",
+        "already_exists": "Um arquivo com este nome já existe"
       },
       "rename": {
         "label": "Renomear",

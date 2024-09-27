@@ -565,7 +565,8 @@
       "create": {
         "label": "Erstellen",
         "file": "Datei erstellen",
-        "folder": "Ordner erstellen"
+        "folder": "Ordner erstellen",
+        "already_exists": "Eine Datei mit diesem Namen existiert bereits"
       },
       "rename": {
         "label": "Umbenennen",

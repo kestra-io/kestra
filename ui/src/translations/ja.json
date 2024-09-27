@@ -565,7 +565,8 @@
       "create": {
         "label": "作成",
         "file": "ファイルを作成",
-        "folder": "フォルダーを作成"
+        "folder": "フォルダーを作成",
+        "already_exists": "この名前のファイルは既に存在します"
       },
       "rename": {
         "label": "名前を変更",

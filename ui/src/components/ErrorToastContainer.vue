@@ -7,9 +7,9 @@
         <Slack />
         <span>{{ $t("slack support") }}</span>
     </a>
-    <span v-html="markdownRenderer" v-if="this.items.length === 0" />
+    <span v-html="markdownRenderer" v-if="items.length === 0" />
     <ul>
-        <li v-for="(item, index) in this.items" :key="index" class="font-monospace">
+        <li v-for="(item, index) in items" :key="index" class="font-monospace">
             <template v-if="item.path">
                 At <code>{{ item.path }}</code>:
             </template>

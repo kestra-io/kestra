@@ -169,10 +169,11 @@
                     :total="stats.total"
                 />
                 <ExecutionsNextScheduled
-                    v-else
+                    v-else-if="isAllowedTriggers"
                     :flow="props.flowID"
                     :namespace="filters.namespace"
                 />
+                <ExecutionsEmptyNextScheduled v-else />
             </el-col>
         </el-row>
 
@@ -220,17 +221,21 @@
 
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
+    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue"
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
+    import permission from "../../models/permission.js";
+    import action from "../../models/action.js";
 
     const router = useRouter();
     const route = useRoute();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
+    const user = store.getters["auth/user"];
 
     const props = defineProps({
         embed: {
@@ -408,6 +413,12 @@
             console.error("All promises failed:", error);
         }
     };
+
+    const isAllowedTriggers = computed(() => {
+        return (
+            user && user.isAllowed(permission.FLOW, action.READ, filters.value.namespace)
+        );
+    });
 
     onBeforeMount(() => {
         filters.value.namespace = route.query.namespace ?? null;

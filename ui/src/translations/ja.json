@@ -847,7 +847,8 @@
       "failure_ratio": "失敗率",
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
-      "description": "説明"
+      "description": "説明",
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",

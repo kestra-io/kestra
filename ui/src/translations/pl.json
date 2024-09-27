@@ -847,7 +847,8 @@
       "failure_ratio": "Wskaźnik Niepowodzeń",
       "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu.",
       "no_flow_description": "Ten flow nie ma opisu.",
-      "description": "Opis"
+      "description": "Opis",
+      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget."
     },
     "delete_log": "Czy na pewno chcesz usunąć log?",
     "docs": "Dokumentacja",

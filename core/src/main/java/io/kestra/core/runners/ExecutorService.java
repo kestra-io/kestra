@@ -3,18 +3,29 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.NextTaskRun;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.ExecutableTask;
+import io.kestra.core.models.tasks.ExecutionUpdatableTask;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WaitFor;
-import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -24,7 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -49,6 +66,9 @@ public class ExecutorService {
 
     @Inject
     private FlowInputOutput flowInputOutput;
+
+    @Inject
+    private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
     protected FlowExecutorInterface flowExecutorInterface;
 
@@ -704,32 +724,72 @@ public class ExecutorService {
         return executor.withExecution(newExecution, "handleKilling");
     }
 
-    private Executor handleWorkerTask(Executor executor) throws InternalException {
+    private Executor handleWorkerTask(final Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
             return executor;
         }
 
         // submit TaskRun when receiving created, must be done after the state execution store
-        List<WorkerTask> workerTasks = executor.getExecution()
+        Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(taskRun -> {
-                Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
-                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                return WorkerTask.builder()
-                    .runContext(runContext)
-                    .taskRun(taskRun)
-                    .task(task)
-                    .build();
-            }))
-            .toList();
+                    Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                    WorkerTask workerTask = WorkerTask.builder()
+                        .runContext(runContext)
+                        .taskRun(taskRun)
+                        .task(task)
+                        .build();
+                    // Get worker group
+                    String workerGroup = Optional.ofNullable(workerTask.getTask())
+                        .map(Task::getWorkerGroup)
+                        .map(WorkerGroup::getKey)
+                        .orElse(null);
+                    // Check if the worker group exist
+                    if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroup)) {
+                        // Check whether at-least one worker is available
+                        if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroup)) {
+                            return workerTask;
+                        } else {
+                            runContext.logger()
+                                .error("Cannot run task. No workers are available for worker group '" + workerGroup + "'.");
+                        }
+                    } else {
+                        runContext.logger()
+                            .error("Cannot run task. No worker group exist for key '" + workerGroup + "'.");
+                    }
+                    // fail the task-run because no worker can run the task
+                    return workerTask.withTaskRun(workerTask.getTaskRun().fail());
+                })
+            )
+            .collect(Collectors.groupingBy(workerTask -> workerTask.getTaskRun().getState().isFailed()));
 
         if (workerTasks.isEmpty()) {
             return executor;
         }
 
-        return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
+        Executor executorToReturn = executor;
+
+        // Handle WorkerTasks for FAILED TaskRun
+        List<WorkerTask> workerTasksFailed = workerTasks.get(true);
+        if (workerTasksFailed != null) {
+            List<WorkerTaskResult> failed = workerTasksFailed
+                .stream()
+                .filter(workerTask -> workerTask.getTaskRun().getState().isFailed())
+                .map(workerTask -> WorkerTaskResult.builder().taskRun(workerTask.getTaskRun()).build())
+                .toList();
+            executorToReturn = executorToReturn.withWorkerTaskResults(failed, "handleWorkerTask");
+        }
+
+        // Handle WorkerTasks for CREATED TaskRun
+        List<WorkerTask> workerTasksCreated = workerTasks.get(false); // is not FAILED
+        if (workerTasksCreated != null) {
+            executorToReturn = executorToReturn.withWorkerTasks(workerTasksCreated, "handleWorkerTask");
+        }
+
+        return executorToReturn;
     }
 
     private Executor handleExecutableTask(final Executor executor) {

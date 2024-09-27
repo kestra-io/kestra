@@ -589,7 +589,8 @@
       "create": {
         "label": "Create",
         "file": "Create file",
-        "folder": "Create folder"
+        "folder": "Create folder",
+        "already_exists": "A file with this name already exists"
       },
       "rename": {
         "label": "Rename",

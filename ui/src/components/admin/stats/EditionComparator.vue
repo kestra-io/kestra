@@ -61,7 +61,7 @@
                         ],
                         button: {
                             text: "Talk to us",
-                            href: "https://kestra.io/demo?utm_source=app&utm_content=stats"
+                            href: "https://kestra.io/demo?utm_source=app$&utm_campaign=enterprise&utm_content=stats"
                         }
                     },
                     {
@@ -73,7 +73,7 @@
                         ],
                         button: {
                             text: "Sign up for a private Alpha",
-                            href: "https://kestra.io/cloud?utm_source=app&utm_content=stats"
+                            href: "https://kestra.io/cloud?utm_source=app&utm_campaign=cloud&utm_content=stats"
                         }
                     }
                 ]

@@ -27,7 +27,7 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <a
-                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
@@ -42,7 +42,7 @@
                             </a>
 
                             <a
-                                href="https://kestra.io/docs?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/docs?utm_source=app&utm_campaign=docs&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
@@ -56,14 +56,14 @@
                                 <Github class="align-middle" /> {{ $t("documentation.github") }}
                             </a>
                             <a
-                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
                                 <Slack class="align-middle" /> {{ $t("join community") }}
                             </a>
                             <a
-                                href="https://kestra.io/demo?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/demo?utm_source=app&utm_campaign=sales&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="wrap">
         <el-radio-group
             v-model="selectedFilterType"
             @change="onSelectedFilterType()"
@@ -31,6 +31,38 @@
             @update:model-value="onRelFilterChange"
         />
     </div>
+    <template v-else>
+        <el-radio-group
+            v-model="selectedFilterType"
+            @change="onSelectedFilterType()"
+            class="filter"
+        >
+            <el-radio-button
+                data-test-id="date-filter-relative-selector"
+                :value="filterType.RELATIVE"
+            >
+                {{ $t("relative") }}
+            </el-radio-button>
+            <el-radio-button
+                data-test-id="date-filter-absolute-selector"
+                :value="filterType.ABSOLUTE"
+            >
+                {{ $t("absolute") }}
+            </el-radio-button>
+        </el-radio-group>
+        <date-range
+            v-if="selectedFilterType === filterType.ABSOLUTE"
+            :start-date="startDate"
+            :end-date="endDate"
+            @update:model-value="onAbsFilterChange"
+            class="w-auto"
+        />
+        <time-select
+            v-if="selectedFilterType === filterType.RELATIVE"
+            :time-range="timeRange"
+            @update:model-value="onRelFilterChange"
+        />
+    </template>
 </template>
 
 <script>
@@ -44,6 +76,10 @@
         },
         props: {
             absolute: {
+                type: Boolean, 
+                default: false
+            },
+            wrap: {
                 type: Boolean, 
                 default: false
             }

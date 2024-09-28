@@ -22,8 +22,8 @@
                         :label="$t('scheduleDate')"
                     >
                         <el-date-picker
-                            :key="scheduleDate"
                             v-model="scheduleDate"
+                            @update:model-value="onChange"
                             type="datetime"
                         />
                     </el-form-item>

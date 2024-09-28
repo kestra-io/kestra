@@ -10,11 +10,7 @@
                 class="inprogress"
                 :height="240"
             >
-                <el-table-column
-                    :label="$t('state')"
-                    class-name="next-toggle"
-                    width="50"
-                >
+                <el-table-column class-name="next-toggle" width="50">
                     <template #default="scope">
                         <el-tooltip
                             v-if="scope.row.tooltip"
@@ -23,11 +19,6 @@
                             <el-switch
                                 disabled
                                 :model-value="!scope.row.disabled"
-                                @change="
-                                    toggleState(scope.row.triggerContext);
-                                    scope.row.triggerContext.disabled =
-                                        !scope.row.triggerContext.disabled;
-                                "
                                 :active-icon="Check"
                                 size="small"
                                 inline-prompt
@@ -38,8 +29,7 @@
                             :model-value="!scope.row.disabled"
                             @change="
                                 toggleState(scope.row.triggerContext);
-                                scope.row.triggerContext.disabled =
-                                    !scope.row.triggerContext.disabled;
+                                scope.row.disabled = !scope.row.disabled;
                             "
                             :active-icon="Check"
                             size="small"
@@ -141,7 +131,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref} from "vue";
+    import {onBeforeMount, watch, ref} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -199,6 +189,10 @@
                 };
             });
     };
+    watch(
+        () => props.namespace,
+        () => loadExecutions(),
+    );
 
     const toggleState = (trigger) => {
         store.dispatch("trigger/update", {

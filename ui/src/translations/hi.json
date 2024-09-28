@@ -565,7 +565,8 @@
       "create": {
         "label": "बनाएँ",
         "file": "फ़ाइल बनाएँ",
-        "folder": "फ़ोल्डर बनाएँ"
+        "folder": "फ़ोल्डर बनाएँ",
+        "already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है"
       },
       "rename": {
         "label": "नाम बदलें",
@@ -682,12 +683,9 @@
             "environment_name": "पर्यावरण नाम",
             "environment_color": "पर्यावरण रंग",
             "chart_color_scheme": {
-              "default": "डिफ़ॉल्ट",
               "label": "चार्ट रंग योजना",
               "classic": "क्लासिक",
-              "cbs": "CBS का मतलब है Color Blind Safe योजना",
-              "kestra": "Kestra",
-              "purple": "बैंगनी"
+              "kestra": "Kestra"
             }
           }
         },
@@ -849,7 +847,19 @@
       "failure_ratio": "विफलता अनुपात",
       "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।",
       "no_flow_description": "इस flow का कोई विवरण नहीं है।",
-      "description": "विवरण"
-    }
+      "description": "विवरण",
+      "not_auth": "आपके पास इस विजेट को देखने की आवश्यक अनुमतियाँ नहीं हैं।"
+    },
+    "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
+    "docs": "डॉक्स",
+    "behavior": "व्यवहार",
+    "concurrency-view": {
+      "desc_no_limit": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> के बारे में और पढ़ें।",
+      "title_no_limit": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं की गई हैं।"
+    },
+    "active-slots": "सक्रिय स्लॉट्स",
+    "concurrency": "समानांतरता",
+    "open sidebar": "साइडबार खोलें",
+    "close sidebar": "साइडबार बंद करें"
   }
 }

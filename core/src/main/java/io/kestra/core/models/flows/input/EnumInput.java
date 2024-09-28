@@ -26,7 +26,7 @@ public class EnumInput extends Input<String> {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (!values.contains(input) & this.getRequired()) {
+        if (!values.contains(input) && this.getRequired()) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "it must match the values `" + values + "`",
                 this,

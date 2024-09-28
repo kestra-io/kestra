@@ -350,6 +350,7 @@
     "download logs": "Download logs",
     "delete logs": "Delete logs",
     "delete_all_logs": "Are you sure you want to delete all logs?",
+    "delete_log": "Are you sure you want to delete the log?",
     "toggle fullscreen": "Toggle fullscreen",
     "copied": "Copied",
     "tags": "Tags",
@@ -588,7 +589,8 @@
       "create": {
         "label": "Create",
         "file": "Create file",
-        "folder": "Create folder"
+        "folder": "Create folder",
+        "already_exists": "A file with this name already exists"
       },
       "rename": {
         "label": "Rename",
@@ -706,7 +708,7 @@
             "environment_color": "Environment Color",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
-              "default": "Default",
+              "classic": "Classic",
               "kestra": "Kestra"
             }
           }
@@ -862,7 +864,18 @@
       "id": "ID",
       "trigger_disabled": "This trigger can only be enabled through code.",
       "description": "Description",
-      "no_flow_description": "This flow has no description."
-    }
+      "no_flow_description": "This flow has no description.",
+      "not_auth": "You don't have the necessary permissions to view this widget."
+    },
+    "docs": "Docs",
+    "active-slots": "Active slots",
+    "behavior": "Behavior",
+    "concurrency": "Concurrency",
+    "concurrency-view": {
+      "title_no_limit": "No limits are set for this Flow.",
+      "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
+    },
+    "open sidebar": "open sidebar",
+    "close sidebar": "close sidebar"
   }
 }

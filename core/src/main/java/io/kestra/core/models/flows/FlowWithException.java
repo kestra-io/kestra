@@ -28,7 +28,7 @@ public class FlowWithException extends FlowWithSource {
                 .tenantId(jsonNode.hasNonNull("tenant_id") ? jsonNode.get("tenant_id").asText() : null)
                 .namespace(jsonNode.get("namespace").asText())
                 .revision(jsonNode.hasNonNull("revision") ? jsonNode.get("revision").asInt() : 1)
-                .deleted(jsonNode.hasNonNull("deleted") ? jsonNode.get("deleted").asBoolean() : false)
+                .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
                 .build();

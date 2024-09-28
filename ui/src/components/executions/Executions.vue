@@ -496,6 +496,7 @@
             TopNavBar,
             LabelInput
         },
+        emits: ["state-count"],
         props: {
             hidden: {
                 type: Array,
@@ -530,6 +531,10 @@
                 type: String,
                 required: false,
                 default: undefined
+            },
+            isConcurrency: {
+                type: Boolean,
+                default: false
             }
         },
         data() {
@@ -611,7 +616,7 @@
         },
         beforeCreate(){
             if(!this.$route.query.scope) {
-                this.$route.query.scope = ["USER"]
+                this.$route.query.scope = this.namespace === "system" ? ["SYSTEM"] : ["USER"];
             }
         },
         created() {
@@ -621,7 +626,10 @@
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
             this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
-                || this.optionalColumns.filter(col => col.default).map(col => col.prop);            
+                || this.optionalColumns.filter(col => col.default).map(col => col.prop);
+            if (this.isConcurrency) {
+                this.emitStateCount([State.RUNNING, State.PAUSED])
+            }
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
@@ -673,7 +681,7 @@
                 return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
-                return this.embed === false || this.filter
+                return this.embed === false && this.filter
             },
             filterStorageKey() {
                 return storageKeys.EXECUTIONS_FILTERS
@@ -974,6 +982,15 @@
                     }
                 })
             },
+            emitStateCount(states) {
+                this.$store.dispatch("execution/findExecutions", this.loadQuery({
+                    size: 0,
+                    page: 1,
+                    state: states
+                }, false)).then(() => {
+                    this.$emit("state-count", this.total);
+                });
+            }
         },
         watch: {
             isOpenLabelsModal(opening) {

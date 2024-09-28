@@ -1,6 +1,6 @@
 const SCHEME = "scheme";
 const OPTIONS = Object.freeze({
-    default: {
+    classic: {
         light: {
             executions: {
                 CANCELLED: "#d1cfe9",
@@ -107,7 +107,7 @@ export const setScheme = (value) => {
 };
 
 export const getScheme = (state, type = "executions") => {
-    const scheme = localStorage.getItem(SCHEME) ?? "default";
+    const scheme = localStorage.getItem(SCHEME) ?? "classic";
     const theme = localStorage.getItem("theme") ?? "light";
 
     return OPTIONS[scheme][theme][type][state];

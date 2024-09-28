@@ -56,9 +56,15 @@
     #{--card-bg}: $card-bg;
     #{--input-bg}: $input-bg;
 
+    #{--bs-border-color}: #E5E4F7;
+    #{--bs-border-secondary-color}: #E5E4F7;
+
+    #{--bs-card-bg}: #FFFFFF;
     #{--bs-body-color}: black;
     #{--bs-heading-color}: var(--bs-black);
-    #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
+    #{--bs-secondary}: #564A75;
+    #{--bs-secondary-rgb}: to-rgb(#564A75);
+    #{--bs-tertiary-color}: #7E719F;
     #{--bs-tertiary}: $tertiary;
 
     #{--bs-gray}: #{map.get($grays, "600")};
@@ -106,6 +112,7 @@
     #{--content-created}: #134ecc;
     #{--border-created}: #a2cdff;
     #{--border-killed}: #fde592;
+    #{--border-killing}: #d1cfe9;
     #{--content-killed}: #7e703e;
     #{--background-killed}: #fef0be;
     #{--background-running}: #e0e0ff;
@@ -167,4 +174,8 @@ $logLevels: "trace", "debug", "info", "warn", "error";
 
 .min-w-auto {
     min-width: auto !important;
+}
+
+.text-tertiary {
+    color: var(--bs-tertiary-color);
 }

@@ -173,9 +173,8 @@ export function getFormat(groupBy) {
         case "hour":
             return "LLL";
         case "day":
-            return "l";
         case "week":
-            return "DD.MM";
+            return "l";
         case "month":
             return "MM.YYYY";
     }

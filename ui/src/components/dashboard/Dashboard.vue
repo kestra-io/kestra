@@ -8,7 +8,7 @@
                     v-model="filters.namespace"
                     data-type="flow"
                     :disabled="props.flow || !!props.namespace"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 />
             </el-col>
             <el-col :xs="24" :lg="4">
@@ -19,7 +19,7 @@
                     collapse-tags
                     multiple
                     :placeholder="$t('state')"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 >
                     <el-option
                         v-for="item in State.allStates()"
@@ -30,10 +30,11 @@
                 </el-select>
             </el-col>
             <el-col :xs="24" :lg="8">
-                <date-filter
+                <DateFilter
                     @update:is-relative="toggleAutoRefresh"
                     @update:filter-value="(dates) => updateParams(dates)"
                     absolute
+                    wrap
                     class="d-flex flex-row"
                 />
             </el-col>
@@ -41,7 +42,7 @@
                 <scope-filter-buttons
                     v-model="filters.scope"
                     :label="$t('data')"
-                    @update:model-value="updateParams()"
+                    @update:model-value="updateParams"
                 />
             </el-col>
             <el-col :xs="24" :sm="8" :lg="4">
@@ -63,7 +64,12 @@
                     :value="stats.success"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.SUCCESS, scope: 'USER'},
+                        query: {
+                            state: State.SUCCESS,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -74,7 +80,12 @@
                     :value="stats.failed"
                     :redirect="{
                         name: 'executions/list',
-                        query: {state: State.FAILED, scope: 'USER'},
+                        query: {
+                            state: State.FAILED,
+                            scope: 'USER',
+                            size: 100,
+                            page: 1,
+                        },
                     }"
                 />
             </el-col>
@@ -85,7 +96,7 @@
                     :value="numbers.flows"
                     :redirect="{
                         name: 'flows/list',
-                        query: {scope: 'USER'},
+                        query: {scope: 'USER', size: 100, page: 1},
                     }"
                 />
             </el-col>
@@ -96,6 +107,7 @@
                     :value="numbers.triggers"
                     :redirect="{
                         name: 'admin/triggers',
+                        query: {size: 100, page: 1},
                     }"
                 />
             </el-col>
@@ -147,7 +159,7 @@
             <el-col v-if="props.flow" :xs="24" :lg="10">
                 <ExecutionsNextScheduled
                     :flow="props.flowID"
-                    :namespace="props.namespace"
+                    :namespace="filters.namespace"
                 />
             </el-col>
             <el-col :xs="24" :lg="props.flow ? 7 : 12">
@@ -157,17 +169,18 @@
                     :total="stats.total"
                 />
                 <ExecutionsNextScheduled
-                    v-else
+                    v-else-if="isAllowedTriggers"
                     :flow="props.flowID"
-                    :namespace="props.namespace"
+                    :namespace="filters.namespace"
                 />
+                <ExecutionsEmptyNextScheduled v-else />
             </el-col>
         </el-row>
 
         <el-row v-if="!props.flow" :gutter="20" class="mx-0">
             <el-col :xs="24">
                 <ExecutionsNamespace
-                    :data="namespaceExecutions"
+                    :data="filteredNamespaceExecutions"
                     :total="stats.total"
                 />
             </el-col>
@@ -183,7 +196,7 @@
 
 <script setup>
     import {onBeforeMount, ref, computed} from "vue";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -208,16 +221,21 @@
 
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
+    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
+    import permission from "../../models/permission.js";
+    import action from "../../models/action.js";
 
     const router = useRouter();
+    const route = useRoute();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
+    const user = store.getters["auth/user"];
 
     const props = defineProps({
         embed: {
@@ -242,7 +260,8 @@
 
     const descriptionDialog = ref(false);
     const description = props.flow
-        ? (store.state.flow.flow.description ?? t("dashboard.no_flow_description"))
+        ? (store.state?.flow?.flow?.description ??
+            t("dashboard.no_flow_description"))
         : undefined;
 
     const filters = ref({
@@ -259,13 +278,14 @@
         canAutoRefresh.value = event;
     };
 
-    const numbers = ref({flows: 0, triggers: 0});
+    const defaultNumbers = {flows: 0, triggers: 0};
+    const numbers = ref({...defaultNumbers});
     const fetchNumbers = () => {
         store.$http
             .post(`${apiUrl(store)}/stats/summary`, filters.value)
             .then((response) => {
                 if (!response.data) return;
-                numbers.value = response.data;
+                numbers.value = {...defaultNumbers, ...response.data};
             });
     };
 
@@ -318,6 +338,13 @@
     const graphData = computed(() => store.state.stat.daily || []);
 
     const namespaceExecutions = ref({});
+    const filteredNamespaceExecutions = computed(() => {
+        const namespace = filters.value.namespace;
+
+        return !namespace
+            ? namespaceExecutions.value
+            : {[namespace]: namespaceExecutions.value[namespace]};
+    });
     const fetchNamespaceExecutions = () => {
         store.dispatch("stat/dailyGroupByNamespace").then((response) => {
             namespaceExecutions.value = response;
@@ -394,7 +421,17 @@
         }
     };
 
-    onBeforeMount(() => updateParams());
+    const isAllowedTriggers = computed(() => {
+        return (
+            user &&
+            user.isAllowed(permission.FLOW, action.READ, filters.value.namespace)
+        );
+    });
+
+    onBeforeMount(() => {
+        filters.value.namespace = route.query.namespace ?? null;
+        updateParams();
+    });
 </script>
 
 <style lang="scss" scoped>

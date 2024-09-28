@@ -274,6 +274,6 @@ public class PluginController {
     private String alertReplacement(@NonNull String original) {
         // we need to replace the NuxtJS ::alert{type=} :: with the more standard ::: warning :::
         return original.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n")
-            .replaceAll("\n::\n", "\n:::\n");
+            .replace("\n::\n", "\n:::\n");
     }
 }

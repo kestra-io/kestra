@@ -28,6 +28,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -69,12 +70,13 @@ public class TriggerController {
     @Get(uri = "/search")
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
     public PagedResults<Triggers> search(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "The identifier of the worker currently evaluating the trigger") @Nullable @QueryValue String workerId
+        @Parameter(description = "The identifier of the worker currently evaluating the trigger") @Nullable @QueryValue String workerId,
+        @Parameter(description = "The flow identifier") @Nullable @QueryValue String flowId
     ) throws HttpStatusException {
 
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
@@ -82,7 +84,7 @@ public class TriggerController {
             query,
             tenantService.resolveTenant(),
             namespace,
-            null,
+            flowId,
             workerId
         );
 
@@ -211,8 +213,8 @@ public class TriggerController {
     @Get(uri = "/{namespace}/{flowId}")
     @Operation(tags = {"Triggers"}, summary = "Get all triggers for a flow")
     public PagedResults<Trigger> find(
-        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,

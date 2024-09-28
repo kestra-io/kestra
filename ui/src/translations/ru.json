@@ -565,7 +565,8 @@
       "create": {
         "label": "Создать",
         "file": "Создать файл",
-        "folder": "Создать папку"
+        "folder": "Создать папку",
+        "already_exists": "Файл с таким именем уже существует"
       },
       "rename": {
         "label": "Переименовать",
@@ -682,12 +683,9 @@
             "environment_name": "Имя окружения",
             "environment_color": "Цвет окружения",
             "chart_color_scheme": {
-              "default": "По умолчанию",
               "label": "Цветовая схема диаграммы",
               "classic": "Классический",
-              "cbs": "CBS означает схему Color Blind Safe",
-              "kestra": "Kestra",
-              "purple": "Фиолетовый"
+              "kestra": "Kestra"
             }
           }
         },
@@ -849,7 +847,19 @@
       "failure_ratio": "Коэффициент отказов",
       "trigger_disabled": "Этот trigger может быть включен только через код.",
       "no_flow_description": "Этот flow не имеет описания.",
-      "description": "Описание"
-    }
+      "description": "Описание",
+      "not_auth": "У вас нет необходимых разрешений для просмотра этого виджета."
+    },
+    "delete_log": "Вы уверены, что хотите удалить log?",
+    "docs": "Документы",
+    "behavior": "Поведение",
+    "concurrency-view": {
+      "desc_no_limit": "Прочитайте больше о <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> в нашей документации.",
+      "title_no_limit": "Для этого Flow не установлены ограничения."
+    },
+    "active-slots": "Активные слоты",
+    "concurrency": "Конкурентность",
+    "open sidebar": "открыть боковую панель",
+    "close sidebar": "закрыть боковую панель"
   }
 }

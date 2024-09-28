@@ -565,7 +565,8 @@
       "create": {
         "label": "Crea",
         "file": "Crea file",
-        "folder": "Crea cartella"
+        "folder": "Crea cartella",
+        "already_exists": "Un file con questo nome esiste già"
       },
       "rename": {
         "label": "Rinomina",
@@ -682,12 +683,9 @@
             "environment_name": "Nome dell'Ambiente",
             "environment_color": "Colore dell'Ambiente",
             "chart_color_scheme": {
-              "default": "Predefinito",
               "label": "Schema Colori Grafico",
               "classic": "Classico",
-              "cbs": "CBS sta per schema Color Blind Safe",
-              "kestra": "Kestra",
-              "purple": "Viola"
+              "kestra": "Kestra"
             }
           }
         },
@@ -849,7 +847,19 @@
       "failure_ratio": "Rapporto di Failure",
       "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice.",
       "no_flow_description": "Questo flow non ha descrizione.",
-      "description": "Descrizione"
-    }
+      "description": "Descrizione",
+      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget."
+    },
+    "delete_log": "Sei sicuro di voler eliminare il log?",
+    "docs": "Documenti",
+    "behavior": "Comportamento",
+    "concurrency-view": {
+      "desc_no_limit": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> nella nostra documentazione.",
+      "title_no_limit": "Nessun limite è impostato per questo Flow."
+    },
+    "active-slots": "Slot attivi",
+    "concurrency": "Concurrency",
+    "open sidebar": "apri barra laterale",
+    "close sidebar": "chiudi barra laterale"
   }
 }

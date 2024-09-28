@@ -73,6 +73,16 @@
                 totalsLegend: {
                     containerID: "totals",
                 },
+                tooltip: {
+                    enabled: true,
+                    intersect: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        title: () => "",
+                        label: (value) =>
+                            `${value.raw} ${value.label.toLowerCase().capitalize()}`,
+                    },
+                },
             },
         }),
     );

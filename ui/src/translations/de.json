@@ -565,7 +565,8 @@
       "create": {
         "label": "Erstellen",
         "file": "Datei erstellen",
-        "folder": "Ordner erstellen"
+        "folder": "Ordner erstellen",
+        "already_exists": "Eine Datei mit diesem Namen existiert bereits"
       },
       "rename": {
         "label": "Umbenennen",
@@ -682,12 +683,9 @@
             "environment_name": "Umgebungsname",
             "environment_color": "Umgebungsfarbe",
             "chart_color_scheme": {
-              "default": "Standard",
               "label": "Diagramm-Farbschema",
               "classic": "Klassisch",
-              "cbs": "CBS steht für das Color Blind Safe-Schema",
-              "kestra": "Kestra",
-              "purple": "Lila"
+              "kestra": "Kestra"
             }
           }
         },
@@ -849,7 +847,19 @@
       "failure_ratio": "Fehlerrate",
       "trigger_disabled": "Dieser Trigger kann nur durch Code aktiviert werden.",
       "no_flow_description": "Dieser Flow hat keine Beschreibung.",
-      "description": "Beschreibung"
-    }
+      "description": "Beschreibung",
+      "not_auth": "Sie haben nicht die erforderlichen Berechtigungen, um dieses Widget anzuzeigen."
+    },
+    "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
+    "docs": "Dokumentation",
+    "behavior": "Verhalten",
+    "concurrency-view": {
+      "desc_no_limit": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a> in unserer Dokumentation.",
+      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
+    },
+    "active-slots": "Aktive Slots",
+    "concurrency": "Nebenläufigkeit",
+    "open sidebar": "Seitenleiste öffnen",
+    "close sidebar": "Seitenleiste schließen"
   }
 }

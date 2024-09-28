@@ -3,7 +3,7 @@ import posthog from "posthog-js"
 import cloneDeep from "lodash/cloneDeep"
 
 let counter = 0;
-const API_URL = "https://api.kestra.io";
+export const API_URL = "https://api.kestra.io";
 
 export default {
     namespaced: true,

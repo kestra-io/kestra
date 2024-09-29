@@ -79,12 +79,12 @@
                 </div>
             </div>
         </el-form-item>
-        <el-form-item>
+        <!--<el-form-item>
             <template #label>
                 <code>inputs</code>
             </template>
             <metadata-inputs v-model="newMetadata.inputs" :inputs="newMetadata.inputs" />
-        </el-form-item>
+        </el-form-item>-->
         <el-form-item>
             <template #label>
                 <code>outputs</code>
@@ -98,12 +98,12 @@
                 @update:model-value="(value) => newMetadata.outputs = value"
             />
         </el-form-item>
-        <el-form-item>
+        <!--<el-form-item>
             <template #label>
                 <code>variables</code>
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
-        </el-form-item>
+        </el-form-item>-->
         <el-switch
             :model-value="showConcurrency"
             @update:model-value="updateConcurrency"
@@ -152,8 +152,8 @@
 <script>
     import {toRaw} from "vue";
     import markdown from "../layout/Markdown.vue";
-    import MetadataInputs from "./MetadataInputs.vue";
-    import MetadataVariables from "./MetadataVariables.vue";
+    //import MetadataInputs from "./MetadataInputs.vue";
+    //import MetadataVariables from "./MetadataVariables.vue";
     import yamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import {mapState} from "vuex";
@@ -176,8 +176,8 @@
         components: {
             markdown,
             Editor,
-            MetadataInputs,
-            MetadataVariables,
+            //MetadataInputs,
+            //MetadataVariables,
         },
         props: {
             metadata: {

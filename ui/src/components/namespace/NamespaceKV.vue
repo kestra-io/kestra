@@ -214,8 +214,12 @@
         methods: {
             jsonValidator(rule, value, callback) {
                 try {
-                    JSON.parse(value)
-                    callback();
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed !== "object" || parsed === null) {
+                        callback(new Error(this.$t("Invalid input: Expected a JSON object or array")));
+                    } else {
+                        callback();
+                    }
                 } catch (error) {
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }

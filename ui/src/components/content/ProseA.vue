@@ -4,6 +4,8 @@
     </component>
 </template>
 <script>
+    import {mapGetters} from "vuex";
+
     export default {
         props: {
             href: {
@@ -17,6 +19,7 @@
             }
         },
         computed: {
+            ...mapGetters("doc", ["pageMetadata"]),
             isRemoteLink() {
                 return this.href.startsWith("/") || /https?:\/\/.*/.test(this.href);
             },
@@ -34,8 +37,14 @@
                     }
                 }
 
+
+                let relativeLink = this.href.replaceAll(/(\/|^)\d+?\.(?!\d)/g, "$1").replace(/(?:\/index)?\.md(#|$)/, "");
+                if (this.pageMetadata.isIndex === false) {
+                    relativeLink = "../" + relativeLink;
+                }
+                const to = this.append(this.$route.path, relativeLink);
                 return {
-                    to: this.append(this.$route.path, this.href.replaceAll(/\d+\.([^/]*)/g, "$1").replace(/\.md$/, ""))
+                    to
                 }
             }
         }

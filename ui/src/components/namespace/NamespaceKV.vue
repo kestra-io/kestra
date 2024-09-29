@@ -224,7 +224,6 @@
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }
             },
-
             durationValidator(rule, value, callback) {
                 if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));

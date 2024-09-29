@@ -690,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "Configurações de Data e Hora",
+          "label": "Idioma e Região",
           "note": "Note que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin.",
           "fields": {
             "time_zone": "Fuso Horário",

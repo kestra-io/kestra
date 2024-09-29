@@ -714,7 +714,7 @@
           }
         },
         "localization": {
-          "label": "Date and Time Settings",
+          "label": "Language and Region",
           "note": "Note that this setting is used for displaying date and time properties in the UI. To schedule your flows in a timezone different than UTC, make sure to set the timezone property on the Schedule trigger in your flow code or your plugin defaults.",
           "fields": {
             "time_zone": "Time Zone",

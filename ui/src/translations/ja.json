@@ -690,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "日付と時刻の設定",
+          "label": "言語と地域",
           "note": "この設定はUIでの日付と時刻のプロパティを表示するために使用されます。UTC以外のタイムゾーンでflowをスケジュールするには、flowコードやプラグインのデフォルトでSchedule triggerのtimezoneプロパティを設定してください。",
           "fields": {
             "time_zone": "タイムゾーン",

@@ -690,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "Datums- und Uhrzeiteinstellungen",
+          "label": "Sprache und Region",
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen.",
           "fields": {
             "time_zone": "Zeitzone",

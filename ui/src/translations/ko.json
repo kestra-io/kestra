@@ -690,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "날짜 및 시간 설정",
+          "label": "언어 및 지역",
           "note": "이 설정은 UI에서 날짜 및 시간 속성을 표시하는 데 사용됩니다. UTC와 다른 시간대에 flow를 예약하려면 flow 코드 또는 플러그인 기본값에서 Schedule trigger의 시간대 속성을 설정하세요.",
           "fields": {
             "time_zone": "시간대",

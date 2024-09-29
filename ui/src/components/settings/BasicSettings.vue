@@ -5,16 +5,6 @@
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #content>
                 <Row>
-                    <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :model-value="lang" @update:model-value="onLang">
-                            <el-option
-                                v-for="item in langOptions"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
                         <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
@@ -141,6 +131,17 @@
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #content>
                 <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.language')">
+                        <el-select :model-value="lang" @update:model-value="onLang">
+                            <el-option
+                                v-for="item in langOptions"
+                                :key="item.value"
+                                :label="item.text"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
                         <el-select :model-value="timezone" @update:model-value="onTimezone" filterable>
                             <el-option

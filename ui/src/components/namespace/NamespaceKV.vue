@@ -164,7 +164,11 @@
                             validator: (rule, value, callback) => {
                                 if (this.kv.type === "DURATION") {
                                     this.durationValidator(rule, value, callback);
-                                } else {
+                                } 
+                                else if (this.kv.type === "JSON") {
+                                    this.jsonValidator(rule, value, callback)
+                                }
+                                else {
                                     callback();
                                 }
                             },
@@ -208,6 +212,14 @@
             this.loadKvs();
         },
         methods: {
+            jsonValidator(rule, value, callback) {
+                try {
+                    JSON.parse(value)
+                    callback();
+                } catch (error) {
+                    callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
+                }
+            },
             durationValidator(rule, value, callback) {
                 if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
                     callback(new Error(this.$t("datepicker.error")));

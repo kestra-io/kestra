@@ -25,7 +25,7 @@
                 if (routePath === "") {
                     return undefined;
                 }
-                return path.normalize(routePath);
+                return path.replaceAll(/(?:^|\/)\.\//g,"");
             },
             pathParts() {
                 return this.path?.split("/") ?? [];

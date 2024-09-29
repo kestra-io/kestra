@@ -42,6 +42,7 @@
     "moment-range": "4.0.2",
     "moment-timezone": "^0.5.45",
     "nprogress": "^0.2.0",
+    "path-browserify": "^1.0.1",
     "pdfjs-dist": "^4.6.82",
     "posthog-js": "^1.165.0",
     "rapidoc": "^9.3.6",

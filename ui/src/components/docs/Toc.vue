@@ -65,11 +65,14 @@
                     "Build with Kestra": [
                         "Concepts",
                         "Workflow Components",
-                        "Developer Guide",
+                        "Expressions",
+                        "Version Control & CI/CD",
+                        "Plugin Developer Guide",
                         "How-to Guides"
                     ],
                     "Scale with Kestra": [
                         "Enterprise Edition",
+                        "Task Runners",
                         "Best Practices"
                     ],
                     "Manage Kestra": [

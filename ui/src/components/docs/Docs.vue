@@ -13,6 +13,7 @@
     import {mapGetters} from "vuex";
     import Toc from "./Toc.vue";
     import {getCurrentInstance} from "vue";
+    import path from "path-browserify";
 
     const parse = useMarkdownParser();
 
@@ -20,11 +21,11 @@
         computed: {
             ...mapGetters("doc", ["pageMetadata"]),
             path() {
-                let path = this.$route.params.path;
-                if (path === "") {
+                let routePath = this.$route.params.path;
+                if (routePath === "") {
                     return undefined;
                 }
-                return path?.replaceAll(/(?:^|\/)\.\//g, "");
+                return path.normalize(routePath);
             },
             pathParts() {
                 return this.path?.split("/") ?? [];

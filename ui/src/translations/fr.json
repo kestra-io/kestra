@@ -689,7 +689,7 @@
           }
         },
         "localization": {
-          "label": "Langue et Région",
+          "label": "Langue et région",
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre",
           "fields": {
             "time_zone": "Fuseau Horaire",

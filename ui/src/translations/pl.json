@@ -690,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "Język i Region",
+          "label": "Język i region",
           "note": "Zauważ, że to ustawienie jest używane do wyświetlania właściwości daty i czasu w UI. Aby zaplanować swoje flows w strefie czasowej innej niż UTC, upewnij się, że ustawisz właściwość strefy czasowej w trigger harmonogramu w kodzie flow lub w domyślnych ustawieniach pluginów.",
           "fields": {
             "time_zone": "Strefa Czasowa",

@@ -37,12 +37,12 @@ public class SelectInput extends Input<String> implements RenderableInput {
     )
     @NotNull
     @Builder.Default
-    Boolean allowInput = false;
+    Boolean allowCustomValue = false;
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (!values.contains(input) & this.getRequired()) {
-            if (this.getAllowInput()) {
+        if (!values.contains(input) && this.getRequired()) {
+            if (this.getAllowCustomValue()) {
                 return;
             }
             throw ManualConstraintViolation.toConstraintViolationException(
@@ -64,7 +64,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .values(renderExpressionValues(renderer))
                 .id(getId())
                 .type(getType())
-                .allowInput(getAllowInput())
+                .allowCustomValue(getAllowCustomValue())
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())

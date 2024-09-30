@@ -240,6 +240,7 @@
     "confirm password": "パスワードを確認",
     "email length constraint": "メールは256文字を超えてはいけません",
     "password length constraint": "パスワードは256文字を超えてはいけません",
+    "password empty constraint": "ユーザー名またはパスワードが間違っています",
     "passwords do not match": "パスワードが一致しません",
     "avg duration": "平均実行時間",
     "neutral trend": "安定",
@@ -565,7 +566,8 @@
       "create": {
         "label": "作成",
         "file": "ファイルを作成",
-        "folder": "フォルダーを作成"
+        "folder": "フォルダーを作成",
+        "already_exists": "この名前のファイルは既に存在します"
       },
       "rename": {
         "label": "名前を変更",
@@ -680,11 +682,16 @@
             "editor_font_family": "エディタフォントファミリー",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "environment_name": "環境名",
-            "environment_color": "環境色"
+            "environment_color": "環境色",
+            "chart_color_scheme": {
+              "label": "チャートのカラースキーム",
+              "classic": "クラシック",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "日付と時刻の設定",
+          "label": "言語と地域",
           "note": "この設定はUIでの日付と時刻のプロパティを表示するために使用されます。UTC以外のタイムゾーンでflowをスケジュールするには、flowコードやプラグインのデフォルトでSchedule triggerのtimezoneプロパティを設定してください。",
           "fields": {
             "time_zone": "タイムゾーン",
@@ -839,7 +846,21 @@
       "executions_in_progress": "進行中のExecutions",
       "next_execution_date": "次回実行日",
       "failure_ratio": "失敗率",
-      "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。"
-    }
+      "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
+      "no_flow_description": "このflowには説明がありません。",
+      "description": "説明",
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
+    },
+    "delete_log": "ログを削除してもよろしいですか？",
+    "docs": "ドキュメント",
+    "behavior": "動作",
+    "concurrency-view": {
+      "desc_no_limit": "ドキュメント内の<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a>について詳しく読む。",
+      "title_no_limit": "このFlowには制限が設定されていません。"
+    },
+    "active-slots": "アクティブスロット",
+    "concurrency": "並行性",
+    "open sidebar": "サイドバーを開く",
+    "close sidebar": "サイドバーを閉じる"
   }
 }

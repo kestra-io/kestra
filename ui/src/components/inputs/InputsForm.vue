@@ -22,7 +22,7 @@
                 v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
-                :allow-create="input.allowInput"
+                :allow-create="input.allowCustomValue"
                 filterable
             >
                 <el-option
@@ -43,7 +43,7 @@
                 @update:model-value="onMultiSelectChange(input.id, $event)"
                 multiple
                 filterable
-                :allow-create="input.allowInput"
+                :allow-create="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -147,7 +147,14 @@
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
             />
-            <markdown v-if="input.description" class="markdown-tooltip text-muted" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <template v-if="executeClicked">
+                <template v-for="err in input.errors ?? []" :key="err">
+                    <el-text type="warning">
+                        {{ err.message }}
+                    </el-text>
+                </template>
+            </template>
         </el-form-item>
     </template>
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
@@ -173,6 +180,10 @@
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
+            executeClicked: {
+                type: Boolean,
+                default: false
+            },
             modelValue: {
                 default: undefined,
                 type: Object
@@ -194,6 +205,7 @@
             return {
                 inputs: {},
                 inputsList: [],
+                inputsValidation: [],
                 multiSelectInputs: {},
             };
         },
@@ -225,7 +237,7 @@
         methods: {
             updateDefaults() {
                 for (const input of this.inputsList || []) {
-                    if (this.inputs[input.id] === undefined) {
+                    if (this.inputs[input.id] === undefined || this.inputs[input.id] === null) {
                         if (input.type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }
@@ -278,9 +290,13 @@
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
                     this.$store.dispatch("execution/validateExecution", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         });
+
+                    return;
                 }
 
                 if (this.execution !== undefined) {
@@ -317,6 +333,11 @@
 
 <style scoped lang="scss">
 .hint {
+    font-size: var(--font-size-xs);
+    color: var(--bs-gray-700);
+}
+
+.text-description {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }

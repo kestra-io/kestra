@@ -1,4 +1,5 @@
 import Utils from "../../../../utils/utils.js";
+import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
     const legendContainer = document.getElementById(id);
@@ -71,7 +72,10 @@ export const barLegend = {
             boxSpan.style.marginRight = "10px";
 
             const textContainer = document.createElement("p");
-            textContainer.style.color = item.fontColor;
+            textContainer.style.color =
+                Utils.getTheme() === "dark"
+                    ? "#FFFFFF"
+                    : cssVariable("--bs-gray-700");
             textContainer.style.margin = 0;
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
@@ -91,8 +95,6 @@ export const barLegend = {
 export const totalsLegend = {
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
-        const darkTheme = Utils.getTheme() === "dark";
-
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
 
         while (ul.firstChild) {
@@ -146,7 +148,10 @@ export const totalsLegend = {
             boxSpan.style.marginRight = "10px";
 
             const textContainer = document.createElement("div");
-            textContainer.style.color = item.fontColor;
+            textContainer.style.color =
+                Utils.getTheme() === "dark"
+                    ? "#FFFFFF"
+                    : cssVariable("--bs-gray-700");
             textContainer.style.margin = 0;
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
@@ -159,7 +164,10 @@ export const totalsLegend = {
             executionsText.style.fontWeight = "bold";
             executionsText.style.fontSize = "18px";
             executionsText.style.lineHeight = "18px";
-            executionsText.style.color = darkTheme ? "#FFFFFF" : "#000000";
+            executionsText.style.color =
+                Utils.getTheme() === "dark"
+                    ? "#FFFFFF"
+                    : cssVariable("--bs-gray-700");
             executionsText.textContent = dataset.data[item.index];
 
             const labelText = document.createElement("p");

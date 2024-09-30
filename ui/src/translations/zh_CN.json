@@ -240,6 +240,7 @@
     "confirm password": "确认密码",
     "email length constraint": "电子邮件不得超过256个字符",
     "password length constraint": "密码不得超过256个字符",
+    "password empty constraint": "用户名或密码不正确",
     "passwords do not match": "密码不匹配",
     "avg duration": "平均执行时间",
     "neutral trend": "稳定",
@@ -565,7 +566,8 @@
       "create": {
         "label": "创建",
         "file": "创建文件",
-        "folder": "创建文件夹"
+        "folder": "创建文件夹",
+        "already_exists": "文件名已存在"
       },
       "rename": {
         "label": "重命名",
@@ -680,11 +682,16 @@
             "editor_font_family": "编辑器字体家族",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
             "environment_name": "环境名称",
-            "environment_color": "环境颜色"
+            "environment_color": "环境颜色",
+            "chart_color_scheme": {
+              "label": "图表配色方案",
+              "classic": "经典",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "日期和时间设置",
+          "label": "语言和地区",
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。",
           "fields": {
             "time_zone": "时区",
@@ -839,7 +846,21 @@
       "executions_in_progress": "执行中",
       "next_execution_date": "下次执行日期",
       "failure_ratio": "失败率",
-      "trigger_disabled": "此trigger只能通过代码启用。"
-    }
+      "trigger_disabled": "此trigger只能通过代码启用。",
+      "no_flow_description": "此flow没有描述。",
+      "description": "描述",
+      "not_auth": "您没有查看此小部件的必要权限。"
+    },
+    "delete_log": "您确定要删除这个log吗？",
+    "docs": "文档",
+    "behavior": "行为",
+    "concurrency-view": {
+      "desc_no_limit": "了解更多关于<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">并发限制</a>的信息，请参阅我们的文档。",
+      "title_no_limit": "没有为此 Flow 设置限制。"
+    },
+    "active-slots": "活动槽位",
+    "concurrency": "并发",
+    "open sidebar": "打开侧边栏",
+    "close sidebar": "关闭侧边栏"
   }
 }

@@ -5,16 +5,6 @@
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #content>
                 <Row>
-                    <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :model-value="lang" @update:model-value="onLang">
-                            <el-option
-                                v-for="item in langOptions"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
                     <Column v-if="allowDefaultNamespace" :label="$t('settings.blocks.configuration.fields.default_namespace')">
                         <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
                     </Column>
@@ -55,6 +45,20 @@
                         <el-select :model-value="theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
+                                :key="item.value"
+                                :label="item.text"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+
+                    <Column :label="$t('settings.blocks.theme.fields.chart_color_scheme.label')">
+                        <el-select :model-value="chartColor" @update:model-value="onChartColor">
+                            <el-option
+                                v-for="item in [
+                                    {value: 'classic', text: $t('settings.blocks.theme.fields.chart_color_scheme.classic')},
+                                    {value: 'kestra', text: $t('settings.blocks.theme.fields.chart_color_scheme.kestra')}
+                                ]"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
@@ -127,6 +131,17 @@
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #content>
                 <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.language')">
+                        <el-select :model-value="lang" @update:model-value="onLang">
+                            <el-option
+                                v-for="item in langOptions"
+                                :key="item.value"
+                                :label="item.text"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
                         <el-select :model-value="timezone" @update:model-value="onTimezone" filterable>
                             <el-option
@@ -219,6 +234,7 @@
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
+                chartColor: undefined,
                 dateFormat: undefined,
                 timezone: undefined,
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
@@ -249,6 +265,7 @@
             this.lang = Utils.getLang();
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.chartColor = localStorage.getItem("scheme") || "default";
             this.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
@@ -306,6 +323,11 @@
             onEditorTheme(value) {
                 localStorage.setItem("editorTheme", value);
                 this.editorTheme = value;
+                this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
+            },
+            onChartColor(value) {
+                localStorage.setItem("scheme", value);
+                this.chartColor = value;
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             },
             onAutofoldTextEditor(value) {

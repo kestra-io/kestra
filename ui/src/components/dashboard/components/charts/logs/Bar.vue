@@ -30,6 +30,7 @@
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 
     const {t} = useI18n({useScope: "global"});
@@ -47,8 +48,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: Logs.graphColors(state),
-                        borderRadius: 4,
+                        backgroundColor: getScheme(state, "logs"),
                         yAxisID: "y",
                         data: [],
                     };
@@ -72,9 +72,28 @@
 
     const options = computed(() =>
         defaultConfig({
+            barThickness: 12,
+            skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
             plugins: {
                 barLegend: {
                     containerID: "logs",
+                },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}`;
+                        },
+                        footer: (value) => {
+                            const total = value.reduce((a, c) => a + c.raw, 0);
+                            return `${t("Total")}: ${total}`;
+                        },
+                    },
                 },
             },
             scales: {

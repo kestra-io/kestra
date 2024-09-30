@@ -240,6 +240,7 @@
     "confirm password": "पासवर्ड की पुष्टि करें",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
     "password length constraint": "पासवर्ड 256 वर्णों से अधिक नहीं होना चाहिए",
+    "password empty constraint": "गलत उपयोगकर्ता नाम या पासवर्ड",
     "passwords do not match": "पासवर्ड मेल नहीं खाते",
     "avg duration": "औसत निष्पादन अवधि",
     "neutral trend": "स्थिर",
@@ -565,7 +566,8 @@
       "create": {
         "label": "बनाएँ",
         "file": "फ़ाइल बनाएँ",
-        "folder": "फ़ोल्डर बनाएँ"
+        "folder": "फ़ोल्डर बनाएँ",
+        "already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है"
       },
       "rename": {
         "label": "नाम बदलें",
@@ -680,11 +682,16 @@
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
             "environment_name": "पर्यावरण नाम",
-            "environment_color": "पर्यावरण रंग"
+            "environment_color": "पर्यावरण रंग",
+            "chart_color_scheme": {
+              "label": "चार्ट रंग योजना",
+              "classic": "क्लासिक",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "दिनांक और समय सेटिंग्स",
+          "label": "भाषा और क्षेत्र",
           "note": "ध्यान दें कि यह सेटिंग UI में दिनांक और समय गुणों को प्रदर्शित करने के लिए उपयोग की जाती है। अपने flows को UTC से अलग समय क्षेत्र में शेड्यूल करने के लिए, सुनिश्चित करें कि आपने अपने flow कोड में या अपने प्लगइन डिफ़ॉल्ट्स में Schedule Trigger पर समय क्षेत्र गुण सेट किया है।",
           "fields": {
             "time_zone": "समय क्षेत्र",
@@ -839,7 +846,21 @@
       "executions_in_progress": "प्रगति में Executions",
       "next_execution_date": "अगली Execution Date",
       "failure_ratio": "विफलता अनुपात",
-      "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।"
-    }
+      "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।",
+      "no_flow_description": "इस flow का कोई विवरण नहीं है।",
+      "description": "विवरण",
+      "not_auth": "आपके पास इस विजेट को देखने की आवश्यक अनुमतियाँ नहीं हैं।"
+    },
+    "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
+    "docs": "डॉक्स",
+    "behavior": "व्यवहार",
+    "concurrency-view": {
+      "desc_no_limit": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> के बारे में और पढ़ें।",
+      "title_no_limit": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं की गई हैं।"
+    },
+    "active-slots": "सक्रिय स्लॉट्स",
+    "concurrency": "समानांतरता",
+    "open sidebar": "साइडबार खोलें",
+    "close sidebar": "साइडबार बंद करें"
   }
 }

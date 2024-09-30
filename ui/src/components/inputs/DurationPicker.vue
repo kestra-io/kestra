@@ -70,8 +70,8 @@
         />
     </div>
     <div>
-        <el-text size="small" :type="this.durationIssue ? 'danger': ''">
-            {{ this.durationIssue ?? "or input custom duration:" }}
+        <el-text size="small" :type="durationIssue ? 'danger': ''">
+            {{ durationIssue ?? "or input custom duration:" }}
         </el-text>
         <el-input type="text" id="customDuration" v-model="customDuration" @input="parseDuration" placeholder="Custom duration" />
     </div>
@@ -90,6 +90,12 @@
         mounted() {
             this.parseDuration(this.modelValue);
             this.updateDuration();
+        },
+        updated() {
+            if (this.modelValue) {
+                this.parseDuration(this.modelValue);
+                this.updateDuration();
+            }
         },
         data() {
             return {

@@ -240,6 +240,7 @@
     "confirm password": "Confirmar senha",
     "email length constraint": "Email não deve exceder 256 caracteres",
     "password length constraint": "Senha não deve exceder 256 caracteres",
+    "password empty constraint": "Nome de utilizador ou palavra-passe incorretos",
     "passwords do not match": "Senhas não coincidem",
     "avg duration": "Duração média da execução",
     "neutral trend": "Estável",
@@ -565,7 +566,8 @@
       "create": {
         "label": "Criar",
         "file": "Criar arquivo",
-        "folder": "Criar pasta"
+        "folder": "Criar pasta",
+        "already_exists": "Um arquivo com este nome já existe"
       },
       "rename": {
         "label": "Renomear",
@@ -680,11 +682,16 @@
             "editor_font_family": "Família de Fonte do Editor",
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "environment_name": "Nome do Ambiente",
-            "environment_color": "Cor do Ambiente"
+            "environment_color": "Cor do Ambiente",
+            "chart_color_scheme": {
+              "label": "Esquema de Cores do Gráfico",
+              "classic": "Clássico",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "Configurações de Data e Hora",
+          "label": "Idioma e Região",
           "note": "Note que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin.",
           "fields": {
             "time_zone": "Fuso Horário",
@@ -839,7 +846,21 @@
       "executions_in_progress": "Execuções em Progresso",
       "next_execution_date": "Próxima Data de Execução",
       "failure_ratio": "Taxa de Falhas",
-      "trigger_disabled": "Este trigger só pode ser habilitado através de código."
-    }
+      "trigger_disabled": "Este trigger só pode ser habilitado através de código.",
+      "no_flow_description": "Este flow não tem descrição.",
+      "description": "Descrição",
+      "not_auth": "Você não tem as permissões necessárias para visualizar este widget."
+    },
+    "delete_log": "Tem certeza de que deseja excluir o log?",
+    "docs": "Documentos",
+    "behavior": "Comportamento",
+    "concurrency-view": {
+      "desc_no_limit": "Leia mais sobre <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Limites de Concurrency</a> em nossa documentação.",
+      "title_no_limit": "Nenhum limite foi definido para este Flow."
+    },
+    "active-slots": "Slots ativos",
+    "concurrency": "Concorrência",
+    "open sidebar": "abrir barra lateral",
+    "close sidebar": "fechar barra lateral"
   }
 }

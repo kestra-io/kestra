@@ -26,6 +26,7 @@ html, body, #app, #app-container {
 }
 
 html {
+    scroll-padding-top: 80px;
     transition: padding-left 0.3s ease;
 
     code[class*="language-"], pre[class*="language-"]  {

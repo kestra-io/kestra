@@ -19,6 +19,7 @@ import Triggers from "../components/admin/Triggers.vue";
 import Stats from "override/components/admin/stats/Stats.vue";
 import Namespaces from "../components/namespace/Namespaces.vue";
 import Namespace from "../components/namespace/Namespace.vue";
+import Docs from "../components/docs/Docs.vue";
 
 export default [
     //Flows
@@ -58,6 +59,9 @@ export default [
     //Namespaces
     {name: "namespaces", path: "/:tenant?/namespaces", component: Namespaces},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: Namespace},
+
+    //Docs
+    {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: Docs},
 
     //Settings
     {name: "settings", path: "/:tenant?/settings", component: Settings},

@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
     <template v-if="!pluginIsSelected">
         <plugin-home v-if="plugins" :plugins="plugins" />
     </template>
@@ -36,7 +36,7 @@
             routeInfo() {
                 return {
                     title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
-                    breadcrumb: [
+                    breadcrumb: !this.$route.params.cls ? undefined : [
                         {
                             label: this.$t("plugins.names"),
                             link: {

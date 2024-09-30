@@ -239,6 +239,7 @@
     "confirm password": "Confirmer le mot de passe",
     "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
     "password length constraint": "Le mot de passe ne doit pas dépasser 256 caractères.",
+    "password empty constraint": "Nom d'utilisateur ou mot de passe incorrect",
     "passwords do not match": "Les mots de passe ne correspondent pas",
     "avg duration": "Durée moyenne d'exécution",
     "neutral trend": "Stable",
@@ -564,7 +565,8 @@
       "create": {
         "label": "Créer",
         "file": "Créer un fichier",
-        "folder": "Créer un dossier"
+        "folder": "Créer un dossier",
+        "already_exists": "Un fichier avec ce nom existe déjà"
       },
       "rename": {
         "label": "Renommer",
@@ -679,11 +681,16 @@
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
             "environment_name": "Nom de l'Environnement",
-            "environment_color": "Couleur de l'Environnement"
+            "environment_color": "Couleur de l'Environnement",
+            "chart_color_scheme": {
+              "label": "Schéma de Couleurs du Graphique",
+              "classic": "Classique",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "Paramètres de Date et d'Heure",
+          "label": "Langue et région",
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre",
           "fields": {
             "time_zone": "Fuseau Horaire",
@@ -838,7 +845,21 @@
       "executions_in_progress": "Exécutions en cours",
       "next_execution_date": "Prochaine Date d'Exécution",
       "failure_ratio": "Ratio d'échec",
-      "trigger_disabled": "Ce trigger ne peut être activé que par le code."
-    }
+      "trigger_disabled": "Ce trigger ne peut être activé que par le code.",
+      "no_flow_description": "Ce flow n'a pas de description.",
+      "description": "Description",
+      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget."
+    },
+    "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
+    "docs": "Documentation",
+    "behavior": "Comportement",
+    "concurrency-view": {
+      "desc_no_limit": "Lisez-en plus sur <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">les limites de Concurrency</a> dans notre documentation.",
+      "title_no_limit": "Aucune limite n'est définie pour ce Flow."
+    },
+    "active-slots": "Slots actifs",
+    "concurrency": "Concurrence",
+    "open sidebar": "ouvrir la barre latérale",
+    "close sidebar": "fermer la barre latérale"
   }
 }

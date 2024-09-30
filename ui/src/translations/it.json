@@ -240,6 +240,7 @@
     "confirm password": "Conferma password",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "password length constraint": "La password non deve superare i 256 caratteri",
+    "password empty constraint": "Nome utente o password errati",
     "passwords do not match": "Le password non corrispondono",
     "avg duration": "Durata media dell'esecuzione",
     "neutral trend": "Stabile",
@@ -565,7 +566,8 @@
       "create": {
         "label": "Crea",
         "file": "Crea file",
-        "folder": "Crea cartella"
+        "folder": "Crea cartella",
+        "already_exists": "Un file con questo nome esiste già"
       },
       "rename": {
         "label": "Rinomina",
@@ -680,11 +682,16 @@
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
             "environment_name": "Nome dell'Ambiente",
-            "environment_color": "Colore dell'Ambiente"
+            "environment_color": "Colore dell'Ambiente",
+            "chart_color_scheme": {
+              "label": "Schema Colori Grafico",
+              "classic": "Classico",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "Impostazioni di Data e Ora",
+          "label": "Lingua e Regione",
           "note": "Nota che questa impostazione viene utilizzata per visualizzare le proprietà di data e ora nell'interfaccia utente. Per pianificare i tuoi flows in un fuso orario diverso da UTC, assicurati di impostare la proprietà del fuso orario nel trigger Schedule nel codice del tuo flow o nei tuoi plugin defaults.",
           "fields": {
             "time_zone": "Fuso Orario",
@@ -839,7 +846,21 @@
       "executions_in_progress": "Esecuzioni In Corso",
       "next_execution_date": "Prossima Data di Esecuzione",
       "failure_ratio": "Rapporto di Failure",
-      "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice."
-    }
+      "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice.",
+      "no_flow_description": "Questo flow non ha descrizione.",
+      "description": "Descrizione",
+      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget."
+    },
+    "delete_log": "Sei sicuro di voler eliminare il log?",
+    "docs": "Documenti",
+    "behavior": "Comportamento",
+    "concurrency-view": {
+      "desc_no_limit": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> nella nostra documentazione.",
+      "title_no_limit": "Nessun limite è impostato per questo Flow."
+    },
+    "active-slots": "Slot attivi",
+    "concurrency": "Concurrency",
+    "open sidebar": "apri barra laterale",
+    "close sidebar": "chiudi barra laterale"
   }
 }

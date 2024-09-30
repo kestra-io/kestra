@@ -34,7 +34,8 @@
 
     import {barLegend} from "../legend.js";
 
-    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
+    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -57,6 +58,8 @@
         const executionData = {};
 
         labels.forEach((namespace) => {
+            if (!props.data[namespace]) return;
+
             const counts = props.data[namespace].counts;
 
             for (const [state, count] of Object.entries(counts)) {
@@ -64,7 +67,7 @@
                     executionData[state] = {
                         label: state,
                         data: [],
-                        backgroundColor: getStateColor(state),
+                        backgroundColor: getScheme(state),
                         stack: state,
                     };
                 }
@@ -72,12 +75,9 @@
             }
         });
 
-        const datasets = Object.values(executionData)
-            .map((dataset) => ({
-                ...dataset,
-                data: dataset.data.map((item) => (item === 0 ? null : item)),
-            }))
-            .filter((dataset) => dataset.data.some((count) => count > 0));
+        const datasets = Object.values(executionData).filter((dataset) =>
+            dataset.data.some((count) => count > 0),
+        );
 
         return {
             labels,
@@ -87,11 +87,24 @@
 
     const options = computed(() =>
         defaultConfig({
-            barThickness: 20,
+            barThickness: 25,
             skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
             plugins: {
                 barLegend: {
                     containerID: "pernamespace",
+                },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}`;
+                        },
+                    },
                 },
             },
             scales: {

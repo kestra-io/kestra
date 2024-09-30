@@ -240,6 +240,7 @@
     "confirm password": "Passwort bestätigen",
     "email length constraint": "E-Mail darf 256 Zeichen nicht überschreiten",
     "password length constraint": "Passwort darf 256 Zeichen nicht überschreiten",
+    "password empty constraint": "Falscher Benutzername oder Passwort",
     "passwords do not match": "Passwörter stimmen nicht überein",
     "avg duration": "Durchschnittliche Ausführungsdauer",
     "neutral trend": "Stabil",
@@ -565,7 +566,8 @@
       "create": {
         "label": "Erstellen",
         "file": "Datei erstellen",
-        "folder": "Ordner erstellen"
+        "folder": "Ordner erstellen",
+        "already_exists": "Eine Datei mit diesem Namen existiert bereits"
       },
       "rename": {
         "label": "Umbenennen",
@@ -680,11 +682,16 @@
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "environment_name": "Umgebungsname",
-            "environment_color": "Umgebungsfarbe"
+            "environment_color": "Umgebungsfarbe",
+            "chart_color_scheme": {
+              "label": "Diagramm-Farbschema",
+              "classic": "Klassisch",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "Datums- und Uhrzeiteinstellungen",
+          "label": "Sprache und Region",
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen.",
           "fields": {
             "time_zone": "Zeitzone",
@@ -839,7 +846,21 @@
       "executions_in_progress": "Ausführungen in Bearbeitung",
       "next_execution_date": "Nächstes Ausführungsdatum",
       "failure_ratio": "Fehlerrate",
-      "trigger_disabled": "Dieser Trigger kann nur durch Code aktiviert werden."
-    }
+      "trigger_disabled": "Dieser Trigger kann nur durch Code aktiviert werden.",
+      "no_flow_description": "Dieser Flow hat keine Beschreibung.",
+      "description": "Beschreibung",
+      "not_auth": "Sie haben nicht die erforderlichen Berechtigungen, um dieses Widget anzuzeigen."
+    },
+    "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
+    "docs": "Dokumentation",
+    "behavior": "Verhalten",
+    "concurrency-view": {
+      "desc_no_limit": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a> in unserer Dokumentation.",
+      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
+    },
+    "active-slots": "Aktive Slots",
+    "concurrency": "Nebenläufigkeit",
+    "open sidebar": "Seitenleiste öffnen",
+    "close sidebar": "Seitenleiste schließen"
   }
 }

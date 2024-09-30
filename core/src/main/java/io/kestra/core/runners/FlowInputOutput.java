@@ -7,6 +7,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
+import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
@@ -14,7 +15,6 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
-import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -226,25 +227,11 @@ public class FlowInputOutput {
             return Collections.emptyList();
         }
 
-        RunContext runContext = runContextFactory.of(null, execution);
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(inputs.stream()
             .map(input -> {
+                // get value or default
                 Object value = Optional.ofNullable((Object) data.get(input.getId())).orElseGet(input::getDefaults);
-                ResolvableInput res;
-                try {
-                    input = RenderableInput.mayRenderInput(input, expression -> {
-                        try {
-                            return runContext.renderTyped(expression);
-                        } catch (IllegalVariableEvaluationException e) {
-                            throw new RuntimeException(e.getMessage(), e);
-                        }
-                    });
-                    res = ResolvableInput.of(input, value);
-                } catch (ConstraintViolationException e) {
-                    res = ResolvableInput.of(input, value);
-                    res.resolveWithError(e);
-                }
-                return res;
+                return ResolvableInput.of(input, value);
             })
             .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)));
 
@@ -255,78 +242,55 @@ public class FlowInputOutput {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private InputAndValue resolveInputValue(
-        @NotNull ResolvableInput resolvable,
-        @NotNull Execution execution,
-        @NotNull Map<String, ResolvableInput> inputs) {
+        final @NotNull ResolvableInput resolvable,
+        final @NotNull Execution execution,
+        final @NotNull Map<String, ResolvableInput> inputs) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved()) return resolvable.get();
 
-        final Input<?> input = resolvable.get().input();
+        Input<?> input = resolvable.get().input();
+
         try {
-            boolean mustBeResolved = true;
+            //  resolve all input dependencies and check whether input is enabled
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, execution, inputs);
+            final RunContext runContext = buildRunContextForExecutionAndInputs(execution, dependencies);
 
-            // check whether the input has dependencies
-            if (input.getDependsOn() != null) {
-                final String dependsOnCondition = input.getDependsOn().condition();
-                final List<String> dependsOnInputs = input.getDependsOn().inputs();
+            boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
 
-                if (ListUtils.isEmpty(dependsOnInputs)) {
-                    // build rendering context with no inputs
-                    try {
-                        RunContext runContext = runContextFactory.of(null, execution);
-                        mustBeResolved = Boolean.parseBoolean(runContext.render(dependsOnCondition));
-                    } catch (Exception e) {
-                        resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
-                            "Invalid condition: " + e.getMessage(),
-                            input,
-                            (Class<Input>)input.getClass(),
-                            input.getId(),
-                            this
-                        ));
-                        mustBeResolved = false;
-                    }
-                } else {
-                    // resolve all dependent inputs
-                    Map<String, InputAndValue> dependencies = dependsOnInputs.stream()
-                        .filter(id -> !id.equals(input.getId()))
-                        .map(inputs::get)
-                        .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-                        .map(it -> resolveInputValue(it, execution, inputs))
-                        .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
-
-                    // check that all dependent inputs are not enabled.
-                    mustBeResolved = dependencies.values().stream().allMatch(InputAndValue::enabled);
-
-                    // validate the conditional expression
-                    if (mustBeResolved && dependsOnCondition != null) {
-                        // build rendering context
-                        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
-                            .stream()
-                            .collect(HashMap::new, (m,v)-> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
-                        );
-                        try {
-                            RunContext runContext = runContextFactory.of(null, execution, vars -> vars.withInputs(flattenInputs));
-                            mustBeResolved = Boolean.parseBoolean(runContext.render(dependsOnCondition));
-                        } catch (IllegalVariableEvaluationException e) {
-                            resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
-                                "Invalid condition: " + e.getMessage(),
-                                input,
-                                (Class<Input>)input.getClass(),
-                                input.getId(),
-                                this
-                            ));
-                            mustBeResolved = false;
-                        }
-                    }
+            final Optional<String> dependsOnCondition = Optional.ofNullable(input.getDependsOn()).map(DependsOn::condition);
+            if (dependsOnCondition.isPresent() && isInputEnabled) {
+                try {
+                    isInputEnabled = Boolean.TRUE.equals(runContext.renderTyped(dependsOnCondition.get()));
+                } catch (IllegalVariableEvaluationException e) {
+                    resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
+                        "Invalid condition: " + e.getMessage(),
+                        input,
+                        (Class<Input>)input.getClass(),
+                        input.getId(),
+                        this
+                    ));
+                    isInputEnabled = false;
                 }
             }
 
-            if (!mustBeResolved) {
+            // return immediately if the input is not enabled
+            if (!isInputEnabled) {
                 resolvable.resolveWithEnabled(false);
                 return resolvable.get();
             }
 
+            // render input
+            input = RenderableInput.mayRenderInput(input, expression -> {
+                try {
+                    return runContext.renderTyped(expression);
+                } catch (IllegalVariableEvaluationException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            });
+            resolvable.setInput(input);
+
+            // validate and parse input value
             final Object value = resolvable.get().value();
             if (value == null) {
                 if (input.getRequired()) {
@@ -337,7 +301,7 @@ public class FlowInputOutput {
             } else {
                 var parsedInput = parseData(execution, input, value);
                 try {
-                    parsedInput.ifPresent(parsed -> ((Input) input).validate(parsed.getValue()));
+                    parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     ConstraintViolationException exception = e.getConstraintViolations().size() == 1 ?
@@ -346,12 +310,34 @@ public class FlowInputOutput {
                     resolvable.resolveWithError(exception);
                 }
             }
+        } catch (ConstraintViolationException e) {
+            resolvable.resolveWithError(e);
         } catch (Exception e) {
             ConstraintViolationException exception = input.toConstraintViolationException(e instanceof IllegalArgumentException ? e.getMessage() : e.toString(), resolvable.get().value());
             resolvable.resolveWithError(exception);
         }
 
         return resolvable.get();
+    }
+
+    private RunContext buildRunContextForExecutionAndInputs(Execution execution, Map<String, InputAndValue> dependencies) {
+        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
+            .stream()
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
+        );
+        return runContextFactory.of(null, execution, vars -> vars.withInputs(flattenInputs));
+    }
+
+    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final Execution execution, final Map<String, ResolvableInput> inputs) {
+        return Optional.ofNullable(input.getDependsOn())
+            .map(DependsOn::inputs)
+            .stream()
+            .flatMap(Collection::stream)
+            .filter(id -> !id.equals(input.getId()))
+            .map(inputs::get)
+            .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
+            .map(it -> resolveInputValue(it, execution, inputs))
+            .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 
     public Map<String, Object> typedOutputs(
@@ -501,18 +487,22 @@ public class FlowInputOutput {
             return input;
         }
 
-        public void resolveWithEnabled(@Nullable boolean enabled) {
-            this.input = new InputAndValue(input.input(), input.value(), enabled, input.exception());
+        public void setInput(final Input<?> input) {
+            this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.exception());
+        }
+
+        public void resolveWithEnabled(boolean enabled) {
+            this.input = new InputAndValue(this.input.input(), input.value(), enabled, this.input.exception());
             markAsResolved();
         }
 
         public void resolveWithValue(@Nullable Object value) {
-            this.input = new InputAndValue(input.input(), value, input.enabled(), input.exception());
+            this.input = new InputAndValue(this.input.input(), value,  this.input.enabled(),  this.input.exception());
             markAsResolved();
         }
 
         public void resolveWithError(@Nullable ConstraintViolationException exception) {
-            this.input = new InputAndValue(input.input(), input.value(), input.enabled(), exception);
+            this.input = new InputAndValue(this.input.input(),  this.input.value(),  this.input.enabled(), exception);
             markAsResolved();
         }
 

@@ -5,6 +5,7 @@
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 v-model="label.key"
+                :disabled="localExisting.includes(label.key)"
                 @update:model-value="update(index, $event, 'key')"
             />
             <el-input
@@ -35,11 +36,16 @@
             labels: {
                 type: Array,
                 required: true
+            },
+            existingLabels: {
+                type: Array,
+                default: () => []
             }
         },
         data() {
             return {
-                locals: []
+                locals: [],
+                localExisting: []
             }
         },
         emits: ["update:labels"],
@@ -49,6 +55,7 @@
             } else {
                 this.locals = this.labels
             }
+            this.localExisting = this.existingLabels.map(label => label.key);
         },
         methods: {
             addItem() {

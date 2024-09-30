@@ -1,5 +1,6 @@
 package io.kestra.cli.commands.flows.namespaces;
 
+import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.FlowValidateCommand;
 import io.kestra.cli.commands.flows.IncludeHelperExpander;
@@ -66,11 +67,11 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
                 updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
             } catch (HttpClientResponseException e){
-                FlowValidateCommand.handleHttpException(e, "flow");
+                AbstractValidateCommand.handleHttpException(e, "flow");
                 return 1;
             }
         } catch (ConstraintViolationException e) {
-            FlowValidateCommand.handleException(e, "flow");
+            AbstractValidateCommand.handleException(e, "flow");
 
             return 1;
         }

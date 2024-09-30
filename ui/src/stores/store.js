@@ -15,6 +15,7 @@ import template from "./template"
 import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
+import doc from "./doc";
 
 export default {
     modules: {
@@ -34,6 +35,7 @@ export default {
         plugin,
         taskrun,
         trigger,
-        editor
+        editor,
+        doc
     }
 }

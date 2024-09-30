@@ -174,7 +174,7 @@ The table below lists common Pebble expressions and functions.
 | `{% if 3 is not even %} ... {% endif %}`                                                           | Negates a boolean expression.                                                                                                   |
 | `{% if category == "news" %} ... {% elseif category == "sports" %} ... {% else %} ... {% endif %}` | Conditional statements with multiple branches.                                                                                  |
 | `{{ trigger.date ?? execution.startDate \| date('yyyy-MM-dd') }}`                                  | Uses null-coalescing and date formatting together.                                                                              |
-| `{{ trigger.date ?? execution.startDate \| dateAdd(-1, 'DAYS') }}`                                 | Substracts one day from the execution start date.                                                                               |
+| `{{ trigger.date ?? execution.startDate \| dateAdd(-1, 'DAYS') }}`                                 | Subtracts one day from the execution start date.                                                                                |
 | `{{ stringDate \| date('yyyy/MMMM/d', existingFormat='yyyy-MMMM-d') }}`                            | Uses named arguments in a filter.                                                                                               |
 | `{{ "apple" \| upper \| abbreviate(3) }}`                                                          | Chains multiple filters together.                                                                                               |
 | `{{ now(timeZone='Europe/Paris') }}`                                                               | Returns the current datetime in a specific timezone.                                                                            |
@@ -259,7 +259,7 @@ The table below lists Pebble filter expressions:
 
 * Follow the step-by-step [tutorial](https://kestra.io/docs/tutorial)
 * Check the [documentation](https://kestra.io/docs)
-* Watch a 10-minute video explanation of key concepts on the [Kestra's YouTube channel](https://youtu.be/yuV_rgnpXU8?si=tdMnZlovgHgnwx0K)
+* Watch a 15-minute video explanation of key concepts on the [Kestra's YouTube channel](https://go.kestra.io/youtube-get-started)
 * Submit a feature request or a bug report on [GitHub](https://github.com/kestra-io/kestra/issues/new/choose)
 * Need help? [Join the community](https://kestra.io/slack)
 * Do you like the project? Give us a ⭐️ on [GitHub](https://github.com/kestra-io/kestra).

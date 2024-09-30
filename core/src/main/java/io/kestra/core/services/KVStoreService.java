@@ -30,7 +30,8 @@ public class KVStoreService {
      */
     public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
 
-        boolean checkIfNamespaceExists = fromNamespace == null || !namespace.startsWith(fromNamespace);
+        // Only check namespace existence if not a descendant
+        boolean checkIfNamespaceExists = fromNamespace == null || isNotParentNamespace(namespace, fromNamespace);
 
         if (checkIfNamespaceExists && !namespaceService.isNamespaceExists(tenant, namespace)) {
             throw new KVStoreException(String.format(
@@ -41,15 +42,7 @@ public class KVStoreService {
 
         boolean isNotSameNamespace = fromNamespace != null && !namespace.equals(fromNamespace);
 
-        if (isNotSameNamespace && !namespace.startsWith(fromNamespace)) {
-            throw new KVStoreException(String.format(
-                "Cannot access the KV store. The '%s' namespace is neither equal to nor a descendant of '%s'",
-                namespace,
-                fromNamespace
-            ));
-        }
-
-        if (isNotSameNamespace) {
+        if (isNotSameNamespace && isNotParentNamespace(namespace, fromNamespace)) {
             try {
                 flowService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
             } catch (IllegalArgumentException e) {
@@ -60,5 +53,9 @@ public class KVStoreService {
         }
 
         return new InternalKVStore(tenant, namespace, storageInterface);
+    }
+
+    private static boolean isNotParentNamespace(final String parentNamespace, final String childNamespace) {
+        return !childNamespace.startsWith(parentNamespace);
     }
 }

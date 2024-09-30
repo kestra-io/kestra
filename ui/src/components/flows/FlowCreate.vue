@@ -2,7 +2,7 @@
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
         <editor-view
-            v-if="this.source"
+            v-if="source"
             :flow-id="flowParsed?.id"
             :namespace="flowParsed?.namespace"
             :is-creating="true"

@@ -36,8 +36,8 @@
         <el-form>
             <el-form-item :label="$t('execution labels')">
                 <label-input
-                    :key="executionLabels"
                     v-model:labels="executionLabels"
+                    :existing-labels="execution.labels"
                 />
             </el-form-item>
         </el-form>
@@ -58,7 +58,7 @@
     import action from "../../models/action.js";
 
     export default {
-        components: {LabelInput,},
+        components: {LabelInput},
         props: {
             component: {
                 type: String,
@@ -108,12 +108,15 @@
         data() {
             return {
                 isOpen: false,
-                executionLabels: [],
+                executionLabels: []
             };
         },
         watch: {
             isOpen() {
                 this.executionLabels = [];
+                if (this.execution.labels) {
+                    this.executionLabels = this.execution.labels
+                }
             }
         },
     };

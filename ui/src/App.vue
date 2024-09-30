@@ -39,6 +39,7 @@
                 fullPage: false,
                 created: false,
                 loaded: false,
+                executions: 0,
             };
         },
         computed: {
@@ -50,12 +51,14 @@
             envName() {
                 return this.$store.getters["layout/envName"] || this.configs?.environment?.name;
             },
+            isOSS(){
+                return true;
+            }
         },
         async created() {
             if (this.created === false) {
                 await this.loadGeneralResources();
                 this.displayApp();
-                this.initGuidedTour();
             }
             this.setTitleEnvSuffix();
 
@@ -132,6 +135,7 @@
 
                 this.$store.dispatch("plugin/icons")
                 const config = await this.$store.dispatch("misc/loadConfigs");
+                await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
 
                 this.$store.dispatch("api/loadFeeds", {
                     version: config.version,
@@ -193,31 +197,22 @@
                     }
                 }
             },
-            initGuidedTour() {
-                this.$store.dispatch("flow/findFlows", {size: 1})
-                    .then(flows => {
-                        if (flows.total === 0 && this.$route.name === "home") {
-                            this.$router.push({
-                                name: "welcome",
-                                params: {
-                                    tenant: this.$route.params.tenant
-                                }
-                            });
-                        }
-                    });
-            },
         },
-        watch: {
-            $route(to) {
-                if (to.name === "home" && this.overallTotal === 0) {
-                    this.$router.push({
-                        name: "welcome",
-                        params: {
-                            tenant: this.$route.params.tenant
-                        }
-                    });
-                }
-            },
+        watch: {   
+            $route: {
+                async handler(route) {
+                    if(route.name === "home" && this.isOSS) {
+                        await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
+                        await this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
+                            this.executions = response?.total ?? 0;
+                        })
+                        
+                        if (!this.executions && !this.overallTotal) {
+                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
+                        }                  
+                    } 
+                }             
+            },    
             envName() {
                 this.setTitleEnvSuffix();
             }

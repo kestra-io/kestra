@@ -54,7 +54,7 @@
 
         <div v-if="execution.inputs" class="mt-4">
             <h5>{{ $t("inputs") }}</h5>
-            <vars :execution="execution" :data="inputs" />
+            <vars :execution="execution" :data="inputs" key-label-translation-key="id" />
         </div>
 
         <div v-if="execution.variables" class="mt-4">

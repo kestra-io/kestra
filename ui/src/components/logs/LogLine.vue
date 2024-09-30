@@ -1,5 +1,5 @@
 <template>
-    <div class="py-2 line font-monospace" :class="{'border-start': cursor, ['log-border-' + log.level.toLowerCase()]: cursor}" v-if="filtered">
+    <div class="py-2 line font-monospace" :class="{['log-border-' + log.level.toLowerCase()]: cursor}" v-if="filtered">
         <span :class="levelClasses" class="border header-badge log-level el-tag noselect">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "").capitalize() }}</span>
@@ -162,9 +162,10 @@
         align-items: center;
         gap: $spacer;
 
-        &.border-start {
-            border-left-width: 2px !important;
-        }
+        border-left-width: 2px !important;
+        border-left-style: solid;
+        border-left-color: transparent;
+
 
         .log-level {
             padding: calc(var(--spacer) / 4);

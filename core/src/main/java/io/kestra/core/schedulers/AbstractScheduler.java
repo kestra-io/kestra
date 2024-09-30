@@ -26,8 +26,6 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
-import io.kestra.plugin.core.trigger.ScheduleOnDates;
-import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -56,7 +54,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -556,10 +553,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
-        Stream.of(result)
-            .filter(Objects::nonNull)
-            .peek(this::log)
-            .forEach(executionWithTrigger -> {
+        Optional.ofNullable(result)
+            .ifPresent(executionWithTrigger -> {
+                    log(executionWithTrigger);
+
                     Trigger trigger = Trigger.of(
                         executionWithTrigger.getTriggerContext(),
                         executionWithTrigger.getExecution(),
@@ -597,7 +594,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.emitExecution(execution, trigger);
     }
 
-    protected void emitExecution(Execution execution, TriggerContext trigger) {
+    private void emitExecution(Execution execution, TriggerContext trigger) {
         // we need to be sure that the tenantId is propagated from the trigger to the execution
         var newExecution = execution.withTenantId(trigger.getTenantId());
         try {

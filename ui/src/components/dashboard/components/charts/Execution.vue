@@ -58,7 +58,6 @@
                     accumulator[state] = {
                         label: state,
                         backgroundColor: backgroundFromState(state),
-                        borderRadius: 4,
                         yAxisID: "y",
                         data: [],
                     };
@@ -77,7 +76,7 @@
             datasets: [
                 {
                     type: "line",
-                    label: false,
+                    label: t("duration"),
                     fill: "start",
                     pointRadius: 0,
                     borderWidth: 0.2,

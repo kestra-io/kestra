@@ -1,5 +1,6 @@
 import axios from "axios";
 import NProgress from "nprogress"
+import {storageKeys} from "./constants.js";
 
 // nprogress
 let requestsTotal = 0
@@ -104,10 +105,13 @@ export default (callback, store, router) => {
                 (window.location.search ?? "")}`
             }
 
+            const impersonate = localStorage.getItem(storageKeys.IMPERSONATE);
+
             // Authentication expired
             if (errorResponse.response.status === 401 &&
                 store.getters["auth/isLogged"] &&
-                !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")) {
+                !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
+            && !impersonate) {
                 // Keep original request
                 const originalRequest = errorResponse.config
 

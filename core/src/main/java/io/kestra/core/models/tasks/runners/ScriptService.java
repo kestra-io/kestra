@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,10 +101,11 @@ public final class ScriptService {
     }
 
     private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {
-        try (InputStream inputStream = runContext.storage().getFile(URI.create(uri))) {
-            Path path = runContext.workingDir().createTempFile();
+        Path path = runContext.workingDir().createTempFile();
 
-            IOUtils.copyLarge(inputStream, new FileOutputStream(path.toFile()));
+        try (InputStream inputStream = runContext.storage().getFile(URI.create(uri));
+            OutputStream outputStream = new FileOutputStream(path.toFile())) {
+            IOUtils.copyLarge(inputStream, outputStream);
 
             return path.toString();
         }

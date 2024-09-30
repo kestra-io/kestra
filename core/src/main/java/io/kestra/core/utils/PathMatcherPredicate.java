@@ -129,6 +129,6 @@ public final class PathMatcherPredicate implements Predicate<Path> {
     }
 
     public static boolean isPrefixWithSyntax(final String pattern) {
-        return pattern.startsWith(SYNTAX_REGEX) | pattern.startsWith(SYNTAX_GLOB);
+        return pattern.startsWith(SYNTAX_REGEX) || pattern.startsWith(SYNTAX_GLOB);
     }
 }

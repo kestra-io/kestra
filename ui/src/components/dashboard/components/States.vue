@@ -1,9 +1,6 @@
 <template>
     <div class="state">
-        <span
-            class="circle"
-            :style="{backgroundColor: getStateColor(label)}"
-        />
+        <span class="circle" :style="{backgroundColor: getScheme(label)}" />
 
         <p class="m-0 fw-light small">
             {{ label.toLowerCase().capitalize() }}
@@ -12,7 +9,7 @@
 </template>
 
 <script setup>
-    import {getStateColor} from "../../../utils/charts.js";
+    import {getScheme} from "../../../utils/scheme.js";
 
     defineProps({
         label: {

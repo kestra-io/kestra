@@ -6,9 +6,12 @@ import io.kestra.core.server.Service.ServiceState;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
@@ -230,5 +233,19 @@ public record ServiceInstance(
      * @param state The service state during this event.
      */
     public record TimestampedEvent(Instant ts, String value, String type, ServiceState state) {
+    }
+
+    /**
+     * Static helper method for grouping all services instanced by a given property.
+     * <p>
+     * This method will filter all services instance not having the expected property.
+     *
+     * @param property The property to group by.
+     * @return  The {@link ServiceInstance} grouped by the given property value.
+     */
+    public static Map<String, List<ServiceInstance>> groupByProperty(final Collection<ServiceInstance> instances, final String property) {
+        return instances.stream()
+            .filter(it -> Optional.ofNullable(it.props()).map(map -> map.get(property)).isPresent())
+            .collect(Collectors.groupingBy(it -> (String) it.props().get(property)));
     }
 }

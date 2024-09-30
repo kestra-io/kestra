@@ -44,11 +44,8 @@
     import {barLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
-    import {
-        defaultConfig,
-        getStateColor,
-        getFormat,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     import Check from "vue-material-design-icons/Check.vue";
 
@@ -66,15 +63,12 @@
     });
 
     const parsedData = computed(() => {
-        const darkTheme = Utils.getTheme() === "dark";
-
         let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.executionCounts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getStateColor(state),
-                        borderRadius: 4,
+                        backgroundColor: getScheme(state),
                         yAxisID: "y",
                         data: [],
                     };
@@ -94,11 +88,11 @@
                 ? [
                     {
                         type: "line",
-                        label: false,
-                        fill: "start",
+                        label: t("duration"),
+                        fill: false,
                         pointRadius: 0,
-                        borderWidth: 0.2,
-                        borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                        borderWidth: 0.75,
+                        borderColor: "#A2CDFF",
                         yAxisID: "yB",
                         data: props.data.map((value) => {
                             return value.duration.avg === 0
@@ -114,9 +108,24 @@
 
     const options = computed(() =>
         defaultConfig({
+            barThickness: 12,
+            skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
             plugins: {
                 barLegend: {
                     containerID: "executions",
+                },
+                tooltip: {
+                    enabled: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            const {label, yAxisID} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
+                        },
+                    },
                 },
             },
             scales: {
@@ -134,9 +143,14 @@
                     ticks: {
                         maxTicksLimit: 8,
                         callback: function (value) {
-                            return moment(
-                                new Date(this.getLabelForValue(value)),
-                            ).format("MM/DD");
+                            const label = this.getLabelForValue(value);
+                            const date = moment(new Date(label));
+
+                            const isCurrentYear = date.year() === moment().year();
+
+                            return date.format(
+                                isCurrentYear ? "MM/DD" : "MM/DD/YY",
+                            );
                         },
                     },
                 },

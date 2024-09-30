@@ -240,6 +240,7 @@
     "confirm password": "Подтвердить пароль",
     "email length constraint": "Email не должен превышать 256 символов",
     "password length constraint": "Пароль не должен превышать 256 символов",
+    "password empty constraint": "Неверное имя пользователя или пароль",
     "passwords do not match": "Пароли не совпадают",
     "avg duration": "Средняя длительность выполнения",
     "neutral trend": "Стабильно",
@@ -565,7 +566,8 @@
       "create": {
         "label": "Создать",
         "file": "Создать файл",
-        "folder": "Создать папку"
+        "folder": "Создать папку",
+        "already_exists": "Файл с таким именем уже существует"
       },
       "rename": {
         "label": "Переименовать",
@@ -680,11 +682,16 @@
             "editor_font_family": "Шрифт редактора",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "environment_name": "Имя окружения",
-            "environment_color": "Цвет окружения"
+            "environment_color": "Цвет окружения",
+            "chart_color_scheme": {
+              "label": "Цветовая схема диаграммы",
+              "classic": "Классический",
+              "kestra": "Kestra"
+            }
           }
         },
         "localization": {
-          "label": "Настройки даты и времени",
+          "label": "Язык и регион",
           "note": "Обратите внимание, что эта настройка используется для отображения свойств даты и времени в интерфейсе. Чтобы запланировать ваши flows в часовом поясе, отличном от UTC, убедитесь, что вы установили свойство timezone в trigger расписания в вашем коде flow или в настройках плагина по умолчанию.",
           "fields": {
             "time_zone": "Часовой пояс",
@@ -839,7 +846,21 @@
       "executions_in_progress": "Выполняемые задачи",
       "next_execution_date": "Следующая дата выполнения",
       "failure_ratio": "Коэффициент отказов",
-      "trigger_disabled": "Этот trigger может быть включен только через код."
-    }
+      "trigger_disabled": "Этот trigger может быть включен только через код.",
+      "no_flow_description": "Этот flow не имеет описания.",
+      "description": "Описание",
+      "not_auth": "У вас нет необходимых разрешений для просмотра этого виджета."
+    },
+    "delete_log": "Вы уверены, что хотите удалить log?",
+    "docs": "Документы",
+    "behavior": "Поведение",
+    "concurrency-view": {
+      "desc_no_limit": "Прочитайте больше о <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> в нашей документации.",
+      "title_no_limit": "Для этого Flow не установлены ограничения."
+    },
+    "active-slots": "Активные слоты",
+    "concurrency": "Конкурентность",
+    "open sidebar": "открыть боковую панель",
+    "close sidebar": "закрыть боковую панель"
   }
 }

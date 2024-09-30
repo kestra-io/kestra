@@ -20,6 +20,15 @@
                     </el-button>
                 </li>
             </ul>
+            <ul v-if="$route.params.tab === 'flows'">
+                <li>
+                    <router-link :to="{name: 'flows/create'}" v-if="canCreateFlow">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
+                </li>
+            </ul>
         </template>
     </top-nav-bar>
     <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" id="namespaces" />
@@ -68,6 +77,9 @@
             canCreateKv() {
                 return this.$route.params.id;
             },
+            canCreateFlow() {
+                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+            },
             routeInfo() {
                 return {
                     title: this.$route.params.id || this.$t("namespaces"),
@@ -102,7 +114,7 @@
                         name: undefined,
                         component: Overview,
                         title: this.$t("overview"),
-                        containerClass: "full-container",
+                        containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
                         query: {
                             id: this.$route.query.id
                         }

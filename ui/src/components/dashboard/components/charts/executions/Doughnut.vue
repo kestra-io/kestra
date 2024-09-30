@@ -9,7 +9,7 @@
                 <Doughnut
                     :data="parsedData"
                     :options="options"
-                    :plugins="[totalsLegend, centerPlugin]"
+                    :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
             </div>
@@ -27,7 +27,8 @@
     import {totalsLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
-    import {defaultConfig, getStateColor} from "../../../../../utils/charts.js";
+    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {getScheme} from "../../../../../utils/scheme.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -53,9 +54,17 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getStateColor(state));
+        const backgroundColor = labels.map((state) => getScheme(state));
 
-        return {labels, datasets: [{data, backgroundColor, borderWidth: 0}]};
+        const maxDataValue = Math.max(...data);
+        const thicknessScale = data.map(
+            (value) => 21 + (value / maxDataValue) * 28,
+        );
+
+        return {
+            labels,
+            datasets: [{data, backgroundColor, thicknessScale, borderWidth: 0}],
+        };
     });
 
     const options = computed(() =>
@@ -63,6 +72,16 @@
             plugins: {
                 totalsLegend: {
                     containerID: "totals",
+                },
+                tooltip: {
+                    enabled: true,
+                    intersect: true,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        title: () => "",
+                        label: (value) =>
+                            `${value.raw} ${value.label.toLowerCase().capitalize()}`,
+                    },
                 },
             },
         }),
@@ -88,6 +107,26 @@
             ctx.fillText(total, centerX, centerY);
 
             ctx.restore();
+        },
+    };
+
+    const thicknessPlugin = {
+        id: "thicknessPlugin",
+        beforeDatasetsDraw(chart) {
+            const {ctx} = chart;
+            const dataset = chart.data.datasets[0];
+            const meta = chart.getDatasetMeta(0);
+
+            const thicknessScale = dataset.thicknessScale;
+
+            meta.data.forEach((arc, index) => {
+                const baseRadius = arc.innerRadius;
+                const additionalThickness = thicknessScale[index];
+                arc.outerRadius = baseRadius + additionalThickness;
+                arc.innerRadius = baseRadius;
+
+                arc.draw(ctx);
+            });
         },
     };
 </script>

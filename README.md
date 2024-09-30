@@ -134,7 +134,7 @@ Kestra's functionality is extended through a rich [ecosystem of plugins](https:/
 | Plugin                   | Description                                                                                                          |
 |--------------------------|----------------------------------------------------------------------------------------------------------------------|
 | **AWS**                  | Run flows when a new file arrives in your Amazon S3 bucket or when you receive an event from SQS, SNS or EventBridge |
-| **Google Cloud** | Interact with a variety og Google Cloud services                                                                     |
+| **Google Cloud** | Interact with a variety of Google Cloud services                                                                     |
 | **Azure**                | Work with Azure Batch, Eventhubs, Blob Storage and more                                                              |
 | **Docker**               | Run Docker containers within your workflows                                                                          |
 | **Kubernetes**           | Launch Kubernetes jobs to scale your workflows                                                                       |
@@ -146,7 +146,6 @@ Kestra's functionality is extended through a rich [ecosystem of plugins](https:/
 | **Slack**               | Send messages to Slack channels                   |
 | **Email**               | Send email notifications                          |
 | **PagerDuty**           | Trigger alerts in PagerDuty                       |
-| **Elasticsearch**       | Log and monitor workflows with Elasticsearch      |
 
 > **Note:** This is just a snapshot of the available plugins. Explore the full list on our [Plugins Page](https://kestra.io/plugins/).
 

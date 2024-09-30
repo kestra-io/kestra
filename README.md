@@ -34,14 +34,12 @@
 
 ## 🌟 What is Kestra?
 
-Kestra is an open-source, event-driven orchestration platform that that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable workflows and manage them with confidence.
-
-In just a few lines of YAML, you can [create a flow](https://kestra.io/docs/getting-started) directly from the UI.
+Kestra is an open-source, event-driven orchestration platform that that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
 
 **Key Features:**
 - **Everything as Code and from the UI:** keep **workflows as code** with a full **Git Version Control** integration, even when building them from the UI.
 - **Event-Driven & Scheduled Workflows:** automate both **scheduled** and **real-time** event-driven workflows via a simple `trigger` definition in YAML.
-- **Declarative YAML Interface:** define workflows using a simple configuration built with autocompletion, syntax validation, and embedded documentation in the **built-in code editor**.
+- **Declarative YAML Interface:** define workflows using a simple configuration in the **built-in code editor**.
 - **Rich Plugin Ecosystem:** hundreds of plugins built in to extract data from any database, cloud storage, or API, and **run scripts in any language**.
 - **Intuitive UI & Code Editor:** build and visualize workflows directly from the UI with syntax highlighting, auto-completion and real-time syntax validation.
 - **Scalable & Resilient:** designed to handle millions of workflows, with high availability and fault tolerance.
@@ -49,7 +47,7 @@ In just a few lines of YAML, you can [create a flow](https://kestra.io/docs/gett
 - **Structure & Resilience**: tame chaos and bring resilience to your workflows with **namespaces**, **labels**, **subflows**, **retries**, **timeout**, **error handling**, **inputs**, **outputs** that generate artifacts in the UI, **variables**, **conditional branching**, **advanced scheduling**, **event triggers**, **backfills**, **dynamic tasks**, **sequential and parallel tasks**, and skip tasks or triggers when needed by setting the flag `disabled` to `true`.
 
 
-> The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
+🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls). 
 
 
 ![Adding new tasks in the UI](https://kestra.io/adding-tasks.gif)
@@ -58,9 +56,9 @@ In just a few lines of YAML, you can [create a flow](https://kestra.io/docs/gett
 
 ## 🚀 Quick Start
 
-### Try Kestra Live
+### Try the Live Demo
 
-Experience Kestra firsthand with our [**Live Demo**](https://demo.kestra.io/ui/login?auto). No installation required!
+Try Kestra with our [**Live Demo**](https://demo.kestra.io/ui/login?auto). No installation required!
 
 ### Get Started Locally in 5 Minutes
 
@@ -74,7 +72,8 @@ Experience Kestra firsthand with our [**Live Demo**](https://demo.kestra.io/ui/l
 Download the `docker-compose.yml` file:
 
 ```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
+curl -o docker-compose.yml \
+https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
 ```
 
 Alternatively:
@@ -111,7 +110,7 @@ Run the flow and see the output in the UI!
 
 ## 🧩 Plugin Ecosystem
 
-Kestra's functionality is extended through a rich ecosystem of plugins. Here's an overview of some popular plugins:
+Kestra's functionality is extended through a rich [ecosystem of plugins](https://kestra.io/plugins). Here's an overview of some popular plugins:
 
 ### Scripting and Automation
 
@@ -119,7 +118,7 @@ Kestra's functionality is extended through a rich ecosystem of plugins. Here's a
 |------------|--------------------------------------------------------------------------------------------------|
 | **Python** | Run [Python scripts](https://kestra.io/docs/how-to-guides/python) in Docker, local process or scale to serverless containers using [Task Runners](https://kestra.io/docs/task-runners) |
 | **Shell**  | Execute [shell commands](https://kestra.io/docs/how-to-guides/shell) and scripts                                                               |
-| **SQL**    | Run SQL queries against various databases                                                        |
+| **SQL**    | Run [SQL queries](https://kestra.io/plugins/plugin-jdbc-postgres) against various databases                                                        |
 | **HTTP**   | Make [HTTP requests](https://kestra.io/plugins/core/tasks/http/io.kestra.plugin.core.http.request) to interact with APIs                                                         |
 | **SSH**    | Execute commands on remote servers [via SSH](https://kestra.io/plugins/plugin-fs/tasks/ssh/io.kestra.plugin.fs.ssh.command)                                                       |
 
@@ -129,7 +128,7 @@ Kestra's functionality is extended through a rich ecosystem of plugins. Here's a
 |-------------------------|---------------------------------------------------|
 | **Kafka**               | [Real-time](https://kestra.io/docs/workflow-components/triggers/realtime-trigger) data streaming with Apache Kafka        |
 | **BigQuery**            | Interact with [Google BigQuery](https://kestra.io/plugins/plugin-gcp#bigquery) for analytics       |
-| **Spark**               | Run Apache Spark jobs for big data processing     |
+| **Spark**               | Run [Apache Spark](https://kestra.io/plugins/plugin-spark) jobs for big data processing     |
 | **Airflow Migration**   | Migrate workflows from [Apache Airflow](https://kestra.io/plugins/plugin-airflow/tasks/dags/io.kestra.plugin.airflow.dags.triggerdagrun)             |
 
 ### Cloud Integrations

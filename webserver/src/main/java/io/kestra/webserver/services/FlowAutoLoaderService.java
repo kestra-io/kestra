@@ -84,7 +84,6 @@ public class FlowAutoLoaderService {
                     ))
                 .map(response -> ((PagedResults<BlueprintItem>)response.body()).getResults())
                 .flatMapIterable(Function.identity())
-                .mergeWith(Mono.just(BlueprintItem.builder().id(PURGE_SYSTEM_FLOW_BLUEPRINT_ID).build()))
                 .flatMap(it -> Mono.from(httpClient
                     .exchange(
                         HttpRequest.create(HttpMethod.GET, "/v1/blueprints/" + it.getId() + "/flow"),

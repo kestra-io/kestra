@@ -240,7 +240,7 @@
     "confirm password": "Подтвердить пароль",
     "email length constraint": "Email не должен превышать 256 символов",
     "password length constraint": "Пароль не должен превышать 256 символов",
-    "password empty constraint": "Неверное имя пользователя или пароль",
+    "password empty constraint": "Неправильное имя пользователя или пароль",
     "passwords do not match": "Пароли не совпадают",
     "avg duration": "Средняя длительность выполнения",
     "neutral trend": "Стабильно",

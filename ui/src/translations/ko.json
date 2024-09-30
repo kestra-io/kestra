@@ -240,7 +240,7 @@
     "confirm password": "비밀번호 확인",
     "email length constraint": "이메일은 256자를 초과할 수 없습니다.",
     "password length constraint": "비밀번호는 256자를 초과할 수 없습니다.",
-    "password empty constraint": "잘못된 사용자 이름 또는 비밀번호",
+    "password empty constraint": "사용자 이름 또는 비밀번호가 잘못되었습니다",
     "passwords do not match": "비밀번호가 일치하지 않습니다.",
     "avg duration": "평균 실행 시간",
     "neutral trend": "안정적",

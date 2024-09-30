@@ -79,7 +79,7 @@
                             validator: (rule, value, callback) => {
                                 if (value && value.length > 256) {
                                     callback(new Error(this.$t("password length constraint")));
-                                } else if (value && value.trim() === '') {
+                                } else if (value && value.trim() === "") {
                                     callback(new Error(this.$t("password empty constraint")));
                                 } else {
                                     callback();

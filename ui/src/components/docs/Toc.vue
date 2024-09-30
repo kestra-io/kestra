@@ -47,7 +47,7 @@
     // import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     // import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import RecursiveToc from "./RecursiveToc.vue";
-    // import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 </script>
 

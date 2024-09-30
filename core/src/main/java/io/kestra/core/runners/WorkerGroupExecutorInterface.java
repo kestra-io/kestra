@@ -13,12 +13,13 @@ import java.util.Set;
 public interface WorkerGroupExecutorInterface {
 
     /**
-     * Checks whether a Worker Group exists for the given key.
+     * Checks whether a Worker Group exists for the given key and tenant.
      *
      * @param key The Worker Group's key - can be {@code null}.
+     * @param tenant The tenant's ID - can be {@code null}.
      * @return {@code true} if the worker group exists, or is {@code null}, {@code false} otherwise.
      */
-    boolean isWorkerGroupExistForKey(String key);
+    boolean isWorkerGroupExistForKey(String key, String tenant);
 
     /**
      * Checks whether the Worker Group is available.
@@ -46,7 +47,7 @@ public interface WorkerGroupExecutorInterface {
     class DefaultWorkerGroupExecutorInterface implements WorkerGroupExecutorInterface {
 
         @Override
-        public boolean isWorkerGroupExistForKey(String key) {
+        public boolean isWorkerGroupExistForKey(String key, String tenant) {
             return true;
         }
 

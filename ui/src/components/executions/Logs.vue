@@ -19,7 +19,14 @@
                 />
             </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                <log-level-navigator :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined" :level="logLevel" :total-count="countByLogLevel[logLevel]" @previous="previousLogForLevel(logLevel)" @next="nextLogForLevel(logLevel)" />
+                <log-level-navigator
+                    v-if="countByLogLevel[logLevel] > 0"
+                    :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                    :level="logLevel"
+                    :total-count="countByLogLevel[logLevel]"
+                    @previous="previousLogForLevel(logLevel)"
+                    @next="nextLogForLevel(logLevel)"
+                />
             </el-form-item>
             <el-form-item>
                 <el-button @click="expandCollapseAll()">

@@ -76,17 +76,13 @@ curl -o docker-compose.yml \
 https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
 ```
 
-Alternatively:
-
-```bash
-wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
-```
-
 Start Kestra:
 
 ```bash
 docker compose up -d
 ```
+
+> Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
 
 Access the Kestra UI at [http://localhost:8080](http://localhost:8080) and start building your first flow!
 
@@ -103,6 +99,8 @@ tasks:
     type: io.kestra.plugin.core.log.Log
     message: "Hello, World!"
 ```
+
+
 
 Run the flow and see the output in the UI!
 
@@ -136,7 +134,7 @@ Kestra's functionality is extended through a rich [ecosystem of plugins](https:/
 | Plugin                   | Description                                                                                                          |
 |--------------------------|----------------------------------------------------------------------------------------------------------------------|
 | **AWS**                  | Run flows when a new file arrives in your Amazon S3 bucket or when you receive an event from SQS, SNS or EventBridge |
-| **Google Cloud Storage** | Interact with a variety og Google Cloud services                                                                     |
+| **Google Cloud** | Interact with a variety og Google Cloud services                                                                     |
 | **Azure**                | Work with Azure Batch, Eventhubs, Blob Storage and more                                                              |
 | **Docker**               | Run Docker containers within your workflows                                                                          |
 | **Kubernetes**           | Launch Kubernetes jobs to scale your workflows                                                                       |

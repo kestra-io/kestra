@@ -748,7 +748,8 @@ public class ExecutorService {
                         .map(WorkerGroup::getKey)
                         .orElse(null);
                     // Check if the worker group exist
-                    if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroup)) {
+                    String tenantId = executor.getFlow().getTenantId();
+                    if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroup, tenantId)) {
                         // Check whether at-least one worker is available
                         if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroup)) {
                             return workerTask;

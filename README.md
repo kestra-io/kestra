@@ -154,6 +154,15 @@ Kestra's functionality is extended through a rich [ecosystem of plugins](https:/
 
 ---
 
+## 📚 Key Concepts
+
+- **Flows:** the core unit in Kestra, representing a workflow composed of tasks.
+- **Tasks:** individual units of work, such as running a script, moving data, or calling an API.
+- **Namespaces:** logical grouping of flows for organization and isolation.
+- **Triggers:** schedule or events that initiate the execution of flows.
+- **Inputs & Variables:** parameters and dynamic data passed into flows and tasks.
+
+---
 
 ## 🎨 Build Workflows Visually
 
@@ -166,15 +175,6 @@ Kestra provides an intuitive UI that allows you to interactively build and visua
 
 ---
 
-## 📚 Key Concepts
-
-- **Flows:** the core unit in Kestra, representing a workflow composed of tasks.
-- **Tasks:** individual units of work, such as running a script, moving data, or calling an API.
-- **Namespaces:** logical grouping of flows for organization and isolation.
-- **Triggers:** schedule or events that initiate the execution of flows.
-- **Inputs & Variables:** parameters and dynamic data passed into flows and tasks.
-
----
 
 ## 🔧 Extensible and Developer-Friendly
 
@@ -206,7 +206,7 @@ Stay connected and get support:
 We welcome contributions of all kinds!
 
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) to start contributing.
+- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) to start contributing.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 
 ---

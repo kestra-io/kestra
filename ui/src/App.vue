@@ -199,17 +199,19 @@
             },
         },
         watch: {   
-            $route(route){
-                if(route.name === "home" && this.isOSS) {
-                    this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
-                    this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
-                        this.executions = response?.total ?? 0;
-                    })
-                    
-                    if (!this.executions && !this.overallTotal) {
-                        this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                    }                  
-                }              
+            $route: {
+                async handler(route) {
+                    if(route.name === "home" && this.isOSS) {
+                        await this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
+                        await this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
+                            this.executions = response?.total ?? 0;
+                        })
+                        
+                        if (!this.executions && !this.overallTotal) {
+                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
+                        }                  
+                    } 
+                }             
             },    
             envName() {
                 this.setTitleEnvSuffix();

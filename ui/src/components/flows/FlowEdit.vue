@@ -89,6 +89,7 @@
             window.addEventListener("popstate", () => {
                 this.stopTour();
             });
+            console.log("test")
         },
         watch: {
             guidedProperties: function () {

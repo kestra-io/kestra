@@ -10,10 +10,10 @@ export function canSaveFlowTemplate(isEdit, user, item, dataType) {
 
     return (
         isEdit && user &&
-        user.isAllowed(typedPermission, action.UPDATE, item.namespace)
+        user.hasAnyActionOnAnyNamespace(typedPermission, action.UPDATE)
     ) || (
         !isEdit && user &&
-        user.isAllowed(typedPermission, action.CREATE, item.namespace)
+        user.hasAnyActionOnAnyNamespace(typedPermission, action.CREATE)
     );
 }
 

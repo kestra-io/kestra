@@ -344,7 +344,7 @@
     });
 
     const isAllowedEdit = () => {
-        return user && user.isAllowed(permission.FLOW, action.UPDATE, props.namespace);
+        return user && user.hasAnyActionOnAnyNamespace(permission.FLOW, action.UPDATE);
     };
 
     const forwardEvent = (type, event) => {

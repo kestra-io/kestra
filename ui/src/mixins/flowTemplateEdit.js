@@ -45,10 +45,10 @@ export default {
             return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE)
         },
         canExecute() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE)
         },
         routeInfo() {
             let route = {

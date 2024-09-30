@@ -148,10 +148,12 @@
                 @update:model-value="onChange"
             />
             <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-            <template v-for="err in input.errors ?? []" :key="err">
-                <el-text type="warning">
-                    {{ err.message }}
-                </el-text>
+            <template v-if="executeClicked">
+                <template v-for="err in input.errors ?? []" :key="err">
+                    <el-text type="warning">
+                        {{ err.message }}
+                    </el-text>
+                </template>
             </template>
         </el-form-item>
     </template>
@@ -178,6 +180,10 @@
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
+            executeClicked: {
+                type: Boolean,
+                default: false
+            },
             modelValue: {
                 default: undefined,
                 type: Object

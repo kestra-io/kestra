@@ -81,8 +81,7 @@
                                     callback(new Error(this.$t("password length constraint")));
                                 } else if (value && value.trim() === '') {
                                     callback(new Error(this.$t("password empty constraint")));
-                                }
-                                else {
+                                } else {
                                     callback();
                                 }
                             },

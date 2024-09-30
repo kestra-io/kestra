@@ -64,31 +64,21 @@ Try Kestra with our [**Live Demo**](https://demo.kestra.io/ui/login?auto). No in
 
 ### Get Started Locally in 5 Minutes
 
-#### Prerequisites
+#### Launch Kestra in Docker
 
-- [Docker](https://docs.docker.com/engine/install/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
-#### Launch Kestra
-
-Download the `docker-compose.yml` file:
+Make sure that Docker is running. Then, start Kestra in a single command:
 
 ```bash
-curl -o docker-compose.yml \
-https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
+docker run --pull=always --rm -it -p 8080:8080 --user=root \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /tmp:/tmp kestra/kestra:latest server local
 ```
 
-Start Kestra:
-
-```bash
-docker compose up -d
-```
-
-> Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
+Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
 
 Access the Kestra UI at [http://localhost:8080](http://localhost:8080) and start building your first flow!
 
-#### Your First Flow: Hello World
+#### Your First Hello World Flow
 
 Create a new flow with the following content:
 
@@ -101,7 +91,6 @@ tasks:
     type: io.kestra.plugin.core.log.Log
     message: "Hello, World!"
 ```
-
 
 
 Run the flow and see the output in the UI!

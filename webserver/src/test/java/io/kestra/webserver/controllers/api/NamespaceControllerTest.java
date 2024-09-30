@@ -66,12 +66,12 @@ public class NamespaceControllerTest {
             HttpRequest.GET("/api/v1/namespaces/search"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
-        assertThat(list.getTotal(), is(5L));
-        assertThat(list.getResults().size(), is(5));
+        assertThat(list.getTotal(), is(6L));
+        assertThat(list.getResults().size(), is(6));
         assertThat(list.getResults(), everyItem(hasProperty("disabled", is(true))));
         assertThat(list.getResults().map(NamespaceWithDisabled::getId), containsInAnyOrder(
             "my", "my.ns", "my.ns.flow",
-            "another", "another.ns"
+            "another", "another.ns", "system"
         ));
 
 
@@ -79,19 +79,19 @@ public class NamespaceControllerTest {
             HttpRequest.GET("/api/v1/namespaces/search?size=2&sort=id:desc"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
-        assertThat(list.getTotal(), is(5L));
+        assertThat(list.getTotal(), is(6L));
         assertThat(list.getResults().size(), is(2));
-        assertThat(list.getResults().getFirst().getId(), is("my.ns.flow"));
-        assertThat(list.getResults().get(1).getId(), is("my.ns"));
+        assertThat(list.getResults().getFirst().getId(), is("system"));
+        assertThat(list.getResults().get(1).getId(), is("my.ns.flow"));
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/namespaces/search?page=2&size=2&sort=id:desc"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
-        assertThat(list.getTotal(), is(5L));
+        assertThat(list.getTotal(), is(6L));
         assertThat(list.getResults().size(), is(2));
-        assertThat(list.getResults().getFirst().getId(), is("my"));
-        assertThat(list.getResults().get(1).getId(), is("another.ns"));
+        assertThat(list.getResults().getFirst().getId(), is("my.ns"));
+        assertThat(list.getResults().get(1).getId(), is("my"));
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/namespaces/search?q=ns"),

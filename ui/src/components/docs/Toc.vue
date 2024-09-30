@@ -1,5 +1,6 @@
 <template>
     <div :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="{collapsed}" class="sidebar d-flex flex-column gap-3">
+        <!--
         <div class="d-flex gap-2 align-items-center">
             <el-button @click="collapsed = !collapsed">
                 <chevron-right v-if="collapsed" />
@@ -7,6 +8,7 @@
             </el-button>
             <span class="toggle-btn text-body-tertiary">{{ $t((collapsed ? 'open' : 'close') + ' sidebar').toUpperCase() }}</span>
         </div>
+        -->
         <div v-if="!collapsed" class="d-flex flex-column gap-3">
             <el-autocomplete
                 ref="search"
@@ -42,10 +44,10 @@
 </template>
 
 <script setup>
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    // import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    // import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import RecursiveToc from "./RecursiveToc.vue";
-    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
+    // import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 </script>
 

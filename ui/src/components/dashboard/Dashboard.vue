@@ -140,15 +140,11 @@
                             v-model="descriptionDialog"
                             :title="$t('description')"
                         >
-                            <p class="pt-4">
-                                {{ description }}
-                            </p>
+                            <Markdown :source="description" class="p-4 description" />
                         </el-dialog>
                     </span>
 
-                    <p class="pt-4 description">
-                        {{ description }}
-                    </p>
+                    <Markdown :source="description" class="p-4 description" />
                 </div>
                 <ExecutionsInProgress
                     v-else
@@ -222,6 +218,8 @@
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
     import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
+
+    import Markdown from "../layout/Markdown.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -462,6 +460,7 @@ $spacing: 20px;
     }
 
     .description {
+        border: none !important;
         color: #564a75;
 
         html.dark & {

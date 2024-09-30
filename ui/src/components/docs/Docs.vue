@@ -137,8 +137,6 @@
         }
 
         :deep(.code-block) {
-            background-color: var(--bs-card-bg);
-            border: 1px solid var(--bs-border-color);
             .language {
                 color: var(--bs-tertiary-color);
             }
@@ -153,11 +151,6 @@
                 color: var(--bs-body-color);
                 border: 1px solid var(--border-killing)
             }
-        }
-
-        :deep(code .line) {
-            display: block;
-            min-height: 1rem;
         }
 
         :deep(p > a) {

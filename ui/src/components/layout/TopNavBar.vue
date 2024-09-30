@@ -41,13 +41,13 @@
                                 <ProgressQuestion class="align-middle" /> {{ $t('Reset guided tour') }}
                             </a>
 
-                            <a
-                                href="https://kestra.io/docs?utm_source=app&utm_campaign=docs&utm_content=top-nav-bar"
-                                target="_blank"
+                            <router-link
                                 class="d-flex gap-2 el-dropdown-menu__item"
+                                :to="{name: 'docs/view'}"
                             >
                                 <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
-                            </a>
+                            </router-link>
+
                             <a
                                 href="https://github.com/kestra-io/kestra/issues"
                                 target="_blank"

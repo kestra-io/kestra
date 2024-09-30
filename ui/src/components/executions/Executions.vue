@@ -520,7 +520,7 @@
             },
             filter: {
                 type: Boolean,
-                default: false
+                default: true
             },
             namespace: {
                 type: String,
@@ -984,8 +984,9 @@
             },
             emitStateCount(states) {
                 this.$store.dispatch("execution/findExecutions", this.loadQuery({
-                    size: 0,
-                    page: 1,
+                    size: parseInt(this.$route.query.size || this.internalPageSize),
+                    page: parseInt(this.$route.query.page || this.internalPageNumber),
+                    sort: this.$route.query.sort || "state.startDate:desc",
                     state: states
                 }, false)).then(() => {
                     this.$emit("state-count", this.total);

@@ -200,7 +200,6 @@
         },
         watch: {   
             $route(route){
-                console.log(route.name, this.isOSS)
                 if(route.name === "home" && this.isOSS) {
                     this.$store.dispatch("flow/findFlows", {size: 10, sort: "id:asc"})
                     this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {

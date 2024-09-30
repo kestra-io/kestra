@@ -240,6 +240,7 @@
     "confirm password": "Conferma password",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "password length constraint": "La password non deve superare i 256 caratteri",
+    "password empty constraint": "Nome utente o password errati",
     "passwords do not match": "Le password non corrispondono",
     "avg duration": "Durata media dell'esecuzione",
     "neutral trend": "Stabile",

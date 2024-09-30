@@ -259,6 +259,7 @@
     "confirm password": "Confirm password",
     "email length constraint": "Email must not exceed 256 characters",
     "password length constraint": "Password must not exceed 256 characters",
+    "password empty constraint": "Incorrect username or password",
     "passwords do not match": "Passwords do not match",
     "avg duration": "Avg. execution duration",
     "neutral trend": "Stable",

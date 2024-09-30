@@ -159,9 +159,6 @@
 
 <style lang="scss">
     .plugins-list {
-        height: 90vh;
-        overflow-y: auto;
-
         &.enhance-readability {
             padding: calc(var(--spacer) * 1.5);
             background-color: var(--bs-gray-100);

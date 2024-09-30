@@ -240,6 +240,7 @@
     "confirm password": "पासवर्ड की पुष्टि करें",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
     "password length constraint": "पासवर्ड 256 वर्णों से अधिक नहीं होना चाहिए",
+    "password empty constraint": "गलत उपयोगकर्ता नाम या पासवर्ड",
     "passwords do not match": "पासवर्ड मेल नहीं खाते",
     "avg duration": "औसत निष्पादन अवधि",
     "neutral trend": "स्थिर",

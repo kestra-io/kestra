@@ -240,6 +240,7 @@
     "confirm password": "确认密码",
     "email length constraint": "电子邮件不得超过256个字符",
     "password length constraint": "密码不得超过256个字符",
+    "password emty constraint": "用户名或密码不正确",
     "passwords do not match": "密码不匹配",
     "avg duration": "平均执行时间",
     "neutral trend": "稳定",

@@ -240,6 +240,7 @@
     "confirm password": "パスワードを確認",
     "email length constraint": "メールは256文字を超えてはいけません",
     "password length constraint": "パスワードは256文字を超えてはいけません",
+    "password empty constraint": "ユーザー名またはパスワードが間違っています",
     "passwords do not match": "パスワードが一致しません",
     "avg duration": "平均実行時間",
     "neutral trend": "安定",

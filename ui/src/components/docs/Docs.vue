@@ -2,7 +2,12 @@
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <div class="d-flex full-height">
         <Toc />
-        <MDCRenderer class="flex-grow-1 content" v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+        <div class="container main-container" v-if="ast?.body">
+            <div class="content">
+                <h1>{{ routeInfo.title }}</h1>
+                <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -83,7 +88,11 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .content {
-        margin: 64px 200px;
+        margin: $spacer;
+
+        h1 {
+            margin-bottom: $spacer;
+        }
 
         #{--bs-link-color}: #8405FF;
         #{--bs-link-color-rgb}: to-rgb(#8405FF);
@@ -130,14 +139,13 @@
         :deep(.code-block) {
             background-color: var(--bs-card-bg);
             border: 1px solid var(--bs-border-color);
-
             .language {
                 color: var(--bs-tertiary-color);
             }
         }
 
         :deep(code) {
-            white-space: pre;
+            white-space: break-spaces;
 
             &:not(.code-block code) {
                 font-weight: 700;

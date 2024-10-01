@@ -849,7 +849,8 @@
       "trigger_disabled": "Este trigger solo puede ser habilitado a través de código.",
       "no_flow_description": "Este flow no tiene descripción.",
       "description": "Descripción",
-      "not_auth": "No tienes los permisos necesarios para ver este widget."
+      "not_auth": "No tienes los permisos necesarios para ver este widget.",
+      "see_all": "Ver todo"
     },
     "delete_log": "¿Está seguro de que desea eliminar el log?",
     "docs": "Documentos",

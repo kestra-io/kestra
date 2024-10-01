@@ -849,7 +849,8 @@
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
       "description": "説明",
-      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。",
+      "see_all": "すべて表示"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",

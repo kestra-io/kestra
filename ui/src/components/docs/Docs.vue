@@ -26,7 +26,7 @@
             ...mapGetters("doc", ["pageMetadata"]),
             path() {
                 let routePath = this.$route.params.path;
-                return routePath && routePath.length > 0 ? routePath.replaceAll(/(?:^|\/)\.\//g,"") : undefined;
+                return routePath && routePath.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined;
             },
             pathParts() {
                 return this.path?.split("/") ?? [];

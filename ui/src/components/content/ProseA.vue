@@ -5,6 +5,7 @@
 </template>
 <script>
     import {mapGetters} from "vuex";
+    import path from "path-browserify";
 
     export default {
         props: {
@@ -42,7 +43,7 @@
                 if (this.pageMetadata.isIndex === false) {
                     relativeLink = "../" + relativeLink;
                 }
-                const to = this.append(this.$route.path, relativeLink);
+                const to = path.normalize(this.append(this.$route.path, relativeLink));
                 return {
                     to
                 }

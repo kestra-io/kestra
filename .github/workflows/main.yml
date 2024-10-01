@@ -68,6 +68,7 @@ jobs:
       # Get Plugins List
       - name: Get Plugins List
         uses: ./.github/actions/plugins-list
+        if: "!startsWith(github.ref, 'refs/tags/v')"
         id: plugins-list
         with:
           plugin-version: ${{ env.PLUGIN_VERSION }}
@@ -75,6 +76,7 @@ jobs:
       # Set Plugins List
       - name: Set Plugin List
         id: plugins
+        if: "!startsWith(github.ref, 'refs/tags/v')"
         run: |
           PLUGINS="${{ steps.plugins-list.outputs.plugins }}"
           TAG=${GITHUB_REF#refs/*/}
@@ -122,6 +124,7 @@ jobs:
       # Docker Build
       - name: Build & Export Docker Image
         uses: docker/build-push-action@v6
+        if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
           context: .
           push: false
@@ -149,6 +152,7 @@ jobs:
 
       - name: Upload Docker
         uses: actions/upload-artifact@v4
+        if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
           name: ${{ steps.vars.outputs.artifact }}
           path: /tmp/${{ steps.vars.outputs.artifact }}.tar
@@ -156,7 +160,7 @@ jobs:
   check-e2e:
     name: Check E2E Tests
     needs: build-artifacts
-    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    if: ${{ (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') && !startsWith(github.ref, 'refs/tags/v') }}
     uses: ./.github/workflows/e2e.yml
     strategy:
       fail-fast: false

@@ -1,8 +1,19 @@
 <template>
     <div class="p-4">
-        <span class="fs-6 fw-bold">
+        <!-- <span class="fs-6 fw-bold">
             {{ t("dashboard.executions_in_progress") }}
-        </span>
+        </span> -->
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fs-6 fw-bold">
+                {{ t("dashboard.executions_in_progress") }}
+            </span>
+            <RouterLink :to="{name: 'executions/list'}">
+                <el-button type="primary" size="small" class="seeall" text>
+                    {{ t("dashboard.see_all") }}
+                </el-button>
+            </RouterLink>
+        </div>
 
         <div class="pt-4">
             <el-table
@@ -167,5 +178,9 @@ code {
 .inprogress {
     --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
+}
+
+.seeall {
+    color: var(--el-color-primary);
 }
 </style>

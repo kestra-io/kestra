@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
 @Plugin
 @Plugin.Id("local")
@@ -55,7 +56,7 @@ public class LocalStorage implements StorageInterface {
         }
 
         parentTraversalGuard(uri);
-        return Paths.get(basePath.toString(), uri.getPath());
+        return Paths.get(basePath.toString(), windowsToUnixPath(uri.getPath()));
     }
 
     @Override

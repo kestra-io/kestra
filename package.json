@@ -1,0 +1,20 @@
+{
+  "name": "kestra",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">   <a href=\"https://www.kestra.io\">     <img src=\"https://kestra.io/banner.png\"  alt=\"Kestra workflow orchestrator\" />   </a> </p>",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "serve": "vue-cli-service serve ui/src/main.js",
+    "dev": "vue-cli-service serve ui/src/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@vue/cli-service": "^5.0.8",
+    "vue-template-compiler": "^2.7.16"
+  }
+}

@@ -1,15 +1,11 @@
 <template>
     <div class="p-4">
-        <!-- <span class="fs-6 fw-bold">
-            {{ t("dashboard.executions_in_progress") }}
-        </span> -->
-        
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.executions_in_progress") }}
             </span>
             <RouterLink :to="{name: 'executions/list'}">
-                <el-button type="primary" size="small" class="seeall" text>
+                <el-button type="primary" size="small" text>
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
@@ -180,7 +176,4 @@ code {
     background: var(--bs-body-bg);
 }
 
-.seeall {
-    color: var(--el-color-primary);
-}
 </style>

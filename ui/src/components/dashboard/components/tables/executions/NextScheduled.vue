@@ -1,14 +1,11 @@
 <template>
     <div class="p-4">
-        <!-- <span class="fs-6 fw-bold">
-            {{ t("dashboard.next_scheduled_executions") }}
-        </span> -->
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
             </span>
-            <RouterLink :to="{name: 'executions/list'}">
-                <el-button type="primary" size="small" class="seeall" text>
+            <RouterLink :to="{name: 'admin/triggers'}">
+                <el-button type="primary" size="small" text>
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
@@ -228,9 +225,5 @@ code {
 
 .next-toggle {
     padding: 8px 0 0 0 !important;
-}
-
-.seeall {
-    color: var(--el-color-primary);
 }
 </style>

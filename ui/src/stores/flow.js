@@ -104,7 +104,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, _dispatch}, options) {
+        saveFlow({commit, dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
@@ -112,23 +112,49 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
-
+                        dispatch("core/setMessage", {
+                            title: "Success",
+                            message: "Flow saved successfully",
+                            variant: "success"
+                        }, {root: true});
                         return response.data;
                     }
                 })
+                .catch(error => {
+                    dispatch("core/setMessage", {
+                        title: "Error",
+                        message: "Failed to save flow: " + error.message,
+                        variant: "danger"
+                    }, {root: true});
+                    throw error;
+                });
         },
         updateFlowTask({commit, dispatch}, options) {
+            console.log('updateFlowTask called', options);
             return this.$http
-                .patch(`${apiUrl(this)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                    commit("setFlow", response.data)
-
+                .patch(`${apiUrl(this)}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task)
+                .then(response => {
+                    console.log('Response:', response.data);
+                    commit("setFlow", response.data);
+                    dispatch("core/setMessage", {
+                        title: "Success",
+                        message: "Flow task updated successfully",
+                        variant: "success"
+                    }, {root: true});
                     return response.data;
                 })
                 .then(flow => {
                     dispatch("loadGraph", {flow});
-
                     return flow;
                 })
+                .catch(error => {
+                    dispatch("core/setMessage", {
+                        title: "Error",
+                        message: "Failed to update flow task: " + error.message,
+                        variant: "danger"
+                    }, {root: true});
+                    throw error;
+                });
         },
         createFlow({commit}, options) {
             return this.$http.post(`${apiUrl(this)}/flows`, options.flow, textYamlHeader).then(response => {

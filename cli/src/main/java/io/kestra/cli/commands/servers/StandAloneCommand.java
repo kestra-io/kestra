@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.cli.services.FileChangedEventListener;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -9,6 +10,7 @@ import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -36,6 +38,10 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Inject
     private StartExecutorService startExecutorService;
+
+    @Inject
+    @Nullable
+    private FileChangedEventListener fileWatcher;
 
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
@@ -106,6 +112,12 @@ public class StandAloneCommand extends AbstractServerCommand {
         }
 
         standAloneRunner.run();
+
+        if (fileWatcher != null) {
+            fileWatcher.startListeningFromConfig();
+        }
+
+        this.shutdownHook(standAloneRunner::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

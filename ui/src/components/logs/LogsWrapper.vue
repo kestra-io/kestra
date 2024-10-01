@@ -55,11 +55,6 @@
                             </template>
                         </div>
                     </el-card>
-
-                    <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
-                        <TrashCan class="me-2" />
-                        <span>{{ $t("delete logs") }}</span>
-                    </el-button>
                 </template>
 
                 <template #table>
@@ -103,13 +98,13 @@
     import LogChart from "../stats/LogChart.vue";
     import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart, TrashCan},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
         props: {
             logLevel: {
                 type: String,
@@ -155,9 +150,6 @@
                 };
             },
             isFlowEdit() {
-                return this.$route.name === "flows/update"
-            },
-            shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update"
             },
             isNamespaceEdit() {

@@ -14,11 +14,19 @@
                 </slot>
             </h1>
         </div>
-        <div class="d-flex side gap-2 flex-shrink-0">
+        
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
+            <div class="d-none d-lg-flex align-items-center">
+                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0 > 0" @click="deleteLogs()" class=" delete-logs-btn">
+                    <TrashCan class="me-2" />
+                    <span>{{ $t("delete logs") }}</span>
+                </el-button>
+            </div>
             <slot name="additional-right" />
+            
             <div class="d-flex fixed-buttons">
                 <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
@@ -100,6 +108,7 @@
     import Update from "vue-material-design-icons/Update.vue";
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
 
     export default {
         components: {
@@ -113,6 +122,7 @@
             Update,
             ProgressQuestion,
             GlobalSearch,
+            TrashCan,
             Impersonating
         },
         props: {
@@ -123,11 +133,16 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
-            }
-        },
+            },
+            showDeleteButton: {
+                type: Boolean,
+                default: false
+            },
+        }, 
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
+            ...mapState("log", ["logs", "total", "level"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -136,7 +151,10 @@
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
-            }
+            },
+            shouldDisplayDeleteButton() {
+                return this.$route.name === "flows/update"
+            },
         },
         methods: {
             restartGuidedTour() {
@@ -144,6 +162,13 @@
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
 
                 this.$tours["guidedTour"]?.start();
+            },
+            deleteLogs() {
+                this.$toast().confirm(
+                    this.$t("delete_all_logs"),
+                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
+                    () => {}
+                )
             }
         }
     };

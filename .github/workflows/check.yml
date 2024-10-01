@@ -78,21 +78,21 @@ jobs:
           resultsGlob: "**/build/allure-results"
           bucket: internal-kestra-host
           baseUrl: "https://internal.kestra.io"
-          prefix: ${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'allure/java') }}
+          prefix: ${{ format('{0}/{1}', github.repository, 'allure/java') }}
           copyLatest: true
           ignoreMissingResults: true
 
       # Jacoco
       - name: 'Set up Cloud SDK'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        if: ${{ github.ref == 'refs/heads/develop' && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: 'Copy jacoco files'
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        if: ${{ github.ref == 'refs/heads/develop' && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
           mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/jacocoTestReport.xml
-          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'jacoco') }}
+          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'jacoco') }}
 
 
       # report test

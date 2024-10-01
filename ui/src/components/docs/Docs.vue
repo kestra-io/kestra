@@ -102,7 +102,7 @@
             #{--bs-link-color-rgb}: to-rgb(#BBBBFF);
         }
 
-        :deep(> h2) {
+        :deep(h2) {
             font-weight: 600;
             border-top: 1px solid var(--bs-border-color);
             margin-bottom: 2rem;
@@ -116,7 +116,7 @@
             }
         }
 
-        :deep(> h3) {
+        :deep(h3) {
             padding-top: 1.25rem;
         }
 
@@ -171,7 +171,7 @@
             justify-content: space-around;
         }
 
-        :deep(.card-group > a), :deep(> h2 > a), :deep(> h3 > a) {
+        :deep(.card-group > a), :deep(h2 > a), :deep(h3 > a) {
             color: var(--bs-body-color);
         }
 

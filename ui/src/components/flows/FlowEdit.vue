@@ -66,10 +66,29 @@
             ...mapState("flow", ["total"])
         },
         methods: {
+            save() {
+                const options = {
+                    flow: this.flow,  // current flow data
+                    task: this.content // specific task data
+                };
+                this.$store.dispatch("updateFlowTask", options)
+                    .then(response => {
+                        console.log("Flow task updated successfully:", response);
+                    })
+                    .catch(error => {
+                        console.error("Error updating flow task:", error);
+                    });
+            },
             stopTour() {
                 this.$tours["guidedTour"]?.stop();
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
             },
+            loadFile() {
+                // existing functionality for loading the flow
+            },
+            updatePluginDocumentation() {
+                // existing functionality
+            }
         },
         created() {
             this.loadFile();

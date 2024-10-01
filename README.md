@@ -34,11 +34,11 @@
 
 ## 🌟 What is Kestra?
 
-Kestra is an open-source, event-driven orchestration platform that that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
+Kestra is an open-source, event-driven orchestration platform that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
 
 **Key Features:**
-- **Everything as Code and from the UI:** keep **workflows as code** with a full **Git Version Control** integration, even when building them from the UI.
-- **Event-Driven & Scheduled Workflows:** automate both **scheduled** and **real-time** event-driven workflows via a simple `trigger` definition in YAML.
+- **Everything as Code and from the UI:** keep **workflows as code** with a **Git Version Control** integration, even when building them from the UI.
+- **Event-Driven & Scheduled Workflows:** automate both **scheduled** and **real-time** event-driven workflows via a simple `trigger` definition.
 - **Declarative YAML Interface:** define workflows using a simple configuration in the **built-in code editor**.
 - **Rich Plugin Ecosystem:** hundreds of plugins built in to extract data from any database, cloud storage, or API, and **run scripts in any language**.
 - **Intuitive UI & Code Editor:** build and visualize workflows directly from the UI with syntax highlighting, auto-completion and real-time syntax validation.

@@ -132,7 +132,7 @@
                 type: Array,
                 default: undefined
             }
-        }, 
+        },
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),

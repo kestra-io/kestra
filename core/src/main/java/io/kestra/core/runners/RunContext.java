@@ -47,6 +47,12 @@ public abstract class RunContext {
     @JsonInclude
     public abstract Map<String, Object> getVariables();
 
+    /**
+     * Returns the list of inputs of type SECRET.
+     */
+    @JsonInclude
+    public abstract List<String> getSecretInputs();
+
     public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;

@@ -11,6 +11,7 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
@@ -30,7 +31,6 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
@@ -67,6 +67,7 @@ public class DefaultRunContext extends RunContext {
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
+    private List<String> secretInputs;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
@@ -98,6 +99,15 @@ public class DefaultRunContext extends RunContext {
         return variables;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public List<String> getSecretInputs() {
+        return secretInputs;
+    }
+
     @JsonIgnore
     public ApplicationContext getApplicationContext() {
         return applicationContext;
@@ -123,6 +133,17 @@ public class DefaultRunContext extends RunContext {
 
     void setLogger(final RunContextLogger logger) {
         this.logger = logger;
+
+        // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
+        if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
+            Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
+            for (String secretInput : secretInputs) {
+                String secret = (String) inputs.get(secretInput);
+                if (secret != null) {
+                    logger.usedSecret(secret);
+                }
+            }
+        }
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
@@ -488,6 +509,7 @@ public class DefaultRunContext extends RunContext {
         private String triggerExecutionId;
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
+        private List<String> secretInputs;
 
         /**
          * Builds the new {@link DefaultRunContext} object.
@@ -507,6 +529,7 @@ public class DefaultRunContext extends RunContext {
             context.storage = storage;
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
+            context.secretInputs = secretInputs;
             return context;
         }
     }

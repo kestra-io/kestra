@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.IdUtils;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 @Value
 @AllArgsConstructor
 @Builder
-public class ExecutionQueued {
+public class ExecutionQueued implements HasUID {
     String tenantId;
 
     @NotNull
@@ -37,6 +38,8 @@ public class ExecutionQueued {
         );
     }
 
+    /** {@inheritDoc **/
+    @Override
     public String uid() {
         return IdUtils.fromParts(this.tenantId, this.namespace, this.flowId, this.execution.getId());
     }

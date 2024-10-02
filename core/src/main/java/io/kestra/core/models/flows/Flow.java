@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
@@ -49,7 +50,7 @@ import java.util.stream.Stream;
 @ToString
 @EqualsAndHashCode
 @FlowValidation
-public class Flow extends AbstractFlow {
+public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
@@ -121,6 +122,9 @@ public class Flow extends AbstractFlow {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
+
+    /** {@inheritDoc **/
+    @Override
     @JsonIgnore
     public String uid() {
         return Flow.uid(this.getTenantId(), this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));

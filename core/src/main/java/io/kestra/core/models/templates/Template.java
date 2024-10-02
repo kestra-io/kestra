@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -33,7 +34,7 @@ import jakarta.validation.constraints.Pattern;
 @Introspected
 @ToString
 @EqualsAndHashCode
-public class Template implements DeletedInterface, TenantInterface {
+public class Template implements DeletedInterface, TenantInterface, HasUID {
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
@@ -70,6 +71,9 @@ public class Template implements DeletedInterface, TenantInterface {
     @Builder.Default
     private final boolean deleted = false;
 
+
+    /** {@inheritDoc **/
+    @Override
     @JsonIgnore
     public String uid() {
         return Template.uid(

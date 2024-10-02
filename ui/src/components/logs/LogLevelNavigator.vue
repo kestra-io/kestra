@@ -7,12 +7,14 @@
         <div class="d-flex align-items-center gap-2">
             <chevron-up class="medium-icon nav-button" @click="forwardEvent('previous')" />
             <chevron-down class="medium-icon nav-button" @click="forwardEvent('next')" />
+            <close class="medium-icon nav-button close-button" @click="forwardEvent('close')" v-if="isSelected" />
         </div>
     </div>
 </template>
 <script setup>
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import Close from "vue-material-design-icons/Close.vue";
 </script>
 <script>
     export default {
@@ -65,6 +67,13 @@
 
         .medium-icon {
             font-size: 1.1rem;
+        }
+
+        .close-button {
+            color: var(--el-text-color-secondary);
+            &:hover {
+                color: var(--el-text-color-primary);
+            }
         }
     }
 </style>

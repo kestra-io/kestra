@@ -39,14 +39,9 @@
                 required: true
             }
         },
-        watch: {
-            "$route.path": {
-                handler() {
-                    const normalizedPath = path.normalize(this.$route.path);
-                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
-                },
-                immediate: true
-            }
+        mounted() {
+            const normalizedPath = path.normalize(this.$route.path);
+            this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path)
         },
         data() {
             return {

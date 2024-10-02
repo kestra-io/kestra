@@ -704,8 +704,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) throws QueueException {
-        DefaultRunContext runContext = (DefaultRunContext) workerTask.getRunContext();
-        runContextInitializer.forWorker(runContext, workerTask);
+        DefaultRunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTask.getRunContext(), workerTask);;
 
         Logger logger = runContext.logger();
 

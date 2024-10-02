@@ -3,16 +3,23 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.jcodings.util.Hash;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.ConstraintViolationException;
+import reactor.core.publisher.Flux;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,17 +29,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class InputsTest extends AbstractMemoryRunnerTest {
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
+
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
         .put("enum", "ENUM_VALUE")
@@ -350,5 +359,23 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getInputs().get("json"), instanceOf(Map.class));
         assertThat(((Map<?, ?>) execution.getInputs().get("json")).size(), is(0));
         assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value"), is("{}"));
+    }
+
+    @Test
+    void shouldNotLogSecretInput() throws TimeoutException, QueueException {
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {});
+
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "input-log-secret"
+        );
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        var logEntry = receive.blockLast();
+        assertThat(logEntry, notNullValue());
+        assertThat(logEntry.getMessage(), is("This is my secret: ********"));
     }
 }

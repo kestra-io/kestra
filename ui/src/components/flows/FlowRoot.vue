@@ -8,6 +8,9 @@
             :tabs="tabs"
         />
     </template>
+    <div v-if="isTriggerHovered && !flow.triggers" class="trigger-hover-popup">
+        <p>Add a trigger in the editor list</p>
+    </div>
 </template>
 
 <script>
@@ -42,6 +45,7 @@
                 dependenciesCount: undefined,
                 expandedSubflows: [],
                 deleted: false,
+                isTriggerHovered: false
             };
         },
         watch: {
@@ -202,6 +206,8 @@
                         component: FlowTriggers,
                         title: this.$t("triggers"),
                         disabled: !this.flow.triggers,
+                        onMouseenter: this.flow.triggers ? null : () => this.showTriggerHoverPopup(true),
+                        onMouseleave: this.flow.triggers ? null : () => this.showTriggerHoverPopup(false),
                     });
                 }
 
@@ -267,6 +273,11 @@
 
                 return tabs;
             },
+            showTriggerHoverPopup(visible) {
+                if (!this.flow.triggers) {
+                    this.isTriggerHovered = visible;
+                }
+            },
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
             },
@@ -330,5 +341,18 @@
 }
 .body-color {
     color: var(--bs-body-color);
+}
+.trigger-hover-popup {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    white-space: nowrap;
 }
 </style>

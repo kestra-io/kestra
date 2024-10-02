@@ -254,13 +254,6 @@
                     .then(() => {
                         this.statsReady = true;
                     });
-            },
-            deleteLogs() {
-                this.$toast().confirm(
-                    this.$t("delete_all_logs"),
-                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
-                    () => {}
-                )
             }
         },
     };
@@ -293,9 +286,5 @@
                 border-top: 1px solid var(--bs-border-color);
             }
         }
-    }
-
-    .delete-logs-btn {
-        width: 200px;
     }
 </style>

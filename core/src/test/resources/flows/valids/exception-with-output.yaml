@@ -1,0 +1,7 @@
+id: exception-with-output
+namespace: io.kestra.tests
+
+tasks:
+  - id: exception
+    type: io.kestra.core.runners.test.TaskThatFail
+    message: Oh no!

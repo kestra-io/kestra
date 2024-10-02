@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.RunnableTaskException;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -82,6 +83,9 @@ public class WorkerTaskThread extends AbstractWorkerThread {
         } catch (dev.failsafe.TimeoutExceededException e) {
             kill(false);
             this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout));
+        } catch (RunnableTaskException e) {
+            taskOutput = e.getOutput();
+            this.exceptionHandler(this, e);
         }
     }
 }

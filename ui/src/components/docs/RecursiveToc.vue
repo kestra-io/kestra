@@ -1,5 +1,5 @@
 <template>
-    <el-collapse accordion v-model="openedDocs">
+    <el-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
             v-for="child in parent.children"
@@ -39,9 +39,14 @@
                 required: true
             }
         },
-        mounted() {
-            const normalizedPath = path.normalize(this.$route.path);
-            this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path)
+        watch: {
+            "$route.path": {
+                handler() {
+                    const normalizedPath = path.normalize(this.$route.path);
+                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
+                },
+                immediate: true
+            }
         },
         data() {
             return {

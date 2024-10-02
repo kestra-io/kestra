@@ -862,6 +862,7 @@
     "active-slots": "Ranuras activas",
     "concurrency": "Concurrente",
     "open sidebar": "abrir barra lateral",
-    "close sidebar": "cerrar barra lateral"
+    "close sidebar": "cerrar barra lateral",
+    "testing_new_pr": "Este es un ejemplo para probar el PR."
   }
 }

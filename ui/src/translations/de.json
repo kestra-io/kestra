@@ -862,6 +862,7 @@
     "active-slots": "Aktive Slots",
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
-    "close sidebar": "Seitenleiste schließen"
+    "close sidebar": "Seitenleiste schließen",
+    "testing_new_pr": "Dies ist ein Beispiel zum Testen des PR."
   }
 }

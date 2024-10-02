@@ -862,6 +862,7 @@
     "active-slots": "활성 슬롯",
     "concurrency": "동시성",
     "open sidebar": "사이드바 열기",
-    "close sidebar": "사이드바 닫기"
+    "close sidebar": "사이드바 닫기",
+    "testing_new_pr": "이것은 PR 테스트를 위한 예제입니다."
   }
 }

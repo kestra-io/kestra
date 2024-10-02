@@ -862,6 +862,7 @@
     "active-slots": "Aktywne sloty",
     "concurrency": "Współbieżność",
     "open sidebar": "otwórz pasek boczny",
-    "close sidebar": "zamknij pasek boczny"
+    "close sidebar": "zamknij pasek boczny",
+    "testing_new_pr": "Oto przykład testowania PR."
   }
 }

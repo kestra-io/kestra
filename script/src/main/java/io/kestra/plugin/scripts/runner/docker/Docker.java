@@ -480,29 +480,17 @@ public class Docker extends TaskRunner {
                 Await.until(ended::get);
 
                 if (exitCode != 0) {
-                    throw new TaskException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
+                    if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
+                        downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
+                    }
+
+                    throw new TaskException(exitCode, defaultLogConsumer);
                 } else if (logger.isDebugEnabled()) {
-                    logger.debug("Command succeed with code {}", exitCode);
+                    logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                // download output files
                 if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
-                    CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(exec.getId(), windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
-                    try (InputStream is = copyArchiveFromContainerCmd.exec();
-                         TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
-                        ArchiveEntry entry;
-                        while ((entry = tar.getNextEntry()) != null) {
-                            // each entry contains the working directory as the first part, we need to remove it
-                            Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() +1)));
-                            if (entry.isDirectory()) {
-                                if (!Files.exists(extractTo)) {
-                                    Files.createDirectories(extractTo);
-                                }
-                            } else {
-                                Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
-                            }
-                        }
-                    }
+                    downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
                 }
 
                 return new RunnerResult(exitCode, defaultLogConsumer);
@@ -528,6 +516,25 @@ public class Docker extends TaskRunner {
                     }
                 } catch (Exception ignored) {
 
+                }
+            }
+        }
+    }
+
+    private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
+        try (InputStream is = copyArchiveFromContainerCmd.exec();
+             TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
+            ArchiveEntry entry;
+            while ((entry = tar.getNextEntry()) != null) {
+                // each entry contains the working directory as the first part, we need to remove it
+                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() +1)));
+                if (entry.isDirectory()) {
+                    if (!Files.exists(extractTo)) {
+                        Files.createDirectories(extractTo);
+                    }
+                } else {
+                    Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         }

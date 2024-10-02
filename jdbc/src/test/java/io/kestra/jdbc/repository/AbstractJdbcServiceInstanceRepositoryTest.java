@@ -54,7 +54,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         repository.save(instance);
 
         // Then
-        Optional<ServiceInstance> result = repository.findById(instance.id());
+        Optional<ServiceInstance> result = repository.findById(instance.uid());
         Assertions.assertEquals(Optional.of(instance), result);
     }
 
@@ -68,7 +68,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         repository.delete(instance);
 
         // Then
-        Optional<ServiceInstance> result = repository.findById(instance.id());
+        Optional<ServiceInstance> result = repository.findById(instance.uid());
         Assertions.assertEquals(Optional.empty(), result);
     }
 
@@ -76,7 +76,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     protected void shouldFindByServiceId() {
         // Given
         AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::save);
-        String uuid = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.EmptyServiceInstance.id();
+        String uuid = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.EmptyServiceInstance.uid();
 
         // When
         Optional<ServiceInstance> result = repository.findById(uuid);

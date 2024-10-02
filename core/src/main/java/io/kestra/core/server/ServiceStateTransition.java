@@ -27,7 +27,7 @@ public final class ServiceStateTransition {
                                                        @Nullable final ImmutablePair<ServiceInstance, ServiceInstance> result) {
         if (result == null) {
             LOG.debug("Failed to transition service [id={}, type={}, hostname={}] to {}. Cause: {}",
-                initial.id(),
+                initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
                 newState,
@@ -41,7 +41,7 @@ public final class ServiceStateTransition {
 
         if (newInstance == null) {
             LOG.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
-                initial.id(),
+                initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
                 oldInstance.state(),
@@ -55,7 +55,7 @@ public final class ServiceStateTransition {
         if (!oldInstance.state().equals(newInstance.state())) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Service [id={}, type={}, hostname={}] transition from {} to {}.",
-                    initial.id(),
+                    initial.uid(),
                     initial.type(),
                     initial.server().hostname(),
                     oldInstance.state(),

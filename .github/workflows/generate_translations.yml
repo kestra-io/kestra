@@ -1,9 +1,8 @@
 name: Generate Translations
 
 on:
-  push:
-    branches:
-      - develop
+  pull_request:
+    types: [opened, synchronize]
     paths:
       - 'ui/src/translations/en.json'
 
@@ -12,13 +11,14 @@ env:
 
 jobs:
   generate-translations:
-    name: Generate Translations and Create PR
+    name: Generate Translations and Add Commit to PR
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 10  # Ensures that at least 10 commits are fetched for comparison
+        ref: ${{ github.head_ref }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -31,15 +31,12 @@ jobs:
     - name: Generate translations
       run: python ui/src/translations/generate_translations.py
 
-    - name: Commit, push changes, and create PR
+    - name: Commit and push changes to existing PR
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         git config --global user.name "GitHub Action"
         git config --global user.email "actions@github.com"
-        BRANCH_NAME="translations/update-translations-$(date +%s)"
-        git checkout -b $BRANCH_NAME
         git add ui/src/translations/*.json
-        git commit -m "Auto-generate translations from en.json"
-        git push --set-upstream origin $BRANCH_NAME
-        gh pr create --title "Auto-generate translations from en.json" --body "This PR was created automatically by a GitHub Action." --base develop --head $BRANCH_NAME --assignee anna-geller --reviewer anna-geller
+        git commit -m "chore(translations): auto generate values for languages other than english"
+        git push origin ${{ github.head_ref }}

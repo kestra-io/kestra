@@ -240,6 +240,7 @@
     "confirm password": "Potwierdź hasło",
     "email length constraint": "Email nie może przekraczać 256 znaków",
     "password length constraint": "Hasło nie może przekraczać 256 znaków",
+    "password empty constraint": "Nieprawidłowa nazwa użytkownika lub hasło",
     "passwords do not match": "Hasła nie pasują do siebie",
     "avg duration": "Średni czas trwania wykonania",
     "neutral trend": "Stabilny",
@@ -690,7 +691,7 @@
           }
         },
         "localization": {
-          "label": "Ustawienia Daty i Czasu",
+          "label": "Język i region",
           "note": "Zauważ, że to ustawienie jest używane do wyświetlania właściwości daty i czasu w UI. Aby zaplanować swoje flows w strefie czasowej innej niż UTC, upewnij się, że ustawisz właściwość strefy czasowej w trigger harmonogramu w kodzie flow lub w domyślnych ustawieniach pluginów.",
           "fields": {
             "time_zone": "Strefa Czasowa",
@@ -848,7 +849,8 @@
       "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu.",
       "no_flow_description": "Ten flow nie ma opisu.",
       "description": "Opis",
-      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget."
+      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget.",
+      "see_all": "Zobacz wszystkie"
     },
     "delete_log": "Czy na pewno chcesz usunąć log?",
     "docs": "Dokumentacja",

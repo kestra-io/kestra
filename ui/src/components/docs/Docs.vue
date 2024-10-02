@@ -2,7 +2,12 @@
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <div class="d-flex full-height">
         <Toc />
-        <MDCRenderer class="flex-grow-1 content" v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+        <div class="container main-container" v-if="ast?.body">
+            <div class="content">
+                <h1>{{ routeInfo.title }}</h1>
+                <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -13,7 +18,6 @@
     import {mapGetters} from "vuex";
     import Toc from "./Toc.vue";
     import {getCurrentInstance} from "vue";
-    import path from "path-browserify";
 
     const parse = useMarkdownParser();
 
@@ -22,10 +26,7 @@
             ...mapGetters("doc", ["pageMetadata"]),
             path() {
                 let routePath = this.$route.params.path;
-                if (routePath === "") {
-                    return undefined;
-                }
-                return path.normalize(routePath);
+                return routePath && routePath.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined;
             },
             pathParts() {
                 return this.path?.split("/") ?? [];
@@ -87,7 +88,11 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .content {
-        margin: 64px 200px;
+        margin: $spacer;
+
+        h1 {
+            margin-bottom: $spacer;
+        }
 
         #{--bs-link-color}: #8405FF;
         #{--bs-link-color-rgb}: to-rgb(#8405FF);
@@ -97,7 +102,7 @@
             #{--bs-link-color-rgb}: to-rgb(#BBBBFF);
         }
 
-        :deep(> h2) {
+        :deep(h2) {
             font-weight: 600;
             border-top: 1px solid var(--bs-border-color);
             margin-bottom: 2rem;
@@ -111,7 +116,7 @@
             }
         }
 
-        :deep(> h3) {
+        :deep(h3) {
             padding-top: 1.25rem;
         }
 
@@ -132,16 +137,13 @@
         }
 
         :deep(.code-block) {
-            background-color: var(--bs-card-bg);
-            border: 1px solid var(--bs-border-color);
-
             .language {
                 color: var(--bs-tertiary-color);
             }
         }
 
         :deep(code) {
-            white-space: pre;
+            white-space: break-spaces;
 
             &:not(.code-block code) {
                 font-weight: 700;
@@ -149,11 +151,6 @@
                 color: var(--bs-body-color);
                 border: 1px solid var(--border-killing)
             }
-        }
-
-        :deep(code .line) {
-            display: block;
-            min-height: 1rem;
         }
 
         :deep(p > a) {
@@ -174,7 +171,7 @@
             justify-content: space-around;
         }
 
-        :deep(.card-group > a), :deep(> h2 > a), :deep(> h3 > a) {
+        :deep(.card-group > a), :deep(h2 > a), :deep(h3 > a) {
             color: var(--bs-body-color);
         }
 

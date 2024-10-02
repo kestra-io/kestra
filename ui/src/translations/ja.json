@@ -240,6 +240,7 @@
     "confirm password": "パスワードを確認",
     "email length constraint": "メールは256文字を超えてはいけません",
     "password length constraint": "パスワードは256文字を超えてはいけません",
+    "password empty constraint": "ユーザー名またはパスワードが間違っています",
     "passwords do not match": "パスワードが一致しません",
     "avg duration": "平均実行時間",
     "neutral trend": "安定",
@@ -690,7 +691,7 @@
           }
         },
         "localization": {
-          "label": "日付と時刻の設定",
+          "label": "言語と地域",
           "note": "この設定はUIでの日付と時刻のプロパティを表示するために使用されます。UTC以外のタイムゾーンでflowをスケジュールするには、flowコードやプラグインのデフォルトでSchedule triggerのtimezoneプロパティを設定してください。",
           "fields": {
             "time_zone": "タイムゾーン",
@@ -848,7 +849,8 @@
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
       "description": "説明",
-      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。",
+      "see_all": "すべて表示"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",

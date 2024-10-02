@@ -47,3 +47,16 @@
 //noinspection CssUnknownTarget
 @import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap");
 
+// skiki
+.shiki {
+    font-size: 0.875em;
+
+    &.github-dark {
+        background-color: var(--bs-card-bg) !important;
+        border: 1px solid var(--bs-border-color) !important;
+    }
+
+    .line {
+        display: inline;
+    }
+}

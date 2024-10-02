@@ -253,17 +253,17 @@
                     });
                 }
 
-                tabs.push(                    {
-                    name: "auditlogs",
-                    title: this.$t("auditlogs"),
-                    locked: true
-                });
-
                 tabs.push({
                     name: "concurrency",
                     title: this.$t("concurrency"),
                     component: FlowConcurrency
                 })
+
+                tabs.push(                    {
+                    name: "auditlogs",
+                    title: this.$t("auditlogs"),
+                    locked: true
+                });
 
                 return tabs;
             },

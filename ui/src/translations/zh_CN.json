@@ -240,6 +240,7 @@
     "confirm password": "确认密码",
     "email length constraint": "电子邮件不得超过256个字符",
     "password length constraint": "密码不得超过256个字符",
+    "password empty constraint": "用户名或密码不正确",
     "passwords do not match": "密码不匹配",
     "avg duration": "平均执行时间",
     "neutral trend": "稳定",
@@ -690,7 +691,7 @@
           }
         },
         "localization": {
-          "label": "日期和时间设置",
+          "label": "语言和地区",
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。",
           "fields": {
             "time_zone": "时区",
@@ -848,7 +849,8 @@
       "trigger_disabled": "此trigger只能通过代码启用。",
       "no_flow_description": "此flow没有描述。",
       "description": "描述",
-      "not_auth": "您没有查看此小部件的必要权限。"
+      "not_auth": "您没有查看此小部件的必要权限。",
+      "see_all": "查看全部"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",

@@ -214,14 +214,14 @@
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
-      "zoom-out": "Dézommer",
+      "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut",
       "zoom-fit": "Voir tout"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
-    "specific task": "Tâche specifique",
+    "specific task": "Tâche spécifique",
     "display output for specific task": "Afficher les sorties pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
@@ -239,6 +239,7 @@
     "confirm password": "Confirmer le mot de passe",
     "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
     "password length constraint": "Le mot de passe ne doit pas dépasser 256 caractères.",
+    "password empty constraint": "Nom d'utilisateur ou mot de passe incorrect",
     "passwords do not match": "Les mots de passe ne correspondent pas",
     "avg duration": "Durée moyenne d'exécution",
     "neutral trend": "Stable",
@@ -623,12 +624,12 @@
     "Set labels": "Ajouter des labels",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
-    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
+    "bulk set labels": "Êtes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
     "dependencies loaded": "Dépendances chargées",
     "loaded x dependencies": "{count} dépendances chargées",
     "security_advice": {
       "title": "Vos données ne sont pas protégées !",
-      "content": "Activer l'authentication basique pour protéger votre instance.",
+      "content": "Activer l'authentification basique pour protéger votre instance.",
       "switch_text": "Ne plus montrer",
       "enable": "Activer l'authentification"
     },
@@ -689,7 +690,7 @@
           }
         },
         "localization": {
-          "label": "Paramètres de Date et d'Heure",
+          "label": "Langue et région",
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre",
           "fields": {
             "time_zone": "Fuseau Horaire",
@@ -847,7 +848,8 @@
       "trigger_disabled": "Ce trigger ne peut être activé que par le code.",
       "no_flow_description": "Ce flow n'a pas de description.",
       "description": "Description",
-      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget."
+      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget.",
+      "see_all": "Voir tout"
     },
     "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
     "docs": "Documentation",

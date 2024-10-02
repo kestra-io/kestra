@@ -35,7 +35,7 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <a
-                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
@@ -49,13 +49,13 @@
                                 <ProgressQuestion class="align-middle" /> {{ $t('Reset guided tour') }}
                             </a>
 
-                            <a
-                                href="https://kestra.io/docs?utm_source=app&utm_content=top-nav-bar"
-                                target="_blank"
+                            <router-link
                                 class="d-flex gap-2 el-dropdown-menu__item"
+                                :to="{name: 'docs/view'}"
                             >
                                 <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
-                            </a>
+                            </router-link>
+
                             <a
                                 href="https://github.com/kestra-io/kestra/issues"
                                 target="_blank"
@@ -64,14 +64,14 @@
                                 <Github class="align-middle" /> {{ $t("documentation.github") }}
                             </a>
                             <a
-                                href="https://kestra.io/slack?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >
                                 <Slack class="align-middle" /> {{ $t("join community") }}
                             </a>
                             <a
-                                href="https://kestra.io/demo?utm_source=app&utm_content=top-nav-bar"
+                                href="https://kestra.io/demo?utm_source=app&utm_campaign=sales&utm_content=top-nav-bar"
                                 target="_blank"
                                 class="d-flex gap-2 el-dropdown-menu__item"
                             >

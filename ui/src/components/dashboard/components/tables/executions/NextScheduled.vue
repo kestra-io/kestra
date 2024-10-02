@@ -1,8 +1,15 @@
 <template>
     <div class="p-4">
-        <span class="fs-6 fw-bold">
-            {{ t("dashboard.next_scheduled_executions") }}
-        </span>
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fs-6 fw-bold">
+                {{ t("dashboard.next_scheduled_executions") }}
+            </span>
+            <RouterLink :to="{name: 'admin/triggers'}">
+                <el-button type="primary" size="small" text>
+                    {{ t("dashboard.see_all") }}
+                </el-button>
+            </RouterLink>
+        </div>
 
         <div class="pt-4">
             <el-table

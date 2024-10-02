@@ -63,7 +63,7 @@
                                 <log-line
                                     @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
-                                    :cursor="this.logCursor === `${currentTaskRunIndex}/${index}`"
+                                    :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
                                     :key="index"
                                     :level="level"

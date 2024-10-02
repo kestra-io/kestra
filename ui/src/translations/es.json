@@ -240,6 +240,7 @@
     "confirm password": "Confirmar contraseña",
     "email length constraint": "El correo electrónico no debe exceder los 256 caracteres",
     "password length constraint": "La contraseña no debe exceder los 256 caracteres",
+    "password empty constraint": "Nombre de usuario o contraseña incorrectos",
     "passwords do not match": "Las contraseñas no coinciden",
     "avg duration": "Duración promedio de ejecución",
     "neutral trend": "Estable",
@@ -690,7 +691,7 @@
           }
         },
         "localization": {
-          "label": "Configuración de Fecha y Hora",
+          "label": "Idioma y Región",
           "note": "Ten en cuenta que esta configuración se usa para mostrar las propiedades de fecha y hora en la UI. Para programar tus flows en una zona horaria diferente a UTC, asegúrate de configurar la propiedad de zona horaria en el trigger de Schedule en tu código de flow o en los predeterminados de tu plugin.",
           "fields": {
             "time_zone": "Zona Horaria",
@@ -848,7 +849,8 @@
       "trigger_disabled": "Este trigger solo puede ser habilitado a través de código.",
       "no_flow_description": "Este flow no tiene descripción.",
       "description": "Descripción",
-      "not_auth": "No tienes los permisos necesarios para ver este widget."
+      "not_auth": "No tienes los permisos necesarios para ver este widget.",
+      "see_all": "Ver todo"
     },
     "delete_log": "¿Está seguro de que desea eliminar el log?",
     "docs": "Documentos",

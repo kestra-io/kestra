@@ -259,6 +259,7 @@
     "confirm password": "Confirm password",
     "email length constraint": "Email must not exceed 256 characters",
     "password length constraint": "Password must not exceed 256 characters",
+    "password empty constraint": "Incorrect username or password",
     "passwords do not match": "Passwords do not match",
     "avg duration": "Avg. execution duration",
     "neutral trend": "Stable",
@@ -714,7 +715,7 @@
           }
         },
         "localization": {
-          "label": "Date and Time Settings",
+          "label": "Language and Region",
           "note": "Note that this setting is used for displaying date and time properties in the UI. To schedule your flows in a timezone different than UTC, make sure to set the timezone property on the Schedule trigger in your flow code or your plugin defaults.",
           "fields": {
             "time_zone": "Time Zone",
@@ -859,6 +860,7 @@
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
       "executions_in_progress": "Executions In Progress",
+      "see_all":"See all",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",

@@ -14,7 +14,6 @@
                 </slot>
             </h1>
         </div>
-        
         <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />

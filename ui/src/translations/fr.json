@@ -214,14 +214,14 @@
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
-      "zoom-out": "Dézommer",
+      "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut",
       "zoom-fit": "Voir tout"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
-    "specific task": "Tâche specifique",
+    "specific task": "Tâche spécifique",
     "display output for specific task": "Afficher les sorties pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
@@ -624,12 +624,12 @@
     "Set labels": "Ajouter des labels",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
-    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
+    "bulk set labels": "Êtes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
     "dependencies loaded": "Dépendances chargées",
     "loaded x dependencies": "{count} dépendances chargées",
     "security_advice": {
       "title": "Vos données ne sont pas protégées !",
-      "content": "Activer l'authentication basique pour protéger votre instance.",
+      "content": "Activer l'authentification basique pour protéger votre instance.",
       "switch_text": "Ne plus montrer",
       "enable": "Activer l'authentification"
     },

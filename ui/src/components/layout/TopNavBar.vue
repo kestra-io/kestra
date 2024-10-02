@@ -20,13 +20,12 @@
                 <global-search class="trigger-flow-guided-step" />
             </div>
             <div class="d-none d-lg-flex align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0 > 0" @click="deleteLogs()" class=" delete-logs-btn">
+                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
                 </el-button>
             </div>
             <slot name="additional-right" />
-            
             <div class="d-flex fixed-buttons">
                 <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
@@ -133,16 +132,12 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
-            },
-            showDeleteButton: {
-                type: Boolean,
-                default: false
-            },
+            }
         }, 
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
-            ...mapState("log", ["logs", "total", "level"]),
+            ...mapState("log", ["logs"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -153,7 +148,7 @@
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
             },
             shouldDisplayDeleteButton() {
-                return this.$route.name === "flows/update"
+                return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
             },
         },
         methods: {

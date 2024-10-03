@@ -863,8 +863,6 @@
     "concurrency": "Конкурентность",
     "open sidebar": "открыть боковую панель",
     "close sidebar": "закрыть боковую панель",
-    "change_status": "Изменить статус",
-    "testing": "Тестирование",
-    "dashboard_initial": "Начальное тестирование Dash."
+    "change_status": "Изменить статус"
   }
 }

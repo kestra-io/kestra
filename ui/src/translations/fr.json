@@ -862,8 +862,6 @@
     "concurrency": "Concurrence",
     "open sidebar": "ouvrir la barre latérale",
     "close sidebar": "fermer la barre latérale",
-    "change_status": "Changer le statut",
-    "testing": "Test en cours",
-    "dashboard_initial": "Test initial de Dash."
+    "change_status": "Changer le statut"
   }
 }

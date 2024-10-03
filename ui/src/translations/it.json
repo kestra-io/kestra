@@ -863,8 +863,6 @@
     "concurrency": "Concurrency",
     "open sidebar": "apri barra laterale",
     "close sidebar": "chiudi barra laterale",
-    "change_status": "Cambia stato",
-    "testing": "Test in corso",
-    "dashboard_initial": "Test iniziale di Dash."
+    "change_status": "Cambia stato"
   }
 }

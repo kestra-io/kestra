@@ -863,8 +863,6 @@
     "concurrency": "並行性",
     "open sidebar": "サイドバーを開く",
     "close sidebar": "サイドバーを閉じる",
-    "change_status": "ステータスを変更",
-    "testing": "テスト",
-    "dashboard_initial": "Dashの初期テスト。"
+    "change_status": "ステータスを変更"
   }
 }

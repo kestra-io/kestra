@@ -879,8 +879,6 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "change_status": "Change status",
-    "testing": "Testing",
-    "dashboard_initial": "Initial tesitng of Dash."
+    "change_status": "Change status"
   }
 }

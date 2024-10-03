@@ -863,8 +863,6 @@
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
-    "change_status": "Status ändern",
-    "testing": "Testen",
-    "dashboard_initial": "Erste Tests von Dash."
+    "change_status": "Status ändern"
   }
 }

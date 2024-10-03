@@ -863,8 +863,6 @@
     "concurrency": "동시성",
     "open sidebar": "사이드바 열기",
     "close sidebar": "사이드바 닫기",
-    "change_status": "상태 변경",
-    "testing": "테스팅",
-    "dashboard_initial": "Dash의 초기 테스트."
+    "change_status": "상태 변경"
   }
 }

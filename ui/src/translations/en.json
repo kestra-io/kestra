@@ -15,7 +15,6 @@
     "flow": "Flow",
     "invalid source": "Invalid source code",
     "update": "Update",
-    "update ok": "is updated",
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
@@ -28,6 +27,7 @@
         "details": "Check the Revisions tab for more details about the latest version."
       },
       "create": {
+        "test_one": "Test one",
         "title": "Flow already exists",
         "description": "A Flow with the same id / namespace already exists.",
         "details": "Saving to override and force the creation of a new revision."

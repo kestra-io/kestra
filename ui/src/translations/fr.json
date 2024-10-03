@@ -28,7 +28,6 @@
         "details": "Regardez l'onglet Révisions pour plus de détails sur la dernière version."
       },
       "create": {
-        "one_more": "One more", 
         "title": "Le flux existe déjà",
         "description": "Un Flow avec le même id / namespace existe déjà.",
         "details": "Sauvegarder pour l'écraser et forcer la création d'une révision."
@@ -48,6 +47,7 @@
     "delete": "Effacer",
     "deleted": "Effacement réussi",
     "deleted confirm": "<em>{name}</em> est effacé !",
+    "Select namespace": "Espace de nom",
     "Add flow": "Ajouter un flow",
     "add": "Ajouter",
     "copy": "Copier",

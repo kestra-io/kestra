@@ -17,22 +17,37 @@ jobs:
     name: Generate Translations
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 10
-        ref: ${{ github.head_ref }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          ref: ${{ github.head_ref }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-    - name: Install dependencies
-      run: pip install gitpython openai
+      - name: Install dependencies
+        run: pip install gitpython openai
 
-    - name: Generate translations
-      run: python ui/src/translations/generate_translations.py
+      - name: Generate translations
+        run: python ui/src/translations/generate_translations.py
+
+      - name: Check for changes in en.json
+        id: check_changes
+        run: |
+          git diff --exit-code ui/src/translations/en.json || echo "changes detected"
+
+      - name: Output change detection result
+        run: |
+          if [[ "${{ steps.check_changes.outcome }}" == "success" ]]; then
+            echo "No changes detected in en.json."
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in en.json."
+            echo "changes=true" >> $GITHUB_ENV
+          fi
 
   commit:
     name: Commit directly to PR

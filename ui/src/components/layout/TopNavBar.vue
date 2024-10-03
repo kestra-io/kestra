@@ -18,6 +18,12 @@
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
+            <div class="d-none d-lg-flex">
+                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()">
+                    <TrashCan class="me-2" />
+                    <span>{{ $t("delete logs") }}</span>
+                </el-button>
+            </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons">
                 <el-dropdown popper-class="">
@@ -100,6 +106,7 @@
     import Update from "vue-material-design-icons/Update.vue";
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
 
     export default {
         components: {
@@ -113,6 +120,7 @@
             Update,
             ProgressQuestion,
             GlobalSearch,
+            TrashCan,
             Impersonating
         },
         props: {
@@ -128,6 +136,7 @@
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
+            ...mapState("log", ["logs"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -136,7 +145,10 @@
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
-            }
+            },
+            shouldDisplayDeleteButton() {
+                return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
+            },
         },
         methods: {
             restartGuidedTour() {
@@ -144,6 +156,13 @@
                 this.$store.commit("core/setGuidedProperties", {tourStarted: false});
 
                 this.$tours["guidedTour"]?.start();
+            },
+            deleteLogs() {
+                this.$toast().confirm(
+                    this.$t("delete_all_logs"),
+                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
+                    () => {}
+                )
             }
         }
     };

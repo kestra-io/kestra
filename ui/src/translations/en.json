@@ -860,6 +860,7 @@
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
       "executions_in_progress": "Executions In Progress",
+      "see_all":"See all",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",

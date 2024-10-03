@@ -18,6 +18,8 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -68,10 +70,11 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
         flowService.checkAllowedNamespace(runContext.tenantId(), renderedNamespace, runContext.tenantId(), runContext.flowInfo().namespace());
 
         String renderedPrefix = runContext.render(this.prefix);
+        Predicate<String> filter = renderedPrefix == null ? key -> true : key -> key.startsWith(renderedPrefix);
 
         List<String> keys = runContext.namespaceKv(renderedNamespace).list().stream()
             .map(KVEntry::key)
-            .filter(key -> key.startsWith(renderedPrefix))
+            .filter(filter)
             .toList();
 
         return Output.builder()

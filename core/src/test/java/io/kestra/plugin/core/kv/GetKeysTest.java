@@ -23,6 +23,31 @@ public class GetKeysTest {
     RunContextFactory runContextFactory;
 
     @Test
+    void shouldGetAllKeys() throws Exception {
+        // Given
+        String namespace = IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespace)
+        ));
+
+        GetKeys getKeys = GetKeys.builder()
+            .id(GetKeys.class.getSimpleName())
+            .type(GetKeys.class.getName())
+            .build();
+
+        final KVStore kv = runContext.namespaceKv(namespace);
+        kv.put("test-key", new KVValueAndMetadata(null, "value"));
+        kv.put("test-second-key", new KVValueAndMetadata(null, "value"));
+        kv.put("another-key", new KVValueAndMetadata(null, "value"));
+
+        // When
+        GetKeys.Output run = getKeys.run(runContext);
+
+        // Then
+        assertThat(run.getKeys(), containsInAnyOrder("test-key", "test-second-key", "another-key"));
+    }
+
+    @Test
     void shouldGetKeysGivenMatchingPrefix() throws Exception {
         // Given
         String namespace = IdUtils.create();

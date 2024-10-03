@@ -24,7 +24,7 @@ dependencies {
     def flyingSaucerVersion = "9.9.4"
 
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
-    api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.17.2")
+    api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.0")
     api platform("io.micronaut.platform:micronaut-platform:4.6.2")
     api platform("io.qameta.allure:allure-bom:2.29.0")
 
@@ -61,7 +61,7 @@ dependencies {
         // Other libs
         api("org.projectlombok:lombok:1.18.34")
         api("org.codehaus.janino:janino:3.1.12")
-        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.0'
+        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.1'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
@@ -80,7 +80,7 @@ dependencies {
         api "org.eclipse.aether:aether-transport-file:$aetherVersion"
         api "org.eclipse.aether:aether-transport-http:$aetherVersion"
         api 'org.apache.maven:maven-aether-provider:3.3.9'
-        api 'com.github.oshi:oshi-core:6.6.4'
+        api 'com.github.oshi:oshi-core:6.6.5'
         api 'io.pebbletemplates:pebble:3.2.2'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion

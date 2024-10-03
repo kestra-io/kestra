@@ -32,7 +32,7 @@ html.dark {
     #{--bs-link-color-rgb}: to-rgb($secondary);
     #{--bs-tertiary-color}: #C3BBE3;
 
-    $levels: info, running, danger, warning, success;
+    $levels: info, running, danger, warning;
     @each $level in $levels {
         .bg-#{$level} {
             #{--bs-bg-opacity}: 0.2;

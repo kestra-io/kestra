@@ -3,16 +3,16 @@
     <template v-if="!pluginIsSelected">
         <plugin-home v-if="plugins" :plugins="plugins" />
     </template>
-    <section v-else class="container">
-        <el-row :gutter="15">
-            <el-col :span="4">
-                <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
-            </el-col>
-            <el-col :offset="1" :span="19" class="markdown" v-loading="isLoading">
+    <docs-layout v-else>
+        <template #menu>
+            <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
+        </template>
+        <template #content>
+            <div class="markdown" v-loading="isLoading">
                 <markdown :source="plugin.markdown" :permalink="true" />
-            </el-col>
-        </el-row>
-    </section>
+            </div>
+        </template>
+    </docs-layout>
 </template>
 
 <script>
@@ -22,10 +22,12 @@
     import Toc from "./Toc.vue"
     import {mapState} from "vuex";
     import PluginHome from "./PluginHome.vue";
+    import DocsLayout from "../docs/DocsLayout.vue";
 
     export default {
         mixins: [RouteContext],
         components: {
+            DocsLayout,
             PluginHome,
             Markdown,
             Toc,
@@ -95,8 +97,3 @@
     };
 </script>
 
-<style lang="scss" scoped>
-    section {
-        overflow-x: hidden;
-    }
-</style>

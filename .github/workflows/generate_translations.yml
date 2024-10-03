@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize]
     paths:
       - "ui/src/translations/en.json"
+
   push:
     branches:
       - develop
@@ -29,11 +30,19 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install gitpython openai
 
       - name: Generate translations
         run: python ui/src/translations/generate_translations.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Check keys matching
+        run: node ui/src/translations/check.js
 
       - name: Set up Git
         run: |
@@ -67,11 +76,19 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install gitpython openai
 
       - name: Generate translations
         run: python ui/src/translations/generate_translations.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Check keys matching
+        run: node ui/src/translations/check.js
 
       - name: Set up Git
         run: |

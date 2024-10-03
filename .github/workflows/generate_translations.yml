@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 10
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -50,7 +50,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(translations): auto generate values for languages other than english"
-          git push origin ${{ github.head_ref }}
+          git push origin ${{ github.ref_name }}
 
   pull_request:
     name: Open PR for a forked repository

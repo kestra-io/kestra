@@ -6,11 +6,43 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public final class ServiceStateTransition {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceStateTransition.class);
+
+    /**
+     * Static helper method for validating a state transition for an existing service instance.
+     *
+     * @param from     The current state of the service instance.
+     * @param to       The new state of the service instance.
+     * @param newState The expected new state
+     * @param reason   The reason of the state transition.
+     * @return a new {@link Response}.
+     */
+    public static Response maybeTransitionServiceState(@Nullable final ServiceInstance from,
+                                                       final ServiceInstance to,
+                                                       final Service.ServiceState newState,
+                                                       final String reason) {
+        // State transition should be aborted - no existing service state.
+        if (from == null) {
+            return logTransitionAndGetResponse(to, newState, null);
+        }
+
+        // State transition must succeed
+        if (from.state().isValidTransition(newState)) {
+            ServiceInstance updated = from
+                .state(newState, Instant.now(), reason)
+                .server(to.server())
+                .metrics(to.metrics());
+            return logTransitionAndGetResponse(to, newState, new ImmutablePair<>(from, updated));
+        }
+
+        // State transition must fail
+        return logTransitionAndGetResponse(to, newState, new ImmutablePair<>(from, null));
+    }
 
     /**
      * Helpers method to get a convenient response from a service state transition.
@@ -63,7 +95,7 @@ public final class ServiceStateTransition {
                 );
             }
         }
-        return new Response(Result.SUCCEED, newInstance);
+        return new Response(Result.SUCCEEDED, newInstance);
     }
 
     /**
@@ -88,9 +120,9 @@ public final class ServiceStateTransition {
      */
     public enum Result {
         /**
-         * State transition succeed.
+         * State transition succeeded.
          */
-        SUCCEED,
+        SUCCEEDED,
         /**
          * State transition failed due to invalid state transition.
          */

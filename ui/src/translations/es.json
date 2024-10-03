@@ -864,6 +864,7 @@
     "open sidebar": "abrir barra lateral",
     "close sidebar": "cerrar barra lateral",
     "change_status": "Cambiar estado",
-    "testing": "Pruebas"
+    "testing": "Pruebas",
+    "dashboard_initial": "Prueba inicial de Dash."
   }
 }

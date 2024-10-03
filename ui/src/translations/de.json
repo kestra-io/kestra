@@ -864,6 +864,7 @@
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
     "change_status": "Status ändern",
-    "testing": "Testen"
+    "testing": "Testen",
+    "dashboard_initial": "Erste Tests von Dash."
   }
 }

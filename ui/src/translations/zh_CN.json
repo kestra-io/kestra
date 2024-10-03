@@ -864,6 +864,7 @@
     "open sidebar": "打开侧边栏",
     "close sidebar": "关闭侧边栏",
     "change_status": "更改状态",
-    "testing": "测试"
+    "testing": "测试",
+    "dashboard_initial": "Dash的初步测试。"
   }
 }

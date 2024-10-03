@@ -864,6 +864,7 @@
     "open sidebar": "साइडबार खोलें",
     "close sidebar": "साइडबार बंद करें",
     "change_status": "स्थिति बदलें",
-    "testing": "परीक्षण"
+    "testing": "परीक्षण",
+    "dashboard_initial": "डैश का प्रारंभिक परीक्षण।"
   }
 }

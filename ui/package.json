@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
+    "translations:check": "node ./src/translations/check.js"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",

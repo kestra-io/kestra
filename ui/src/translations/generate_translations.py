@@ -93,7 +93,7 @@ def translate_dict(en_dict, target_language):
             translated_value = translate_dict(value, target_language)
         else:
             translated_value = translate_text(value, target_language)
-            print(f"Translating key [{key}] with value [{value}] from EN, to value [{translated_value}] in {target_language}.")
+            print(f"Translating key '{key}' with value '{value}]' from English, to value '{translated_value}' in {target_language}.")
         translated_dict[key] = translated_value
     return translated_dict
 

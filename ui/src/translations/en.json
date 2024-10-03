@@ -880,6 +880,7 @@
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
     "change_status": "Change status",
-    "testing": "Testing"
+    "testing": "Testing",
+    "dashboard_initial": "Initial tesitng of Dash."
   }
 }

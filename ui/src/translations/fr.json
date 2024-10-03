@@ -28,6 +28,7 @@
         "details": "Regardez l'onglet Révisions pour plus de détails sur la dernière version."
       },
       "create": {
+        "title": "Le flux existe déjà",
         "description": "Un Flow avec le même id / namespace existe déjà.",
         "details": "Sauvegarder pour l'écraser et forcer la création d'une révision."
       }

@@ -19,10 +19,10 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.fork == false }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 10
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -50,7 +50,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(translations): auto generate values for languages other than english"
-          git push origin ${{ github.event.pull_request.head.ref }}
+          git push origin ${{ github.event.pull_request.head.sha }}
 
   pull_request:
     name: Open PR for a forked repository

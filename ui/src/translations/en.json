@@ -532,8 +532,7 @@
       "success": "Trigger is unlocked"
     },
     "restart trigger": {
-      "button": "Restart trigger",
-      "tooltip": "Restart the trigger"
+      "button": "Restart trigger"
     },
     "date format": "Date format",
     "timezone": "Timezone",

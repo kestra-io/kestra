@@ -50,11 +50,15 @@ jobs:
         git config --global user.name "GitHub Action"
         git config --global user.email "actions@github.com"
 
-    - name: Commit and push changes
+    - name: Check for changes and commit
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         git add ui/src/translations/*.json
+        if git diff --cached --quiet; then
+          echo "No changes to commit. Exiting with success."
+          exit 0
+        fi
         git commit -m "chore(translations): auto generate values for languages other than english"
         git push origin ${{ github.head_ref }}
 
@@ -82,5 +86,9 @@ jobs:
         
         git checkout -b $BRANCH_NAME
         git add ui/src/translations/*.json
+        if git diff --cached --quiet; then
+          echo "No changes to commit. Exiting with success."
+          exit 0
+        fi
         git commit -m "chore(translations): auto generate values for languages other than english"
         git push origin $BRANCH_NAME

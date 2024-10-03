@@ -862,6 +862,7 @@
     "active-slots": "アクティブスロット",
     "concurrency": "並行性",
     "open sidebar": "サイドバーを開く",
-    "close sidebar": "サイドバーを閉じる"
+    "close sidebar": "サイドバーを閉じる",
+    "test": "これはテストです。"
   }
 }

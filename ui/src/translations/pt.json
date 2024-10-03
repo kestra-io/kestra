@@ -862,6 +862,7 @@
     "active-slots": "Slots ativos",
     "concurrency": "Concorrência",
     "open sidebar": "abrir barra lateral",
-    "close sidebar": "fechar barra lateral"
+    "close sidebar": "fechar barra lateral",
+    "test": "Este é apenas um teste."
   }
 }

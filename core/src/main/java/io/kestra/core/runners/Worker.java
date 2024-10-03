@@ -589,6 +589,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
         }
 
+        WorkerTask finalWorkerTask = null;
         try {
             AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
@@ -598,7 +599,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             // save dynamic WorkerResults since cleanUpTransient will remove them
             List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
 
-            WorkerTask finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
+            finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
 
             // get last state
             TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
@@ -630,7 +631,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } catch (QueueException e) {
             // If there is a QueueException it can either be caused by the message limit or another queue issue.
             // We fail the task and try to resend it.
-            WorkerTask finalWorkerTask  = workerTask.fail();
+            finalWorkerTask  = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
                 finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withOutputs(Collections.emptyMap()));
@@ -650,7 +651,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 workerTask.getRunContext().cleanup();
             }
 
-            this.logTerminated(workerTask);
+            this.logTerminated(finalWorkerTask);
         }
     }
 

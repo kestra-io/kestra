@@ -4,7 +4,6 @@ from openai import OpenAI
 
 client = OpenAI()
 
-
 def translate_text(text, target_language):
     prompt = f"""Translate the text provided after "----------" to {target_language}.
                 The text is intended to be displayed within a software application,
@@ -171,14 +170,31 @@ def remove_en_prefix(dictionary, prefix="en|"):
     return {k[len(prefix):]: v for k, v in dictionary.items() if k.startswith(prefix)}
 
 
+def remove_extra_keys(translated_dict, en_dict):
+    """
+    Remove keys from the translated dictionary that are not present in the English dictionary.
+    """
+    translated_flat = flatten_dict(translated_dict)
+    en_flat = flatten_dict(en_dict)
+
+    # Keep only the keys that are present in the English dictionary
+    filtered_flat = {k: v for k, v in translated_flat.items() if k in en_flat}
+    return unflatten_dict(filtered_flat)
+
+
 def main(
     language_code,
     target_language,
     input_file="ui/src/translations/en.json",
 ):
+    # Load the English dictionary
+    current_en_dict = load_en_dict(input_file)
+    
+    # Load the target language dictionary
     with open(f"ui/src/translations/{language_code}.json", "r") as f:
         target_dict = json.load(f)[language_code]
 
+    # Get the keys that need to be translated
     to_translate = get_keys_to_translate(input_file)
     to_translate = remove_en_prefix(to_translate)
     translated_flat_dict = translate_dict(to_translate, target_language)
@@ -188,6 +204,10 @@ def main(
     target_flat.update(translated_flat_dict)
     updated_target_dict = unflatten_dict(target_flat)
 
+    # Remove extra keys that are not present in the English dictionary
+    updated_target_dict = remove_extra_keys(updated_target_dict, current_en_dict)
+
+    # Save the updated translation file
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
 

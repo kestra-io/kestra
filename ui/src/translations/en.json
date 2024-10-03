@@ -17,6 +17,7 @@
     "update": "Update",
     "update ok": "is updated",
     "delete ok": "is deleted",
+    "test": "test",
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure to delete <code>{name}</code>?",

@@ -28,6 +28,7 @@
         "details": "최신 수정본에 대한 자세한 내용은 수정본 탭을 확인하세요."
       },
       "create": {
+        "extraaa": "extra",
         "title": "Flow가 이미 존재합니다",
         "description": "동일한 id / namespace를 가진 Flow가 이미 존재합니다.",
         "details": "덮어쓰고 새 수정본을 강제로 생성합니다."

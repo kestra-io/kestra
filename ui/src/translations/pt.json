@@ -30,7 +30,8 @@
       "create": {
         "title": "Flow já existe",
         "description": "Um Flow com o mesmo id / namespace já existe.",
-        "details": "Salvando para sobrescrever e forçar a criação de uma nova revisão."
+        "details": "Salvando para sobrescrever e forçar a criação de uma nova revisão.",
+        "test_one": "Teste um"
       }
     },
     "override": {

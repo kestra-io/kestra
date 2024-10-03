@@ -30,7 +30,8 @@
       "create": {
         "title": "Flow existiert bereits",
         "description": "Ein Flow mit derselben Id / Namespace existiert bereits.",
-        "details": "Speichern, um zu überschreiben und eine neue Revision zu erzwingen."
+        "details": "Speichern, um zu überschreiben und eine neue Revision zu erzwingen.",
+        "test_one": "Test eins"
       }
     },
     "override": {

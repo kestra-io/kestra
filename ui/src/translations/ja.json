@@ -30,7 +30,8 @@
       "create": {
         "title": "Flowは既に存在します",
         "description": "同じid / namespaceのFlowが既に存在します。",
-        "details": "新しいリビジョンの作成を強制的に上書き保存します。"
+        "details": "新しいリビジョンの作成を強制的に上書き保存します。",
+        "test_one": "テスト1"
       }
     },
     "override": {

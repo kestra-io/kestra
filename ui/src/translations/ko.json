@@ -30,7 +30,8 @@
       "create": {
         "title": "Flow가 이미 존재합니다",
         "description": "동일한 id / namespace를 가진 Flow가 이미 존재합니다.",
-        "details": "덮어쓰고 새 수정본을 강제로 생성합니다."
+        "details": "덮어쓰고 새 수정본을 강제로 생성합니다.",
+        "test_one": "테스트 하나"
       }
     },
     "override": {

@@ -302,6 +302,16 @@
                     }
                 })
             }
+
+            // Expose paste function globally for testing
+            window.pasteToEditor = (textToPaste) => {               
+                this.editor.executeEdits("", [
+                    {
+                        range: this.editor.getSelection(),
+                        text: textToPaste,
+                    },
+                ]);
+            };
         },
         beforeUnmount: function () {
             this.destroy();

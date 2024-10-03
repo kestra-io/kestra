@@ -879,6 +879,7 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "change_status": "Change status"
+    "change_status": "Change status",
+    "test": "This is just a test."
   }
 }

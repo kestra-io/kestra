@@ -862,7 +862,6 @@
     "active-slots": "Aktive Slots",
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
-    "close sidebar": "Seitenleiste schließen",
-    "test": "Dies ist nur ein Test."
+    "close sidebar": "Seitenleiste schließen"
   }
 }

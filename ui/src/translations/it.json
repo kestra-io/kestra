@@ -862,7 +862,6 @@
     "active-slots": "Slot attivi",
     "concurrency": "Concurrency",
     "open sidebar": "apri barra laterale",
-    "close sidebar": "chiudi barra laterale",
-    "test": "Ecco la traduzione del testo:\n\nQuesto è solo un test."
+    "close sidebar": "chiudi barra laterale"
   }
 }

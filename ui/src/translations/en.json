@@ -878,6 +878,7 @@
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
     "open sidebar": "open sidebar",
-    "close sidebar": "close sidebar"
+    "close sidebar": "close sidebar",
+    "change_status": "Change status"
   }
 }

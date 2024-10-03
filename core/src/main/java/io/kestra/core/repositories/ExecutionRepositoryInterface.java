@@ -167,11 +167,11 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     List<ExecutionCount> executionCounts(
         @Nullable String tenantId,
-        List<Flow> flows,
+        @Nullable List<Flow> flows,
         @Nullable List<State.Type> states,
         @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
-    );
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<String> namespaces);
 
     Execution save(Execution execution);
 

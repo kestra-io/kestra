@@ -591,7 +591,8 @@ public abstract class AbstractExecutionRepositoryTest {
             ),
             null,
             ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now()
+            ZonedDateTime.now(),
+            null
         );
         assertThat(result.size(), is(4));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
@@ -608,12 +609,24 @@ public abstract class AbstractExecutionRepositoryTest {
             ),
             List.of(State.Type.SUCCESS),
             null,
+            null,
             null
         );
         assertThat(result.size(), is(3));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
         assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
+
+        result = executionRepository.executionCounts(
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(NAMESPACE)
+        );
+        assertThat(result.size(), is(1));
+        assertThat(result.stream().filter(executionCount -> executionCount.getNamespace().equals(NAMESPACE)).findFirst().get().getCount(), is(14L));
     }
 
     @Test

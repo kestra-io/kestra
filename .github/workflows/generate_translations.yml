@@ -13,9 +13,10 @@ env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
-  generate:
-    name: Generate Translations
+  commit:
+    name: Commit directly to PR
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.head.repo.fork == false }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,17 +34,6 @@ jobs:
 
       - name: Generate translations
         run: python ui/src/translations/generate_translations.py
-
-  commit:
-    name: Commit directly to PR
-    runs-on: ubuntu-latest
-    needs: generate
-    if: ${{ github.event.pull_request.head.repo.fork == false }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 10
 
       - name: Set up Git
         run: |
@@ -65,13 +55,23 @@ jobs:
   pull_request:
     name: Open PR for a forked repository
     runs-on: ubuntu-latest
-    needs: generate
     if: ${{ github.event.pull_request.head.repo.fork == true }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 10
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install gitpython openai
+
+      - name: Generate translations
+        run: python ui/src/translations/generate_translations.py
 
       - name: Set up Git
         run: |

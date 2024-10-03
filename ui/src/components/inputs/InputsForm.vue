@@ -14,6 +14,7 @@
                 v-if="input.type === 'STRING' || input.type === 'URI'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
+                @confirm="onSubmit"
             />
             <el-select
                 :full-height="false"
@@ -209,7 +210,7 @@
                 multiSelectInputs: {},
             };
         },
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "confirm"],
         created() {
             this.inputsList.push(...(this.initialInputs ?? []));
             this.validateInputs();
@@ -223,9 +224,10 @@
             }, 500)
 
             this._keyListener = function(e) {
-                if (e.keyCode === 13 && (e.ctrlKey || e.metaKey))  {
+                // Ctrl/Control + Enter
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey))  {
                     e.preventDefault();
-                    this.onSubmit(this.$refs.form);
+                    this.onSubmit();
                 }
             };
 
@@ -247,6 +249,9 @@
             },
             onChange() {
                 this.$emit("update:modelValue", this.inputs);
+            },
+            onSubmit() {
+                this.$emit("confirm");
             },
             onMultiSelectChange(input, e) {
                 this.inputs[input] = JSON.stringify(e).toString();

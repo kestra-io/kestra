@@ -4,6 +4,8 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceLivenessStore;
+import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
@@ -30,7 +32,7 @@ import static org.jooq.impl.DSL.using;
 
 @Getter
 @Slf4j
-public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbcRepository implements ServiceInstanceRepositoryInterface {
+public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbcRepository implements ServiceInstanceRepositoryInterface, ServiceLivenessStore, ServiceLivenessUpdater {
 
     private static final Field<Object> STATE = field("state");
     private static final Field<Object> TYPE = field("service_type");
@@ -212,6 +214,15 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
         return instance;
     }
 
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public void update(final ServiceInstance instance) {
+        this.save(instance);
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -250,9 +261,9 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * {@inheritDoc}
      **/
     @Override
-    public ServiceStateTransition.Response mayTransitionServiceTo(final ServiceInstance instance,
-                                                                  final Service.ServiceState newState,
-                                                                  final String reason) {
+    public ServiceStateTransition.Response update(final ServiceInstance instance,
+                                                  final Service.ServiceState newState,
+                                                  final String reason) {
         return transactionResult(configuration -> mayTransitServiceTo(configuration, instance, newState, reason));
     }
 
@@ -305,7 +316,9 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 .state(newState, Instant.now(), reason)
                 .server(instance.server())
                 .metrics(instance.metrics());
-            return new ImmutablePair<>(before, save(updated));
+            // Synchronize
+            update(updated);
+            return new ImmutablePair<>(before, updated);
         }
         return new ImmutablePair<>(before, null);
     }

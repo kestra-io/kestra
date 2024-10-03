@@ -13,8 +13,6 @@ public class QueueService {
             return hasUID.uid();
         } else if (object.getClass() == Execution.class) {
             return ((Execution) object).getId();
-        } else if (object.getClass() == WorkerInstance.class) {
-            return ((WorkerInstance) object).getWorkerUuid();
         } else if (object.getClass() == LogEntry.class) {
             return null;
         } else if (object.getClass() == SubflowExecution.class) {

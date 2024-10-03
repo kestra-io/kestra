@@ -2,7 +2,6 @@ package io.kestra.core.server;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServiceStateTransition.Result;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -27,7 +26,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
     private static final String TASK_NAME = "service-liveness-manager-task";
     private final LocalServiceStateFactory localServiceStateFactory;
-    private final ServiceInstanceRepositoryInterface serviceRepository;
+    private final ServiceLivenessUpdater serviceLivenessUpdater;
     private final ReentrantLock stateLock = new ReentrantLock();
     protected final OnStateTransitionFailureCallback onStateTransitionFailureCallback;
     private final ServerInstanceFactory serverInstanceFactory;
@@ -39,13 +38,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                                   final ServiceRegistry serviceRegistry,
                                   final LocalServiceStateFactory localServiceStateFactory,
                                   final ServerInstanceFactory serverInstanceFactory,
-                                  final ServiceInstanceRepositoryInterface repository,
+                                  final ServiceLivenessUpdater serviceLivenessUpdater,
                                   final OnStateTransitionFailureCallback onStateTransitionFailureCallback) {
         super(TASK_NAME, configuration);
         this.serviceRegistry = serviceRegistry;
         this.localServiceStateFactory = localServiceStateFactory;
         this.serverInstanceFactory = serverInstanceFactory;
-        this.serviceRepository = repository;
+        this.serviceLivenessUpdater = serviceLivenessUpdater;
         this.onStateTransitionFailureCallback = onStateTransitionFailureCallback;
     }
 
@@ -99,7 +98,9 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             service,
             event.properties()
         );
-        ServiceInstance instance = serviceRepository.save(localServiceState.instance());
+        final ServiceInstance instance = localServiceState.instance();
+
+        serviceLivenessUpdater.update(instance);
         this.serviceRegistry.register(localServiceState.with(instance));
         if (log.isDebugEnabled()) {
             log.debug("[Service id={}, type='{}', hostname='{}'] Connected.",
@@ -230,36 +231,33 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 .metrics(localServiceState.service().getMetrics())
                 .server(serverInstanceFactory.newServerInstance());
 
-            ServiceStateTransition.Response response = serviceRepository.mayTransitionServiceTo(localInstance, newState);
+            ServiceStateTransition.Response response = serviceLivenessUpdater.update(localInstance, newState);
             ServiceInstance remoteInstance = response.instance();
 
-            boolean isStateTransitionSucceed = response.is(Result.SUCCEED);
+            boolean isStateTransitionSucceed = response.is(Result.SUCCEEDED);
 
             if (response.is(Result.ABORTED)) {
                 // Force state transition due to inconsistent state; remote state does not exist (yet).
-                remoteInstance = serviceRepository.save(localInstance.state(newState, now));
+                remoteInstance = localInstance.state(newState, now);
+                serviceLivenessUpdater.update(remoteInstance);
                 isStateTransitionSucceed = true;
             }
 
             if (response.is(Result.FAILED)) {
-                if (remoteInstance.seqId() < localInstance.seqId()) {
-                    // Force state transition due to inconsistent state; remote state is not up-to-date.
-                    remoteInstance = serviceRepository.save(localInstance.state(newState, now));
-                    isStateTransitionSucceed = true;
-                } else {
-                    mayDisableStateUpdate(service, remoteInstance);
+                mayDisableStateUpdate(service, remoteInstance);
 
-                    // Register the OnStateTransitionFailureCallback
-                    final ServiceInstance instance = remoteInstance;
-                    returnCallback = () -> {
-                        Optional<ServiceInstance> result = onStateChangeError.execute(now, service, instance, isLivenessEnabled());
-                        if (result.isPresent()) {
-                            // Optionally recover from state-transition failure
-                            this.serviceRegistry.register(localServiceState(service).with(serviceRepository.save(result.get())));
-                            this.lastSucceedStateUpdated = now;
-                        }
-                    };
-                }
+                // Register the OnStateTransitionFailureCallback
+                final ServiceInstance instance = remoteInstance;
+                returnCallback = () -> {
+                    Optional<ServiceInstance> result = onStateChangeError.execute(now, service, instance, isLivenessEnabled());
+                    if (result.isPresent()) {
+                        // Optionally recover from state-transition failure
+                        final ServiceInstance recovered = result.get();
+                        serviceLivenessUpdater.update(recovered);
+                        this.serviceRegistry.register(localServiceState(service).with(recovered));
+                        this.lastSucceedStateUpdated = now;
+                    }
+                };
             }
 
             if (isStateTransitionSucceed) {

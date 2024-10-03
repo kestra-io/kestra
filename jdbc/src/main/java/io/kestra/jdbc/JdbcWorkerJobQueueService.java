@@ -44,11 +44,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
 
             Worker worker = serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER).unwrap();
 
-            final WorkerInstance workerInstance = WorkerInstance
-                .builder()
-                .workerUuid(worker.getId())
-                .workerGroup(worker.getWorkerGroup())
-                .build();
+            final WorkerInstance workerInstance = new WorkerInstance(worker.getId(), worker.getWorkerGroup());
 
             eithers.forEach(either -> {
                 if (either.isRight()) {

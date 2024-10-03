@@ -1,5 +1,7 @@
 package io.kestra.core.server;
 
+import io.kestra.core.utils.Enums;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -129,7 +131,7 @@ public interface Service extends AutoCloseable {
         TERMINATED_GRACEFULLY(7),       // 5
         TERMINATED_FORCED(7),           // 6
         NOT_RUNNING(8),                 // 7
-        EMPTY();                         // 8
+        EMPTY();                                    // 8
 
         private final Set<Integer> validTransitions = new HashSet<>();
 
@@ -159,6 +161,10 @@ public interface Service extends AutoCloseable {
 
         public static Set<ServiceState> allRunningStates() {
             return Set.of(CREATED, RUNNING);
+        }
+
+        public static Set<ServiceState> allNonRunningStates() {
+            return Enums.allExcept(Service.ServiceState.class, ServiceState.allRunningStates());
         }
     }
 }

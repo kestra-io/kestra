@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - 'ui/src/translations/en.json'
+      - "ui/src/translations/en.json"
   push:
     branches:
       - develop
@@ -13,82 +13,82 @@ env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
-  generate:
-    name: Generate Translations
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 10
-        ref: ${{ github.head_ref }}
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
-    - name: Install dependencies
-      run: pip install gitpython openai
-
-    - name: Generate translations
-      run: python ui/src/translations/generate_translations.py
-
   commit:
     name: Commit directly to PR
     runs-on: ubuntu-latest
-    needs: generate
     if: ${{ github.event.pull_request.head.repo.fork == false }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 10
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          ref: ${{ github.head_ref }}
 
-    - name: Set up Git
-      run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "actions@github.com"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-    - name: Check for changes and commit
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        git add ui/src/translations/*.json
-        if git diff --cached --quiet; then
-          echo "No changes to commit. Exiting with success."
-          exit 0
-        fi
-        git commit -m "chore(translations): auto generate values for languages other than english"
-        git push origin ${{ github.head_ref }}
+      - name: Install dependencies
+        run: pip install gitpython openai
+
+      - name: Generate translations
+        run: python ui/src/translations/generate_translations.py
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+
+      - name: Check for changes and commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add ui/src/translations/*.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit. Exiting with success."
+            exit 0
+          fi
+          git commit -m "chore(translations): auto generate values for languages other than english"
+          git push origin ${{ github.head_ref }}
 
   pull_request:
     name: Open PR for a forked repository
     runs-on: ubuntu-latest
-    needs: generate
     if: ${{ github.event.pull_request.head.repo.fork == true }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 10
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
 
-    - name: Set up Git
-      run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "actions@github.com"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-    - name: Create and push a new branch
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        BRANCH_NAME="generated-translations-${{ github.event.pull_request.head.repo.name }}"
-        
-        git checkout -b $BRANCH_NAME
-        git add ui/src/translations/*.json
-        if git diff --cached --quiet; then
-          echo "No changes to commit. Exiting with success."
-          exit 0
-        fi
-        git commit -m "chore(translations): auto generate values for languages other than english"
-        git push origin $BRANCH_NAME
+      - name: Install dependencies
+        run: pip install gitpython openai
+
+      - name: Generate translations
+        run: python ui/src/translations/generate_translations.py
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+
+      - name: Create and push a new branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="generated-translations-${{ github.event.pull_request.head.repo.name }}"
+
+          git checkout -b $BRANCH_NAME
+          git add ui/src/translations/*.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit. Exiting with success."
+            exit 0
+          fi
+          git commit -m "chore(translations): auto generate values for languages other than english"
+          git push origin $BRANCH_NAME

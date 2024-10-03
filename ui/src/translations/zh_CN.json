@@ -30,8 +30,7 @@
       "create": {
         "title": "流程已存在",
         "description": "具有相同ID/命名空间的流程已存在。",
-        "details": "保存以覆盖并强制创建新修订版。",
-        "test_one": "测试一"
+        "details": "保存以覆盖并强制创建新修订版。"
       }
     },
     "override": {

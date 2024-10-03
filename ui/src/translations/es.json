@@ -30,8 +30,7 @@
       "create": {
         "title": "El flujo ya existe",
         "description": "Un flujo con el mismo id / namespace ya existe.",
-        "details": "Guardando para sobrescribir y forzar la creación de una nueva revisión.",
-        "test_one": "Prueba uno"
+        "details": "Guardando para sobrescribir y forzar la creación de una nueva revisión."
       }
     },
     "override": {

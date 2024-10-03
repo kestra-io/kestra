@@ -510,7 +510,8 @@
       "success": "Trigger ist entsperrt"
     },
     "restart trigger": {
-      "button": "Trigger neu starten"
+      "button": "Trigger neu starten",
+      "tooltip": "Den Trigger neu starten"
     },
     "date format": "Datumsformat",
     "timezone": "Zeitzone",

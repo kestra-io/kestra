@@ -510,7 +510,8 @@
       "success": "Trigger odblokowany"
     },
     "restart trigger": {
-      "button": "Restartuj trigger"
+      "button": "Restartuj trigger",
+      "tooltip": "Uruchom ponownie trigger"
     },
     "date format": "Format daty",
     "timezone": "Strefa czasowa",

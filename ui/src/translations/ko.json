@@ -510,7 +510,8 @@
       "success": "Trigger가 잠금 해제되었습니다"
     },
     "restart trigger": {
-      "button": "Trigger 재시작"
+      "button": "Trigger 재시작",
+      "tooltip": "트리거 재시작"
     },
     "date format": "날짜 형식",
     "timezone": "시간대",

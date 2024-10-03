@@ -863,6 +863,7 @@
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
     "close sidebar": "关闭侧边栏",
-    "change_status": "更改状态"
+    "change_status": "更改状态",
+    "testing": "测试"
   }
 }

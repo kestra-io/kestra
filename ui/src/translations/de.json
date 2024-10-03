@@ -863,6 +863,7 @@
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
-    "change_status": "Status ändern"
+    "change_status": "Status ändern",
+    "testing": "Testen"
   }
 }

@@ -863,6 +863,7 @@
     "concurrency": "Concorrência",
     "open sidebar": "abrir barra lateral",
     "close sidebar": "fechar barra lateral",
-    "change_status": "Alterar status"
+    "change_status": "Alterar status",
+    "testing": "Testando"
   }
 }

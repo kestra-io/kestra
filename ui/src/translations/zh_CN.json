@@ -861,6 +861,7 @@
     "active-slots": "活动槽位",
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
-    "close sidebar": "关闭侧边栏"
+    "close sidebar": "关闭侧边栏",
+    "change_status": "更改状态"
   }
 }

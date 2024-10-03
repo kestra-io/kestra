@@ -861,6 +861,7 @@
     "active-slots": "Ranuras activas",
     "concurrency": "Concurrente",
     "open sidebar": "abrir barra lateral",
-    "close sidebar": "cerrar barra lateral"
+    "close sidebar": "cerrar barra lateral",
+    "change_status": "Cambiar estado"
   }
 }

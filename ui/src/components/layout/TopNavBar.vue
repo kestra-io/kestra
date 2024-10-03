@@ -14,11 +14,11 @@
                 </slot>
             </h1>
         </div>
-        <div class="d-flex side gap-2 flex-shrink-0">
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
-            <div class="d-none d-lg-flex">
+            <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
                 <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>

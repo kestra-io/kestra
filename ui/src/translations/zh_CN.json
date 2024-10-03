@@ -510,7 +510,8 @@
       "success": "触发器已解锁"
     },
     "restart trigger": {
-      "button": "重新启动触发器"
+      "button": "重新启动触发器",
+      "tooltip": "重新启动trigger"
     },
     "date format": "日期格式",
     "timezone": "时区",

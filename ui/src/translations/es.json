@@ -510,7 +510,8 @@
       "success": "Trigger desbloqueado"
     },
     "restart trigger": {
-      "button": "Reiniciar trigger"
+      "button": "Reiniciar trigger",
+      "tooltip": "Reiniciar el trigger"
     },
     "date format": "Formato de fecha",
     "timezone": "Zona horaria",

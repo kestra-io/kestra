@@ -510,7 +510,8 @@
       "success": "Trigger अनलॉक किया गया"
     },
     "restart trigger": {
-      "button": "Trigger पुनः प्रारंभ करें"
+      "button": "Trigger पुनः प्रारंभ करें",
+      "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "date format": "दिनांक प्रारूप",
     "timezone": "समय क्षेत्र",

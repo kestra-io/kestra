@@ -510,7 +510,8 @@
       "success": "triggerのロックが解除されました"
     },
     "restart trigger": {
-      "button": "triggerを再起動"
+      "button": "triggerを再起動",
+      "tooltip": "トリガーを再起動する"
     },
     "date format": "日付形式",
     "timezone": "タイムゾーン",

@@ -509,7 +509,8 @@
       "success": "Le déclencheur est débloqué"
     },
     "restart trigger": {
-      "button": "Redémarrer trigger"
+      "button": "Redémarrer trigger",
+      "tooltip": "Redémarrer le trigger"
     },
     "date format": "Format de date",
     "timezone": "Fuseau horaire",

@@ -510,7 +510,8 @@
       "success": "Trigger разблокирован"
     },
     "restart trigger": {
-      "button": "Перезапустить trigger"
+      "button": "Перезапустить trigger",
+      "tooltip": "Перезапустить trigger"
     },
     "date format": "Формат даты",
     "timezone": "Часовой пояс",

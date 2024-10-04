@@ -73,7 +73,7 @@
                 </template>
 
                 <template #top>
-                    <el-card shadow="never">
+                    <el-card v-if="daily" shadow="never" class="mb-4">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>

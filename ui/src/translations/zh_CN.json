@@ -852,8 +852,8 @@
       "description": "描述",
       "not_auth": "您没有查看此小部件的必要权限。",
       "see_all": "查看全部",
-      "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下的总执行次数。",
-      "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数的总和除以终止状态下执行总次数的结果。"
+      "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下执行总次数的结果。",
+      "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数之和除以终止状态下执行总次数的结果。"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",

@@ -99,7 +99,7 @@ public final class PathMatcherPredicate implements Predicate<Path> {
                     } else {
                         pattern = mayAddRecursiveMatch(p);
                     }
-                    syntaxAndPattern = SYNTAX_GLOB + pattern;
+                    syntaxAndPattern = SYNTAX_GLOB + pattern.replace("\\", "/");
                 }
                 return syntaxAndPattern;
             })
@@ -125,7 +125,7 @@ public final class PathMatcherPredicate implements Predicate<Path> {
     }
 
     private static String mayAddLeadingSlash(final String path) {
-        return path.startsWith("/") ? path : "/" + path;
+        return (path.startsWith("/") || path.startsWith("\\")) ? path : "/" + path;
     }
 
     public static boolean isPrefixWithSyntax(final String pattern) {

@@ -48,7 +48,7 @@
             <el-col :xs="24" :sm="8" :lg="4">
                 <refresh-button
                     class="float-right"
-                    @refresh="fetchAll()"
+                    @refresh="refresh()"
                     :can-auto-refresh="canAutoRefresh"
                 />
             </el-col>
@@ -140,7 +140,10 @@
                             v-model="descriptionDialog"
                             :title="$t('description')"
                         >
-                            <Markdown :source="description" class="p-4 description" />
+                            <Markdown
+                                :source="description"
+                                class="p-4 description"
+                            />
                         </el-dialog>
                     </span>
 
@@ -271,6 +274,13 @@
         scope: ["USER"],
     });
 
+    const refresh = async () => {
+        await updateParams({
+            startDate: filters.value.startDate,
+            endDate: moment().toISOString(true),
+        });
+        fetchAll();
+    };
     const canAutoRefresh = ref(false);
     const toggleAutoRefresh = (event) => {
         canAutoRefresh.value = event;

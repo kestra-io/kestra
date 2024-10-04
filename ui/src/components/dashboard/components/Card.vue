@@ -2,7 +2,14 @@
     <div class="p-4 card">
         <div class="d-flex pb-2 justify-content-between">
             <div class="d-flex align-items-center">
-                <component :is="icon" class="me-2 fs-4 icons" />
+                <el-tooltip
+                    v-if="tooltip"
+                    :content="tooltip"
+                    popper-class="dashboard-card-tooltip"
+                >
+                    <component :is="icon" class="me-2 fs-4 icons" />
+                </el-tooltip>
+                <component v-else :is="icon" class="me-2 fs-4 icons" />
 
                 <p class="m-0 fs-6 label">
                     {{ label }}
@@ -30,6 +37,10 @@
         label: {
             type: String,
             required: true,
+        },
+        tooltip: {
+            type: String,
+            default: undefined,
         },
         value: {
             type: [String, Number],
@@ -61,5 +72,11 @@
             color: $gray-300;
         }
     }
+}
+</style>
+
+<style lang="scss">
+.dashboard-card-tooltip {
+    width: 300px;
 }
 </style>

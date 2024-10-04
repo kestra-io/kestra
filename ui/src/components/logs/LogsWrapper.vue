@@ -122,10 +122,6 @@
                 type: Object,
                 default: null
             },
-            purgeFilters: {
-                type: Boolean,
-                default: false
-            },
         },
         data() {
             return {
@@ -202,7 +198,7 @@
             loadQuery(base) {
                 // eslint-disable-next-line no-unused-vars
                 const {triggerId, ...rest} = this.filters || {};
-                let queryFilter = this.filters ? (this.purgeFilters ? rest : this.filters) : this.queryWithFilter();
+                let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
@@ -224,13 +220,11 @@
                 this.isLoading = true
 
                 // eslint-disable-next-line no-unused-vars
-                const {triggerId, ...rest} = this.filters || {};
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
-                    ...(this.purgeFilters ? rest : this.filters)
+                    ...this.filters
                 };
-
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({
                         ...data,

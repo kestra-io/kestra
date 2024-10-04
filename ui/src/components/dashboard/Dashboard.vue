@@ -200,7 +200,6 @@
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
-    import _cloneDeep from "lodash/cloneDeep";
 
     import {apiUrl} from "override/utils/route";
     import State from "../../utils/state";
@@ -314,15 +313,17 @@
     });
     const transformer = (data) => {
         return data.reduce((accumulator, value) => {
-            if (!accumulator) accumulator = _cloneDeep(value);
-            else {
-                for (const key in value.executionCounts) {
-                    accumulator.executionCounts[key] += value.executionCounts[key];
-                }
+            accumulator = accumulator || {executionCounts: {}, duration: {}};
 
-                for (const key in value.duration) {
-                    accumulator.duration[key] += value.duration[key];
-                }
+            for (const key in value.executionCounts) {
+                accumulator.executionCounts[key] =
+                    (accumulator.executionCounts[key] || 0) +
+                    value.executionCounts[key];
+            }
+
+            for (const key in value.duration) {
+                accumulator.duration[key] =
+                    (accumulator.duration[key] || 0) + value.duration[key];
             }
 
             return accumulator;

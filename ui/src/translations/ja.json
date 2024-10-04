@@ -850,7 +850,10 @@
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
       "description": "説明",
-      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。",
+      "see_all": "すべて表示",
+      "success_ratio_tooltip": "成功率は、SUCCESS、CANCELLED、WARNINGの実行の合計を、終了状態にある実行の総数で割ったものです。",
+      "failure_ratio_tooltip": "失敗率は、FAILED、KILLED、RETRIEDの実行の合計を、終了状態にある実行の総数で割ったものです。"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",

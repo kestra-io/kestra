@@ -850,7 +850,10 @@
       "trigger_disabled": "이 trigger는 코드로만 활성화할 수 있습니다.",
       "no_flow_description": "이 flow에는 설명이 없습니다.",
       "description": "설명",
-      "not_auth": "이 위젯을 볼 수 있는 권한이 없습니다."
+      "not_auth": "이 위젯을 볼 수 있는 권한이 없습니다.",
+      "see_all": "모두 보기",
+      "success_ratio_tooltip": "성공 비율은 SUCCESS, CANCELLED 및 WARNING 실행의 합계를 종료된 상태의 총 실행 수로 나눈 값입니다.",
+      "failure_ratio_tooltip": "실패 비율은 FAILED, KILLED, RETRIED 실행의 합을 종료된 상태의 총 실행 수로 나눈 값입니다."
     },
     "delete_log": "로그를 삭제하시겠습니까?",
     "docs": "문서",

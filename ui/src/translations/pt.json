@@ -850,7 +850,10 @@
       "trigger_disabled": "Este trigger só pode ser habilitado através de código.",
       "no_flow_description": "Este flow não tem descrição.",
       "description": "Descrição",
-      "not_auth": "Você não tem as permissões necessárias para visualizar este widget."
+      "not_auth": "Você não tem as permissões necessárias para visualizar este widget.",
+      "see_all": "Ver todos",
+      "success_ratio_tooltip": "A Taxa de Sucesso é a soma das execuções em estados SUCCESS, CANCELLED e WARNING dividida pelo número total de execuções em um estado terminado.",
+      "failure_ratio_tooltip": "A proporção de falhas é a soma das execuções FAILED, KILLED e RETRIED dividida pelo número total de execuções em estado terminado."
     },
     "delete_log": "Tem certeza de que deseja excluir o log?",
     "docs": "Documentos",

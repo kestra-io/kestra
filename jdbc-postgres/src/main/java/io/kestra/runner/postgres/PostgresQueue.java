@@ -134,7 +134,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
                 try {
                     return Either.left(MAPPER.readValue(record.get("value", JSONB.class).data(), cls));
                 } catch (JsonProcessingException e) {
-                    return Either.right(new DeserializationException(e, record.get("value", String.class)));
+                    return Either.right(new DeserializationException(e, record.get("value", JSONB.class).data()));
                 }
             });
     }

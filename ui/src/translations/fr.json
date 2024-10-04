@@ -852,7 +852,7 @@
       "description": "Description",
       "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget.",
       "see_all": "Voir tout",
-      "success_ratio_tooltip": "Le ratio de succès est la somme des exécutions en états SUCCESS, CANCELLED et WARNING divisée par le nombre total d'exécutions dans un état terminé.",
+      "success_ratio_tooltip": "Le ratio de succès est la somme des exécutions en état SUCCESS, CANCELLED et WARNING divisée par le nombre total d'exécutions dans un état terminé.",
       "failure_ratio_tooltip": "Le ratio d'échec est la somme des exécutions en état FAILED, KILLED et RETRIED divisée par le nombre total d'exécutions dans un état terminé."
     },
     "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",

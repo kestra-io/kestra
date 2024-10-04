@@ -61,6 +61,7 @@
                 <Card
                     :icon="CheckBold"
                     :label="t('dashboard.success_ratio')"
+                    :tooltip="t('dashboard.success_ratio_tooltip')"
                     :value="stats.success"
                     :redirect="{
                         name: 'executions/list',
@@ -77,6 +78,7 @@
                 <Card
                     :icon="Alert"
                     :label="t('dashboard.failure_ratio')"
+                    :tooltip="t('dashboard.failure_ratio_tooltip')"
                     :value="stats.failed"
                     :redirect="{
                         name: 'executions/list',
@@ -299,16 +301,30 @@
     const executions = ref({raw: {}, all: {}, yesterday: {}, today: {}});
     const stats = computed(() => {
         const counts = executions?.value?.all?.executionCounts || {};
-        const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+        const terminatedStates = State.getTerminatedStates();
+        const statesToCount = Object.fromEntries(
+            Object.entries(counts).filter(([key]) =>
+                terminatedStates.includes(key),
+            ),
+        );
 
-        function percentage(count, total) {
-            return total ? ((count / total) * 100).toFixed(2) : "0.00";
-        }
+        const total = Object.values(statesToCount).reduce(
+            (sum, count) => sum + count,
+            0,
+        );
+        const successStates = ["SUCCESS", "CANCELLED", "WARNING"];
+        const failedStates = ["FAILED", "KILLED", "RETRIED"];
+        const sumStates = (states) =>
+            states.reduce((sum, state) => sum + (statesToCount[state] || 0), 0);
+
+        const successRatio =
+            total > 0 ? (sumStates(successStates) / total) * 100 : 0;
+        const failedRatio = total > 0 ? (sumStates(failedStates) / total) * 100 : 0;
 
         return {
             total,
-            success: `${percentage(counts[State.SUCCESS] || 0, total)}%`,
-            failed: `${percentage(counts[State.FAILED] || 0, total)}%`,
+            success: `${successRatio.toFixed(2)}%`,
+            failed: `${failedRatio.toFixed(2)}%`,
         };
     });
     const transformer = (data) => {

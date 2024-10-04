@@ -10,7 +10,6 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
@@ -47,8 +46,9 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -112,7 +112,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     @Getter
     private final Map<String, AtomicInteger> evaluateTriggerRunningCount = new ConcurrentHashMap<>();
 
-    private final List<AbstractWorkerCallable> workerCallableReferences = new ArrayList<>();
+    private final List<AbstractWorkerThread> workerThreadReferences = new ArrayList<>();
 
     private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
@@ -199,19 +199,19 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
                     killedExecution.add(executionKilledExecution.getExecutionId());
 
-                    workerCallableReferences
+                    workerThreadReferences
                         .stream()
-                        .filter(workerCallable -> workerCallable instanceof WorkerTaskCallable)
-                        .map(workerCallable -> (WorkerTaskCallable) workerCallable)
-                        .filter(workerCallable -> executionKilledExecution.isEqual(workerCallable.getWorkerTask()))
-                        .forEach(AbstractWorkerCallable::kill);
+                        .filter(workerThread -> workerThread instanceof WorkerTaskThread)
+                        .map(workerThread -> (WorkerTaskThread) workerThread)
+                        .filter(workerThread -> executionKilledExecution.isEqual(workerThread.getWorkerTask()))
+                        .forEach(AbstractWorkerThread::kill);
                 } else if (executionKilled.getLeft() instanceof ExecutionKilledTrigger executionKilledTrigger) {
-                    workerCallableReferences
+                    workerThreadReferences
                         .stream()
-                        .filter(workerCallable -> workerCallable instanceof AbstractWorkerTriggerCallable)
-                        .map(workerCallable -> (AbstractWorkerTriggerCallable) workerCallable)
-                        .filter(workerCallable -> executionKilledTrigger.isEqual(workerCallable.getWorkerTrigger().getTriggerContext()))
-                        .forEach(AbstractWorkerCallable::kill);
+                        .filter(workerThread -> workerThread instanceof AbstractWorkerTriggerThread)
+                        .map(workerThread -> (AbstractWorkerTriggerThread) workerThread)
+                        .filter(workerThread -> executionKilledTrigger.isEqual(workerThread.getWorkerTrigger().getTriggerContext()))
+                        .forEach(AbstractWorkerThread::kill);
                 }
             }
         }));
@@ -242,6 +242,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } finally {
                         runningJobCount.decrementAndGet();
                     }
+
                 });
             }
         ));
@@ -480,29 +481,29 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         );
 
                         if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                            WorkerTriggerThread workerThread = new WorkerTriggerThread(runContext, workerTrigger, pollingTrigger);
+                            io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
-                            if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleTriggerError(workerTrigger, workerCallable.getException());
+                            if (workerThread.getException() != null || !state.equals(SUCCESS)) {
+                                this.handleTriggerError(workerTrigger, workerThread.getException());
                             }
 
                             if (!state.equals(FAILED)) {
-                                this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                                this.publishTriggerExecution(workerTrigger, workerThread.getEvaluate());
                             }
                         } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
-                            WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
+                            WorkerTriggerRealtimeThread workerThread = new WorkerTriggerRealtimeThread(
                                 runContext,
                                 workerTrigger,
                                 streamingTrigger,
                                 throwable -> this.handleTriggerError(workerTrigger, throwable),
                                 execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
                             );
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                            io.kestra.core.models.flows.State.Type state = runThread(workerThread, runContext.logger());
 
                             // here the realtime trigger fail before the publisher being call so we create a fail execution
-                            if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
+                            if (workerThread.getException() != null || !state.equals(SUCCESS)) {
+                                this.handleRealtimeTriggerError(workerTrigger, workerThread.getException());
                             }
                         }
                     } catch (Exception e) {
@@ -726,7 +727,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         metricRunningCount.incrementAndGet();
 
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
+        WorkerTaskThread workerThread = new WorkerTaskThread(workerTask, task, runContext, metricRegistry);
 
         // emit attempts
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
@@ -737,7 +738,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         ));
 
         // run it
-        io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
+        io.kestra.core.models.flows.State.Type state = runThread(workerThread, logger);
 
         metricRunningCount.decrementAndGet();
 
@@ -763,7 +764,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withAttempts(attempts);
 
         try {
-            taskRun = taskRun.withOutputs(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of());
+            taskRun = taskRun.withOutputs(workerThread.getTaskOutput() != null ? workerThread.getTaskOutput().toMap() : ImmutableMap.of());
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }
@@ -772,18 +773,30 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withTaskRun(taskRun);
     }
 
-    private io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
-        synchronized (this) {
-            workerCallableReferences.add(workerJobCallable);
-        }
-
+    private io.kestra.core.models.flows.State.Type runThread(AbstractWorkerThread workerThread, Logger logger) {
+        // run it
+        io.kestra.core.models.flows.State.Type state;
         try {
-            return workerJobCallable.call();
+            synchronized (this) {
+                workerThreadReferences.add(workerThread);
+            }
+            workerThread.start();
+            workerThread.join();
+            state = workerThread.getTaskState();
+        } catch (InterruptedException e) {
+            logger.error("Failed to join the Worker thread: {}", e.getMessage(), e);
+            if (workerThread instanceof WorkerTaskThread workerTaskThread) {
+                state = workerTaskThread.getWorkerTask().getTask().isAllowFailure() ? WARNING : FAILED;
+            } else {
+                state = FAILED;
+            }
         } finally {
             synchronized (this) {
-                workerCallableReferences.remove(workerJobCallable);
+                workerThreadReferences.remove(workerThread);
             }
         }
+
+        return state;
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {
@@ -855,14 +868,14 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private boolean waitForTasksCompletion(final Duration timeout) {
         final Instant deadline = Instant.now().plus(timeout);
 
-        final List<AbstractWorkerCallable> callables;
+        final List<AbstractWorkerThread> threads;
         synchronized (this) {
             // copy to avoid concurrent modification exception on iteration.
-            callables = new ArrayList<>(this.workerCallableReferences);
+            threads = new ArrayList<>(this.workerThreadReferences);
         }
 
         // signals all worker tasks and triggers of the shutdown.
-        callables.forEach(AbstractWorkerCallable::signalStop);
+        threads.forEach(AbstractWorkerThread::signalStop);
 
         AtomicReference<ServiceState> shutdownState = new AtomicReference<>();
         // start shutdown
@@ -875,7 +888,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
 
                     // wait for all realtime triggers to cleanly stop.
-                    awaitForRealtimeTriggers(callables, Duration.ofMillis(remaining));
+                    awaitForRealtimeTriggers(threads, Duration.ofMillis(remaining));
 
                     boolean gracefullyShutdown = this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
                     if (!gracefullyShutdown) {
@@ -904,12 +917,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     return true;
                 }
 
-                if (this.workerCallableReferences.isEmpty()) {
+                if (this.workerThreadReferences.isEmpty()) {
                     log.debug("All worker threads is terminated.");
                 } else {
                     log.warn(
                         "Waiting for all worker threads to terminate (remaining: {}).",
-                        this.workerCallableReferences.size()
+                        this.workerThreadReferences.size()
                     );
                 }
 
@@ -921,11 +934,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
         return shutdownState.get() == TERMINATED_GRACEFULLY;
     }
 
-    private void awaitForRealtimeTriggers(final List<AbstractWorkerCallable> callables,
+    private void awaitForRealtimeTriggers(final List<AbstractWorkerThread> threads,
                                           final Duration timeout) {
         final Instant deadline = Instant.now().plus(timeout);
-        for (AbstractWorkerCallable callable : callables) {
-            if (callable instanceof WorkerTriggerRealtimeCallable t) {
+        for (AbstractWorkerThread thread : threads) {
+            if (thread instanceof WorkerTriggerRealtimeThread t) {
                 long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
 
                 if (!t.awaitStop(Duration.ofMillis(remaining))) {
@@ -961,16 +974,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.executorService.shutdownNow();
     }
 
-    public List<WorkerJob> getWorkerThreadTasks() {
-        return this.workerCallableReferences
+    public List<WorkerJob> getWorkerThreadTasks() throws Exception {
+        return this.workerThreadReferences
             .stream()
-            .map(throwFunction(workerCallable -> {
-                if (workerCallable instanceof WorkerTaskCallable workerTaskCallable) {
-                    return workerTaskCallable.workerTask;
-                } else if (workerCallable instanceof AbstractWorkerTriggerCallable workerTriggerCallable) {
-                    return workerTriggerCallable.workerTrigger;
+            .map(throwFunction(workerThread -> {
+                if (workerThread instanceof WorkerTaskThread workerTaskThread) {
+                    return workerTaskThread.workerTask;
+                } else if (workerThread instanceof AbstractWorkerTriggerThread workerTriggerThread) {
+                    return workerTriggerThread.workerTrigger;
                 } else {
-                    throw new IllegalArgumentException("Invalid Callable type: '" + workerCallable.getClass().getName() + "'");
+                    throw new IllegalArgumentException("Invalid thread type: '" + workerThread.getClass().getName() + "'");
                 }
             }))
             .toList();

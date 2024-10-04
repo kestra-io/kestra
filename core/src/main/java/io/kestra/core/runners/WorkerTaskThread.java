@@ -4,7 +4,6 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.Timeout;
 import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.RunnableTaskException;
@@ -14,7 +13,7 @@ import java.time.Duration;
 
 import static io.kestra.core.models.flows.State.Type.*;
 
-class WorkerTaskCallable extends AbstractWorkerCallable {
+public class WorkerTaskThread extends AbstractWorkerThread {
     RunnableTask<?> task;
     MetricRegistry metricRegistry;
 
@@ -24,7 +23,7 @@ class WorkerTaskCallable extends AbstractWorkerCallable {
     @Getter
     Output taskOutput;
 
-    WorkerTaskCallable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
+    public WorkerTaskThread(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
         super(runContext, task.getClass().getName(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;
@@ -52,9 +51,8 @@ class WorkerTaskCallable extends AbstractWorkerCallable {
     }
 
     @Override
-    public State.Type doCall() throws Exception {
+    public void doRun() throws Exception {
         final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
-
         try {
             if (workerTaskTimeout != null) {
                 Timeout<Object> taskTimeout = Timeout
@@ -74,20 +72,20 @@ class WorkerTaskCallable extends AbstractWorkerCallable {
                         .increment()
                     )
                     .run(() -> taskOutput = task.run(runContext));
+
             } else {
                 taskOutput = task.run(runContext);
             }
-
+            taskState = SUCCESS;
             if (taskOutput != null && taskOutput.finalState().isPresent()) {
-                return taskOutput.finalState().get();
+                taskState = taskOutput.finalState().get();
             }
-            return SUCCESS;
         } catch (dev.failsafe.TimeoutExceededException e) {
             kill(false);
-            return this.exceptionHandler(new TimeoutExceededException(workerTaskTimeout));
+            this.exceptionHandler(this, new TimeoutExceededException(workerTaskTimeout));
         } catch (RunnableTaskException e) {
             taskOutput = e.getOutput();
-            return this.exceptionHandler(e);
+            this.exceptionHandler(this, e);
         }
     }
 }

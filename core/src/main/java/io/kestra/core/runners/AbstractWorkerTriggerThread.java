@@ -5,14 +5,14 @@ import lombok.Getter;
 
 import java.time.Duration;
 
-abstract class AbstractWorkerTriggerCallable extends AbstractWorkerCallable {
+public abstract class AbstractWorkerTriggerThread extends AbstractWorkerThread {
     // This duration is by design low as we don't want to hang a thread for too long when we kill a trigger
     private static final Duration AWAIT_ON_KILL = Duration.ofMillis(50);
 
     @Getter
     WorkerTrigger workerTrigger;
 
-    AbstractWorkerTriggerCallable(RunContext runContext, String type, WorkerTrigger workerTrigger) {
+    public AbstractWorkerTriggerThread(RunContext runContext, String type, WorkerTrigger workerTrigger) {
         super(runContext, type, workerTrigger.getTrigger().getClass().getClassLoader());
         this.workerTrigger = workerTrigger;
     }

@@ -71,6 +71,13 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService newThreadPerTaskExecutor(String name) {
+        // TODO we cannot wrap it inside the ExecutorServiceMetrics.monitor as it is not supported yet.
+        return Executors.newThreadPerTaskExecutor(
+            threadFactoryBuilder.build(name + "_%d")
+        );
+    }
+
     private ExecutorService wrap(String name, ExecutorService executorService) {
         return ExecutorServiceMetrics.monitor(
             meterRegistry,

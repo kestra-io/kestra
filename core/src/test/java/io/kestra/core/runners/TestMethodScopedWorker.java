@@ -24,7 +24,7 @@ public class TestMethodScopedWorker extends Worker {
                                   WorkerGroupService workerGroupService,
                                   ExecutorsUtils executorsUtils
     ) {
-        super(workerId, numThreads, workerGroupKey, eventPublisher, workerGroupService, executorsUtils);
+        super(workerId, numThreads, -1, workerGroupKey, eventPublisher, workerGroupService, executorsUtils);
     }
 
     /**

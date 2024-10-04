@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -137,6 +138,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);
 
+    private final RealtimeTriggerWorkerThreadPool realtimeTriggerWorkerThreadPool;
+
     /**
      * Creates a new {@link Worker} instance.
      *
@@ -148,6 +151,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     public Worker(
         @Parameter String workerId,
         @Parameter Integer numThreads,
+        @Parameter Integer numRealtimeTriggerThreads,
         @Nullable @Parameter String workerGroupKey,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         WorkerGroupService workerGroupService,
@@ -158,6 +162,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
         this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
+        this.realtimeTriggerWorkerThreadPool = new RealtimeTriggerWorkerThreadPool(executorsUtils, numRealtimeTriggerThreads);
+
         this.setState(ServiceState.CREATED);
     }
 
@@ -168,6 +174,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+
+        this.realtimeTriggerWorkerThreadPool.initMetrics(this.metricRegistry, tags);
     }
 
     @Override
@@ -446,10 +454,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     private void handleTrigger(WorkerTrigger workerTrigger) {
-        metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
-            .increment();
-
         // update the trigger so that it contains the workerId
         var trigger = workerTrigger.getTriggerContext();
         trigger.setWorkerId(this.id);
@@ -458,6 +462,53 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } catch (QueueException e) {
             handleTriggerError(workerTrigger, e);
         }
+
+        DefaultRunContext runContext = (DefaultRunContext)workerTrigger.getConditionContext().getRunContext();
+        runContextInitializer.forWorker(runContext, workerTrigger);
+
+        if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
+            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
+            callTrigger(runContext, workerTrigger, workerCallable, evaluateState -> {
+                if (workerCallable.getException() != null || !evaluateState.equals(SUCCESS)) {
+                    this.handleTriggerError(workerTrigger, workerCallable.getException());
+                }
+
+                if (!evaluateState.equals(FAILED)) {
+                    this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
+                }
+            });
+        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
+            WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
+                runContext,
+                workerTrigger,
+                streamingTrigger,
+                throwable -> this.handleTriggerError(workerTrigger, throwable),
+                execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
+            );
+
+            // Dispatch to a separate thread pool the call to the realtime trigger callable.
+            // As realtime triggers evaluates in continuous, they never free their thread so they must not hold a worker thread.
+            try {
+                realtimeTriggerWorkerThreadPool.startAndForget(() -> {
+                    callTrigger(runContext, workerTrigger, workerCallable, evaluateState -> {
+                        // here the realtime trigger fails before the publisher being call so we create a fail execution
+                        if (workerCallable.getException() != null || !evaluateState.equals(SUCCESS)) {
+                            this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
+                        }
+                    });
+                });
+            } catch (RealtimeTriggerWorkerThreadPool.ThreadPoolExcedeedException e) {
+                this.handleRealtimeTriggerError(workerTrigger, e);
+            }
+        }
+
+
+    }
+
+    private void callTrigger(RunContext runContext, WorkerTrigger workerTrigger, AbstractWorkerCallable workerCallable, Consumer<io.kestra.core.models.flows.State.Type> postAction) {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .increment();
 
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger, workerGroup))
@@ -469,8 +520,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger, workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
-                    DefaultRunContext runContext = (DefaultRunContext)workerTrigger.getConditionContext().getRunContext();
-                    runContextInitializer.forWorker(runContext, workerTrigger);
                     try {
 
                         logService.logTrigger(
@@ -481,28 +530,14 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTrigger.getTrigger().getType()
                         );
 
-                        if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                            WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                        io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                        postAction.accept(state);
 
-                            if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
-                                this.handleTriggerError(workerTrigger, workerCallable.getException());
-                            }
+                        if (workerTrigger.getTrigger() instanceof PollingTriggerInterface) {
 
-                            if (!state.equals(FAILED)) {
-                                this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
-                            }
-                        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
-                            WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
-                                runContext,
-                                workerTrigger,
-                                streamingTrigger,
-                                throwable -> this.handleTriggerError(workerTrigger, throwable),
-                                execution -> this.publishTriggerExecution(workerTrigger, Optional.of(execution))
-                            );
-                            io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
+                        } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface) {
 
-                            // here the realtime trigger fail before the publisher being call so we create a fail execution
+                            // here the realtime trigger fails before the publisher being call so we create a fail execution
                             if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
                                 this.handleRealtimeTriggerError(workerTrigger, workerCallable.getException());
                             }
@@ -873,6 +908,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 try {
                     this.receiveCancellations.forEach(Runnable::run);
                     this.executorService.shutdown();
+                    this.realtimeTriggerWorkerThreadPool.shutdown();
 
                     long remaining = Math.max(0, Instant.now().until(deadline, ChronoUnit.MILLIS));
 

@@ -22,6 +22,8 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_JOB_PENDING_COUNT = "worker.job.pending";
     public final static String METRIC_WORKER_JOB_RUNNING_COUNT = "worker.job.running";
     public final static String METRIC_WORKER_JOB_THREAD_COUNT = "worker.job.thread";
+    public final static String METRIC_WORKER_REALTIME_TRIGGER_THREAD_COUNT = "worker.realtimetrigger.thread";
+    public final static String METRIC_WORKER_REALTIME_TRIGGER_RUNNING_COUNT = "worker.realtimetrigger.running";
     public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public final static String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";

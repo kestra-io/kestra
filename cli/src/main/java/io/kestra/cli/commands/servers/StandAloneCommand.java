@@ -40,8 +40,11 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
-    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to two times the number of available processors. Set it to 0 to avoid starting a worker.")
-    private int workerThread = defaultWorkerThread();
+    @CommandLine.Option(names = {"--worker-thread", "--worker-threads"}, description = "the number of worker threads, defaults to two times the number of available processors. Set it to 0 to avoid starting a worker.")
+    private int workerThreads = defaultWorkerThreads();
+
+    @CommandLine.Option(names = {"--worker-realtime-trigger-threads"}, description = "the max number of realtime trigger worker threads, defaults to -1 meaning unlimited")
+    private int workerRealtimeTriggerThreads = -1;
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipExecutions = Collections.emptyList();
@@ -99,10 +102,11 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
 
-        if (this.workerThread == 0) {
+        if (this.workerThreads == 0) {
             standAloneRunner.setWorkerEnabled(false);
         } else {
-            standAloneRunner.setWorkerThread(this.workerThread);
+            standAloneRunner.setWorkerThreads(this.workerThreads);
+            standAloneRunner.setWorkerRealtimeTriggerThreads(workerRealtimeTriggerThreads);
         }
 
         standAloneRunner.run();

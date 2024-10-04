@@ -7,7 +7,11 @@ abstract public class AbstractServerCommand extends AbstractCommand implements S
     @CommandLine.Option(names = {"--port"}, description = "the port to bind")
     Integer serverPort;
 
-    protected static int defaultWorkerThread() {
+    protected static int defaultWorkerThreads() {
         return Runtime.getRuntime().availableProcessors() * 4;
+    }
+
+    protected String displayRealtimeTriggerThreads(int threads) {
+        return threads > 0 ? String.valueOf(threads) : "unlimited";
     }
 }

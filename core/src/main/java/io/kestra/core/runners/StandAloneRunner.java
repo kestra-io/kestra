@@ -26,7 +26,8 @@ import java.util.concurrent.TimeoutException;
 @Requires(missingBeans = RunnerInterface.class)
 public class StandAloneRunner implements RunnerInterface, AutoCloseable {
     private ExecutorService poolExecutor;
-    @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter protected int workerThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter protected int workerRealtimeTriggerThreads = -1;
     @Setter protected boolean schedulerEnabled = true;
     @Setter protected boolean workerEnabled = true;
 
@@ -51,9 +52,9 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
         if (workerEnabled) {
-            // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils
+            // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still use UUID for Worker ID instead of IdUtils
             String workerID = UUID.randomUUID().toString();
-            Worker worker = applicationContext.createBean(Worker.class, workerID, workerThread, null);
+            Worker worker = applicationContext.createBean(Worker.class, workerID, workerThreads, workerRealtimeTriggerThreads, null);
             applicationContext.registerSingleton(worker); //
             poolExecutor.execute(worker);
             servers.add(worker);

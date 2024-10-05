@@ -705,7 +705,7 @@
     };
 
     const save = async (e) => {
-        if (!currentTab?.value?.dirty && !props.isCreating) {
+        if (!haveChange.value && !props.isCreating) {
             return;
         }
         if (e) {

@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.utils.ListUtils;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
@@ -125,6 +126,8 @@ public final class RunVariables {
 
         Builder withGlobals(Map<?, ?> globals);
 
+        Builder withSecretInputs(List<String> secretInputs);
+
         /**
          * Builds the immutable map of run variables.
          *
@@ -152,6 +155,7 @@ public final class RunVariables {
         protected Map<String, ?> envs;
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
+        private List<String> secretInputs;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -252,6 +256,16 @@ public final class RunVariables {
 
                 if (!inputs.isEmpty()) {
                     builder.put("inputs", inputs);
+
+                    // if a secret input is used, add it to the list of secrets to mask on the logger
+                    if (logger != null && !ListUtils.isEmpty(secretInputs)) {
+                        for (String secretInput : secretInputs) {
+                            String secret = (String) inputs.get(secretInput);
+                            if (secret != null) {
+                                logger.usedSecret(secret);
+                            }
+                        }
+                    }
                 }
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {

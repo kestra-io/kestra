@@ -9,7 +9,6 @@ public class ExecutionCount {
     @NotNull
     String namespace;
 
-    @NotNull
     String flowId;
 
     @NotNull

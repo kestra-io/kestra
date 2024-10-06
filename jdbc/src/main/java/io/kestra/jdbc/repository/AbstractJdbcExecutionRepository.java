@@ -18,6 +18,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
@@ -99,7 +100,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return false;
     }
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public Flux<Execution> findAllByTriggerExecutionId(String tenantId,
                                                        String triggerExecutionId) {
@@ -804,8 +807,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         List<Flow> flows,
         @Nullable List<State.Type> states,
         @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
-    ) {
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<String> namespaces) {
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
@@ -835,16 +838,24 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     select = select.and(this.statesFilter(states));
                 }
 
-                // add flow & namespace filters
-                select = select.and(DSL.or(
-                    flows
+                List<Condition> orConditions = new ArrayList<>();
+                orConditions.addAll(ListUtils.emptyOnNull(flows)
+                    .stream()
+                    .map(flow -> DSL.and(
+                        field("namespace").eq(flow.getNamespace()),
+                        field("flow_id").eq(flow.getFlowId())
+                    ))
+                    .toList());
+
+                orConditions.addAll(
+                    ListUtils.emptyOnNull(namespaces)
                         .stream()
-                        .map(flow -> DSL.and(
-                            field("namespace").eq(flow.getNamespace()),
-                            field("flow_id").eq(flow.getFlowId())
-                        ))
+                        .map(np -> field("namespace").eq(np))
                         .toList()
-                ));
+                );
+
+                // add flows filters
+                select = select.and(DSL.or(orConditions));
 
                 // map result to flow
                 return select
@@ -865,22 +876,40 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .toList();
             });
 
+        List<ExecutionCount> counts = new ArrayList<>();
         // fill missing with count at 0
-        return flows
-            .stream()
-            .map(flow -> result
+        if (flows != null) {
+            counts.addAll(flows
                 .stream()
-                .filter(executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
-                    executionCount.getFlowId().equals(flow.getFlowId())
+                .map(flow -> result
+                    .stream()
+                    .filter(executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
+                        executionCount.getFlowId().equals(flow.getFlowId())
+                    )
+                    .findFirst()
+                    .orElse(new ExecutionCount(
+                        flow.getNamespace(),
+                        flow.getFlowId(),
+                        0L
+                    ))
                 )
-                .findFirst()
-                .orElse(new ExecutionCount(
-                    flow.getNamespace(),
-                    flow.getFlowId(),
-                    0L
-                ))
-            )
-            .toList();
+                .toList());
+        }
+
+        if (namespaces != null) {
+            Map<String, Long> groupedByNamespace = result.stream()
+                .collect(Collectors.groupingBy(
+                    ExecutionCount::getNamespace,
+                    Collectors.summingLong(ExecutionCount::getCount)
+                ));
+
+            counts.addAll(groupedByNamespace.entrySet()
+                .stream()
+                .map(entry -> new ExecutionCount(entry.getKey(), null, entry.getValue()))
+                .toList());
+        }
+
+        return counts;
     }
 
     public List<Execution> lastExecutions(

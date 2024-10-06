@@ -1,5 +1,5 @@
 <template>
-    <el-collapse accordion v-model="openedDocs">
+    <el-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
             v-for="child in parent.children"

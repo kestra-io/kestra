@@ -26,6 +26,7 @@
                     :total-count="countByLogLevel[logLevel]"
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
+                    @close="clearLogLevel(logLevel)"
                 />
             </el-form-item>
             <el-form-item>
@@ -217,7 +218,17 @@
 
                 const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
-            }
+            },
+            clearLogLevel(level) {
+                if (this.logCursor !== undefined && this.cursorLogLevel === level) {
+                    this.logCursor = undefined;
+                }
+                if (this.level === level) {
+                    this.level = undefined;
+                    this.onChange();
+                }
+            }   
+
         }
     };
 </script>

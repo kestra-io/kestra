@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.exec.scripts.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.tasks.RunnableTaskException;
 import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.DefaultRunContext;
@@ -25,7 +26,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -154,8 +154,27 @@ public class CommandsWrapper implements TaskCommands {
         RunContext taskRunnerRunContext = initializer.forPlugin(((DefaultRunContext) runContext).clone(), realTaskRunner);
         this.commands = this.render(runContext, commands);
 
-        RunnerResult runnerResult = realTaskRunner.run(taskRunnerRunContext, this, this.outputFiles);
+        var outputBuilder = ScriptOutput.builder().warningOnStdErr(this.warningOnStdErr);
+        try {
+            RunnerResult runnerResult = realTaskRunner.run(taskRunnerRunContext, this, this.outputFiles);
+            return outputBuilder.exitCode(runnerResult.getExitCode())
+                .stdOutLineCount(runnerResult.getLogConsumer().getStdOutCount())
+                .stdErrLineCount(runnerResult.getLogConsumer().getStdErrCount())
+                .vars(runnerResult.getLogConsumer().getOutputs())
+                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .build();
+        } catch (TaskException e) {
+            var output = outputBuilder.exitCode(e.getExitCode())
+                .stdOutLineCount(e.getStdOutCount())
+                .stdErrLineCount(e.getStdErrCount())
+                .vars(e.getLogConsumer() != null ? e.getLogConsumer().getOutputs() : null)
+                .outputFiles(getOutputFiles(taskRunnerRunContext))
+                .build();
+            throw new RunnableTaskException(e, output);
+        }
+    }
 
+    private Map<String, URI> getOutputFiles(RunContext taskRunnerRunContext) throws Exception {
         Map<String, URI> outputFiles = new HashMap<>();
         if (this.outputDirectoryEnabled()) {
             outputFiles.putAll(ScriptService.uploadOutputFiles(taskRunnerRunContext, this.getOutputDirectory()));
@@ -164,15 +183,7 @@ public class CommandsWrapper implements TaskCommands {
         if (this.outputFiles != null) {
             outputFiles.putAll(FilesService.outputFiles(taskRunnerRunContext, this.outputFiles));
         }
-
-        return ScriptOutput.builder()
-            .exitCode(runnerResult.getExitCode())
-            .stdOutLineCount(runnerResult.getLogConsumer().getStdOutCount())
-            .stdErrLineCount(runnerResult.getLogConsumer().getStdErrCount())
-            .warningOnStdErr(this.warningOnStdErr)
-            .vars(runnerResult.getLogConsumer().getOutputs())
-            .outputFiles(outputFiles)
-            .build();
+        return outputFiles;
     }
 
     public TaskRunner getTaskRunner() {

@@ -855,7 +855,9 @@
     "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
     "dashboard": {
       "success_ratio": "Success Ratio",
+      "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
       "failure_ratio": "Failure Ratio",
+      "failure_ratio_tooltip": "Failed ratio is the sum of FAILED, KILLED and RETRIED executions divided by the total number of executions in a terminated state.",
       "per_day": " (per day)",
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
@@ -878,6 +880,7 @@
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
     "open sidebar": "open sidebar",
-    "close sidebar": "close sidebar"
+    "close sidebar": "close sidebar",
+    "change_status": "Change status"
   }
 }

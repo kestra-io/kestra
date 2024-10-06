@@ -73,12 +73,9 @@
                 </template>
 
                 <template #top>
-                    <state-global-chart
-                        class="mb-4"
-                        v-if="daily"
-                        :ready="dailyReady"
-                        :data="daily"
-                    />
+                    <el-card v-if="daily" shadow="never" class="mb-4">
+                        <ExecutionsBar :data="daily" :total="executionsCount" />
+                    </el-card>
                 </template>
 
                 <template #table>
@@ -245,7 +242,6 @@
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import StateChart from "../stats/StateChart.vue";
-    import StateGlobalChart from "../stats/StateGlobalChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
@@ -255,6 +251,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import {storageKeys} from "../../utils/constants";
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -265,7 +262,6 @@
             DateAgo,
             SearchField,
             StateChart,
-            StateGlobalChart,
             Status,
             TriggerAvatar,
             MarkdownTooltip,
@@ -274,7 +270,8 @@
             Upload,
             LabelFilter,
             ScopeFilterButtons,
-            TopNavBar
+            TopNavBar,
+            ExecutionsBar
         },
         data() {
             return {
@@ -318,7 +315,12 @@
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
-            }
+            },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
         },
         beforeCreate(){
             if(!this.$route.query.scope) {

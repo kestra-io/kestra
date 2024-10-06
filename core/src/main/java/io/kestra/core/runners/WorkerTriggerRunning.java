@@ -29,6 +29,9 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
     @NotNull
     private ConditionContext conditionContext;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String uid() {
         return triggerContext.uid();

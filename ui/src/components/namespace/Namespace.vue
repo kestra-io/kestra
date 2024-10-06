@@ -48,6 +48,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Overview from "./Overview.vue";
+    import Executions from "./Executions.vue";
     import NamespaceKV from "./NamespaceKV.vue";
     import NamespaceFlows from "./NamespaceFlows.vue";
     import EditorView from "../inputs/EditorView.vue";
@@ -144,6 +145,14 @@
                             id: this.$route.query.id
                         }
                     },   
+                    {
+                        name: "executions",
+                        component: Executions,
+                        title: this.$t("executions"),
+                        query: {
+                            id: this.$route.query.id
+                        }
+                    },
                     {
                         name: "dependencies",
                         component: NamespaceDependenciesWrapper,

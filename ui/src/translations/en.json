@@ -241,6 +241,7 @@
       "zoom-fit": "Fit"
     },
     "show task logs": "Show task logs",
+    "show task condition": "Show task condition",
     "show task outputs": "Show task outputs",
     "show task source": "Show task source",
     "specific task": "Specific task",

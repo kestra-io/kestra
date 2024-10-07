@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
@@ -27,6 +28,7 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TruthUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -424,11 +426,31 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         .filter(workerTask -> this.deduplicateWorkerTask(execution, executorState, workerTask.getTaskRun()))
                         .toList();
 
+
                     // WorkerTask not flowable to workerTask
                     workerTasksDedup
                         .stream()
-                        .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
+                        .filter(workerTask -> {
+                            try {
+                                return workerTask.getTask().isSendToWorkerTask() && TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()));
+                            } catch (IllegalVariableEvaluationException e) {
+                                return true;
+                            }
+                        })
                         .forEach(throwConsumer(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask)));
+
+                    // WorkerTask with execution condition that are not met
+                    workerTasksDedup
+                        .stream()
+                        .filter(workerTask -> {
+                            try {
+                                return !TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()));
+                            } catch (IllegalVariableEvaluationException e) {
+                                return false;
+                            }
+                        })
+                        .map(workerTask -> new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)))
+                        .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
 
                     // WorkerTask flowable to workerTaskResult as Running
                     workerTasksDedup

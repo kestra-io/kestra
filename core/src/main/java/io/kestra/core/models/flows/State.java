@@ -197,10 +197,11 @@ public class State {
         CANCELLED,
         QUEUED,
         RETRYING,
-        RETRIED;
+        RETRIED,
+        SKIPPED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED || this == Type.SKIPPED;
         }
 
         public boolean isCreated() {

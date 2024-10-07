@@ -159,7 +159,7 @@ class PluginControllerTest {
             Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
             assertThat(doc.getMarkdown(), containsString("io.kestra.plugin.templates.ExampleTask"));
-            assertThat(properties.size(), is(14));
+            assertThat(properties.size(), is(15));
             assertThat(properties.get("id").size(), is(4));
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(1));
         });

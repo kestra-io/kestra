@@ -20,6 +20,7 @@
     import {YamlUtils} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
     import Markdown from "../layout/Markdown.vue";
+    import Editor from "./Editor.vue";
 
     const router = getCurrentInstance().appContext.config.globalProperties.$router;
 
@@ -97,6 +98,7 @@
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
+    const isShowConditionOpen = ref(false);
     const selectedTask = ref(null);
 
     // Init components
@@ -274,6 +276,12 @@
         isDrawerOpen.value = true;
     }
 
+    const showCondition = (event) => {
+        selectedTask.value = event.task
+        isShowConditionOpen.value = true;
+        isDrawerOpen.value = true;
+    }
+
     const onSwappedTask = (event) => {
         emit("swapped-task", event.swappedTasks);
         emit("on-edit", event.newSource, true);
@@ -312,6 +320,7 @@
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-description="showDescription"
+            @show-condition="showCondition"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
             @swapped-task="onSwappedTask"
@@ -369,6 +378,18 @@
             </div>
             <div v-if="isShowDescriptionOpen">
                 <markdown class="markdown-tooltip" :source="selectedTask.description" />
+            </div>
+            <div v-if="isShowConditionOpen">
+                <editor
+                    :read-only="true"
+                    :input="true"
+                    :full-height="false"
+                    :navbar="false"
+                    :minimap="false"
+                    :model-value="selectedTask.runIf"
+                    lang="yaml"
+                    class="mt-3"
+                />
             </div>
         </drawer>
     </div>

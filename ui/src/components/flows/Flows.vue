@@ -106,10 +106,10 @@
                                 <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
                                     {{ $t('delete') }}
                                 </el-button>
-                                <el-button v-if="canUpdate" @click="enableFlows" :icon="FileDocumentCheckOutline">
+                                <el-button v-if="canUpdate && anyFlowDisabled()" @click="enableFlows" :icon="FileDocumentCheckOutline">
                                     {{ $t('enable') }}
                                 </el-button>
-                                <el-button v-if="canUpdate" @click="disableFlows" :icon="FileDocumentRemoveOutline">
+                                <el-button v-if="canUpdate && anyFlowEnabled()" @click="disableFlows" :icon="FileDocumentRemoveOutline">
                                     {{ $t('disable') }}
                                 </el-button>
                             </bulk-select>
@@ -331,7 +331,8 @@
             selectionMapper(element) {
                 return {
                     id: element.id,
-                    namespace: element.namespace
+                    namespace: element.namespace,
+                    enabled: !element.disabled
                 }
             },
             exportFlows() {
@@ -387,6 +388,12 @@
                     () => {
                     }
                 )
+            },
+            anyFlowDisabled() {
+                return this.selection.some(flow => !flow.enabled);
+            },
+            anyFlowEnabled() {
+                return this.selection.some(flow => flow.enabled);
             },
             enableFlows() {
                 this.$toast().confirm(
@@ -542,7 +549,7 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             }
-        }        
+        }
     };
 </script>
 

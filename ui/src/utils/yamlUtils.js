@@ -589,11 +589,11 @@ export default class YamlUtils {
             return source;
         }
 
-        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "pluginDefaults", "taskDefaults", "concurrency", "outputs"];
+        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
         const updatedItems = [];
         for (const prop of order) {
             const item = yamlDoc.contents.items.find(e => e.key.value === prop);
-            if (item && (((isSeq(item.value) || isMap(item.value)) && item.value.items.length > 0) || item.value.value)) {
+            if (item && (((isSeq(item.value) || isMap(item.value)) && item.value.items.length > 0) || (item.value.value !== undefined && item.value.value !== null))) {
                 updatedItems.push(item);
             }
         }

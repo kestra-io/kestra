@@ -19,19 +19,20 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import jakarta.validation.ConstraintViolationException;
-
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
 @Slf4j
@@ -61,6 +62,22 @@ public class PluginDefaultService {
 
     private AtomicBoolean warnOnce = new AtomicBoolean(false);
 
+    @PostConstruct
+    void validateGlobalPluginDefault() {
+        List<PluginDefault> mergedDefaults = new ArrayList<>();
+        if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
+            mergedDefaults.addAll(taskGlobalDefault.getDefaults());
+        }
+
+        if (pluginGlobalDefault != null && pluginGlobalDefault.getDefaults() != null) {
+            mergedDefaults.addAll(pluginGlobalDefault.getDefaults());
+        }
+
+        mergedDefaults.stream()
+            .flatMap(pluginDefault -> this.validateDefault(pluginDefault).stream())
+            .forEach(violation -> log.error("Invalid plugin default configuration: {}", violation));
+    }
+
     /**
      * @param flow the flow to extract default
      * @return list of {@code PluginDefault} ordered by most important first
@@ -74,7 +91,7 @@ public class PluginDefaultService {
 
         if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
             if (warnOnce.compareAndSet(false, true)) {
-                log.warn("Global Task Defaults are deprecated, please use Global Plugin Defaults instead via the 'kestra.plugins.defaults' property.");
+                log.warn("Global Task Defaults are deprecated, please use Global Plugin Defaults instead via the 'kestra.plugins.defaults' configuration property.");
             }
             list.addAll(taskGlobalDefault.getDefaults());
         }
@@ -160,6 +177,36 @@ public class PluginDefaultService {
         }
 
         return yamlFlowParser.parse(flowAsMap, Flow.class, false);
+    }
+
+    /**
+     * Validate a plugin default by comparing its properties with the getters of the plugin class.
+     * <p>
+     * If the plugin default type is unknown,
+     * validation will be disabled as we cannot differentiate between a prefix or an unknown type.
+     */
+    public List<String> validateDefault(PluginDefault pluginDefault) {
+        Class<? extends Plugin> classByIdentifier = pluginRegistry.findClassByIdentifier(pluginDefault.getType());
+        if (classByIdentifier == null) {
+            // this can either be a prefix or a non-existing plugin, in both cases we cannot validate in detail
+            return Collections.emptyList();
+        }
+
+        Set<String> pluginDefaultProperties = pluginDefault.getValues().keySet();
+        List<String> pluginProperties = Stream.of(classByIdentifier.getMethods())
+            .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("if"))
+            .map(method -> {
+                if (method.getName().startsWith("get")) {
+                    return method.getName().substring(3).toLowerCase();
+                }
+                return method.getName().substring(2).toLowerCase();
+            })
+            .toList();
+
+        return pluginDefaultProperties.stream()
+            .filter(property -> !pluginProperties.contains(property.toLowerCase()))
+            .map(property -> "No property '" + property + "' exists in plugin '" + pluginDefault.getType() + "'")
+            .toList();
     }
 
     private void addAliases(List<PluginDefault> allDefaults) {

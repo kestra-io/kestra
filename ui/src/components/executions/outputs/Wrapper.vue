@@ -373,4 +373,9 @@
 .bordered {
     border: 1px solid var(--bs-border-color)
 }
+
+.bordered > .el-collapse-item{
+    margin-bottom :0px !important
+}
+
 </style>

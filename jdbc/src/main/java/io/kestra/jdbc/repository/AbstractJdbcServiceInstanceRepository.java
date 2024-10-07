@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.using;
 
@@ -292,7 +291,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                                                                                 final Service.ServiceState newState,
                                                                                 final String reason) {
         // Find the ServiceInstance to be updated
-        Optional<ServiceInstance> optional = findById(instance.id(), configuration, true);
+        Optional<ServiceInstance> optional = findById(instance.uid(), configuration, true);
 
         // Check whether service was found.
         if (optional.isEmpty()) {

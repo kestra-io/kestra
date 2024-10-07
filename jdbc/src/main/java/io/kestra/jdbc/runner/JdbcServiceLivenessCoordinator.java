@@ -79,7 +79,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
             List<String> workerIdsHavingTasksToRestart = nonRespondingServices.stream()
                 .filter(instance -> instance.is(Service.ServiceType.WORKER))
                 .filter(instance -> instance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY))
-                .map(ServiceInstance::id)
+                .map(ServiceInstance::uid)
                 .toList();
 
             if (!workerIdsHavingTasksToRestart.isEmpty()) {
@@ -116,7 +116,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
             if (!uncleanShutdownWorkers.isEmpty()) {
                 List<String> ids = uncleanShutdownWorkers.stream()
                     .filter(instance -> instance.config().workerTaskRestartStrategy().isRestartable())
-                    .map(ServiceInstance::id)
+                    .map(ServiceInstance::uid)
                     .toList();
                 if (!ids.isEmpty()) {
                     log.info("Trigger task restart for non-responding workers after termination grace period: {}.", ids);
@@ -156,7 +156,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
         if (instance.state().isDisconnectedOrTerminating()) {
             log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 now.toEpochMilli() - instance.updatedAt().toEpochMilli()

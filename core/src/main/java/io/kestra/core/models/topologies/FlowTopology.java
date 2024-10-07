@@ -1,6 +1,7 @@
 package io.kestra.core.models.topologies;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.HasUID;
 import lombok.Builder;
 import lombok.Value;
 
@@ -8,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Value
 @Builder
-public class FlowTopology {
+public class FlowTopology implements HasUID {
     @NotNull
     FlowNode source;
 
@@ -18,6 +19,9 @@ public class FlowTopology {
     @NotNull
     FlowNode destination;
 
+
+    /** {@inheritDoc **/
+    @Override
     @JsonIgnore
     public String uid() {
         // we use destination as prefix to enable prefixScan on FlowTopologyUpdateTransformer

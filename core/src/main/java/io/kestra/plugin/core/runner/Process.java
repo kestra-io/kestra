@@ -152,9 +152,9 @@ public class Process extends TaskRunner {
             stdErr.join();
 
             if (exitCode != 0) {
-                throw new TaskException(exitCode, defaultLogConsumer.getStdOutCount(), defaultLogConsumer.getStdErrCount());
+                throw new TaskException(exitCode, defaultLogConsumer);
             } else {
-                logger.debug("Command succeed with code {}", exitCode);
+                logger.debug("Command succeed with exit code {}", exitCode);
             }
 
             return new RunnerResult(exitCode, defaultLogConsumer);

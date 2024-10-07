@@ -381,6 +381,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         List.of(new io.kestra.core.models.executions.statistics.Flow(flow.getNamespace(), flow.getId())),
                         List.of(State.Type.RUNNING, State.Type.PAUSED),
                         null,
+                        null,
                         null
                     ).getFirst();
 

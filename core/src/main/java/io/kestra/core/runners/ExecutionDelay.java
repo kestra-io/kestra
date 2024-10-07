@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.flows.State;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,7 @@ import java.time.Instant;
 @Value
 @AllArgsConstructor
 @Builder
-public class ExecutionDelay {
+public class ExecutionDelay implements HasUID {
     @NotNull
     String taskRunId;
 
@@ -26,6 +27,7 @@ public class ExecutionDelay {
 
     @NotNull DelayType delayType;
 
+    @Override
     @JsonIgnore
     public String uid() {
         return String.join("_", executionId, taskRunId);

@@ -407,6 +407,8 @@
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
     "dependencies": "종속성",
+    "flow-depedencies": "종속성",
+    "flow no dependencies": "귀하의 흐름에는 종속성이 없습니다.",
     "see dependencies": "종속성 보기",
     "dependencies missing acls": "이 flow에 대한 권한이 없습니다",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",

@@ -406,6 +406,8 @@
     "flow enable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को सक्षम करना चाहते हैं?",
     "flows disabled": "<code>{count}</code> Flow(s) अक्षम किए गए",
     "flows enabled": "<code>{count}</code> Flow(s) सक्षम किए गए",
+    "flow no dependencies": "आपके प्रवाह में कोई निर्भरता नहीं है",
+    "flow-dependencies": "निर्भरता",
     "dependencies": "निर्भरताएँ",
     "see dependencies": "निर्भरताएँ देखें",
     "dependencies missing acls": "इस flow पर कोई अनुमतियाँ नहीं हैं",

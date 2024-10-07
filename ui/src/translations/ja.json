@@ -407,6 +407,8 @@
     "flows disabled": "<code>{count}</code>件のflowが無効化されました",
     "flows enabled": "<code>{count}</code>件のflowが有効化されました",
     "dependencies": "依存関係",
+    "flow no dependencies": "フローに依存関係がありません",
+    "flow-dependencies": "依存関係",
     "see dependencies": "依存関係を表示",
     "dependencies missing acls": "このflowには権限がありません",
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",

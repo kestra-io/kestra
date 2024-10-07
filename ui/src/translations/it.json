@@ -406,6 +406,8 @@
     "flow enable": "Sei sicuro di voler abilitare <code>{flowCount}</code> flow?",
     "flows disabled": "<code>{count}</code> Flow disabilitati",
     "flows enabled": "<code>{count}</code> Flow abilitati",
+    "flow no dependencies": "Il tuo flusso non ha dipendenze",
+    "flow-dependencies": "dipendenze",
     "dependencies": "Dipendenze",
     "see dependencies": "Vedi dipendenze",
     "dependencies missing acls": "Nessun permesso su questo flow",

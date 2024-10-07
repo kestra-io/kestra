@@ -8,9 +8,6 @@
             :tabs="tabs"
         />
     </template>
-    <div v-if="isTriggerHovered && !flow.triggers" class="trigger-hover-popup">
-        <p>Add a trigger in the editor list</p>
-    </div>
 </template>
 
 <script>
@@ -25,6 +22,7 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
+    import FlowNoDependencies from "./FlowNoDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
@@ -45,7 +43,6 @@
                 dependenciesCount: undefined,
                 expandedSubflows: [],
                 deleted: false,
-                isTriggerHovered: false
             };
         },
         watch: {
@@ -206,8 +203,6 @@
                         component: FlowTriggers,
                         title: this.$t("triggers"),
                         disabled: !this.flow.triggers,
-                        onMouseenter: this.flow.triggers ? null : () => this.showTriggerHoverPopup(true),
-                        onMouseleave: this.flow.triggers ? null : () => this.showTriggerHoverPopup(false),
                     });
                 }
 
@@ -253,7 +248,7 @@
                 ) {
                     tabs.push({
                         name: "dependencies",
-                        component: FlowDependencies,
+                        component: this.routeFlowDependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
                     });
@@ -272,11 +267,6 @@
                 });
 
                 return tabs;
-            },
-            showTriggerHoverPopup(visible) {
-                if (!this.flow.triggers) {
-                    this.isTriggerHovered = visible;
-                }
             },
             updateExpandedSubflows(expandedSubflows) {
                 this.expandedSubflows = expandedSubflows;
@@ -328,6 +318,9 @@
                     this.flow.namespace,
                 );
             },
+            routeFlowDependencies() {
+                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+            }
         },
         unmounted() {
             this.$store.commit("flow/setFlow", undefined);
@@ -341,18 +334,5 @@
 }
 .body-color {
     color: var(--bs-body-color);
-}
-.trigger-hover-popup {
-    position: absolute;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: white;
-    border: 1px solid #ddd;
-    padding: 10px;
-    z-index: 1000;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-    white-space: nowrap;
 }
 </style>

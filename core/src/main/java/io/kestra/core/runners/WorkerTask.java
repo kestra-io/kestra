@@ -51,8 +51,8 @@ public class WorkerTask extends WorkerJob {
      *
      * @return this worker task, updated
      */
-    public WorkerTask fail() {
+    public TaskRun fail() {
         var state = this.task.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
-        return this.withTaskRun(this.getTaskRun().withState(state));
+        return this.getTaskRun().withState(state);
     }
 }

@@ -185,6 +185,9 @@
             }
         }
     }
+    p {
+        line-height: 15px;
+    }
 
     .markdown-tooltip {
         *:last-child {

@@ -171,6 +171,7 @@ public class DefaultRunContext extends RunContext {
         runContext.metrics = new ArrayList<>();
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
+        runContext.secretInputs = this.secretInputs;
         if (this.isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);

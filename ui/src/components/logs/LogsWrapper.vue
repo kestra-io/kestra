@@ -30,6 +30,13 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-switch
+                            :model-value="showChart"
+                            @update:model-value="onShowChartChange"
+                            :active-text="$t('show chart')"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <filters :storage-key="storageKeys.LOGS_FILTERS" />
                     </el-form-item>
                     <el-form-item>
@@ -37,7 +44,7 @@
                     </el-form-item>
                 </template>
 
-                <template v-if="charts" #top>
+                <template v-if="showStatChart()" #top>
                     <el-card shadow="never" class="mb-3" v-loading="!statsReady">
                         <div class="state-global-charts">
                             <template v-if="hasStatsData">
@@ -135,7 +142,8 @@
                 refreshDates: false,
                 statsReady: false,
                 statsData: [],
-                canAutoRefresh: false
+                canAutoRefresh: false,
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART))
             };
         },
         computed: {
@@ -194,6 +202,16 @@
         methods: {
             onDateFilterTypeChange(event) {
                 this.canAutoRefresh = event;
+            },
+            showStatChart() {
+                return this.charts && this.showChart;
+            },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value);
+                if (this.showStatChart) {
+                    this.loadStats();
+                }
             },
             refresh() {
                 this.refreshDates = !this.refreshDates;

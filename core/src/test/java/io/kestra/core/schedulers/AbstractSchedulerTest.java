@@ -56,12 +56,12 @@ abstract public class AbstractSchedulerTest {
         ));
     }
 
-    protected static Flow createFlow(List<AbstractTrigger> triggers) {
+    protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
         return createFlow(triggers, null);
     }
 
-    protected static Flow createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        Flow.FlowBuilder<?, ?> flow = Flow.builder()
+    protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        Flow.FlowBuilder<?, ?> builder = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(
@@ -93,11 +93,11 @@ abstract public class AbstractSchedulerTest {
                 .build()));
 
         if (list != null) {
-            flow.pluginDefaults(list);
+            builder.pluginDefaults(list);
         }
 
-        return flow
-            .build();
+        Flow flow = builder.build();
+        return FlowWithSource.of(flow, flow.generateSource());
     }
 
     protected static int COUNTER = 0;

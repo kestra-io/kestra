@@ -185,10 +185,11 @@
             }
         }
     }
-
     .markdown-tooltip {
         *:last-child {
             margin-bottom: 0;
         }
+        line-height: 15px;
+        padding: 5px;
     }
 </style>

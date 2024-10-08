@@ -1,6 +1,6 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -267,10 +267,10 @@ public class DeserializationIssuesCaseTest {
     }
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
-        AtomicReference<List<Flow>> flows = new AtomicReference<>();
+        AtomicReference<List<FlowWithSource>> flows = new AtomicReference<>();
         flowListeners.listen(newFlows -> flows.set(newFlows));
 
-        sendToQueue.accept(new QueueMessage(Flow.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+        sendToQueue.accept(new QueueMessage(FlowWithSource.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
 
         Await.until(
             () -> flows.get() != null && flows.get().stream().anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2") && (newFlow.getTasks() == null || newFlow.getTasks().isEmpty())),

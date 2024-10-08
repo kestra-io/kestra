@@ -1,6 +1,7 @@
 package io.kestra.runner.h2;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -25,7 +26,7 @@ class H2FlowListenersTest extends FlowListenersTest {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    QueueInterface<Flow> flowQueue;
+    QueueInterface<FlowWithSource> flowQueue;
 
     @Test
     public void all() {

@@ -39,7 +39,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
 
-    private final QueueInterface<Flow> flowQueue;
+    private final QueueInterface<FlowWithSource> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
     private final ModelValidator modelValidator;
@@ -193,6 +193,48 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Select<Record2<String, String>> from;
+
+                from = revision.map(integer -> context
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
+                        .from(jdbcRepository.getTable())
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(integer)))
+                    .orElseGet(() -> context
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
+                        .from(fromLastRevision(true))
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(field("namespace", String.class).eq(namespace))
+                        .and(field("id", String.class).eq(id)));
+                Record2<String, String> fetched = from.fetchAny();
+
+                if (fetched == null) {
+                    return Optional.empty();
+                }
+
+                Flow flow = jdbcRepository.map(fetched);
+                String source = fetched.get("source_code", String.class);
+                if (flow instanceof FlowWithException fwe) {
+                    return Optional.of(fwe.toBuilder().source(source).build());
+                }
+                return Optional.of(FlowWithSource.of(flow, source));
+            });
+    }
+
+    @Override
     public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id) {
          return jdbcRepository
             .getDslContextWrapper()
@@ -265,7 +307,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
+                var select = DSL
                     .using(configuration)
                     .select(field("value"))
                     .from(fromLastRevision(true))
@@ -599,7 +641,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         this.jdbcRepository.persist(flow, fields);
 
-        flowQueue.emit(flow);
+        flowQueue.emit(flow.withSource(flowSource));
         if (exists.isPresent()) {
             eventPublisher.publishEvent(new CrudEvent<>(flow, exists.get(), crudEventType));
         } else {
@@ -611,17 +653,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SneakyThrows
     @Override
-    public Flow delete(Flow flow) {
-        if (flow instanceof FlowWithSource) {
-            flow = ((FlowWithSource) flow).toFlow();
-        }
-
-        Optional<Flow> revision = this.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision()));
+    public FlowWithSource delete(FlowWithSource flow) {
+        Optional<FlowWithSource> revision = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision()));
         if (revision.isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
 
-        Optional<Flow> last = this.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        Optional<FlowWithSource> last = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId());
         if (last.isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
@@ -630,10 +668,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             throw new IllegalStateException("Trying to deleted old revision, wanted " + revision.get().getRevision() + ", last revision is " + last.get().getRevision());
         }
 
-        Flow deleted = flow.toDeleted();
+        FlowWithSource deleted = flow.toDeleted();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
-        fields.put(field("source_code"), JacksonMapper.ofYaml().writeValueAsString(deleted));
+        fields.put(field("source_code"), deleted.getSource());
 
         this.jdbcRepository.persist(deleted, fields);
 

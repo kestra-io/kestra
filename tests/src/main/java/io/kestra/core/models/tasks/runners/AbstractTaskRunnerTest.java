@@ -136,6 +136,21 @@ public abstract class AbstractTaskRunnerTest {
         assertThat(defaultLogConsumer.getOutputs().get("logOutput"), is("Hello World"));
     }
 
+    @Test
+    protected void failWithInput() throws IOException {
+        var runContext = runContext(this.runContextFactory);
+        var commands = initScriptCommands(runContext);
+        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(
+            List.of("/bin/sh", "-c"),
+            Collections.emptyList(),
+            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1"))
+        );
+
+        var taskRunner = taskRunner();
+        TaskException taskException = assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
+        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput"), is("Hello World"));
+    }
+
     protected RunContext runContext(RunContextFactory runContextFactory) {
         return this.runContext(runContextFactory, null);
     }
@@ -185,11 +200,7 @@ public abstract class AbstractTaskRunnerTest {
     protected TaskCommands initScriptCommands(RunContext runContext) throws IOException {
         var commands = Mockito.mock(TaskCommands.class);
         Mockito.when(commands.getContainerImage()).thenReturn(defaultImage());
-        Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
-            @Override
-            public void accept(String s, Boolean aBoolean) {
-            }
-        });
+        Mockito.when(commands.getLogConsumer()).thenReturn(new DefaultLogConsumer(runContext));
 
         var workingDirectory = runContext.workingDir().path();
         Mockito.when(commands.getWorkingDirectory()).thenReturn(workingDirectory);

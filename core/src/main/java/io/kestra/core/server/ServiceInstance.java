@@ -1,19 +1,24 @@
 package io.kestra.core.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.server.Service.ServiceState;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
  *
- * @param id        The service unique identifier.
+ * @param uid        The service unique identifier.
  * @param type      The service type.
  * @param state     The state of the service.
  * @param server    The server running this service.
@@ -27,7 +32,7 @@ import java.util.Set;
  */
 @JsonInclude
 public record ServiceInstance(
-    String id,
+    @JsonProperty("id") String uid,
     Service.ServiceType type,
     ServiceState state,
     ServerInstance server,
@@ -38,7 +43,7 @@ public record ServiceInstance(
     Map<String, Object> props,
     Set<Metric> metrics,
     long seqId
-) {
+) implements HasUID {
 
     // TimestampedEvent type for state updated.
     private static final String SERVICE_STATE_UPDATED_EVENT_TYPE = "service.state.updated";
@@ -113,7 +118,7 @@ public record ServiceInstance(
      */
     public ServiceInstance server(final ServerInstance server) {
         return new ServiceInstance(
-            id,
+            uid,
             type,
             state,
             server,
@@ -135,7 +140,7 @@ public record ServiceInstance(
      */
     public ServiceInstance metrics(final Set<Metric> metrics) {
         return new ServiceInstance(
-            id,
+            uid,
             type,
             state,
             server,
@@ -185,7 +190,7 @@ public record ServiceInstance(
         }
         long nextSeqId = seqId + 1;
         return new ServiceInstance(
-            id,
+            uid,
             type,
             newState,
             server,
@@ -230,5 +235,19 @@ public record ServiceInstance(
      * @param state The service state during this event.
      */
     public record TimestampedEvent(Instant ts, String value, String type, ServiceState state) {
+    }
+
+    /**
+     * Static helper method for grouping all services instanced by a given property.
+     * <p>
+     * This method will filter all services instance not having the expected property.
+     *
+     * @param property The property to group by.
+     * @return  The {@link ServiceInstance} grouped by the given property value.
+     */
+    public static Map<String, List<ServiceInstance>> groupByProperty(final Collection<ServiceInstance> instances, final String property) {
+        return instances.stream()
+            .filter(it -> Optional.ofNullable(it.props()).map(map -> map.get(property)).isPresent())
+            .collect(Collectors.groupingBy(it -> (String) it.props().get(property)));
     }
 }

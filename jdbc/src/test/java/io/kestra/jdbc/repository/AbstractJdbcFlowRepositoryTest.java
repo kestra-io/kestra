@@ -76,7 +76,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .execute();
         });
 
-        Optional<Flow> flow = flowRepository.findById(null, "io.kestra.unittest", "invalid");
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(null, "io.kestra.unittest", "invalid");
 
         try {
             assertThat(flow.isPresent(), is(true));
@@ -107,7 +107,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
             Assertions.assertTrue(count > 0);
         } finally {
             Optional.ofNullable(toDelete).ifPresent(flow -> {
-                flowRepository.delete(flow.toFlow());
+                flowRepository.delete(flow);
             });
         }
     }
@@ -127,7 +127,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
             Assertions.assertEquals(1, count);
         } finally {
             for (FlowWithSource flow : toDelete) {
-                flowRepository.delete(flow.toFlow());
+                flowRepository.delete(flow);
             }
         }
     }

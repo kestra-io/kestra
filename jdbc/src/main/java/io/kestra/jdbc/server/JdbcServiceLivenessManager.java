@@ -65,7 +65,7 @@ public final class JdbcServiceLivenessManager extends ServiceLivenessManager {
         // for more than the configured liveness timeout (this is to prevent zombie server).
         if (isLivenessEnabled() && isWorkerServer() && isServerDisconnected(now)) {
             log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state before reaching timeout ({}ms). Disconnecting.",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 getElapsedMilliSinceLastStateUpdate(now)

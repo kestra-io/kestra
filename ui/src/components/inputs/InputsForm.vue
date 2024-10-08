@@ -14,6 +14,7 @@
                 v-if="input.type === 'STRING' || input.type === 'URI'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
+                @confirm="onSubmit"
             />
             <el-select
                 :full-height="false"
@@ -148,10 +149,12 @@
                 @update:model-value="onChange"
             />
             <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-            <template v-for="err in input.errors ?? []" :key="err">
-                <el-text type="warning">
-                    {{ err.message }}
-                </el-text>
+            <template v-if="executeClicked">
+                <template v-for="err in input.errors ?? []" :key="err">
+                    <el-text type="warning">
+                        {{ err.message }}
+                    </el-text>
+                </template>
             </template>
         </el-form-item>
     </template>
@@ -178,6 +181,10 @@
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
+            executeClicked: {
+                type: Boolean,
+                default: false
+            },
             modelValue: {
                 default: undefined,
                 type: Object
@@ -203,7 +210,7 @@
                 multiSelectInputs: {},
             };
         },
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "confirm"],
         created() {
             this.inputsList.push(...(this.initialInputs ?? []));
             this.validateInputs();
@@ -217,9 +224,10 @@
             }, 500)
 
             this._keyListener = function(e) {
-                if (e.keyCode === 13 && (e.ctrlKey || e.metaKey))  {
+                // Ctrl/Control + Enter
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey))  {
                     e.preventDefault();
-                    this.onSubmit(this.$refs.form);
+                    this.onSubmit();
                 }
             };
 
@@ -241,6 +249,9 @@
             },
             onChange() {
                 this.$emit("update:modelValue", this.inputs);
+            },
+            onSubmit() {
+                this.$emit("confirm");
             },
             onMultiSelectChange(input, e) {
                 this.inputs[input] = JSON.stringify(e).toString();

@@ -5,7 +5,7 @@
     "ok": "OK",
     "close": "Fermer",
     "description": "Description",
-    "show description": "Afficher la description",
+    "show description": "Afficher une description",
     "namespace": "Espace de nom",
     "revision": "Révision",
     "Language": "Langue",
@@ -28,6 +28,7 @@
         "details": "Regardez l'onglet Révisions pour plus de détails sur la dernière version."
       },
       "create": {
+        "title": "Le flux existe déjà",
         "description": "Un Flow avec le même id / namespace existe déjà.",
         "details": "Sauvegarder pour l'écraser et forcer la création d'une révision."
       }
@@ -214,14 +215,14 @@
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
-      "zoom-out": "Dézommer",
+      "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut",
       "zoom-fit": "Voir tout"
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task outputs": "Afficher les outputs de la tâche",
     "show task source": "Afficher le code source de la tâche",
-    "specific task": "Tâche specifique",
+    "specific task": "Tâche spécifique",
     "display output for specific task": "Afficher les sorties pour cette tâche",
     "display metric for specific task": "Afficher les mesures pour cette tâche",
     "display direct sub tasks count": "Display les sous tâches directes",
@@ -509,7 +510,8 @@
       "success": "Le déclencheur est débloqué"
     },
     "restart trigger": {
-      "button": "Redémarrer trigger"
+      "button": "Redémarrer trigger",
+      "tooltip": "Redémarrer le trigger"
     },
     "date format": "Format de date",
     "timezone": "Fuseau horaire",
@@ -624,12 +626,12 @@
     "Set labels": "Ajouter des labels",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
-    "bulk set labels": "Etes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
+    "bulk set labels": "Êtes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
     "dependencies loaded": "Dépendances chargées",
     "loaded x dependencies": "{count} dépendances chargées",
     "security_advice": {
       "title": "Vos données ne sont pas protégées !",
-      "content": "Activer l'authentication basique pour protéger votre instance.",
+      "content": "Activer l'authentification basique pour protéger votre instance.",
       "switch_text": "Ne plus montrer",
       "enable": "Activer l'authentification"
     },
@@ -848,7 +850,10 @@
       "trigger_disabled": "Ce trigger ne peut être activé que par le code.",
       "no_flow_description": "Ce flow n'a pas de description.",
       "description": "Description",
-      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget."
+      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget.",
+      "see_all": "Voir tout",
+      "success_ratio_tooltip": "Le ratio de succès est la somme des exécutions en état SUCCESS, CANCELLED et WARNING divisée par le nombre total d'exécutions dans un état terminé.",
+      "failure_ratio_tooltip": "Le ratio d'échec est la somme des exécutions en état FAILED, KILLED et RETRIED divisée par le nombre total d'exécutions dans un état terminé."
     },
     "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
     "docs": "Documentation",
@@ -860,6 +865,11 @@
     "active-slots": "Slots actifs",
     "concurrency": "Concurrence",
     "open sidebar": "ouvrir la barre latérale",
-    "close sidebar": "fermer la barre latérale"
+    "close sidebar": "fermer la barre latérale",
+    "change_status": "Changer le statut",
+    "in-our-documentation": "dans notre documentation.",
+    "read-more": "En savoir plus sur",
+    "flow-dependencies": "dépendances",
+    "flow-no-dependencies": "Votre flow n'a pas de dépendances."
   }
 }

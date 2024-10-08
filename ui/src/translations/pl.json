@@ -510,7 +510,8 @@
       "success": "Trigger odblokowany"
     },
     "restart trigger": {
-      "button": "Restartuj trigger"
+      "button": "Restartuj trigger",
+      "tooltip": "Uruchom ponownie trigger"
     },
     "date format": "Format daty",
     "timezone": "Strefa czasowa",
@@ -849,7 +850,10 @@
       "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu.",
       "no_flow_description": "Ten flow nie ma opisu.",
       "description": "Opis",
-      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget."
+      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget.",
+      "see_all": "Zobacz wszystkie",
+      "success_ratio_tooltip": "Wskaźnik Sukcesu to suma wykonań w stanach SUCCESS, CANCELLED i WARNING podzielona przez całkowitą liczbę wykonań w stanie zakończonym.",
+      "failure_ratio_tooltip": "Stosunek niepowodzeń to suma wykonań w stanach FAILED, KILLED i RETRIED podzielona przez całkowitą liczbę wykonań w stanie zakończonym."
     },
     "delete_log": "Czy na pewno chcesz usunąć log?",
     "docs": "Dokumentacja",
@@ -861,6 +865,11 @@
     "active-slots": "Aktywne sloty",
     "concurrency": "Współbieżność",
     "open sidebar": "otwórz pasek boczny",
-    "close sidebar": "zamknij pasek boczny"
+    "close sidebar": "zamknij pasek boczny",
+    "change_status": "Zmień status",
+    "in-our-documentation": "w naszej dokumentacji.",
+    "read-more": "Czytaj więcej o",
+    "flow-dependencies": "zależności",
+    "flow-no-dependencies": "Twój flow nie ma żadnych zależności"
   }
 }

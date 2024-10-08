@@ -5,6 +5,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -15,12 +16,12 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -83,8 +84,10 @@ public class RunContextFactory {
                     .withFlow(flow)
                     .withExecution(execution)
                     .withDecryptVariables(true)
+                    .withSecretInputs(secretInputsFromFlow(flow))
                 )
                 .build(runContextLogger))
+            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -107,8 +110,10 @@ public class RunContextFactory {
                 .withExecution(execution)
                 .withTaskRun(taskRun)
                 .withDecryptVariables(decryptVariables)
+                .withSecretInputs(secretInputsFromFlow(flow))
                 .build(runContextLogger))
             .withKvStoreService(kvStoreService)
+            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -122,8 +127,10 @@ public class RunContextFactory {
             .withVariables(newRunVariablesBuilder()
                 .withFlow(flow)
                 .withTrigger(trigger)
+                .withSecretInputs(secretInputsFromFlow(flow))
                 .build(runContextLogger)
             )
+            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -135,6 +142,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, flowService))
             .withVariables(variables)
+            .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }
 
@@ -175,6 +183,16 @@ public class RunContextFactory {
     @VisibleForTesting
     public RunContext of() {
         return of(Map.of());
+    }
+
+    private List<String> secretInputsFromFlow(Flow flow) {
+        if (flow == null || flow.getInputs() == null) {
+            return Collections.emptyList();
+        }
+
+        return flow.getInputs().stream()
+            .filter(input -> input.getType() == Type.SECRET)
+            .map(input -> input.getId()).toList();
     }
 
     private DefaultRunContext.Builder newBuilder() {

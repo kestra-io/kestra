@@ -58,7 +58,7 @@ public interface WorkingDir {
      * This method should be equivalent to {@code createTempFile(null)}
      *
      * @return The {@link Path} of created file.
-     * @throws IOException if an error happen while creating the file.
+     * @throws IOException if an error happens while creating the file.
      */
     Path createTempFile() throws IOException;
 
@@ -70,7 +70,7 @@ public interface WorkingDir {
      *
      * @param extension The file extension - may be {@code null}, in which case ".tmp" is used.
      * @return The {@link Path} of created file.
-     * @throws IOException if an error happen while creating the file.
+     * @throws IOException if an error happens while creating the file.
      */
     Path createTempFile(String extension) throws IOException;
 
@@ -79,7 +79,7 @@ public interface WorkingDir {
      *
      * @param content The file content - may be {@code null}.
      * @return The {@link Path} of created file.
-     * @throws IOException if an error happen while creating the file.
+     * @throws IOException if an error happens while creating the file.
      */
     Path createTempFile(byte[] content) throws IOException;
 
@@ -89,7 +89,7 @@ public interface WorkingDir {
      * @param content   The file content - may be {@code null}.
      * @param extension The file extension - may be {@code null}, in which case ".tmp" is used.
      * @return The {@link Path} of created file.
-     * @throws IOException if an error happen while creating the file.
+     * @throws IOException if an error happens while creating the file.
      */
     Path createTempFile(byte[] content, String extension) throws IOException;
 
@@ -99,7 +99,7 @@ public interface WorkingDir {
      * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
-     * @throws IOException                if an error happen while creating the file.
+     * @throws IOException                if an error happens while creating the file.
      * @throws FileAlreadyExistsException – If a file of that name already exists (optional specific
      * @throws IllegalArgumentException   if the given filename is {@code null} or empty.
      */
@@ -112,7 +112,7 @@ public interface WorkingDir {
      *
      * @param filename The file name.
      * @param content  The file content - may be {@code null}.
-     * @throws IOException              if an error happen while creating the file.
+     * @throws IOException              if an error happens while creating the file.
      * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename, byte[] content) throws IOException;
@@ -124,19 +124,17 @@ public interface WorkingDir {
      *
      * @param filename The file name.
      * @param content  The file content - may be {@code null}.
-     * @throws IOException              if an error happen while creating the file.
+     * @throws IOException              if an error happens while creating the file.
      * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename, InputStream content) throws IOException;
 
     /**
      * Creates a new file or replaces an existing one with the given content.
-     * <p>
-     * This method will throw an exception if a file already exists for the given filename.
      *
      * @param path    The path of the file.
      * @param content The file content - may be {@code null}.
-     * @throws IOException              if an error happen while creating the file.
+     * @throws IOException              if an error happens while creating the file.
      * @throws IllegalArgumentException if the given path is {@code null}.
      */
     Path putFile(Path path, InputStream content) throws IOException;
@@ -146,7 +144,7 @@ public interface WorkingDir {
      *
      * @param patterns the patterns to match.
      * @return The list of matched files.
-     * @throws IOException if an error happen while creating the file.
+     * @throws IOException if an error happens while creating the file.
      */
     List<Path> findAllFilesMatching(final List<String> patterns) throws IOException;
 
@@ -157,7 +155,7 @@ public interface WorkingDir {
      * A call to this method will remove all existing files from the working-directory.
      * After the cleanup, the working directory can continue to be used safely.
      *
-     * @throws IOException if an error happen while cleaning the working directory.
+     * @throws IOException if an error happens while cleaning the working directory.
      */
     void cleanup() throws IOException;
 

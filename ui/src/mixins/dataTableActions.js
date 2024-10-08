@@ -17,8 +17,8 @@ export default {
             dblClickRouteName: undefined,
             loadInit: true,
             ready: false,
-            internalPageSize: undefined,
-            internalPageNumber: undefined,
+            internalPageSize: 25,
+            internalPageNumber: 1,
             internalSort: undefined,
         };
     },

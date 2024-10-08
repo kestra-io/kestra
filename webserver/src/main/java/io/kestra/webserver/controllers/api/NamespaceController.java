@@ -10,6 +10,7 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.models.namespaces.NamespaceWithDisabled;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -38,6 +39,9 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @Inject
     private FlowTopologyService flowTopologyService;
 
+    @Inject
+    private NamespaceUtils namespaceUtils;
+
     @Get(uri = "{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Get a namespace")
@@ -59,7 +63,14 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     ) throws HttpStatusException {
         List<String> distinctNamespaces = flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream()
             .flatMap(n -> NamespaceUtils.asTree(n).stream())
-            .sorted()
+            .collect(Collectors.toList());
+
+        // we manually add it here so it is always listed in the Namespaces page.
+        if (distinctNamespaces.stream().noneMatch(ns -> namespaceUtils.getSystemFlowNamespace().equals(ns))) {
+            distinctNamespaces.add(namespaceUtils.getSystemFlowNamespace());
+        }
+
+        distinctNamespaces = distinctNamespaces.stream().sorted()
             .distinct()
             .collect(Collectors.toList());
 

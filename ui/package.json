@@ -10,11 +10,12 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix"
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
+    "translations:check": "node ./src/translations/check.js"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",
-    "@kestra-io/ui-libs": "^0.0.67",
+    "@kestra-io/ui-libs": "^0.0.68",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
     "@vue-flow/core": "^1.41.2",
@@ -44,7 +45,7 @@
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
     "pdfjs-dist": "^4.6.82",
-    "posthog-js": "^1.165.0",
+    "posthog-js": "^1.166.1",
     "rapidoc": "^9.3.6",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.5.8",

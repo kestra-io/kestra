@@ -510,7 +510,8 @@
       "success": "Trigger अनलॉक किया गया"
     },
     "restart trigger": {
-      "button": "Trigger पुनः प्रारंभ करें"
+      "button": "Trigger पुनः प्रारंभ करें",
+      "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "date format": "दिनांक प्रारूप",
     "timezone": "समय क्षेत्र",
@@ -849,7 +850,10 @@
       "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।",
       "no_flow_description": "इस flow का कोई विवरण नहीं है।",
       "description": "विवरण",
-      "not_auth": "आपके पास इस विजेट को देखने की आवश्यक अनुमतियाँ नहीं हैं।"
+      "not_auth": "आपके पास इस विजेट को देखने की आवश्यक अनुमतियाँ नहीं हैं।",
+      "see_all": "सभी देखें",
+      "success_ratio_tooltip": "सफलता अनुपात SUCCESS, CANCELLED और WARNING निष्पादन का योग है, जिसे समाप्त स्थिति में कुल निष्पादन की संख्या से विभाजित किया जाता है।",
+      "failure_ratio_tooltip": "असफल अनुपात, FAILED, KILLED और RETRIED निष्पादन का योग है, जिसे समाप्त स्थिति में कुल निष्पादन की संख्या से विभाजित किया जाता है।"
     },
     "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
     "docs": "डॉक्स",
@@ -861,6 +865,11 @@
     "active-slots": "सक्रिय स्लॉट्स",
     "concurrency": "समानांतरता",
     "open sidebar": "साइडबार खोलें",
-    "close sidebar": "साइडबार बंद करें"
+    "close sidebar": "साइडबार बंद करें",
+    "change_status": "स्थिति बदलें",
+    "in-our-documentation": "हमारे दस्तावेज़ में।",
+    "read-more": "और अधिक पढ़ें",
+    "flow-dependencies": "निर्भरता",
+    "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।"
   }
 }

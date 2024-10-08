@@ -117,14 +117,18 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedOrdered() {
-        Stream<Flow> stream = Stream.of(
-            create("test", "test", 1),
-            create("test", "test2", 2),
-            create("test", "test2", 2).toDeleted(),
-            create("test", "test2", 4)
+        var flow1 = create("test", "test", 1);
+        var flow2 = create("test", "test2", 2);
+        var flow3 = create("test", "test2", 2).toDeleted();
+        var flow4 = create("test", "test2", 4);
+        Stream<FlowWithSource> stream = Stream.of(
+            flow1.withSource(flow1.generateSource()),
+            flow2.withSource(flow2.generateSource()),
+            flow3.withSource(flow3.generateSource()),
+            flow4.withSource(flow4.generateSource())
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -133,15 +137,20 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedSameRevision() {
-        Stream<Flow> stream = Stream.of(
-            create("test2", "test2", 1),
-            create("test", "test", 1),
-            create("test", "test2", 2),
-            create("test", "test3", 3),
-            create("test", "test2", 2).toDeleted()
+        var flow1 = create("test2", "test2", 1);
+        var flow2 = create("test", "test", 1);
+        var flow3 = create("test", "test2", 2);
+        var flow4 = create("test", "test3", 3);
+        var flow5 = create("test", "test2", 2).toDeleted();
+        Stream<FlowWithSource> stream = Stream.of(
+            flow1.withSource(flow1.generateSource()),
+            flow2.withSource(flow2.generateSource()),
+            flow3.withSource(flow3.generateSource()),
+            flow4.withSource(flow4.generateSource()),
+            flow5.withSource(flow5.generateSource())
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -150,14 +159,18 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedUnordered() {
-        Stream<Flow> stream = Stream.of(
-            create("test", "test", 1),
-            create("test", "test2", 2),
-            create("test", "test2", 4),
-            create("test", "test2", 2).toDeleted()
+        var flow1 = create("test", "test", 1);
+        var flow2 = create("test", "test2", 2);
+        var flow3 = create("test", "test2", 4);
+        var flow4 = create("test", "test2", 2).toDeleted();
+        Stream<FlowWithSource> stream = Stream.of(
+            flow1.withSource(flow1.generateSource()),
+            flow2.withSource(flow2.generateSource()),
+            flow3.withSource(flow3.generateSource()),
+            flow4.withSource(flow4.generateSource())
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -166,17 +179,22 @@ class FlowServiceTest {
 
     @Test
     void multipleFlow() {
-        Stream<Flow> stream = Stream.of(
-            create("test", "test", 2),
-            create("test", "test2", 1),
-            create("test2", "test2", 1),
-            create("test2", "test3", 3),
-            create("test3", "test1", 2),
-            create("test3", "test2", 3)
-
+        var flow1 = create("test", "test", 2);
+        var flow2 = create("test", "test2", 1);
+        var flow3 = create("test2", "test2", 1);
+        var flow4 = create("test2", "test3", 3);
+        var flow5 = create("test3", "test1", 2);
+        var flow6 = create("test3", "test2", 3);
+        Stream<FlowWithSource> stream = Stream.of(
+            flow1.withSource(flow1.generateSource()),
+            flow2.withSource(flow2.generateSource()),
+            flow3.withSource(flow3.generateSource()),
+            flow4.withSource(flow4.generateSource()),
+            flow5.withSource(flow5.generateSource()),
+            flow6.withSource(flow6.generateSource())
         );
 
-        List<Flow> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));

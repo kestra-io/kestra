@@ -28,6 +28,9 @@ public class WorkerTaskRunning extends WorkerJobRunning {
     @NotNull
     private RunContext runContext;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String uid() {
         return this.taskRun.getId();

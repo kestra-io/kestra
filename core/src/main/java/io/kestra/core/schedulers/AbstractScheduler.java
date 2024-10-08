@@ -10,8 +10,8 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueException;
@@ -245,8 +245,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     // Initialized local trigger state,
     // and if some flows were created outside the box, for example from the CLI,
     // then we may have some triggers that are not created yet.
-    private void initializedTriggers(List<Flow> flows) {
-        record FlowAndTrigger(Flow flow, AbstractTrigger trigger) {
+    private void initializedTriggers(List<FlowWithSource> flows) {
+        record FlowAndTrigger(FlowWithSource flow, AbstractTrigger trigger) {
         }
         List<Trigger> triggers = triggerState.findAllForAllTenants();
 
@@ -271,6 +271,16 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .nextExecutionDate(nextExecutionDate)
                             .stopAfter(flowAndTrigger.trigger().getStopAfter())
                             .build();
+
+                        // Used for schedulableNextDate
+                        FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
+                            .flow(flowAndTrigger.flow())
+                            .abstractTrigger(flowAndTrigger.trigger())
+                            .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
+                            .conditionContext(conditionContext)
+                            .triggerContext(newTrigger)
+                            .build();
+                        schedulableNextDate.put(newTrigger.uid(), FlowWithWorkerTriggerNextDate.of(flowWithWorkerTrigger));
                         this.triggerState.create(newTrigger);
                     } catch (Exception e) {
                         logError(conditionContext, flowAndTrigger.flow(), flowAndTrigger.trigger(), e);
@@ -281,16 +291,29 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flowAndTrigger.flow(), null);
                     RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules()).orElseGet(() -> schedule.defaultRecoverMissedSchedules(runContext));
                     try {
+                        Trigger lastUpdate = trigger.get();
                         if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
                             ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
                             if (previousDate.isAfter(trigger.get().getDate())) {
-                                Trigger updated = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
-                                this.triggerState.update(updated);
+                                lastUpdate = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
+
+                                this.triggerState.update(lastUpdate);
                             }
                         } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
-                            Trigger updated = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
-                            this.triggerState.update(updated);
+                            lastUpdate = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
+
+                            this.triggerState.update(lastUpdate);
                         }
+                        // Used for schedulableNextDate
+                        FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
+                            .flow(flowAndTrigger.flow())
+                            .abstractTrigger(flowAndTrigger.trigger())
+                            .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
+                            .conditionContext(conditionContext)
+                            .triggerContext(lastUpdate)
+                            .build();
+                        schedulableNextDate.put(lastUpdate.uid(), FlowWithWorkerTriggerNextDate.of(flowWithWorkerTrigger));
+
                     } catch (Exception e) {
                         logError(conditionContext, flowAndTrigger.flow(), flowAndTrigger.trigger(), e);
                     }
@@ -324,7 +347,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private List<FlowWithTriggers> computeSchedulable(List<Flow> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
+    private List<FlowWithTriggers> computeSchedulable(List<FlowWithSource> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
         List<String> flowToKeep = triggerContextsToEvaluate.stream().map(Trigger::getFlowId).toList();
 
         return flows
@@ -377,12 +400,12 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .filter(Objects::nonNull).toList();
     }
 
-    abstract public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
+    abstract public void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
 
     public List<FlowWithTriggers> schedulerTriggers() {
-        Map<String, Flow> flows = this.flowListeners.flows()
+        Map<String, FlowWithSource> flows = this.flowListeners.flows()
             .stream()
-            .collect(Collectors.toMap(Flow::uidWithoutRevision, Function.identity()));
+            .collect(Collectors.toMap(FlowWithSource::uidWithoutRevision, Function.identity()));
 
         return this.triggerState.findAllForAllTenants().stream()
             .filter(trigger -> flows.containsKey(trigger.flowUid()))
@@ -410,7 +433,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 return;
             }
 
-            triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
             List<Trigger> triggerContextsToEvaluate = triggers.stream()
                 .filter(trigger -> Boolean.FALSE.equals(trigger.getDisabled()))
                 .toList();
@@ -760,7 +782,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private void logError(ConditionContext conditionContext, Flow flow, AbstractTrigger trigger, Throwable e) {
+    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
         logService.logFlow(
@@ -841,13 +863,13 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Getter
     @NoArgsConstructor
     private static class FlowWithWorkerTrigger {
-        private Flow flow;
+        private FlowWithSource flow;
         private AbstractTrigger abstractTrigger;
         private WorkerTriggerInterface workerTrigger;
         private Trigger triggerContext;
         private ConditionContext conditionContext;
 
-        public FlowWithWorkerTrigger from(Flow flow) throws InternalException {
+        public FlowWithWorkerTrigger from(FlowWithSource flow) throws InternalException {
             AbstractTrigger abstractTrigger = flow.getTriggers()
                 .stream()
                 .filter(a -> a.getId().equals(this.abstractTrigger.getId()) && a instanceof WorkerTriggerInterface)
@@ -894,7 +916,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Getter
     @Builder(toBuilder = true)
     public static class FlowWithTriggers {
-        private final Flow flow;
+        private final FlowWithSource flow;
         private final AbstractTrigger abstractTrigger;
         private final Trigger triggerContext;
         private final RunContext runContext;

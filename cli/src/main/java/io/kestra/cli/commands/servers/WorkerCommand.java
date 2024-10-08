@@ -9,6 +9,7 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 import java.util.Map;
 import java.util.UUID;
@@ -23,10 +24,10 @@ public class WorkerCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of worker threads, defaults to two times the number of available processors")
+    @Option(names = {"-t", "--thread"}, description = "the max number of worker threads, defaults to two times the number of available processors")
     private int thread = defaultWorkerThread();
 
-    @CommandLine.Option(names = {"-g", "--worker-group"}, description = "the worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
+    @Option(names = {"-g", "--worker-group"}, description = "the worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
     private String workerGroupKey = null;
 
     @SuppressWarnings("unused")
@@ -61,5 +62,9 @@ public class WorkerCommand extends AbstractServerCommand {
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;
+    }
+
+    public String workerGroupKey() {
+        return workerGroupKey;
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <el-collapse accordion v-model="openedDocs">
+    <el-collapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
             v-for="child in parent.children"
@@ -29,6 +29,8 @@
 </template>
 
 <script>
+    import path from "path-browserify";
+
     export default {
         name: "RecursiveToc",
         props: {
@@ -40,7 +42,8 @@
         watch: {
             "$route.path": {
                 handler() {
-                    this.openedDocs = this.parent.children.filter(child => this.$route.path.includes(child.path)).map(child => child.path);
+                    const normalizedPath = path.normalize(this.$route.path);
+                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
                 },
                 immediate: true
             }

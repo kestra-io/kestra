@@ -266,7 +266,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                     }
                 }));
 
-            haveTemplate = templates.size() > 0;
+            haveTemplate = !templates.isEmpty();
         }
 
         return flowReference.get();

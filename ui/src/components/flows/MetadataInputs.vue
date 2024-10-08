@@ -54,6 +54,7 @@
                             <el-button
                                 :icon="Minus"
                                 @click="deleteInput(index)"
+                                :disabled="index === 0 && newInputs.length === 1"
                             />
                         </el-button-group>
                     </div>

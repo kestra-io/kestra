@@ -139,7 +139,7 @@
                 <code>disabled</code>
             </template>
             <div>
-                <el-switch active-color="green" v-model="newMetadata.disabled" />
+                <el-switch active-color="green" v-model="newMetadata.disabled" @update:model-value="(value) => newMetadata.disabled = value" />
             </div>
         </el-form-item>
     </el-form>

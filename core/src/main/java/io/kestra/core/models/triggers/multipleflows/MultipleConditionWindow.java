@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.utils.IdUtils;
 import lombok.Builder;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 @Value
 @Builder
-public class MultipleConditionWindow {
+public class MultipleConditionWindow implements HasUID {
     String tenantId;
 
     String namespace;
@@ -28,6 +29,9 @@ public class MultipleConditionWindow {
 
     Map<String, Boolean> results;
 
+
+    /** {@inheritDoc **/
+    @Override
     @JsonIgnore
     public String uid() {
         return IdUtils.fromParts(

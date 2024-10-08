@@ -510,7 +510,8 @@
       "success": "triggerのロックが解除されました"
     },
     "restart trigger": {
-      "button": "triggerを再起動"
+      "button": "triggerを再起動",
+      "tooltip": "トリガーを再起動する"
     },
     "date format": "日付形式",
     "timezone": "タイムゾーン",
@@ -849,7 +850,10 @@
       "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。",
       "no_flow_description": "このflowには説明がありません。",
       "description": "説明",
-      "not_auth": "必要な権限がないため、このウィジェットを表示できません。"
+      "not_auth": "必要な権限がないため、このウィジェットを表示できません。",
+      "see_all": "すべて表示",
+      "success_ratio_tooltip": "成功率は、SUCCESS、CANCELLED、WARNINGの実行の合計を、終了状態にある実行の総数で割ったものです。",
+      "failure_ratio_tooltip": "失敗率は、FAILED、KILLED、および RETRIED の実行の合計を、終了状態にある実行の総数で割ったものです。"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",
@@ -861,6 +865,11 @@
     "active-slots": "アクティブスロット",
     "concurrency": "並行性",
     "open sidebar": "サイドバーを開く",
-    "close sidebar": "サイドバーを閉じる"
+    "close sidebar": "サイドバーを閉じる",
+    "change_status": "ステータスを変更",
+    "in-our-documentation": "ドキュメント内で。",
+    "read-more": "続きを読む",
+    "flow-dependencies": "依存関係",
+    "flow-no-dependencies": "あなたのflowには依存関係がありません"
   }
 }

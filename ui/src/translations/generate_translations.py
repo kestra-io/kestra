@@ -93,6 +93,7 @@ def translate_dict(en_dict, target_language):
             translated_value = translate_dict(value, target_language)
         else:
             translated_value = translate_text(value, target_language)
+            print(f"Translating key '{key}' with value '{value}' from English, to value '{translated_value}' in {target_language}.")
         translated_dict[key] = translated_value
     return translated_dict
 
@@ -160,7 +161,6 @@ def get_keys_to_translate(file_path="ui/src/translations/en.json"):
     keys_to_translate = detect_changes(current_en_dict, previous_en_dict)
     en_flat = flatten_dict(current_en_dict)
     to_translate = {k: en_flat[k] for k in keys_to_translate}
-    print("Changed data requiring translatation:", to_translate)
     return to_translate
 
 

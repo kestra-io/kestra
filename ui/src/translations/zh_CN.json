@@ -510,7 +510,8 @@
       "success": "触发器已解锁"
     },
     "restart trigger": {
-      "button": "重新启动触发器"
+      "button": "重新启动触发器",
+      "tooltip": "重新启动trigger"
     },
     "date format": "日期格式",
     "timezone": "时区",
@@ -849,7 +850,10 @@
       "trigger_disabled": "此trigger只能通过代码启用。",
       "no_flow_description": "此flow没有描述。",
       "description": "描述",
-      "not_auth": "您没有查看此小部件的必要权限。"
+      "not_auth": "您没有查看此小部件的必要权限。",
+      "see_all": "查看全部",
+      "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下执行总次数的结果。",
+      "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数之和除以终止状态下执行总次数的结果。"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",
@@ -861,6 +865,11 @@
     "active-slots": "活动槽位",
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
-    "close sidebar": "关闭侧边栏"
+    "close sidebar": "关闭侧边栏",
+    "change_status": "更改状态",
+    "in-our-documentation": "在我们的文档中。",
+    "read-more": "了解更多关于",
+    "flow-dependencies": "依赖项",
+    "flow-no-dependencies": "您的flow没有任何依赖项"
   }
 }

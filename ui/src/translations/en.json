@@ -6,7 +6,7 @@
     "close": "Close",
     "namespace": "Namespace",
     "description": "Description",
-    "show description": "Show description",
+    "show description": "Show a description",
     "revision": "Revision",
     "Language": "Language",
     "Set default page": "Set default page",
@@ -428,6 +428,10 @@
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
+    "flow-no-dependencies": "Your flow does not have any dependencies",
+    "flow-dependencies": "dependencies",
+    "read-more": "Read more about",
+    "in-our-documentation": "in our documentation.",
     "dependencies": "Dependencies",
     "see dependencies": "See dependencies",
     "dependencies missing acls": "No permissions on this flow",
@@ -855,11 +859,14 @@
     "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
     "dashboard": {
       "success_ratio": "Success Ratio",
+      "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
       "failure_ratio": "Failure Ratio",
+      "failure_ratio_tooltip": "Failed ratio is the sum of FAILED, KILLED and RETRIED executions divided by the total number of executions in a terminated state.",
       "per_day": " (per day)",
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
       "executions_in_progress": "Executions In Progress",
+      "see_all":"See all",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",
@@ -877,6 +884,7 @@
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
     "open sidebar": "open sidebar",
-    "close sidebar": "close sidebar"
+    "close sidebar": "close sidebar",
+    "change_status": "Change status"
   }
 }

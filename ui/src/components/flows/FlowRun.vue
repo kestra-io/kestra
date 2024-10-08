@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" />
+            <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
             <el-collapse class="mt-4" v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -23,7 +23,6 @@
                     >
                         <el-date-picker
                             v-model="scheduleDate"
-                            @update:model-value="onChange"
                             type="datetime"
                         />
                     </el-form-item>
@@ -48,10 +47,10 @@
                             :icon="Flash"
                             class="flow-run-trigger-button"
                             :class="{'onboarding-glow': guidedProperties.tourStarted}"
-                            @click="onSubmit($refs.form)"
+                            @click="onSubmit($refs.form); executeClicked = true;"
                             type="primary"
                             native-type="submit"
-                            :disabled="flow.disabled || haveBadLabels"
+                            :disabled="!flowCanBeExecuted"
                         >
                             {{ $t('launch execution') }}
                         </el-button>
@@ -101,7 +100,8 @@
                 scheduleDate: undefined,
                 inputVisible: false,
                 collapseName: undefined,
-                newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB
+                newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
+                executeClicked: false,
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
@@ -111,6 +111,9 @@
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
+            flowCanBeExecuted() {
+                return this.flow && !this.flow.disabled && !this.haveBadLabels;
+            }
         },
         methods: {
             getExecutionLabels() {
@@ -152,7 +155,7 @@
                 return inputs;
             },
             onSubmit(formRef) {
-                if (formRef) {
+                if (formRef && this.flowCanBeExecuted) {
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;
@@ -175,7 +178,6 @@
                     });
                 }
             },
-
             state(input) {
                 const required = input.required === undefined ? true : input.required;
 

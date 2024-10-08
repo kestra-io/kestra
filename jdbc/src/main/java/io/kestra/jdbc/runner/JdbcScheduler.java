@@ -1,7 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -15,7 +15,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -102,7 +101,7 @@ public class JdbcScheduler extends AbstractScheduler {
     }
 
     @Override
-    public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
+    public void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
         JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(this.dslContextWrapper);
 
         schedulerContext.startTransaction(scheduleContextInterface -> {

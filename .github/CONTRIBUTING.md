@@ -31,8 +31,8 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 
 #### Requirements
 The following dependencies are required to build Kestra locally:
-- Java 17+, Kestra runs on Java 11 but we hit a Java compiler bug fixed in Java 17
-- Node 14+ and npm
+- Java 21+
+- Node 18+ and npm
 - Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)
@@ -52,14 +52,15 @@ The backend is made with [Micronaut](https://micronaut.io).
 Open the cloned repository in your favorite IDE. In most of decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
 You can also build it from a terminal using `./gradlew build`, the Gradle wrapper will download the right Gradle version to use.
 
-- You may need to enable java annotation processors since we are using it a lot.
-- The main class is `io.kestra.cli.App` from module `kestra.cli.main`
-- Pass as program arguments the server you want to develop, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies)
-- ![Intellij Idea Configuration ](https://user-images.githubusercontent.com/2064609/161399626-1b681add-cfa8-4e0e-a843-2631cc59758d.png) Intellij Idea configuration can be found in screenshot below.
-  - `MICRONAUT_ENVIRONMENTS`: can be set any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`
-  - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on the startup.
-- You can also use the gradle task `./gradlew runLocal` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
-- The server start by default on port 8080 and is reachable on `http://localhost:8080`
+- You may need to enable java annotation processors since we are using them.
+- On IntelliJ IDEA, click on **Run -> Edit Configurations -> + Add new Configuration** to create a run configuration to start Kestra.
+  - The main class is `io.kestra.cli.App` from module `kestra.cli.main`.
+  - Pass as program arguments the server you want to work with, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies). You can also use `server standalone` and use the provided `docker-compose-ci.yml` Docker compose file to start a standalone server with a real database as a backend that would need to be configured properly.
+  - Configure the following environment variables:
+    - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
+    - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
+  - See the screenshot bellow for an example: ![Intellij IDEA Configuration ](run-app.png)
+- The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
 
@@ -72,14 +73,14 @@ python3 -m pip install virtualenv
 #### Develop frontend
 The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` folder.
 
-- `npm install --force` (force is need because of some conflicting package)
-- create a files `ui/.env.development.local` with content `VITE_APP_API_URL=http://localhost:8080` (or your actual server url)
+- `npm install`
+- create a file `ui/.env.development.local` with content `VITE_APP_API_URL=http://localhost:8080` (or your actual server url)
 - `npm run dev` will start the development server with hot reload.
-- The server start by default on port 8090 and is reachable on `http://localhost:5173`
+- The server start by default on port 5173 and is reachable on `http://localhost:5173`
 - You can run `npm run build` in order to build the front-end that will be delivered from the backend (without running the `npm run dev`) above.
 
 Now, you need to start a backend server, you could:
-- start a [local server](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies) without database using this docker-compose file already configured with CORS enabled:
+- start a [local server](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies) without a database using this docker-compose file already configured with CORS enabled:
 ```yaml
 services:
   kestra:
@@ -99,7 +100,7 @@ services:
     ports:
       - "8080:8080"
 ```
-- start the [Develop backend](#develop-backend) from your IDE and you need to configure CORS restrictions when using the local development npm server, changing the backend configuration allowing the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
+- start the [Develop backend](#develop-backend) from your IDE, you need to configure CORS restrictions when using the local development npm server, changing the backend configuration allowing the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
 
 ```yaml
 micronaut:
@@ -133,4 +134,4 @@ A complete documentation for developing plugin can be found [here](https://kestr
 
 ### Improving The Documentation
 The main documentation is located in a separate [repository](https://github.com/kestra-io/kestra.io).
-For tasks documentation, they are located directly on Java source using [Swagger annotations](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/kestra/blob/develop/core/src/main/java/io/kestra/core/tasks/scripts/AbstractBash.java))
+For tasks documentation, they are located directly in the Java source, using [Swagger annotations](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/kestra/blob/develop/core/src/main/java/io/kestra/core/tasks/scripts/AbstractBash.java))

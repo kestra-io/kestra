@@ -68,17 +68,21 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-switch
+                            :model-value="showChart"
+                            @update:model-value="onShowChartChange"
+                            :active-text="$t('show chart')"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <filters :storage-key="storageKeys.FLOWS_FILTERS" />
                     </el-form-item>
                 </template>
 
                 <template #top>
-                    <state-global-chart
-                        class="mb-4"
-                        v-if="daily"
-                        :ready="dailyReady"
-                        :data="daily"
-                    />
+                    <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                        <ExecutionsBar :data="daily" :total="executionsCount" />
+                    </el-card>
                 </template>
 
                 <template #table>
@@ -109,10 +113,10 @@
                                 <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
                                     {{ $t('delete') }}
                                 </el-button>
-                                <el-button v-if="canUpdate" @click="enableFlows" :icon="FileDocumentCheckOutline">
+                                <el-button v-if="canUpdate && anyFlowDisabled()" @click="enableFlows" :icon="FileDocumentCheckOutline">
                                     {{ $t('enable') }}
                                 </el-button>
-                                <el-button v-if="canUpdate" @click="disableFlows" :icon="FileDocumentRemoveOutline">
+                                <el-button v-if="canUpdate && anyFlowEnabled()" @click="disableFlows" :icon="FileDocumentRemoveOutline">
                                     {{ $t('disable') }}
                                 </el-button>
                             </bulk-select>
@@ -245,7 +249,6 @@
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import StateChart from "../stats/StateChart.vue";
-    import StateGlobalChart from "../stats/StateGlobalChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
@@ -255,6 +258,7 @@
     import LabelFilter from "../labels/LabelFilter.vue";
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import {storageKeys} from "../../utils/constants";
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -265,7 +269,6 @@
             DateAgo,
             SearchField,
             StateChart,
-            StateGlobalChart,
             Status,
             TriggerAvatar,
             MarkdownTooltip,
@@ -274,7 +277,8 @@
             Upload,
             LabelFilter,
             ScopeFilterButtons,
-            TopNavBar
+            TopNavBar,
+            ExecutionsBar
         },
         data() {
             return {
@@ -285,6 +289,7 @@
                 lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_FLOWS_CHART))
             };
         },
         computed: {
@@ -318,7 +323,12 @@
             },
             canUpdate() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
-            }
+            },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
         },
         beforeCreate(){
             if(!this.$route.query.scope) {
@@ -329,8 +339,17 @@
             selectionMapper(element) {
                 return {
                     id: element.id,
-                    namespace: element.namespace
+                    namespace: element.namespace,
+                    enabled: !element.disabled
                 }
+            },
+            showStatChart() {
+                return this.daily && this.showChart;
+            },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
+                this.loadStats();
             },
             exportFlows() {
                 this.$toast().confirm(
@@ -385,6 +404,12 @@
                     () => {
                     }
                 )
+            },
+            anyFlowDisabled() {
+                return this.selection.some(flow => !flow.enabled);
+            },
+            anyFlowEnabled() {
+                return this.selection.some(flow => flow.enabled);
             },
             enableFlows() {
                 this.$toast().confirm(
@@ -483,10 +508,10 @@
 
                 return _merge(base, queryFilter)
             },
-            loadData(callback) {
+            loadStats() {
                 this.dailyReady = false;
 
-                if (this.user.hasAny(permission.EXECUTION)) {
+                if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
                     this.$store
                         .dispatch("stat/daily", this.loadQuery({
                             startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
@@ -496,6 +521,9 @@
                             this.dailyReady = true;
                         });
                 }
+            },
+            loadData(callback) {
+                this.loadStats();
 
                 this.$store
                     .dispatch("flow/findFlows", this.loadQuery({
@@ -540,7 +568,7 @@
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
             }
-        }        
+        }
     };
 </script>
 

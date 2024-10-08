@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
@@ -49,7 +50,7 @@ import java.util.stream.Stream;
 @ToString
 @EqualsAndHashCode
 @FlowValidation
-public class Flow extends AbstractFlow {
+public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
@@ -121,6 +122,9 @@ public class Flow extends AbstractFlow {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
+
+    /** {@inheritDoc **/
+    @Override
     @JsonIgnore
     public String uid() {
         return Flow.uid(this.getTenantId(), this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));
@@ -260,8 +264,9 @@ public class Flow extends AbstractFlow {
 
     public Flow updateTask(String taskId, Task newValue) throws InternalException {
         Task task = this.findTaskByTaskId(taskId);
+        Flow flow = this instanceof FlowWithSource ? ((FlowWithSource) this).toFlow() : this;
 
-        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(this, JacksonMapper.MAP_TYPE_REFERENCE);
+        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
         return NON_DEFAULT_OBJECT_MAPPER.convertValue(
             recursiveUpdate(map, task, newValue),
@@ -341,7 +346,7 @@ public class Flow extends AbstractFlow {
             ));
         }
 
-        if (violations.size() > 0) {
+        if (!violations.isEmpty()) {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();
@@ -357,5 +362,9 @@ public class Flow extends AbstractFlow {
             .revision(this.revision + 1)
             .deleted(true)
             .build();
+    }
+
+    public FlowWithSource withSource(String source) {
+        return FlowWithSource.of(this, source);
     }
 }

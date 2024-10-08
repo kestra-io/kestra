@@ -150,7 +150,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
+                    // The deleted field is not used, so ti will always be false.
+                    // We add it here to be sure to use the correct index.
+                    .where(field("deleted", Boolean.class).eq(false))
+                    .and(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -168,8 +171,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
+                SelectConditionStep<Record1<Object>> select = context
                     .selectDistinct(field(field))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
@@ -185,8 +187,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
+                SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));

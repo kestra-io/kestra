@@ -933,7 +933,8 @@
                 )
             "
         >
-            <el-button @click="toggleExplorerVisibility()" class="toggle-button">
+            <el-button @click="toggleExplorerVisibility()">
+                <span class="pe-2 toggle-button">{{ t("files") }}</span>
                 <component :is="explorerVisible ? MenuOpen : MenuClose" />
             </el-button>
         </el-tooltip>
@@ -1308,7 +1309,7 @@
     }
 
     .toggle-button {
-        color: $secondary;
+        font-size: var(--el-font-size-small);
     }
 
     .tabs {

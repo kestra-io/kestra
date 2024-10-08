@@ -870,6 +870,7 @@
     "in-our-documentation": "w naszej dokumentacji.",
     "read-more": "Czytaj więcej o",
     "flow-dependencies": "zależności",
-    "flow-no-dependencies": "Twój flow nie ma żadnych zależności"
+    "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
+    "files": "Pliki"
   }
 }

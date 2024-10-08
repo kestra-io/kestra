@@ -870,6 +870,7 @@
     "in-our-documentation": "हमारे दस्तावेज़ में।",
     "read-more": "और अधिक पढ़ें",
     "flow-dependencies": "निर्भरता",
-    "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।"
+    "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "files": "फ़ाइलें"
   }
 }

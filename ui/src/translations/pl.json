@@ -407,8 +407,6 @@
     "flows disabled": "<code>{count}</code> Flow(s) wyłączone",
     "flows enabled": "<code>{count}</code> Flow(s) włączone",
     "dependencies": "Zależności",
-    "flow-dependencies": "zależności",
-    "flow no dependencies": "Twój przepływ nie ma żadnych zależności",
     "see dependencies": "Zobacz zależności",
     "dependencies missing acls": "Brak uprawnień do tego flow",
     "dependencies delete flow": "Ten flow ma zależności. Usunięcie go uniemożliwi wykonanie ich zależności.<br /><br /> Oto lista dotkniętych flows:",

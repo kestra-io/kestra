@@ -6,7 +6,7 @@
         <div class="no-dependencies-message">
             <p>{{ $t("flow no dependencies") }}</p>
         </div>
-        <div class="no-dependencies-doc-message">
+        <div class="no-dependencies-doc-message" :class="themeClass">
             <p>
                 {{ $t("Read more about") }}
                 <a
@@ -32,9 +32,13 @@
             flowImage() {
                 return (localStorage.getItem("theme") || "light") === "light" ? flowImageLight : flowImageDark;
             },
+            themeClass() {
+                return (localStorage.getItem("theme") || "light") === "light" ? "theme-light" : "theme-dark";
+            },
             dependenciesDocsUrl() {
                 return "https://kestra.io/docs/ui/flows#dependencies";
-            }
+            },
+
         }
     };
 </script>
@@ -53,11 +57,17 @@
 .no-dependencies-doc-message {
   font-weight: 200;
   font-size: var(--el-font-size-extra-small);
-  color: var(--el-text-color-primary);
+}
+.theme-light {
+  color: #000; 
+}
+.theme-dark {
+  color: #fff;
 }
 .doc-link {
   text-decoration: underline;
   font-weight: bold;
+  color: var(--el-text-color-primary);
 }
 .doc-link:hover {
   cursor: pointer;

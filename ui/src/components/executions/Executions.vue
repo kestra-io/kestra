@@ -857,7 +857,7 @@
                 );
             },
             changeStatusToast() {
-                return this.$t("bulk change execution status", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);

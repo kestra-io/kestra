@@ -6,7 +6,7 @@
     "close": "Fechar",
     "namespace": "Namespace",
     "description": "Descrição",
-    "show description": "Mostrar descrição",
+    "show description": "Mostrar uma descrição",
     "revision": "Revisão",
     "Language": "Idioma",
     "Set default page": "Definir página padrão",
@@ -866,6 +866,10 @@
     "concurrency": "Concorrência",
     "open sidebar": "abrir barra lateral",
     "close sidebar": "fechar barra lateral",
-    "change_status": "Alterar status"
+    "change_status": "Alterar status",
+    "in-our-documentation": "na nossa documentação.",
+    "read-more": "Leia mais sobre",
+    "flow-dependencies": "dependências",
+    "flow-no-dependencies": "Seu flow não possui dependências"
   }
 }

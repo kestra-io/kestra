@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -30,7 +31,7 @@ public class FlowTriggerService {
     @Inject
     private FlowService flowService;
 
-    public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<Flow> allFlows) {
+    public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())

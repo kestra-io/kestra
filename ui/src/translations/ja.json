@@ -866,6 +866,10 @@
     "concurrency": "並行性",
     "open sidebar": "サイドバーを開く",
     "close sidebar": "サイドバーを閉じる",
-    "change_status": "ステータスを変更"
+    "change_status": "ステータスを変更",
+    "in-our-documentation": "ドキュメント内で。",
+    "read-more": "続きを読む",
+    "flow-dependencies": "依存関係",
+    "flow-no-dependencies": "あなたのflowには依存関係がありません"
   }
 }

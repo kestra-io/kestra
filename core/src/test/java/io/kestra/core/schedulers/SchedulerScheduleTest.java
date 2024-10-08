@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.ExpressionCondition;
@@ -55,7 +56,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             ));
     }
 
-    private Flow createScheduleFlow(String zone, String triggerId, boolean invalid) {
+    private FlowWithSource createScheduleFlow(String zone, String triggerId, boolean invalid) {
         Schedule schedule = createScheduleTrigger(zone, "0 * * * *", triggerId, invalid).build();
 
         return createFlow(Collections.singletonList(schedule));
@@ -86,8 +87,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
         // Create a flow with a backfill of 5 hours
         // then flow should be executed 6 times
-        Flow invalid = createScheduleFlow("Asia/Delhi", "schedule", true);
-        Flow flow = createScheduleFlow("Europe/Paris", "schedule", false);
+        FlowWithSource invalid = createScheduleFlow("Asia/Delhi", "schedule", true);
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule", false);
 
         doReturn(List.of(invalid, flow))
             .when(flowListenersServiceSpy)
@@ -156,7 +157,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
 
-        Flow flow = createScheduleFlow("Europe/Paris", "retroSchedule", false);
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", "retroSchedule", false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -189,7 +190,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverALLMissing() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Flow flow = createScheduleFlow(null, "recoverALLMissing", false);
+        FlowWithSource flow = createScheduleFlow(null, "recoverALLMissing", false);
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -234,7 +235,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverLASTMissing", false)
             .recoverMissedSchedules(RecoverMissedSchedules.LAST)
             .build();
-        Flow flow = createFlow(List.of(schedule));
+        FlowWithSource flow = createFlow(List.of(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -280,7 +281,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverNONEMissing", false)
             .recoverMissedSchedules(RecoverMissedSchedules.NONE)
             .build();
-        Flow flow = createFlow(List.of(schedule));
+        FlowWithSource flow = createFlow(List.of(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -312,7 +313,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         String triggerId = "backfill";
 
-        Flow flow = createScheduleFlow("Europe/Paris", triggerId, false);
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", triggerId, false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -370,7 +371,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         String triggerId = "disabled";
 
-        Flow flow = createScheduleFlow("Europe/Paris", triggerId, false);
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", triggerId, false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -412,7 +413,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "stopAfter", false)
             .stopAfter(List.of(State.Type.SUCCESS))
             .build();
-        Flow flow = createFlow(Collections.singletonList(schedule));
+        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -472,7 +473,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 )
             )
             .build();
-        Flow flow = createFlow(Collections.singletonList(schedule));
+        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();

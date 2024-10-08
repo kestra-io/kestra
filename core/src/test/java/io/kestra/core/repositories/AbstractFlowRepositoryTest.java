@@ -89,7 +89,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
         try {
             Optional<Flow> full = flowRepository.findById(null, flow.getNamespace(), flow.getId());
             assertThat(full.isPresent(), is(true));
@@ -107,7 +107,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
         try {
             Optional<Flow> full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
             assertThat(full.isPresent(), is(true));
@@ -125,7 +125,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, "# comment\n" + flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flow = flowRepository.create(flow, "# comment\n" + flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         try {
             Optional<FlowWithSource> full = flowRepository.findByIdWithSource(null, flow.getNamespace(), flow.getId());
@@ -152,7 +152,7 @@ public abstract class AbstractFlowRepositoryTest {
             .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
             .build();
         // create with repository
-        FlowWithSource flow = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first));
+        FlowWithSource flow = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first.withSource(first.generateSource())));
 
         List<FlowWithSource> revisions;
         try {
@@ -175,7 +175,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .build();
 
             // revision is incremented
-            FlowWithSource incremented = flowRepository.update(flowRev2, flow, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2));
+            FlowWithSource incremented = flowRepository.update(flowRev2, flow, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource())));
             assertThat(incremented.getRevision(), is(2));
 
             // revision is well saved
@@ -187,7 +187,7 @@ public abstract class AbstractFlowRepositoryTest {
                 JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class),
                 flowRev2,
                 JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class).generateSource(),
-                pluginDefaultService.injectDefaults(flowRev2)
+                pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource()))
             );
             assertThat(incremented2.getRevision(), is(2));
 
@@ -196,7 +196,7 @@ public abstract class AbstractFlowRepositoryTest {
                 JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class),
                 flowRev2,
                 JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class).generateSource(),
-                pluginDefaultService.injectDefaults(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class))
+                pluginDefaultService.injectDefaults(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class).withSource(flow.getSource()))
             );
             assertThat(incremented3.getRevision(), is(3));
         } finally {
@@ -230,7 +230,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void save() {
         Flow flow = builder().revision(12).build();
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         try {
             assertThat(save.getRevision(), is(1));
@@ -242,7 +242,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void saveNoRevision() {
         Flow flow = builder().build();
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         try {
             assertThat(save.getRevision(), is(1));
@@ -310,7 +310,7 @@ public abstract class AbstractFlowRepositoryTest {
             .revision(3)
             .build();
         String flowSource = "# comment\n" + flow.generateSource();
-        flow = flowRepository.create(flow, flowSource, pluginDefaultService.injectDefaults(flow));
+        flow = flowRepository.create(flow, flowSource, pluginDefaultService.injectDefaults(flow.withSource(flowSource)));
 
         try {
             List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
@@ -359,7 +359,7 @@ public abstract class AbstractFlowRepositoryTest {
     void delete() {
         Flow flow = builder().build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        FlowWithSource save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         try {
             assertThat(flowRepository.findById(null, save.getNamespace(), save.getId()).isPresent(), is(true));
@@ -388,7 +388,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
@@ -403,7 +403,7 @@ public abstract class AbstractFlowRepositoryTest {
 
             ConstraintViolationException e = assertThrows(
                 ConstraintViolationException.class,
-                () -> flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update))
+                () -> flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update.withSource(update.generateSource())))
             );
 
             assertThat(e.getConstraintViolations().size(), is(2));
@@ -426,7 +426,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
@@ -437,7 +437,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .build();
             ;
 
-            Flow updated = flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update));
+            Flow updated = flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update.withSource(update.generateSource())));
             assertThat(updated.getTriggers(), is(nullValue()));
         } finally {
             deleteFlow(flow);
@@ -464,7 +464,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
         } finally {
@@ -538,7 +538,7 @@ public abstract class AbstractFlowRepositoryTest {
             .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
             .build();
         // create with repository
-        first = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first));
+        first = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first.withSource(first.generateSource())));
         try {
             assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(1));
 
@@ -555,7 +555,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
                 .build();
 
-            first = flowRepository.update(flowRev2, first, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2));
+            first = flowRepository.update(flowRev2, first, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource())));
             assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(2));
         } finally {
             deleteFlow(first);
@@ -625,7 +625,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     private void deleteFlow(Flow flow) {
         Integer revision = flowRepository.lastRevision(flow.getTenantId(), flow.getNamespace(), flow.getId());
-        flowRepository.delete(flow.toBuilder().revision(revision).build());
+        flowRepository.delete(flow.toBuilder().revision(revision).build().withSource(flow.generateSource()));
     }
 
     @Singleton

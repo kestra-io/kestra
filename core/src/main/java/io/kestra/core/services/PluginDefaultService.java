@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -41,6 +42,9 @@ public class PluginDefaultService {
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
+    private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy()
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
     @Nullable
     @Inject
     protected TaskGlobalDefaultConfiguration taskGlobalDefault;
@@ -60,7 +64,7 @@ public class PluginDefaultService {
     @Inject
     private PluginRegistry pluginRegistry;
 
-    private AtomicBoolean warnOnce = new AtomicBoolean(false);
+    private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
     @PostConstruct
     void validateGlobalPluginDefault() {
@@ -103,13 +107,12 @@ public class PluginDefaultService {
         return list;
     }
 
-    private Map<String, List<PluginDefault>> pluginDefaultsToMap(List<PluginDefault> pluginDefaults) {
-        return pluginDefaults
-            .stream()
-            .collect(Collectors.groupingBy(PluginDefault::getType));
-    }
-
-    public Flow injectDefaults(Flow flow, Execution execution) {
+    /**
+     * Inject plugin defaults into a Flow.
+     * In case of exception, the flow is returned as is,
+     * then a logger is created based on the execution to be able to log an exception in the execution logs.
+     */
+    public FlowWithSource injectDefaults(FlowWithSource flow, Execution execution) {
         try {
             return this.injectDefaults(flow);
         } catch (Exception e) {
@@ -129,6 +132,10 @@ public class PluginDefaultService {
         }
     }
 
+    /**
+     * @deprecated use {@link #injectDefaults(FlowWithSource, Logger)} instead
+     */
+    @Deprecated(forRemoval = true, since = "0.20")
     public Flow injectDefaults(Flow flow, Logger logger) {
         try {
             return this.injectDefaults(flow);
@@ -138,21 +145,62 @@ public class PluginDefaultService {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Inject plugin defaults into a Flow.
+     * In case of exception, the flow is returned as is, then the logger is used to log the exception.
+     */
+    public FlowWithSource injectDefaults(FlowWithSource flow, Logger logger) {
+        try {
+            return this.injectDefaults(flow);
+        } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
+            return flow;
+        }
+    }
+
+    /**
+     * @deprecated use {@link #injectDefaults(FlowWithSource)} instead
+     */
+    @Deprecated(forRemoval = true, since = "0.20")
     public Flow injectDefaults(Flow flow) throws ConstraintViolationException {
-        if (flow instanceof FlowWithSource) {
-            flow = ((FlowWithSource) flow).toFlow();
+        if (flow instanceof FlowWithSource flowWithSource) {
+            return this.injectDefaults(flowWithSource);
         }
 
         Map<String, Object> flowAsMap = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
+        return innerInjectDefault(flow, flowAsMap);
+    }
+
+    /**
+     * Inject plugin defaults into a Flow.
+     */
+    public FlowWithSource injectDefaults(FlowWithSource flow) throws ConstraintViolationException {
+        try {
+            Map<String, Object> flowAsMap = OBJECT_MAPPER.readValue(flow.getSource(), JacksonMapper.MAP_TYPE_REFERENCE);
+
+            Flow withDefault =  innerInjectDefault(flow, flowAsMap);
+
+            // revision and tenants are not in the source, so we copy them manually
+            return withDefault.toBuilder()
+                .tenantId(flow.getTenantId())
+                .revision(flow.getRevision())
+                .build()
+                .withSource(flow.getSource());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Flow innerInjectDefault(Flow flow, Map<String, Object> flowAsMap) {
         List<PluginDefault> allDefaults = mergeAllDefaults(flow);
         addAliases(allDefaults);
         Map<Boolean, List<PluginDefault>> allDefaultsGroup = allDefaults
             .stream()
             .collect(Collectors.groupingBy(PluginDefault::isForced, Collectors.toList()));
 
-        // non forced
+        // non-forced
         Map<String, List<PluginDefault>> defaults = pluginDefaultsToMap(allDefaultsGroup.getOrDefault(false, Collections.emptyList()));
 
         // forced plugin default need to be reverse, lower win
@@ -207,6 +255,12 @@ public class PluginDefaultService {
             .filter(property -> !pluginProperties.contains(property.toLowerCase()))
             .map(property -> "No property '" + property + "' exists in plugin '" + pluginDefault.getType() + "'")
             .toList();
+    }
+
+    private Map<String, List<PluginDefault>> pluginDefaultsToMap(List<PluginDefault> pluginDefaults) {
+        return pluginDefaults
+            .stream()
+            .collect(Collectors.groupingBy(PluginDefault::getType));
     }
 
     private void addAliases(List<PluginDefault> allDefaults) {

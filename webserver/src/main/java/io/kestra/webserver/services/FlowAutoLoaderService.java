@@ -98,7 +98,7 @@ public class FlowAutoLoaderService {
                 )
                 .map(source -> {
                     Flow flow = yamlFlowParser.parse(source, Flow.class);
-                    repository.create(flow, source, pluginDefaultService.injectDefaults(flow));
+                    repository.create(flow, source, pluginDefaultService.injectDefaults(flow.withSource(source)));
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;
                 })

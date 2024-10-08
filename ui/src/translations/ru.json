@@ -866,6 +866,10 @@
     "concurrency": "Конкурентность",
     "open sidebar": "открыть боковую панель",
     "close sidebar": "закрыть боковую панель",
-    "change_status": "Изменить статус"
+    "change_status": "Изменить статус",
+    "in-our-documentation": "в нашей документации.",
+    "read-more": "Узнать больше о",
+    "flow-dependencies": "зависимости",
+    "flow-no-dependencies": "Ваш flow не имеет зависимостей"
   }
 }

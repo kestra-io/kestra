@@ -872,7 +872,8 @@
       "trigger_disabled": "This trigger can only be enabled through code.",
       "description": "Description",
       "no_flow_description": "This flow has no description.",
-      "not_auth": "You don't have the necessary permissions to view this widget."
+      "not_auth": "You don't have the necessary permissions to view this widget.",
+      "see_all": "See all"
     },
     "docs": "Docs",
     "active-slots": "Active slots",

@@ -866,6 +866,10 @@
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
-    "change_status": "Status ändern"
+    "change_status": "Status ändern",
+    "in-our-documentation": "in unserer Dokumentation.",
+    "read-more": "Mehr erfahren über",
+    "flow-dependencies": "Abhängigkeiten",
+    "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten."
   }
 }

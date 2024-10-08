@@ -866,6 +866,10 @@
     "concurrency": "Concurrency",
     "open sidebar": "apri barra laterale",
     "close sidebar": "chiudi barra laterale",
-    "change_status": "Cambia stato"
+    "change_status": "Cambia stato",
+    "in-our-documentation": "nella nostra documentazione.",
+    "read-more": "Leggi di più su",
+    "flow-dependencies": "dipendenze",
+    "flow-no-dependencies": "Il tuo flow non ha dipendenze"
   }
 }

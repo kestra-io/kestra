@@ -6,7 +6,7 @@
     "close": "Fechar",
     "namespace": "Namespace",
     "description": "Descrição",
-    "show description": "Mostrar descrição",
+    "show description": "Mostrar uma descrição",
     "revision": "Revisão",
     "Language": "Idioma",
     "Set default page": "Definir página padrão",
@@ -240,6 +240,7 @@
     "confirm password": "Confirmar senha",
     "email length constraint": "Email não deve exceder 256 caracteres",
     "password length constraint": "Senha não deve exceder 256 caracteres",
+    "password empty constraint": "Nome de utilizador ou palavra-passe incorretos",
     "passwords do not match": "Senhas não coincidem",
     "avg duration": "Duração média da execução",
     "neutral trend": "Estável",
@@ -509,7 +510,8 @@
       "success": "Trigger desbloqueado"
     },
     "restart trigger": {
-      "button": "Reiniciar trigger"
+      "button": "Reiniciar trigger",
+      "tooltip": "Reiniciar o trigger"
     },
     "date format": "Formato de data",
     "timezone": "Fuso horário",
@@ -848,7 +850,10 @@
       "trigger_disabled": "Este trigger só pode ser habilitado através de código.",
       "no_flow_description": "Este flow não tem descrição.",
       "description": "Descrição",
-      "not_auth": "Você não tem as permissões necessárias para visualizar este widget."
+      "not_auth": "Você não tem as permissões necessárias para visualizar este widget.",
+      "see_all": "Ver todos",
+      "success_ratio_tooltip": "A Taxa de Sucesso é a soma das execuções em estados SUCCESS, CANCELLED e WARNING dividida pelo número total de execuções em um estado terminado.",
+      "failure_ratio_tooltip": "A proporção de falhas é a soma das execuções FAILED, KILLED e RETRIED dividida pelo número total de execuções em um estado terminado."
     },
     "delete_log": "Tem certeza de que deseja excluir o log?",
     "docs": "Documentos",
@@ -860,6 +865,7 @@
     "active-slots": "Slots ativos",
     "concurrency": "Concorrência",
     "open sidebar": "abrir barra lateral",
-    "close sidebar": "fechar barra lateral"
+    "close sidebar": "fechar barra lateral",
+    "change_status": "Alterar status"
   }
 }

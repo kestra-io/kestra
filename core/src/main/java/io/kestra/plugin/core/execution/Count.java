@@ -14,15 +14,13 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -76,10 +74,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     aliases = "io.kestra.core.tasks.executions.Counts"
 )
 public class Count extends Task implements RunnableTask<Count.Output> {
-    @NotNull
-    @NotEmpty
     @Schema(
-        title = "A list of flows to be filtered."
+        title = "A list of flows to be filtered.",
+        description = "If not provided, namespaces must be set."
     )
     @PluginProperty
     protected List<Flow> flows;
@@ -114,6 +111,9 @@ public class Count extends Task implements RunnableTask<Count.Output> {
     @PluginProperty(dynamic = true)
     protected String expression;
 
+    @PluginProperty
+    protected List<String> namespaces;
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -121,18 +121,28 @@ public class Count extends Task implements RunnableTask<Count.Output> {
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
+        if (flows == null && namespaces == null) {
+            throw new IllegalArgumentException("You must provide a list of flows or namespaces");
+        }
+
         var flowInfo = runContext.flowInfo();
 
         // check that all flows are allowed
         FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
-        flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
+        if (flows != null) {
+            flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
+        }
+        if (namespaces != null) {
+            namespaces.forEach(namespace -> flowService.checkAllowedNamespace(flowInfo.tenantId(), namespace, flowInfo.tenantId(), flowInfo.namespace()));
+        }
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
             flowInfo.tenantId(),
             flows,
             this.states,
             startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,
-            endDate != null ? ZonedDateTime.parse(runContext.render(endDate)) : null
+            endDate != null ? ZonedDateTime.parse(runContext.render(endDate)) : null,
+            namespaces
         );
 
         logger.trace("{} flows matching filters", executionCounts.size());

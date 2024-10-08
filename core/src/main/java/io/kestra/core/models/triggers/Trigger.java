@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -19,7 +20,7 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @NoArgsConstructor
-public class Trigger extends TriggerContext {
+public class Trigger extends TriggerContext implements HasUID {
     @Nullable
     private String executionId;
 
@@ -48,6 +49,9 @@ public class Trigger extends TriggerContext {
         return new TriggerBuilderImpl();
     }
 
+
+    /** {@inheritDoc **/
+    @Override
     public String uid() {
         return uid(this);
     }

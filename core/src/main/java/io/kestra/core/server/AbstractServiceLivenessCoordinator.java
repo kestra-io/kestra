@@ -78,7 +78,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
             })
             // warn
             .peek(instance -> log.warn("Detected non-responding service [id={}, type={}, hostname={}] after timeout ({}ms).",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 now.toEpochMilli() - instance.updatedAt().toEpochMilli()
@@ -96,7 +96,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
                 .forEach(instance -> {
                     if (log.isDebugEnabled()) {
                         log.debug("Detected new service [id={}, type={}, hostname={}] (started at: {}).",
-                            instance.id(),
+                            instance.uid(),
                             instance.type(),
                             instance.server().hostname(),
                             instance.createdAt()
@@ -114,7 +114,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         } catch (Exception e) {
             // Log and ignore exception - it's safe to ignore error because the run() method is supposed to schedule at fix rate.
             log.error("Unexpected error while service [id={}, type={}, hostname={}] transition from {} to {}. Error: {}",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 instance.state(),

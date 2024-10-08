@@ -19,7 +19,15 @@
                 />
             </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                <log-level-navigator :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined" :level="logLevel" :total-count="countByLogLevel[logLevel]" @previous="previousLogForLevel(logLevel)" @next="nextLogForLevel(logLevel)" />
+                <log-level-navigator
+                    v-if="countByLogLevel[logLevel] > 0"
+                    :cursor-idx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                    :level="logLevel"
+                    :total-count="countByLogLevel[logLevel]"
+                    @previous="previousLogForLevel(logLevel)"
+                    @next="nextLogForLevel(logLevel)"
+                    @close="clearLogLevel(logLevel)"
+                />
             </el-form-item>
             <el-form-item>
                 <el-button @click="expandCollapseAll()">
@@ -210,7 +218,17 @@
 
                 const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
-            }
+            },
+            clearLogLevel(level) {
+                if (this.logCursor !== undefined && this.cursorLogLevel === level) {
+                    this.logCursor = undefined;
+                }
+                if (this.level === level) {
+                    this.level = undefined;
+                    this.onChange();
+                }
+            }   
+
         }
     };
 </script>

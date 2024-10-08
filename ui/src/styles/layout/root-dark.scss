@@ -32,7 +32,7 @@ html.dark {
     #{--bs-link-color-rgb}: to-rgb($secondary);
     #{--bs-tertiary-color}: #C3BBE3;
 
-    $levels: info, running, danger, warning, success;
+    $levels: info, running, danger, warning;
     @each $level in $levels {
         .bg-#{$level} {
             #{--bs-bg-opacity}: 0.2;
@@ -147,8 +147,6 @@ html.dark {
     #{--bs-success-rgb}: to_rgb($content-success);
 
     .shiki, .shiki span {
-        color: var(--shiki-dark) !important;
-        background-color: var(--shiki-dark-bg) !important;
         font-style: var(--shiki-dark-font-style) !important;
         font-weight: var(--shiki-dark-font-weight) !important;
         text-decoration: var(--shiki-dark-text-decoration) !important;

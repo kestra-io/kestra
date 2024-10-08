@@ -29,7 +29,6 @@
     import TaskEditor from "../flows/TaskEditor.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import Editor from "./Editor.vue";
-    import yamlUtils from "../../utils/yamlUtils";
     import {SECTIONS} from "../../utils/constants.js";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
@@ -406,7 +405,7 @@
     };
 
     const updatePluginDocumentation = (event) => {
-        const taskType = yamlUtils.getTaskType(
+        const taskType = YamlUtils.getTaskType(
             event.model.getValue(),
             event.position
         );
@@ -706,7 +705,7 @@
     };
 
     const save = async (e) => {
-        if (!currentTab?.value?.dirty && !props.isCreating) {
+        if (!haveChange.value && !props.isCreating) {
             return;
         }
         if (e) {

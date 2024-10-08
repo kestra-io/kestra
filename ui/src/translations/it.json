@@ -6,7 +6,7 @@
     "close": "Chiudi",
     "namespace": "Namespace",
     "description": "Descrizione",
-    "show description": "Mostra descrizione",
+    "show description": "Mostra una descrizione",
     "revision": "Revisione",
     "Language": "Lingua",
     "Set default page": "Imposta pagina predefinita",
@@ -240,6 +240,7 @@
     "confirm password": "Conferma password",
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "password length constraint": "La password non deve superare i 256 caratteri",
+    "password empty constraint": "Nome utente o password errati",
     "passwords do not match": "Le password non corrispondono",
     "avg duration": "Durata media dell'esecuzione",
     "neutral trend": "Stabile",
@@ -509,7 +510,8 @@
       "success": "Trigger sbloccato"
     },
     "restart trigger": {
-      "button": "Riavvia trigger"
+      "button": "Riavvia trigger",
+      "tooltip": "Riavvia il trigger"
     },
     "date format": "Formato data",
     "timezone": "Fuso orario",
@@ -848,7 +850,10 @@
       "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice.",
       "no_flow_description": "Questo flow non ha descrizione.",
       "description": "Descrizione",
-      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget."
+      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget.",
+      "see_all": "Vedi tutto",
+      "success_ratio_tooltip": "Il Rapporto di Successo è la somma delle esecuzioni in stato SUCCESS, CANCELLED e WARNING divisa per il numero totale di esecuzioni in uno stato terminato.",
+      "failure_ratio_tooltip": "Il rapporto di errore è la somma delle esecuzioni FAILED, KILLED e RETRIED divisa per il numero totale di esecuzioni in uno stato terminato."
     },
     "delete_log": "Sei sicuro di voler eliminare il log?",
     "docs": "Documenti",
@@ -860,6 +865,7 @@
     "active-slots": "Slot attivi",
     "concurrency": "Concurrency",
     "open sidebar": "apri barra laterale",
-    "close sidebar": "chiudi barra laterale"
+    "close sidebar": "chiudi barra laterale",
+    "change_status": "Cambia stato"
   }
 }

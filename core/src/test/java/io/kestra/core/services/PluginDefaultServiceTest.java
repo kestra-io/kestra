@@ -130,9 +130,11 @@ class PluginDefaultServiceTest {
         final PluginGlobalDefaultConfiguration pluginGlobalDefaultConfiguration = new PluginGlobalDefaultConfiguration();
         pluginGlobalDefaultConfiguration.defaults = List.of(globalDefault);
 
+        var previousGlobalDefault = pluginDefaultService.pluginGlobalDefault;
         pluginDefaultService.pluginGlobalDefault = pluginGlobalDefaultConfiguration;
 
         final Flow injected = pluginDefaultService.injectDefaults(flowWithPluginDefault);
+        pluginDefaultService.pluginGlobalDefault = previousGlobalDefault;
 
         assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropFoo(), is(fooValue));
         assertThat(((DefaultPrecedenceTester) injected.getTasks().getFirst()).getPropBar(), is(barValue));

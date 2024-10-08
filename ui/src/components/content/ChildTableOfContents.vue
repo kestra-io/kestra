@@ -22,7 +22,7 @@
             if (props.pageUrl) {
                 currentPage = props.pageUrl;
             } else {
-                currentPage = route.value.params.path;
+                currentPage = route.params.path;
             }
 
             currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
@@ -39,7 +39,7 @@
                     }
                 });
 
-            const dir = Object.entries(childrenWithMetadata)[0][1].children;
+            const dir = Object.entries(childrenWithMetadata)[0]?.[1]?.children;
             return {dir};
         },
 
@@ -47,7 +47,6 @@
             const {dir, max} = ctx;
 
             const renderLink = (link) => h(RouterLink, {to: {path: "/" + link.path}}, () => link.title);
-
 
             const renderLinks = (data, level) => {
                 return h(

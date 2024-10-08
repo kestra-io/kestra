@@ -233,4 +233,8 @@ export default class State {
     static icon() {
         return _mapValues(STATE, (state) => state.icon);
     }
+
+    static getTerminatedStates() {
+        return Object.values(STATE).filter(state => !state.isRunning).map(state => state.name);
+    }
 }

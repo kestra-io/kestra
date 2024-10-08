@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.models.HasUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -16,7 +17,7 @@ import jakarta.validation.constraints.NotNull;
 @Data
 @SuperBuilder
 @NoArgsConstructor
-public abstract class WorkerJobRunning {
+public abstract class WorkerJobRunning implements HasUID {
     @NotNull
     private WorkerInstance workerInstance;
 
@@ -25,5 +26,4 @@ public abstract class WorkerJobRunning {
 
     abstract public String getType();
 
-    abstract public String uid();
 }

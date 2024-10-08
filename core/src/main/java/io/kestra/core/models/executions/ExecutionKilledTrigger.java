@@ -36,7 +36,6 @@ public class ExecutionKilledTrigger extends ExecutionKilled implements TenantInt
             triggerContext.getTriggerId().equals(this.triggerId);
     }
 
-
     @Override
     public String uid() {
         return IdUtils.fromParts(

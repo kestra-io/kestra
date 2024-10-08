@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.TaskRun;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +14,7 @@ import jakarta.validation.constraints.NotNull;
 @Value
 @AllArgsConstructor
 @Builder
-public class WorkerTaskResult {
+public class WorkerTaskResult implements HasUID {
     @NotNull
     TaskRun taskRun;
 
@@ -35,5 +36,13 @@ public class WorkerTaskResult {
             .stream()
             .map(WorkerTaskResult::getTaskRun)
             .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String uid() {
+        return taskRun.getId();
     }
 }

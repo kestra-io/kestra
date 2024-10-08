@@ -28,18 +28,6 @@ kestra:
       bool: true
       nested:
         int: 2
-  tasks:
-    defaults:
-    - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-      values:
-        doubleValue: 19
-        arrays:
-          - 2
-        property:
-          here: me
-          lists:
-          - val:
-              key: test
 
   anonymous-usage-report:
     enabled: false
@@ -64,3 +52,15 @@ kestra:
       - type: io.kestra.core.runners.test.task.Alias
         values:
           prop0: value0
+
+    defaults:
+      - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+        values:
+          doubleValue: 19
+          arrays:
+            - 2
+          property:
+            here: me
+            lists:
+              - val:
+                  key: test

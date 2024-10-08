@@ -48,7 +48,7 @@
             <el-col :xs="24" :sm="8" :lg="4">
                 <refresh-button
                     class="float-right"
-                    @refresh="fetchAll()"
+                    @refresh="refresh()"
                     :can-auto-refresh="canAutoRefresh"
                 />
             </el-col>
@@ -61,6 +61,7 @@
                 <Card
                     :icon="CheckBold"
                     :label="t('dashboard.success_ratio')"
+                    :tooltip="t('dashboard.success_ratio_tooltip')"
                     :value="stats.success"
                     :redirect="{
                         name: 'executions/list',
@@ -77,6 +78,7 @@
                 <Card
                     :icon="Alert"
                     :label="t('dashboard.failure_ratio')"
+                    :tooltip="t('dashboard.failure_ratio_tooltip')"
                     :value="stats.failed"
                     :redirect="{
                         name: 'executions/list',
@@ -140,15 +142,14 @@
                             v-model="descriptionDialog"
                             :title="$t('description')"
                         >
-                            <p class="pt-4">
-                                {{ description }}
-                            </p>
+                            <Markdown
+                                :source="description"
+                                class="p-4 description"
+                            />
                         </el-dialog>
                     </span>
 
-                    <p class="pt-4 description">
-                        {{ description }}
-                    </p>
+                    <Markdown :source="description" class="p-4 description" />
                 </div>
                 <ExecutionsInProgress
                     v-else
@@ -201,7 +202,6 @@
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
-    import _cloneDeep from "lodash/cloneDeep";
 
     import {apiUrl} from "override/utils/route";
     import State from "../../utils/state";
@@ -222,6 +222,8 @@
     import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
     import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
     import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
+
+    import Markdown from "../layout/Markdown.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -273,6 +275,13 @@
         scope: ["USER"],
     });
 
+    const refresh = async () => {
+        await updateParams({
+            startDate: filters.value.startDate,
+            endDate: moment().toISOString(true),
+        });
+        fetchAll();
+    };
     const canAutoRefresh = ref(false);
     const toggleAutoRefresh = (event) => {
         canAutoRefresh.value = event;
@@ -292,29 +301,45 @@
     const executions = ref({raw: {}, all: {}, yesterday: {}, today: {}});
     const stats = computed(() => {
         const counts = executions?.value?.all?.executionCounts || {};
-        const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+        const terminatedStates = State.getTerminatedStates();
+        const statesToCount = Object.fromEntries(
+            Object.entries(counts).filter(([key]) =>
+                terminatedStates.includes(key),
+            ),
+        );
 
-        function percentage(count, total) {
-            return total ? ((count / total) * 100).toFixed(2) : "0.00";
-        }
+        const total = Object.values(statesToCount).reduce(
+            (sum, count) => sum + count,
+            0,
+        );
+        const successStates = ["SUCCESS", "CANCELLED", "WARNING"];
+        const failedStates = ["FAILED", "KILLED", "RETRIED"];
+        const sumStates = (states) =>
+            states.reduce((sum, state) => sum + (statesToCount[state] || 0), 0);
+
+        const successRatio =
+            total > 0 ? (sumStates(successStates) / total) * 100 : 0;
+        const failedRatio = total > 0 ? (sumStates(failedStates) / total) * 100 : 0;
 
         return {
             total,
-            success: `${percentage(counts[State.SUCCESS] || 0, total)}%`,
-            failed: `${percentage(counts[State.FAILED] || 0, total)}%`,
+            success: `${successRatio.toFixed(2)}%`,
+            failed: `${failedRatio.toFixed(2)}%`,
         };
     });
     const transformer = (data) => {
         return data.reduce((accumulator, value) => {
-            if (!accumulator) accumulator = _cloneDeep(value);
-            else {
-                for (const key in value.executionCounts) {
-                    accumulator.executionCounts[key] += value.executionCounts[key];
-                }
+            accumulator = accumulator || {executionCounts: {}, duration: {}};
 
-                for (const key in value.duration) {
-                    accumulator.duration[key] += value.duration[key];
-                }
+            for (const key in value.executionCounts) {
+                accumulator.executionCounts[key] =
+                    (accumulator.executionCounts[key] || 0) +
+                    value.executionCounts[key];
+            }
+
+            for (const key in value.duration) {
+                accumulator.duration[key] =
+                    (accumulator.duration[key] || 0) + value.duration[key];
             }
 
             return accumulator;
@@ -462,6 +487,7 @@ $spacing: 20px;
     }
 
     .description {
+        border: none !important;
         color: #564a75;
 
         html.dark & {

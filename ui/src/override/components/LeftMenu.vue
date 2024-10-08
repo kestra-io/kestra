@@ -203,6 +203,15 @@
                         },
                     },
                     {
+                        href: {name: "docs/view"},
+                        routes: this.routeStartWith("docs/view"),
+                        title: this.$t("docs"),
+                        icon: {
+                            element: shallowRef(FileTableOutline),
+                            class: "menu-icon"
+                        }
+                    },
+                    {
                         title: this.$t("administration"),
                         routes: this.routeStartWith("admin"),
                         icon: {
@@ -275,15 +284,6 @@
                         ]
                     },
                     {
-                        href: {name: "docs/view"},
-                        routes: this.routeStartWith("docs/view"),
-                        title: this.$t("docs"),
-                        icon: {
-                            element: shallowRef(FileTableOutline),
-                            class: "menu-icon"
-                        }
-                    },
-                    {
                         href: {name: "settings"},
                         routes: this.routeStartWith("admin/settings"),
                         title: this.$t("settings.label"),
@@ -305,6 +305,12 @@
             this.expandParentIfNeeded();
         },
         watch: {
+            "$i18n.locale": {
+                deep: true,
+                handler(){
+                    this.localMenu = this.disabledCurrentRoute(this.generateMenu());
+                }
+            },
             menu: {
                 handler(newVal, oldVal) {
                     // Check if the active menu item has changed, if yes then update the menu

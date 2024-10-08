@@ -195,6 +195,11 @@
                 if (!newValue) {
                     this.resetKv();
                 }
+            },
+            "kv.type"() {
+                if (this.$refs.form) {
+                    this.$refs.form.clearValidate("value");
+                }
             }
         },
         data() {

@@ -20,6 +20,9 @@
     "queryParams": "readonly"
   },
   "rules": {
+    "vue/this-in-template": [
+      "error"
+    ],
     "vue/html-indent": [
       "error",
       4,

@@ -240,6 +240,7 @@
     "confirm password": "确认密码",
     "email length constraint": "电子邮件不得超过256个字符",
     "password length constraint": "密码不得超过256个字符",
+    "password empty constraint": "用户名或密码不正确",
     "passwords do not match": "密码不匹配",
     "avg duration": "平均执行时间",
     "neutral trend": "稳定",
@@ -509,7 +510,8 @@
       "success": "触发器已解锁"
     },
     "restart trigger": {
-      "button": "重新启动触发器"
+      "button": "重新启动触发器",
+      "tooltip": "重新启动trigger"
     },
     "date format": "日期格式",
     "timezone": "时区",
@@ -848,7 +850,10 @@
       "trigger_disabled": "此trigger只能通过代码启用。",
       "no_flow_description": "此flow没有描述。",
       "description": "描述",
-      "not_auth": "您没有查看此小部件的必要权限。"
+      "not_auth": "您没有查看此小部件的必要权限。",
+      "see_all": "查看全部",
+      "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下执行总次数的结果。",
+      "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数之和除以终止状态下执行总次数的结果。"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",
@@ -860,6 +865,7 @@
     "active-slots": "活动槽位",
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
-    "close sidebar": "关闭侧边栏"
+    "close sidebar": "关闭侧边栏",
+    "change_status": "更改状态"
   }
 }

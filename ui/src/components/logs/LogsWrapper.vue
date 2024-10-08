@@ -55,11 +55,6 @@
                             </template>
                         </div>
                     </el-card>
-
-                    <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()" class="mb-3 delete-logs-btn">
-                        <TrashCan class="me-2" />
-                        <span>{{ $t("delete logs") }}</span>
-                    </el-button>
                 </template>
 
                 <template #table>
@@ -103,13 +98,13 @@
     import LogChart from "../stats/LogChart.vue";
     import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart, TrashCan},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
         props: {
             logLevel: {
                 type: String,
@@ -126,10 +121,6 @@
             filters: {
                 type: Object,
                 default: null
-            },
-            purgeFilters: {
-                type: Boolean,
-                default: false
             },
         },
         data() {
@@ -155,9 +146,6 @@
                 };
             },
             isFlowEdit() {
-                return this.$route.name === "flows/update"
-            },
-            shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update"
             },
             isNamespaceEdit() {
@@ -210,7 +198,7 @@
             loadQuery(base) {
                 // eslint-disable-next-line no-unused-vars
                 const {triggerId, ...rest} = this.filters || {};
-                let queryFilter = this.filters ? (this.purgeFilters ? rest : this.filters) : this.queryWithFilter();
+                let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
                     queryFilter["namespace"] = this.namespace;
@@ -232,13 +220,11 @@
                 this.isLoading = true
 
                 // eslint-disable-next-line no-unused-vars
-                const {triggerId, ...rest} = this.filters || {};
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
-                    ...(this.purgeFilters ? rest : this.filters)
+                    ...this.filters
                 };
-
                 this.$store
                     .dispatch("log/findLogs", this.loadQuery({
                         ...data,
@@ -262,13 +248,6 @@
                     .then(() => {
                         this.statsReady = true;
                     });
-            },
-            deleteLogs() {
-                this.$toast().confirm(
-                    this.$t("delete_all_logs"),
-                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
-                    () => {}
-                )
             }
         },
     };
@@ -301,9 +280,5 @@
                 border-top: 1px solid var(--bs-border-color);
             }
         }
-    }
-
-    .delete-logs-btn {
-        width: 200px;
     }
 </style>

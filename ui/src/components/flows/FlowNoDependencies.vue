@@ -4,11 +4,11 @@
             <img :src="flowImage" alt="No dependencies">
         </div>
         <div class="no-dependencies-message">
-            <p>{{ $t("flow no dependencies") }}</p>
+            <p>{{ $t("flow-no-dependencies") }}</p>
         </div>
         <div class="no-dependencies-doc-message" :class="themeClass">
             <p>
-                {{ $t("Read more about") }}
+                {{ $t("read-more") }}
                 <a
                     :href="dependenciesDocsUrl"
                     target="_blank"
@@ -17,7 +17,7 @@
                 >
                     {{ $t("flow-dependencies") }}
                 </a>
-                {{ $t("in our documentation.") }}
+                {{ $t("in-our-documentation") }}
             </p>
         </div>
     </div>

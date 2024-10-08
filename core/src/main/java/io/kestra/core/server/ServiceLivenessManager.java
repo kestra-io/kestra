@@ -70,7 +70,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             ServiceInstance instance = holder.instance();
             log.debug(
                 "[Service id={}, type={}, hostname={}] Service state is not updatable. StateChangeEvent[{}] skipped.",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 instance.state()
@@ -103,7 +103,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         this.serviceRegistry.register(localServiceState.with(instance));
         if (log.isDebugEnabled()) {
             log.debug("[Service id={}, type='{}', hostname='{}'] Connected.",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname()
             );
@@ -145,7 +145,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 ServiceInstance instance = updateServiceInstanceState(now, service, null, onStateTransitionFailureCallback);
                 if (log.isTraceEnabled() && instance != null) {
                     log.trace("[Service id={}, type={}, hostname='{}'] Completed scheduled state update: '{}' ({}ms).",
-                        instance.id(),
+                        instance.uid(),
                         instance.type(),
                         instance.server().hostname(),
                         instance.state(),
@@ -198,7 +198,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             ServiceInstance localInstance = localServiceState.instance();
             if (!localInstance.state().isValidTransition(newState)) {
                 log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
-                    localInstance.id(),
+                    localInstance.uid(),
                     localInstance.type(),
                     localInstance.server().hostname(),
                     localInstance.state(),
@@ -270,7 +270,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         } catch (Exception e) {
             final ServiceInstance localInstance = localServiceState(service).instance();
             log.error("[Service id={}, type='{}', hostname='{}'] Failed to update state to {}. Error: {}",
-                localInstance.id(),
+                localInstance.uid(),
                 localInstance.type(),
                 localInstance.server().hostname(),
                 newState.name(),
@@ -293,7 +293,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             log.error(
                 "[Service id={}, type={}, hostname={}] Termination already completed ({}). " +
                     "This error may occur if the service has already been evicted by Kestra due to a prior error.",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 actualState
@@ -347,7 +347,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
             if (isLivenessEnabled || instance.is(Service.ServiceState.ERROR)) {
                 log.error("[Service id={}, type={}, hostname='{}'] Terminating server.",
-                    instance.id(),
+                    instance.uid(),
                     instance.type(),
                     instance.server().hostname()
                 );
@@ -365,7 +365,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
             // This should not happen, but let's log a WARN to keep a trace.
             log.warn("[Service id={}, type={}, hostname='{}'] Received unexpected state [{}] transition error [bug].",
-                instance.id(),
+                instance.uid(),
                 instance.type(),
                 instance.server().hostname(),
                 instance.state()

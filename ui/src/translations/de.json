@@ -510,7 +510,8 @@
       "success": "Trigger ist entsperrt"
     },
     "restart trigger": {
-      "button": "Trigger neu starten"
+      "button": "Trigger neu starten",
+      "tooltip": "Den Trigger neu starten"
     },
     "date format": "Datumsformat",
     "timezone": "Zeitzone",
@@ -850,7 +851,9 @@
       "no_flow_description": "Dieser Flow hat keine Beschreibung.",
       "description": "Beschreibung",
       "not_auth": "Sie haben nicht die erforderlichen Berechtigungen, um dieses Widget anzuzeigen.",
-      "see_all": "Alle anzeigen"
+      "see_all": "Alle anzeigen",
+      "success_ratio_tooltip": "Erfolgsquote ist die Summe der SUCCESS, CANCELLED und WARNING Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand.",
+      "failure_ratio_tooltip": "Der Fehlerrate ist die Summe der FAILED, KILLED und RETRIED Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand."
     },
     "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
     "docs": "Dokumentation",
@@ -862,6 +865,7 @@
     "active-slots": "Aktive Slots",
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
-    "close sidebar": "Seitenleiste schließen"
+    "close sidebar": "Seitenleiste schließen",
+    "change_status": "Status ändern"
   }
 }

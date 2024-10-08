@@ -38,13 +38,11 @@ public class WorkerTask extends WorkerJob {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String uid() {
-        return this.taskRun.getTaskId();
-    }
-
-    @Override
-    public String taskRunId() {
         return this.taskRun.getId();
     }
 

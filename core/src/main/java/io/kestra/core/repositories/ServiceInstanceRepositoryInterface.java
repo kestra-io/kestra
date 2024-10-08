@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -113,7 +112,7 @@ public interface ServiceInstanceRepositoryInterface {
                                                                    final String reason) {
         // This default method is not transactional and may lead to inconsistent state transition.
         synchronized (this) {
-            Optional<ServiceInstance> optional = findById(instance.id());
+            Optional<ServiceInstance> optional = findById(instance.uid());
             final ImmutablePair<ServiceInstance, ServiceInstance> beforeAndAfter;
             // UNKNOWN service
             if (optional.isEmpty()) {

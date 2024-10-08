@@ -62,4 +62,8 @@ public class Usage {
 
     @Valid
     private final ExecutionUsage executions;
+
+    @Valid
+    @Nullable
+    private ServiceUsage services;
 }

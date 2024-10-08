@@ -6,7 +6,7 @@
     "close": "Cerrar",
     "namespace": "Namespace",
     "description": "Descripción",
-    "show description": "Mostrar descripción",
+    "show description": "Mostrar una descripción",
     "revision": "Revisión",
     "Language": "Idioma",
     "Set default page": "Establecer página predeterminada",
@@ -510,7 +510,8 @@
       "success": "Trigger desbloqueado"
     },
     "restart trigger": {
-      "button": "Reiniciar trigger"
+      "button": "Reiniciar trigger",
+      "tooltip": "Reiniciar el trigger"
     },
     "date format": "Formato de fecha",
     "timezone": "Zona horaria",
@@ -850,7 +851,9 @@
       "no_flow_description": "Este flow no tiene descripción.",
       "description": "Descripción",
       "not_auth": "No tienes los permisos necesarios para ver este widget.",
-      "see_all": "Ver todo"
+      "see_all": "Ver todo",
+      "success_ratio_tooltip": "La Tasa de Éxito es la suma de ejecuciones en estado SUCCESS, CANCELLED y WARNING dividida por el número total de ejecuciones en un estado terminado.",
+      "failure_ratio_tooltip": "La proporción de Failed es la suma de ejecuciones FAILED, KILLED y RETRIED dividida por el número total de ejecuciones en un estado terminado."
     },
     "delete_log": "¿Está seguro de que desea eliminar el log?",
     "docs": "Documentos",
@@ -862,6 +865,7 @@
     "active-slots": "Ranuras activas",
     "concurrency": "Concurrente",
     "open sidebar": "abrir barra lateral",
-    "close sidebar": "cerrar barra lateral"
+    "close sidebar": "cerrar barra lateral",
+    "change_status": "Cambiar estado"
   }
 }

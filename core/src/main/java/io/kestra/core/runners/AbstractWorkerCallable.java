@@ -1,19 +1,20 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.WorkerJobLifecycle;
+import io.kestra.core.models.flows.State;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.slf4j.Logger;
 
 import java.time.Duration;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static io.kestra.core.models.flows.State.Type.FAILED;
-import static io.kestra.core.models.flows.State.Type.KILLED;
+import static io.kestra.core.models.flows.State.Type.*;
 
 @SuppressWarnings("this-escape")
-public abstract class AbstractWorkerThread extends Thread {
+public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     volatile boolean killed = false;
 
     Logger logger;
@@ -25,19 +26,15 @@ public abstract class AbstractWorkerThread extends Thread {
     String type;
 
     @Getter
-    io.kestra.core.models.flows.State.Type taskState;
-
-    @Getter
     Throwable exception;
 
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     private final ClassLoader classLoader;
 
-    public AbstractWorkerThread(RunContext runContext, String type, ClassLoader classLoader) {
-        super("WorkerThread");
-        this.setUncaughtExceptionHandler(this::exceptionHandler);
+    private Thread currentThread;
 
+    AbstractWorkerCallable(RunContext runContext, String type, ClassLoader classLoader) {
         this.logger = runContext.logger();
         this.runContext = runContext;
         this.type = type;
@@ -51,18 +48,20 @@ public abstract class AbstractWorkerThread extends Thread {
 
     /** {@inheritDoc} **/
     @Override
-    public void run() {
-        Thread.currentThread().setContextClassLoader(classLoader);
+    public State.Type call() {
+        this.currentThread = Thread.currentThread();
+        this.currentThread.setContextClassLoader(classLoader);
+
         try {
-            doRun();
+            return doCall();
         } catch (Exception e) {
-            this.exceptionHandler(this, e);
+            return this.exceptionHandler(e);
         } finally {
             shutdownLatch.countDown();
         }
     }
 
-    protected abstract void doRun() throws Exception;
+    protected abstract State.Type doCall() throws Exception;
 
     /**
      * Signals to the job executed by this worker thread to stop.
@@ -87,21 +86,28 @@ public abstract class AbstractWorkerThread extends Thread {
 
     protected void kill(boolean markAsKilled) {
         this.killed = markAsKilled;
-        this.taskState = KILLED;
 
         // When we arrive here, the thread run() method may be ended but the thread "in the stopping process".
         // So we don't interrupt if the shutdownLatch is 0 as this means the run() method is done or if the thread is no more alive.
-        if (shutdownLatch.getCount() > 0 && this.isAlive()) {
+        if (shutdownLatch.getCount() > 0) {
             this.interrupt();
         }
     }
 
-    protected void exceptionHandler(Thread t, Throwable e) {
+    protected State.Type exceptionHandler(Throwable e) {
         this.exception = e;
 
-        if (!this.killed) {
+        if (this.killed) {
+            return KILLED;
+        } else {
             logger.error(e.getMessage(), e);
-            taskState = FAILED;
+            return FAILED;
+        }
+    }
+
+    public void interrupt() {
+        if (this.currentThread != null && this.currentThread.isAlive()) {
+            this.currentThread.interrupt();
         }
     }
 }

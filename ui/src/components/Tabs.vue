@@ -9,11 +9,24 @@
             :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
-                    <enterprise-tooltip :disabled="tab.locked" :term="tab.name" content="tabs">
+                <component 
+                    :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" 
+                    @click="embeddedTabChange(tab)" 
+                    :to="embedActiveTab ? undefined : to(tab)" 
+                    :data-test-id="tab.name"
+                >
+                    <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
+                        <span><strong>{{ tab.title }}</strong></span>
+                    </el-tooltip>
+                    
+                    <span v-else>
                         {{ tab.title }}
-                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </enterprise-tooltip>
+                    </span>
+                    <el-badge 
+                        :type="tab.count > 0 ? 'danger' : 'primary'" 
+                        :value="tab.count" 
+                        v-if="tab.count !== undefined" 
+                    />
                 </component>
             </template>
         </el-tab-pane>

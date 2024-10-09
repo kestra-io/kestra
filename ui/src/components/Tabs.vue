@@ -10,7 +10,7 @@
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
-                    <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" content="No triggers available" placement="top">
+                    <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
                     <span v-if="!tab.hideTitle">

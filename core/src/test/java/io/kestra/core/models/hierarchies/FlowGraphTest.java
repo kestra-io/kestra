@@ -257,7 +257,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(flowGraph.getEdges().size(), is(26));
         assertThat(flowGraph.getClusters().size(), is(5));
 
-        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).getExecutableTask().subflowId().flowId(), is("switch"));
+        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).executableTask().subflowId().flowId(), is("switch"));
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
         assertThat(subflowGraphTask.getTask(), instanceOf(SubflowGraphTask.SubflowTaskWrapper.class));
         assertThat(subflowGraphTask.getRelationType(), is(RelationType.SEQUENTIAL));

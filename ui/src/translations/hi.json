@@ -871,6 +871,7 @@
     "read-more": "और अधिक पढ़ें",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
-    "files": "फ़ाइलें"
+    "files": "फ़ाइलें",
+    "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें"
   }
 }

@@ -871,6 +871,7 @@
     "read-more": "자세히 알아보기",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
-    "files": "파일"
+    "files": "파일",
+    "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요."
   }
 }

@@ -871,6 +871,7 @@
     "read-more": "続きを読む",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
-    "files": "ファイル"
+    "files": "ファイル",
+    "add-trigger-in-editor": "最初にFlowにTriggerを追加してください"
   }
 }

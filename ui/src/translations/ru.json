@@ -871,6 +871,7 @@
     "read-more": "Узнать больше о",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
-    "files": "Файлы"
+    "files": "Файлы",
+    "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow"
   }
 }

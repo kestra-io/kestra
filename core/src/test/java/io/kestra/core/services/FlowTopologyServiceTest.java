@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.plugin.core.condition.ExecutionFlowCondition;
 import io.kestra.plugin.core.condition.ExecutionStatusCondition;
 import io.kestra.plugin.core.condition.MultipleCondition;
@@ -36,7 +37,7 @@ class FlowTopologyServiceTest {
 
     @Test
     public void flowTask() {
-        Flow parent = Flow.builder()
+        FlowWithSource parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")
             .revision(1)
@@ -53,47 +54,52 @@ class FlowTopologyServiceTest {
                     ))
                     .build()
             ))
-            .build();
+            .build()
+            .withSource(null);
 
-        Flow child = Flow.builder()
+        FlowWithSource child = Flow.builder()
             .namespace("io.kestra.ee")
             .id("child")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
         assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TASK));
     }
 
     @Test
     public void noRelation() {
-        Flow parent = Flow.builder()
+        FlowWithSource parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
-        Flow child = Flow.builder()
+        FlowWithSource child = Flow.builder()
             .namespace("io.kestra.ee")
             .id("child")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
         assertThat(flowTopologyService.isChild(parent, child), nullValue());
     }
 
     @Test
     public void trigger() {
-        Flow parent = Flow.builder()
+        FlowWithSource parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
-        Flow child = Flow.builder()
+        FlowWithSource child = Flow.builder()
             .namespace("io.kestra.ee")
             .id("child")
             .revision(1)
@@ -111,28 +117,31 @@ class FlowTopologyServiceTest {
                     ))
                     .build()
             ))
-            .build();
+            .build()
+            .withSource(null);
 
         assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TRIGGER));
     }
 
     @Test
     public void multipleCondition() {
-        Flow parent = Flow.builder()
+        FlowWithSource parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
-        Flow noTrigger = Flow.builder()
+        FlowWithSource noTrigger = Flow.builder()
             .namespace("io.kestra.exclude")
             .id("no")
             .revision(1)
             .tasks(List.of(returnTask()))
-            .build();
+            .build()
+            .withSource(null);
 
-        Flow child = Flow.builder()
+        FlowWithSource child = Flow.builder()
             .namespace("io.kestra.ee")
             .id("child")
             .revision(1)
@@ -165,7 +174,8 @@ class FlowTopologyServiceTest {
                     ))
                     .build()
             ))
-            .build();
+            .build()
+            .withSource(null);
 
         assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TRIGGER));
 
@@ -174,14 +184,14 @@ class FlowTopologyServiceTest {
 
     @Test
     public void self1() {
-        Flow flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").toBuilder().revision(1).build();
+        FlowWithSource flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").toBuilder().revision(1).build().withSource(null);
 
         assertThat(flowTopologyService.isChild(flow, flow), nullValue());
     }
 
     @Test
     public void self() {
-        Flow flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build();
+        FlowWithSource flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build().withSource(null);
 
         assertThat(flowTopologyService.isChild(flow, flow), nullValue());
     }

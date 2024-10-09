@@ -60,6 +60,9 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
   - See the screenshot bellow for an example: ![Intellij IDEA Configuration ](run-app.png)
+  - During startup if **JavaScript memory heap out**, configure following environment variable with some larger value
+    - `NODE_OPTIONS` :  --max-old-space-size={LARGER_SIZE_IN_MB} 
+    - Example   `NODE_OPTIONS : --max-old-space-size=4096` or `NODE_OPTIONS : --max-old-space-size=8192` ![Intellij IDEA Configuration ](node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:

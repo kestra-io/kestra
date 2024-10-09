@@ -5,6 +5,7 @@ import io.kestra.core.models.collectors.*;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -65,6 +67,9 @@ public class CollectorService {
 
     @Value("${kestra.anonymous-usage-report.uri}")
     protected URI url;
+
+    @Inject
+    private ServiceInstanceRepositoryInterface serviceRepository;
 
     private transient Usage defaultUsage;
 
@@ -109,7 +114,8 @@ public class CollectorService {
         if (details) {
             builder = builder
                 .flows(FlowUsage.of(flowRepository))
-                .executions(ExecutionUsage.of(executionRepository, from, to));
+                .executions(ExecutionUsage.of(executionRepository, from, to))
+                .services(ServiceUsage.of(from.toInstant(), to.toInstant(), serviceRepository, Duration.ofMinutes(5)));
         }
         return builder.build();
     }

@@ -57,6 +57,7 @@
                             <el-button
                                 :icon="Minus"
                                 @click="deleteInput(index)"
+                                :disabled="index === 0 && newVariables.length === 1"
                             />
                         </el-button-group>
                     </div>
@@ -117,8 +118,8 @@
                     this.newVariables[index][1] = event;
                 }
             },
-            deleteInput(key) {
-                delete this.newVariables[key];
+            deleteInput(index) {
+                this.newVariables.splice(index, 1);
             },
             addVariable() {
                 this.newVariables.push(["", undefined]);

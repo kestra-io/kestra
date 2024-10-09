@@ -10,7 +10,6 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.models.namespaces.NamespaceWithDisabled;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;

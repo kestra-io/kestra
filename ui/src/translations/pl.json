@@ -866,6 +866,12 @@
     "concurrency": "Współbieżność",
     "open sidebar": "otwórz pasek boczny",
     "close sidebar": "zamknij pasek boczny",
-    "change_status": "Zmień status"
+    "change_status": "Zmień status",
+    "in-our-documentation": "w naszej dokumentacji.",
+    "read-more": "Czytaj więcej o",
+    "flow-dependencies": "zależności",
+    "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
+    "files": "Pliki",
+    "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow"
   }
 }

@@ -350,7 +350,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
+                    // The deleted field is not used, so ti will always be false.
+                    // We add it here to be sure to use the correct index.
+                    .where(field("deleted", Boolean.class).eq(false))
+                    .and(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }

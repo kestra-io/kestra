@@ -20,12 +20,12 @@ dependencies {
     def jsonschemaVersion = "4.35.0"
     def kafkaVersion = "3.7.1"
     def opensearchVersion = "2.14.0"
-    def opensearchRestVersion = "2.17.0"
+    def opensearchRestVersion = "2.17.1"
     def flyingSaucerVersion = "9.9.4"
 
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.0")
-    api platform("io.micronaut.platform:micronaut-platform:4.6.2")
+    api platform("io.micronaut.platform:micronaut-platform:4.6.3")
     api platform("io.qameta.allure:allure-bom:2.29.0")
 
     constraints {
@@ -85,7 +85,7 @@ dependencies {
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.8.0'
+        api 'nl.basjes.gitignore:gitignore-reader:1.9.0'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion
@@ -116,7 +116,7 @@ dependencies {
         api ("org.jooq:jooq:3.19.13")
 
         // Tests
-        api "org.junit-pioneer:junit-pioneer:2.2.0"
+        api "org.junit-pioneer:junit-pioneer:2.3.0"
         api 'org.hamcrest:hamcrest:3.0'
         api 'org.hamcrest:hamcrest-library:3.0'
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'

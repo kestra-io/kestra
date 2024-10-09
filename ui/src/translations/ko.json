@@ -6,7 +6,7 @@
     "close": "닫기",
     "namespace": "Namespace",
     "description": "설명",
-    "show description": "설명 보기",
+    "show description": "설명을 표시",
     "revision": "수정본",
     "Language": "언어",
     "Set default page": "기본 페이지 설정",
@@ -866,6 +866,12 @@
     "concurrency": "동시성",
     "open sidebar": "사이드바 열기",
     "close sidebar": "사이드바 닫기",
-    "change_status": "상태 변경"
+    "change_status": "상태 변경",
+    "in-our-documentation": "우리의 문서에서.",
+    "read-more": "자세히 알아보기",
+    "flow-dependencies": "종속성",
+    "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "files": "파일",
+    "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요."
   }
 }

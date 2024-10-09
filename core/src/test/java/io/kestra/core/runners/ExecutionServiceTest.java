@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -68,7 +69,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
-        Flow flow = flowRepository.findById(null, "io.kestra.tests", "restart_last_failed").orElseThrow();
+        FlowWithSource flow = flowRepository.findByIdWithSource(null, "io.kestra.tests", "restart_last_failed").orElseThrow();
         flowRepository.update(
             flow,
             flow.updateTask(

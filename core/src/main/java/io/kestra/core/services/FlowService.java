@@ -71,9 +71,10 @@ public class FlowService {
             throw noRepositoryException();
         }
 
-        Flow withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
+        FlowWithSource withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
             .tenantId(tenantId)
-            .build();
+            .build()
+            .withSource(source);
 
         FlowRepositoryInterface flowRepository = this.flowRepository.get();
         Optional<FlowWithSource> flowWithSource = flowRepository
@@ -119,23 +120,7 @@ public class FlowService {
         return flowRepository.get().findByNamespace(tenantId, namespace);
     }
 
-    public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
-        if (flowRepository.isEmpty()) {
-            throw noRepositoryException();
-        }
-
-        return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
-    }
-
-    public Flow delete(Flow flow) {
-        if (flowRepository.isEmpty()) {
-            throw noRepositoryException();
-        }
-
-        return flowRepository.get().delete(flow);
-    }
-
-    public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
+    public Stream<FlowWithSource> keepLastVersion(Stream<FlowWithSource> stream) {
         return keepLastVersionCollector(stream);
     }
 
@@ -250,32 +235,23 @@ public class FlowService {
             .filter(method -> !Modifier.isStatic(method.getModifiers()));
     }
 
-    public Flow keepLastVersion(Stream<Flow> stream, String namespace, String flowId) {
-        return keepLastVersionCollector(
-            stream
-                .filter(flow -> flow.getNamespace().equals(namespace) && flow.getId().equals(flowId))
-        )
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + flowId + "'"));
-    }
-
-    public Collection<Flow> keepLastVersion(List<Flow> flows) {
+    public Collection<FlowWithSource> keepLastVersion(List<FlowWithSource> flows) {
         return keepLastVersionCollector(flows.stream())
             .toList();
     }
 
-    private Stream<Flow> keepLastVersionCollector(Stream<Flow> stream) {
+    private Stream<FlowWithSource> keepLastVersionCollector(Stream<FlowWithSource> stream) {
         return stream
             .sorted((left, right) -> left.getRevision() > right.getRevision() ? -1 : (left.getRevision().equals(right.getRevision()) ? 0 : 1))
             .collect(Collectors.groupingBy(Flow::uidWithoutRevision))
             .values()
             .stream()
             .map(flows -> {
-                Flow flow = flows.stream().findFirst().orElseThrow();
+                FlowWithSource flow = flows.stream().findFirst().orElseThrow();
 
                 // edge case, 2 flows with same revision, we keep the deleted
-                final Flow finalFlow = flow;
-                Optional<Flow> deleted = flows.stream()
+                final FlowWithSource finalFlow = flow;
+                Optional<FlowWithSource> deleted = flows.stream()
                     .filter(f -> f.getRevision().equals(finalFlow.getRevision()) && f.isDeleted())
                     .findFirst();
 
@@ -374,6 +350,7 @@ public class FlowService {
                     fixSnakeYaml(entry.getKey()),
                     fixSnakeYaml(entry.getValue())
                 ))
+                .filter(entry -> entry.getValue() != null)
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
                     Map.Entry::getValue,

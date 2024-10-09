@@ -6,9 +6,12 @@ import io.kestra.core.models.kv.KVType;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.storages.kv.*;
+import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkRequest;
+import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkResponse;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -33,6 +36,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -177,6 +181,41 @@ class KVControllerTest extends JdbcH2ControllerTest {
         assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(true));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
 
+        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(false));
+    }
+
+    @Test
+    void shouldReturnSuccessForDeleteBulkOperationGivenExistingKeys() throws IOException {
+        // Given
+        storageInterface.put(
+            null,
+            toKVUri(NAMESPACE, "my-key"),
+            new StorageObject(
+                Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(5)).toString()),
+                new ByteArrayInputStream("\"content\"".getBytes())
+            )
+        );
+        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(true));
+
+        // When
+        HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()
+            .exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv", new ApiDeleteBulkRequest(List.of("my-key"))), ApiDeleteBulkResponse.class);
+
+        // Then
+        Assertions.assertEquals(HttpStatus.OK, response.getStatus());
+        Assertions.assertEquals(new ApiDeleteBulkResponse(List.of("my-key")), response.body());
+    }
+
+    @Test
+    void shouldReturnSuccessForDeleteBulkOperationGivenNonExistingKeys() {
+        // Given
+        // When
+        HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()
+            .exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv", new ApiDeleteBulkRequest(List.of("my-key"))), ApiDeleteBulkResponse.class);
+
+        // Then
+        Assertions.assertEquals(HttpStatus.OK, response.getStatus());
+        Assertions.assertEquals(new ApiDeleteBulkResponse(List.of()), response.body());
         assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(false));
     }
 

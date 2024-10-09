@@ -5,7 +5,7 @@
     "ok": "OK",
     "close": "Fermer",
     "description": "Description",
-    "show description": "Afficher la description",
+    "show description": "Afficher une description",
     "namespace": "Espace de nom",
     "revision": "Révision",
     "Language": "Langue",
@@ -866,6 +866,12 @@
     "concurrency": "Concurrence",
     "open sidebar": "ouvrir la barre latérale",
     "close sidebar": "fermer la barre latérale",
-    "change_status": "Changer le statut"
+    "change_status": "Changer le statut",
+    "in-our-documentation": "dans notre documentation.",
+    "read-more": "En savoir plus sur",
+    "flow-dependencies": "dépendances",
+    "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
+    "files": "Fichiers",
+    "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow"
   }
 }

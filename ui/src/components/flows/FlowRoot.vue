@@ -22,6 +22,7 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
+    import FlowNoDependencies from "./FlowNoDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
@@ -201,7 +202,11 @@
                         name: "triggers",
                         component: FlowTriggers,
                         title: this.$t("triggers"),
+                        props: {
+                            showTooltip: !this.flow.triggers || this.flow.triggers.length === 0
+                        },
                         disabled: !this.flow.triggers,
+                        hideTitle: !this.flow.triggers
                     });
                 }
 
@@ -247,7 +252,7 @@
                 ) {
                     tabs.push({
                         name: "dependencies",
-                        component: FlowDependencies,
+                        component: this.routeFlowDependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
                     });
@@ -317,6 +322,9 @@
                     this.flow.namespace,
                 );
             },
+            routeFlowDependencies() {
+                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+            }
         },
         unmounted() {
             this.$store.commit("flow/setFlow", undefined);

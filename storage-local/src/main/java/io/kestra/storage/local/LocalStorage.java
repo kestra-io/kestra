@@ -237,7 +237,7 @@ public class LocalStorage implements StorageInterface {
         Path prefix = (tenantId == null) ?
             basePath.toAbsolutePath() :
             Path.of(basePath.toAbsolutePath().toString(), tenantId);
-        return URI.create("kestra:///" + prefix.relativize(path));
+        return URI.create("kestra:///" + prefix.relativize(path).toString().replace("\\", "/"));
     }
 
     private void parentTraversalGuard(URI uri) {

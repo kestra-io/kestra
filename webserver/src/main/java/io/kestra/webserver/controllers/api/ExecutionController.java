@@ -214,7 +214,7 @@ public class ExecutionController {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
             .map(throwFunction(execution -> {
-                Optional<Flow> flow = flowRepository.findByIdWithoutAcl(
+                Optional<FlowWithSource> flow = flowRepository.findByIdWithSourceWithoutAcl(
                     execution.getTenantId(),
                     execution.getNamespace(),
                     execution.getFlowId(),
@@ -694,9 +694,10 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), execution.get().getFlowId());
+        String flowId = execution.get().getFlowId();
+        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
         if (flow.isEmpty()) {
-            throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
+            throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
         }
 
         String prefix = StorageContext

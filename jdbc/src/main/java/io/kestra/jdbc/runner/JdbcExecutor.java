@@ -263,7 +263,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         flowTopologyService
                             .topology(
                                 flow,
-                                this.allFlows.stream().map(flowWithSource -> flowWithSource.toFlow())
+                                this.allFlows
                             )
                     )
                         .distinct()

@@ -48,7 +48,7 @@
     "posthog-js": "^1.166.1",
     "rapidoc": "^9.3.6",
     "throttle-debounce": "^5.0.2",
-    "vue": "^3.5.8",
+    "vue": "^3.5.11",
     "vue-axios": "3.5.2",
     "vue-chartjs": "^5.3.1",
     "vue-gtag": "^2.0.1",

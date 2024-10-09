@@ -213,15 +213,14 @@ public class DocumentationGenerator {
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(r -> Map.entry(r, ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, r, baseCls)))
-            .map(pluginDocumentationWithClass -> {
+            .map(r -> ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, r, baseCls))
+            .map(pluginDocumentation -> {
                 try {
-                    ClassPluginDocumentation<T> pluginDocumentation = pluginDocumentationWithClass.getValue();
                     return new Document(
                         docPath(registeredPlugin, type, pluginDocumentation),
                         render(pluginDocumentation),
                         pluginDocumentation.getIcon(),
-                        pluginDocumentationWithClass.getKey()
+                        new Schema(pluginDocumentation.getPropertiesSchema(), pluginDocumentation.getOutputsSchema(), pluginDocumentation.getDefs())
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);

@@ -43,7 +43,6 @@ public class PluginDocCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
         DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
-        JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
         List<RegisteredPlugin> plugins = core ?  pluginRegistry().plugins() : pluginRegistry().externalPlugins();
         for (RegisteredPlugin registeredPlugin : plugins) {
@@ -77,7 +76,7 @@ public class PluginDocCommand extends AbstractCommand {
                                 stdOut("Generate icon in: {0}", iconFile);
                             }
 
-                            if (this.schema && s.getClazz() != null) {
+                            if (this.schema && s.getSchema() != null) {
                                 File jsonSchemaFile = new File(
                                     file.getParent(),
                                     file.getName().substring(0, file.getName().lastIndexOf(".")) + ".json"
@@ -85,7 +84,7 @@ public class PluginDocCommand extends AbstractCommand {
 
                                 com.google.common.io.Files
                                     .asByteSink(jsonSchemaFile)
-                                    .write(JacksonMapper.ofJson().writeValueAsBytes(jsonSchemaGenerator.schemas(s.getClazz())));
+                                    .write(JacksonMapper.ofJson().writeValueAsBytes(s.getSchema()));
                                 stdOut("Generate json schema in: {0}", jsonSchemaFile);
                             }
                         } catch (IOException e) {

@@ -13,5 +13,5 @@ public class Document {
     private final String path;
     private final String body;
     private final String icon;
-    private final Class<?> clazz;
+    private final Schema schema;
 }

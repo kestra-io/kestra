@@ -3,8 +3,10 @@ package io.kestra.cli.commands.plugins;
 import com.google.common.base.Charsets;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.docs.DocumentationGenerator;
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
@@ -34,10 +36,14 @@ public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--icons"}, description = "Also write icon for each task")
     private boolean icons = false;
 
+    @CommandLine.Option(names = {"--schema"}, description = "Also write json schema for each task")
+    private boolean schema = false;
+
     @Override
     public Integer call() throws Exception {
         super.call();
         DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
+        JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
         List<RegisteredPlugin> plugins = core ?  pluginRegistry().plugins() : pluginRegistry().externalPlugins();
         for (RegisteredPlugin registeredPlugin : plugins) {
@@ -71,7 +77,17 @@ public class PluginDocCommand extends AbstractCommand {
                                 stdOut("Generate icon in: {0}", iconFile);
                             }
 
-                            stdOut("Generate doc in: {0}", file);
+                            if (this.schema && s.getClazz() != null) {
+                                File jsonSchemaFile = new File(
+                                    file.getParent(),
+                                    file.getName().substring(0, file.getName().lastIndexOf(".")) + ".json"
+                                );
+
+                                com.google.common.io.Files
+                                    .asByteSink(jsonSchemaFile)
+                                    .write(JacksonMapper.ofJson().writeValueAsBytes(jsonSchemaGenerator.schemas(s.getClazz())));
+                                stdOut("Generate json schema in: {0}", jsonSchemaFile);
+                            }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

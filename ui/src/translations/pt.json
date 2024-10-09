@@ -870,6 +870,8 @@
     "in-our-documentation": "na nossa documentação.",
     "read-more": "Leia mais sobre",
     "flow-dependencies": "dependências",
-    "flow-no-dependencies": "Seu flow não possui dependências"
+    "flow-no-dependencies": "Seu flow não possui dependências",
+    "files": "Arquivos",
+    "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro"
   }
 }

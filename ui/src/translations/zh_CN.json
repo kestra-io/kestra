@@ -870,6 +870,8 @@
     "in-our-documentation": "在我们的文档中。",
     "read-more": "了解更多关于",
     "flow-dependencies": "依赖项",
-    "flow-no-dependencies": "您的flow没有任何依赖项"
+    "flow-no-dependencies": "您的flow没有任何依赖项",
+    "files": "文件",
+    "add-trigger-in-editor": "首先为您的Flow添加一个Trigger"
   }
 }

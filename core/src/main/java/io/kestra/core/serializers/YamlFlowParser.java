@@ -22,9 +22,12 @@ import java.util.Set;
 
 @Singleton
 public class YamlFlowParser {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofYaml()
+    private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+
+    private static final ObjectMapper NON_STRICT_MAPPER = STRICT_MAPPER.copy()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
@@ -36,12 +39,7 @@ public class YamlFlowParser {
 
 
     public <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
-        ObjectMapper currentMapper = MAPPER;
-
-        if (!strict) {
-            currentMapper = MAPPER.copy()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        }
+        ObjectMapper currentMapper = strict ? STRICT_MAPPER : NON_STRICT_MAPPER;
 
         try {
             return currentMapper.convertValue(input, cls);
@@ -81,7 +79,7 @@ public class YamlFlowParser {
 
     private <T> T readFlow(String input, Class<T> objectClass, String resource) {
         try {
-            return MAPPER.readValue(input, objectClass);
+            return STRICT_MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             jsonProcessingExceptionHandler(input, resource, e);
         }

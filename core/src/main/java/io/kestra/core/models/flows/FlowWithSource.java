@@ -35,6 +35,7 @@ public class FlowWithSource extends Flow {
             .disabled(this.disabled)
             .deleted(this.deleted)
             .concurrency(this.concurrency)
+            .retry(this.retry)
             .build();
     }
 

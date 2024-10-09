@@ -134,6 +134,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             )
             .orderBy(field("next_execution_date").asc())
             .forUpdate()
+            .skipLocked()
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }

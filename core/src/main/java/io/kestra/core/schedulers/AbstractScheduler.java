@@ -271,6 +271,16 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .nextExecutionDate(nextExecutionDate)
                             .stopAfter(flowAndTrigger.trigger().getStopAfter())
                             .build();
+
+                        // Used for schedulableNextDate
+                        FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
+                            .flow(flowAndTrigger.flow())
+                            .abstractTrigger(flowAndTrigger.trigger())
+                            .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
+                            .conditionContext(conditionContext)
+                            .triggerContext(newTrigger)
+                            .build();
+                        schedulableNextDate.put(newTrigger.uid(), FlowWithWorkerTriggerNextDate.of(flowWithWorkerTrigger));
                         this.triggerState.create(newTrigger);
                     } catch (Exception e) {
                         logError(conditionContext, flowAndTrigger.flow(), flowAndTrigger.trigger(), e);
@@ -281,16 +291,29 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flowAndTrigger.flow(), null);
                     RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules()).orElseGet(() -> schedule.defaultRecoverMissedSchedules(runContext));
                     try {
+                        Trigger lastUpdate = trigger.get();
                         if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
                             ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
                             if (previousDate.isAfter(trigger.get().getDate())) {
-                                Trigger updated = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
-                                this.triggerState.update(updated);
+                                lastUpdate = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
+
+                                this.triggerState.update(lastUpdate);
                             }
                         } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
-                            Trigger updated = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
-                            this.triggerState.update(updated);
+                            lastUpdate = trigger.get().toBuilder().nextExecutionDate(schedule.nextEvaluationDate()).build();
+
+                            this.triggerState.update(lastUpdate);
                         }
+                        // Used for schedulableNextDate
+                        FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
+                            .flow(flowAndTrigger.flow())
+                            .abstractTrigger(flowAndTrigger.trigger())
+                            .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
+                            .conditionContext(conditionContext)
+                            .triggerContext(lastUpdate)
+                            .build();
+                        schedulableNextDate.put(lastUpdate.uid(), FlowWithWorkerTriggerNextDate.of(flowWithWorkerTrigger));
+
                     } catch (Exception e) {
                         logError(conditionContext, flowAndTrigger.flow(), flowAndTrigger.trigger(), e);
                     }
@@ -410,7 +433,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 return;
             }
 
-            triggers.forEach(trigger -> schedulableNextDate.remove(trigger.uid()));
             List<Trigger> triggerContextsToEvaluate = triggers.stream()
                 .filter(trigger -> Boolean.FALSE.equals(trigger.getDisabled()))
                 .toList();

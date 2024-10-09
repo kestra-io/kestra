@@ -31,6 +31,8 @@ export const storageKeys = {
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
     SHOW_CHART: "showChart",
+    SHOW_FLOWS_CHART: "showFlowsChart",
+    SHOW_LOGS_CHART: "showLogsChart",
     DEFAULT_NAMESPACE: "defaultNamespace",
     LATEST_NAMESPACE: "latestNamespace",
     PAGINATION_SIZE: "paginationSize",

@@ -70,7 +70,7 @@
     "@shikijs/markdown-it": "^1.19.0",
     "@typescript-eslint/parser": "^8.7.0",
     "@vitejs/plugin-vue": "^5.1.4",
-    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-prettier": "^10.0.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
     "eslint": "^8.57.1",

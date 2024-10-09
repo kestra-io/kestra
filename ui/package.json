@@ -45,7 +45,7 @@
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
     "pdfjs-dist": "^4.6.82",
-    "posthog-js": "^1.166.1",
+    "posthog-js": "^1.167.0",
     "rapidoc": "^9.3.6",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.5.8",

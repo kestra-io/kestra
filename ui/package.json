@@ -85,7 +85,7 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.8",
     "vite-plugin-eslint": "^1.8.1",
-    "vitest": "^2.1.1"
+    "vitest": "^2.1.2"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.22.4"

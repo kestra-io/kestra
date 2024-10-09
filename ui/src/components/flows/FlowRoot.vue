@@ -206,6 +206,7 @@
                             showTooltip: !this.flow.triggers || this.flow.triggers.length === 0
                         },
                         disabled: !this.flow.triggers,
+                        hideTitle: !this.flow.triggers
                     });
                 }
 

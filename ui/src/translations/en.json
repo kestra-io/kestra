@@ -230,6 +230,7 @@
     "automatic refresh": "Automatic refresh",
     "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
     "trigger refresh": "Trigger refresh",
+    "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "topology-graph": {
       "graph-orientation": "Graph orientation",

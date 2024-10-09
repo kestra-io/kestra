@@ -11,6 +11,13 @@ export default (app, store, router) => {
     router.beforeEach(async () => {
         if (store.getters["core/unsavedChange"]) {
             if (confirm(confirmationMessage)) {
+                 store.commit("editor/changeOpenedTabs", {
+                     action: "dirty",
+                     name: "Flow",
+                     path: "Flow.yaml",
+                     dirty: false,
+                });
+                store.commit("flow/setFlow", store.getters["flow/lastSavedFlow"]);
                 store.commit("core/setUnsavedChange", false);
             } else {
                 return false;

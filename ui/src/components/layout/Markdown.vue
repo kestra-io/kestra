@@ -142,6 +142,12 @@
             }
         }
 
+        h1 img {
+            html.dark & {
+                filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(180deg);
+            }
+        }
+
         h2 {
             margin-top: calc(var(--spacer) * 2);
         }

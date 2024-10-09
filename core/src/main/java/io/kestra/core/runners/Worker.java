@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -279,7 +278,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private void handleTask(WorkerTask workerTask) {
+    private void handleTask(final WorkerTask workerTask) {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
@@ -293,13 +292,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                    workerTask = workerTask.fail();
+                    WorkerTask failed = workerTask.withTaskRun(workerTask.fail());
                     try {
-                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(failed.getTaskRun()));
                     } catch (QueueException ex) {
-                        log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
+                        log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTask().getId(), failed.getTaskRun().getId(), e);
                     }
-                    this.logTerminated(workerTask);
+                    this.logTerminated(failed);
                     return;
                 }
 
@@ -330,9 +329,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                    workerTask = workerTask.fail();
                     try {
-                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
                     }
@@ -535,16 +533,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private WorkerTask cleanUpTransient(WorkerTask workerTask) {
-        try {
-            return MAPPER.readValue(MAPPER.writeValueAsString(workerTask), WorkerTask.class);
-        } catch (JsonProcessingException e) {
-            log.warn("Unable to cleanup transient", e);
-
-            return workerTask;
-        }
-    }
-
     private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask, workerGroup))
@@ -559,9 +547,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
-            workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(KILLED));
-
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
             } catch (QueueException ex) {
@@ -586,28 +572,20 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
         try {
-            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun()));
         } catch (QueueException e) {
             log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
         }
 
-        WorkerTask finalWorkerTask = null;
         try {
-            AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
-
             // run
-            WorkerTask workerTaskAttempt = this.runAttempt(current.get());
-
-            // save dynamic WorkerResults since cleanUpTransient will remove them
-            List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
-
-            finalWorkerTask = this.cleanUpTransient(workerTaskAttempt);
+            WorkerTask workerTaskAttempt = this.runAttempt(workerTask);
 
             // get last state
-            TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
+            TaskRunAttempt lastAttempt = workerTaskAttempt.getTaskRun().lastAttempt();
             if (lastAttempt == null) {
                 throw new IllegalStateException("Can find lastAttempt on taskRun '" +
-                    finalWorkerTask.getTaskRun().toString(true) + "'"
+                    workerTaskAttempt.getTaskRun().toString(true) + "'"
                 );
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
@@ -620,25 +598,25 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 state = WARNING;
             }
 
-            if (workerTask.getTask().isAllowFailure() && !finalWorkerTask.getTaskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
+            if (workerTask.getTask().isAllowFailure() && !workerTaskAttempt.getTaskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
                 state = WARNING;
             }
 
             // emit
-            finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
-
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
+            List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
+            List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTaskAttempt.getTaskRun().withState(state), dynamicTaskRuns);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } catch (QueueException e) {
             // If there is a QueueException it can either be caused by the message limit or another queue issue.
             // We fail the task and try to resend it.
-            finalWorkerTask  = workerTask.fail();
+            TaskRun failed  = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
-                finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withOutputs(Collections.emptyMap()));
+                failed = failed.withOutputs(Collections.emptyMap());
             }
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
             RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
             contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
             try {
@@ -653,8 +631,15 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 workerTask.getRunContext().cleanup();
             }
 
-            this.logTerminated(finalWorkerTask);
+            this.logTerminated(workerTask);
         }
+    }
+
+    private List<TaskRun> dynamicWorkerResults(List<WorkerTaskResult> dynamicWorkerResults) {
+        return dynamicWorkerResults
+            .stream()
+            .map(WorkerTaskResult::getTaskRun)
+            .toList();
     }
 
     private void logTerminated(WorkerTask workerTask) {
@@ -705,7 +690,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private WorkerTask runAttempt(WorkerTask workerTask) throws QueueException {
+    private WorkerTask runAttempt(final WorkerTask workerTask) throws QueueException {
         DefaultRunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTask.getRunContext(), workerTask);;
 
         Logger logger = runContext.logger();
@@ -731,12 +716,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
         WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
 
         // emit attempts
-        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
-            .withTaskRun(
+        this.workerTaskResultQueue.emit(new WorkerTaskResult(
                 workerTask.getTaskRun()
                     .withAttempts(this.addAttempt(workerTask, builder.build()))
             )
-        ));
+        );
 
         // run it
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);

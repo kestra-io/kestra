@@ -25,7 +25,8 @@ export default {
         metrics: [],
         aggregatedMetrics: undefined,
         tasksWithMetrics: [],
-        executeFlow: false
+        executeFlow: false,
+        lastSaveFlow: undefined
     },
 
     actions: {
@@ -313,6 +314,7 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow;
+            state.lastSaveFlow = flow;
             // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
             //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
             //         state.flowGraph = undefined
@@ -389,6 +391,11 @@ export default {
         }
     },
     getters: {
+        lastSaveFlow(state){
+            if(state.lastSavedFlow){
+                return state.lastSavedFlow;
+            }
+        },
         flow(state) {
             if (state.flow) {
                 return state.flow;

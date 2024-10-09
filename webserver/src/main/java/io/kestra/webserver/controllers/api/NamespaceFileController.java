@@ -159,6 +159,10 @@ public class NamespaceFileController {
                 ZipEntry entry;
                 while ((entry = archive.getNextEntry()) != null) {
                     if (entry.isDirectory()) {
+                        String directory = entry.getName();
+                        if (forbiddenPathPatterns.stream().noneMatch(pattern -> pattern.matcher(directory).matches())) {
+                            createDirectory(namespace, directory);
+                        }
                         continue;
                     }
 
@@ -166,7 +170,14 @@ public class NamespaceFileController {
                 }
             }
         } else {
-            try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
+            if (path.lastIndexOf('/') > 0) {
+                String directory = path.substring(0, path.lastIndexOf('/'));
+                if (forbiddenPathPatterns.stream().noneMatch(pattern -> pattern.matcher(directory).matches())) {
+                    createDirectory(namespace, directory);
+                }
+            }
+
+            try (BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
                 // Done to bypass the wrong available() output of the CompletedFileUpload InputStream
                 @Override
                 public synchronized int available() {

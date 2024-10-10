@@ -20,7 +20,7 @@ class FlowValidateCommandTest {
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             String[] args = {
                 "--local",
-                "src/test/resources/helper/flow.yaml"
+                "src/test/resources/helper/include.yaml"
             };
             Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
 

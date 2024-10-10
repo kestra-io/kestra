@@ -22,7 +22,7 @@ import static org.hamcrest.core.StringContains.containsString;
 class FlowExportCommandTest {
     @Test
     void run() throws IOException {
-        URL directory = FlowExportCommandTest.class.getClassLoader().getResource("flows");
+        URL directory = FlowExportCommandTest.class.getClassLoader().getResource("flows/same");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 

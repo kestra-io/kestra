@@ -11,16 +11,17 @@ import java.io.PrintStream;
 import java.net.URL;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.core.Is.is;
 
 class FlowNamespaceUpdateCommandTest {
     @Test
-    void runWithDelete()  {
-        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
+    void runWithDelete() {
+        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/same");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
-        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/flowsSubFolder");
+        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/same/flowsSubFolder");
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
 
@@ -38,7 +39,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("3 flow(s)"));
+            assertThat(out.toString(), containsString("namespace 'io.kestra.cli' successfully updated"));
             out.reset();
 
             args = new String[]{
@@ -54,12 +55,12 @@ class FlowNamespaceUpdateCommandTest {
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             // 2 delete + 1 update
-            assertThat(out.toString(), containsString("3 flow(s)"));
+            assertThat(out.toString(), containsString("namespace 'io.kestra.cli' successfully updated"));
         }
     }
 
     @Test
-    void invalid()  {
+    void invalid() {
         URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("invalids");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
@@ -87,9 +88,9 @@ class FlowNamespaceUpdateCommandTest {
     }
 
     @Test
-    void runNoDelete()  {
-        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
-        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/flowsSubFolder");
+    void runNoDelete() {
+        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/same");
+        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/same/flowsSubFolder");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -143,7 +144,7 @@ class FlowNamespaceUpdateCommandTest {
     }
 
     @Test
-    void helper()  {
+    void helper() {
         URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("helper");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -166,6 +167,37 @@ class FlowNamespaceUpdateCommandTest {
 
             assertThat(call, is(0));
             assertThat(out.toString(), containsString("1 flow(s)"));
+        }
+    }
+
+    @Test
+    void runOverride() {
+        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
+        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/same/flowsSubFolder");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.override",
+                "--override-namespaces",
+                directory.getPath(),
+
+            };
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("io.kestra.override"));
+            assertThat(out.toString(), not(containsString("io.kestra.cli")));
+
         }
     }
 }

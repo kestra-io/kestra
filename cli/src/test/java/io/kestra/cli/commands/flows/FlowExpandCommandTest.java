@@ -19,7 +19,7 @@ class FlowExpandCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             String[] args = {
-                "src/test/resources/helper/flow.yaml"
+                "src/test/resources/helper/include.yaml"
             };
             Integer call = PicocliRunner.call(FlowExpandCommand.class, ctx, args);
 

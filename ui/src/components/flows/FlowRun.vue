@@ -168,9 +168,11 @@
                             newTab: this.newTab,
                             id: this.flow.id,
                             namespace: this.flow.namespace,
-                            labels: this.executionLabels
-                                .filter(label => label.key && label.value)
-                                .map(label => `${label.key}:${label.value}`),
+                            labels: [...new Set(
+                                this.executionLabels
+                                    .filter(label => label.key && label.value)
+                                    .map(label => `${label.key}:${label.value}`)
+                            )],
                             scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                             nextStep: true
                         })

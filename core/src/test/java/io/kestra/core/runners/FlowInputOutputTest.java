@@ -210,7 +210,7 @@ class FlowInputOutputTest {
         Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
 
         // When
-        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data).block();
 
         // Then
         Assertions.assertNull(values.getFirst().exception());

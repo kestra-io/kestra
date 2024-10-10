@@ -614,11 +614,6 @@
                 selectedStatus: undefined
             };
         },
-        beforeCreate(){
-            if(!this.$route.query.scope) {
-                this.$route.query.scope = this.namespace === "system" ? ["SYSTEM"] : ["USER"];
-            }
-        },
         created() {
             // allow to have different storage key for flow executions list
             if (this.$route.name === "flows/update") {
@@ -632,6 +627,9 @@
             }
         },
         computed: {
+            storageKeys() {
+                return storageKeys;
+            },
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
@@ -694,6 +692,18 @@
                     };
                 });
             },
+        },
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace; 
+            } if (!query.scope) {
+                query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
+            }
+            next(vm => {
+                vm.$router.replace({query});
+            });
         },
         methods: {
             executionParams(row) {

@@ -18,6 +18,7 @@ import io.kestra.core.models.flows.input.ItemTypeInterface;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -90,31 +91,15 @@ public class FlowInputOutput {
      * @param inputs                  The Flow's inputs.
      * @param execution               The Execution.
      * @param data                    The Execution's inputs data.
-     * @param deleteInputsFromStorage Specifies whether inputs stored on internal storage should be deleted before returning.
      * @return The list of {@link InputAndValue}.
      */
     public List<InputAndValue> validateExecutionInputs(final List<Input<?>> inputs,
                                                        final Execution execution,
-                                                       final Publisher<CompletedPart> data,
-                                                       final boolean deleteInputsFromStorage) throws IOException {
+                                                       final Publisher<CompletedPart> data) throws IOException {
         if (ListUtils.isEmpty(inputs)) return Collections.emptyList();
 
-        Map<String, ?> dataByInputId = readData(inputs, execution, data);
-
-        List<InputAndValue> values = this.resolveInputs(inputs, execution, dataByInputId);
-        if (deleteInputsFromStorage) {
-            values.stream()
-                .filter(it -> it.input() instanceof FileInput && Objects.nonNull(it.value()))
-                .forEach(it -> {
-                    try {
-                        URI uri = URI.create(it.value().toString());
-                        storageInterface.delete(execution.getTenantId(), uri);
-                    } catch (IllegalArgumentException | IOException e) {
-                        log.debug("Failed to remove execution input after validation [{}]", it.value(), e);
-                    }
-                });
-        }
-        return values;
+        Map<String, ?> dataByInputId = readData(inputs, execution, data, false);
+        return this.resolveInputs(inputs, execution, dataByInputId);
     }
 
     /**
@@ -142,14 +127,23 @@ public class FlowInputOutput {
     public Map<String, Object> readExecutionInputs(final List<Input<?>> inputs,
                                                    final Execution execution,
                                                    final Publisher<CompletedPart> data) throws IOException {
-        return this.readExecutionInputs(inputs, execution, readData(inputs, execution, data));
+        return this.readExecutionInputs(inputs, execution, readData(inputs, execution, data, true));
     }
 
-    private Map<String, ?> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data) throws IOException {
+    private Map<String, ?> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) throws IOException {
         return Flux.from(data)
             .subscribeOn(Schedulers.boundedElastic())
             .map(throwFunction(input -> {
                 if (input instanceof CompletedFileUpload fileUpload) {
+                    if (!uploadFiles) {
+                        // only build the storage URI
+                        final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
+                        URI from = URI.create("kestra://" + StorageContext
+                            .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
+                            .getContextStorageURI()
+                        );
+                        return new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString());
+                    }
                     final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
                     File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
                     try (var inputStream = fileUpload.getInputStream();

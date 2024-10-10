@@ -530,10 +530,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .increment();
     }
 
-    private static ZonedDateTime now() {
-        return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-    }
-
     private WorkerTask cleanUpTransient(WorkerTask workerTask) {
         try {
             return MAPPER.readValue(MAPPER.writeValueAsString(workerTask), WorkerTask.class);
@@ -553,7 +549,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask, workerGroup))
                 .record(Duration.between(
-                    workerTask.getTaskRun().getState().getStartDate(), now()
+                    workerTask.getTaskRun().getState().getStartDate(), Instant.now()
                 ));
         }
 

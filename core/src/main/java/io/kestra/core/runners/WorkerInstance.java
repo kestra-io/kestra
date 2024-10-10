@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.kestra.core.models.HasUID;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -11,20 +12,37 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-@Data
-@SuperBuilder(toBuilder = true)
-@ToString
-@NoArgsConstructor
-@Getter
+/**
+ * Represents a Worker Instance.
+ *
+ * @param uid           The service ID of the worker.
+ * @param workerUuid    The service ID of the worker.
+ * @param workerGroup   The worker group.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WorkerInstance {
-    @NotNull
-    private String workerUuid;
+public record WorkerInstance(
+    String uid,
+    @Deprecated
+    String workerUuid,
+    String workerGroup) implements HasUID {
 
-    private String workerGroup;
+    public WorkerInstance(String uid) {
+        this(uid, null);
+    }
 
-    @Builder.Default
-    private List<Integer> partitions = new ArrayList<>();
+    public WorkerInstance(String uid, String workerGroup) {
+        this(uid, null, workerGroup);
+    }
 
+    @Override
+    public String uid() {
+        return Optional.ofNullable(uid).orElse(workerUuid);
+    }
+
+    @Override
+    public String workerUuid() {
+        return uid();
+    }
 }

@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +63,21 @@ public final class Enums {
                     .map(Enum::name)
                     .collect(Collectors.joining(", ", "[", "]"))
             )));
+    }
+
+    /**
+     * Gets all the enum values except the one to exclude.
+     *
+     * @param enumType The enum class type.
+     * @param toExclude The enum values to exclude.
+     * @param <T>      The enum type.
+     * @return The Enum value.
+     */
+    public static <T extends Enum<T>> Set<T> allExcept(final @NotNull Class<T> enumType,  Set<T> toExclude) {
+        T[] values = enumType.getEnumConstants();
+        return Arrays.stream(values)
+            .filter(Predicate.not(toExclude::contains))
+            .collect(Collectors.toSet());
     }
 
 

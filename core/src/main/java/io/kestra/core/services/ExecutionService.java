@@ -455,8 +455,7 @@ public class ExecutionService {
             return flowInputOutput.validateExecutionInputs(
                 pauseTask.getOnResume(),
                 execution,
-                inputs,
-                true
+                inputs
             );
         }
         return Collections.emptyList();

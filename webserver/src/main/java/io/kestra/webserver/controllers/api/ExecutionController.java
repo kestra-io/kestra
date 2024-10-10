@@ -571,7 +571,7 @@ public class ExecutionController {
 
                 try {
                     Execution execution = Execution.newExecution(flow, parseLabels(labels));
-                    List<InputAndValue> values = flowInputOutput.validateExecutionInputs(flow.getInputs(), execution, inputs, true);
+                    List<InputAndValue> values = flowInputOutput.validateExecutionInputs(flow.getInputs(), execution, inputs);
                     sink.success(ApiValidateExecutionInputsResponse.of(id, namespace, values));
                 } catch (Exception e) {
                     sink.error(e);

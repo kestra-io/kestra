@@ -27,7 +27,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create'}" v-if="canCreate">
+                    <router-link :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" v-if="canCreate">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>

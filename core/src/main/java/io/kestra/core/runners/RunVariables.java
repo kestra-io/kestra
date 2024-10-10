@@ -225,6 +225,27 @@ public final class RunVariables {
                         outputs = secret.decrypt(outputs);
                     }
                     builder.put("outputs", outputs);
+
+                    Map<String, Object> tasksMap = new HashMap<>();
+
+                    execution.getTaskRunList().forEach(taskRun -> {
+                        if (taskRun.getState() != null) {
+                            if (taskRun.getValue() == null) {
+                                tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
+                            } else {
+                                if (tasksMap.containsKey(taskRun.getTaskId())) {
+                                    Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
+                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
+                                } else {
+                                    tasksMap.put(taskRun.getTaskId(), Map.of(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent())));
+                                }
+                            }
+                        }
+                    });
+
+                    builder.put("tasks", tasksMap);
+
                 }
 
                 // Inputs

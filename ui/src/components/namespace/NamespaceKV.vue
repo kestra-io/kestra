@@ -6,9 +6,7 @@
         stripe
         table-layout="auto"
         fixed
-        @sort-change="onSort"
         @selection-change="handleSelectionChange"
-        :selectable="!hidden?.includes('selection')"
     >
         <template #select-actions>
             <bulk-select
@@ -23,7 +21,7 @@
             </bulk-select>
         </template>    
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
-            <template #default="scope">
+            <template #default="scope"> 
                 <id :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
@@ -289,8 +287,16 @@
                 });
             },
             removeKvs() {
-                this.$toast().confirm(this.$t("delete confirm"), () => {
-                    return true;
+                let request = {"keys":[]}
+                this.selection.forEach((obj)=>{
+                    request.keys.push(obj.key)
+                })
+                this.$toast().confirm(this.$t("delete confirm multiple",{name: request.keys.length}), () => {
+                    return this.$store
+                        .dispatch("namespace/deleteKvs", {namespace: this.$route.params.id, request: request})
+                        .then(() => {
+                            this.$toast().deleted(request.keys.length);
+                        });
                 });
             },
             saveKv(formRef) {

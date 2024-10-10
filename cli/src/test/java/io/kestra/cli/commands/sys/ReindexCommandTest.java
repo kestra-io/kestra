@@ -18,7 +18,7 @@ import static org.hamcrest.core.StringContains.containsString;
 class ReindexCommandTest {
     @Test
     void reindexFlow() {
-        URL directory = ReindexCommandTest.class.getClassLoader().getResource("flows");
+        URL directory = ReindexCommandTest.class.getClassLoader().getResource("flows/same");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 

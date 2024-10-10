@@ -529,10 +529,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .increment();
     }
 
-    private static ZonedDateTime now() {
-        return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-    }
-
     private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask, workerGroup))
@@ -542,7 +538,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             metricRegistry
                 .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask, workerGroup))
                 .record(Duration.between(
-                    workerTask.getTaskRun().getState().getStartDate(), now()
+                    workerTask.getTaskRun().getState().getStartDate(), Instant.now()
                 ));
         }
 

@@ -19,6 +19,9 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.services.StorageService;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -580,23 +583,25 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                 return null;
             }
 
-            Integer iterations = (Integer) taskOutput.get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES);
-            String subflowOutputsBaseUri = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);
+            String subflowOutputsBase = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);
+            URI subflowOutputsBaseUri = URI.create(StorageContext.KESTRA_PROTOCOL + subflowOutputsBase + "/");
 
-            List<URI> outputsURIs = IntStream.rangeClosed(1, iterations)
-                .mapToObj(it -> "kestra://" + subflowOutputsBaseUri + "/" + it + "/outputs.ion")
-                .map(throwFunction(URI::create))
-                .filter(runContext.storage()::isFileExist)
-                .toList();
+            StorageInterface storage = ((DefaultRunContext) runContext).getApplicationContext().getBean(StorageInterface.class);
+            if (storage.exists(runContext.tenantId(), subflowOutputsBaseUri)) {
+                List<FileAttributes> list = storage.list(runContext.tenantId(), subflowOutputsBaseUri);
 
-            if (!outputsURIs.isEmpty()) {
-                // Merge outputs from each sub-flow into a single stored in the internal storage.
-                List<InputStream> streams = outputsURIs.stream()
-                    .map(throwFunction(runContext.storage()::getFile))
-                    .toList();
-                try (InputStream is = new SequenceInputStream(Collections.enumeration(streams))) {
-                    URI uri = runContext.storage().putFile(is, "outputs.ion");
-                    return ForEachItemMergeOutputs.Output.builder().subflowOutputs(uri).build();
+                if (!list.isEmpty()) {
+                    // Merge outputs from each sub-flow into a single stored in the internal storage.
+                    List<InputStream> streams = list.stream()
+                        .map(throwFunction(attr -> {
+                            URI file = subflowOutputsBaseUri.resolve(attr.getFileName() + "/outputs.ion");
+                            return runContext.storage().getFile(file);
+                        }))
+                        .toList();
+                    try (InputStream is = new SequenceInputStream(Collections.enumeration(streams))) {
+                        URI uri = runContext.storage().putFile(is, "outputs.ion");
+                        return ForEachItemMergeOutputs.Output.builder().subflowOutputs(uri).build();
+                    }
                 }
             }
 

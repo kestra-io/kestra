@@ -2,7 +2,6 @@ package io.kestra.core.exceptions;
 
 import lombok.Getter;
 
-import java.io.IOException;
 import java.io.Serial;
 
 @Getter
@@ -12,7 +11,7 @@ public class DeserializationException extends RuntimeException {
 
     private String record;
 
-    public DeserializationException(IOException cause, String record) {
+    public DeserializationException(Exception cause, String record) {
         super(cause);
         this.record = record;
     }

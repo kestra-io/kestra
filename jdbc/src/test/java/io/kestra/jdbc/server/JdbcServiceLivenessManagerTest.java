@@ -2,12 +2,12 @@ package io.kestra.jdbc.server;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServerInstanceFactory;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.LocalServiceStateFactory;
+import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
@@ -25,7 +25,7 @@ import java.time.Instant;
 
 import static io.kestra.core.server.ServiceLivenessManagerTest.newServiceForState;
 import static io.kestra.core.server.ServiceLivenessManagerTest.serviceInstanceFor;
-import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEED;
+import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith({MockitoExtension.class})
@@ -35,7 +35,7 @@ class JdbcServiceLivenessManagerTest {
     private static final Duration DEFAULT_DURATION = Duration.ofSeconds(5);
 
     @Mock
-    public ServiceInstanceRepositoryInterface repository;
+    public ServiceLivenessUpdater serviceLivenessUpdater;
 
     private JdbcServiceLivenessManager serviceLivenessManager;
 
@@ -64,7 +64,7 @@ class JdbcServiceLivenessManagerTest {
             new ServiceRegistry(),
             new LocalServiceStateFactory(config, null),
             new ServerInstanceFactory(context, null),
-            repository
+            serviceLivenessUpdater
         );
     }
 
@@ -77,15 +77,15 @@ class JdbcServiceLivenessManagerTest {
         // When
         Instant now = Instant.now();
         final ServiceStateTransition.Response response = new ServiceStateTransition.Response(
-            SUCCEED,
+            SUCCEEDED,
             serviceInstanceFor(running)
         );
 
-        Mockito.when(repository.mayTransitionServiceTo(any(ServiceInstance.class), any(Service.ServiceState.class))).thenReturn(response);
+        Mockito.when(serviceLivenessUpdater.update(any(ServiceInstance.class), any(Service.ServiceState.class))).thenReturn(response);
         serviceLivenessManager.run(now); // SUCCEED
 
         // Simulate exception on each transition
-        Mockito.when(repository.mayTransitionServiceTo(any(ServiceInstance.class), any(Service.ServiceState.class))).thenThrow(new RuntimeException());
+        Mockito.when(serviceLivenessUpdater.update(any(ServiceInstance.class), any(Service.ServiceState.class))).thenThrow(new RuntimeException());
 
         serviceLivenessManager.run(now.plus(Duration.ofSeconds(2))); // FAIL
         Mockito.verify(context, Mockito.never()).shutdown();

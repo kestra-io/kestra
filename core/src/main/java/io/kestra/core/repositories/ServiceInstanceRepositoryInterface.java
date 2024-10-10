@@ -2,9 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceStateTransition;
 import io.micronaut.data.model.Pageable;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.time.Instant;
 import java.util.List;
@@ -84,53 +82,6 @@ public interface ServiceInstanceRepositoryInterface {
     List<ServiceInstance> findAllInstancesBetween(final Service.ServiceType type,
                                                   final Instant from,
                                                   final Instant to);
-
-    /**
-     * Attempt to transition the state of a given service to given new state.
-     * This method may not update the service if the transition is not valid.
-     *
-     * @param instance the service instance.
-     * @param newState the new state of the service.
-     * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
-     */
-    default ServiceStateTransition.Response mayTransitionServiceTo(final ServiceInstance instance,
-                                                                   final Service.ServiceState newState) {
-        return mayTransitionServiceTo(instance, newState, null);
-    }
-
-    /**
-     * Attempt to transition the state of a given service to given new state.
-     * This method may not update the service if the transition is not valid.
-     *
-     * @param instance the service instance.
-     * @param newState the new state of the service.
-     * @param reason   the human-readable reason of the state transition
-     * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
-     */
-    default ServiceStateTransition.Response mayTransitionServiceTo(final ServiceInstance instance,
-                                                                   final Service.ServiceState newState,
-                                                                   final String reason) {
-        // This default method is not transactional and may lead to inconsistent state transition.
-        synchronized (this) {
-            Optional<ServiceInstance> optional = findById(instance.uid());
-            final ImmutablePair<ServiceInstance, ServiceInstance> beforeAndAfter;
-            // UNKNOWN service
-            if (optional.isEmpty()) {
-                beforeAndAfter = null;
-                // VALID service transition
-            } else if (optional.get().state().isValidTransition(newState)) {
-                ServiceInstance updated = optional.get()
-                    .state(newState, Instant.now(), reason)
-                    .server(instance.server())
-                    .metrics(instance.metrics());
-                beforeAndAfter = new ImmutablePair<>(optional.get(), save(updated));
-                // INVALID service transition
-            } else {
-                beforeAndAfter = new ImmutablePair<>(optional.get(), null);
-            }
-            return ServiceStateTransition.logTransitionAndGetResponse(instance, newState, beforeAndAfter);
-        }
-    }
 
     /**
      * Returns the function to be used for mapping column used to sort result.

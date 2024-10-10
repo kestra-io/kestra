@@ -52,14 +52,17 @@ The backend is made with [Micronaut](https://micronaut.io).
 Open the cloned repository in your favorite IDE. In most of decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
 You can also build it from a terminal using `./gradlew build`, the Gradle wrapper will download the right Gradle version to use.
 
-- You may need to enable java annotation processors since we are using it a lot.
-- The main class is `io.kestra.cli.App` from module `kestra.cli.main`
-- Pass as program arguments the server you want to develop, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies)
-- ![Intellij Idea Configuration ](https://user-images.githubusercontent.com/2064609/161399626-1b681add-cfa8-4e0e-a843-2631cc59758d.png) Intellij Idea configuration can be found in screenshot below.
-  - `MICRONAUT_ENVIRONMENTS`: can be set any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`
-  - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on the startup.
-- You can also use the gradle task `./gradlew runLocal` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
-- The server start by default on port 8080 and is reachable on `http://localhost:8080`
+- You may need to enable java annotation processors since we are using them.
+- On IntelliJ IDEA, click on **Run -> Edit Configurations -> + Add new Configuration** to create a run configuration to start Kestra.
+  - The main class is `io.kestra.cli.App` from module `kestra.cli.main`.
+  - Pass as program arguments the server you want to work with, for example `server local` will start the [standalone local](https://kestra.io/docs/administrator-guide/server-cli#kestra-local-development-server-with-no-dependencies). You can also use `server standalone` and use the provided `docker-compose-ci.yml` Docker compose file to start a standalone server with a real database as a backend that would need to be configured properly.
+  - Configure the following environment variables:
+    - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
+    - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
+  - See the screenshot bellow for an example: ![Intellij IDEA Configuration ](run-app.png)
+  - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
+      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](node_option_env_var.png)
+- The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
 

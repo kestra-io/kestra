@@ -872,6 +872,7 @@
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
     "files": "ファイル",
-    "add-trigger-in-editor": "最初にFlowにTriggerを追加してください"
+    "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
+    "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？"
   }
 }

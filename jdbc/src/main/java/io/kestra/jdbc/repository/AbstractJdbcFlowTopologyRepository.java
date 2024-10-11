@@ -1,6 +1,6 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
@@ -78,7 +78,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
             });
     }
 
-    public void save(Flow flow, List<FlowTopology> flowTopologies) {
+    public void save(FlowWithSource flow, List<FlowTopology> flowTopologies) {
         jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {

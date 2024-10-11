@@ -49,7 +49,7 @@
                 this.$store
                     .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
                     .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces);
+                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => namespace.code !== "system");
                     });
             }
         },

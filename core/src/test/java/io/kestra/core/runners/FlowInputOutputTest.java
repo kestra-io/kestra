@@ -4,6 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.StringInput;
@@ -198,35 +199,22 @@ class FlowInputOutputTest {
     }
 
     @Test
-    void shouldDeleteFileInputAfterValidationGivenDeleteTrue() throws IOException {
+    void shouldNotUploadFileInputAfterValidation() throws IOException {
         // Given
-        FileInput input = FileInput.builder()
+        FileInput input = FileInput
+            .builder()
             .id("input")
+            .type(Type.FILE)
             .build();
 
         Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
 
         // When
-        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data, true);
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data);
 
         // Then
-        Assertions.assertFalse(storageInterface.exists(null, URI.create(values.get(0).value().toString())));
-    }
-
-    @Test
-    void shouldNotDeleteFileInputAfterValidationGivenDeleteFalse() throws IOException {
-        // Given
-        FileInput input = FileInput.builder()
-            .id("input")
-            .build();
-
-        Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
-
-        // When
-        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data, false);
-
-        // Then
-        Assertions.assertTrue(storageInterface.exists(null, URI.create(values.get(0).value().toString())));
+        Assertions.assertNull(values.getFirst().exception());
+        Assertions.assertFalse(storageInterface.exists(null, URI.create(values.getFirst().value().toString())));
     }
 
     private static final class MemoryCompletedFileUpload implements CompletedFileUpload {

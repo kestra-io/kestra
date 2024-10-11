@@ -870,6 +870,9 @@
     "in-our-documentation": "nella nostra documentazione.",
     "read-more": "Leggi di più su",
     "flow-dependencies": "dipendenze",
-    "flow-no-dependencies": "Il tuo flow non ha dipendenze"
+    "flow-no-dependencies": "Il tuo flow non ha dipendenze",
+    "files": "File",
+    "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
+    "delete confirm multiple": "Sei sicuro di voler eliminare il/i <code>{name}</code> KV?"
   }
 }

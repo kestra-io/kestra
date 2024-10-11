@@ -232,6 +232,7 @@
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
     import permission from "../../models/permission.js";
     import action from "../../models/action.js";
+    import {storageKeys} from "../../utils/constants";
 
     const router = useRouter();
     const route = useRoute();
@@ -239,6 +240,7 @@
     const {t} = useI18n({useScope: "global"});
     const user = store.getters["auth/user"];
 
+    const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || null;
     const props = defineProps({
         embed: {
             type: Boolean,
@@ -454,7 +456,12 @@
     });
 
     onBeforeMount(() => {
-        filters.value.namespace = route.query.namespace ?? null;
+        if (!route.query.namespace) {
+            router.replace({query: {...route.query, namespace: defaultNamespace}});
+        }
+
+        filters.value.namespace = route.query.namespace || defaultNamespace;
+
         updateParams();
     });
 </script>

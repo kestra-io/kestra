@@ -35,7 +35,10 @@
                             v-else
                             :model-value="!scope.row.disabled"
                             @change="
-                                toggleState(scope.row.triggerContext);
+                                toggleState(
+                                    scope.row.triggerContext,
+                                    !scope.row.disabled,
+                                );
                                 scope.row.disabled = !scope.row.disabled;
                             "
                             :active-icon="Check"
@@ -201,11 +204,8 @@
         () => loadExecutions(),
     );
 
-    const toggleState = (trigger) => {
-        store.dispatch("trigger/update", {
-            ...trigger,
-            disabled: !trigger.disabled,
-        });
+    const toggleState = (trigger, disabled) => {
+        store.dispatch("trigger/update", {...trigger, disabled});
     };
 
     onBeforeMount(() => {

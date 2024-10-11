@@ -263,7 +263,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         flowTopologyService
                             .topology(
                                 flow,
-                                this.allFlows.stream().map(flowWithSource -> flowWithSource.toFlow())
+                                this.allFlows
                             )
                     )
                         .distinct()
@@ -434,7 +434,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     workerTasksDedup
                         .stream()
                         .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
+                        .map(workerTask -> new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)))
                         .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
                 }
 

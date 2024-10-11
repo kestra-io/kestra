@@ -2,7 +2,7 @@ package io.kestra.core.topologies;
 
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.Graph;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.topologies.FlowNode;
@@ -106,8 +106,8 @@ public class FlowTopologyService {
             .build();
     }
 
-    public Stream<FlowTopology> topology(Flow child, Stream<Flow> allFlows) {
-        return allFlows
+    public Stream<FlowTopology> topology(FlowWithSource child, List<FlowWithSource> allFlows) {
+        return allFlows.stream()
             .flatMap(parent -> Stream.concat(
                 Stream.ofNullable(this.map(parent, child)),
                 Stream.ofNullable(this.map(child, parent))
@@ -115,7 +115,7 @@ public class FlowTopologyService {
             .filter(Objects::nonNull);
     }
 
-    protected FlowTopology map(Flow parent, Flow child) {
+    protected FlowTopology map(FlowWithSource parent, FlowWithSource child) {
         // we don't allow self link
         if (child.uidWithoutRevision().equals(parent.uidWithoutRevision())) {
             return null;
@@ -137,7 +137,7 @@ public class FlowTopologyService {
     }
 
     @Nullable
-    public FlowRelation isChild(Flow parent, Flow child) {
+    public FlowRelation isChild(FlowWithSource parent, FlowWithSource child) {
         if (this.isFlowTaskChild(parent, child)) {
             return FlowRelation.FLOW_TASK;
         }
@@ -149,7 +149,7 @@ public class FlowTopologyService {
         return null;
     }
 
-    protected boolean isFlowTaskChild(Flow parent, Flow child) {
+    protected boolean isFlowTaskChild(FlowWithSource parent, FlowWithSource child) {
         try {
             return parent
                 .allTasksWithChilds()
@@ -165,7 +165,7 @@ public class FlowTopologyService {
         }
     }
 
-    protected boolean isTriggerChild(Flow parent, Flow child) {
+    protected boolean isTriggerChild(FlowWithSource parent, FlowWithSource child) {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
         // simulated execution
@@ -188,7 +188,7 @@ public class FlowTopologyService {
             .allMatch(condition -> validateCondition(condition, parent, execution));
     }
 
-    protected boolean validateCondition(Condition condition, Flow child, Execution execution) {
+    protected boolean validateCondition(Condition condition, FlowWithSource child, Execution execution) {
         if (isFilterCondition(condition)) {
             return true;
         }

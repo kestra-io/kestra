@@ -2,7 +2,6 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -83,11 +82,11 @@ public class GraphService {
         subflowToReplaceByParent.map(throwFunction(parentWithSubflowGraphTask -> {
                 SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
                 Task task = (Task) subflowGraphTask.getTask();
-                RunContext runContext = subflowGraphTask.getExecutableTask().subflowId().flowUid().contains("{{") && execution != null ?
+                RunContext runContext = subflowGraphTask.executableTask().subflowId().flowUid().contains("{{") && execution != null ?
                     runContextFactory.of(finalFlow, task, execution, subflowGraphTask.getTaskRun()) :
                     null;
                 subflowGraphTask = subflowGraphTask.withRenderedSubflowId(runContext);
-                ExecutableTask.SubflowId subflowId = subflowGraphTask.getExecutableTask().subflowId();
+                ExecutableTask.SubflowId subflowId = subflowGraphTask.executableTask().subflowId();
 
                 if (subflowId.flowUid().contains("{{")) {
                     throw new IllegalArgumentException("Can't expand subflow task '" + task.getId() + "' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");

@@ -20,6 +20,7 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure to delete <code>{name}</code>?",
+    "delete confirm multiple": "Are you sure to delete <code>{name}</code> KV(s)?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
       "update": {
@@ -230,6 +231,7 @@
     "automatic refresh": "Automatic refresh",
     "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
     "trigger refresh": "Trigger refresh",
+    "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
@@ -885,6 +887,7 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "change_status": "Change status"
+    "change_status": "Change status",
+    "files": "Files"
   }
 }

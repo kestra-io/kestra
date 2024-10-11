@@ -872,6 +872,7 @@
     "flow-dependencies": "dépendances",
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "files": "Fichiers",
-    "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow"
+    "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
+    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?"
   }
 }

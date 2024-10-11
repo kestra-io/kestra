@@ -199,6 +199,16 @@
                 return this.countStats > 0;
             },
         },
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace; 
+            }
+            next(vm => {
+                vm.$router?.replace({query});
+            });
+        },
         methods: {
             onDateFilterTypeChange(event) {
                 this.canAutoRefresh = event;

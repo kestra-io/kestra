@@ -77,8 +77,8 @@ export default {
                     return tab.name === name;
                 });
 
-                state.tabs[tabIdxToDirty].dirty = dirty;
-                state.current.dirty = dirty;
+                if(state.tabs[tabIdxToDirty]) state.tabs[tabIdxToDirty].dirty = dirty;
+                if(state.current) state.current.dirty = dirty;
             }
         },
         closeTabs(state) {

@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen.",
-      "search": "Suchen Sie in über +{count} Plugins"
+      "search": "Suche in {count}+ Plugins"
     },
     "no inputs": "Dieser Flow hat keine Inputs.",
     "settings": {

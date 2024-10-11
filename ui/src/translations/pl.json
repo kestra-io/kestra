@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow.",
-      "search": "Wyszukaj wśród +{count} plugins"
+      "search": "Wyszukaj wśród {count}+ wtyczek"
     },
     "no inputs": "Ten flow nie ma inputs.",
     "settings": {

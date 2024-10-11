@@ -1,7 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.services.BasicAuthService;
+import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.PropertySource;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -14,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+@Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
 class MiscControllerTest extends JdbcH2ControllerTest {
     @Inject
     @Client("/")
@@ -38,6 +42,7 @@ class MiscControllerTest extends JdbcH2ControllerTest {
         assertThat(response.getIsTaskRunEnabled(), is(false));
         assertThat(response.getIsAnonymousUsageEnabled(), is(true));
         assertThat(response.getIsBasicAuthEnabled(), is(false));
+        assertThat(response.getSystemNamespace(), is("some.system.ns"));
     }
 
     @Test

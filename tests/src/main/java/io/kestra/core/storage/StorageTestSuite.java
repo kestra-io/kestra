@@ -635,6 +635,27 @@ public abstract class StorageTestSuite {
     }
 
     @Test
+    void putFromAnotherFile() throws Exception {
+        String prefix = IdUtils.create();
+        String tenantId = IdUtils.create();
+
+        put(tenantId, prefix);
+
+        URI putFromAnother = storageInterface.put(
+            tenantId,
+            new URI("/" + prefix + "/storage/put_from_another.yml"),
+            storageInterface.get(tenantId, new URI("/" + prefix + "/storage/put.yml"))
+        );
+
+        assertThat(putFromAnother.toString(), is(new URI("kestra:///" + prefix + "/storage/put_from_another.yml").toString()));
+        InputStream get = storageInterface.get(tenantId, new URI("/" + prefix + "/storage/put_from_another.yml"));
+        assertThat(
+            CharStreams.toString(new InputStreamReader(get)),
+            is(CONTENT_STRING)
+        );
+    }
+
+    @Test
     void putNoTenant() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = null;

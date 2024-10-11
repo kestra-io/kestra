@@ -284,7 +284,7 @@
                 file: undefined,
             };
         },
-        computed: {       
+        computed: {
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),

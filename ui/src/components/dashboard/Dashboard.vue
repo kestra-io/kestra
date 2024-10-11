@@ -463,7 +463,7 @@
         filters.value.namespace = route.query.namespace || defaultNamespace;
 
         updateParams();
-    });    
+    });
 </script>
 
 <style lang="scss" scoped>

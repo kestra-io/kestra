@@ -284,10 +284,7 @@
                 file: undefined,
             };
         },
-        computed: {
-            storageKeys() {
-                return storageKeys
-            },
+        computed: {       
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily", "lastExecutions"]),
             ...mapState("auth", ["user"]),
@@ -334,7 +331,7 @@
                 query.scope = ["USER"];
             }
             next(vm => {
-                vm.$router.replace({query});
+                vm.$router?.replace({query});
             });
         },
         methods: {

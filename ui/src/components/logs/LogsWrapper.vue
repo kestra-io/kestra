@@ -194,7 +194,7 @@
                 query.namespace = defaultNamespace; 
             }
             next(vm => {
-                vm.$router.replace({query});
+                vm.$router?.replace({query});
             });
         },
         methods: {

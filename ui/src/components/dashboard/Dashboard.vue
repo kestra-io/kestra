@@ -267,7 +267,7 @@
         ? (store.state?.flow?.flow?.description ??
             t("dashboard.no_flow_description"))
         : undefined;
-        
+
     const filters = ref({
         namespace: null,
         state: [],
@@ -463,9 +463,7 @@
         filters.value.namespace = route.query.namespace || defaultNamespace;
 
         updateParams();
-    });
-
-    
+    });    
 </script>
 
 <style lang="scss" scoped>

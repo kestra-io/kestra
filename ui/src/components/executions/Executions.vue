@@ -627,9 +627,6 @@
             }
         },
         computed: {
-            storageKeys() {
-                return storageKeys;
-            },
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
@@ -702,7 +699,7 @@
                 query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
             }
             next(vm => {
-                vm.$router.replace({query});
+                vm.$router?.replace({query});
             });
         },
         methods: {

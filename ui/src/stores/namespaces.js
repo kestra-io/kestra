@@ -75,6 +75,15 @@ export default {
                     return dispatch("kvsList", {id: payload.namespace})
                 });
         },
+        deleteKvs({dispatch}, payload) {
+            return this.$http
+                .delete(`${apiUrl(this)}/namespaces/${payload.namespace}/kv`,{
+                    data: payload.request
+                })
+                .then(() => {
+                    return dispatch("kvsList", {id: payload.namespace})
+                });
+        },
 
         // Create a directory
         async createDirectory(_, payload) {

@@ -1,14 +1,27 @@
 <template>
-    <el-table
+    <select-table
         :data="kvs"
-        ref="table"
+        ref="selectTable"
         :default-sort="{prop: 'id', order: 'ascending'}"
         stripe
         table-layout="auto"
         fixed
+        @selection-change="handleSelectionChange"
     >
+        <template #select-actions>
+            <bulk-select
+                :select-all="queryBulkAction"
+                :selections="selection"
+                @update:select-all="toggleAllSelection"
+                @unselect="toggleAllUnselected"
+            >
+                <el-button :icon="Delete" type="default" @click="removeKvs()">
+                    {{ $t("delete") }}
+                </el-button>
+            </bulk-select>
+        </template>    
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
-            <template #default="scope">
+            <template #default="scope"> 
                 <id :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
@@ -27,7 +40,7 @@
                 <el-button :icon="Delete" link @click="removeKv(scope.row.key)" />
             </template>
         </el-table-column>
-    </el-table>
+    </select-table>
 
     <drawer
         v-if="addKvDrawerVisible"
@@ -115,6 +128,8 @@
 </template>
 
 <script setup>
+    import BulkSelect from "../layout/BulkSelect.vue";
+    import SelectTable from "../layout/SelectTable.vue";
     import Editor from "../inputs/Editor.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -127,8 +142,10 @@
     import {mapState} from "vuex";
     import Drawer from "../Drawer.vue";
     import Id from "../Id.vue";
+    import SelectTableActions from "../../mixins/selectTableActions";
 
     export default {
+        mixins: [SelectTableActions],
         components: {
             Id,
             Drawer
@@ -266,6 +283,19 @@
                         .dispatch("namespace/deleteKv", {namespace: this.$route.params.id, key: key})
                         .then(() => {
                             this.$toast().deleted(key);
+                        });
+                });
+            },
+            removeKvs() {
+                let request = {"keys":[]}
+                this.selection.forEach((obj)=>{
+                    request.keys.push(obj.key)
+                })
+                this.$toast().confirm(this.$t("delete confirm multiple",{name: request.keys.length}), () => {
+                    return this.$store
+                        .dispatch("namespace/deleteKvs", {namespace: this.$route.params.id, request: request})
+                        .then(() => {
+                            this.$toast().deleted(request.keys.length);
                         });
                 });
             },

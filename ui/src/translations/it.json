@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow.",
-      "search": "Cerca tra +{count} plugin"
+      "search": "Cerca tra oltre {count} plugin"
     },
     "no inputs": "Questo flow non ha inputs.",
     "settings": {

@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。",
-      "search": "在超过{count}个插件中搜索"
+      "search": "在{count}+个插件中搜索"
     },
     "no inputs": "此流程没有输入。",
     "settings": {

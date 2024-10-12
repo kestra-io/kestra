@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Les plugins sont des blocs pour vos workflows.",
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux.",
-      "search": "Cherchez à travers +{count} plugins"
+      "search": "Rechercher parmi {count}+ plugins"
     },
     "no inputs": "Ce flow n'a pas d'entrée.",
     "settings": {

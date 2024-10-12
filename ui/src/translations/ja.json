@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。",
-      "search": "+{count}プラグインを検索"
+      "search": "{count}+ プラグインを検索"
     },
     "no inputs": "このflowにはinputがありません。",
     "settings": {

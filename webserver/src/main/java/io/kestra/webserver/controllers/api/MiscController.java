@@ -8,6 +8,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.core.annotation.Nullable;
@@ -48,6 +49,9 @@ public class MiscController {
     @Inject
     TenantService tenantService;
 
+    @Inject
+    NamespaceUtils namespaceUtils;
+
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
 
@@ -83,7 +87,8 @@ public class MiscController {
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
                 .build()
-            ).isBasicAuthEnabled(basicAuthService.isEnabled());
+            ).isBasicAuthEnabled(basicAuthService.isEnabled())
+            .systemNamespace(namespaceUtils.getSystemFlowNamespace());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -141,6 +146,8 @@ public class MiscController {
         Preview preview;
 
         Boolean isBasicAuthEnabled;
+
+        String systemNamespace;
     }
 
     @Value

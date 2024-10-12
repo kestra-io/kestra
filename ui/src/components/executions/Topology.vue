@@ -252,15 +252,8 @@
             display: flex;
         }
     }
-    .status-div {
-        &.bg-success {
-            --bs-bg-opacity: 1;
-            background-color: rgba(var(--bs-success-rgb), var(--bs-bg-opacity)) !important;
-        }
-      }
     .vueflow {
         height: 100%;
         width: 100%;
-        
     }
 </style>

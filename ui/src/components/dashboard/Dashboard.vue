@@ -8,6 +8,10 @@
                     v-model="filters.namespace"
                     data-type="flow"
                     :disabled="props.flow || !!props.namespace"
+                    multiple
+                    collapse-tags
+                    clearable
+                    filterable
                     @update:model-value="updateParams"
                 />
             </el-col>
@@ -269,7 +273,7 @@
         : undefined;
 
     const filters = ref({
-        namespace: null,
+        namespace: [],
         state: [],
         startDate: null,
         endDate: null,
@@ -365,13 +369,19 @@
     const graphData = computed(() => store.state.stat.daily || []);
 
     const namespaceExecutions = ref({});
-    const filteredNamespaceExecutions = computed(() => {
-        const namespace = filters.value.namespace;
 
-        return !namespace
+    const filteredNamespaceExecutions = computed(() => {
+        const namespaces = filters.value.namespace;
+
+        return namespaces.length === 0
             ? namespaceExecutions.value
-            : {[namespace]: namespaceExecutions.value[namespace]};
+            : Object.fromEntries(
+                Object.entries(namespaceExecutions.value).filter(([key]) =>
+                    namespaces.includes(key)
+                )
+            );
     });
+    
     const fetchNamespaceExecutions = () => {
         store.dispatch("stat/dailyGroupByNamespace").then((response) => {
             namespaceExecutions.value = response;
@@ -411,7 +421,9 @@
         });
 
         filters.value = {
-            namespace: props.namespace ?? completeParams.namespace,
+            namespace: completeParams.namespace?.filter(Boolean).length
+                ? [].concat(completeParams.namespace)
+                : undefined,
             flowId: props.flowID ?? null,
             state: completeParams.state?.filter(Boolean).length
                 ? [].concat(completeParams.state)
@@ -460,7 +472,7 @@
             router.replace({query: {...route.query, namespace: defaultNamespace}});
         }
 
-        filters.value.namespace = route.query.namespace || defaultNamespace;
+        filters.value.namespace = route.query.namespace ? route.query.namespace.split(",") : [defaultNamespace];
 
         updateParams();
     });

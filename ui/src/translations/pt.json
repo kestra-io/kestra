@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow.",
-      "search": "Pesquisar em mais de +{count} plugins"
+      "search": "Pesquisar em mais de {count} plugins"
     },
     "no inputs": "Este flow não tem inputs.",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "dependências",
     "flow-no-dependencies": "Seu flow não possui dependências",
     "files": "Arquivos",
-    "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro"
+    "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
+    "delete confirm multiple": "Tem certeza de que deseja excluir o(s) <code>{name}</code> KV(s)?"
   }
 }

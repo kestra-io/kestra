@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।",
-      "search": "+{count} प्लगइन्स में खोजें"
+      "search": "{count}+ प्लगइन्स में खोजें"
     },
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "files": "फ़ाइलें",
-    "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें"
+    "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
+    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?"
   }
 }

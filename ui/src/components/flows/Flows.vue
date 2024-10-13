@@ -257,8 +257,8 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
-    import {storageKeys} from "../../utils/constants";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -330,10 +330,17 @@
                 }, 0);
             },
         },
-        beforeCreate(){
-            if(!this.$route.query.scope) {
-                this.$route.query.scope = ["USER"]
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace; 
+            } if (!query.scope) {
+                query.scope = ["USER"];
             }
+            next(vm => {
+                vm.$router?.replace({query});
+            });
         },
         methods: {
             selectionMapper(element) {

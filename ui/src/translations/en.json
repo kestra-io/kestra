@@ -20,6 +20,7 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure to delete <code>{name}</code>?",
+    "delete confirm multiple": "Are you sure to delete <code>{name}</code> KV(s)?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
       "update": {
@@ -686,7 +687,7 @@
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across +{count} plugins"
+      "search": "Search across {count}+ plugins"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {

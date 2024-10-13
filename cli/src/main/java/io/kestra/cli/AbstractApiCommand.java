@@ -14,6 +14,9 @@ import io.micronaut.http.netty.body.NettyJsonHandler;
 import io.micronaut.json.JsonMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 import picocli.CommandLine;
 
 import java.net.URISyntaxException;
@@ -78,5 +81,13 @@ public abstract class AbstractApiCommand extends AbstractCommand {
         }
 
         return tenantId == null ? "/api/v1" + path : "/api/v1/" + tenantId + path;
+    }
+
+    @Builder
+    @Value
+    @Jacksonized
+    public static class UpdateResult {
+        String id;
+        String namespace;
     }
 }

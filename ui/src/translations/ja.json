@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。",
-      "search": "+{count}プラグインを検索"
+      "search": "{count}+ プラグインを検索"
     },
     "no inputs": "このflowにはinputがありません。",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
     "files": "ファイル",
-    "add-trigger-in-editor": "最初にFlowにTriggerを追加してください"
+    "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
+    "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？"
   }
 }

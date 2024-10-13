@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。",
-      "search": "在超过{count}个插件中搜索"
+      "search": "在{count}+个插件中搜索"
     },
     "no inputs": "此流程没有输入。",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "files": "文件",
-    "add-trigger-in-editor": "首先为您的Flow添加一个Trigger"
+    "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
+    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？"
   }
 }

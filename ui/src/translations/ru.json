@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow.",
-      "search": "Поиск среди +{count} плагинов"
+      "search": "Поиск среди {count}+ плагинов"
     },
     "no inputs": "Этот flow не имеет входных данных.",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "files": "Файлы",
-    "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow"
+    "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
+    "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?"
   }
 }

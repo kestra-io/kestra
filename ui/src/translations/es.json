@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow.",
-      "search": "Busca entre +{count} plugins"
+      "search": "Buscar en más de {count} plugins"
     },
     "no inputs": "Este flow no tiene inputs.",
     "settings": {
@@ -872,6 +872,7 @@
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
     "files": "Archivos",
-    "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero"
+    "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
+    "delete confirm multiple": "¿Está seguro de que desea eliminar el(los) <code>{name}</code> KV(s)?"
   }
 }

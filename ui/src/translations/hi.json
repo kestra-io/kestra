@@ -873,6 +873,7 @@
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "files": "फ़ाइलें",
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
-    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?"
+    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?",
+    "show task condition": "कार्य की स्थिति दिखाएं"
   }
 }

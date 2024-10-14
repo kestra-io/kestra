@@ -873,6 +873,7 @@
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "files": "文件",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
-    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？"
+    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
+    "show task condition": "显示任务条件"
   }
 }

@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
@@ -14,12 +15,11 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.*;
 
 public abstract class StorageService {
 
-    public static List<URI> split(RunContext runContext, StorageSplitInterface storageSplitInterface, URI from) throws IOException {
+    public static List<URI> split(RunContext runContext, StorageSplitInterface storageSplitInterface, URI from) throws IOException, IllegalVariableEvaluationException {
         String fromPath = from.getPath();
         String extension = ".tmp";
         if (fromPath.indexOf('.') >= 0) {
@@ -31,14 +31,17 @@ public abstract class StorageService {
 
             if (storageSplitInterface.getBytes() != null) {
                 ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-                Number convert = readableBytesTypeConverter.convert(storageSplitInterface.getBytes(), Number.class)
+                Number convert = readableBytesTypeConverter.convert(storageSplitInterface.getBytes().as(runContext, String.class), Number.class)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
 
-                splited = StorageService.split(runContext, extension, storageSplitInterface.getSeparator(), bufferedReader, (bytes, size) -> bytes >= convert.longValue());
+                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
+                    bufferedReader, (bytes, size) -> bytes >= convert.longValue());
             } else if (storageSplitInterface.getPartitions() != null) {
-                splited = StorageService.partition(runContext, extension, storageSplitInterface.getSeparator(), bufferedReader, storageSplitInterface.getPartitions());
+                splited = StorageService.partition(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
+                    bufferedReader, storageSplitInterface.getPartitions().as(runContext, Integer.class));
             } else if (storageSplitInterface.getRows() != null) {
-                splited = StorageService.split(runContext, extension, storageSplitInterface.getSeparator(), bufferedReader, (bytes, size) -> size >= storageSplitInterface.getRows());
+                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
+                    bufferedReader, throwBiFunction((bytes, size) -> size >= storageSplitInterface.getRows().as(runContext, Integer.class)));
             } else {
                 throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
             }

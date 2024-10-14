@@ -74,7 +74,7 @@ public class ForEachItemCaseTest {
         });
 
         URI file = storageUpload();
-        Map<String, Object> inputs = Map.of("file", file.toString());
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
@@ -105,7 +105,7 @@ public class ForEachItemCaseTest {
 
     public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException, QueueException {
         URI file = emptyItems();
-        Map<String, Object> inputs = Map.of("file", file.toString());
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));

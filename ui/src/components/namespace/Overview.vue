@@ -1,5 +1,5 @@
 <template>
-    <Dashboard :namespace="$route.params.id || $route.query.id" embed />
+    <Dashboard :restore-u-r-l="false" :namespace="$route.params.id || $route.query.id" embed />
 </template>
 
 <script>

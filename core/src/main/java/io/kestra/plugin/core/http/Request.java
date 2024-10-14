@@ -261,6 +261,7 @@ import java.util.OptionalInt;
                   
                   - id: upload
                     type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/upload"
                     headers:
                       user-agent: "kestra-io"
                     method: "POST"

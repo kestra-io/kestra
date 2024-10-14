@@ -3,6 +3,7 @@ package io.kestra.core.storages;
 import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.Plugin;
+import io.micronaut.context.ApplicationContext;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -15,6 +16,16 @@ import java.util.List;
 import java.util.Map;
 
 public interface StorageInterface extends AutoCloseable, Plugin {
+
+    /**
+     * Opens any resources or perform any pre-checks for initializing this storage.
+     * @see #init()
+     *
+     * @throws IOException if an error happens during initialization.
+     */
+    default void init(ApplicationContext applicationContext) throws IOException {
+        init();
+    }
 
     /**
      * Opens any resources or perform any pre-checks for initializing this storage.

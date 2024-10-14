@@ -6,6 +6,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
@@ -36,6 +37,9 @@ public class KestraBeansFactory {
     @Value("${kestra.storage.type}")
     Optional<String> storageType;
 
+    @Inject
+    ApplicationContext applicationContext;
+
     @Requires(missingBeans = PluginRegistry.class)
     @Singleton
     public PluginRegistry pluginRegistry() {
@@ -51,7 +55,7 @@ public class KestraBeansFactory {
             , KESTRA_STORAGE_TYPE_CONFIG,
             StorageInterfaceFactory.getLoggableStorageIds(pluginRegistry)
         )));
-        return StorageInterfaceFactory.make(pluginRegistry, pluginId, storageConfig.getStorageConfig(pluginId), validator);
+        return StorageInterfaceFactory.make(pluginRegistry, pluginId, storageConfig.getStorageConfig(pluginId), validator, applicationContext);
     }
 
     @ConfigurationProperties("kestra")

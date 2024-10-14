@@ -5,6 +5,7 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.context.ApplicationContext;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -40,7 +41,8 @@ public final class StorageInterfaceFactory {
     public static StorageInterface make(final PluginRegistry pluginRegistry,
                                         final String pluginId,
                                         final Map<String, Object> pluginConfiguration,
-                                        final Validator validator) {
+                                        final Validator validator,
+                                        final ApplicationContext applicationContext) {
         Optional<Class<? extends StorageInterface>> optional = allStorageClasses(pluginRegistry)
             .filter(clazz -> Plugin.getId(clazz).map(id -> id.equalsIgnoreCase(pluginId)).orElse(false))
             .findFirst();
@@ -83,7 +85,7 @@ public final class StorageInterfaceFactory {
         }
 
         try {
-            plugin.init();
+            plugin.init(applicationContext);
         } catch (IOException e) {
             throw new KestraRuntimeException(String.format(
                 "Failed to initialize storage '%s'. Error: %s", pluginId, e.getMessage()), e

@@ -46,14 +46,9 @@
 
                 <template v-if="showStatChart()" #top>
                     <el-card shadow="never" class="mb-3" v-loading="!statsReady">
-                        <div class="state-global-charts">
+                        <div>
                             <template v-if="hasStatsData">
-                                <log-chart
-                                    v-if="statsReady"
-                                    :data="logDaily"
-                                    :namespace="namespace"
-                                    :flow-id="flowId"
-                                />
+                                <Logs :data="logDaily" />
                             </template>
                             <template v-else>
                                 <el-alert type="info" :closable="false" class="m-0">
@@ -102,7 +97,7 @@
     import DataTable from "../../components/layout/DataTable.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
-    import LogChart from "../stats/LogChart.vue";
+    import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
     
@@ -111,7 +106,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs},
         props: {
             logLevel: {
                 type: String,
@@ -147,7 +142,7 @@
                 statsReady: false,
                 statsData: [],
                 canAutoRefresh: false,
-                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART))
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
             };
         },
         computed: {
@@ -223,7 +218,7 @@
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value);
-                if (this.showStatChart) {
+                if (this.showStatChart()) {
                     this.loadStats();
                 }
             },

@@ -1,5 +1,5 @@
 <template>
-    <Flows :namespace="$route.params.id || $route.query.id" />
+    <Flows :restore-url="false" :namespace="$route.params.id || $route.query.id" />
 </template>
 
 <script>

@@ -44,8 +44,9 @@
                 </el-form-item>
                 <el-form-item v-if="$route.name !== 'flows/update'">
                     <namespace-select
+                        :value="selectedNamespace"
                         data-type="flow"
-                        :value="$route.query.namespace"
+                        :disabled="!!namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>
@@ -133,17 +134,10 @@
                 </el-form-item>
             </template>
 
-            <template #top v-if="showStatChart()">
-                <state-global-chart
-                    v-if="daily"
-                    class="mb-4"
-                    :ready="dailyReady"
-                    :data="daily"
-                    :start-date="startDate"
-                    :end-date="endDate"
-                    :namespace="namespace"
-                    :flow-id="flowId"
-                />
+            <template #top>
+                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                </el-card>
             </template>
 
             <template #table>
@@ -456,7 +450,6 @@
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
-    import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -471,6 +464,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import DateAgo from "../layout/DateAgo.vue";
     import {h, ref} from "vue";
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
     import {filterLabels} from "./utils"
 
@@ -488,13 +482,13 @@
             Filters,
             StatusFilterButtons,
             ScopeFilterButtons,
-            StateGlobalChart,
             Kicon,
             Labels,
             Id,
             TriggerFlow,
             TopNavBar,
-            LabelInput
+            LabelInput,
+            ExecutionsBar
         },
         emits: ["state-count"],
         props: {
@@ -689,6 +683,14 @@
                     };
                 });
             },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
+            selectedNamespace(){
+                return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
+            }
         },
         beforeRouteEnter(to, from, next) {
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);

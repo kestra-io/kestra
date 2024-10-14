@@ -120,7 +120,7 @@
                 y: {
                     title: {
                         display: true,
-                        text: t("executions"),
+                        text: t("logs"),
                     },
                     grid: {
                         display: false,

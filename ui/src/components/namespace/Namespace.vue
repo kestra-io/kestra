@@ -50,7 +50,7 @@
     import Overview from "./Overview.vue";
     import Executions from "./Executions.vue";
     import NamespaceKV from "./NamespaceKV.vue";
-    import NamespaceFlows from "./NamespaceFlows.vue";
+    import Flows from "./Flows.vue";
     import EditorView from "../inputs/EditorView.vue";
     import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
     import {apiUrl} from "override/utils/route";
@@ -136,10 +136,11 @@
                     },
                     {
                         name: "flows",
-                        component: NamespaceFlows,
+                        component: Flows,
                         title: this.$t("flows"),
                         props: {
                             tab: "flows",
+                            topbar:false,
                         },
                         query: {
                             id: this.$route.query.id
@@ -148,6 +149,9 @@
                     {
                         name: "executions",
                         component: Executions,
+                        props: {
+                            embed: false,
+                        },
                         title: this.$t("executions"),
                         query: {
                             id: this.$route.query.id

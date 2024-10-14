@@ -3,7 +3,7 @@
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
-                <template #navbar v-if="!embed">
+                <template #navbar v-if="!embed || showFilters">
                     <el-form-item>
                         <search-field />
                     </el-form-item>
@@ -119,6 +119,10 @@
             charts: {
                 type: Boolean,
                 default: true
+            },
+            showFilters: {
+                type: Boolean,
+                default: false
             },
             filters: {
                 type: Object,

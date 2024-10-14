@@ -2,6 +2,6 @@ package io.kestra.jdbc.runner;
 
 import org.jooq.DSLContext;
 
-public interface JdbcIndexerInterface<T> {
+public interface JdbcQueueIndexerInterface<T> {
     T save(DSLContext context, T message);
 }

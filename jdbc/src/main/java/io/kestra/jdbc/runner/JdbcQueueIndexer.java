@@ -13,16 +13,21 @@ import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class is responsible to index the queue synchronously at message production time.<p>
+ * Some queue messages are batch-indexed asynchronously via the {@link JdbcIndexer}
+ * which listen to (receive) those queue messages.
+ */
 @Slf4j
 @Singleton
 public class JdbcQueueIndexer {
-    private final Map<Class<?>, JdbcIndexerInterface<?>> repositories = new HashMap<>();
+    private final Map<Class<?>, JdbcQueueIndexerInterface<?>> repositories = new HashMap<>();
 
     private final MetricRegistry metricRegistry;
 
     @Inject
     public JdbcQueueIndexer(ApplicationContext applicationContext) {
-        applicationContext.getBeansOfType(JdbcIndexerInterface.class)
+        applicationContext.getBeansOfType(JdbcQueueIndexerInterface.class)
             .forEach(saveRepositoryInterface -> {
                 String typeName = ((ParameterizedType) ((Class<?>) saveRepositoryInterface.getClass()
                     .getGenericSuperclass()).getGenericInterfaces()[1]).getActualTypeArguments()[0].getTypeName();
@@ -43,7 +48,7 @@ public class JdbcQueueIndexer {
             this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", item.getClass().getName()).increment();
 
             this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, "type", item.getClass().getName()).record(() -> {
-                JdbcIndexerInterface<?> jdbcIndexerInterface = repositories.get(item.getClass());
+                JdbcQueueIndexerInterface<?> jdbcIndexerInterface = repositories.get(item.getClass());
                 if (jdbcIndexerInterface instanceof FlowTopologyRepositoryInterface) {
                     // we allow flow topology to fail indexation
                     try {

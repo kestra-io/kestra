@@ -9,7 +9,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.ScheduleContextInterface;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
+public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcQueueIndexerInterface<Trigger> {
     public static final Field<Object> NAMESPACE_FIELD = field("namespace");
 
     protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;

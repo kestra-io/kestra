@@ -138,6 +138,7 @@
             },
             to(tab) {
                 if (this.activeTab === tab) {
+                    this.setActiveName()
                     return this.$route;
                 } else {
                     return {

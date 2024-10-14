@@ -1,5 +1,5 @@
 <template>
-    <Executions :namespace="$route.params.id || $route.query.id" :topbar="false" :hidden="['selection','inputs','flowRevision','taskRunList.taskId']" />
+    <Executions :restore-url="false" :namespace="$route.params.id || $route.query.id" :topbar="false" :hidden="['selection','inputs','flowRevision','taskRunList.taskId']" />
 </template>
 
 <script>

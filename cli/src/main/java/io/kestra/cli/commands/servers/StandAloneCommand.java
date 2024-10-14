@@ -70,6 +70,9 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "a list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
     private List<String> notStartExecutors = Collections.emptyList();
 
+    @CommandLine.Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
+    boolean indexerDisabled = false;
+
     @Override
     public boolean isFlowAutoLoadEnabled() {
         return !tutorialsDisabled;
@@ -109,6 +112,10 @@ public class StandAloneCommand extends AbstractServerCommand {
             standAloneRunner.setWorkerEnabled(false);
         } else {
             standAloneRunner.setWorkerThread(this.workerThread);
+        }
+
+        if (this.indexerDisabled) {
+            standAloneRunner.setIndexerEnabled(false);
         }
 
         standAloneRunner.run();

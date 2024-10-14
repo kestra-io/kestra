@@ -284,9 +284,12 @@
                 })
 
                 if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {});
                     this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {});
                     this.editor.addCommand(KeyCode.F1, () => {});
+
+                    if (!this.readOnly) {
+                        this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => { });
+                    }
                 }
 
                 if (this.original === undefined && this.navbar && this.fullHeight) {
@@ -332,7 +335,7 @@
 
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange(e => {
-                        if(!this.$refs.container) return;                    
+                        if(!this.$refs.container) return;
                         this.$refs.container.style.height = (e.contentHeight + this.customHeight) + "px";
                     });
                 }

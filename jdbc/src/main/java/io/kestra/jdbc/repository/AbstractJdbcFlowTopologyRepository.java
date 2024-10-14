@@ -3,7 +3,7 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRepository implements FlowTopologyRepositoryInterface, JdbcIndexerInterface<FlowTopology> {
+public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRepository implements FlowTopologyRepositoryInterface, JdbcQueueIndexerInterface<FlowTopology> {
     protected final io.kestra.jdbc.AbstractJdbcRepository<FlowTopology> jdbcRepository;
 
     public AbstractJdbcFlowTopologyRepository(io.kestra.jdbc.AbstractJdbcRepository<FlowTopology> jdbcRepository) {

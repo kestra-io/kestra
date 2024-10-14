@@ -264,6 +264,10 @@
             required: false,
             default: null,
         },
+        restoreURL:{
+            type: Boolean,
+            default: true,
+        }
     });
 
     const descriptionDialog = ref(false);
@@ -468,11 +472,13 @@
     });
 
     onBeforeMount(() => {
-        if (!route.query.namespace) {
+        if (!route.query.namespace && props.restoreURL) {
             router.replace({query: {...route.query, namespace: defaultNamespace}});
+            filters.value.namespace = route.query.namespace ? route.query.namespace.split(",") : defaultNamespace;
         }
-
-        filters.value.namespace = route.query.namespace ? route.query.namespace.split(",") : [defaultNamespace];
+        else {
+            filters.value.namespace = null
+        }
 
         updateParams();
     });

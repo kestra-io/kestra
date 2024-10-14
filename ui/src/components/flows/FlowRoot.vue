@@ -13,7 +13,7 @@
 <script>
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
-    import FlowLogs from "./FlowLogs.vue";
+    import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -221,8 +221,13 @@
                 ) {
                     tabs.push({
                         name: "logs",
-                        component: FlowLogs,
+                        component: LogsWrapper,
                         title: this.$t("logs"),
+                        props: {
+                            showFilters: true,
+                            restoreurl: false,
+                        },
+                        containerClass: "full-container p-4"
                     });
                 }
 

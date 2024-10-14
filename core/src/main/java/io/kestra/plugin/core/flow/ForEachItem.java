@@ -622,15 +622,15 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter
     @NoArgsConstructor
     public static class Batch implements StorageSplitInterface {
-        private String bytes;
+        private Property<String> bytes;
 
-        private Integer partitions;
-
-        @Builder.Default
-        private Integer rows = 1;
+        private Property<Integer> partitions;
 
         @Builder.Default
-        private String separator = "\n";
+        private Property<Integer> rows = Property.of(1);
+
+        @Builder.Default
+        private Property<String> separator = Property.of("\n");
     }
 
     @Builder

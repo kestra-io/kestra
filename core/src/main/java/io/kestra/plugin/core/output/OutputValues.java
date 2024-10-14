@@ -23,6 +23,7 @@ import java.util.Map;
     You can use this task to return some outputs and pass them to downstream tasks.
     It's helpful for parsing and returning values from a task. You can then access these outputs in your downstream tasks
     using the expression `{{ outputs.mytask_id.values.my_output_name }}` and you can see them in the Outputs tab.
+    The values can be strings, numbers, arrays, or any valid JSON object.
     """
 )
 @Plugin(
@@ -39,6 +40,11 @@ tasks:
     values:
       taskrun_data: "{{ task.id }} > {{ taskrun.startDate }}"
       execution_data: "{{ flow.id }} > {{ execution.startDate }}"
+      number_value: 42
+      array_value: ["{{ task.id }}", "{{ flow.id }}", "static value"]
+      nested_object:
+        key1: "value1"
+        key2: "{{ execution.id }}"
 
   - id: log_values
     type: io.kestra.plugin.core.log.Log
@@ -51,15 +57,16 @@ tasks:
 )
 public class OutputValues extends Task implements RunnableTask<OutputValues.Output> {
     @Schema(
-        title = "The templated strings to render."
+        title = "The templated strings to render.",
+        description = "These values can be strings, numbers, arrays, or objects. Templated strings (enclosed in {{ }}) will be rendered using the current context."
     )
-    private HashMap<String, String> values;
+    private HashMap<String, Object> values;
 
 
     @Override
     public OutputValues.Output run(RunContext runContext) throws Exception {
         return OutputValues.Output.builder()
-            .values(runContext.renderMap(values))
+            .values(runContext.render(values))
             .build();
     }
 
@@ -69,6 +76,6 @@ public class OutputValues extends Task implements RunnableTask<OutputValues.Outp
         @Schema(
             title = "The generated values."
         )
-        private Map<String, String> values;
+        private Map<String, Object> values;
     }
 }

@@ -1594,7 +1594,7 @@ public class ExecutionController {
 
         Execution newExecution = execution
             .toBuilder()
-            .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).toList())
+            .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList())
             .build();
         eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
 

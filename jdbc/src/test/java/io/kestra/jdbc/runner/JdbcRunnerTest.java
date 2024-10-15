@@ -119,9 +119,17 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void errors() throws TimeoutException, QueueException {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logsQueue, either -> logs.add(either.getLeft()));
+
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "errors", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(7));
+
+        receive.blockLast();
+        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("The task that that fail"));
+        assertThat(logEntry, notNullValue());
+        assertThat(logEntry.getMessage(), is("The task that that fail is 'failed'"));
     }
 
     @Test

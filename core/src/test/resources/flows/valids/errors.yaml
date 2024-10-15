@@ -7,7 +7,7 @@ tasks:
 errors:
   - id: t2
     type: io.kestra.plugin.core.log.Log
-    message: second {{task.id}}
+    message: The task that that fail is '{{ error.taskId }}'
 
   - id: t3
     type: io.kestra.plugin.core.flow.Parallel

@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
@@ -27,6 +28,7 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TruthUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -354,8 +356,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Execution execution = pair.getLeft();
                 ExecutorState executorState = pair.getRight();
 
-            final Flow flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
-            Executor executor = new Executor(execution, null).withFlow(flow);
+                final Flow flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
+                Executor executor = new Executor(execution, null).withFlow(flow);
 
                 // schedule it for later if needed
                 if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
@@ -418,24 +420,30 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 // worker task
                 if (!executor.getWorkerTasks().isEmpty()) {
-                    List<WorkerTask> workerTasksDedup = executor
+                    executor
                         .getWorkerTasks()
                         .stream()
                         .filter(workerTask -> this.deduplicateWorkerTask(execution, executorState, workerTask.getTaskRun()))
-                        .toList();
+                        .forEach(throwConsumer(workerTask -> {
+                            try {
+                                if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                                    workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
+                                }
+                                else {
+                                    if (workerTask.getTask().isSendToWorkerTask()) {
+                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask);
+                                    }
+                                    if (workerTask.getTask().isFlowable()) {
+                                        workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                    }
+                                }
+                            } catch (IllegalVariableEvaluationException e) {
+                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
+                                workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
+                            }
+                        }));
 
-                    // WorkerTask not flowable to workerTask
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
-                        .forEach(throwConsumer(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask)));
 
-                    // WorkerTask flowable to workerTaskResult as Running
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)))
-                        .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
                 }
 
                 // worker tasks results

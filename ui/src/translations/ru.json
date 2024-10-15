@@ -873,6 +873,7 @@
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "files": "Файлы",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
-    "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?"
+    "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?",
+    "show task condition": "Показать условие task"
   }
 }

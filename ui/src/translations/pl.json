@@ -874,6 +874,6 @@
     "files": "Pliki",
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
-    "show task condition": "Pokaż stan taska"
+    "show task condition": "Pokaż warunek taska"
   }
 }

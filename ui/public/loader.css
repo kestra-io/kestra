@@ -60,6 +60,25 @@ html.dark #loader-wrapper {
   animation: spin 1.5s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
 }
 
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 12px; /* Adjust the width to make it more clickable */
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
 @-webkit-keyframes spin {
   0% {
     -webkit-transform: rotate(0deg); /* Chrome, Opera 15+, Safari 3.1+ */

@@ -82,7 +82,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks[0]: No task defined, neither cases or default have any tasks"));
+        assertThat(validate.get().getMessage(), containsString("impossible: No task defined, neither cases or default have any tasks"));
     }
 
     @Test
@@ -93,7 +93,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks[0]: Only runnable tasks are allowed as children of a WorkingDirectory task"));
+        assertThat(validate.get().getMessage(), containsString("impossible: Only runnable tasks are allowed as children of a WorkingDirectory task"));
     }
 
     @Test
@@ -104,7 +104,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("tasks[0]: The 'tasks' property cannot be empty"));
+        assertThat(validate.get().getMessage(), containsString("impossible: The 'tasks' property cannot be empty"));
     }
 
     @Test
@@ -131,7 +131,7 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), equalTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality"));
+        assertThat(validate.get().getMessage(), equalTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n"));
     }
 
     @Test
@@ -150,8 +150,8 @@ class FlowTest {
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getConstraintViolations().size(), is(2));
 
-        assertThat(validate.get().getMessage(), containsString("inputs[0]: no `defaults` can be set for inputs of type 'FILE'"));
-        assertThat(validate.get().getMessage(), containsString("inputs[1]: `itemType` cannot be `ARRAY"));
+        assertThat(validate.get().getMessage(), containsString("file: no `defaults` can be set for inputs of type 'FILE'"));
+        assertThat(validate.get().getMessage(), containsString("array: `itemType` cannot be `ARRAY"));
     }
 
     private Flow parse(String path) {

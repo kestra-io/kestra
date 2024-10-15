@@ -356,8 +356,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Execution execution = pair.getLeft();
                 ExecutorState executorState = pair.getRight();
 
-            final Flow flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
-            Executor executor = new Executor(execution, null).withFlow(flow);
+                final Flow flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
+                Executor executor = new Executor(execution, null).withFlow(flow);
 
                 // schedule it for later if needed
                 if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
@@ -420,44 +420,30 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 // worker task
                 if (!executor.getWorkerTasks().isEmpty()) {
-                    List<WorkerTask> workerTasksDedup = executor
+                    executor
                         .getWorkerTasks()
                         .stream()
                         .filter(workerTask -> this.deduplicateWorkerTask(execution, executorState, workerTask.getTaskRun()))
-                        .toList();
-
-
-                    // WorkerTask not flowable to workerTask
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> {
+                        .forEach(throwConsumer(workerTask -> {
                             try {
-                                return workerTask.getTask().isSendToWorkerTask() && TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()));
+                                if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                                    workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
+                                }
+                                else {
+                                    if (workerTask.getTask().isSendToWorkerTask()) {
+                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask);
+                                    }
+                                    if (workerTask.getTask().isFlowable()) {
+                                        workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                    }
+                                }
                             } catch (IllegalVariableEvaluationException e) {
-                                return true;
+                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
+                                workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
                             }
-                        })
-                        .forEach(throwConsumer(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask)));
+                        }));
 
-                    // WorkerTask with execution condition that are not met
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> {
-                            try {
-                                return !TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()));
-                            } catch (IllegalVariableEvaluationException e) {
-                                return false;
-                            }
-                        })
-                        .map(workerTask -> new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)))
-                        .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
 
-                    // WorkerTask flowable to workerTaskResult as Running
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)))
-                        .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
                 }
 
                 // worker tasks results

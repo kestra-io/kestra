@@ -284,7 +284,7 @@
     const refresh = async () => {
         await updateParams({
             startDate: filters.value.startDate,
-            endDate: moment().toISOString(true),
+            endDate: moment().add(1, "days").endOf("day").toISOString(true),
         });
         fetchAll();
     };
@@ -398,10 +398,18 @@
             filters.value = {
                 ...filters.value,
                 startDate: moment()
-                    .subtract(moment.duration(timeRange).as("milliseconds"))
+                    .subtract(30, "days")
+                    .startOf("day")
                     .toISOString(true),
-                endDate: moment().toISOString(true),
+                endDate: moment().add(1, "days").endOf("day").toISOString(true),
                 timeRange,
+            };
+        } else {
+            filters.value = {
+                ...filters.value,
+                startDate: moment().subtract(30, "days").startOf("day").toISOString(true),
+                endDate: moment().add(1, "days").endOf("day").toISOString(true),
+                timeRange: "PT720H",
             };
         }
 

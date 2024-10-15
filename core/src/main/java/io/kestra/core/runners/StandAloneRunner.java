@@ -66,7 +66,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
             servers.add(scheduler);
         }
 
-        if (indexerEnabled) {
+        if (indexerEnabled && applicationContext.containsBean(IndexerInterface.class)) { // tests may not have an indexer
             IndexerInterface indexer = applicationContext.getBean(IndexerInterface.class);
             poolExecutor.execute(indexer);
             servers.add(indexer);

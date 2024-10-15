@@ -226,6 +226,26 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         );
     }
 
+    public Runnable receiveBatch(Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
+        return receiveBatch(null, queueType, consumer);
+    }
+
+    public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
+        return receiveBatch(consumerGroup, queueType, consumer, true);
+    }
+
+    public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer, boolean forUpdate) {
+        return this.receiveImpl(
+            consumerGroup,
+            queueType,
+            (dslContext, eithers) -> {
+                consumer.accept(eithers);
+            },
+            false,
+            forUpdate
+        );
+    }
+
     public Runnable receiveTransaction(String consumerGroup, Class<?> queueType, BiConsumer<DSLContext, List<Either<T, DeserializationException>>> consumer) {
         return this.receiveImpl(
             consumerGroup,

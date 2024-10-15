@@ -1,5 +1,11 @@
 package io.kestra.core.repositories;
 
-public interface SaveRepositoryInterface <T> {
-    T save(T flow);
+import java.util.List;
+
+public interface SaveRepositoryInterface<T> {
+    T save(T item);
+
+    default int saveBatch(List<T> items) {
+        throw new UnsupportedOperationException();
+    }
 }

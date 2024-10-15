@@ -6,6 +6,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.kv.KVStore;
@@ -58,6 +59,10 @@ public abstract class RunContext {
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
 
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+
+    public abstract <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException;
+
+    public abstract <T> T  render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract List<String> render(List<String> inline) throws IllegalVariableEvaluationException;
 

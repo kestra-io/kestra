@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.core.utils.ListUtils;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
 import org.jooq.*;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface, JdbcIndexerInterface<MetricEntry> {
+public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository) {
@@ -143,6 +143,15 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
+    public int saveBatch(List<MetricEntry> items) {
+        if (ListUtils.isEmpty(items)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.persistBatch(items);
+    }
+
+    @Override
     public Integer purge(Execution execution) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -156,14 +165,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     .and(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
-    }
-
-    @Override
-    public MetricEntry save(DSLContext dslContext, MetricEntry metric) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(metric);
-        this.jdbcRepository.persist(metric, dslContext, fields);
-
-        return metric;
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {

@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -202,6 +203,16 @@ public class DefaultRunContext extends RunContext {
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
+    }
+
+    @Override
+    public <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.as(this, clazz);
+    }
+
+    @Override
+    public <T> T render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.as(this, clazz, variables);
     }
 
     /**

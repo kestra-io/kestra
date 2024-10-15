@@ -51,6 +51,9 @@ abstract public class Task implements TaskInterface {
     @Builder.Default
     private boolean logToFile = false;
 
+    @Builder.Default
+    private String runIf = "true";
+
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
             return Optional.of(this);

@@ -873,6 +873,7 @@
     "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
     "files": "Pliki",
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
-    "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?"
+    "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
+    "show task condition": "Pokaż warunek taska"
   }
 }

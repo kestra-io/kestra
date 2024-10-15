@@ -29,11 +29,12 @@ public final class ExecutableUtils {
         // prevent initialization
     }
 
-    public static State.Type guessState(Execution execution, boolean transmitFailed, boolean allowedFailure) {
+    public static State.Type guessState(Execution execution, boolean transmitFailed, boolean allowedFailure, boolean allowWarning) {
         if (transmitFailed &&
             (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            return (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
+            State.Type finalState = (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
+            return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
         } else {
             return State.Type.SUCCESS;
         }
@@ -113,7 +114,7 @@ public final class ExecutableUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static TaskRun manageIterations(Storage storage, TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure) throws InternalException {
+    public static TaskRun manageIterations(Storage storage, TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure, boolean allowWarning) throws InternalException {
         Integer numberOfBatches = (Integer) taskRun.getOutputs().get(TASK_VARIABLE_NUMBER_OF_BATCHES);
         var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
         if (previousTaskRun == null) {
@@ -145,7 +146,7 @@ public final class ExecutableUtils {
             iterations.getOrDefault(State.Type.CANCELLED.toString(), 0);
 
         if (terminatedIterations == numberOfBatches) {
-            State.Type state = transmitFailed ? findTerminalState(iterations, allowFailure) : State.Type.SUCCESS;
+            State.Type state = transmitFailed ? findTerminalState(iterations, allowFailure, allowWarning) : State.Type.SUCCESS;
             final Map<String, Object> outputs = new HashMap<>();
             outputs.put(TASK_VARIABLE_ITERATIONS, iterations);
             outputs.put(TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches);
@@ -167,14 +168,17 @@ public final class ExecutableUtils {
             ));
     }
 
-    private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure) {
+    private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure, boolean allowWarning) {
         if (iterations.getOrDefault(State.Type.FAILED.toString(), 0) > 0) {
-            return allowFailure ? State.Type.WARNING : State.Type.FAILED;
+            return allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
         }
         if (iterations.getOrDefault(State.Type.KILLED.toString(), 0) > 0) {
             return State.Type.KILLED;
         }
         if (iterations.getOrDefault(State.Type.WARNING.toString(), 0) > 0) {
+            if (allowWarning) {
+                return State.Type.SUCCESS;
+            }
             return State.Type.WARNING;
         }
         return State.Type.SUCCESS;

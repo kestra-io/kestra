@@ -59,6 +59,11 @@ public interface FlowableTask <T extends Output> {
     boolean isAllowFailure();
 
     /**
+     * Whether the task is allowed to be in warning state.
+     */
+    boolean isAllowWarning();
+
+    /**
      * Resolve the state of a flowable task.
      */
     default Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
@@ -68,7 +73,8 @@ public interface FlowableTask <T extends Output> {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            isAllowFailure()
+            isAllowFailure(),
+            isAllowWarning()
         );
     }
 

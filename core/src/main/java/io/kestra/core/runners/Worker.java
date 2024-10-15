@@ -42,11 +42,11 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -319,6 +319,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;
                     }
+
+
 
                     // create the next RunContext populated with the previous WorkerTaskResult
                     runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
@@ -598,6 +600,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 state = WARNING;
             }
 
+            if (workerTask.getTask().isAllowWarning() && WARNING.equals(state)) {
+                state = SUCCESS;
+            }
+
             // emit
             List<WorkerTaskResult> dynamicWorkerResults = workerTaskAttempt.getRunContext().dynamicWorkerResults();
             List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
@@ -693,7 +699,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
-            var state = workerTask.getTask().isAllowFailure() ? WARNING : FAILED;
+            var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
             TaskRunAttempt attempt = TaskRunAttempt.builder().state(new io.kestra.core.models.flows.State().withState(state)).build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);

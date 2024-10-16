@@ -67,7 +67,7 @@ import java.util.Optional;
                   - id: log_response
                     type: io.kestra.plugin.core.log.Log
                     message: '{{ trigger.body }}'
-                
+
                 triggers:
                   - id: http
                     type: io.kestra.plugin.core.http.Trigger
@@ -156,7 +156,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
             : output.getBody();
         Map<String, Object> responseVariables = Map.of("response", Map.of(
             "statusCode", output.getCode(),
-            "body", body,
+            "body", (body == null ? "" : body),
             "headers", output.getHeaders()
             )
         );

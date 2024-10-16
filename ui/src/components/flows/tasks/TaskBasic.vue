@@ -30,8 +30,7 @@
             :schema="schema"
             :required="isRequired(key)"
             :definitions="definitions"
-            :min="1"
-            :disabled="getPropertiesValue(key) < 0"
+            :min="exclusiveMinimum"
         />
     </el-form-item>
 </template>
@@ -61,8 +60,13 @@
                     const properties = this.schema.properties
                     return this.sortProperties(properties)
                 }
-
                 return undefined;
+            },
+            exclusiveMinimum() {
+                const concurrencyLimit = this.schema.properties.limit;
+                return concurrencyLimit && concurrencyLimit.exclusiveMinimum
+                    ? concurrencyLimit.exclusiveMinimum
+                    : 1;
             }
         },
         methods: {
@@ -124,7 +128,7 @@
                     (schema.title && schema.description ? "\n" : "") +
                     (schema.description ? schema.description : "")
                 );
-            },
+            }
         },
     };
 </script>

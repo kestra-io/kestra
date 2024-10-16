@@ -46,7 +46,7 @@
     "path-browserify": "^1.0.1",
     "pdfjs-dist": "^4.7.76",
     "posthog-js": "^1.167.0",
-    "rapidoc": "^9.3.6",
+    "rapidoc": "^9.3.8",
     "shiki": "^1.22.0",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.5.11",

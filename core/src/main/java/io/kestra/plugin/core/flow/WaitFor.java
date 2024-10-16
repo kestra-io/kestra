@@ -195,7 +195,8 @@ public class WaitFor extends Task implements FlowableTask<WaitFor.Output> {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            isAllowFailure()
+            isAllowFailure(),
+            isAllowWarning()
         );
     }
 

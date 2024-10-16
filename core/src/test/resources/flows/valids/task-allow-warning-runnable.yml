@@ -1,0 +1,15 @@
+id: task-allow-warning-runnable
+namespace: io.kestra.tests
+
+tasks:
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+    allowFailure: true
+    allowWarning: true
+    retry:
+      type: constant
+      interval: PT0.100S
+      maxAttempt: 3
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: I'm allowed

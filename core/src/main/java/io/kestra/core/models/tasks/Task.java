@@ -54,6 +54,9 @@ abstract public class Task implements TaskInterface {
     @Builder.Default
     private String runIf = "true";
 
+    @Builder.Default
+    private boolean allowWarning = false;
+
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {
             return Optional.of(this);

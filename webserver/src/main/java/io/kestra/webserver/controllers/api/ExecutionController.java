@@ -65,6 +65,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -104,14 +105,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1084,7 +1078,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return changeStatusById(ids, newStatus);
     }
@@ -1316,9 +1311,118 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return resumeByIds(ids);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/pause")
+    @Operation(tags = {"Executions"}, summary = "Pause a running execution.")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the executions is not running")
+    public void pause(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws Exception {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        Execution pausedExecution = this.executionService.pause(execution);
+        this.executionQueue.emit(pausedExecution);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/pause/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Pause a list of running executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Paused with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> pauseByIds(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) throws Exception {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && !execution.get().getState().isRunning()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not in state RUNNING",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk pause")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        for (Execution execution : executions) {
+            Execution pausedExecution = this.executionService.pause(execution);
+            this.executionQueue.emit(pausedExecution);
+        }
+
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/pause/by-query")
+    @Operation(tags = {"Executions"}, summary = "Pause executions filter by query parameters")
+    public HttpResponse<?> pauseByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+    ) throws Exception {
+        validateTimeline(startDate, endDate);
+
+        var ids = executionRepository
+            .find(
+                query,
+                tenantService.resolveTenant(),
+                scope,
+                namespace,
+                flowId,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+                endDate,
+                state,
+                RequestUtils.toMap(labels),
+                triggerExecutionId,
+                childFilter
+            )
+            .map(Execution::getId)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        return pauseByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1358,7 +1462,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return killByIds(ids);
     }
@@ -1400,7 +1505,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return replayByIds(ids);
     }
@@ -1693,7 +1799,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return setLabelsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }

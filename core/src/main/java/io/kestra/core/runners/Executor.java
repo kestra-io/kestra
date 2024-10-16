@@ -1,10 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
@@ -104,6 +101,7 @@ public class Executor {
         this.exception = exception;
         this.from.add(from);
         this.executionUpdated = true;
+        this.execution = this.execution.withError(ExecutionError.from(exception));
 
         return this;
     }

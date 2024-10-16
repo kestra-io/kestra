@@ -105,6 +105,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     Instant scheduleDate;
 
+    @With
+    @Nullable
+    ExecutionError error;
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -196,7 +200,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.error
         );
     }
 
@@ -230,7 +235,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            taskRun.getError() != null ? taskRun.getError() : this.error
         );
     }
 
@@ -252,7 +258,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.error
         );
     }
 
@@ -631,7 +638,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
+                        this.withTaskRun(t.getTaskRun()).withError(ExecutionError.from(e)),
                         t.getLogs()
                     );
                 } catch (InternalException ex) {
@@ -639,7 +646,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 }
             })
             .orElseGet(() -> new FailedExecutionWithLog(
-                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
+                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED).withError(ExecutionError.from(e)) : this.withError(ExecutionError.from(e)),
                     RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
                 )
             );

@@ -127,9 +127,15 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(7));
 
         receive.blockLast();
-        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("The task that that fail"));
+        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("It's the fault of "));
         assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("The task that that fail is 'failed'"));
+        assertThat(logEntry.getMessage(), is("It's the fault of 'failed'"));
+        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the message: "));
+        assertThat(logEntry, notNullValue());
+        assertThat(logEntry.getMessage(), is("See the message: Task failure"));
+        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the stackTrace: "));
+        assertThat(logEntry, notNullValue());
+        assertThat(logEntry.getMessage(), startsWith("See the stackTrace: java.lang.Exception: Task failure"));
     }
 
     @Test

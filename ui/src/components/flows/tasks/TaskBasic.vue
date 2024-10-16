@@ -30,6 +30,8 @@
             :schema="schema"
             :required="isRequired(key)"
             :definitions="definitions"
+            :min="1"
+            :disabled="getPropertiesValue(key) < 0"
         />
     </el-form-item>
 </template>

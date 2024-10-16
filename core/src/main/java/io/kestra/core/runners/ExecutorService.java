@@ -847,11 +847,7 @@ public class ExecutorService {
                     }
                 } catch (Exception e) {
                     WorkerTaskResult failed = WorkerTaskResult.builder()
-                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
-                            .withAttempts(Collections.singletonList(
-                                TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()
-                            ))
-                        )
+                        .taskRun(workerTask.getTaskRun().fail())
                         .build();
                     executor
                         .withWorkerTaskResults(List.of(failed), "handleExecutableTask")
@@ -902,11 +898,7 @@ public class ExecutorService {
                     );
                 } catch (Exception e) {
                     workerTaskResults.add(WorkerTaskResult.builder()
-                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED)
-                            .withAttempts(Collections.singletonList(
-                                TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build()
-                            ))
-                        )
+                        .taskRun(workerTask.getTaskRun().fail())
                         .build());
                     executor.withException(e, "handleExecutionUpdatingTask");
                 }

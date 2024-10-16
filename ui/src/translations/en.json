@@ -309,6 +309,7 @@
     "templates": "Templates",
     "templates deprecated": "Templates are deprecated. Please use subflows instead. See the <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrations section</a> explaining how you can migrate from templates to subflows.",
     "no result": "No logs emitted so far",
+    "empty search": "Search results are empty",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger details",

@@ -677,7 +677,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             message.getParentTaskRun(),
                             current.getExecution(),
                             forEachItem.getTransmitFailed(),
-                            forEachItem.isAllowFailure()
+                            forEachItem.isAllowFailure(),
+                            forEachItem.isAllowWarning()
                         );
                     } else {
                         taskRun = message.getParentTaskRun();

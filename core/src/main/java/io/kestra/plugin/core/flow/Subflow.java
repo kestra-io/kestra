@@ -226,7 +226,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                 builder.outputs(outputs);
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                var state = this.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+                var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
                 taskRun = taskRun
                     .withState(state)
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
@@ -242,7 +242,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
         taskRun = taskRun.withOutputs(builder.build().toMap());
 
-        State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure());
+        State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {
             taskRun = taskRun.withState(finalState);
         }

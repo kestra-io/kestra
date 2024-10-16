@@ -52,7 +52,7 @@ public class WorkerTask extends WorkerJob {
      * @return this worker task, updated
      */
     public TaskRun fail() {
-        var state = this.task.isAllowFailure() ? State.Type.WARNING : State.Type.FAILED;
+        var state = this.task.isAllowFailure() ? this.task.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
         return this.getTaskRun().withState(state);
     }
 }

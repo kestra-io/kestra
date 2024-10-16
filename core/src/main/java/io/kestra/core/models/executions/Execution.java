@@ -515,10 +515,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public State.Type guessFinalState(Flow flow) {
-        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null, false);
+        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null, false, false);
     }
 
-    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun, boolean allowFailure) {
+    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun, boolean allowFailure, boolean allowWarning) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         var state = this
             .findLastByState(taskRuns, State.Type.KILLED)
@@ -538,7 +538,13 @@ public class Execution implements DeletedInterface, TenantInterface {
             .orElse(State.Type.SUCCESS);
 
         if (state == State.Type.FAILED && allowFailure) {
+            if (allowWarning) {
+                return State.Type.SUCCESS;
+            }
             return State.Type.WARNING;
+        }
+        if (State.Type.WARNING.equals(state) && allowWarning) {
+            return State.Type.SUCCESS;
         }
         return state;
     }

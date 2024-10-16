@@ -245,7 +245,7 @@
             },
             load() {
                 this.isLoading = true
-
+                
                 // eslint-disable-next-line no-unused-vars
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
@@ -270,7 +270,7 @@
                 this.$store
                     .dispatch("stat/logDaily", this.loadQuery({
                         startDate: this.$moment(this.startDate).toISOString(true),
-                        endDate: this.$moment(this.endDate).toISOString(true)
+                        endDate: this.$moment(this.endDate + 1).toISOString(true)
                     }, true))
                     .then(() => {
                         this.statsReady = true;

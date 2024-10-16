@@ -115,6 +115,7 @@
                         })
                         .finally(callback)
                 } else {
+                    this.$store.commit("flow/setTotal", 0);
                     this.$store.commit("flow/setSearch", undefined);
                     callback();
                 }

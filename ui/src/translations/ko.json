@@ -873,6 +873,8 @@
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
     "files": "파일",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
-    "delete confirm multiple": "<code>{name}</code> KV(s)를 삭제하시겠습니까?"
+    "delete confirm multiple": "<code>{name}</code> KV(s)를 삭제하시겠습니까?",
+    "show task condition": "작업 상태 표시",
+    "empty search": "검색 결과가 없습니다"
   }
 }

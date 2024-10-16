@@ -9,6 +9,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.ExecutionError;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
@@ -292,7 +293,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                    WorkerTask failed = workerTask.withTaskRun(workerTask.fail());
+                    WorkerTask failed = workerTask.withTaskRun(workerTask.fail(e));
                     try {
                         this.workerTaskResultQueue.emit(new WorkerTaskResult(failed.getTaskRun()));
                     } catch (QueueException ex) {
@@ -320,8 +321,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
                         break;
                     }
 
-
-
                     // create the next RunContext populated with the previous WorkerTaskResult
                     runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
                 }
@@ -332,7 +331,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     try {
-                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail(e)));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
                     }
@@ -413,7 +412,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // We create a FAILED execution, so the user is aware that the realtime trigger failed to be created
         var execution = TriggerService
             .generateRealtimeExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), null)
-            .withState(FAILED);
+            .withState(FAILED)
+            .withError(ExecutionError.from(e));
 
         // We create an ERROR log attached to the execution
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
@@ -613,7 +613,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         } catch (QueueException e) {
             // If there is a QueueException it can either be caused by the message limit or another queue issue.
             // We fail the task and try to resend it.
-            TaskRun failed  = workerTask.fail();
+            TaskRun failed  = workerTask.fail(e);
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
                 failed = failed.withOutputs(Collections.emptyMap());
@@ -754,6 +754,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
             taskRun = taskRun.withOutputs(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of());
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
+        }
+
+        if (workerTaskCallable.exception !=null) {
+            taskRun = taskRun.withError(ExecutionError.from(workerTaskCallable.exception));
         }
 
         return workerTask

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.executions.ExecutionError;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
@@ -51,8 +52,8 @@ public class WorkerTask extends WorkerJob {
      *
      * @return this worker task, updated
      */
-    public TaskRun fail() {
+    public TaskRun fail(Throwable cause) {
         var state = this.task.isAllowFailure() ? this.task.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
-        return this.getTaskRun().withState(state);
+        return this.getTaskRun().withState(state).withError(ExecutionError.from(cause));
     }
 }

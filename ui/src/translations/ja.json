@@ -874,6 +874,7 @@
     "files": "ファイル",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？",
-    "show task condition": "タスク条件を表示"
+    "show task condition": "タスク条件を表示",
+    "empty search": "検索結果がありません"
   }
 }

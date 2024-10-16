@@ -874,6 +874,7 @@
     "files": "File",
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
     "delete confirm multiple": "Sei sicuro di voler eliminare il/i <code>{name}</code> KV?",
-    "show task condition": "Mostra condizione del task"
+    "show task condition": "Mostra condizione del task",
+    "empty search": "Risultati di ricerca vuoti"
   }
 }

@@ -30,7 +30,7 @@
             :schema="schema"
             :required="isRequired(key)"
             :definitions="definitions"
-            :min="exclusiveMinimum"
+            :min="getExclusiveMinimum(key)"
         />
     </el-form-item>
 </template>
@@ -61,12 +61,6 @@
                     return this.sortProperties(properties)
                 }
                 return undefined;
-            },
-            exclusiveMinimum() {
-                const concurrencyLimit = this.schema.properties.limit;
-                return concurrencyLimit && concurrencyLimit.exclusiveMinimum
-                    ? concurrencyLimit.exclusiveMinimum
-                    : 1;
             }
         },
         methods: {
@@ -128,6 +122,11 @@
                     (schema.title && schema.description ? "\n" : "") +
                     (schema.description ? schema.description : "")
                 );
+            },
+            getExclusiveMinimum(key) {
+                const property = this.schema.properties[key];
+                const propertyHasExclusiveMinimum = property && property.exclusiveMinimum
+                return propertyHasExclusiveMinimum ? property.exclusiveMinimum : null;
             }
         },
     };

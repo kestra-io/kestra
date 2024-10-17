@@ -12,9 +12,9 @@
 
     <el-button-group v-else-if="isURI(value)">
         <a class="el-button el-button--small el-button--primary" :href="value" target="_blank">
-            <OpenInNew />
+            <OpenInNew /> &nbsp;
             {{ $t('open') }}
-        </a>        
+        </a>
     </el-button-group>
 
     <span v-else-if="value === null">

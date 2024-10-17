@@ -41,7 +41,8 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI"),
     @JsonSubTypes.Type(value = MultiselectInput.class, name = "MULTISELECT"),
-    @JsonSubTypes.Type(value = YamlInput.class, name = "YAML")
+    @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
+    @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
 })
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Input<T> implements Data {

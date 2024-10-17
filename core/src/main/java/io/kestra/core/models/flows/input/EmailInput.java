@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public class EmailInput extends Input<String> {
 
-    private static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+    private static final String EMAIL_PATTERN = "^$|^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
 
     @Override
     public void validate(String input) throws ConstraintViolationException {

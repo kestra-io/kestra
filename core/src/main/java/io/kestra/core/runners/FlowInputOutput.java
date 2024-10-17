@@ -393,7 +393,7 @@ public class FlowInputOutput {
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
         try {
             return switch (type) {
-                case SELECT, ENUM, STRING,EMAIL -> current;
+                case SELECT, ENUM, STRING, EMAIL -> current;
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");

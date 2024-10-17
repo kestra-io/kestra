@@ -52,6 +52,15 @@
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
         <inputs-form :initial-inputs="initialInputs.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+        <div class="bottom-buttons" v-if="!embed">
+            <div class="left-align">
+                <el-form-item>
+                    <el-button :icon="ContentCopy" @click="fillInputsFromExecution">
+                        {{ $t('prefill inputs') }}
+                    </el-button>
+                </el-form-item>
+            </div>
+        </div>
 
         <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="execution-description">
@@ -83,9 +92,15 @@
     import State from "../../utils/state";
     import ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
+    import Inputs from "../../utils/inputs";
 
     export default {
         components: {InputsForm},
+        created(){
+            console.log(this.initialInputs)
+            console.log("this.initialInputs")
+            console.log(this.execution)
+        },
         props: {
             component: {
                 type: String,
@@ -135,6 +150,15 @@
             }
         },
         methods: {
+            fillInputsFromExecution(){
+                const nonEmptyInputNames = Object.keys(this.execution.inputs);
+                this.initialInputs.inputs
+                    .filter(input => nonEmptyInputNames.includes(input.id))
+                    .forEach(input => {
+                        let value = this.execution.inputs[input.id];
+                        this.inputs[input.id] = Inputs.normalize(input.type, value);
+                    });
+            },
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
                 this.$store
@@ -232,6 +256,7 @@
         },
         data() {
             return {
+                inputs: {},
                 revisionsSelected: undefined,
                 isOpen: false,
             };

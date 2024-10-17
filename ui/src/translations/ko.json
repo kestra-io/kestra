@@ -875,6 +875,12 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "delete confirm multiple": "<code>{name}</code> KV(s)를 삭제하시겠습니까?",
     "show task condition": "작업 상태 표시",
-    "empty search": "검색 결과가 없습니다"
+    "empty search": "검색 결과가 없습니다",
+    "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
+    "pause": "일시 중지",
+    "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
+    "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
+    "pause done": "실행이 PAUSED 상태입니다.",
+    "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다."
   }
 }

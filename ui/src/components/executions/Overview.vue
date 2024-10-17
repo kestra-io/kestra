@@ -10,6 +10,7 @@
                 <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
+                <pause :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>
@@ -74,6 +75,7 @@
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
+    import Pause from "./Pause.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -92,6 +94,7 @@
             SetLabels,
             Restart,
             Resume,
+            Pause,
             Kill,
             DateAgo,
             Labels,

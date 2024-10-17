@@ -1545,4 +1545,51 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(executionResult, notNullValue());
         assertThat(executionResult.get("url"), is("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id")));
     }
+
+    @Test
+    void shouldPauseARunningFlow() throws QueueException, TimeoutException {
+        Execution result = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/pause", null));
+        assertThat(response.getStatus(), is(HttpStatus.OK));
+
+        // resume it, it should then go to completion
+        response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/resume", null));
+        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/pause", null)));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
+
+        // pausing an already completed flow will result in errors
+        Execution completed = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+
+        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + completed.getId() + "/pause", null)));
+        assertThat(notRunning.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldPauseByIdsRunningFlows() throws TimeoutException, QueueException {
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/pause/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void shouldPauseByQueryRunningFlows() throws TimeoutException, QueueException {
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
 }

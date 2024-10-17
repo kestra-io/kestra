@@ -875,6 +875,12 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?",
     "show task condition": "Показать условие task",
-    "empty search": "Результаты поиска пусты"
+    "empty search": "Результаты поиска пусты",
+    "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
+    "pause": "Пауза",
+    "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
+    "invalid bulk pause": "Не удалось приостановить выполнения",
+    "pause done": "Выполнение приостановлено",
+    "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную."
   }
 }

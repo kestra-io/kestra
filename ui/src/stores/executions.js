@@ -143,6 +143,22 @@ export default {
                 }
             });
         },
+        pause(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/pause`);
+        },
+        bulkPauseExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/pause/by-ids`,
+                options.executionsId
+            )
+        },
+        queryPauseExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/pause/by-query`,
+                {},
+                {params: options}
+            )
+        },
         loadExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)

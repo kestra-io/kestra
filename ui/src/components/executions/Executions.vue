@@ -186,6 +186,9 @@
                             <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
                                 {{ $t("resume") }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                {{ $t("pause") }}
+                            </el-button>
                         </bulk-select>
                         <el-dialog
                             v-if="isOpenLabelsModal"
@@ -431,6 +434,7 @@
     import Utils from "../../utils/utils";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import PauseBox from "vue-material-design-icons/PauseBox.vue";
 </script>
 
 <script>
@@ -696,7 +700,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             } if (!query.scope) {
                 query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
             }
@@ -837,6 +841,14 @@
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",
                     "executions resumed"
+                );
+            },
+            pauseExecutions() {
+                this.genericConfirmAction(
+                    "bulk pause",
+                    "execution/queryPauseExecution",
+                    "execution/bulkPauseExecution",
+                    "executions paused"
                 );
             },
             restartExecutions() {

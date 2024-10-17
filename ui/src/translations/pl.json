@@ -875,6 +875,12 @@
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
     "show task condition": "Pokaż warunek taska",
-    "empty search": "Wyniki wyszukiwania są puste"
+    "empty search": "Wyniki wyszukiwania są puste",
+    "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
+    "pause": "Wstrzymaj",
+    "bulk pause": "Czy na pewno chcesz wstrzymać wykonanie <code>{executionCount}</code>?",
+    "invalid bulk pause": "Nie można wstrzymać wykonania",
+    "pause done": "Wykonanie jest PAUSED",
+    "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie."
   }
 }

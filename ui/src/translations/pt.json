@@ -875,6 +875,12 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "delete confirm multiple": "Tem certeza de que deseja excluir o(s) <code>{name}</code> KV(s)?",
     "show task condition": "Exibir condição da task",
-    "empty search": "Resultados da pesquisa estão vazios"
+    "empty search": "Resultados da pesquisa estão vazios",
+    "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
+    "pause": "Pausar",
+    "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
+    "invalid bulk pause": "Não foi possível pausar as execuções",
+    "pause done": "A execução está PAUSED",
+    "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente."
   }
 }

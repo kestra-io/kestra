@@ -51,6 +51,7 @@
         </template>
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
+        <inputs-form :initial-inputs="initialInputs.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
         <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="execution-description">
@@ -81,8 +82,10 @@
     import action from "../../models/action";
     import State from "../../utils/state";
     import ExecutionUtils from "../../utils/executionUtils";
+    import InputsForm from "../../components/inputs/InputsForm.vue";
 
     export default {
+        components: {InputsForm},
         props: {
             component: {
                 type: String,
@@ -113,6 +116,14 @@
             tooltipPosition: {
                 type: String,
                 default: "bottom"
+            },
+            initialInputs: {
+                type: Array,
+                default: undefined
+            },
+            flow: {
+                type: Object,
+                default: undefined,
             }
         },
         emits: ["follow"],

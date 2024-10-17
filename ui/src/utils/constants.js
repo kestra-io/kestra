@@ -47,3 +47,7 @@ export const executeFlowBehaviours = {
     NEW_TAB: "new tab"
 }
 
+export const stateDisplayValues = {
+    INPROGRESS: "IN-PROGRESS"
+}
+

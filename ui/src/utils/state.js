@@ -49,15 +49,6 @@ const STATE = Object.freeze({
         isKillable: true,
         isFailed: false,
     },
-    INPROGRESS: {
-        name: "INPROGRESS",
-        color: "#8405FF",
-        colorClass: "purple",
-        icon: PlayCircle,
-        isRunning: true,
-        isKillable: true,
-        isFailed: false,
-    },
     KILLING: {
         name: "KILLING",
         color: "#FCE07C",
@@ -157,11 +148,7 @@ export default class State {
     static get RUNNING() {
         return STATE.RUNNING.name;
     }
-
-    static get INPROGRESS() {
-        return STATE.INPROGRESS.name;
-    }
-
+    
     static get KILLING() {
         return STATE.KILLING.name;
     }

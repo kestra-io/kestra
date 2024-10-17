@@ -29,6 +29,7 @@
 </template>
 <script>
     import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+    import {stateDisplayValues} from "../../utils/constants";
     import State from "../../utils/state";
     import throttle from "lodash/throttle"
 
@@ -81,7 +82,7 @@
             },
             getStateToBeDisplayed(str){
                 if(str === State.RUNNING){
-                    return State.INPROGRESS;
+                    return stateDisplayValues.INPROGRESS;
                 }else{
                     return str;
                 }

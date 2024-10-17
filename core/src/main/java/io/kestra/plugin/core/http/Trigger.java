@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -154,11 +155,11 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         Object body = this.encryptBody
             ? runContext.decrypt(output.getEncryptedBody().getValue())
             : output.getBody();
-        Map<String, Object> responseVariables = Map.of("response", Map.of(
-            "statusCode", output.getCode(),
-            "body", (body == null ? "" : body),
-            "headers", output.getHeaders()
-            )
+        Map<String, Object> responseVariables = Map.of("response", new HashMap<>(){
+                {put("statusCode", output.getCode());}
+                {put("body", body);}
+                {put("headers", output.getHeaders());}
+            }
         );
         var renderedCondition = runContext.render(this.responseCondition, responseVariables);
         if (TruthUtils.isTruthy(renderedCondition)) {

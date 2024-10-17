@@ -438,7 +438,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                     }
                                 }
                             } catch (IllegalVariableEvaluationException e) {
-                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
+                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED).withError(ExecutionError.from(e))));
                                 workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
                             }
                         }));

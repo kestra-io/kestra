@@ -247,10 +247,20 @@ public final class RunVariables {
                     builder.put("tasks", tasksMap);
 
                     // search for failures
-                    execution.getTaskRunList().reversed().stream()
+                    Map<String, Object> error = new HashMap<>();
+                    Optional<TaskRun> failedTaskRun = execution.getTaskRunList().reversed().stream()
                         .filter(taskRun -> taskRun.getState() != null && taskRun.getState().isFailed())
-                        .findFirst()
-                        .ifPresent(taskRun -> builder.put("error", Map.of("taskId", taskRun.getTaskId())));
+                        .findFirst();
+                    if (failedTaskRun.isPresent() || execution.getError() != null) {
+                        failedTaskRun.ifPresent(run -> error.put("taskId", run.getTaskId()));
+                        if (execution.getError() != null) {
+                            error.put("message", execution.getError().getMessage());
+                            error.put("stackTrace", execution.getError().getStacktrace());
+                        }
+                    }
+                    if (!error.isEmpty()) {
+                        builder.put("error", error);
+                    }
                 }
 
                 // Inputs

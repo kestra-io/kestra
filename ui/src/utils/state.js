@@ -112,6 +112,15 @@ const STATE = Object.freeze({
         isKillable: false,
         isFailed: true,
     },
+    SKIPPED: {
+        name: "CANCELLED",
+        color: "#918BA9",
+        colorClass: "gray",
+        icon: Cancel,
+        isRunning: false,
+        isKillable: false,
+        isFailed: true,
+    },
     QUEUED: {
         name: "QUEUED",
         color: "#918BA9",

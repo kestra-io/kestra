@@ -157,7 +157,7 @@ export default class State {
     static get RUNNING() {
         return STATE.RUNNING.name;
     }
-    
+
     static get KILLING() {
         return STATE.KILLING.name;
     }

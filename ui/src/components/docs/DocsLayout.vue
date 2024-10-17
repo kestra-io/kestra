@@ -48,16 +48,16 @@
         overflow-y: auto;
 
         &::-webkit-scrollbar {
-            width: 2px;
+            width: 8px;
         }
 
         &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
+            background: var(--card-bg);
         }
 
         &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--bs-gray-600);
+            background: var(--bs-primary);
+            border-radius: 0px;
         }
 
         &.collapsed {

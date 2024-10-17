@@ -49,22 +49,22 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <el-cascader-panel :options="transform(triggerVariables)" />
+            <KestraCascader :options="transform(triggerVariables)" />
         </div>
 
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
-            <el-cascader-panel :options="transform(execution.inputs)" />
+            <KestraCascader :options="transform(execution.inputs)" />
         </div>
 
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
-            <el-cascader-panel :options="transform(execution.variables)" />
+            <KestraCascader :options="transform(execution.variables)" />
         </div>
 
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
-            <el-cascader-panel :options="transform(execution.outputs)" />
+            <KestraCascader :options="transform(execution.outputs)" />
         </div>
     </div>
 </template>
@@ -82,6 +82,7 @@
     import Labels from "../layout/Labels.vue"
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
+    import KestraCascader from "../../components/kestra/Cascader.vue"
 
     export default {
         components: {
@@ -94,7 +95,8 @@
             Kill,
             DateAgo,
             Labels,
-            Crud
+            Crud,
+            KestraCascader
         },
         emits: ["follow"],
         methods: {

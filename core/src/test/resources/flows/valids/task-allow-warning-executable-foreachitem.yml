@@ -1,0 +1,24 @@
+id: task-allow-warning-executable-foreachitem
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEachItem
+    allowFailure: true
+    allowWarning: true
+    items: "{{ inputs.file }}"
+    batch:
+      rows: 4
+    namespace: io.kestra.tests
+    flowId: for-each-item-subflow-failed
+    wait: true
+    transmitFailed: true
+    inputs:
+      items: "{{ taskrun.items }}"
+  - id: log-allowed
+    type: io.kestra.plugin.core.log.Log
+    message: I'm allowed

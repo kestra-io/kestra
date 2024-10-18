@@ -170,7 +170,8 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            this.isAllowFailure()
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 

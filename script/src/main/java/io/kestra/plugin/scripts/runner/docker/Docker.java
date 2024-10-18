@@ -9,6 +9,8 @@ import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
+import com.github.dockerjava.transport.DomainSocket;
+import com.sun.jna.LastErrorException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -27,7 +29,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -39,8 +40,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
@@ -331,7 +332,8 @@ public class Docker extends TaskRunner {
 
         String image = runContext.render(this.image, additionalVars);
 
-        try (DockerClient dockerClient = dockerClient(runContext, image)) {
+        String resolvedHost = DockerService.findHost(runContext, this.host);
+        try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
             // pull image
             if (this.getPullPolicy() != PullPolicy.NEVER) {
                 pullImage(dockerClient, image, this.getPullPolicy(), logger);
@@ -518,6 +520,21 @@ public class Docker extends TaskRunner {
 
                 }
             }
+        } catch (RuntimeException e) {
+            try {
+                if (e.getCause() instanceof IOException io &&
+                    io.getCause() instanceof LastErrorException socketException &&
+                    socketException.getMessage().contains("No such file or directory") &&
+                    Socket.class.isAssignableFrom(Class.forName(io.getStackTrace()[0].getClassName()))) {
+                    throw new IllegalStateException("Docker socket is not accessible or not found. " +
+                        "Please make sure you properly mounted the Docker socket into your Kestra container (`-v /var/run/docker.sock:/var/run/docker.sock`) and that your user or group has at least the read and write privilege. " +
+                        "Tried socket: " + resolvedHost, e);
+                }
+            } catch (ClassNotFoundException ignored) {
+                // If we can't check if the stacktrace class is a Socket, we just ignore the exception
+                throw e;
+            }
+            throw e;
         }
     }
 
@@ -569,9 +586,9 @@ public class Docker extends TaskRunner {
         return vars;
     }
 
-    private DockerClient dockerClient(RunContext runContext, String image) throws IOException, IllegalVariableEvaluationException {
+    private DockerClient dockerClient(RunContext runContext, String image, String host) throws IOException, IllegalVariableEvaluationException {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder()
-            .withDockerHost(DockerService.findHost(runContext, this.host));
+            .withDockerHost(host);
 
         if (this.getConfig() != null || this.getCredentials() != null) {
             Path config = DockerService.createConfig(

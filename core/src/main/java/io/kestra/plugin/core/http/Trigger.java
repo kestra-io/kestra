@@ -155,12 +155,12 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         Object body = this.encryptBody
             ? runContext.decrypt(output.getEncryptedBody().getValue())
             : output.getBody();
-        Map<String, Object> responseVariables = Map.of("response", new HashMap<>(){
-                {put("statusCode", output.getCode());}
-                {put("body", body);}
-                {put("headers", output.getHeaders());}
-            }
-        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusCode", output.getCode());
+        response.put("body", body); // body can be null so we need a null-friendly map
+        response.put("headers", output.getHeaders());
+        Map<String, Object> responseVariables = Map.of("response", response);
         var renderedCondition = runContext.render(this.responseCondition, responseVariables);
         if (TruthUtils.isTruthy(renderedCondition)) {
             Execution execution = TriggerService.generateExecution(this, conditionContext, context, output);

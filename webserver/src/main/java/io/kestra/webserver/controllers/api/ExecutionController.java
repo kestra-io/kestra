@@ -700,18 +700,20 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        String flowId = execution.get().getFlowId();
-        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
-        if (flow.isEmpty()) {
-            throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
-        }
-
         String prefix = StorageContext
             .forExecution(execution.get())
             .getExecutionStorageURI().getPath();
 
         if (path.getPath().startsWith(prefix)) {
             return null;
+        }
+
+        // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
+        // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
+        String flowId = execution.get().getFlowId();
+        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
+        if (flow.isEmpty()) {
+            throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
         }
 
         // maybe state

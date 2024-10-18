@@ -868,13 +868,13 @@
     "close sidebar": "fermer la barre latérale",
     "change_status": "Changer le statut",
     "in-our-documentation": "dans notre documentation.",
-    "read-more": "En savoir plus sur",
+    "read-more": "En savoir plus",
     "flow-dependencies": "dépendances",
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "files": "Fichiers",
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
     "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
-    "show task condition": "Afficher la condition de la task",
-    "empty search": "Les résultats de recherche sont vides"
+    "show task condition": "Afficher la condition de la tâche",
+    "empty search": "Aucun résultat"
   }
 }

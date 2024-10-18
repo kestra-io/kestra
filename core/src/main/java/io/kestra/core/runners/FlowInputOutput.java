@@ -401,7 +401,8 @@ public class FlowInputOutput {
                     yield EncryptionService.encrypt(secretKey.get(), (String) current);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf((String) current);
-                case FLOAT -> current instanceof Float ? current : Float.valueOf((String) current);
+                // Assuming that after the render we must have a double/int, so we can safely use its toString representation
+                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
                 case DATETIME -> Instant.parse(((String) current));
                 case DATE -> LocalDate.parse(((String) current));

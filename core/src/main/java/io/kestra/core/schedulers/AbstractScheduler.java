@@ -8,6 +8,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionError;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithException;
@@ -565,6 +566,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .flowRevision(f.getFlow().getRevision())
                             .labels(f.getFlow().getLabels())
                             .state(new State().withState(State.Type.FAILED))
+                            .error(ExecutionError.from(ie))
                             .build();
                         ZonedDateTime nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);

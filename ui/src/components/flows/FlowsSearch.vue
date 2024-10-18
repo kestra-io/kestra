@@ -26,7 +26,7 @@
                 <template #table>
                     <div v-if="search === undefined || search.length === 0">
                         <el-alert type="info" class="mb-3" :closable="false">
-                            {{ $t('no result') }}
+                            {{ $t('empty search') }}
                         </el-alert>
                     </div>
 
@@ -115,6 +115,7 @@
                         })
                         .finally(callback)
                 } else {
+                    this.$store.commit("flow/setTotal", 0);
                     this.$store.commit("flow/setSearch", undefined);
                     callback();
                 }

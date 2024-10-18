@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution">
+    <div v-if="execution" class="execution-overview">
         <el-row class="mb-3">
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
@@ -47,31 +47,30 @@
             </el-table-column>
         </el-table>
 
-        <div v-if="execution.trigger" class="mt-4">
+        <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <vars :execution="execution" :data="triggerVariables" />
+            <KestraCascader :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})" class="overflow-auto" />
         </div>
 
-        <div v-if="execution.inputs" class="mt-4">
+        <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
-            <vars :execution="execution" :data="inputs" key-label-translation-key="id" />
+            <KestraCascader :options="transform(execution.inputs)" class="overflow-auto" />
         </div>
 
-        <div v-if="execution.variables" class="mt-4">
+        <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
-            <vars :execution="execution" :data="execution.variables" />
+            <KestraCascader :options="transform(execution.variables)" class="overflow-auto" />
         </div>
 
-        <div v-if="execution.outputs" class="mt-4">
+        <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
-            <vars :execution="execution" :data="execution.outputs" />
+            <KestraCascader :options="transform(execution.outputs)" class="overflow-auto" />
         </div>
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
     import Status from "../Status.vue";
-    import Vars from "./Vars.vue";
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
@@ -83,6 +82,7 @@
     import Labels from "../layout/Labels.vue"
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
+    import KestraCascader from "../../components/kestra/Cascader.vue"
 
     export default {
         components: {
@@ -91,15 +91,41 @@
             Status,
             SetLabels,
             Restart,
-            Vars,
             Resume,
             Kill,
             DateAgo,
             Labels,
-            Crud
+            Crud,
+            KestraCascader
         },
         emits: ["follow"],
         methods: {
+            transform(obj) {
+                return Object.entries(obj).map(([key, value]) => {
+                    const children =
+                        typeof value === "object" && value !== null
+                            ? Object.entries(value).map(
+                                ([k, v]) => this.transform({[k]: v})[0],
+                            )
+                            : [{label: value, value: value}];
+
+                    // Filter out children with undefined label and value
+                    const filteredChildren = children.filter(
+                        (child) =>
+                            child.label !== undefined || child.value !== undefined,
+                    );
+
+                    // Return node with or without children based on existence
+                    const node = {label: key, value: key};
+
+                    // Include children only if there are valid entries
+                    if (filteredChildren.length) {
+                        node.children = filteredChildren;
+                    }
+
+                    return node;
+                });
+            },
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
@@ -187,21 +213,84 @@
                     })
                 })
                 return inputs;
-            },
-            // This is used to display correctly trigger variables
-            triggerVariables() {
-                let trigger = this.execution.trigger
-                trigger["trigger"] = this.execution.trigger.variables
-                delete trigger["variables"]
-
-                return trigger
             }
         },
     };
 </script>
-<style scoped lang="scss">
-    .crud-align {
-        display: flex;
-        align-items: center;
+
+<style lang="scss">
+.crud-align {
+    display: flex;
+    align-items: center;
+}
+
+.execution-overview {
+    .cascader {
+        &::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+            border-radius: 0px;
+        }
     }
+
+    .wrapper {
+        background: var(--card-bg);
+    }
+
+    .el-cascader-menu {
+        min-width: 300px;
+        max-width: 300px;
+
+        .el-cascader-menu__list {
+            padding: 0;
+        }
+
+        .el-cascader-menu__wrap {
+            height: 100%;
+        }
+
+        & .el-cascader-node {
+            height: 36px;
+            line-height: 36px;
+            font-size: var(--el-font-size-small);
+            color: var(--el-text-color-regular);
+            padding: 0 30px 0 5px;
+
+            &[aria-haspopup="false"] {
+                padding-right: 0.5rem !important;
+            }
+
+            &:hover {
+                background-color: var(--bs-border-color);
+            }
+
+            &.in-active-path,
+            &.is-active {
+                background-color: var(--bs-border-color);
+                font-weight: normal;
+            }
+
+            .el-cascader-node__prefix {
+                display: none;
+            }
+
+            .task .wrapper {
+                align-self: center;
+                height: var(--el-font-size-small);
+                width: var(--el-font-size-small);
+            }
+
+            code span.regular {
+                color: var(--el-text-color-regular);
+            }
+        }
+    }
+}
 </style>

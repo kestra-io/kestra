@@ -49,7 +49,7 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader :options="transform({...execution.trigger, ...execution.trigger.trigger})" class="overflow-auto" />
+            <KestraCascader :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})" class="overflow-auto" />
         </div>
 
         <div v-if="execution.inputs" class="my-5">

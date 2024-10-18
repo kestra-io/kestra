@@ -7,26 +7,24 @@
             clearable
         />
         <el-collapse accordion v-model="activeNames">
-            <template
-                :key="plugin.title"
-                v-for="(plugin) in sortedPlugins(pluginsList)"
-            >
+            <template :key="plugin.title" v-for="(plugin) in sortedPlugins(pluginsList)">
                 <el-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
                     :title="plugin.title.capitalize()"
                     :key="plugin.group"
+                    :ref="`plugin-${plugin.group}`"
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
                             <h6>{{ namespace }}</h6>
                             <ul class="toc-h4">
-                                <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
+                                <li v-for="(classes, type) in types" :key="type + '-' + namespace">
                                     <h6>{{ $filters.cap(type) }}</h6>
                                     <ul class="section-nav toc-h5">
                                         <li v-for="cls in classes" :key="cls">
                                             <router-link
-                                                @click="$emit('routerChange')"
+                                                @click="$emit('routerChange'); handlePluginChange(namespace)"
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
@@ -38,7 +36,8 @@
                                                 </div>
                                                 <span
                                                     :class="$route.params.cls === (namespace + '.' + cls) ? 'selected mx-2' : 'mx-2'"
-                                                >{{ cls }}</span>
+                                                >{{
+                                                    cls }}</span>
                                             </router-link>
                                         </li>
                                     </ul>
@@ -66,11 +65,14 @@
             }
         },
         mounted() {
+
             this.plugins.forEach(plugin => {
                 if (plugin.tasks.includes(this.$route.params.cls)) {
                     this.activeNames = [plugin.group]
+                    localStorage.setItem("activePlugin", plugin.group);
                 }
             })
+            this.scrollToActivePlugin();
         },
         components: {
             TaskIcon
@@ -117,6 +119,26 @@
             }
         },
         methods: {
+
+            scrollToActivePlugin() {
+                const activePlugin = localStorage.getItem("activePlugin");
+                if (activePlugin) {
+                    // Use Vue's $refs to scroll to the specific plugin group
+                    this.$nextTick(() => {
+                        const pluginElement = this.$refs[`plugin-${activePlugin}`];
+                        if (pluginElement && pluginElement[0]) {
+                            pluginElement[0].$el.scrollIntoView({behavior: "smooth", block: "start"});
+                        }
+                    });
+                }
+            },
+
+            // When user navigates to a different plugin, save the new plugin group to localStorage
+            handlePluginChange(pluginGroup) {
+                this.activeNames = [pluginGroup];
+                localStorage.setItem("activePlugin", pluginGroup); // Save to localStorage
+            },
+
             sortedPlugins(plugins) {
                 return plugins
                     .sort((a, b) => {
@@ -158,70 +180,71 @@
 </script>
 
 <style lang="scss">
-    .plugins-list {
-        &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
-            background-color: var(--bs-gray-100);
+.plugins-list {
+    &.enhance-readability {
+        padding: calc(var(--spacer) * 1.5);
+        background-color: var(--bs-gray-100);
+    }
+
+    &::-webkit-scrollbar {
+        width: 2px;
+    }
+
+    &::-webkit-scrollbar-track {
+        -webkit-border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        -webkit-border-radius: 10px;
+        background: var(--bs-gray-600);
+    }
+
+    .el-collapse-item__header {
+        font-size: 0.875rem;
+    }
+
+    ul {
+        list-style: none;
+        padding-inline-start: 0;
+        margin-bottom: 0;
+        font-size: var(--font-size-xs);
+        margin-left: calc(var(--spacer) / 2);
+    }
+
+    h6,
+    a {
+        word-break: break-all;
+        color: var(--el-collapse-header-text-color);
+    }
+
+    .toc-h3 {
+        .icon {
+            width: var(--font-size-sm);
+            height: var(--font-size-sm);
+            display: inline-block;
+            position: relative;
         }
 
-        &::-webkit-scrollbar {
-            width: 2px;
+        h6 {
+            font-size: 1.1em;
         }
 
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--bs-gray-600);
-        }
-
-        .el-collapse-item__header {
-            font-size: 0.875rem;
-        }
-
-        ul {
-            list-style: none;
-            padding-inline-start: 0;
-            margin-bottom: 0;
-            font-size: var(--font-size-xs);
-            margin-left: calc(var(--spacer) / 2);
-        }
-
-        h6, a {
-            word-break: break-all;
-            color: var(--el-collapse-header-text-color);
-        }
-
-        .toc-h3 {
-            .icon {
-                width: var(--font-size-sm);
-                height: var(--font-size-sm);
-                display: inline-block;
-                position: relative;
-            }
+        .toc-h4 {
+            margin-left: var(--spacer);
 
             h6 {
-                font-size: 1.1em;
+                font-size: var(--font-size-sm);
+                margin-bottom: calc(var(--spacer) / 2);
             }
 
-            .toc-h4 {
-                margin-left: var(--spacer);
-
-                h6 {
-                    font-size: var(--font-size-sm);
-                    margin-bottom: calc(var(--spacer) / 2);
-                }
-
-                li {
-                    margin-bottom: calc(var(--spacer) / 2);
-                }
+            li {
+                margin-bottom: calc(var(--spacer) / 2);
             }
         }
     }
+}
 
-    .selected {
-        color: var(--bs-purple);
-    }
+.selected {
+    color: var(--bs-purple);
+}
 </style>

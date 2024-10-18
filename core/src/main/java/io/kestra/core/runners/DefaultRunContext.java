@@ -200,7 +200,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
 
     /**
@@ -217,7 +217,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
 
     /**
@@ -234,7 +234,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
 
     @Override
@@ -245,7 +245,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, variables));
+        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
     }
 
     @Override
@@ -260,7 +260,7 @@ public class DefaultRunContext extends RunContext {
             return null;
         }
 
-        Map<String, Object> allVariables = mergeWithNullableValues(this.variables, variables);
+        Map<String, Object> allVariables = mergeWithNullableValues(this.variables, decryptVariables(variables));
         return inline
             .entrySet()
             .stream()
@@ -369,6 +369,14 @@ public class DefaultRunContext extends RunContext {
         }
 
         return this;
+    }
+
+    private Map<String, Object> decryptVariables(Map<String, Object> variables) {
+        if (secretKey.isPresent()) {
+            final Secret secret = new Secret(secretKey, logger);
+            return secret.decrypt(variables);
+        }
+        return variables;
     }
 
     @SuppressWarnings("unchecked")

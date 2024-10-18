@@ -130,16 +130,14 @@
             }
         }
 
-        :deep(&:not(.shiki)) {
-            code {
-                white-space: break-spaces;
+        :deep(code) {
+            white-space: break-spaces;
 
-                &:not(.code-block code) {
-                    font-weight: 700;
-                    background: var(--bs-body-bg);
-                    color: var(--bs-body-color);
-                    border: 1px solid var(--border-killing)
-                }
+            &:not(.shiki code) {
+                font-weight: 700;
+                background: var(--bs-body-bg);
+                color: var(--bs-body-color);
+                border: 1px solid var(--border-killing)
             }
         }
 

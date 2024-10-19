@@ -1263,7 +1263,7 @@
         }
 
         &::-webkit-scrollbar {
-            width: 2px;
+            width: 10px;
             height: 2px;
         }
 

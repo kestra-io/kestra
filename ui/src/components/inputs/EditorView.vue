@@ -1273,7 +1273,7 @@
 
         &::-webkit-scrollbar-thumb {
             background: var(--bs-primary);
-            border-radius: 0px;
+            border-radius: 20px;
         }
     }
 

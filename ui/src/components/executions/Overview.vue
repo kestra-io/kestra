@@ -10,6 +10,7 @@
                 <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
+                <pause :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>
@@ -49,22 +50,22 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader :options="transform(triggerVariables)" />
+            <KestraCascader :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})" class="overflow-auto" />
         </div>
 
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
-            <KestraCascader :options="transform(execution.inputs)" />
+            <KestraCascader :options="transform(execution.inputs)" class="overflow-auto" />
         </div>
 
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
-            <KestraCascader :options="transform(execution.variables)" />
+            <KestraCascader :options="transform(execution.variables)" class="overflow-auto" />
         </div>
 
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
-            <KestraCascader :options="transform(execution.outputs)" />
+            <KestraCascader :options="transform(execution.outputs)" class="overflow-auto" />
         </div>
     </div>
 </template>
@@ -74,6 +75,7 @@
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
+    import Pause from "./Pause.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -92,6 +94,7 @@
             SetLabels,
             Restart,
             Resume,
+            Pause,
             Kill,
             DateAgo,
             Labels,
@@ -213,14 +216,6 @@
                     })
                 })
                 return inputs;
-            },
-            // This is used to display correctly trigger variables
-            triggerVariables() {
-                let trigger = this.execution.trigger
-                trigger["trigger"] = this.execution.trigger.variables
-                delete trigger["variables"]
-
-                return trigger
             }
         },
     };

@@ -1049,8 +1049,8 @@ public abstract class StorageTestSuite {
         String tenantId = IdUtils.create();
 
         Map<String, String> expectedMetadata = Map.of(
-            "key1", "value1",
-            "key2", "value2"
+            "someComplexKey1", "value1",
+            "anotherComplexKey2", "value2"
         );
         putFile(tenantId, "/" + prefix + "/storage/get.yml", expectedMetadata);
         StorageObject withMetadata = storageInterface.getWithMetadata(tenantId, new URI("kestra:///" + prefix + "/storage/get.yml"));

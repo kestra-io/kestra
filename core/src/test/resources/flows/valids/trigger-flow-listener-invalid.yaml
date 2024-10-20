@@ -4,6 +4,7 @@ namespace: io.kestra.tests.trigger
 inputs:
   - id: from_parent
     type: STRING
+    defaults: "default value"
 
 tasks:
   - id: only-invalid
@@ -13,9 +14,9 @@ tasks:
 triggers:
   - id: listen-flow-invalid
     type: io.kestra.plugin.core.trigger.Flow
-    inputs:
-      from_parent: "{{ trigger.outputs.invalid_output }}"
     conditions:
       - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger
         flowId: trigger-flow
+    # inputs:
+    #  from_parent: "{{ trigger.outputs.parent_output }}"

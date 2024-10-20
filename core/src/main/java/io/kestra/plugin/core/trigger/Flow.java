@@ -41,25 +41,30 @@ import jakarta.validation.constraints.NotNull;
         ::"""
 )
 @Plugin(
-    examples = @Example(
-            title = """Trigger the `transform` flow after the `extract` flow has successfully completed. The extract flow generates a `last_ingested_date` output that is passed to the `transform` flow as an input. Here is the `extract` flow:
-            ```yaml
-            id: extract
-            namespace: company.team
-
-            tasks:
-              - id: final_date
-                type: io.kestra.plugin.core.debug.Return
-                format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
-
-            outputs:
-              - id: last_ingested_date
-                type: STRING
-                value: "{{ outputs.final_date.value }}"            
-            ```
-            Below is the `transform` flow that is triggered after the `extract` flow has successfully completed. The `last_ingested_date` output from the `extract` flow is passed to the `last_ingested_date` input of the `transform` flow. 
-            """,
+    examples = {
+        @Example(
             full = true,
+            title = """
+                Trigger the transform flow after the extract flow has successfully completed. \
+                The extract flow generates a `last_ingested_date` output that is passed to the \
+                transform flow as an input. Here is the extract flow:
+                ```yaml
+                id: extract
+                namespace: company.team
+
+                tasks:
+                  - id: final_date
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
+
+                outputs:
+                  - id: last_ingested_date
+                    type: STRING
+                    value: "{{ outputs.final_date.value }}"            
+                ```
+                Below is the transform flow that is triggered after the extract flow has successfully completed. \
+                The `last_ingested_date` output from the extract flow is passed to the \
+                `last_ingested_date` input of the transform flow.""",
             code = """
                 id: transform
                 namespace: company.team
@@ -95,7 +100,8 @@ import jakarta.validation.constraints.NotNull;
                       - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
                         in:
                           - SUCCESS"""
-                          ),
+        ),
+    },
     aliases = "io.kestra.core.models.triggers.types.Flow"
 )
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {

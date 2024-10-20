@@ -381,11 +381,6 @@ form.ks-horizontal {
         background-color: var(--bs-primary);
     }
 
-    .el-tabs__nav {
-        display: flex;
-        flex-wrap: wrap; 
-    }
-
     .el-tabs__item {
         padding: 0;
         transition: all 0.3s ease;

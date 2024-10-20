@@ -8,13 +8,13 @@ namespace: io.kestra.tests.trigger
 tasks:
   - id: return_value
     type: io.kestra.plugin.core.debug.Return
-    format: "child"
+    format: task in a child flow
 
 triggers:
   - id: multiple-listen-flow
     type: io.kestra.plugin.core.trigger.Flow
 #    inputs:
-#      from_parent: '{{ trigger.outputs.parent_output.value }}'
+#      from_parent: '{{ trigger.outputs.parent_output }}'
     conditions:
       - id: multiple
         type: io.kestra.plugin.core.condition.MultipleCondition

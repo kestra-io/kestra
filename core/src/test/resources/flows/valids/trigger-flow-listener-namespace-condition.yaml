@@ -20,4 +20,4 @@ triggers:
 outputs:
   - id: parent_output
     type: STRING
-    value: "{{ outputs.simple_output.outputs.value }}"
+    value: "{{ outputs.simple_output.value }}"

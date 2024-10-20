@@ -43,7 +43,7 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = @Example(
         title = "This flow will be triggered after each successful execution of flow `company.team.trigger_flow` " +
-            "and it will pass the `parent_output.uri` flow output to the `from_parent` input of the child flow.",
+            "and it will pass the `parent_output` flow output to the `from_parent` input of the child flow.",
         full = true,
         code = """
             id: child_flow
@@ -62,7 +62,7 @@ import jakarta.validation.constraints.NotNull;
               - id: parent_flow
                 type: io.kestra.plugin.core.trigger.Flow
                 inputs:
-                  from_parent: "{{ trigger.outputs.parent_output.uri }}"
+                  from_parent: "{{ trigger.outputs.parent_output }}"
                 conditions:
                   - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
                     namespace: company.team

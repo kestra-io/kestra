@@ -9,6 +9,18 @@
         &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info) {
             --el-button-hover-text-color: var(--bs-body-color);
         }
+             
+             &:hover {
+                border-color: #8008f6 !important;
+                background-color: #404559 !important; 
+                color: #ffffff !important; 
+            }
+    }
+ 
+      &:hover {
+        border-color: #890fff !important;
+        background-color: #f5f5ff !important; 
+        color:  black !important; 
     }
 
     .el-input-group--append & [class*=el-icon] + span {

@@ -2,7 +2,7 @@ id: trigger-flow-listener-namespace-condition
 namespace: io.kestra.tests.trigger
 
 inputs:
-  - id: from-parent
+  - id: from_parent
     type: STRING
 
 tasks:

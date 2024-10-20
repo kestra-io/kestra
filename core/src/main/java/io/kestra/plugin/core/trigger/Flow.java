@@ -43,10 +43,10 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = @Example(
         title = "This flow will be triggered after each successful execution of flow `company.team.trigger_flow` " +
-            "and forward the `uri` of `my_task` taskId outputs.",
+            "and it will pass the `uri` output of `parent_task` to the `from_parent` input of the child flow.",
         full = true,
         code = """
-            id: trigger_flow_listener
+            id: child_flow
             namespace: company.team
 
             inputs:
@@ -59,10 +59,10 @@ import jakarta.validation.constraints.NotNull;
                 format: "v1: {{ trigger.executionId }}"
 
             triggers:
-              - id: listen_flow
+              - id: parent_flow
                 type: io.kestra.plugin.core.trigger.Flow
                 inputs:
-                  from-parent: '{{ outputs.my_task.uri }}'
+                  from_parent: "{{ outputs.parent_task.uri }}"
                 conditions:
                   - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
                     namespace: company.team
@@ -81,12 +81,11 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
     @Nullable
     @Schema(
-        title = "Fill input of this flow based on output of current flow.",
+        title = "Pass upstream flow's outputs to inputs of the current flow.",
         description = """
-            Fill input of this flow based on output of current flow, allowing to pass data or file to the triggered flow
+            The inputs allow you to pass data object or a file to the downstream flow.
             ::alert{type="warning"}
-            If you provide invalid input, the flow will not be created! Since there is no task started, you can't log any reason that's visible on the Execution UI.
-            So you will need to go to the Logs tabs on the UI to understand the error.
+            Make sure that the inputs and task outputs defined in this Flow trigger match the outputs of the upstream flow. Otherwise, the downstream flow execution will not to be created. If that happens, go to the Logs tab on the Flow page to understand the error.
             ::"""
     )
     @PluginProperty
@@ -97,13 +96,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         title = "List of execution states that will be evaluated by the trigger",
         description = """
             By default, only executions in a terminal state will be evaluated.
-            If you use a condition of type `ExecutionStatusCondition` it will be evaluated after this list.
+            Any `ExecutionStatusCondition`-type condition will be evaluated after the list of `states`.
             ::alert{type="info"}
-            The trigger will be evaluated on each execution state change, this means that, for non-terminal state, they can be observed multiple times.
-            For example, if a flow has two `Pause` tasks, the execution will transition two times from PAUSED to RUNNING so theses states will be observed two times.
+            The trigger will be evaluated for each state change of matching executions. Keep in mind that if a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. The Flow trigger listening to a `PAUSED` state will be evaluated twice in this case.
             ::
             ::alert{type="warning"}
-            You cannot evaluate on the CREATED state.
+            Note that a Flow trigger cannot react to the `CREATED` state.
             ::"""
     )
     @Builder.Default

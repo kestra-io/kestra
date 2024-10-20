@@ -42,36 +42,60 @@ import jakarta.validation.constraints.NotNull;
 )
 @Plugin(
     examples = @Example(
-        title = "This flow will be triggered after each successful execution of flow `company.team.trigger_flow` " +
-            "and it will pass the `parent_output` flow output to the `from_parent` input of the child flow.",
-        full = true,
-        code = """
-            id: child_flow
+            title = """Trigger the `transform` flow after the `extract` flow has successfully completed. The extract flow generates a `last_ingested_date` output that is passed to the `transform` flow as an input. Here is the `extract` flow:
+            ```yaml
+            id: extract
             namespace: company.team
 
-            inputs:
-              - id: from_parent
-                type: STRING
-
             tasks:
-              - id: only_no_input
+              - id: final_date
                 type: io.kestra.plugin.core.debug.Return
-                format: "v1: {{ trigger.executionId }}"
+                format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
 
-            triggers:
-              - id: parent_flow
-                type: io.kestra.plugin.core.trigger.Flow
+            outputs:
+              - id: last_ingested_date
+                type: STRING
+                value: "{{ outputs.final_date.value }}"            
+            ```
+            Below is the `transform` flow that is triggered after the `extract` flow has successfully completed. The `last_ingested_date` output from the `extract` flow is passed to the `last_ingested_date` input of the `transform` flow. 
+            """,
+            full = true,
+            code = """
+                id: transform
+                namespace: company.team
+
                 inputs:
-                  from_parent: "{{ trigger.outputs.parent_output }}"
-                conditions:
-                  - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
-                    namespace: company.team
-                    flowId: trigger_flow
-                  - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
-                    in:
-                      - SUCCESS
-            """
-    ),
+                  - id: last_ingested_date
+                    type: STRING
+                    defaults: "2025-01-01"
+
+                variables:
+                  result: |
+                    Ingestion done in {{ trigger.executionId }}. 
+                    Now transforming data up to {{ inputs.last_ingested_date }}
+
+                tasks:
+                  - id: run_transform
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ render(vars.result) }}"
+
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ render(vars.result) }}"
+
+                triggers:
+                  - id: run_after_extract
+                    type: io.kestra.plugin.core.trigger.Flow
+                    inputs:
+                      last_ingested_date: "{{ trigger.outputs.last_ingested_date }}"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+                        namespace: company.team
+                        flowId: extract
+                      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+                        in:
+                          - SUCCESS"""
+                          ),
     aliases = "io.kestra.core.models.triggers.types.Flow"
 )
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {

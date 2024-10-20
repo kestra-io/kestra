@@ -6,13 +6,18 @@ inputs:
     type: STRING
 
 tasks:
-  - id: only-listener
+  - id: simple_output
     type: io.kestra.plugin.core.debug.Return
     format: "simple return"
 
 triggers:
-  - id: listen-flow
+  - id: parent
     type: io.kestra.plugin.core.trigger.Flow
     conditions:
       - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition
         namespace: io.kestra.tests.trigger
+
+outputs:
+  - id: parent_output
+    type: STRING
+    value: "{{ outputs.simple_output.outputs.value }}"

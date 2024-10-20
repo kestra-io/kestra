@@ -43,7 +43,7 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = @Example(
         title = "This flow will be triggered after each successful execution of flow `company.team.trigger_flow` " +
-            "and it will pass the `uri` output of `parent_task` to the `from_parent` input of the child flow.",
+            "and it will pass the `parent_output.uri` flow output to the `from_parent` input of the child flow.",
         full = true,
         code = """
             id: child_flow
@@ -62,7 +62,7 @@ import jakarta.validation.constraints.NotNull;
               - id: parent_flow
                 type: io.kestra.plugin.core.trigger.Flow
                 inputs:
-                  from_parent: "{{ outputs.parent_task.uri }}"
+                  from_parent: "{{ trigger.outputs.parent_output.uri }}"
                 conditions:
                   - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
                     namespace: company.team
@@ -83,7 +83,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Schema(
         title = "Pass upstream flow's outputs to inputs of the current flow.",
         description = """
-            The inputs allow you to pass data object or a file to the downstream flow.
+            The inputs allow you to pass data object or a file to the downstream flow as long as those outputs are defined on the flow-level in the upstream flow.
             ::alert{type="warning"}
             Make sure that the inputs and task outputs defined in this Flow trigger match the outputs of the upstream flow. Otherwise, the downstream flow execution will not to be created. If that happens, go to the Logs tab on the Flow page to understand the error.
             ::"""

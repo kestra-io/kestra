@@ -8,13 +8,13 @@ inputs:
 tasks:
   - id: only-invalid
     type: io.kestra.plugin.core.debug.Return
-    format: "childs: {{inputs['from_parent']}}"
+    format: "childs: {{ inputs.from_parent }}"
 
 triggers:
   - id: listen-flow-invalid
     type: io.kestra.plugin.core.trigger.Flow
     inputs:
-      from_parent: '{{ outputs.invalid.value }}'
+      from_parent: "{{ trigger.outputs.invalid.value }}"
     conditions:
       - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
         namespace: io.kestra.tests.trigger

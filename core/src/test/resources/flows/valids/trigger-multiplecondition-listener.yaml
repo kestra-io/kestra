@@ -6,15 +6,15 @@ namespace: io.kestra.tests.trigger
 #    type: STRING
 
 tasks:
-  - id: only-listener
+  - id: return_value
     type: io.kestra.plugin.core.debug.Return
-    format: "childs"
+    format: "child"
 
 triggers:
   - id: multiple-listen-flow
     type: io.kestra.plugin.core.trigger.Flow
 #    inputs:
-#      from_parent: '{{ outputs.only.value }}'
+#      from_parent: '{{ trigger.outputs.parent_output.value }}'
     conditions:
       - id: multiple
         type: io.kestra.plugin.core.condition.MultipleCondition

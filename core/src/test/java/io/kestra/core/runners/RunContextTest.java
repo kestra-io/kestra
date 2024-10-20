@@ -63,9 +63,6 @@ import static org.hamcrest.Matchers.*;
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
-    ApplicationContext applicationContext;
-
-    @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
 

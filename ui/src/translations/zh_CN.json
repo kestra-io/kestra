@@ -873,6 +873,14 @@
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "files": "文件",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
-    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？"
+    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
+    "show task condition": "显示任务条件",
+    "empty search": "搜索结果为空",
+    "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
+    "pause": "暂停",
+    "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
+    "invalid bulk pause": "无法暂停执行",
+    "pause done": "执行已PAUSED",
+    "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。"
   }
 }

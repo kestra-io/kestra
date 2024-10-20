@@ -208,7 +208,8 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            this.isAllowFailure()
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 

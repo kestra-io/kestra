@@ -31,7 +31,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuperBuilder
@@ -161,7 +160,7 @@ public class If extends Task implements FlowableTask<VoidOutput> {
         List<ResolvedTask> childTask = this.childTasks(runContext, parentTaskRun);
         if (ListUtils.isEmpty(childTask)) {
             // no next task to run, we guess the state from the parent task
-            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure()));
+            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
 
         return FlowableUtils.resolveState(
@@ -170,7 +169,8 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            this.isAllowFailure()
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 }

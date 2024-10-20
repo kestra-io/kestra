@@ -24,7 +24,8 @@ public enum Type {
     SECRET(SecretInput.class.getName()),
     ARRAY(ArrayInput.class.getName()),
     MULTISELECT(MultiselectInput.class.getName()),
-    YAML(YamlInput.class.getName());
+    YAML(YamlInput.class.getName()),
+    EMAIL(EmailInput.class.getName());
 
     private final String clsName;
 

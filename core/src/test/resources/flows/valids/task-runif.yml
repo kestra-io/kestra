@@ -1,0 +1,22 @@
+id: task-runif
+namespace: io.kestra.tests
+tasks:
+  - id: output
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      taskrun_data: 1
+  - id: executed
+    type: io.kestra.plugin.core.log.Log
+    runIf: "{{ outputs.output['values']['taskrun_data'] == 1 }}"
+    message:
+      - "success"
+  - id: notexecuted
+    type: io.kestra.plugin.core.log.Log
+    runIf: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
+    message:
+      - "should not be printed"
+  - id: willfailedtheflow
+    type: io.kestra.plugin.core.log.Log
+    runIf: "{{ outputs.notexists == 2 }}"
+    message:
+      - "should failed"

@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.DependsOn;
@@ -34,7 +35,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -93,13 +94,12 @@ public class FlowInputOutput {
      * @param data                    The Execution's inputs data.
      * @return The list of {@link InputAndValue}.
      */
-    public List<InputAndValue> validateExecutionInputs(final List<Input<?>> inputs,
+    public Mono<List<InputAndValue>> validateExecutionInputs(final List<Input<?>> inputs,
                                                        final Execution execution,
-                                                       final Publisher<CompletedPart> data) throws IOException {
-        if (ListUtils.isEmpty(inputs)) return Collections.emptyList();
+                                                       final Publisher<CompletedPart> data)  {
+        if (ListUtils.isEmpty(inputs)) return Mono.just(Collections.emptyList());
 
-        Map<String, ?> dataByInputId = readData(inputs, execution, data, false);
-        return this.resolveInputs(inputs, execution, dataByInputId);
+        return readData(inputs, execution, data, false).map(inputData -> resolveInputs(inputs, execution, inputData));
     }
 
     /**
@@ -110,9 +110,9 @@ public class FlowInputOutput {
      * @param data      The Execution's inputs data.
      * @return The Map of typed inputs.
      */
-    public Map<String, Object> readExecutionInputs(final Flow flow,
+    public Mono<Map<String, Object>> readExecutionInputs(final Flow flow,
                                                    final Execution execution,
-                                                   final Publisher<CompletedPart> data) throws IOException {
+                                                   final Publisher<CompletedPart> data)  {
         return this.readExecutionInputs(flow.getInputs(), execution, data);
     }
 
@@ -124,48 +124,51 @@ public class FlowInputOutput {
      * @param data      The Execution's inputs data.
      * @return The Map of typed inputs.
      */
-    public Map<String, Object> readExecutionInputs(final List<Input<?>> inputs,
-                                                   final Execution execution,
-                                                   final Publisher<CompletedPart> data) throws IOException {
-        return this.readExecutionInputs(inputs, execution, readData(inputs, execution, data, true));
+    public Mono<Map<String, Object>> readExecutionInputs(final List<Input<?>> inputs,
+                                                         final Execution execution,
+                                                         final Publisher<CompletedPart> data) {
+        return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, execution, inputData));
     }
 
-    private Map<String, ?> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) throws IOException {
+    private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
-            .subscribeOn(Schedulers.boundedElastic())
-            .map(throwFunction(input -> {
-                if (input instanceof CompletedFileUpload fileUpload) {
-                    if (!uploadFiles) {
-                        // only build the storage URI
+            .<AbstractMap.SimpleEntry<String, String>>handle((input, sink) -> {
+                try {
+                    if (input instanceof CompletedFileUpload fileUpload) {
+                        if (!uploadFiles) {
+                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
+                            URI from = URI.create("kestra://" + StorageContext
+                                .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
+                                .getContextStorageURI()
+                            );
+                            sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
+                            return;
+                        }
                         final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
-                        URI from = URI.create("kestra://" + StorageContext
-                            .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
-                            .getContextStorageURI()
-                        );
-                        return new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString());
-                    }
-                    final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
-                    File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
-                    try (var inputStream = fileUpload.getInputStream();
-                         var outputStream = new FileOutputStream(tempFile)) {
-                        long transferredBytes = inputStream.transferTo(outputStream);
-                        if (transferredBytes == 0) {
-                            throw new RuntimeException("Can't upload file: " + fileUpload.getFilename());
-                        }
 
-                        URI from = storageInterface.from(execution, fileUpload.getFilename(), tempFile);
-                        return new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString());
-                    } finally {
-                        if (!tempFile.delete()) {
-                            tempFile.deleteOnExit();
-                        }
+                            File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
+                            try (var inputStream = fileUpload.getInputStream();
+                                 var outputStream = new FileOutputStream(tempFile)) {
+                                long transferredBytes = inputStream.transferTo(outputStream);
+                                if (transferredBytes == 0) {
+                                    sink.error(new KestraRuntimeException("Can't upload file: " + fileUpload.getFilename()));
+                                    return;
+                                }
+                                URI from = storageInterface.from(execution, fileUpload.getFilename(), tempFile);
+                                sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
+                            } finally {
+                                if (!tempFile.delete()) {
+                                    tempFile.deleteOnExit();
+                                }
+                            }
+                    } else {
+                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
                     }
-                } else {
-                    return new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes()));
+                } catch (IOException e) {
+                    sink.error(e);
                 }
-            }))
-            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
-            .block();
+            })
+            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
     }
 
     /**
@@ -390,7 +393,7 @@ public class FlowInputOutput {
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
         try {
             return switch (type) {
-                case SELECT, ENUM, STRING -> current;
+                case SELECT, ENUM, STRING, EMAIL -> current;
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
@@ -398,7 +401,8 @@ public class FlowInputOutput {
                     yield EncryptionService.encrypt(secretKey.get(), (String) current);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf((String) current);
-                case FLOAT -> current instanceof Float ? current : Float.valueOf((String) current);
+                // Assuming that after the render we must have a double/int, so we can safely use its toString representation
+                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
                 case DATETIME -> Instant.parse(((String) current));
                 case DATE -> LocalDate.parse(((String) current));

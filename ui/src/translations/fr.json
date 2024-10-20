@@ -873,6 +873,14 @@
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "files": "Fichiers",
     "add-trigger-in-editor": "Ajoutez d'abord un Trigger à votre Flow",
-    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?"
+    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
+    "show task condition": "Afficher la condition de la task",
+    "empty search": "Les résultats de recherche sont vides",
+    "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
+    "pause": "Pause",
+    "bulk pause": "Êtes-vous sûr de vouloir mettre en pause l'exécution de <code>{executionCount}</code> ?",
+    "invalid bulk pause": "Impossible de mettre en pause les exécutions",
+    "pause done": "L'exécution est en PAUSE",
+    "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement."
   }
 }

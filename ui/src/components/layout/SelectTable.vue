@@ -1,15 +1,26 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER" class="position-relative">
-        <div v-if="hasSelection" class="bulk-select-header">
+        <div v-if="hasSelection && data.length" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
-        <el-table ref="table" v-bind="$attrs" :data="data" @selection-change="selectionChanged">
-            <slot name="expand" v-if="expandable" />
-            <el-table-column type="selection" v-if="selectable" />
-            <slot name="default" />
-        </el-table>
+
+        <template v-if="data.length">
+            <el-table
+                ref="table"
+                v-bind="$attrs"
+                :data="data"
+                @selection-change="selectionChanged"
+            >
+                <slot name="expand" v-if="expandable" />
+                <el-table-column type="selection" v-if="selectable" />
+                <slot name="default" />
+            </el-table>
+        </template>
+
+        <el-empty v-else description="No data available" />
     </div>
 </template>
+
 
 <script>
     export default {

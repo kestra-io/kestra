@@ -320,6 +320,24 @@ public class FlowService {
         return source;
     }
 
+    // Used in Git plugin
+    public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
+    }
+
+    // Used in Git plugin
+    public FlowWithSource delete(FlowWithSource flow) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().delete(flow);
+    }
+
     @SneakyThrows
     private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
         String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(object);

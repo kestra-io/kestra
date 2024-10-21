@@ -4,6 +4,7 @@ namespace: io.kestra.tests.trigger
 inputs:
   - id: from_parent
     type: STRING
+    defaults: "default value"
 
 tasks:
   - id: only-listener
@@ -13,8 +14,8 @@ tasks:
 triggers:
   - id: listen-flow
     type: io.kestra.plugin.core.trigger.Flow
-    inputs:
-      from_parent: "{{ trigger.outputs.parent_output }}"
+    # inputs:
+    #  from_parent: "{{ trigger.outputs.parent_output }}"
     conditions:
       - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
         in:

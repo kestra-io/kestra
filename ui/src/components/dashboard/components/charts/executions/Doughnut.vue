@@ -4,7 +4,7 @@
             {{ t("dashboard.total_executions") }}
         </span>
 
-        <div class="d-flex flex-row align-items-center h-100">
+        <div v-if="total > 0" class="d-flex flex-row align-items-center h-100">
             <div class="w-75">
                 <Doughnut
                     :data="parsedData"
@@ -15,8 +15,11 @@
             </div>
             <div id="totals" />
         </div>
+
+        <el-empty v-else description="No data available" />
     </div>
 </template>
+
 
 <script setup>
     import {computed} from "vue";
@@ -35,6 +38,10 @@
     const props = defineProps({
         data: {
             type: Object,
+            required: true,
+        },
+        total: {
+            type: Number,
             required: true,
         },
     });

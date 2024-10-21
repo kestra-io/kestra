@@ -149,7 +149,7 @@ jobs:
       - uses: rlespinasse/github-slug-action@v4
 
       - name: Publish allure report
-        uses: andrcuns/allure-publish-action@v2.7.1
+        uses: andrcuns/allure-publish-action@v2.8.0
         if: ${{ !cancelled() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}

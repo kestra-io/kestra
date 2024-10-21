@@ -106,6 +106,10 @@
         components: {Editor, Crud, Drawer},
         created() {
             this.load();
+            window.addEventListener("resize", this.handleZoomChange);
+        },
+        beforeUnmount() {
+            window.removeEventListener("resize", this.handleZoomChange);
         },
         methods: {
             load() {
@@ -136,6 +140,14 @@
                             );
                         }
                     });
+            },
+            handleZoomChange() {
+                const zoomLevel = window.devicePixelRatio;
+                if (zoomLevel <= 1.3) {
+                    this.sideBySide = true;  
+                } else {
+                    this.sideBySide = false; 
+                }
             },
             revisionIndex(revision) {
                 const rev = parseInt(revision);

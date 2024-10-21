@@ -5,10 +5,18 @@ on:
     types: [opened, synchronize]
     paths:
       - "ui/src/translations/en.json"
-
   push:
     branches:
       - develop
+  workflow_dispatch:
+    inputs:
+      base_branch:
+        description: 'Base branch to compare'
+        required: true
+        default: 'develop'
+      other_input:
+        description: 'Other potential input'
+        required: false
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -98,6 +106,35 @@ jobs:
       - name: Create and push a new branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="generated-translations-${{ github.event.pull_request.head.repo.name }}"
+
+          git checkout -b $BRANCH_NAME
+          git add ui/src/translations/*.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit. Exiting with success."
+            exit 0
+          fi
+          git commit -m "chore(translations): auto generate values for languages other than english"
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: $BRANCH_NAME
+          base: ${{ github.event.inputs.base_branch || 'develop' }}
+          title: 'Add missing translation keys/values'
+          body: 'This PR adds missing translation keys/values.'
+
+  check_ci_status:
+    runs-on: ubuntu-latest
+    needs: pull_request
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check CI status
         run: |
           BRANCH_NAME="generated-translations-${{ github.event.pull_request.head.repo.name }}"
 

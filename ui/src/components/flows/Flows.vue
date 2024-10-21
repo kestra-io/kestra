@@ -86,7 +86,7 @@
                     </el-card>
                 </template>
 
-                <template #table>
+                <template #table v-if="flows.length">
                     <select-table
                         ref="selectTable"
                         :data="flows"

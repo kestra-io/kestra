@@ -14,3 +14,4 @@ outputs:
   - id: value
     value: "{{ outputs.return.value }}"
     type: STRING
+    displayName: Final returned value

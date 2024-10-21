@@ -10,3 +10,4 @@ outputs:
 - id: "key"
   value: "{{ outputs.return }}"
   type: STRING
+  displayName: Final returned value

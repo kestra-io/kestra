@@ -5,6 +5,7 @@ outputs:
   - id: status
     type: STRING
     value: "{{trigger.state}}"
+    displayName: Final returned value
 
 tasks:
   - id: hello

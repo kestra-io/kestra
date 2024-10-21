@@ -20,7 +20,7 @@ class FlowOutputTest extends AbstractMemoryRunnerTest {
     void shouldGetSuccessExecutionForFlowWithOutputs() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, NAMESPACE, "flow-with-outputs", null, null);
         assertThat(execution.getOutputs(), aMapWithSize(1));
-        assertThat(execution.getOutputs().get("key"), is("{\"value\":\"flow-with-outputs\"}"));
+        assertThat(execution.getOutputs().get("key"), is("{\"displayName\":\"Final returned value\",\"value\":\"{\"value\":\"flow-with-outputs\"}\"}"));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 

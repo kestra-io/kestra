@@ -80,18 +80,14 @@
                             </bulk-select>
                         </template>
                         <el-table-column
-                            prop="triggerId"
+                            v-for="column in visibleColumns"
+                            :key="column.prop"
+                            :prop="column.prop"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
-                            :label="$t('id')"
-                        />
-                        <el-table-column
-                            prop="flowId"
-                            sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
-                            :label="$t('flow')"
+                            :label="column.label"
                         >
-                            <template #default="scope">
+                            <template v-if="column.prop === 'flowId'" #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
                                 >
@@ -103,20 +99,7 @@
                                     :title="scope.row.namespace + '.' + scope.row.flowId"
                                 />
                             </template>
-                        </el-table-column>
-                        <el-table-column
-                            prop="namespace"
-                            sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
-                            :label="$t('namespace')"
-                        >
-                            <template #default="scope">
-                                {{ $filters.invisibleSpace(scope.row.namespace) }}
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column :label="$t('current execution')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'executionId'" #default="scope">
                                 <router-link
                                     v-if="scope.row.executionId"
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.executionId}}"
@@ -124,43 +107,40 @@
                                     <id :value="scope.row.executionId" :shrink="true" />
                                 </router-link>
                             </template>
-                        </el-table-column>
-
-                        <el-table-column :label="$t('state')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'executionCurrentState'" #default="scope">
                                 <status
                                     v-if="scope.row.executionCurrentState"
                                     :status="scope.row.executionCurrentState"
                                     size="small"
                                 />
                             </template>
-                        </el-table-column>
-                        <el-table-column prop="workerId" :label="$t('workerId')">
-                            <template #default="scope">
-                                <id
-                                    :value="scope.row.workerId"
-                                    :shrink="true"
-                                />
+                            <template v-else-if="column.prop === 'workerId'" #default="scope">
+                                <id :value="scope.row.workerId" :shrink="true" />
                             </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('date')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'date'" #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.date" />
                             </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('updated date')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'updatedDate'" #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('next execution date')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'nextExecutionDate'" #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('evaluation lock date')">
-                            <template #default="scope">
+                            <template v-else-if="column.prop === 'evaluateRunningDate'" #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
+                            </template>
+                            <template v-else-if="column.prop === 'backfill'" #default="scope">
+                                <span v-if="scope.row.backfill">
+                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                        <play-box />
+                                    </el-tooltip>
+                                    <el-tooltip v-else :content="$t('backfill paused')">
+                                        <pause-box />
+                                    </el-tooltip>
+                                </span>
+                            </template>
+                            <template v-else #default="scope">
+                                {{ scope.row[column.prop] }}
                             </template>
                         </el-table-column>
                         <el-table-column
@@ -197,36 +177,6 @@
                                 </el-button>
                             </template>
                         </el-table-column>
-
-                        <el-table-column :label="$t('backfill')" column-key="backfill">
-                            <template #default="scope">
-                                <span v-if="scope.row.backfill">
-                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                        <play-box />
-                                    </el-tooltip>
-                                    <el-tooltip v-else :content="$t('backfill paused')">
-                                        <pause-box />
-                                    </el-tooltip>
-                                </span>
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column column-key="disable" class-name="row-action">
-                            <template #default="scope">
-                                <el-switch
-                                    v-if="!scope.row.missingSource"
-                                    size="small"
-                                    :active-text="$t('enabled')"
-                                    :model-value="!scope.row.disabled"
-                                    @change="setDisabled(scope.row, $event)"
-                                    class="switch-text"
-                                    :active-action-icon="Check"
-                                />
-                                <el-tooltip v-else :content="'flow source not found'" effect="light">
-                                    <AlertCircle class="trigger-issue-icon" />
-                                </el-tooltip>
-                            </template>
-                        </el-table-column>
                     </select-table>
                 </template>
             </data-table>
@@ -253,8 +203,8 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import Check from "vue-material-design-icons/Check.vue";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
+                        // import Check from "vue-material-design-icons/Check.vue";
+                        // import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
@@ -475,6 +425,25 @@
 
                 const disabled = this.state === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
+            },
+            visibleColumns() {
+                const columns = [
+                    {prop: "triggerId", label: this.$t("id")},
+                    {prop: "flowId", label: this.$t("flow")},
+                    {prop: "namespace", label: this.$t("namespace")},
+                    {prop: "executionId", label: this.$t("current execution")},
+                    {prop: "executionCurrentState", label: this.$t("state")},
+                    {prop: "workerId", label: this.$t("workerId")},
+                    {prop: "date", label: this.$t("date")},
+                    {prop: "updatedDate", label: this.$t("updated date")},
+                    {prop: "nextExecutionDate", label: this.$t("next execution date")},
+                    {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
+                    {prop: "backfill", label: this.$t("backfill")}
+                ];
+
+                return columns.filter(column => {
+                    return this.triggersMerged.some(trigger => trigger[column.prop]);
+                });
             }
         }
     };

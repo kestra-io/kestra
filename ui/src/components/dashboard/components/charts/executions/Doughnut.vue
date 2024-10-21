@@ -16,7 +16,7 @@
             <div id="totals" />
         </div>
 
-        <el-empty v-else description="No data available" />
+        <el-empty v-else :description="$t('no data')" />
     </div>
 </template>
 

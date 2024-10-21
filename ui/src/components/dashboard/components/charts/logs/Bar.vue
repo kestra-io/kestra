@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-        <div class="d-flex flex justify-content-between pb-4">
+        <div class="d-flex justify-content-between pb-4">
             <div>
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("logs") }}</span>
@@ -11,12 +11,17 @@
                 <div id="logs" />
             </div>
         </div>
-        <Bar
-            :data="parsedData"
-            :options="options"
-            :plugins="[barLegend]"
-            class="tall"
-        />
+
+        <div v-if="props.data.length > 0">
+            <Bar
+                :data="parsedData"
+                :options="options"
+                :plugins="[barLegend]"
+                class="tall"
+            />
+        </div>
+
+        <el-empty v-else :description="$t('no result')" />
     </div>
 </template>
 

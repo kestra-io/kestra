@@ -310,6 +310,11 @@
                 this.theme = value;
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             },
+            updateThemeBasedOnSystem() {
+                if (this.theme === "syncWithSystem") {
+                    Utils.switchTheme("syncWithSystem");
+                }
+            },
             onDateFormat(value) {
                 localStorage.setItem(DATE_FORMAT_STORAGE_KEY, value);
                 this.dateFormat = value;
@@ -386,6 +391,10 @@
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             }
         },
+        mounted() {
+            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+            mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
+        },
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
@@ -413,7 +422,8 @@
             themesOptions() {
                 return [
                     {value: "light", text: "Light"},
-                    {value: "dark", text: "Dark"}
+                    {value: "dark", text: "Dark"},
+                    {value: "syncWithSystem", text: "Sync With System"}
                 ]
             },
             editorThemesOptions() {

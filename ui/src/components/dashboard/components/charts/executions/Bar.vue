@@ -1,6 +1,6 @@
 <template>
     <div class="p-4 responsive-container">
-        <div class="d-flex flex-wrap justify-content-between pb-4 info-container">
+        <div v-if="total > 0" class="d-flex flex-wrap justify-content-between pb-4 info-container">
             <div class="info-block">
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("executions") }}</span>
@@ -25,15 +25,18 @@
                 <div id="executions" />
             </div>
         </div>
+
         <Bar
+            v-if="total > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+
+        <el-empty v-else description="No data available" />
     </div>
 </template>
-
 <script setup>
     import {computed, ref, onMounted, onUnmounted} from "vue";
     import {useI18n} from "vue-i18n";

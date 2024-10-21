@@ -183,13 +183,25 @@ export default class Utils {
         // class name
         let htmlClass = document.getElementsByTagName("html")[0].classList;
 
-        htmlClass.forEach((cls) => {
-            if (cls === "dark" || cls === "light") {
+        function removeClasses() 
+        {
+            htmlClass.forEach((cls) => {
+            if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
                 htmlClass.remove(cls);
             }
-        })
+            })
+        }
+        removeClasses();
 
-        htmlClass.add(theme);
+        if(theme === "syncWithSystem") {
+            removeClasses();
+            const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            htmlClass.add(theme, systemTheme);
+        }
+        else {
+            removeClasses();
+            htmlClass.add(theme);
+        }
         localStorage.setItem("theme", theme);
     }
 

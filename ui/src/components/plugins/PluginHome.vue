@@ -176,7 +176,7 @@
 <style scoped lang="scss">
     .headband-row {
         width: 100%;
-        background: url("../../assets/plugins/headband.svg") no-repeat center;
+        background: url("../../assets/plugins/headband.webp") no-repeat center;
         background-size: cover;
         height: 9em;
     }

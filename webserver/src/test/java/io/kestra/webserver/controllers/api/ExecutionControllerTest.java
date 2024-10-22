@@ -1592,4 +1592,16 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
         assertThat(response.getCount(), is(3));
     }
+
+    @Test
+    void shouldRefuseSystemLabels() {
+        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system_label:system", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        ));
+
+        assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
 }

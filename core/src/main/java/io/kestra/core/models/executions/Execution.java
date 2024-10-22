@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
+import static io.kestra.core.models.Label.SYSTEM_PREFIX;
+
 @Builder(toBuilder = true)
 @Slf4j
 @Getter
@@ -76,7 +78,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     Map<String, Object> outputs;
 
-    @With
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     List<Label> labels;
@@ -180,6 +181,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.prebuild();
             return super.build();
         }
+
+        @Override
+        public ExecutionBuilder labels(List<Label> labels) {
+            checkForSystemLabels(labels);
+            return super.labels(labels);
+        }
     }
 
     public Execution withState(State.Type state) {
@@ -195,6 +202,63 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.labels,
             this.variables,
             this.state.withState(state),
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.error
+        );
+    }
+
+    public Execution withLabels(List<Label> labels) {
+        checkForSystemLabels(labels);
+
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            labels,
+            this.variables,
+            this.state,
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.error
+        );
+    }
+
+    private static void checkForSystemLabels(List<Label> labels) {
+        if (labels != null) {
+            Optional<Label> first = labels.stream().filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+            if (first.isPresent()) {
+                throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
+            }
+        }
+    }
+
+    public Execution withSystemLabels(List<Label> labels) {
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            labels,
+            this.variables,
+            this.state,
             this.parentId,
             this.originalId,
             this.trigger,

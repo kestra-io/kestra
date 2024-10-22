@@ -882,6 +882,7 @@
     "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "no_data": "Keine Daten verfügbar"
+    "no_data": "Keine Daten verfügbar",
+    "testing_automation": "Automatisierung"
   }
 }

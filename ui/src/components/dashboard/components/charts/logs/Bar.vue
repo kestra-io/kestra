@@ -12,16 +12,14 @@
             </div>
         </div>
 
-        <div v-if="props.data.length > 0">
-            <Bar
-                :data="parsedData"
-                :options="options"
-                :plugins="[barLegend]"
-                class="tall"
-            />
-        </div>
-
-        <el-empty v-else :description="$t('no result')" />
+        <Bar
+            v-if="props.data.length > 0"
+            :data="parsedData"
+            :options="options"
+            :plugins="[barLegend]"
+            class="tall"
+        />
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
 

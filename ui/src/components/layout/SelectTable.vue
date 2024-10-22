@@ -17,7 +17,7 @@
             </el-table>
         </template>
 
-        <el-empty v-else :description="$t('no data')" />
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
 

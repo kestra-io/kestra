@@ -161,7 +161,7 @@ public class LocalStorage implements StorageInterface {
             }
         }
 
-        return URI.create("kestra://" + uri.getPath());
+        return URI.create("kestra://" + uri.getRawPath());
     }
 
     @Override

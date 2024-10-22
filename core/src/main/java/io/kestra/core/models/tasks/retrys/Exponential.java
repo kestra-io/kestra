@@ -2,6 +2,7 @@ package io.kestra.core.models.tasks.retrys;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import dev.failsafe.RetryPolicyBuilder;
+import io.kestra.core.validations.ExponentialRetryValidation;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@ExponentialRetryValidation
 public class Exponential extends AbstractRetry {
     @NotNull
     @JsonInclude

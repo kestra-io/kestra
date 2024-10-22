@@ -7,16 +7,19 @@
         <div class="d-flex flex-row align-items-center h-100">
             <div class="w-75">
                 <Doughnut
+                    v-if="total > 0"
                     :data="parsedData"
                     :options="options"
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
+                <el-empty v-else :description="$t('no_data')" />
             </div>
             <div id="totals" />
         </div>
     </div>
 </template>
+
 
 <script setup>
     import {computed} from "vue";
@@ -35,6 +38,10 @@
     const props = defineProps({
         data: {
             type: Object,
+            required: true,
+        },
+        total: {
+            type: Number,
             required: true,
         },
     });

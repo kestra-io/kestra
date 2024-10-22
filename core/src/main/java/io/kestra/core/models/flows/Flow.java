@@ -358,4 +358,8 @@ public class Flow extends AbstractFlow {
             .deleted(true)
             .build();
     }
+
+    public FlowWithSource withSource(String source) {
+        return FlowWithSource.of(this, source);
+    }
 }

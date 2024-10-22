@@ -4,4 +4,4 @@ namespace: io.kestra.tests
 tasks:
   - id: sleep
     type: io.kestra.core.tasks.test.Sleep
-    duration: 1000
+    duration: 3000 #30 seconds updated

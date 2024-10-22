@@ -50,7 +50,7 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" />
                             </template>
-                            <el-empty v-else :description="$t('no result')" />
+                            <el-empty v-else :description="$t('no_data')" />
                         </div>
                     </el-card>
                 </template>

@@ -5,18 +5,17 @@ on:
     types: [opened, synchronize]
     paths:
       - "ui/src/translations/en.json"
+
   push:
     branches:
       - develop
+
   workflow_dispatch:
     inputs:
-      base_branch:
+      branch:
         description: 'Base branch to compare'
         required: true
         default: 'develop'
-      other_input:
-        description: 'Other potential input'
-        required: false
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -123,7 +122,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: $BRANCH_NAME
-          base: ${{ github.event.inputs.base_branch || 'develop' }}
+          base: ${{ github.event.inputs.branch }}
           title: 'Add missing translation keys/values'
           body: 'This PR adds missing translation keys/values.'
 

@@ -45,9 +45,9 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             title = """
-                Trigger the transform flow after the extract flow has successfully completed. \
-                The extract flow generates a `last_ingested_date` output that is passed to the \
-                transform flow as an input. Here is the extract flow:
+                Trigger the `transform` flow after the `extract` flow finishes successfully. \
+                The `extract` flow generates a `last_ingested_date` output that is passed to the \
+                `transform` flow as an input. Here is the `extract` flow:
                 ```yaml
                 id: extract
                 namespace: company.team
@@ -62,9 +62,7 @@ import jakarta.validation.constraints.NotNull;
                     type: STRING
                     value: "{{ outputs.final_date.value }}"            
                 ```
-                Below is the transform flow that is triggered after the extract flow has successfully completed. \
-                The `last_ingested_date` output from the extract flow is passed to the \
-                `last_ingested_date` input of the transform flow.""",
+                Below is the `transform` flow triggered in response to the `extract` flow's successful completion.""",
             code = """
                 id: transform
                 namespace: company.team

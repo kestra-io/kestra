@@ -896,6 +896,7 @@
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
     "change_status": "Change status",
-    "files": "Files"
+    "files": "Files",
+    "test": "test"
   }
 }

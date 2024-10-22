@@ -405,8 +405,8 @@ public class FlowInputOutput {
                 case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
                 case DATETIME -> Instant.parse(((String) current));
-                case DATE -> LocalDate.parse(((String) current));
-                case TIME -> LocalTime.parse(((String) current));
+                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(((String) current));
+                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(((String) current));
                 case DURATION -> Duration.parse(((String) current));
                 case FILE -> {
                     URI uri = URI.create(((String) current).replace(File.separator, "/"));

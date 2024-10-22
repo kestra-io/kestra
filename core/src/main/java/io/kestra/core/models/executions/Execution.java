@@ -212,6 +212,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         );
     }
 
+    /**
+     * This method replaces labels with new ones.
+     * It refuses system labels as they must be passed via the withSystemLabels method.
+     */
     public Execution withLabels(List<Label> labels) {
         checkForSystemLabels(labels);
 
@@ -246,7 +250,15 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
     }
 
+    /**
+     * This method in <b>only to be used</b> to add system labels to an execution.
+     * It will not replace exisiting labels but add new one (possibly duplicating).
+     */
     public Execution withSystemLabels(List<Label> labels) {
+        List<Label> newLabels = this.labels == null ? new ArrayList<>() : this.labels;
+        if (labels != null) {
+            newLabels.addAll(labels);
+        }
         return new Execution(
             this.tenantId,
             this.id,
@@ -256,7 +268,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.taskRunList,
             this.inputs,
             this.outputs,
-            labels,
+            newLabels,
             this.variables,
             this.state,
             this.parentId,

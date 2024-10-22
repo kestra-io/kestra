@@ -131,14 +131,12 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                 );
             }));
 
-            return execution.toBuilder()
-                .labels(newLabels.entrySet().stream()
+            return execution.withLabels(newLabels.entrySet().stream()
                     .map(throwFunction(entry -> new Label(
                         entry.getKey(),
                         entry.getValue()
                     )))
-                    .toList())
-                .build();
+                    .toList());
         } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + labels.getClass());
         }

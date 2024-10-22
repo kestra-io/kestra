@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -101,6 +103,9 @@ public class ForEachItemCaseTest {
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow"));
         assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item/executions/.*/tasks/each-split/.*\\.txt"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
+        Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
+        assertThat(correlationId.isPresent(), is(true));
+        assertThat(correlationId.get().value(), is(execution.getId()));
     }
 
     public void forEachItemEmptyItems() throws TimeoutException, URISyntaxException, IOException, QueueException {

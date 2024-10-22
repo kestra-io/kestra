@@ -1,0 +1,11 @@
+id: system-labels
+namespace: io.kestra.tests
+
+labels:
+  system_label: system_key
+  system_id: id
+  another: label
+
+tasks:
+  - type: io.kestra.plugin.core.log.Log
+    message: "bla"

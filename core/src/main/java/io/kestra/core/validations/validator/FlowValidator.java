@@ -1,5 +1,6 @@
 package io.kestra.core.validations.validator;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 @Introspected
@@ -81,6 +84,13 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             if (!duplicates.isEmpty()) {
                 violations.add("Duplicate output with name [" + String.join(", ", duplicates) + "]");
             }
+        }
+
+        // system labels
+        if (value.getLabels() != null) {
+            value.getLabels().stream()
+                .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX))
+                .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
         }
 
         if (!violations.isEmpty()) {

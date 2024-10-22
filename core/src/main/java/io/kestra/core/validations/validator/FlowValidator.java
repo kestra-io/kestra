@@ -1,6 +1,5 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -60,38 +59,28 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         value.allTasksWithChilds()
-            .forEach(
-                task -> {
-                    if (task instanceof ExecutableTask<?> executableTask
-                        && value.getId().equals(executableTask.subflowId().flowId())
-                        && value.getNamespace().equals(executableTask.subflowId().namespace())) {
-                        violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]");
-                    }
-                }
-            );
+            .stream().filter(task -> task instanceof ExecutableTask<?> executableTask
+                && value.getId().equals(executableTask.subflowId().flowId())
+                && value.getNamespace().equals(executableTask.subflowId().namespace()))
+            .forEach(task -> violations.add("Recursive call to flow [" + value.getNamespace() + "." + value.getId() + "]"));
 
         // input unique name
-        if (value.getInputs() != null) {
-            List<String> duplicates = getDuplicates(value.getInputs().stream().map(Data::getId).toList());
-            if (!duplicates.isEmpty()) {
-                violations.add("Duplicate input with name [" + String.join(", ", duplicates) + "]");
-            }
-            checkFlowInputsDependencyGraph(value, violations);
+        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getInputs()).stream().map(Data::getId).toList());
+        if (!duplicateIds.isEmpty()) {
+            violations.add("Duplicate input with name [" + String.join(", ", duplicateIds) + "]");
         }
+        checkFlowInputsDependencyGraph(value, violations);
+
         // output unique name
-        if (value.getOutputs() != null) {
-            List<String> duplicates = getDuplicates(value.getOutputs().stream().map(Data::getId).toList());
-            if (!duplicates.isEmpty()) {
-                violations.add("Duplicate output with name [" + String.join(", ", duplicates) + "]");
-            }
+        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
+        if (!duplicateIds.isEmpty()) {
+            violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
 
         // system labels
-        if (value.getLabels() != null) {
-            value.getLabels().stream()
-                .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX))
-                .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
-        }
+        ListUtils.emptyOnNull(value.getLabels()).stream()
+            .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX))
+            .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

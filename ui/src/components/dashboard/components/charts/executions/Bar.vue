@@ -1,6 +1,6 @@
 <template>
     <div class="p-4 responsive-container">
-        <div v-if="total > 0" class="d-flex flex-wrap justify-content-between pb-4 info-container">
+        <div class="d-flex flex-wrap justify-content-between pb-4 info-container">
             <div class="info-block">
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("executions") }}</span>
@@ -33,7 +33,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-
+        
         <el-empty v-else :description="$t('no data')" />
     </div>
 </template>

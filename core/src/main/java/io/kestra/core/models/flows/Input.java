@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -44,7 +43,6 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
     @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
 })
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Input<T> implements Data {
     @Schema(
         title = "The ID of the input."

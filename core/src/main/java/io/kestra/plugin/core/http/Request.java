@@ -122,20 +122,20 @@ import java.util.OptionalInt;
                       connectionPoolIdleTimeout: PT10S # 0 seconds by default
                       readIdleTimeout: PT10M # 300 seconds by default
                 """
-        ),        
+        ),
         @Example(
             title = "Make a HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
             full = true,
             code = """
                 id: http_post_request_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: payload
                     type: JSON
                     defaults: |
                       {"title": "Kestra Pen"}
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -143,7 +143,7 @@ import java.util.OptionalInt;
                     method: POST
                     contentType: application/json
                     body: "{{ inputs.payload }}"
-                
+
                   - id: print_status
                     type: io.kestra.plugin.core.log.Log
                     message: '{{ outputs.send_data.body }}'
@@ -155,7 +155,7 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_request_example
                 namespace: company.team
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -174,11 +174,11 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_multipart_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: file
                     type: FILE
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -197,11 +197,11 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_multipart_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: file
                     type: FILE
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -222,7 +222,7 @@ import java.util.OptionalInt;
             code = """
                 id: http_upload_image
                 namespace: company.team
-                
+
                 tasks:
                   - id: s3_download
                     type: io.kestra.plugin.aws.s3.Download
@@ -231,7 +231,7 @@ import java.util.OptionalInt;
                     region: "eu-central-1"
                     bucket: "my-bucket"
                     key: "path/to/file/my_image.jpeg"
-                  
+
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
                     uri: "https://server.com/upload"
@@ -253,12 +253,12 @@ import java.util.OptionalInt;
             code = """
                 id: http_csv_file_upload
                 namespace: company.team
-                
+
                 tasks:
                   - id: http_download
                     type: io.kestra.plugin.core.http.Download
                     uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
-                  
+
                   - id: upload
                     type: io.kestra.plugin.core.http.Request
                     uri: "https://server.com/upload"

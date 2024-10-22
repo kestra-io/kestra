@@ -140,7 +140,7 @@
                 </el-card>
             </template>
 
-            <template #table>
+            <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"

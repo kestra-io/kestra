@@ -89,6 +89,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -582,7 +583,8 @@ public class ExecutionController {
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Execution execution = Execution.newExecution(flow, parseLabels(labels));
+        Pair<List<Label>, List<Label>> parsedLabels = parseLabels(labels);
+        Execution execution = Execution.newExecution(flow, parsedLabels.getLeft()).withSystemLabels(parsedLabels.getRight());
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), execution, inputs)
             .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
@@ -603,7 +605,8 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
     ) throws IOException {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Execution current = Execution.newExecution(flow, null, parseLabels(labels), scheduleDate);
+        Pair<List<Label>, List<Label>> parsedLabels = parseLabels(labels);
+        Execution current = Execution.newExecution(flow, null, parsedLabels.getLeft(), scheduleDate).withSystemLabels(parsedLabels.getRight());
         Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
             .handle((executionInputs, sink) -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
@@ -682,10 +685,14 @@ public class ExecutionController {
         }
     }
 
-    private List<Label> parseLabels(List<String> labels) {
-        return labels == null ? null : RequestUtils.toMap(labels).entrySet().stream()
+    protected Pair<List<Label>, List<Label>> parseLabels(List<String> labels) {
+        // We allow passing the correlation id from the API but only this one, other system labels will go throught and fail at execution creation.
+        List<Label> parsedLabels =  labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
+        List<Label> standardLabels = parsedLabels.stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).toList();
+        List<Label> systemLabels = parsedLabels.stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).toList();
+        return Pair.of(standardLabels, systemLabels);
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
@@ -1705,9 +1712,7 @@ public class ExecutionController {
         }
 
         Execution newExecution = execution
-            .toBuilder()
-            .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList())
-            .build();
+            .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());
         eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
 
         return executionRepository.save(newExecution);

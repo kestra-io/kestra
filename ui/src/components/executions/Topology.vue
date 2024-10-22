@@ -252,7 +252,6 @@
             display: flex;
         }
     }
-
     .vueflow {
         height: 100%;
         width: 100%;

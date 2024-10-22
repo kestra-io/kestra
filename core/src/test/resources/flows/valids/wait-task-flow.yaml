@@ -1,0 +1,17 @@
+id: wait-task-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: wait
+    type: io.kestra.plugin.core.debug.Wait
+    delay: PT10S # Waits for 10 seconds before proceeding
+
+  - id: next-task
+    type: io.kestra.plugin.core.scripts.Shell
+    commands:
+      - echo "Wait task completed"
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 * * * *"

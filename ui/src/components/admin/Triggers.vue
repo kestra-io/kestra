@@ -491,7 +491,6 @@
                     {prop: "updatedDate", label: this.$t("updated date")},
                     {prop: "nextExecutionDate", label: this.$t("next execution date")},
                     {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
-                    {prop: "backfill", label: this.$t("backfill")}
                 ];
 
                 return columns.reduce((acc, column) => {

@@ -80,12 +80,14 @@
                             </bulk-select>
                         </template>
                         <el-table-column
+                            v-if="visibleColumns.triggerId"
                             prop="triggerId"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
                         />
                         <el-table-column
+                            v-if="visibleColumns.flowId"
                             prop="flowId"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
@@ -105,6 +107,7 @@
                             </template>
                         </el-table-column>
                         <el-table-column
+                            v-if="visibleColumns.namespace"
                             prop="namespace"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
@@ -115,7 +118,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column :label="$t('current execution')">
+                        <el-table-column v-if="visibleColumns.executionId" :label="$t('current execution')">
                             <template #default="scope">
                                 <router-link
                                     v-if="scope.row.executionId"
@@ -126,7 +129,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column :label="$t('state')">
+                        <el-table-column v-if="visibleColumns.executionCurrentState" :label="$t('state')">
                             <template #default="scope">
                                 <status
                                     v-if="scope.row.executionCurrentState"
@@ -135,7 +138,7 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column prop="workerId" :label="$t('workerId')">
+                        <el-table-column v-if="visibleColumns.workerId" prop="workerId" :label="$t('workerId')">
                             <template #default="scope">
                                 <id
                                     :value="scope.row.workerId"
@@ -143,22 +146,22 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('date')">
+                        <el-table-column v-if="visibleColumns.date" :label="$t('date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.date" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('updated date')">
+                        <el-table-column v-if="visibleColumns.updatedDate" :label="$t('updated date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('next execution date')">
+                        <el-table-column v-if="visibleColumns.nextExecutionDate" :label="$t('next execution date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('evaluation lock date')">
+                        <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
                             </template>
@@ -475,6 +478,26 @@
 
                 const disabled = this.state === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
+            },
+            visibleColumns() {
+                const columns = [
+                    {prop: "triggerId", label: this.$t("id")},
+                    {prop: "flowId", label: this.$t("flow")},
+                    {prop: "namespace", label: this.$t("namespace")},
+                    {prop: "executionId", label: this.$t("current execution")},
+                    {prop: "executionCurrentState", label: this.$t("state")},
+                    {prop: "workerId", label: this.$t("workerId")},
+                    {prop: "date", label: this.$t("date")},
+                    {prop: "updatedDate", label: this.$t("updated date")},
+                    {prop: "nextExecutionDate", label: this.$t("next execution date")},
+                    {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
+                    {prop: "backfill", label: this.$t("backfill")}
+                ];
+
+                return columns.reduce((acc, column) => {
+                    acc[column.prop] = this.triggersMerged.some(trigger => trigger[column.prop]);
+                    return acc;
+                }, {});
             }
         }
     };

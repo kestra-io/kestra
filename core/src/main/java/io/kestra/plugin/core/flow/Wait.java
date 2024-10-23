@@ -1,4 +1,4 @@
-package io.kestra.plugin.core.debug;
+package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;

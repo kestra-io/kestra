@@ -147,6 +147,8 @@
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
+    #{--bs-link-color}:#A084E8;
+    #{--bs-link-color-rgb}: to-rgb(#A084E8);
 
     #{--bs-border-info}: var(--border-information);
     #{--bs-border-running}: var(--border-running);

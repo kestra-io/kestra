@@ -32,6 +32,7 @@ public class TemplateValidateCommand extends AbstractValidateCommand {
                 Template template = (Template) object;
                 return template.getNamespace() + " / " + template.getId();
             },
+            (Object object) -> Collections.emptyList(),
             (Object object) -> Collections.emptyList()
         );
     }

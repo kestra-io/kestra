@@ -34,7 +34,7 @@
             class="tall"
         />
         
-        <el-empty v-else :description="$t('no data')" />
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
 <script setup>

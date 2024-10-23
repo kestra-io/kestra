@@ -686,7 +686,7 @@ public class ExecutionController {
     }
 
     protected Pair<List<Label>, List<Label>> parseLabels(List<String> labels) {
-        // We allow passing the correlation id from the API but only this one, other system labels will go throught and fail at execution creation.
+        // We allow passing the correlation id from the API but only this one, other system labels will go through and fail at execution creation.
         List<Label> parsedLabels =  labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();

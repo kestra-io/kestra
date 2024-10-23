@@ -881,6 +881,8 @@
     "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
     "invalid bulk pause": "无法暂停执行",
     "pause done": "执行已PAUSED",
-    "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。"
+    "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "no_data": "无可用数据",
+    "informative notice": "注意事项"
   }
 }

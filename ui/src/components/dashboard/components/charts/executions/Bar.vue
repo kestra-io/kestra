@@ -25,15 +25,18 @@
                 <div id="executions" />
             </div>
         </div>
+
         <Bar
+            v-if="total > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+        
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
-
 <script setup>
     import {computed, ref, onMounted, onUnmounted} from "vue";
     import {useI18n} from "vue-i18n";

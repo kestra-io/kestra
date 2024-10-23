@@ -296,4 +296,18 @@ class FlowServiceTest {
     void checkAllowedAllNamespaces() {
         flowService.checkAllowedAllNamespaces("tenant", "fromTenant", "fromNamespace");
     }
+
+    @Test
+    void delete() {
+        Flow flow = create("deleteTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        flowService.delete(saved);
+    }
+
+    @Test
+    void findByNamespacePrefix() {
+        Flow flow = create("findByTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        assertThat(flowService.findByNamespacePrefix(null, "io.kestra").size(), is(1));
+    }
 }

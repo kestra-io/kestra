@@ -28,8 +28,8 @@ html.dark {
     #{--bs-border-secondary-color}: #2F3342;
     #{--bs-secondary}: #E3DBFF;
     #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
-    #{--bs-link-color}: $secondary;
-    #{--bs-link-color-rgb}: to-rgb($secondary);
+    #{--bs-link-color}: #E1DAF8;
+    #{--bs-link-color-rgb}: to-rgb(#E1DAF8);
     #{--bs-tertiary-color}: #C3BBE3;
 
     $levels: info, running, danger, warning;

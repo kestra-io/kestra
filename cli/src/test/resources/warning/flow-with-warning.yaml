@@ -5,3 +5,6 @@ tasks:
   - id: deprecated
     type: io.kestra.plugin.core.debug.Echo
     format: Hello World
+  - id: alias
+    type: io.kestra.core.tasks.log.Log
+    message: I'm an alias

@@ -301,7 +301,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="scope.row.labels" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -438,7 +438,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -629,6 +629,7 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -709,6 +710,17 @@
             });
         },
         methods: {
+            filteredLabels(labels) {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return labels?.filter(label => {
+                    // Check if the label key matches any prefix but allow it if it's in the query
+                    return !toIgnore.some(prefix => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
+                });
+            },
             executionParams(row) {
                 return {
                     namespace: row.namespace,

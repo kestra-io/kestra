@@ -3,5 +3,5 @@ namespace: io.kestra.tests
 
 tasks:
   - id: sleep
-    type: io.kestra.core.tasks.test.Sleep
+    type: io.kestra.plugin.core.flow.Sleep
     duration: 1000

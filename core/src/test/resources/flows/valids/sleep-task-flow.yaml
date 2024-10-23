@@ -1,9 +1,9 @@
-id: wait-task-flow
+id: sleep-task-flow
 namespace: io.kestra.tests
 
 tasks:
-  - id: wait
-    type: io.kestra.plugin.core.flow.Wait
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
     delay: PT10S # Waits for 10 seconds before proceeding
 
   - id: next-task

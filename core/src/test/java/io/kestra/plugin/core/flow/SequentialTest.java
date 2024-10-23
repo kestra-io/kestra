@@ -22,7 +22,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void waitTaskTest() throws TimeoutException, QueueException {
+    void sleepTaskTest() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "wait-task-flow");
 
         // Assert that the execution state is SUCCESS after the wait task completes

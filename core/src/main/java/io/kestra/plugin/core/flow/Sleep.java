@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
         )
     }
 )
-public class Wait extends Task {
+public class Sleep extends Task {
     @Schema(
         title = "Duration to wait",
         description = "The time duration in ISO-8601 format (e.g., `PT5S` for 5 seconds)."

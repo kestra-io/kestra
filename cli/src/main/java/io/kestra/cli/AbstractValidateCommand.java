@@ -1,6 +1,5 @@
 package io.kestra.cli;
 
-import io.kestra.cli.commands.flows.FlowValidateCommand;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.YamlFlowParser;
@@ -75,7 +74,8 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         YamlFlowParser yamlFlowParser,
         ModelValidator modelValidator,
         Function<Object, String> identity,
-        Function<Object, List<String>> warningsFunction
+        Function<Object, List<String>> warningsFunction,
+        Function<Object, List<String>> infosFunction
     ) throws Exception {
         super.call();
 
@@ -93,6 +93,8 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                             stdOut("@|green \u2713|@ - " + identity.apply(parse));
                             List<String> warnings = warningsFunction.apply(parse);
                             warnings.forEach(warning -> stdOut("@|bold,yellow \u26A0|@ - " + warning));
+                            List<String> infos = infosFunction.apply(parse);
+                            infos.forEach(info -> stdOut("@|bold,blue \u2139|@ - " + info));
                         } catch (ConstraintViolationException e) {
                             stdErr("@|red \u2718|@ - " + path);
                             AbstractValidateCommand.handleException(e, clsName);

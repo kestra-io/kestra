@@ -167,5 +167,12 @@ code {
 .inprogress {
     --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
+    & a {
+        color: #8e71f7;
+
+        html.dark & {
+            color: #e0e0fc;
+        }
+    }
 }
 </style>

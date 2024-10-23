@@ -7,7 +7,7 @@
         <div class="pt-4">
             <el-table
                 :data="executions.results"
-                class="inprogress"
+                class="nextscheduled"
                 :height="240"
             >
                 <el-table-column class-name="next-toggle" width="50">
@@ -211,9 +211,16 @@ code {
     color: var(--bs-code-color);
 }
 
-.inprogress {
+.nextscheduled {
     --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
+    & a {
+        color: #8e71f7;
+
+        html.dark & {
+            color: #e0e0fc;
+        }
+    }
 }
 
 .next-toggle {

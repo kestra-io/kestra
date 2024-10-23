@@ -5,5 +5,6 @@ public enum SchemaType {
     template,
     task,
     trigger,
-    plugindefault
+    plugindefault,
+    apps
 }

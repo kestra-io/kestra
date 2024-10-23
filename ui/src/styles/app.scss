@@ -111,3 +111,24 @@ main {
     }
 }
 
+// full page
+html.full-screen {
+    --menu-width: 0;
+
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #app {
+
+        height: 100%;
+        main {
+            transition: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+    }
+}

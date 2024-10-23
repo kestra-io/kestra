@@ -275,7 +275,8 @@ export default {
                     }
                 }
 
-                commit("setFilePreview", data)
+                commit("setFilePreview", data);
+                return data;
             })
         },
         setLabels(_, options) {

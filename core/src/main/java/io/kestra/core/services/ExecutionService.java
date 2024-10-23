@@ -15,7 +15,6 @@ import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -97,18 +96,23 @@ public class ExecutionService {
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
 
-    public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId) {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenant, executionId);
-        if (maybeExecution.isEmpty()) {
-            throw new NoSuchElementException("Execution '"+ executionId + "' not found.");
-        }
+    public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
+        Execution execution = getExecution(tenant, executionId, withACL);
 
-        var execution = maybeExecution.get();
         if (!execution.getState().isPaused()) {
             throw new IllegalStateException("Execution '"+ executionId + "' is not paused, can't resume it");
         }
 
         return execution;
+    }
+
+    public Execution getExecution(final String tenant, final @NotNull String executionId, boolean withACL) {
+        Optional<Execution> maybeExecution = withACL ?
+            executionRepository.findById(tenant, executionId) :
+            executionRepository.findByIdWithoutAcl(tenant, executionId);
+
+        return maybeExecution
+            .orElseThrow(() -> new NoSuchElementException("Execution '"+ executionId + "' not found."));
     }
 
     /**
@@ -456,7 +460,28 @@ public class ExecutionService {
     }
 
     /**
+     * Validates the inputs for an execution to be resumed.
+     * <p>
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
+     * @param flow      the flow of the execution
+     * @return the execution in the new state.
+     */
+    public Mono<List<InputAndValue>> validateForResume(final Execution execution, Flow flow) {
+        return getFirstPausedTaskOr(execution, flow)
+            .flatMap(task -> {
+                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), execution, Map.of()));
+                } else {
+                    return Mono.just(Collections.emptyList());
+                }
+            });
+    }
+
+    /**
      * Resume a paused execution to a new state.
+     * <p>
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume

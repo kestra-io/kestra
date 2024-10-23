@@ -881,6 +881,8 @@
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
-    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。"
+    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "no_data": "データがありません",
+    "informative notice": "注記"
   }
 }

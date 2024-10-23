@@ -121,7 +121,7 @@ public class FileChangedEventListener {
                 WatchEvent.Kind<?> kind = watchEvent.kind();
                 Path entry = (Path) watchEvent.context();
 
-                if (entry.endsWith(".yml") || entry.endsWith(".yaml")) {
+                if (entry.toString().endsWith(".yml") || entry.toString().endsWith(".yaml")) {
 
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
 

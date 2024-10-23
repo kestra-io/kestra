@@ -67,7 +67,8 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
 
     @Builder.Default
     @Schema(
-        title = "Whether to set the task state to `WARNING` if any `stdErr` is emitted."
+        title = "Whether to set the task state to `WARNING` when any `stdErr` output is detected.",
+        description = "Note that a script error will set the state to `FAILED` regardless."
     )
     @PluginProperty
     @NotNull

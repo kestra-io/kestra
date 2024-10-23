@@ -86,7 +86,7 @@
                     </el-card>
                 </template>
 
-                <template #table>
+                <template #table v-if="flows.length">
                     <select-table
                         ref="selectTable"
                         :data="flows"
@@ -604,4 +604,18 @@
     .flow-id {
         min-width: 200px;
     }
+    :deep(.el-select),
+    :deep(.el-select-dropdown),
+    :deep(.label-filter),
+    :deep(.namespace-select),
+    :deep(.search-field) {
+        .el-input__inner,
+        .el-input__wrapper,
+        .el-select-dropdown__item,
+        .el-tag,
+        input {
+            font-size: 16px; 
+        }
+    }
+
 </style>

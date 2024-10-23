@@ -140,7 +140,7 @@
                     id: "marker-custom",
                     type: MarkerType.ArrowClosed,
                 },
-                type: "smoothstep"
+                type: "bezier"
             }]);
         }
 

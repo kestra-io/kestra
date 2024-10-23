@@ -883,6 +883,6 @@
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
     "no_data": "No hay datos disponibles",
-    "informative notice": "Aviso(s) informativo(s)"
+    "informative notice": "Nota(s)"
   }
 }

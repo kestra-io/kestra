@@ -1,7 +1,0 @@
-id: sleep-task-flow
-namespace: io.kestra.tests
-
-tasks:
-  - id: sleep
-    type: io.kestra.core.tasks.scripts.Bash
-    script: sleep 30

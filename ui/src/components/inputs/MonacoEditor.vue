@@ -103,7 +103,7 @@
             },
             creating: {
                 type: Boolean,
-                default: false        
+                default: false
             }
         },
         emits: ["editorDidMount", "change"],
@@ -258,7 +258,8 @@
                                 suggestionFor("labels"),
                                 suggestionFor("envs"),
                                 suggestionFor("globals"),
-                                suggestionFor("parents")
+                                suggestionFor("parents"),
+                                suggestionFor("error")
                             ]
                         };
                     }
@@ -304,7 +305,7 @@
             }
 
             // Expose paste function globally for testing
-            window.pasteToEditor = (textToPaste) => {               
+            window.pasteToEditor = (textToPaste) => {
                 this.editor.executeEdits("", [
                     {
                         range: this.editor.getSelection(),
@@ -546,6 +547,9 @@
                 case "task":
                     autocompletions = ["id", "type"];
                     break;
+                case "error":
+                    autocompletions = ["taskId"];
+                    break;
                 default: {
                     let match = field.match(/^outputs\.([^.]+)$/);
                     if (match) {
@@ -728,6 +732,6 @@
     @import "../../styles/layout/root-dark.scss";
 
     .custom-dark-vs-theme .monaco-editor .sticky-widget {
-        background-color: $input-bg;        
+        background-color: $input-bg;
     }
 </style>

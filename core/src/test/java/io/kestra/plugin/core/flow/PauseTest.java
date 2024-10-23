@@ -216,7 +216,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
                 flow,
                 State.Type.RUNNING,
                 Flux.just(part1, part2)
-            );
+            ).block();
 
             execution = runnerUtils.awaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
@@ -243,7 +243,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
             ConstraintViolationException e = assertThrows(
                 ConstraintViolationException.class,
-                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty())
+                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty()).block()
             );
 
             assertThat(e.getMessage(), containsString("Invalid input for `asked`, missing required input, but received `null`"));

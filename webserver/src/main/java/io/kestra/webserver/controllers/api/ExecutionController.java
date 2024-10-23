@@ -7,7 +7,14 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.*;
+import io.kestra.core.models.executions.ExecutionError;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.FlowScope;
+import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -44,9 +51,21 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
-import io.micronaut.http.*;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -64,7 +83,8 @@ import jakarta.inject.Named;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -86,12 +106,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
-import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 @Validated
@@ -559,24 +581,11 @@ public class ExecutionController {
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
-        return Mono.create(
-            sink -> {
-                Flow flow;
-                try {
-                    flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-                } catch (IllegalStateException e) {
-                    sink.error(new IllegalStateException("Cannot validate execution inputs. Cause: " + e.getMessage()));
-                    return;
-                }
-
-                try {
-                    Execution execution = Execution.newExecution(flow, parseLabels(labels));
-                    List<InputAndValue> values = flowInputOutput.validateExecutionInputs(flow.getInputs(), execution, inputs);
-                    sink.success(ApiValidateExecutionInputsResponse.of(id, namespace, values));
-                } catch (Exception e) {
-                    sink.error(e);
-                }
-            });
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
+        Execution execution = Execution.newExecution(flow, parseLabels(labels));
+        return flowInputOutput
+            .validateExecutionInputs(flow.getInputs(), execution, inputs)
+            .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -593,49 +602,39 @@ public class ExecutionController {
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision,
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
     ) throws IOException {
-        return Mono.create(
-            sink -> {
-
-                Flow flow;
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
+        Execution current = Execution.newExecution(flow, null, parseLabels(labels), scheduleDate);
+        Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
+            .handle((executionInputs, sink) -> {
+                Execution executionWithInputs = current.withInputs(executionInputs);
                 try {
-                    flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-                } catch (IllegalStateException e) {
-                    sink.error(new IllegalStateException("Cannot execute flow. Cause: " + e.getMessage()));
-                    return;
-                }
+                    executionQueue.emit(executionWithInputs);
+                    eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
-                try {
-                    Execution current = Execution.newExecution(
-                        flow,
-                        throwBiFunction((f, execution) -> flowInputOutput.readExecutionInputs(f, execution, inputs)),
-                        parseLabels(labels),
-                        scheduleDate
-                    );
-
-                    executionQueue.emit(current);
-                    eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
-
+                    CompletableFuture<ExecutionResponse> future = new CompletableFuture<>();
                     if (!wait) {
-                        sink.success(ExecutionResponse.fromExecution(current, executionUrl(current)));
+                        future.complete(ExecutionResponse.fromExecution(executionWithInputs, executionUrl(executionWithInputs)));
                     } else {
-                        Runnable receive = this.executionQueue.receive(either -> {
+                        final AtomicReference<Runnable> disposable = new AtomicReference<>();
+                        disposable.set(this.executionQueue.receive(either -> {
                             if (either.isRight()) {
                                 log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
-                                sink.success();
+                                sink.complete();
                             }
 
                             Execution item = either.getLeft();
-                            if (item.getId().equals(current.getId()) && this.isStopFollow(flow, item)) {
-                                sink.success(ExecutionResponse.fromExecution(item, executionUrl(item)));
+                            if (item.getId().equals(executionWithInputs.getId()) && this.isStopFollow(flow, item)) {
+                                disposable.get().run();
+                                future.complete(ExecutionResponse.fromExecution(item, executionUrl(item)));
                             }
-                        });
-
-                        sink.onDispose(receive::run);
+                        }));
                     }
-                } catch (IOException | QueueException e) {
-                    sink.error(new RuntimeException(e));
+                    sink.next(future);
+                } catch (QueueException e) {
+                    sink.error(e);
                 }
             });
+        return handle.flatMap(Mono::fromFuture);
     }
 
     private URI executionUrl(Execution execution) {
@@ -652,8 +651,8 @@ public class ExecutionController {
         private final URI url;
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
-        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, URI url) {
-            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate);
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, ExecutionError error, URI url) {
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, error);
 
             this.url = url;
         }
@@ -677,6 +676,7 @@ public class ExecutionController {
                 execution.isDeleted(),
                 execution.getMetadata(),
                 execution.getScheduleDate(),
+                execution.getError(),
                 url
             );
         }
@@ -694,18 +694,20 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
         }
 
-        String flowId = execution.get().getFlowId();
-        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
-        if (flow.isEmpty()) {
-            throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
-        }
-
         String prefix = StorageContext
             .forExecution(execution.get())
             .getExecutionStorageURI().getPath();
 
         if (path.getPath().startsWith(prefix)) {
             return null;
+        }
+
+        // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
+        // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
+        String flowId = execution.get().getFlowId();
+        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
+        if (flow.isEmpty()) {
+            throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
         }
 
         // maybe state
@@ -1078,7 +1080,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return changeStatusById(ids, newStatus);
     }
@@ -1183,17 +1186,14 @@ public class ExecutionController {
     public Publisher<ApiValidateExecutionInputsResponse>  validateInputsOnResume(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
-    ) throws Exception {
-        return Mono.<ApiValidateExecutionInputsResponse>create(sink -> {
-            try {
-                Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
-                Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
-                List<InputAndValue> values = this.executionService.validateForResume(execution, flow, inputs);
-                sink.success(ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), values));
-            } catch (Exception e) {
-                sink.error(new RuntimeException(e));
-            }
-        }).doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast()); // need to consume the inputs in case of error
+    ) {
+        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+
+        return executionService.validateForResume(execution, flow, inputs)
+            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), values))
+            // need to consume the inputs in case of error
+            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1206,19 +1206,20 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
     ) throws Exception {
-        return Mono.<HttpResponse<?>>create(sink -> {
-            try {
-                Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
-                Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
-                Execution resumeExecution = this.executionService.resume(execution, flow, State.Type.RUNNING, inputs);
-                this.executionQueue.emit(resumeExecution);
-                sink.success(HttpResponse.noContent());
-            } catch (IllegalStateException | NoSuchElementException e) {
-                sink.error(e);
-            } catch (Exception e) {
-                sink.error(new RuntimeException(e));
-            }
-        }).doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast()); // need to consume the inputs in case of error
+        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+
+        return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs)
+            .<HttpResponse<?>>handle((resumeExecution, sink) -> {
+                try {
+                    this.executionQueue.emit(resumeExecution);
+                    sink.next(HttpResponse.noContent());
+                } catch (QueueException e) {
+                    sink.error(e);
+                }
+            })
+            // need to consume the inputs in case of error
+            .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1312,9 +1313,118 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return resumeByIds(ids);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/pause")
+    @Operation(tags = {"Executions"}, summary = "Pause a running execution.")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the executions is not running")
+    public void pause(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws Exception {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        Execution pausedExecution = this.executionService.pause(execution);
+        this.executionQueue.emit(pausedExecution);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/pause/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Pause a list of running executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Paused with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> pauseByIds(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) throws Exception {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+            if (execution.isPresent() && !execution.get().getState().isRunning()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not in state RUNNING",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk pause")
+                .invalids(invalids)
+                .build()
+            );
+        }
+
+        for (Execution execution : executions) {
+            Execution pausedExecution = this.executionService.pause(execution);
+            this.executionQueue.emit(pausedExecution);
+        }
+
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/pause/by-query")
+    @Operation(tags = {"Executions"}, summary = "Pause executions filter by query parameters")
+    public HttpResponse<?> pauseByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+    ) throws Exception {
+        validateTimeline(startDate, endDate);
+
+        var ids = executionRepository
+            .find(
+                query,
+                tenantService.resolveTenant(),
+                scope,
+                namespace,
+                flowId,
+                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+                endDate,
+                state,
+                RequestUtils.toMap(labels),
+                triggerExecutionId,
+                childFilter
+            )
+            .map(Execution::getId)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        return pauseByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1354,7 +1464,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return killByIds(ids);
     }
@@ -1396,7 +1507,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return replayByIds(ids);
     }
@@ -1689,7 +1801,8 @@ public class ExecutionController {
             )
             .map(Execution::getId)
             .collectList()
-            .block();
+            .blockOptional()
+            .orElse(Collections.emptyList());
 
         return setLabelsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }

@@ -30,6 +30,7 @@
             :schema="schema"
             :required="isRequired(key)"
             :definitions="definitions"
+            :min="getExclusiveMinimum(key)"
         />
     </el-form-item>
 </template>
@@ -59,7 +60,6 @@
                     const properties = this.schema.properties
                     return this.sortProperties(properties)
                 }
-
                 return undefined;
             }
         },
@@ -123,6 +123,11 @@
                     (schema.description ? schema.description : "")
                 );
             },
+            getExclusiveMinimum(key) {
+                const property = this.schema.properties[key];
+                const propertyHasExclusiveMinimum = property && property.exclusiveMinimum
+                return propertyHasExclusiveMinimum ? property.exclusiveMinimum : null;
+            }
         },
     };
 </script>

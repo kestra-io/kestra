@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting an issue! Please provide a [Minima Reproducible Example](https://stackoverflow.com/help/minimal-reproducible-example) 
+        Thanks for reporting an issue! Please provide a [Minimal Reproducible Example](https://stackoverflow.com/help/minimal-reproducible-example) 
         and share any additional information that may help reproduce, troubleshoot, and hopefully fix the issue, including screenshots, error traceback, and your Kestra server logs.
         NOTE: If your issue is more of a question, please ping us directly on [Slack](https://kestra.io/slack).
   - type: textarea

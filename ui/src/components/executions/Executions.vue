@@ -143,7 +143,7 @@
             <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
-                    :data="executions"
+                    :data="filteredExecutions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     stripe
                     table-layout="auto"
@@ -438,7 +438,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -629,6 +629,19 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            ...mapGetters("misc", ["configs"]),
+            filteredExecutions() {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return this.executions.filter(execution => {
+                    return !execution.labels?.some(label => {
+                        // Check if the label key matches any prefix, but allow if it's in the query
+                        return toIgnore.some(prefix => label.key.startsWith(prefix)) && !allowedLabels.includes(label.key);
+                    });
+                });
+            },
             routeInfo() {
                 return {
                     title: this.$t("executions")

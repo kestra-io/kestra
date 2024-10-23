@@ -4,11 +4,6 @@ namespace: io.kestra.tests
 tasks:
   - id: sleep
     type: io.kestra.plugin.core.flow.Sleep
-    delay: PT10S # Waits for 10 seconds before proceeding
-
-  - id: next-task
-    type: io.kestra.plugin.core.scripts.Shell
-    commands:
-      - echo "Wait task completed"
+    duration: PT2S
 
 

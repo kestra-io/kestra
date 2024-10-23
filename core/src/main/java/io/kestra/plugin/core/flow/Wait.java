@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
         @Example(
             code = """
                 id: wait
-                type: io.kestra.plugin.core.debug.Wait
+                type: io.kestra.plugin.core.flow.Wait
                 duration: "PT5S"
             """
         )

@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: wait
-    type: io.kestra.plugin.core.debug.Wait
+    type: io.kestra.plugin.core.flow.Wait
     delay: PT10S # Waits for 10 seconds before proceeding
 
   - id: next-task

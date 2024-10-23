@@ -529,7 +529,7 @@
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
     "warning detected": "Warning(s) detected",
-    "informative notice": "Informative notice(s)",
+    "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
     "open": "Open",

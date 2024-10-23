@@ -1,7 +1,7 @@
-import org.siouan.frontendgradleplugin.infrastructure.gradle.RunNpm
+import org.siouan.frontendgradleplugin.infrastructure.gradle.RunNpmTaskType
 
 plugins {
-    id 'org.siouan.frontend-jdk17'
+    id 'org.siouan.frontend-jdk21'
 }
 
 publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
@@ -28,12 +28,12 @@ tasks.named('assembleFrontend') {
     outputs.dir('../webserver/src/main/resources/ui')
 }
 
-final linterTask = tasks.register('lintFrontend', RunNpm) {
+final linterTask = tasks.register('lintFrontend', RunNpmTaskType) {
     dependsOn tasks.named('installFrontend')
     group 'Frontend'
     description 'Lints the frontend source code.'
 
-    script = 'run test:lint'
+    args = 'run test:lint'
 }
 
 check.dependsOn linterTask

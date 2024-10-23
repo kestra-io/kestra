@@ -27,7 +27,7 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto  py-2 px-4 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto py-2 px-4 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">

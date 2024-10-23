@@ -143,7 +143,7 @@
             <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
-                    :data="filteredExecutions"
+                    :data="executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     stripe
                     table-layout="auto"
@@ -301,7 +301,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="scope.row.labels" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -630,18 +630,6 @@
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
             ...mapGetters("misc", ["configs"]),
-            filteredExecutions() {
-                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
-                // Extract only the keys from the route query labels
-                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
-
-                return this.executions.filter(execution => {
-                    return !execution.labels?.some(label => {
-                        // Check if the label key matches any prefix, but allow if it's in the query
-                        return toIgnore.some(prefix => label.key.startsWith(prefix)) && !allowedLabels.includes(label.key);
-                    });
-                });
-            },
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -722,6 +710,17 @@
             });
         },
         methods: {
+            filteredLabels(labels) {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return labels?.filter(label => {
+                    // Check if the label key matches any prefix but allow it if it's in the query
+                    return !toIgnore.some(prefix => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
+                });
+            },
             executionParams(row) {
                 return {
                     namespace: row.namespace,

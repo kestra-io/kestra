@@ -163,6 +163,8 @@
             border-left: 4px solid var(--bs-border-color);
         }
 
+        strong > code,
+        li > code,
         td > code,
         p > code{
             border-radius: var(--bs-border-radius-sm);

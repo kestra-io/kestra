@@ -331,6 +331,8 @@ dependencyCheck {
 
     // configure a suppression file
     suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
+
+    nvd.apiKey = System.getenv("NVD_API_KEY")
 }
 
 /**********************************************************************************************************************\

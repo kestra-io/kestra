@@ -707,9 +707,9 @@
           }
         },
         "save": {
-          "label": "Sauvegarder les préférences",
+          "label": "Enregistrer les préférences",
           "fields": {
-            "name": "Sauvegarder les modifications"
+            "name": "Enregistrer les modifications"
           }
         }
       }

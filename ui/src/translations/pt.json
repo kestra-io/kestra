@@ -707,9 +707,9 @@
           }
         },
         "save": {
-          "label": "Salvar preferências",
+          "label": "Salvar Preferências",
           "fields": {
-            "name": "Salvar alterações"
+            "name": "Salvar Alterações"
           }
         }
       }

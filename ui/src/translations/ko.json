@@ -705,6 +705,12 @@
             "flows": "모든 Flow 내보내기",
             "templates": "모든 템플릿 내보내기"
           }
+        },
+        "save": {
+          "label": "환경 설정 저장",
+          "fields": {
+            "name": "변경 사항 저장"
+          }
         }
       }
     },
@@ -882,6 +888,7 @@
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
-    "no_data": "데이터가 없습니다"
+    "no_data": "데이터가 없습니다",
+    "informative notice": "노트(s)"
   }
 }

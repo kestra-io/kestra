@@ -13,10 +13,12 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.storages.Storage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.stream.Streams;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public final class ExecutableUtils {
@@ -91,6 +93,14 @@ public final class ExecutableUtils {
             "flowRevision", currentFlow.getRevision()
         );
 
+        // propagate system labels and compute correlation ID if not already existing
+        List<Label> systemLabels = Streams.of(currentExecution.getLabels())
+            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+            .collect(Collectors.toList());
+        if (systemLabels.stream().noneMatch(label -> label.key().equals(Label.CORRELATION_ID))) {
+            systemLabels.add(new Label(Label.CORRELATION_ID, currentExecution.getId()));
+        }
+
         FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
         Instant scheduleOnDate = scheduleDate != null ? scheduleDate.as(runContext, ZonedDateTime.class).toInstant() : null;
         Execution execution = Execution
@@ -105,7 +115,8 @@ public final class ExecutableUtils {
                 .variables(variables)
                 .build()
             )
-            .withScheduleDate(scheduleOnDate);
+            .withScheduleDate(scheduleOnDate)
+            .withSystemLabels(systemLabels);
         return SubflowExecution.builder()
             .parentTask(currentTask)
             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))

@@ -705,6 +705,12 @@
             "flows": "Exportar Todos os Flows",
             "templates": "Exportar Todos os Templates"
           }
+        },
+        "save": {
+          "label": "Salvar Preferências",
+          "fields": {
+            "name": "Salvar Alterações"
+          }
         }
       }
     },
@@ -882,6 +888,7 @@
     "invalid bulk pause": "Não foi possível pausar as execuções",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "no_data": "Sem dados disponíveis"
+    "no_data": "Sem dados disponíveis",
+    "informative notice": "Nota(s)"
   }
 }

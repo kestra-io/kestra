@@ -529,6 +529,7 @@
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
     "warning detected": "Warning(s) detected",
+    "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
     "open": "Open",
@@ -741,6 +742,12 @@
           "fields": {
             "flows": "Export All Flows",
             "templates": "Export All Templates"
+          }
+        },
+        "save": {
+          "label": "Save Preferences",
+          "fields": {
+            "name": "Save Changes"
           }
         }
       }

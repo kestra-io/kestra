@@ -887,6 +887,8 @@
     "bulk pause": "Sei sicuro di voler mettere in pausa l'esecuzione di <code>{executionCount}</code>?",
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
     "pause done": "L'esecuzione è PAUSED",
-    "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente."
+    "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
+    "no_data": "Nessun dato disponibile",
+    "informative notice": "Note(s)"
   }
 }

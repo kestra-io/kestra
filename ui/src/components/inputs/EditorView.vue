@@ -176,6 +176,15 @@
         return undefined;
     });
 
+    const flowInfos = computed(() => {
+        if (isFlow()) {
+            const infos = props.flowValidation?.infos  ?? [];
+            return infos.length === 0 ? undefined : infos;
+        }
+
+        return undefined;
+    });
+
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
     };
@@ -983,6 +992,7 @@
                 tooltip-placement="bottom-start"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
+                :infos="flowInfos"
             />
 
             <EditorButtons

@@ -11,6 +11,7 @@ const cleanInputs = (inputsList, values) => {
 
 export const inputsToFormDate = (submitor, inputsList, values) => {
     values = cleanInputs(inputsList, values);
+    if(Object.keys(values).length === 0) return;
 
     const formData = new FormData();
     for (let input of inputsList || []) {

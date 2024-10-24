@@ -18,11 +18,13 @@
             </div>
         </div>
         <Bar
+            v-if="total > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
 

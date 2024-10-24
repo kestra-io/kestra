@@ -209,9 +209,9 @@
                 }
 
                 if (this.system) {
-                    query.tags = "54";
+                    query.tags = "system";
                 } else if (this.$route.query.selectedTag || this.selectedTag) {
-                    query.tags =this.$route.query.selectedTag || this.selectedTag;
+                    query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
                 return this.$http

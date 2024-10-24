@@ -78,7 +78,7 @@ public abstract class Input<T> implements Data {
     @Schema(
         title = "The default value to use if no value is specified."
     )
-    Object defaults;
+    T defaults;
 
     @Schema(
         title = "The display name of the input."

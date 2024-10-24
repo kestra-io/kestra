@@ -1,9 +1,13 @@
 package io.kestra.core.models.property;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -221,5 +225,15 @@ class PropertyTest {
         var runContext = runContextFactory.of();
 
         assertThrows(IllegalVariableEvaluationException.class, () -> task.run(runContext));
+    }
+
+    @Test
+    void nullPropertyShouldDeserializeToPropertyContainingNull() throws JsonProcessingException {
+        DynamicPropertyExampleTask task = ((DynamicPropertyExampleTask) JacksonMapper.ofYaml().readValue("""
+            type: io.kestra.core.models.property.DynamicPropertyExampleTask""", new TypeReference<Task>() {}));
+
+        Property<String> string = task.getString();
+        assertThat(string, notNullValue());
+        assertThat(string.getExpression(), nullValue());
     }
 }

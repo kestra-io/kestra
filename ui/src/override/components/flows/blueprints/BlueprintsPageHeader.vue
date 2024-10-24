@@ -1,5 +1,5 @@
 <template>
-    <nav class="header">
+    <nav class="header container">
         <div class="image-box">
             <img src="../../../../assets/icons/blueprint.svg" :alt="$t('blueprints.header.alt')">
         </div>
@@ -16,8 +16,7 @@
         display: flex;
         align-items: center;
         gap: 16px;
-        padding: calc(5 * var(--spacer));
-        padding-top: calc(3 * var(--spacer));
+        padding-top: calc(4 * var(--spacer));
         padding-bottom: calc(2 * var(--spacer));
 
         .catch-phrase {

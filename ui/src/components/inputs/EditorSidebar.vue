@@ -934,8 +934,9 @@
     }
 
     .el-tree {
-        height: calc(100% - 64px);
-        overflow: hidden auto;
+        max-width: 20rem;
+        height: calc(100% - 34px);
+        overflow: auto;
 
         .el-tree__empty-block {
             height: auto;
@@ -943,6 +944,7 @@
 
         &::-webkit-scrollbar {
             width: 2px;
+            height: 4px;
         }
 
         &::-webkit-scrollbar-track {
@@ -962,6 +964,12 @@
             .el-tree-node__content {
                 width: 100%;
             }
+            .el-tree-node__children {
+                overflow: unset !important;
+            }
+        }
+        @media (min-width: 1920px) {
+                max-width: 100%;
         }
     }
 </style>

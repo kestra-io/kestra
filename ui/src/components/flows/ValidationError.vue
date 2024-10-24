@@ -54,8 +54,11 @@
                             {{ $t("warning detected") }}
                         </span>
                     </el-header>
-                    <el-main>{{ warnings.join("\n") }}</el-main>
-                    <el-main v-if="infos">{{ infos.join("\n") }}</el-main>
+                    <el-main>
+                        {{ warnings.join("\n") }}
+                        <br v-if="infos">
+                        {{ infos?.join("\n") }}
+                    </el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning">
@@ -84,7 +87,7 @@
                             {{ $t("informative notice") }}
                         </span>
                     </el-header>
-                    <el-main>{{ infos.join("\n") }}</el-main>
+                    <el-main>{{ infos.join("<\n") }}</el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">

@@ -705,6 +705,12 @@
             "flows": "Esporta tutti i Flows",
             "templates": "Esporta tutti i Template"
           }
+        },
+        "save": {
+          "label": "Salva Preferenze",
+          "fields": {
+            "name": "Salva modifiche"
+          }
         }
       }
     },

@@ -10,3 +10,4 @@ outputs:
 - id: "key"
   value: "{{ invalid }}"
   type: STRING
+  displayName: Final returned value

@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +33,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
+
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -345,13 +348,20 @@ public class FlowInputOutput {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
+        final ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> results = flow
             .getOutputs()
             .stream()
             .map(output -> {
-                Object current = in == null ? null : in.get(output.getId());
+                String current = in == null ? null : in.get(output.getId()).toString();
+                Object currentValue;
                 try {
-                    return parseData(execution, output, current)
+                    currentValue = mapper.readValue(current, new TypeReference<HashMap<String, Object>>() {}).get("value");
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    return parseData(execution, output, currentValue)
                         .map(entry -> {
                             if (output.getType().equals(Type.SECRET)) {
                                 return new AbstractMap.SimpleEntry<>(
@@ -362,7 +372,7 @@ public class FlowInputOutput {
                             return entry;
                         });
                 } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), current);
+                    throw output.toConstraintViolationException(e.getMessage(), currentValue);
                 }
             })
             .filter(Optional::isPresent)

@@ -14,3 +14,4 @@ outputs:
     value:
       - "{{ outputs.return.values.one }}"
       - "{{ outputs.return.values.two }}"
+    displayName: Final returned value

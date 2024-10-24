@@ -705,6 +705,12 @@
             "flows": "Exporter tous les Flux",
             "templates": "Exporter tous les modèles"
           }
+        },
+        "save": {
+          "label": "Sauvegarder les préférences",
+          "fields": {
+            "name": "Sauvegarder les modifications"
+          }
         }
       }
     },

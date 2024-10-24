@@ -263,7 +263,6 @@
                     dateFormat: DATE_FORMAT_STORAGE_KEY,
                     timezone: TIMEZONE_STORAGE_KEY,
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
-                    
                 },
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
                     const timezoneMoment = this.$moment.tz(zone);
@@ -401,7 +400,6 @@
                         }
                     }
                 })
-                location.reload();
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             }
         },

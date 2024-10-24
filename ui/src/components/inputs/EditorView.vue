@@ -178,7 +178,8 @@
 
     const flowInfos = computed(() => {
         if (isFlow()) {
-            return props.flowValidation?.infos;
+            const infos = props.flowValidation?.infos  ?? [];
+            return infos.length === 0 ? undefined : infos;
         }
 
         return undefined;

@@ -290,7 +290,8 @@
         "catch phrase": {
           "1": "The first step is always the hardest.",
           "2": "Explore blueprints to kick-start your next flow."
-        }
+        },
+        "alt": "Blueprints Icon"
       }
     },
     "use": "Use",
@@ -877,7 +878,7 @@
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
       "executions_in_progress": "Executions In Progress",
-      "see_all":"See all",
+      "see_all": "See all",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",

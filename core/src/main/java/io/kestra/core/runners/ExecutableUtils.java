@@ -12,6 +12,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.storages.Storage;
+import io.kestra.core.utils.ListUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.stream.Streams;
 
@@ -60,7 +61,8 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        List<Label> labels,
+        Map<String, String> labels,
+        boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate
     ) throws IllegalVariableEvaluationException {
         String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
@@ -86,23 +88,19 @@ public final class ExecutableUtils {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
+        List<Label> newLabels = inheritLabels ? new ArrayList<>(currentExecution.getLabels()) : new ArrayList<>(systemLabels(currentExecution));
+        if (labels != null) {
+            for (Map.Entry<String, String> entry : labels.entrySet()) {
+                newLabels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
+            }
+        }
+
         Map<String, Object> variables = ImmutableMap.of(
             "executionId", currentExecution.getId(),
             "namespace", currentFlow.getNamespace(),
             "flowId", currentFlow.getId(),
             "flowRevision", currentFlow.getRevision()
         );
-
-        // propagate system labels and compute correlation ID if not already existing
-        List<Label> newLabels = Streams.of(currentExecution.getLabels())
-            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
-            .collect(Collectors.toList());
-        if (newLabels.stream().noneMatch(label -> label.key().equals(Label.CORRELATION_ID))) {
-            newLabels.add(new Label(Label.CORRELATION_ID, currentExecution.getId()));
-        }
-        if (labels != null) {
-            newLabels.addAll(labels);
-        }
 
         FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
         Instant scheduleOnDate = scheduleDate != null ? scheduleDate.as(runContext, ZonedDateTime.class).toInstant() : null;
@@ -124,6 +122,12 @@ public final class ExecutableUtils {
             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
             .execution(execution)
             .build();
+    }
+
+    private static List<Label> systemLabels(Execution execution) {
+        return Streams.of(execution.getLabels())
+            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+            .toList();
     }
 
     @SuppressWarnings("unchecked")

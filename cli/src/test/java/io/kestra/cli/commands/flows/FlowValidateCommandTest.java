@@ -20,7 +20,7 @@ class FlowValidateCommandTest {
         try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
             String[] args = {
                 "--local",
-                "src/test/resources/helper/flow.yaml"
+                "src/test/resources/helper/include.yaml"
             };
             Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
 
@@ -42,7 +42,9 @@ class FlowValidateCommandTest {
             Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
 
             assertThat(call, is(0));
-            assertThat(out.toString(), containsString("tasks[0] is deprecated"));
+            assertThat(out.toString(), containsString("✓ - system / warning"));
+            assertThat(out.toString(), containsString("⚠ - tasks[0] is deprecated"));
+            assertThat(out.toString(), containsString("ℹ - io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log"));
         }
     }
 }

@@ -13,7 +13,7 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
+                <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
                     Current status is : <status size="small" class="me-1" :status="taskRun.state.current" />

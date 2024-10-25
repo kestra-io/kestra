@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow.",
-      "search": "Busca entre +{count} plugins"
+      "search": "Buscar en más de {count} plugins"
     },
     "no inputs": "Este flow no tiene inputs.",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "Exportar Todos los Flows",
             "templates": "Exportar Todas las Plantillas"
+          }
+        },
+        "save": {
+          "label": "Guardar preferencias",
+          "fields": {
+            "name": "Guardar cambios"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "Concurrente",
     "open sidebar": "abrir barra lateral",
     "close sidebar": "cerrar barra lateral",
-    "change_status": "Cambiar estado"
+    "change_status": "Cambiar estado",
+    "in-our-documentation": "en nuestra documentación.",
+    "read-more": "Leer más sobre",
+    "flow-dependencies": "dependencias",
+    "flow-no-dependencies": "Tu flow no tiene dependencias.",
+    "files": "Archivos",
+    "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
+    "delete confirm multiple": "¿Está seguro de que desea eliminar el(los) <code>{name}</code> KV(s)?",
+    "show task condition": "Mostrar condición de task",
+    "empty search": "Resultados de búsqueda vacíos",
+    "pause confirm": "¿Está seguro de pausar la ejecución <code>{id}</code>?",
+    "pause": "Pausar",
+    "bulk pause": "¿Está seguro de que desea pausar la(s) ejecución(es) <code>{executionCount}</code>?",
+    "invalid bulk pause": "No se pudo pausar las ejecuciones",
+    "pause done": "La ejecución está PAUSED",
+    "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
+    "no_data": "No hay datos disponibles",
+    "informative notice": "Nota(s)"
   }
 }

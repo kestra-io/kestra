@@ -4,13 +4,15 @@ namespace: io.kestra.tests
 inputs:
   - id: file
     type: FILE
+  - id: batch
+    type: INT
 
 tasks:
   - id: each
     type: io.kestra.plugin.core.flow.ForEachItem
     items: "{{ inputs.file }}"
     batch:
-      rows: 4
+      rows: "{{inputs.batch}}"
     namespace: io.kestra.tests
     flowId: for-each-item-subflow
     wait: true

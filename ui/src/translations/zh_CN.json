@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。",
-      "search": "在超过{count}个插件中搜索"
+      "search": "在{count}+个插件中搜索"
     },
     "no inputs": "此流程没有输入。",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "导出所有流程",
             "templates": "导出所有模板"
+          }
+        },
+        "save": {
+          "label": "保存偏好设置",
+          "fields": {
+            "name": "保存更改"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
     "close sidebar": "关闭侧边栏",
-    "change_status": "更改状态"
+    "change_status": "更改状态",
+    "in-our-documentation": "在我们的文档中。",
+    "read-more": "了解更多关于",
+    "flow-dependencies": "依赖项",
+    "flow-no-dependencies": "您的flow没有任何依赖项",
+    "files": "文件",
+    "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
+    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
+    "show task condition": "显示任务条件",
+    "empty search": "搜索结果为空",
+    "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
+    "pause": "暂停",
+    "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
+    "invalid bulk pause": "无法暂停执行",
+    "pause done": "执行已PAUSED",
+    "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "no_data": "无可用数据",
+    "informative notice": "注意事项"
   }
 }

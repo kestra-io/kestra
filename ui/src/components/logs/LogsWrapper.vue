@@ -3,7 +3,7 @@
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
-                <template #navbar v-if="!embed">
+                <template #navbar v-if="!embed || showFilters">
                     <el-form-item>
                         <search-field />
                     </el-form-item>
@@ -30,6 +30,13 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-switch
+                            :model-value="showChart"
+                            @update:model-value="onShowChartChange"
+                            :active-text="$t('show chart')"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <filters :storage-key="storageKeys.LOGS_FILTERS" />
                     </el-form-item>
                     <el-form-item>
@@ -37,34 +44,20 @@
                     </el-form-item>
                 </template>
 
-                <template v-if="charts" #top>
+                <template v-if="showStatChart()" #top>
                     <el-card shadow="never" class="mb-3" v-loading="!statsReady">
-                        <div class="state-global-charts">
+                        <div>
                             <template v-if="hasStatsData">
-                                <log-chart
-                                    v-if="statsReady"
-                                    :data="logDaily"
-                                    :namespace="namespace"
-                                    :flow-id="flowId"
-                                />
+                                <Logs :data="logDaily" />
                             </template>
-                            <template v-else>
-                                <el-alert type="info" :closable="false" class="m-0">
-                                    {{ $t('no result') }}
-                                </el-alert>
-                            </template>
+                            <el-empty v-else :description="$t('no_data')" />
                         </div>
                     </el-card>
                 </template>
 
-                <template #table>
+                <template #table v-if="logs !== undefined && logs.length > 0">
                     <div v-loading="isLoading">
-                        <div v-if="logs === undefined || logs.length === 0">
-                            <el-alert type="info" :closable="false" class="text-muted">
-                                {{ $t('no result') }}
-                            </el-alert>
-                        </div>
-                        <div v-else class="logs-wrapper">
+                        <div class="logs-wrapper">
                             <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
                                 <log-line
                                     level="TRACE"
@@ -95,7 +88,7 @@
     import DataTable from "../../components/layout/DataTable.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
-    import LogChart from "../stats/LogChart.vue";
+    import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
     
@@ -104,7 +97,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, LogChart},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs},
         props: {
             logLevel: {
                 type: String,
@@ -117,6 +110,10 @@
             charts: {
                 type: Boolean,
                 default: true
+            },
+            showFilters: {
+                type: Boolean,
+                default: false
             },
             filters: {
                 type: Object,
@@ -131,7 +128,8 @@
                 refreshDates: false,
                 statsReady: false,
                 statsData: [],
-                canAutoRefresh: false
+                canAutoRefresh: false,
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
             };
         },
         computed: {
@@ -187,9 +185,29 @@
                 return this.countStats > 0;
             },
         },
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace; 
+            }
+            next(vm => {
+                vm.$router?.replace({query});
+            });
+        },
         methods: {
             onDateFilterTypeChange(event) {
                 this.canAutoRefresh = event;
+            },
+            showStatChart() {
+                return this.charts && this.showChart;
+            },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value);
+                if (this.showStatChart()) {
+                    this.loadStats();
+                }
             },
             refresh() {
                 this.refreshDates = !this.refreshDates;

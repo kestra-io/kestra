@@ -18,11 +18,4 @@ public abstract class AbstractServiceNamespaceUpdateCommand extends AbstractApiC
     @CommandLine.Option(names = {"--delete"}, negatable = true, description = "if missing should be deleted")
     public boolean delete = false;
 
-    @Builder
-    @Value
-    @Jacksonized
-    public static class UpdateResult {
-        String id;
-        String namespace;
-    }
 }

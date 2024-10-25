@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import java.util.Optional;
+
 @Singleton
 @MysqlRepositoryEnabled
 public class MysqlServiceInstanceRepository extends AbstractJdbcServiceInstanceRepository {
@@ -13,5 +15,4 @@ public class MysqlServiceInstanceRepository extends AbstractJdbcServiceInstanceR
     public MysqlServiceInstanceRepository(@Named("serviceinstance") MysqlRepository<ServiceInstance> repository) {
         super(repository);
     }
-
 }

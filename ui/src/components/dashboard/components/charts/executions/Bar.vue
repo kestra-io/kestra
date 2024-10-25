@@ -1,7 +1,7 @@
 <template>
-    <div class="p-4">
-        <div class="d-flex flex justify-content-between pb-4">
-            <div>
+    <div class="p-4 responsive-container">
+        <div class="d-flex flex-wrap justify-content-between pb-4 info-container">
+            <div class="info-block">
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("executions") }}</span>
                     <span class="fw-light small">
@@ -13,8 +13,8 @@
                 </p>
             </div>
 
-            <div>
-                <div class="d-flex justify-content-end align-items-center">
+            <div class="switch-container">
+                <div class="d-flex justify-content-end align-items-center switch-content">
                     <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
@@ -25,17 +25,20 @@
                 <div id="executions" />
             </div>
         </div>
+
         <Bar
+            v-if="total > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+        
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
-
 <script setup>
-    import {computed, ref} from "vue";
+    import {computed, ref, onMounted, onUnmounted} from "vue";
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
@@ -50,6 +53,7 @@
     import Check from "vue-material-design-icons/Check.vue";
 
     const {t} = useI18n({useScope: "global"});
+    const isSmallScreen = ref(window.innerWidth < 610);
 
     const props = defineProps({
         data: {
@@ -106,9 +110,20 @@
         };
     });
 
+    onMounted(() => {
+        const handleResize = () => {
+            isSmallScreen.value = window.innerWidth < 610;
+        };
+        window.addEventListener("resize", handleResize);
+
+        onUnmounted(() => {
+            window.removeEventListener("resize", handleResize);
+        });
+    });
+
     const options = computed(() =>
         defaultConfig({
-            barThickness: 12,
+            barThickness: isSmallScreen.value ? 8 : 12,
             skipNull: true,
             borderSkipped: false,
             borderColor: "transparent",
@@ -141,7 +156,7 @@
                     display: true,
                     stacked: true,
                     ticks: {
-                        maxTicksLimit: 8,
+                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
                         callback: function (value) {
                             const label = this.getLabelForValue(value);
                             const date = moment(new Date(label));
@@ -156,7 +171,7 @@
                 },
                 y: {
                     title: {
-                        display: true,
+                        display: !isSmallScreen.value,
                         text: t("executions"),
                     },
                     grid: {
@@ -166,12 +181,12 @@
                     position: "left",
                     stacked: true,
                     ticks: {
-                        maxTicksLimit: 8,
+                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
                     },
                 },
                 yB: {
                     title: {
-                        display: duration.value,
+                        display: duration.value && !isSmallScreen.value,
                         text: t("duration"),
                     },
                     grid: {
@@ -180,7 +195,7 @@
                     display: duration.value,
                     position: "right",
                     ticks: {
-                        maxTicksLimit: 8,
+                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
                         callback: function (value) {
                             return `${this.getLabelForValue(value)}s`;
                         },
@@ -193,22 +208,65 @@
     const duration = ref(true);
 </script>
 
+
+Copy code
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 $height: 200px;
 
 .tall {
-    height: $height;
-    max-height: $height;
+  height: $height;
+  max-height: $height;
 }
 
 .small {
-    font-size: $font-size-xs;
-    color: $gray-700;
+  font-size: $font-size-xs;
+  color: $gray-700;
 
-    html.dark & {
-        color: $gray-300;
-    }
+  html.dark & {
+    color: $gray-300;
+  }
+}
+
+@media (max-width: 610px) {
+  .responsive-container {
+    padding: 2px;
+  }
+
+  .info-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .info-block {
+    margin-bottom: 15px;
+  }
+
+  .switch-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .switch-content {
+    justify-content: center;
+  }
+
+  .fs-2 {
+    font-size: 1.5rem;
+  }
+
+  .fs-6 {
+    font-size: 0.875rem;
+  }
+
+  .small {
+    font-size: 0.75rem;
+  }
+
+  .pe-2 {
+    padding-right: 0.5rem;
+  }
 }
 </style>

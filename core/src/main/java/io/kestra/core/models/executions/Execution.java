@@ -20,6 +20,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -76,7 +77,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     Map<String, Object> outputs;
 
-    @With
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     List<Label> labels;
@@ -104,6 +104,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @With
     @Nullable
     Instant scheduleDate;
+
+    @With
+    @Nullable
+    ExecutionError error;
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
@@ -138,10 +142,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        List<Label> executionLabels = new ArrayList<>();
-        if (flow.getLabels() != null) {
-            executionLabels.addAll(flow.getLabels());
-        }
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
 
         if (labels != null) {
             executionLabels.addAll(labels);
@@ -156,6 +157,8 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return execution;
     }
+
+
 
     public static class ExecutionBuilder {
         void prebuild() {
@@ -196,7 +199,33 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.error
+        );
+    }
+
+    public Execution withLabels(List<Label> labels) {
+
+
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            labels,
+            this.variables,
+            this.state,
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.error
         );
     }
 
@@ -230,7 +259,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            taskRun.getError() != null ? taskRun.getError() : this.error
         );
     }
 
@@ -252,7 +282,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.error
         );
     }
 
@@ -515,10 +546,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public State.Type guessFinalState(Flow flow) {
-        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null, false);
+        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null, false, false);
     }
 
-    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun, boolean allowFailure) {
+    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun, boolean allowFailure, boolean allowWarning) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         var state = this
             .findLastByState(taskRuns, State.Type.KILLED)
@@ -538,7 +569,13 @@ public class Execution implements DeletedInterface, TenantInterface {
             .orElse(State.Type.SUCCESS);
 
         if (state == State.Type.FAILED && allowFailure) {
+            if (allowWarning) {
+                return State.Type.SUCCESS;
+            }
             return State.Type.WARNING;
+        }
+        if (State.Type.WARNING.equals(state) && allowWarning) {
+            return State.Type.SUCCESS;
         }
         return state;
     }
@@ -625,7 +662,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
+                        this.withTaskRun(t.getTaskRun()).withError(ExecutionError.from(e)),
                         t.getLogs()
                     );
                 } catch (InternalException ex) {
@@ -633,7 +670,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 }
             })
             .orElseGet(() -> new FailedExecutionWithLog(
-                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
+                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED).withError(ExecutionError.from(e)) : this.withError(ExecutionError.from(e)),
                     RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
                 )
             );

@@ -8,7 +8,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.scheduling.TaskExecutors;
@@ -23,6 +25,8 @@ import java.net.URISyntaxException;
 import java.time.*;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Validated
 @Controller("/api/v1/namespaces/{namespace}/kv")
@@ -86,6 +90,62 @@ public class KVController {
         @Parameter(description = "The key") @PathVariable String key
     ) throws IOException, URISyntaxException, ResourceExpiredException {
         return kvStore(namespace).delete(key);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete
+    @Operation(tags = {"KV"}, summary = "Bulk-delete multiple key/value pairs from the given namespace.")
+    public HttpResponse<ApiDeleteBulkResponse> deleteKeys(
+        @Parameter(description = "The namespace id") @PathVariable String namespace,
+        @Parameter(description = "The keys") @Body ApiDeleteBulkRequest request
+    ) {
+        KVStore kvStore = kvStore(namespace);
+        List<String> deletedKeys = request.keys().stream()
+            .map(key -> {
+                try {
+                    if (kvStore.delete(key)) {
+                        return Optional.of(key);
+                    }
+                    return Optional.<String>empty();
+                } catch (IOException e) {
+                    // Ignore deletion error for bulk-operation
+                    return Optional.<String>empty();
+                }
+            })
+            .flatMap(Optional::stream)
+            .toList();
+        return HttpResponse.ok(new ApiDeleteBulkResponse(deletedKeys));
+    }
+
+    /**
+     * API Response for the bulk-delete operation.
+     *
+     * @param keys
+     */
+    @Introspected
+    public record ApiDeleteBulkResponse(
+        @Parameter(description = "The list of keys deleted")
+        List<String> keys
+    ) {
+
+        public List<String> keys() {
+            return Optional.ofNullable(keys).orElse(List.of());
+        }
+    }
+
+    /**
+     * API Request for the bulk-delete operation.
+     *
+     * @param keys
+     */
+    public record ApiDeleteBulkRequest(
+        @Parameter(description = "The list of keys to delete")
+        List<String> keys
+    ) {
+
+        public List<String> keys() {
+            return Optional.ofNullable(keys).orElse(List.of());
+        }
     }
 
     private KVStore kvStore(String namespace) {

@@ -67,17 +67,9 @@
             color: var(--bs-body-color);
         }
 
-        table {
-            background-color: var(--bs-white);
-            html.dark & {
-                background-color: var(--bs-gray-500);
-            }
-        }
-
         table,
-        th,
-        td {
-            border: 1px solid var(--bs-border-color);
+        th {
+            border-bottom: 2px solid var(--bs-border-color);
         }
 
         th,
@@ -167,6 +159,17 @@
                     opacity: 1;
                 }
             }
+            padding: 5px ;
+            border-left: 4px solid var(--bs-border-color);
+        }
+
+        strong > code,
+        li > code,
+        td > code,
+        p > code{
+            border-radius: var(--bs-border-radius-sm);
+            border: 1px solid var(--bs-border-color);
+            color: var(--bs-body-color);
         }
 
         h3, h4, h5 {
@@ -185,10 +188,11 @@
             }
         }
     }
-
     .markdown-tooltip {
         *:last-child {
             margin-bottom: 0;
         }
+        line-height: 15px;
+        padding: 5px;
     }
 </style>

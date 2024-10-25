@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow.",
-      "search": "Wyszukaj wśród +{count} plugins"
+      "search": "Wyszukaj wśród {count}+ wtyczek"
     },
     "no inputs": "Ten flow nie ma inputs.",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "Eksportuj Wszystkie Flows",
             "templates": "Eksportuj Wszystkie Szablony"
+          }
+        },
+        "save": {
+          "label": "Zapisz preferencje",
+          "fields": {
+            "name": "Zapisz zmiany"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "Współbieżność",
     "open sidebar": "otwórz pasek boczny",
     "close sidebar": "zamknij pasek boczny",
-    "change_status": "Zmień status"
+    "change_status": "Zmień status",
+    "in-our-documentation": "w naszej dokumentacji.",
+    "read-more": "Czytaj więcej o",
+    "flow-dependencies": "zależności",
+    "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
+    "files": "Pliki",
+    "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
+    "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
+    "show task condition": "Pokaż warunek taska",
+    "empty search": "Wyniki wyszukiwania są puste",
+    "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
+    "pause": "Wstrzymaj",
+    "bulk pause": "Czy na pewno chcesz wstrzymać wykonanie <code>{executionCount}</code>?",
+    "invalid bulk pause": "Nie można wstrzymać wykonania",
+    "pause done": "Wykonanie jest PAUSED",
+    "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "no_data": "Brak dostępnych danych",
+    "informative notice": "Notatka(i)"
   }
 }

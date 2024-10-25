@@ -40,6 +40,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
@@ -61,9 +62,6 @@ import static org.hamcrest.Matchers.*;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest extends AbstractMemoryRunnerTest {
-    @Inject
-    ApplicationContext applicationContext;
-
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
@@ -285,6 +283,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "SECRET_PASSWORD", matches = ".*")
     void secretTrigger() throws IllegalVariableEvaluationException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;

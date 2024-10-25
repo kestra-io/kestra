@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
@@ -64,6 +65,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final MessageProtectionConfiguration messageProtectionConfiguration;
 
+    private final MetricRegistry metricRegistry;
+
     protected final Table<Record> table;
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
@@ -80,6 +83,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
         this.configuration = applicationContext.getBean(Configuration.class);
         this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
+        this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
         JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 
@@ -97,6 +101,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         }
 
         if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
+            metricRegistry
+                .counter(MetricRegistry.QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.TAG_CLASS_NAME, cls.getName())
+                .increment();
+
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
                     throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
@@ -220,6 +228,26 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             queueType,
             (dslContext, eithers) -> {
                 eithers.forEach(consumer);
+            },
+            false,
+            forUpdate
+        );
+    }
+
+    public Runnable receiveBatch(Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
+        return receiveBatch(null, queueType, consumer);
+    }
+
+    public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
+        return receiveBatch(consumerGroup, queueType, consumer, true);
+    }
+
+    public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer, boolean forUpdate) {
+        return this.receiveImpl(
+            consumerGroup,
+            queueType,
+            (dslContext, eithers) -> {
+                consumer.accept(eithers);
             },
             false,
             forUpdate

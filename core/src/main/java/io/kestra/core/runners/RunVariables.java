@@ -225,6 +225,42 @@ public final class RunVariables {
                         outputs = secret.decrypt(outputs);
                     }
                     builder.put("outputs", outputs);
+
+                    Map<String, Object> tasksMap = new HashMap<>();
+
+                    execution.getTaskRunList().forEach(taskRun -> {
+                        if (taskRun.getState() != null) {
+                            if (taskRun.getValue() == null) {
+                                tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
+                            } else {
+                                if (tasksMap.containsKey(taskRun.getTaskId())) {
+                                    Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
+                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
+                                } else {
+                                    tasksMap.put(taskRun.getTaskId(), Map.of(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent())));
+                                }
+                            }
+                        }
+                    });
+
+                    builder.put("tasks", tasksMap);
+
+                    // search for failures
+                    Map<String, Object> error = new HashMap<>();
+                    Optional<TaskRun> failedTaskRun = execution.getTaskRunList().reversed().stream()
+                        .filter(taskRun -> taskRun.getState() != null && taskRun.getState().isFailed())
+                        .findFirst();
+                    if (failedTaskRun.isPresent() || execution.getError() != null) {
+                        failedTaskRun.ifPresent(run -> error.put("taskId", run.getTaskId()));
+                        if (execution.getError() != null) {
+                            error.put("message", execution.getError().getMessage());
+                            error.put("stackTrace", execution.getError().getStacktrace());
+                        }
+                    }
+                    if (!error.isEmpty()) {
+                        builder.put("error", error);
+                    }
                 }
 
                 // Inputs

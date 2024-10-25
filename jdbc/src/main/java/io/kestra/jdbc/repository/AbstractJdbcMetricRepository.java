@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.core.utils.ListUtils;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
 import org.jooq.*;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface, JdbcIndexerInterface<MetricEntry> {
+public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository) {
@@ -143,6 +143,15 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
+    public int saveBatch(List<MetricEntry> items) {
+        if (ListUtils.isEmpty(items)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.persistBatch(items);
+    }
+
+    @Override
     public Integer purge(Execution execution) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -150,17 +159,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
+                    // The deleted field is not used, so ti will always be false.
+                    // We add it here to be sure to use the correct index.
+                    .where(field("deleted", Boolean.class).eq(false))
+                    .and(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
-    }
-
-    @Override
-    public MetricEntry save(DSLContext dslContext, MetricEntry metric) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(metric);
-        this.jdbcRepository.persist(metric, dslContext, fields);
-
-        return metric;
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {
@@ -168,8 +172,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
+                SelectConditionStep<Record1<Object>> select = context
                     .selectDistinct(field(field))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
@@ -185,8 +188,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
+                SelectConditionStep<Record1<Object>> select = context
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));

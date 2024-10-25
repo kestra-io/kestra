@@ -14,7 +14,7 @@
         <div class="pt-4">
             <el-table
                 :data="executions.results"
-                class="inprogress"
+                class="nextscheduled"
                 :height="240"
             >
                 <el-table-column class-name="next-toggle" width="50">
@@ -35,7 +35,10 @@
                             v-else
                             :model-value="!scope.row.disabled"
                             @change="
-                                toggleState(scope.row.triggerContext);
+                                toggleState(
+                                    scope.row.triggerContext,
+                                    !scope.row.disabled,
+                                );
                                 scope.row.disabled = !scope.row.disabled;
                             "
                             :active-icon="Check"
@@ -201,11 +204,8 @@
         () => loadExecutions(),
     );
 
-    const toggleState = (trigger) => {
-        store.dispatch("trigger/update", {
-            ...trigger,
-            disabled: !trigger.disabled,
-        });
+    const toggleState = (trigger, disabled) => {
+        store.dispatch("trigger/update", {...trigger, disabled});
     };
 
     onBeforeMount(() => {
@@ -218,9 +218,16 @@ code {
     color: var(--bs-code-color);
 }
 
-.inprogress {
+.nextscheduled {
     --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
+    & a {
+        color: #8e71f7;
+
+        html.dark & {
+            color: #e0e0fc;
+        }
+    }
 }
 
 .next-toggle {

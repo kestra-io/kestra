@@ -8,7 +8,7 @@ import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import jakarta.validation.constraints.NotNull;
 
 @Value
@@ -23,19 +23,6 @@ public class WorkerTaskResult implements HasUID {
     public WorkerTaskResult(TaskRun taskRun) {
         this.taskRun = taskRun;
         this.dynamicTaskRuns = new ArrayList<>();
-    }
-
-    public WorkerTaskResult(WorkerTask workerTask) {
-        this.taskRun = workerTask.getTaskRun();
-        this.dynamicTaskRuns = new ArrayList<>();
-    }
-
-    public WorkerTaskResult(WorkerTask workerTask, List<WorkerTaskResult> dynamicWorkerResults) {
-        this.taskRun = workerTask.getTaskRun();
-        this.dynamicTaskRuns = dynamicWorkerResults
-            .stream()
-            .map(WorkerTaskResult::getTaskRun)
-            .toList();
     }
 
     /**

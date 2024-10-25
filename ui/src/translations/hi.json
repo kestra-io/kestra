@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।",
-      "search": "+{count} प्लगइन्स में खोजें"
+      "search": "{count}+ प्लगइन्स में खोजें"
     },
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "सभी Flows निर्यात करें",
             "templates": "सभी templates निर्यात करें"
+          }
+        },
+        "save": {
+          "label": "प्राथमिकताएँ सहेजें",
+          "fields": {
+            "name": "परिवर्तनों को सहेजें"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "समानांतरता",
     "open sidebar": "साइडबार खोलें",
     "close sidebar": "साइडबार बंद करें",
-    "change_status": "स्थिति बदलें"
+    "change_status": "स्थिति बदलें",
+    "in-our-documentation": "हमारे दस्तावेज़ में।",
+    "read-more": "और अधिक पढ़ें",
+    "flow-dependencies": "निर्भरता",
+    "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "files": "फ़ाइलें",
+    "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
+    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?",
+    "show task condition": "कार्य की स्थिति दिखाएं",
+    "empty search": "खोज परिणाम खाली हैं",
+    "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
+    "pause": "रोकें",
+    "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
+    "invalid bulk pause": "निष्पादन को PAUSE नहीं किया जा सका",
+    "pause done": "निष्पादन PAUSED है",
+    "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "no_data": "कोई डेटा उपलब्ध नहीं है",
+    "informative notice": "नोट(s)"
   }
 }

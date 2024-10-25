@@ -1,17 +1,11 @@
 id: resume-execution
 namespace:  io.kestra.tests
 
+inputs:
+  - id: executionId
+    type: STRING
+
 tasks:
-  - id: parallel
-    type: io.kestra.plugin.core.flow.Parallel
-    tasks:
-      - id: pause
-        type: io.kestra.plugin.core.flow.Pause
-      - id: sequential
-        type: io.kestra.plugin.core.flow.Sequential
-        tasks:
-          - id: log
-            type: io.kestra.core.tasks.test.Sleep
-            duration: 100
-          - id: resume
-            type: io.kestra.plugin.core.execution.Resume
+    - id: resume
+      type: io.kestra.plugin.core.execution.Resume
+      executionId: "{{inputs.executionId}}"

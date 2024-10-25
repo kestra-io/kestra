@@ -3,14 +3,13 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.flows.Concurrency;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -29,6 +28,7 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TruthUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -91,7 +91,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<Flow> flowQueue;
+    private QueueInterface<FlowWithSource> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -147,7 +147,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Inject
     private FlowTopologyService flowTopologyService;
 
-    protected List<Flow> allFlows;
+    protected List<FlowWithSource> allFlows;
 
     @Inject
     private WorkerGroupService workerGroupService;
@@ -243,7 +243,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,
             either -> {
-                Flow flow;
+                FlowWithSource flow;
                 if (either.isRight()) {
                     log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
                     try {
@@ -258,19 +258,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     flow = either.getLeft();
                 }
 
-                flowTopologyRepository.save(
-                    flow,
-                    (flow.isDeleted() ?
-                        Stream.<FlowTopology>empty() :
-                        flowTopologyService
-                            .topology(
-                                flow,
-                                this.allFlows.stream()
-                            )
-                    )
-                        .distinct()
-                        .toList()
-                );
+                try {
+                    flowTopologyRepository.save(
+                        flow,
+                        (flow.isDeleted() ?
+                            Stream.<FlowTopology>empty() :
+                            flowTopologyService
+                                .topology(
+                                    flow,
+                                    this.allFlows
+                                )
+                        )
+                            .distinct()
+                            .toList()
+                    );
+                } catch (Exception e) {
+                    log.error("Unable to save flow topology", e);
+                }
+
             }
         ));
         setState(ServiceState.RUNNING);
@@ -356,7 +361,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Execution execution = pair.getLeft();
                 ExecutorState executorState = pair.getRight();
 
-                final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
+                final Flow flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
                 Executor executor = new Executor(execution, null).withFlow(flow);
 
                 // schedule it for later if needed
@@ -420,24 +425,30 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 // worker task
                 if (!executor.getWorkerTasks().isEmpty()) {
-                    List<WorkerTask> workerTasksDedup = executor
+                    executor
                         .getWorkerTasks()
                         .stream()
                         .filter(workerTask -> this.deduplicateWorkerTask(execution, executorState, workerTask.getTaskRun()))
-                        .toList();
+                        .forEach(throwConsumer(workerTask -> {
+                            try {
+                                if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
+                                    workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
+                                }
+                                else {
+                                    if (workerTask.getTask().isSendToWorkerTask()) {
+                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask);
+                                    }
+                                    if (workerTask.getTask().isFlowable()) {
+                                        workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                    }
+                                }
+                            } catch (IllegalVariableEvaluationException e) {
+                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED).withError(ExecutionError.from(e))));
+                                workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
+                            }
+                        }));
 
-                    // WorkerTask not flowable to workerTask
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
-                        .forEach(throwConsumer(workerTask -> workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask)));
 
-                    // WorkerTask flowable to workerTaskResult as Running
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
-                        .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
                 }
 
                 // worker tasks results
@@ -671,7 +682,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             message.getParentTaskRun(),
                             current.getExecution(),
                             forEachItem.getTransmitFailed(),
-                            forEachItem.isAllowFailure()
+                            forEachItem.isAllowFailure(),
+                            forEachItem.isAllowWarning()
                         );
                     } else {
                         taskRun = message.getParentTaskRun();
@@ -842,7 +854,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Execution execution = executor.getExecution();
             // handle flow triggers on state change
             if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows.stream().map(flow -> flow.toFlow()).toList(), Optional.of(multipleConditionStorage))
                     .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
             }
 
@@ -885,14 +897,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         }
     }
 
-    private Flow transform(Flow flow, Execution execution) {
+    private Flow transform(FlowWithSource flow, Execution execution) {
         if (templateExecutorInterface.isPresent()) {
             try {
                 flow = Template.injectTemplate(
                     flow,
                     execution,
                     (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
-                );
+                ).withSource(flow.getSource());
             } catch (InternalException e) {
                 log.warn("Failed to inject template", e);
             }

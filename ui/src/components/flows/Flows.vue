@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title">
+    <top-nav-bar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -27,7 +27,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create'}" v-if="canCreate">
+                    <router-link :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" v-if="canCreate">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>
@@ -36,7 +36,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" :class="{'container': topbar}" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -49,8 +49,9 @@
                     </el-form-item>
                     <el-form-item>
                         <namespace-select
+                            :value="selectedNamespace"
                             data-type="flow"
-                            :value="$route.query.namespace"
+                            :disabled="!!namespace"
                             @update:model-value="onDataTableValue('namespace', $event)"
                         />
                     </el-form-item>
@@ -68,17 +69,24 @@
                         />
                     </el-form-item>
                     <el-form-item>
+                        <el-switch
+                            :model-value="showChart"
+                            @update:model-value="onShowChartChange"
+                            :active-text="$t('show chart')"
+                        />
+                    </el-form-item>
+                    <el-form-item>
                         <filters :storage-key="storageKeys.FLOWS_FILTERS" />
                     </el-form-item>
                 </template>
 
                 <template #top>
-                    <el-card v-if="daily" shadow="never" class="mb-4">
+                    <el-card v-if="showStatChart()" shadow="never" class="mb-4">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>
 
-                <template #table>
+                <template #table v-if="flows.length">
                     <select-table
                         ref="selectTable"
                         :data="flows"
@@ -250,8 +258,8 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import LabelFilter from "../labels/LabelFilter.vue";
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
-    import {storageKeys} from "../../utils/constants";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
@@ -273,6 +281,17 @@
             TopNavBar,
             ExecutionsBar
         },
+        props: {
+            topbar: {
+                type: Boolean,
+                default: true
+            },
+            namespace: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+        },
         data() {
             return {
                 isDefaultNamespaceAllow: true,
@@ -282,6 +301,7 @@
                 lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_FLOWS_CHART)),
             };
         },
         computed: {
@@ -321,11 +341,21 @@
                     return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
                 }, 0);
             },
-        },
-        beforeCreate(){
-            if(!this.$route.query.scope) {
-                this.$route.query.scope = ["USER"]
+            selectedNamespace(){
+                return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             }
+        },
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace; 
+            } if (!query.scope) {
+                query.scope = ["USER"];
+            }
+            next(vm => {
+                vm.$router?.replace({query});
+            });
         },
         methods: {
             selectionMapper(element) {
@@ -334,6 +364,15 @@
                     namespace: element.namespace,
                     enabled: !element.disabled
                 }
+            },
+            showStatChart() {
+                return this.daily && this.showChart;
+            },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
+                if(this.showStatChart())
+                    this.loadStats();
             },
             exportFlows() {
                 this.$toast().confirm(
@@ -492,10 +531,10 @@
 
                 return _merge(base, queryFilter)
             },
-            loadData(callback) {
+            loadStats() {
                 this.dailyReady = false;
 
-                if (this.user.hasAny(permission.EXECUTION)) {
+                if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
                     this.$store
                         .dispatch("stat/daily", this.loadQuery({
                             startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
@@ -505,6 +544,9 @@
                             this.dailyReady = true;
                         });
                 }
+            },
+            loadData(callback) {
+                this.loadStats();
 
                 this.$store
                     .dispatch("flow/findFlows", this.loadQuery({
@@ -562,4 +604,18 @@
     .flow-id {
         min-width: 200px;
     }
+    :deep(.el-select),
+    :deep(.el-select-dropdown),
+    :deep(.label-filter),
+    :deep(.namespace-select),
+    :deep(.search-field) {
+        .el-input__inner,
+        .el-input__wrapper,
+        .el-select-dropdown__item,
+        .el-tag,
+        input {
+            font-size: 16px; 
+        }
+    }
+
 </style>

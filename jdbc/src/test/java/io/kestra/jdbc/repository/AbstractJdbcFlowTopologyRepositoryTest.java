@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.AbstractFlowTopologyRepositoryTest;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -22,11 +23,12 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
     @Test
     void saveMultiple() {
-        Flow flow = Flow.builder()
+        FlowWithSource flow = Flow.builder()
             .id("flow-a")
             .namespace("io.kestra.tests")
             .revision(1)
-            .build();
+            .build()
+            .withSource(null);
 
         flowTopologyRepository.save(
             flow,

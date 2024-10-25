@@ -62,8 +62,9 @@
                 } else if (this.$route.query.blueprintId && this.$route.query.blueprintSource) {
                     this.source = await this.queryBlueprint(this.$route.query.blueprintId)
                 } else {
+                    const selectedNamespace = this.$route.query.namespace || "company.team";
                     this.source = `id: myflow
-namespace: company.team
+namespace: ${selectedNamespace}
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log

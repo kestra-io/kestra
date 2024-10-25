@@ -8,12 +8,14 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,7 @@ public class SkipExecutionCaseTest {
     @Inject
     private SkipExecutionService skipExecutionService;
 
-    public void skipExecution() throws TimeoutException, QueueException, InterruptedException {
+    public void skipExecution() throws TimeoutException, QueueException {
         Flow flow = createFlow();
         Execution execution1 = Execution.newExecution(flow, null, null, Optional.empty());
         String execution1Id = execution1.getId();
@@ -48,8 +50,7 @@ public class SkipExecutionCaseTest {
 
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
-        Thread.sleep(25); // to be 100% sure that it works, add a slight delay to be sure we didn't miss the execution by chance
-        execution1 = executionRepository.findById(null, execution1Id).get();
+        execution1 = Await.until(() -> executionRepository.findById(null, execution1Id).orElse(null), Duration.ofMillis(100), Duration.ofSeconds(1));
         assertThat(execution1.getState().getCurrent(), is(State.Type.CREATED));
     }
 

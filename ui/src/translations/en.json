@@ -20,6 +20,7 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure to delete <code>{name}</code>?",
+    "delete confirm multiple": "Are you sure to delete <code>{name}</code> KV(s)?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
       "update": {
@@ -209,6 +210,10 @@
     "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
+    "pause": "Pause",
+    "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be process, and the execution will have to be resumed manually.",
+    "pause confirm": "Are you sure to pause execution <code>{id}</code>?",
+    "pause done": "Execution is paused",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "No data available for current task",
@@ -230,6 +235,7 @@
     "automatic refresh": "Automatic refresh",
     "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
     "trigger refresh": "Trigger refresh",
+    "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
@@ -239,6 +245,7 @@
       "zoom-fit": "Fit"
     },
     "show task logs": "Show task logs",
+    "show task condition": "Show task condition",
     "show task outputs": "Show task outputs",
     "show task source": "Show task source",
     "specific task": "Specific task",
@@ -307,6 +314,7 @@
     "templates": "Templates",
     "templates deprecated": "Templates are deprecated. Please use subflows instead. See the <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrations section</a> explaining how you can migrate from templates to subflows.",
     "no result": "No logs emitted so far",
+    "empty search": "Search results are empty",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger details",
@@ -372,6 +380,7 @@
     "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
+    "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -399,6 +408,7 @@
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
+    "invalid bulk pause": "Could not pause executions",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
@@ -428,6 +438,10 @@
     "flow enable": "Are you sure you want to enable <code>{flowCount}</code> flow(s)?",
     "flows disabled": "<code>{count}</code> Flow(s) disabled",
     "flows enabled": "<code>{count}</code> Flow(s) enabled",
+    "flow-no-dependencies": "Your flow does not have any dependencies",
+    "flow-dependencies": "dependencies",
+    "read-more": "Read more about",
+    "in-our-documentation": "in our documentation.",
     "dependencies": "Dependencies",
     "see dependencies": "See dependencies",
     "dependencies missing acls": "No permissions on this flow",
@@ -515,6 +529,7 @@
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
     "warning detected": "Warning(s) detected",
+    "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
     "open": "Open",
@@ -681,7 +696,7 @@
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across +{count} plugins"
+      "search": "Search across {count}+ plugins"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {
@@ -727,6 +742,12 @@
           "fields": {
             "flows": "Export All Flows",
             "templates": "Export All Templates"
+          }
+        },
+        "save": {
+          "label": "Save Preferences",
+          "fields": {
+            "name": "Save Changes"
           }
         }
       }
@@ -881,6 +902,8 @@
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
-    "change_status": "Change status"
+    "change_status": "Change status",
+    "files": "Files",
+    "no_data": "No data available"
   }
 }

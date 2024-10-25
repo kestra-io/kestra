@@ -96,6 +96,25 @@ public abstract class AbstractJdbcRepository<T> {
             .execute();
     }
 
+    public int persistBatch(List<T> items) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            var inserts = items.stream().map(item -> {
+                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
+
+                    return dslContext
+                        .insertInto(table)
+                        .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(item))
+                        .set(finalFields)
+                        .onDuplicateKeyUpdate()
+                        .set(finalFields);
+                })
+                .toList();
+
+            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
+        });
+    }
+
     public int delete(T entity) {
         return dslContextWrapper.transactionResult(configuration -> {
             return this.delete(DSL.using(configuration), entity);

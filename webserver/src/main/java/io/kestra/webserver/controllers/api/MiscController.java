@@ -8,6 +8,7 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.core.annotation.Nullable;
@@ -22,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -48,6 +50,9 @@ public class MiscController {
     @Inject
     TenantService tenantService;
 
+    @Inject
+    NamespaceUtils namespaceUtils;
+
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
 
@@ -64,6 +69,9 @@ public class MiscController {
 
     @io.micronaut.context.annotation.Value("${kestra.server.preview.max-rows:5000}")
     private Integer maxPreviewRows;
+
+    @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
+    private List<String> hiddenLabelsPrefixes;
 
 
     @Get("{/tenant}/configs")
@@ -83,7 +91,9 @@ public class MiscController {
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
                 .build()
-            ).isBasicAuthEnabled(basicAuthService.isEnabled());
+            ).isBasicAuthEnabled(basicAuthService.isEnabled())
+            .systemNamespace(namespaceUtils.getSystemFlowNamespace())
+            .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -141,6 +151,10 @@ public class MiscController {
         Preview preview;
 
         Boolean isBasicAuthEnabled;
+
+        String systemNamespace;
+
+        List<String> hiddenLabelsPrefixes;
     }
 
     @Value

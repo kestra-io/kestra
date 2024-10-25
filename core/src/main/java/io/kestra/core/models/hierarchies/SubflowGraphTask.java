@@ -25,7 +25,7 @@ public class SubflowGraphTask extends AbstractGraphTask {
         super((TaskInterface) task, taskRun, values, relationType);
     }
 
-    public ExecutableTask<?> getExecutableTask() {
+    public ExecutableTask<?> executableTask() {
         TaskInterface task = super.getTask();
         if (task instanceof ExecutableTask) {
             return (ExecutableTask<?>) task;
@@ -36,7 +36,7 @@ public class SubflowGraphTask extends AbstractGraphTask {
 
     public SubflowGraphTask withRenderedSubflowId(RunContext runContext) {
         SubflowGraphTask previous = this;
-        return new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.getExecutableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
+        return new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.executableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
             @Override
             public int hashCode() {
                 // Since edges are handled by a hashmap, we need to keep the same hash and uid is not a good candidate as it changes whenever a node is moved to a cluster

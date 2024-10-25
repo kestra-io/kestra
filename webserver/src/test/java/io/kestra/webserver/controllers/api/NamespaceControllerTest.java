@@ -40,7 +40,7 @@ public class NamespaceControllerTest {
 
     @BeforeEach
     void reset() {
-        flowRepository.findAllForAllTenants().forEach(flowRepository::delete);
+        flowRepository.findAllWithSourceForAllTenants().forEach(flowRepository::delete);
     }
 
     @Test

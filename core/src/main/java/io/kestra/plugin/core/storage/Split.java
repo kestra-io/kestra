@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -58,14 +59,14 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     @NotNull
     private String from;
 
-    private String bytes;
+    private Property<String> bytes;
 
-    private Integer partitions;
+    private Property<Integer> partitions;
 
-    private Integer rows;
+    private Property<Integer> rows;
 
     @Builder.Default
-    private String separator = "\n";
+    private Property<String> separator = Property.of("\n");
 
     @Override
     public Split.Output run(RunContext runContext) throws Exception {

@@ -40,8 +40,7 @@ import java.util.Optional;
         "You can access the current iteration value using the variable `{{ taskrun.value }}`. " +
         "The task list will be executed sequentially for each item.\n\n" +
         "We highly recommend triggering a subflow for each value. " +
-        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/developer-guide/best-practices) " +
-        "and the [following Blueprint](https://kestra.io/blueprints/128-run-a-subflow-for-each-value-in-parallel-and-wait-for-their-completion-recommended-pattern-to-iterate-over-hundreds-or-thousands-of-list-items) " +
+        "This allows much better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) " +
         "for more details."
 )
 @Plugin(
@@ -138,7 +137,8 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun,
             runContext,
-            this.isAllowFailure()
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -40,7 +41,7 @@ class SplitTest {
 
         Split result = Split.builder()
             .from(put.toString())
-            .partitions(8)
+            .partitions(Property.of(8))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -57,7 +58,7 @@ class SplitTest {
 
         Split result = Split.builder()
             .from(put.toString())
-            .rows(10)
+            .rows(Property.of(10))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -73,7 +74,7 @@ class SplitTest {
 
         Split result = Split.builder()
             .from(put.toString())
-            .bytes("1KB")
+            .bytes(Property.of("1KB"))
             .build();
 
         Split.Output run = result.run(runContext);

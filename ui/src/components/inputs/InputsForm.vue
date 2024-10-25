@@ -11,7 +11,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-if="input.type === 'STRING' || input.type === 'URI'"
+                v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 @confirm="onSubmit"

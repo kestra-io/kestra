@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow.",
-      "search": "Поиск среди +{count} плагинов"
+      "search": "Поиск среди {count}+ плагинов"
     },
     "no inputs": "Этот flow не имеет входных данных.",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "Экспортировать все flows",
             "templates": "Экспортировать все шаблоны"
+          }
+        },
+        "save": {
+          "label": "Сохранить настройки",
+          "fields": {
+            "name": "Сохранить изменения"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "Конкурентность",
     "open sidebar": "открыть боковую панель",
     "close sidebar": "закрыть боковую панель",
-    "change_status": "Изменить статус"
+    "change_status": "Изменить статус",
+    "in-our-documentation": "в нашей документации.",
+    "read-more": "Узнать больше о",
+    "flow-dependencies": "зависимости",
+    "flow-no-dependencies": "Ваш flow не имеет зависимостей",
+    "files": "Файлы",
+    "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
+    "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?",
+    "show task condition": "Показать условие task",
+    "empty search": "Результаты поиска пусты",
+    "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
+    "pause": "Пауза",
+    "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
+    "invalid bulk pause": "Не удалось приостановить выполнения",
+    "pause done": "Выполнение приостановлено",
+    "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
+    "no_data": "Нет данных",
+    "informative notice": "Примечание(я)"
   }
 }

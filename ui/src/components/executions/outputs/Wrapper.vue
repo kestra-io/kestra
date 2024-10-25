@@ -291,6 +291,24 @@
 
 <style lang="scss">
 .outputs {
+    .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
+    .values {
+        pointer-events: none;
+        margin: 0.75rem 0 1.25rem 0;
+    }
+
+    .debug {
+        background: var(--bs-gray-100);
+    }
+
+    .bordered {
+        border: 1px solid var(--bs-border-color);
+    }
+
+    .bordered > .el-collapse-item {
+        margin-bottom: 0px !important;
+    }
+
     .cascader {
         &::-webkit-scrollbar {
             height: 5px;
@@ -309,73 +327,53 @@
     .wrapper {
         background: var(--card-bg);
     }
-}
 
-.el-cascader-menu {
-    min-width: 300px;
-    max-width: 300px;
+    .el-cascader-menu {
+        min-width: 300px;
+        max-width: 300px;
 
-    &:last-child {
-        border-right: 1px solid var(--bs-border-color);
-    }
-
-    .el-cascader-menu__wrap {
-        height: 100%;
-    }
-
-    & .el-cascader-node {
-        height: 36px;
-        line-height: 36px;
-        font-size: var(--el-font-size-small);
-        color: var(--el-text-color-regular);
-
-        &[aria-haspopup="false"] {
-            padding-right: 0.5rem !important;
+        &:last-child {
+            border-right: 1px solid var(--bs-border-color);
         }
 
-        &:hover {
-            background-color: var(--bs-border-color);
+        .el-cascader-menu__wrap {
+            height: 100%;
         }
 
-        &.in-active-path,
-        &.is-active {
-            background-color: var(--bs-border-color);
-            font-weight: normal;
-        }
-
-        .el-cascader-node__prefix {
-            display: none;
-        }
-
-        .task .wrapper {
-            align-self: center;
-            height: var(--el-font-size-small);
-            width: var(--el-font-size-small);
-        }
-
-        code span.regular {
+        & .el-cascader-node {
+            height: 36px;
+            line-height: 36px;
+            font-size: var(--el-font-size-small);
             color: var(--el-text-color-regular);
+
+            &[aria-haspopup="false"] {
+                padding-right: 0.5rem !important;
+            }
+
+            &:hover {
+                background-color: var(--bs-border-color);
+            }
+
+            &.in-active-path,
+            &.is-active {
+                background-color: var(--bs-border-color);
+                font-weight: normal;
+            }
+
+            .el-cascader-node__prefix {
+                display: none;
+            }
+
+            .task .wrapper {
+                align-self: center;
+                height: var(--el-font-size-small);
+                width: var(--el-font-size-small);
+            }
+
+            code span.regular {
+                color: var(--el-text-color-regular);
+            }
         }
     }
 }
-
-
-.el-scrollbar.el-cascader-menu:nth-of-type(-n+2) ul li:first-child,
-.values {
-    pointer-events: none;
-    margin: 0.75rem 0 1.25rem 0;
-}
-
-.debug {
-    background: var(--bs-gray-100);
-}
-
-.bordered {
-    border: 1px solid var(--bs-border-color)
-}
-
-.bordered > .el-collapse-item{
-    margin-bottom :0px !important
-}
-
 </style>

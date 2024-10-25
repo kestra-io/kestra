@@ -54,7 +54,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
         try {
             long elapsed = getElapsedMilliSinceLastSchedule(now);
             long timeout = serverConfig.liveness().timeout().toMillis();
-            if (elapsed > timeout) {
+            if (elapsed > (timeout + (timeout / 10))) {
                 // useful for debugging unexpected heartbeat timeout
                 log.warn("Thread starvation or clock leap detected (elapsed since previous schedule {}ms", elapsed);
             }

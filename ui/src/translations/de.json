@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen.",
-      "search": "Suchen Sie in über +{count} Plugins"
+      "search": "Suche in {count}+ Plugins"
     },
     "no inputs": "Dieser Flow hat keine Inputs.",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "Alle Flows exportieren",
             "templates": "Alle Vorlagen exportieren"
+          }
+        },
+        "save": {
+          "label": "Präferenzen speichern",
+          "fields": {
+            "name": "Änderungen speichern"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
-    "change_status": "Status ändern"
+    "change_status": "Status ändern",
+    "in-our-documentation": "in unserer Dokumentation.",
+    "read-more": "Mehr erfahren über",
+    "flow-dependencies": "Abhängigkeiten",
+    "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
+    "files": "Dateien",
+    "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
+    "delete confirm multiple": "Sind Sie sicher, dass Sie <code>{name}</code> KV(s) löschen möchten?",
+    "show task condition": "Bedingung des Tasks anzeigen",
+    "empty search": "Suchergebnisse sind leer",
+    "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
+    "pause": "Pause",
+    "bulk pause": "Sind Sie sicher, dass Sie die Ausführung(en) <code>{executionCount}</code> pausieren möchten?",
+    "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
+    "pause done": "Die Ausführung ist PAUSED.",
+    "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "no_data": "Keine Daten verfügbar",
+    "informative notice": "Hinweis(e)"
   }
 }

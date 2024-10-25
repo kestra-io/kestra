@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -40,7 +41,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<Flow> flowQueue;
+    protected QueueInterface<FlowWithSource> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -50,17 +51,14 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killedQueue;
 
-    @Inject
-    protected SchedulerTriggerStateInterface triggerState;
-
-    public static Flow createFlow(Duration sleep) {
+    public static FlowWithSource createFlow(Duration sleep) {
         SleepTriggerTest schedule = SleepTriggerTest.builder()
             .id("sleep")
             .type(SleepTriggerTest.class.getName())
             .sleep(sleep)
             .build();
 
-        return Flow.builder()
+        return FlowWithSource.builder()
             .id(SchedulerTriggerChangeTest.class.getSimpleName())
             .namespace("io.kestra.unittest")
             .revision(1)
@@ -106,7 +104,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             scheduler.run();
 
             // emit a flow trigger to be started
-            Flow flow = createFlow(Duration.ofSeconds(10));
+            FlowWithSource flow = createFlow(Duration.ofSeconds(10));
             flowQueue.emit(flow);
 
             Await.until(() -> STARTED_COUNT == 1, Duration.ofMillis(100), Duration.ofSeconds(30));

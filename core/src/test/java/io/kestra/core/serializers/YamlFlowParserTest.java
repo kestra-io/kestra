@@ -123,10 +123,10 @@ class YamlFlowParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size(), is(28));
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(10L));
+        assertThat(flow.getInputs().size(), is(29));
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(11L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(18L));
-        assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(2L));
+        assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(3L));
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
     }
 
@@ -167,7 +167,7 @@ class YamlFlowParserTest {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
         String s = mapper.writeValueAsString(flow);
-        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
+        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system_readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 
     @Test
@@ -197,7 +197,7 @@ class YamlFlowParserTest {
             () -> this.parse("flows/invalids/invalid-property.yaml")
         );
 
-        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (11 known properties: \"logLevel\", \"timeout\", \"format\", \"retry\", \"type\", \"id\", \"description\", \"workerGroup\", \"logToFile\", \"disabled\", \"allowFailure\"])"));
+        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (13 known properties: \"logLevel\", \"timeout\", \"retry\", \"allowWarning\", \"format\", \"type\", \"id\", \"description\", \"workerGroup\", \"runIf\", \"logToFile\", \"disabled\", \"allowFailure\"])"));
         assertThat(exception.getConstraintViolations().size(), is(1));
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString(), is("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]"));
     }

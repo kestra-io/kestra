@@ -1,0 +1,7 @@
+id: quattro
+namespace: io.kestra.outsider
+
+tasks:
+  - id: date
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{taskrun.startDate}}"

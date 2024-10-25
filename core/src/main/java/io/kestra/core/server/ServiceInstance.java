@@ -183,7 +183,7 @@ public record ServiceInstance(
             reason = String.format("Service transitioned to the '%s' state.", newState);
         }
 
-        List<TimestampedEvent> events = this.events;
+        List<TimestampedEvent> events = Optional.ofNullable(this.events).orElse(new ArrayList<>());
         if (reason != null) {
             events = new ArrayList<>(events);
             events.add(new TimestampedEvent(updatedAt, reason, SERVICE_STATE_UPDATED_EVENT_TYPE, newState));

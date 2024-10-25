@@ -55,7 +55,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
 
         Execution execution = runnerUtils.runOne(flow.getTenantId(), flow.getNamespace(), flow.getId());
 

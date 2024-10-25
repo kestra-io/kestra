@@ -124,6 +124,7 @@ kestra:
     delay: 1s
     maxDelay: ""
 
+  jdbc:
     queues:
       min-poll-interval: 25ms
       max-poll-interval: 1000ms
@@ -187,3 +188,8 @@ kestra:
     uri: https://api.kestra.io/v1/reports/usages
     initial-delay: 5m
     fixed-delay: 1h
+
+  hidden-labels:
+    prefixes:
+      - system_
+      - internal_

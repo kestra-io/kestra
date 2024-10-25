@@ -22,6 +22,7 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,27 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .doUpdate()
             .set(finalFields)
             .execute();
+    }
+
+    @Override
+    public int persistBatch(List<T> items) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            var inserts = items.stream().map(item -> {
+                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
+
+                    return dslContext
+                        .insertInto(table)
+                        .set(AbstractJdbcRepository.field("key"), key(item))
+                        .set(finalFields)
+                        .onConflict(AbstractJdbcRepository.field("key"))
+                        .doUpdate()
+                        .set(finalFields);
+                })
+                .toList();
+
+            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
+        });
     }
 
     @SuppressWarnings("unchecked")

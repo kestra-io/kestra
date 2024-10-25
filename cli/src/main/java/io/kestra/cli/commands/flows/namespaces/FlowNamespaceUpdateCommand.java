@@ -2,7 +2,6 @@ package io.kestra.cli.commands.flows.namespaces;
 
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
-import io.kestra.cli.commands.flows.FlowValidateCommand;
 import io.kestra.cli.commands.flows.IncludeHelperExpander;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
@@ -12,10 +11,10 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -30,6 +29,9 @@ import java.util.List;
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
     public YamlFlowParser yamlFlowParser;
+
+    @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "replace namespace of all flows by the one provided")
+    public boolean override = false;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -54,6 +56,9 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
             } else {
                 body = String.join("\n---\n", flows);
+            }
+            if (override) {
+                body = body.replaceAll("(?m)^namespace:.+", "namespace: " + namespace);
             }
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest

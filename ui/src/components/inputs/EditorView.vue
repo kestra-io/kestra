@@ -176,6 +176,15 @@
         return undefined;
     });
 
+    const flowInfos = computed(() => {
+        if (isFlow()) {
+            const infos = props.flowValidation?.infos  ?? [];
+            return infos.length === 0 ? undefined : infos;
+        }
+
+        return undefined;
+    });
+
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
     };
@@ -933,7 +942,8 @@
                 )
             "
         >
-            <el-button @click="toggleExplorerVisibility()" class="toggle-button">
+            <el-button @click="toggleExplorerVisibility()">
+                <span class="pe-2 toggle-button">{{ t("files") }}</span>
                 <component :is="explorerVisible ? MenuOpen : MenuClose" />
             </el-button>
         </el-tooltip>
@@ -982,6 +992,7 @@
                 tooltip-placement="bottom-start"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
+                :infos="flowInfos"
             />
 
             <EditorButtons
@@ -1262,7 +1273,7 @@
         }
 
         &::-webkit-scrollbar {
-            width: 2px;
+            width: 10px;
             height: 2px;
         }
 
@@ -1272,7 +1283,7 @@
 
         &::-webkit-scrollbar-thumb {
             background: var(--bs-primary);
-            border-radius: 0px;
+            border-radius: 20px;
         }
     }
 
@@ -1308,7 +1319,7 @@
     }
 
     .toggle-button {
-        color: $secondary;
+        font-size: var(--el-font-size-small);
     }
 
     .tabs {

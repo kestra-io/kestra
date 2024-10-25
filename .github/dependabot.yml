@@ -32,11 +32,10 @@ updates:
       timezone: "Europe/Paris"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade"]
-    reviewers: ["MilosPaunovic"]
     ignore:
-      # Ignore updates of version 1.x, as we're using beta of 2.x
-      - dependency-name: "vue-virtual-scroller"
-        versions: ["1.x"]
       # Ignore major versions greater than 8, as it's still known to be flaky
       - dependency-name: "eslint"
         versions: [">8"]
+      # Ignore updates of version 1.x, as we're using beta of 2.x
+      - dependency-name: "vue-virtual-scroller"
+        versions: ["1.x"]

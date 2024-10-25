@@ -44,8 +44,9 @@
                 </el-form-item>
                 <el-form-item v-if="$route.name !== 'flows/update'">
                     <namespace-select
+                        :value="selectedNamespace"
                         data-type="flow"
-                        :value="$route.query.namespace"
+                        :disabled="!!namespace"
                         @update:model-value="onDataTableValue('namespace', $event)"
                     />
                 </el-form-item>
@@ -133,20 +134,13 @@
                 </el-form-item>
             </template>
 
-            <template #top v-if="showStatChart()">
-                <state-global-chart
-                    v-if="daily"
-                    class="mb-4"
-                    :ready="dailyReady"
-                    :data="daily"
-                    :start-date="startDate"
-                    :end-date="endDate"
-                    :namespace="namespace"
-                    :flow-id="flowId"
-                />
+            <template #top>
+                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                </el-card>
             </template>
 
-            <template #table>
+            <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -191,6 +185,9 @@
                             </el-button>
                             <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
                                 {{ $t("resume") }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                {{ $t("pause") }}
                             </el-button>
                         </bulk-select>
                         <el-dialog
@@ -304,7 +301,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="scope.row.labels" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -437,10 +434,11 @@
     import Utils from "../../utils/utils";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import PauseBox from "vue-material-design-icons/PauseBox.vue";
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -456,7 +454,6 @@
     import Filters from "../saved-filters/Filters.vue";
     import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
-    import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -471,6 +468,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import DateAgo from "../layout/DateAgo.vue";
     import {h, ref} from "vue";
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
     import {filterLabels} from "./utils"
 
@@ -488,13 +486,13 @@
             Filters,
             StatusFilterButtons,
             ScopeFilterButtons,
-            StateGlobalChart,
             Kicon,
             Labels,
             Id,
             TriggerFlow,
             TopNavBar,
-            LabelInput
+            LabelInput,
+            ExecutionsBar
         },
         emits: ["state-count"],
         props: {
@@ -614,11 +612,6 @@
                 selectedStatus: undefined
             };
         },
-        beforeCreate(){
-            if(!this.$route.query.scope) {
-                this.$route.query.scope = this.namespace === "system" ? ["SYSTEM"] : ["USER"];
-            }
-        },
         created() {
             // allow to have different storage key for flow executions list
             if (this.$route.name === "flows/update") {
@@ -636,6 +629,7 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -694,8 +688,39 @@
                     };
                 });
             },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
+            selectedNamespace(){
+                return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
+            }
+        },
+        beforeRouteEnter(to, from, next) {
+            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const query = {...to.query};
+            if (defaultNamespace) {
+                query.namespace = defaultNamespace;
+            } if (!query.scope) {
+                query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
+            }
+            next(vm => {
+                vm.$router?.replace({query});
+            });
         },
         methods: {
+            filteredLabels(labels) {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return labels?.filter(label => {
+                    // Check if the label key matches any prefix but allow it if it's in the query
+                    return !toIgnore.some(prefix => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
+                });
+            },
             executionParams(row) {
                 return {
                     namespace: row.namespace,
@@ -830,6 +855,14 @@
                     "executions resumed"
                 );
             },
+            pauseExecutions() {
+                this.genericConfirmAction(
+                    "bulk pause",
+                    "execution/queryPauseExecution",
+                    "execution/bulkPauseExecution",
+                    "executions paused"
+                );
+            },
             restartExecutions() {
                 this.genericConfirmAction(
                     "bulk restart",
@@ -857,7 +890,7 @@
                 );
             },
             changeStatusToast() {
-                return this.$t("bulk change execution status", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
+                return this.$t("bulk change state", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);

@@ -6,7 +6,7 @@ import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
-import io.kestra.jdbc.runner.JdbcIndexerInterface;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.jooq.Record;
@@ -24,7 +24,7 @@ import java.util.Comparator;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
+public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository) {
@@ -343,6 +343,15 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
+    public int saveBatch(List<LogEntry> items) {
+        if (ListUtils.isEmpty(items)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.persistBatch(items);
+    }
+
+    @Override
     public Integer purge(Execution execution) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -350,17 +359,12 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
+                    // The deleted field is not used, so ti will always be false.
+                    // We add it here to be sure to use the correct index.
+                    .where(field("deleted", Boolean.class).eq(false))
+                    .and(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
-    }
-
-    @Override
-    public LogEntry save(DSLContext dslContext, LogEntry logEntry) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(logEntry);
-        this.jdbcRepository.persist(logEntry, dslContext, fields);
-
-        return logEntry;
     }
 
     @Override

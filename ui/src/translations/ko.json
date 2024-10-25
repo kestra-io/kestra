@@ -658,7 +658,7 @@
     "pluginPage": {
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요.",
-      "search": "+{count} 개의 플러그인 검색"
+      "search": "{count}+ 플러그인 검색"
     },
     "no inputs": "이 flow에는 입력이 없습니다.",
     "settings": {
@@ -704,6 +704,12 @@
           "fields": {
             "flows": "모든 Flow 내보내기",
             "templates": "모든 템플릿 내보내기"
+          }
+        },
+        "save": {
+          "label": "환경 설정 저장",
+          "fields": {
+            "name": "변경 사항 저장"
           }
         }
       }
@@ -866,6 +872,23 @@
     "concurrency": "동시성",
     "open sidebar": "사이드바 열기",
     "close sidebar": "사이드바 닫기",
-    "change_status": "상태 변경"
+    "change_status": "상태 변경",
+    "in-our-documentation": "우리의 문서에서.",
+    "read-more": "자세히 알아보기",
+    "flow-dependencies": "종속성",
+    "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "files": "파일",
+    "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
+    "delete confirm multiple": "<code>{name}</code> KV(s)를 삭제하시겠습니까?",
+    "show task condition": "작업 상태 표시",
+    "empty search": "검색 결과가 없습니다",
+    "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
+    "pause": "일시 중지",
+    "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
+    "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
+    "pause done": "실행이 PAUSED 상태입니다.",
+    "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
+    "no_data": "데이터가 없습니다",
+    "informative notice": "노트(s)"
   }
 }

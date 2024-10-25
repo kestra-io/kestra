@@ -20,6 +20,7 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
@@ -425,23 +426,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext, Backfill backfill) throws IllegalVariableEvaluationException {
-        List<Label> labels = new ArrayList<>();
-
-        if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
-        }
+        List<Label> labels = LabelService.fromTrigger(runContext, conditionContext.getFlow(), this);
 
         if (backfill != null && backfill.getLabels() != null) {
             for (Label label : backfill.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        if (this.getLabels() != null) {
-            for (Label label : this.getLabels()) {
                 final var value = runContext.render(label.value());
                 if (value != null) {
                     labels.add(new Label(label.key(), value));

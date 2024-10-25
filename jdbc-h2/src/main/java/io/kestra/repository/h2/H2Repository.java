@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
@@ -43,19 +44,36 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public void persist(T entity, DSLContext context, @Nullable Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
+        this.persistInternal(entity, context, finalFields);
+    }
+
+    private int persistInternal(T entity, DSLContext context, Map<Field<Object>, Object> fields) {
         int affectedRows = context
             .update(table)
-            .set(finalFields)
+            .set(fields)
             .where(AbstractJdbcRepository.field("key").eq(key(entity)))
             .execute();
 
         if (affectedRows == 0) {
-            context
+           return  context
                 .insertInto(table)
                 .set(AbstractJdbcRepository.field("key"), key(entity))
-                .set(finalFields)
+                .set(fields)
                 .execute();
+        } else {
+            return affectedRows;
         }
+    }
+
+    @Override
+    public int persistBatch(List<T> items) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            return items.stream()
+                .map(item -> this.persistInternal(item, dslContext, this.persistFields(item)))
+                .mapToInt(i -> i)
+                .sum();
+        });
     }
 
     public Condition fullTextCondition(List<String> fields, String query) {

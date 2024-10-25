@@ -58,10 +58,10 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
-            title = "Execute a Kestra flow via an HTTP request authenticated with a Bearer auth token.",
+            title = "Execute a Kestra flow via an HTTP request authenticated with a Bearer auth token / JWT token.",
             full = true,
             code = """
-                id: api_auth_call
+                id: jwt_auth_call
                 namespace: company.team
 
                 tasks:
@@ -70,7 +70,37 @@ import java.util.OptionalInt;
                     uri: https://dummyjson.com/user/me
                     method: GET
                     headers:
-                      authorization: 'Bearer <TOKEN>'
+                      Authorization: 'Bearer <TOKEN>'
+                """
+        ),
+        @Example(
+            title = "Execute a Kestra flow via an HTTP request authenticated with API key passed in the header.",
+            full = true,
+            code = """
+                id: api_key_auth_call
+                namespace: company.team
+
+                tasks:
+                  - id: api_key_auth
+                    type: io.kestra.plugin.core.http.Request
+                    uri: https://dummyjson.com/user/me
+                    method: GET
+                    headers:
+                      X-API-KEY: abcde12345
+                """
+        ),
+        @Example(
+            title = "Execute a Kestra flow via an HTTP request authenticated with API key passed in the query parameters.",
+            full = true,
+            code = """
+                id: api_key_auth_call
+                namespace: company.team
+
+                tasks:
+                  - id: api_key_in_query_params
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://dummyjson.com/user/me?api_key={{ secret('API_KEY') }}"
+                    method: GET
                 """
         ),
         @Example(
@@ -92,20 +122,20 @@ import java.util.OptionalInt;
                       connectionPoolIdleTimeout: PT10S # 0 seconds by default
                       readIdleTimeout: PT10M # 300 seconds by default
                 """
-        ),        
+        ),
         @Example(
             title = "Make a HTTP request and process its output. Given that we send a JSON payload in the request body, we need to use `application/json` as content type.",
             full = true,
             code = """
                 id: http_post_request_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: payload
                     type: JSON
                     defaults: |
                       {"title": "Kestra Pen"}
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -113,7 +143,7 @@ import java.util.OptionalInt;
                     method: POST
                     contentType: application/json
                     body: "{{ inputs.payload }}"
-                
+
                   - id: print_status
                     type: io.kestra.plugin.core.log.Log
                     message: '{{ outputs.send_data.body }}'
@@ -125,7 +155,7 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_request_example
                 namespace: company.team
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -144,11 +174,11 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_multipart_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: file
                     type: FILE
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -167,11 +197,11 @@ import java.util.OptionalInt;
             code = """
                 id: http_post_multipart_example
                 namespace: company.team
-                
+
                 inputs:
                   - id: file
                     type: FILE
-                
+
                 tasks:
                   - id: send_data
                     type: io.kestra.plugin.core.http.Request
@@ -184,6 +214,60 @@ import java.util.OptionalInt;
                       user:
                         name: "my-file.txt"
                         content: "{{ inputs.file }}"
+                """
+        ),
+        @Example(
+            title = "Upload an image using HTTP POST request to a webserver.",
+            full = true,
+            code = """
+                id: http_upload_image
+                namespace: company.team
+
+                tasks:
+                  - id: s3_download
+                    type: io.kestra.plugin.aws.s3.Download
+                    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID')}}"
+                    secretKeyId: "{{ secret('AWS_SECRET_KEY_ID')}}"
+                    region: "eu-central-1"
+                    bucket: "my-bucket"
+                    key: "path/to/file/my_image.jpeg"
+
+                  - id: send_data
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/upload"
+                    headers:
+                      user-agent: "kestra-io"
+                    method: "POST"
+                    contentType: "image/jpeg"
+                    formData:
+                      user:
+                        file: "my-image.jpeg"
+                        url: "{{ outputs.s3_download.uri }}"
+                        metadata:
+                          description: "my favorite image"
+                """
+        ),
+        @Example(
+            title = "Upload a CSV file using HTTP POST request to a webserver.",
+            full = true,
+            code = """
+                id: http_csv_file_upload
+                namespace: company.team
+
+                tasks:
+                  - id: http_download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: upload
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://server.com/upload"
+                    headers:
+                      user-agent: "kestra-io"
+                    method: "POST"
+                    contentType: "multipart/form-data"
+                    formData:
+                      url: "{{ outputs.http_download.uri }}"
                 """
         )
     },

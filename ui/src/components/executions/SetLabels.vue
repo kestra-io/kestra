@@ -76,7 +76,8 @@
         methods: {
             setLabels() {
                 const filtered = filterLabels(this.executionLabels)
-
+                console.log("executionLabels", this.executionLabels)
+                console.log("filtered", filtered)
                 if(filtered.error) {
                     this.$toast().error(this.$t("wrong labels"))
                     return;

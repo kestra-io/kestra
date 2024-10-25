@@ -9,6 +9,18 @@
         &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info) {
             --el-button-hover-text-color: var(--bs-body-color);
         }
+             
+             &:hover {
+                border-color: #8008f6 !important;
+                background-color: #404559 !important; 
+                color: white !important; 
+            }
+    }
+ 
+      &:hover {
+        border-color: #890fff !important;
+        background-color: #f5f5ff !important; 
+        color:  black !important; 
     }
 
     .el-input-group--append & [class*=el-icon] + span {
@@ -1029,6 +1041,10 @@ form.ks-horizontal {
     background-color: var(--input-bg);
     border-radius: var(--el-border-radius-base);
     height: var(--el-component-size);
+
+    .el-radio-button {
+        display: inline-flex;
+    }
 
     .el-radio-button__inner {
         background-color: var(--input-bg);

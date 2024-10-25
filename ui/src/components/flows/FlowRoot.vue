@@ -13,7 +13,7 @@
 <script>
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
-    import FlowLogs from "./FlowLogs.vue";
+    import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -22,6 +22,7 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
+    import FlowNoDependencies from "./FlowNoDependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
@@ -166,7 +167,7 @@
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit,
+                            isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
                         },
                     });
                 }
@@ -201,7 +202,11 @@
                         name: "triggers",
                         component: FlowTriggers,
                         title: this.$t("triggers"),
+                        props: {
+                            showTooltip: !this.flow.triggers || this.flow.triggers.length === 0
+                        },
                         disabled: !this.flow.triggers,
+                        hideTitle: !this.flow.triggers
                     });
                 }
 
@@ -216,8 +221,13 @@
                 ) {
                     tabs.push({
                         name: "logs",
-                        component: FlowLogs,
+                        component: LogsWrapper,
                         title: this.$t("logs"),
+                        props: {
+                            showFilters: true,
+                            restoreurl: false,
+                        },
+                        containerClass: "full-container p-4"
                     });
                 }
 
@@ -247,7 +257,7 @@
                 ) {
                     tabs.push({
                         name: "dependencies",
-                        component: FlowDependencies,
+                        component: this.routeFlowDependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
                     });
@@ -317,6 +327,16 @@
                     this.flow.namespace,
                 );
             },
+            readOnlySystemLabel() {
+                if (!this.flow) {
+                    return false;
+                }
+
+                return this.flow.labels?.system_readOnly === "true" ?? false;
+            },
+            routeFlowDependencies() {
+                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+            }
         },
         unmounted() {
             this.$store.commit("flow/setFlow", undefined);

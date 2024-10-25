@@ -22,7 +22,7 @@ class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
     @Inject
-    YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    private YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
     @Test
     void invalidRecursiveFlow() {
@@ -31,6 +31,24 @@ class FlowValidationTest {
 
         assertThat(validate.isPresent(), is(true));
         assertThat(validate.get().getMessage(), containsString(": Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]"));
+    }
+
+    @Test
+    void systemLabelShouldFailValidation() {
+        Flow flow = this.parse("flows/invalids/system-labels.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_label=system_key"));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_id=id"));
+    }
+
+    @Test
+    void validFlowShouldSucceed() {
+        Flow flow = this.parse("flows/valids/minimal.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(false));
     }
 
     private Flow parse(String path) {

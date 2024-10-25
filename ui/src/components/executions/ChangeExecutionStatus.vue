@@ -4,7 +4,7 @@
         :persistent="false"
         transition=""
         :hide-after="0"
-        :content="$t('change status tooltip')"
+        :content="$t('change state tooltip')"
         raw-content
         :placement="tooltipPosition"
     >
@@ -15,7 +15,7 @@
             :disabled="!enabled"
             class="ms-0 me-1"
         >
-            {{ $t('change status') }}
+            {{ $t('change state') }}
         </component>
     </el-tooltip>
 
@@ -25,7 +25,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('change execution status confirm', {id: execution.id})" />
+            <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
                 Current status is : <status size="small" class="me-1" :status="execution.state.current" />

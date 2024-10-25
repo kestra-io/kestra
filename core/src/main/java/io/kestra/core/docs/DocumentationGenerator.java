@@ -114,7 +114,8 @@ public class DocumentationGenerator {
         return Collections.singletonList(new Document(
             docPath(plugin),
             render("index", builder.build()),
-            plugin.icon("plugin-icon")
+            plugin.icon("plugin-icon"),
+            null
         ));
     }
 
@@ -203,11 +204,11 @@ public class DocumentationGenerator {
             .map(throwFunction(e -> new Document(
                 pluginName + "/guides/" + e.getKey()  + ".md",
                 e.getValue(),
+                null,
                 null
             )))
             .toList();
     }
-
 
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
@@ -218,7 +219,8 @@ public class DocumentationGenerator {
                     return new Document(
                         docPath(registeredPlugin, type, pluginDocumentation),
                         render(pluginDocumentation),
-                        pluginDocumentation.getIcon()
+                        pluginDocumentation.getIcon(),
+                        new Schema(pluginDocumentation.getPropertiesSchema(), pluginDocumentation.getOutputsSchema(), pluginDocumentation.getDefs())
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);

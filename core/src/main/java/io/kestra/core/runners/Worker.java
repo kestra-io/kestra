@@ -756,8 +756,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }
 
-        if (workerTaskCallable.exception !=null) {
-            taskRun = taskRun.withError(ExecutionError.from(workerTaskCallable.exception));
+        if (workerTaskCallable.exception != null) {
+            taskRun = taskRun.withError(ExecutionError.from(workerTaskCallable.exception, taskRun.getValue()));
         }
 
         return workerTask

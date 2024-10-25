@@ -256,6 +256,7 @@ public final class RunVariables {
                         if (execution.getError() != null) {
                             error.put("message", execution.getError().getMessage());
                             error.put("stackTrace", execution.getError().getStacktrace());
+                            error.put("value", execution.getError().getValue());
                         }
                     }
                     if (!error.isEmpty()) {

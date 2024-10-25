@@ -5,11 +5,12 @@
 </template>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables.scss";
-
     .blueprints {
-        background: var(--bg-dots-image) no-repeat top left;
-        background-color: var(--bg-dots-color);
-        background-size: 1654px;
+        background: url('../../../../assets/dots-bg.jpg') no-repeat top left;
+        background-color: #F6F6FA;
+        .dark & {
+            background:  url('../../../../assets/dots-bg-dark.jpg') no-repeat top left;
+            background-color: #1B1E27;
+        }
     }
 </style>

@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.services.LabelService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,7 @@ import jakarta.validation.constraints.NotNull;
                 outputs:
                   - id: last_ingested_date
                     type: STRING
-                    value: "{{ outputs.final_date.value }}"            
+                    value: "{{ outputs.final_date.value }}"
                 ```
                 Below is the `transform` flow triggered in response to the `extract` flow's successful completion.""",
             code = """
@@ -74,7 +75,7 @@ import jakarta.validation.constraints.NotNull;
 
                 variables:
                   result: |
-                    Ingestion done in {{ trigger.executionId }}. 
+                    Ingestion done in {{ trigger.executionId }}.
                     Now transforming data up to {{ inputs.last_ingested_date }}
 
                 tasks:
@@ -144,7 +145,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(generateLabels(runContext, flow))
+            .labels(LabelService.fromTrigger(runContext, flow, this))
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,
@@ -178,34 +179,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 e
             );
             return Optional.empty();
-        }
-    }
-
-    private List<Label> generateLabels(RunContext runContext, io.kestra.core.models.flows.Flow flow) {
-        final List<Label> labels = new ArrayList<>();
-
-        if (flow.getLabels() != null) {
-            labels.addAll(flow.getLabels()); // no need for rendering
-        }
-
-        if (this.getLabels() != null) {
-            for (Label label : this.getLabels()) {
-                final var value = renderLabelValue(runContext, label);
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        return labels;
-    }
-
-    private String renderLabelValue(RunContext runContext, Label label) {
-        try {
-            return runContext.render(label.value());
-        } catch (IllegalVariableEvaluationException e) {
-            runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
-            return null;
         }
     }
 

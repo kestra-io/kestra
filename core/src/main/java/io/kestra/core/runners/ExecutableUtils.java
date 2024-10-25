@@ -94,11 +94,14 @@ public final class ExecutableUtils {
         );
 
         // propagate system labels and compute correlation ID if not already existing
-        List<Label> systemLabels = Streams.of(currentExecution.getLabels())
+        List<Label> newLabels = Streams.of(currentExecution.getLabels())
             .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
             .collect(Collectors.toList());
-        if (systemLabels.stream().noneMatch(label -> label.key().equals(Label.CORRELATION_ID))) {
-            systemLabels.add(new Label(Label.CORRELATION_ID, currentExecution.getId()));
+        if (newLabels.stream().noneMatch(label -> label.key().equals(Label.CORRELATION_ID))) {
+            newLabels.add(new Label(Label.CORRELATION_ID, currentExecution.getId()));
+        }
+        if (labels != null) {
+            newLabels.addAll(labels);
         }
 
         FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
@@ -107,7 +110,7 @@ public final class ExecutableUtils {
             .newExecution(
                 flow,
                 (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
-                labels,
+                newLabels,
                 Optional.empty())
             .withTrigger(ExecutionTrigger.builder()
                 .id(currentTask.getId())
@@ -115,8 +118,7 @@ public final class ExecutableUtils {
                 .variables(variables)
                 .build()
             )
-            .withScheduleDate(scheduleOnDate)
-            .withSystemLabels(systemLabels);
+            .withScheduleDate(scheduleOnDate);
         return SubflowExecution.builder()
             .parentTask(currentTask)
             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))

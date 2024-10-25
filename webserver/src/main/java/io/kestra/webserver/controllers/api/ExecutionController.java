@@ -29,10 +29,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
@@ -89,7 +86,6 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -112,6 +108,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.models.Label.CORRELATION_ID;
+import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -533,7 +531,7 @@ public class ExecutionController {
 
         var result = execution.get();
         if (flow.getLabels() != null) {
-            result = result.withLabels(flow.getLabels());
+            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
@@ -583,8 +581,8 @@ public class ExecutionController {
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Pair<List<Label>, List<Label>> parsedLabels = parseLabels(labels);
-        Execution execution = Execution.newExecution(flow, parsedLabels.getLeft()).withSystemLabels(parsedLabels.getRight());
+        List<Label> parsedLabels = parseLabels(labels);
+        Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), execution, inputs)
             .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
@@ -605,8 +603,8 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
     ) throws IOException {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Pair<List<Label>, List<Label>> parsedLabels = parseLabels(labels);
-        Execution current = Execution.newExecution(flow, null, parsedLabels.getLeft(), scheduleDate).withSystemLabels(parsedLabels.getRight());
+        List<Label> parsedLabels = parseLabels(labels);
+        Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate);
         Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
             .handle((executionInputs, sink) -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
@@ -669,7 +667,7 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
-                execution.outputs(),
+                execution.getOutputs(),
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -685,14 +683,17 @@ public class ExecutionController {
         }
     }
 
-    protected Pair<List<Label>, List<Label>> parseLabels(List<String> labels) {
-        // We allow passing the correlation id from the API but only this one, other system labels will go through and fail at execution creation.
+    protected List<Label> parseLabels(List<String> labels) {
         List<Label> parsedLabels =  labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
-        List<Label> standardLabels = parsedLabels.stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).toList();
-        List<Label> systemLabels = parsedLabels.stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).toList();
-        return Pair.of(standardLabels, systemLabels);
+
+        // check for system labels: none can be passed at execution creation time except system_correlationId
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
+        }
+        return parsedLabels;
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
@@ -1699,6 +1700,12 @@ public class ExecutionController {
     }
 
     private Execution setLabels(Execution execution, List<Label> labels) {
+        // check for system labels: none can be passed at runtime
+        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
+        }
+
         Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
         if (execution.getLabels() != null) {
             execution.getLabels().forEach(

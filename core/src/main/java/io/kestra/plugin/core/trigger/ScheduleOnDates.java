@@ -10,6 +10,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -83,7 +84,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
                 this,
                 conditionContext,
                 triggerContext,
-                generateLabels(runContext, conditionContext),
+                LabelService.fromTrigger(runContext, conditionContext.getFlow(), this),
                 this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
                 nextDate
@@ -131,24 +132,5 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
-    }
-
-    private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext) throws IllegalVariableEvaluationException {
-        List<Label> labels = new ArrayList<>();
-
-        if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
-        }
-
-        if (this.getLabels() != null) {
-            for (Label label : this.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        return labels;
     }
 }

@@ -258,19 +258,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     flow = either.getLeft();
                 }
 
-                flowTopologyRepository.save(
-                    flow,
-                    (flow.isDeleted() ?
-                        Stream.<FlowTopology>empty() :
-                        flowTopologyService
-                            .topology(
-                                flow,
-                                this.allFlows
-                            )
-                    )
-                        .distinct()
-                        .toList()
-                );
+                try {
+                    flowTopologyRepository.save(
+                        flow,
+                        (flow.isDeleted() ?
+                            Stream.<FlowTopology>empty() :
+                            flowTopologyService
+                                .topology(
+                                    flow,
+                                    this.allFlows
+                                )
+                        )
+                            .distinct()
+                            .toList()
+                    );
+                } catch (Exception e) {
+                    log.error("Unable to save flow topology", e);
+                }
+
             }
         ));
         setState(ServiceState.RUNNING);

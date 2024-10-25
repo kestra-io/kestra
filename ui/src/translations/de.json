@@ -707,7 +707,7 @@
           }
         },
         "save": {
-          "label": "Präferenzen speichern",
+          "label": "Einstellungen speichern",
           "fields": {
             "name": "Änderungen speichern"
           }

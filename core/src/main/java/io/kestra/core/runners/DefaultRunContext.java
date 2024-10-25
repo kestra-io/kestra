@@ -215,6 +215,26 @@ public class DefaultRunContext extends RunContext {
         return inline == null ? null : inline.as(this, clazz, variables);
     }
 
+    @Override
+    public <T> T renderList(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.asList(this, clazz);
+    }
+
+    @Override
+    public <T> T  renderList(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.asList(this, clazz, variables);
+    }
+
+    @Override
+    public <T> T renderMap(Property<T> inline, Class<T> keyClass, Class<T> valueClass) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.asMap(this, keyClass, valueClass, variables);
+    }
+
+    @Override
+    public <T> T  renderMap(Property<T> inline, Class<T> keyClass, Class<T> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return inline == null ? null : inline.asMap(this, keyClass, valueClass, variables);
+    }
+
     /**
      * {@inheritDoc}
      */

@@ -143,13 +143,14 @@ public class Execution implements DeletedInterface, TenantInterface {
             .build();
 
         List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
-
         if (labels != null) {
             executionLabels.addAll(labels);
         }
-        if (!executionLabels.isEmpty()) {
-            execution = execution.withLabels(executionLabels);
+        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            // add a correlation ID if none exist
+            executionLabels.add(new Label(Label.CORRELATION_ID, execution.getId()));
         }
+        execution = execution.withLabels(executionLabels);
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));

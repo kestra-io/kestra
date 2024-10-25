@@ -167,7 +167,7 @@
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit,
+                            isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
                         },
                     });
                 }
@@ -326,6 +326,13 @@
                     action.UPDATE,
                     this.flow.namespace,
                 );
+            },
+            readOnlySystemLabel() {
+                if (!this.flow) {
+                    return false;
+                }
+
+                return this.flow.labels?.system_readOnly === "true" ?? false;
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

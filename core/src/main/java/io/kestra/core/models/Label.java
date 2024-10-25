@@ -9,4 +9,5 @@ public record Label(@NotNull String key, @NotNull String value) {
     public static final String CORRELATION_ID = SYSTEM_PREFIX + "correlationId";
     public static final String USERNAME = SYSTEM_PREFIX + "username";
     public static final String APP = SYSTEM_PREFIX + "app";
+    public static final String READ_ONLY = SYSTEM_PREFIX + "readOnly";
 }

@@ -959,6 +959,8 @@
             --el-tree-node-content-height: 36px;
             --el-tree-node-hover-bg-color: transparent;
             line-height: 36px;
+            min-width: fit-content;
+            width: 100%;
 
             .el-tree-node__content {
                 width: 100%;

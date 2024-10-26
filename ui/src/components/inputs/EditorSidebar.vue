@@ -934,7 +934,6 @@
     }
 
     .el-tree {
-        max-width: 20rem;
         height: calc(100% - 34px);
         overflow: auto;
 
@@ -968,9 +967,6 @@
                 overflow: unset !important;
             }
         }
-        @media (min-width: 1920px) {
-                max-width: 100%;
-        }
     }
 </style>
 
@@ -980,6 +976,7 @@
     .sidebar {
         background: var(--card-bg);
         border-right: 1px solid var(--bs-border-color);
+        max-width: 33%;
 
         .empty {
             position: relative;

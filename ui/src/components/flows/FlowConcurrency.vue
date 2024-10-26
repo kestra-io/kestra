@@ -1,33 +1,3 @@
-<script>
-    import Executions from "../executions/Executions.vue";
-    import {mapState} from "vuex";
-    import State from "../../utils/state.js";
-    import Status from "../Status.vue";
-
-    export default {
-        components: {Status, Executions},
-        data() {
-            return {
-                runningCount: 0
-            }
-        },
-        methods: {
-            setRunningCount(count) {
-                this.runningCount = count
-            }
-        },
-        computed: {
-            ...mapState("flow", ["flow"]),
-            State() {
-                return State
-            },
-            progress() {
-                return this.runningCount / this.flow.concurrency.limit * 100
-            }
-        }
-    }
-</script>
-
 <template>
     <div v-if="flow.concurrency">
         <el-card class="mb-1">
@@ -56,14 +26,52 @@
             />
         </el-card>
     </div>
-    <div v-else class="d-flex flex-grow-1 flex-column align-items-center justify-content-center">
-        <img src="../../../src/assets/no_concurrency.svg" alt="No Concurrency" class="img-size my-3">
-        <h4>{{ $t('concurrency-view.title_no_limit') }}</h4>
-        <span v-html="$t('concurrency-view.desc_no_limit')" />
-    </div>
+    <empty-state
+        v-else
+        :title="$t('concurrency-view.title_no_limit')"
+        :description="$t('concurrency-view.desc_no_limit')"
+        :image="noConcurrencyImage"
+    />
 </template>
 
-<style  lang="scss">
+<script>
+    import Executions from "../executions/Executions.vue";
+    import EmptyState from "../layout/EmptyState.vue";
+    import {mapState} from "vuex";
+    import State from "../../utils/state.js";
+    import Status from "../Status.vue";
+    import noConcurrencyImage from "../../assets/no_concurrency.svg";
+
+    export default {
+        components: {
+            Status, 
+            Executions,
+            EmptyState
+        },
+        data() {
+            return {
+                runningCount: 0,
+                noConcurrencyImage
+            }
+        },
+        methods: {
+            setRunningCount(count) {
+                this.runningCount = count
+            }
+        },
+        computed: {
+            ...mapState("flow", ["flow"]),
+            State() {
+                return State
+            },
+            progress() {
+                return this.runningCount / this.flow.concurrency.limit * 100
+            }
+        }
+    }
+</script>
+
+<style lang="scss" scoped>
     .img-size {
         max-width: 200px;
     }

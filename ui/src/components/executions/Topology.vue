@@ -15,6 +15,7 @@
                 view-type="topology"
                 @expand-subflow="onExpandSubflow"
             />
+            <el-loading v-else-if="loading" />
             <el-alert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
             </el-alert>
@@ -39,6 +40,7 @@
         },
         data() {
             return {
+                loading: true,
                 previousExecutionId: undefined,
                 expandedSubflows: [],
                 previousExpandedSubflows: [],
@@ -74,8 +76,20 @@
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
-            loadData(){
-                this.loadGraph();
+            loadData() {
+                this.loading = true;
+                if (this.execution) {
+                    this.$store.dispatch("execution/loadGraph", {
+                        id: this.execution.id,
+                        params: {
+                            subflows: this.expandedSubflows
+                        }
+                    }).finally(() => {
+                        this.loading = false;
+                    });
+                } else {
+                    this.loading = false;
+                }
             },
             isUnused: function (nodeByUid, nodeUid) {
                 let nodeToCheck = nodeByUid[nodeUid];

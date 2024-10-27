@@ -217,6 +217,9 @@
                         </template>
                     </select-table>
                 </template>
+                <template #table v-else>
+                    <el-empty :description="$t('no_data')" />
+                </template>
             </data-table>
         </div>
     </section>
@@ -547,6 +550,7 @@
             },
             loadData(callback) {
                 this.loadStats();
+                console.log("inside loadData");
 
                 this.$store
                     .dispatch("flow/findFlows", this.loadQuery({
@@ -557,7 +561,7 @@
                     .then(flows => {
                         this.dailyGroupByFlowReady = false;
                         this.lastExecutionByFlowReady = false;
-
+                        console.log("flows length", flows.results);
                         if (flows.results && flows.results.length > 0) {
                             if (this.user && this.user.hasAny(permission.EXECUTION)) {
                                 this.$store

@@ -26,7 +26,7 @@ dependencies {
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.0")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
-    api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
+    api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.4")
     api platform("io.micronaut.platform:micronaut-platform:4.6.3")
     api platform("io.qameta.allure:allure-bom:2.29.0")
 

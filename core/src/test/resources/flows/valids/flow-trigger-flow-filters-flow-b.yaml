@@ -1,0 +1,7 @@
+id: flow-trigger-flow-filters-flow-b
+namespace: io.kestra.tests.trigger.flow-filters
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

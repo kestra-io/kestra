@@ -298,7 +298,21 @@
                 document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
                     e.click()
                 });
-            }
+            },
+            checkMobileWidth(){
+                
+                if(window.innerWidth<=768 || localStorage.getItem("collapsed")==="true"){
+                    this.collapsed = true;  
+                    this.$emit("menu-collapse", "i emitted");
+                }if(window.innerWidth>768 && localStorage.getItem("menuCollapsed")==="false"){
+                    this.collapsed = false;
+                    this.$emit("menu-collapse", false);
+                }
+            },
+            handleBeforeUnload() {
+                localStorage.setItem("collapsed",String(this.collapsed));
+            },
+            
         },
         updated() {
             // Required here because in mounted() the menu is not yet rendered
@@ -341,7 +355,14 @@
             },
         },
         mounted() {
-            this.localMenu = this.menu;
+            this.localMenu = this.menu
+            this.checkMobileWidth();
+            window.addEventListener("resize",this.checkMobileWidth);
+            window.addEventListener("beforeunload", this.handleBeforeUnload);  
+        },
+        beforeUnmount(){
+            window.removeEventListener("resize",this.checkMobileWidth);
+            window.removeEventListener("beforeunload", this.handleBeforeUnload);
         }
     };
 </script>

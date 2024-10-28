@@ -114,9 +114,8 @@
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
             },
             displayApp() {
-                this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
+                // this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
                 Utils.switchTheme();
-
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
                 this.loaded = true;

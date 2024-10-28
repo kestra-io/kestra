@@ -39,6 +39,13 @@ public class SelectInput extends Input<String> implements RenderableInput {
     @Builder.Default
     Boolean allowCustomValue = false;
 
+    @Schema(
+        title = "Indicates if the input should be rendered as a radio button group."
+    )
+    @NotNull
+    @Builder.Default
+    Boolean isRadio = false;  // New field added here
+
     @Override
     public void validate(String input) throws ConstraintViolationException {
         if (!values.contains(input) && this.getRequired()) {
@@ -65,6 +72,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .id(getId())
                 .type(getType())
                 .allowCustomValue(getAllowCustomValue())
+                .isRadio(isRadio)  // Include isRadio in the builder
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())
@@ -103,3 +111,4 @@ public class SelectInput extends Input<String> implements RenderableInput {
         );
     }
 }
+

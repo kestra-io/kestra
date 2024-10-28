@@ -33,7 +33,7 @@ public interface MultipleConditionStorageInterface {
                 .plusMinutes(multipleCondition.getWindow().toMinutes() * (now.getMinute() / multipleCondition.getWindow().toMinutes()));
         }
 
-        ZonedDateTime start = now.plus(multipleCondition.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime start = multipleCondition.getWindowAdvance() == null ? now : now.plus(multipleCondition.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime end = start.plus(multipleCondition.getWindow()).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS);
 
         return this.get(flow, multipleCondition.getId())

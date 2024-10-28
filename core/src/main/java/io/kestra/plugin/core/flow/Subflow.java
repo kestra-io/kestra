@@ -31,6 +31,7 @@ import lombok.ToString;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.stream.Streams;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -161,17 +162,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             inputs.putAll(runContext.render(this.inputs));
         }
 
-        List<Label> labels = new ArrayList<>();
-        if (this.inheritLabels && currentExecution.getLabels() != null && !currentExecution.getLabels().isEmpty()) {
-            labels.addAll(currentExecution.getLabels());
-        }
-
-        if (this.labels != null) {
-            for (Map.Entry<String, String> entry : this.labels.entrySet()) {
-                labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-            }
-        }
-
         return List.of(ExecutableUtils.subflowExecution(
             runContext,
             flowExecutorInterface,
@@ -181,6 +171,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             currentTaskRun,
             inputs,
             labels,
+            inheritLabels,
             scheduleDate
         ));
     }

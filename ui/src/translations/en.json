@@ -900,9 +900,13 @@
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
-      "dependency-view": {
-          "title_no_deps": "No dependencies are set for this Flow.",
-          "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+    "dependency-view": {
+      "title_no_deps": "No dependencies are set for this Flow.",
+      "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+    },
+    "triggers-view": {
+      "title_no_triggers": "Your flow does't have any Triggers.",
+      "desc_no_triggers": "Read more about <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in our documentation."
     },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",

@@ -121,6 +121,7 @@
     "source": "Source",
     "home": "Home",
     "create": "Create",
+    "create in dashboard": "Create Flow",
     "add flow": "Add flow",
     "from": "From",
     "to": "To",

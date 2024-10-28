@@ -119,6 +119,7 @@
     "source": "소스",
     "home": "홈",
     "create": "생성",
+    "create in dashboard": "플로우 생성",
     "add flow": "Flow 추가",
     "from": "시작",
     "to": "종료",

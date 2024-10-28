@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "El primer paso siempre es el más difícil.",
           "2": "Explora blueprints para iniciar tu próximo flujo."
-        }
+        },
+        "alt": "Icono de Blueprints"
       },
       "empty": "No hay blueprints para mostrar."
     },

@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour créer rapidement vos flows."
-        }
+        },
+        "alt": "Icône des Blueprints"
       },
       "empty": "Aucun blueprint à afficher."
     },

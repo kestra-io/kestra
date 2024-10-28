@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
           "2": "Odkryj blueprints, aby rozpocząć swój następny flow."
-        }
+        },
+        "alt": "Ikona Blueprintów"
       },
       "empty": "Brak blueprintów do wyświetlenia."
     },

@@ -86,8 +86,9 @@
                     </el-card>
                 </template>
 
-                <template #table v-if="flows.length">
+                <template #table>
                     <select-table
+                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -216,9 +217,8 @@
                             </el-table-column>
                         </template>
                     </select-table>
-                </template>
-                <template #table v-else>
-                    <el-empty :description="$t('no_data')" />
+
+                    <el-empty v-else :description="$t('no_data')" />
                 </template>
             </data-table>
         </div>
@@ -560,6 +560,7 @@
                     .then(flows => {
                         this.dailyGroupByFlowReady = false;
                         this.lastExecutionByFlowReady = false;
+
                         if (flows.results && flows.results.length > 0) {
                             if (this.user && this.user.hasAny(permission.EXECUTION)) {
                                 this.$store

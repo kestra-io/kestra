@@ -1,17 +1,13 @@
-// EmptyState.vue
 <template>
     <div class="empty-state-container">
         <div class="empty-state-image">
-            <img 
-                :src="image" 
-                :alt="title"
-            >
+            <img :src="image" :alt="title">
         </div>
         <div class="empty-state-content">
             <h4 class="empty-state-title">
                 {{ title }}
             </h4>
-            <div 
+            <div
                 class="empty-state-description"
                 :class="themeClass"
                 v-html="description"
@@ -26,24 +22,24 @@
         props: {
             title: {
                 type: String,
-                required: true
+                required: true,
             },
             description: {
                 type: String,
-                required: true
+                required: true,
             },
             image: {
                 type: String,
-                required: true
-            }
+                required: true,
+            },
         },
         computed: {
             themeClass() {
-                return (localStorage.getItem("theme") || "light") === "light" 
-                    ? "theme-light" 
+                return (localStorage.getItem("theme") || "light") === "light"
+                    ? "theme-light"
                     : "theme-dark";
-            }
-        }
+            },
+        },
     };
 </script>
 

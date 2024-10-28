@@ -230,10 +230,6 @@
             }
         },
         methods: {
-            shouldShowLog(log) {
-                if (!this.filter) return true
-                return log.message?.toLowerCase().includes(this.filter.toLowerCase())
-            },
             setLogLineRef(index, el) {
                 if (el) {
                     this.logLineRefs[index] = el;

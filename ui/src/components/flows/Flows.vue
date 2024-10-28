@@ -86,8 +86,9 @@
                     </el-card>
                 </template>
 
-                <template #table v-if="flows.length">
+                <template #table>
                     <select-table
+                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -216,6 +217,8 @@
                             </el-table-column>
                         </template>
                     </select-table>
+
+                    <el-empty v-else :description="$t('no_data')" />
                 </template>
             </data-table>
         </div>

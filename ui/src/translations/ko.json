@@ -890,6 +890,14 @@
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
     "no_data": "데이터가 없습니다",
-    "informative notice": "노트(s)"
+    "informative notice": "노트(s)",
+    "triggers-view": {
+      "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>에 대한 자세한 내용은 문서를 참조하세요.",
+      "title_no_triggers": "당신의 flow에는 Trigger가 없습니다."
+    },
+    "dependency-view": {
+      "title_no_deps": "이 Flow에는 설정된 종속성이 없습니다.",
+      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
+    }
   }
 }

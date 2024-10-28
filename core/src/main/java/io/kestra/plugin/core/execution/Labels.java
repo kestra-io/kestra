@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.execution;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -11,6 +13,7 @@ import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -18,16 +21,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
-import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
@@ -72,6 +72,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     aliases = "io.kestra.core.tasks.executions.Labels"
 )
 public class Labels extends Task implements ExecutionUpdatableTask {
+    private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     @Schema(
         title = "Labels to add to the current execution.",
         description = "The value should result in a list of labels or a labelKey:labelValue map",
@@ -87,24 +90,20 @@ public class Labels extends Task implements ExecutionUpdatableTask {
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {
-        Logger logger = runContext.logger();
-
-        Object labelsObject = labels;
+        Map<String, String> labelsAsMap;
         if (labels instanceof String labelStr) {
             try {
-                labelsObject = JacksonMapper.toObject(runContext.render(labelStr));
+                labelsAsMap = MAPPER.readValue(runContext.render(labelStr), MAP_TYPE_REFERENCE);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
-        }
-
-        if (labelsObject instanceof List<?> labelsList) {
-            labelsObject = labelsList.stream()
+        } else if (labels instanceof List<?> labelsList) {
+            labelsAsMap = labelsList.stream()
                 .map(throwFunction(label -> {
                         if (label instanceof Map<?, ?> labelMap) {
                             return Map.entry(
-                                (String) labelMap.get("key"),
-                                (String) labelMap.get("value")
+                                runContext.render((String) labelMap.get("key")),
+                                runContext.render((String) labelMap.get("value"))
                             );
                         } else {
                             throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
@@ -114,39 +113,36 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     Map.Entry::getKey,
                     Map.Entry::getValue
                 ));
-        }
-
-        if (labelsObject instanceof Map<?, ?> labelsMap) {
-            Map<String, String> newLabels = Optional.ofNullable(execution.getLabels()).orElse(Collections.emptyList()).stream()
+        } else if (labels instanceof Map<?, ?> map) {
+            labelsAsMap = map.entrySet()
+                .stream()
+                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), runContext.render((String) entry.getValue()))))
                 .collect(Collectors.toMap(
-                    Label::key,
-                    Label::value,
-                    (labelValue1, labelValue2) -> labelValue2
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
                 ));
-            labelsMap.forEach(throwBiConsumer((key, value) -> {
-                String renderedKey = runContext.render((String) key);
-                String renderedValue = runContext.render((String) value);
-                logger.info("Adding label {} with value {}", renderedKey, renderedValue);
-                newLabels.put(
-                    renderedKey,
-                    renderedValue
-                );
-            }));
-
-            // check for system labels: none can be passed at runtime
-            Optional<Map.Entry<String, String>> first = newLabels.entrySet().stream().filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX)).findFirst();
-            if (first.isPresent()) {
-                throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().getKey() + "=" + first.get().getValue());
-            }
-
-            return execution.withLabels(newLabels.entrySet().stream()
-                    .map(entry -> new Label(
-                        entry.getKey(),
-                        entry.getValue()
-                    ))
-                    .toList());
         } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + labels.getClass());
         }
+
+        // check for system labels: none can be passed at runtime
+        Optional<Map.Entry<String, String>> first = labelsAsMap.entrySet().stream().filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().getKey() + "=" + first.get().getValue());
+        }
+
+        Map<String, String> newLabels = ListUtils.emptyOnNull(execution.getLabels()).stream()
+            .collect(Collectors.toMap(
+                Label::key,
+                Label::value
+            ));
+        newLabels.putAll(labelsAsMap);
+
+        return execution.withLabels(newLabels.entrySet().stream()
+            .map(entry -> new Label(
+                entry.getKey(),
+                entry.getValue()
+            ))
+            .toList());
     }
 }

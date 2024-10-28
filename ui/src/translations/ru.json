@@ -890,6 +890,14 @@
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
     "no_data": "Нет данных",
-    "informative notice": "Примечание(я)"
+    "informative notice": "Примечание(я)",
+    "triggers-view": {
+      "desc_no_triggers": "Узнайте больше о <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> в нашей документации.",
+      "title_no_triggers": "Ваш flow не имеет никаких Triggers."
+    },
+    "dependency-view": {
+      "title_no_deps": "Для этого Flow зависимости не установлены.",
+      "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
+    }
   }
 }

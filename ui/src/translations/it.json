@@ -890,6 +890,14 @@
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
     "no_data": "Nessun dato disponibile",
-    "informative notice": "Note(s)"
+    "informative notice": "Note(s)",
+    "triggers-view": {
+      "desc_no_triggers": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a> nella nostra documentazione.",
+      "title_no_triggers": "Il tuo flow non ha alcun trigger."
+    },
+    "dependency-view": {
+      "title_no_deps": "Nessuna dipendenza è impostata per questo Flow.",
+      "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione."
+    }
   }
 }

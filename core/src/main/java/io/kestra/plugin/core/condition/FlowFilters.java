@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
@@ -15,7 +16,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,10 +62,11 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         )
     }
 )
-@Slf4j
 public class FlowFilters extends AbstractMultipleCondition {
     @NotNull
     @NotEmpty
+    @Schema(title = "The list of upstream flows to wait for.")
+    @PluginProperty
     private List<UpstreamFlow> upstreamFlows;
 
     /**

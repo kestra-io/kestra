@@ -37,21 +37,20 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     @NotNull
     @Schema(
         title = "The duration of the window",
-        description = "See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available duration value.\n" +
-            "The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window, " +
-            "the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes")
+        description = """
+            See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available duration value.
+            The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window,
+            the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes.""")
     @PluginProperty
     @Builder.Default
     private Duration window = Duration.ofDays(1);
 
     @Schema(
         title = "The window advance duration",
-        description = "Allow to specify the start hour of the window\n" +
-            "Eg: you want a window of 6 hours (window=PT6H). By default the check will be done between: \n" +
-            "00:00 and 06:00 - 06:00 and 12:00 - 12:00 and 18:00 - 18:00 and 00:00 " +
-            "If you want to check the window between: \n" +
-            "03:00 and 09:00 - 09:00 and 15:00 - 15:00 and 21:00 - 21:00 and 3:00" +
-            "You will have to shift the window of 3 hours by settings windowAdvance: PT3H")
+        description = """
+            Allow to specify the start hour of the window.
+            Eg: you want a window of 6 hours (window=PT6H). By default the check will be done between: 00:00 and 06:00 - 06:00 and 12:00 - 12:00 and 18:00 - 18:00 and 00:00.
+            If you want to check the window between: 03:00 and 09:00 - 09:00 and 15:00 - 15:00 and 21:00 - 21:00 and 3:00, you will have to shift the window of 3 hours by settings windowAdvance: PT3H.""")
     @PluginProperty
     private Duration windowAdvance;
 

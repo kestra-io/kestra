@@ -14,7 +14,7 @@
                 </slot>
             </h1>
         </div>
-        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
@@ -25,7 +25,7 @@
                 </el-button>
             </div>
             <slot name="additional-right" />
-            <div class="d-flex fixed-buttons">
+            <div class="d-flex fixed-buttons icons">
                 <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
                         <HelpBox />
@@ -150,6 +150,11 @@
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
             },
         },
+        data(){
+            return{
+                isApplied:false
+            };
+        },
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
@@ -163,8 +168,44 @@
                     () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
+            },
+            checkScreenWidth(){
+                const ulElement = document.querySelector(".mycontainer ul[data-v-43a2476c-s]");
+                const firstLi = ulElement?document.querySelector(".mycontainer ul[data-v-43a2476c-s] li:first-child"):null;
+                const secondLi = ulElement?document.querySelector(".mycontainer ul[data-v-43a2476c-s] li:nth-child(2)"):null;
+                const thirdLi = ulElement?document.querySelector(".mycontainer ul[data-v-43a2476c-s] li:nth-child(3)"):null;
+                const fourthLi = ulElement?document.querySelector(".mycontainer ul[data-v-43a2476c-s] li:nth-child(4)"):null;
+                const sideEl=document.querySelector("div.side.d-flex.gap-2.align-items-center");
+
+                if(window.innerWidth<=768 && !this.isApplied){ 
+                    if(ulElement) ulElement.style.display="contents";
+                    if(firstLi) firstLi.classList.add("first-child");
+                    if(secondLi) secondLi.classList.add("second-child")
+                    if(thirdLi) thirdLi.classList.add("third-child")
+                    if(fourthLi) fourthLi.classList.add("fourth-child") 
+                    if(sideEl) sideEl.classList.remove("d-flex")
+                    if(sideEl) sideEl.classList.add("d-none")
+                    this.isApplied=true;
+                }if(window.innerWidth>768 && this.isApplied){
+                    if(ulElement) ulElement.style.display="flex";
+                    if(firstLi) firstLi.classList.remove("first-child");
+                    if(secondLi) secondLi.classList.remove("second-child");
+                    if(thirdLi) thirdLi.classList.remove("third-child");
+                    if(fourthLi) fourthLi.classList.remove("fourth-child"); 
+                    if(sideEl) sideEl.classList.add("d-flex")
+                    if(sideEl) sideEl.classList.remove("d-none")
+                    this.isApplied=false
+                }
             }
+        },
+        mounted(){
+            window.addEventListener("resize", this.checkScreenWidth);
+            this.checkScreenWidth(); // Initial check
+        },
+        beforeUnmount(){
+            window.removeEventListener("resize", this.checkScreenWidth);
         }
+        
     };
 </script>,
 <style lang="scss" scoped>
@@ -218,6 +259,48 @@
                 margin: 0;
                 gap: calc(var(--spacer) / 2);
                 align-items: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(3, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+
+            }
+            .icons{
+                grid-row:2;
+                grid-column:2;
+                display: contents;
+            }
+            .first-child{
+                grid-row:1;
+                grid-column:1;
+            }
+            .second-child{
+                grid-row:1;
+                grid-column:2;
+            }
+            .third-child{
+                grid-row:1;
+                grid-column:3;
+            }
+            .fourth-child{
+                grid-row:2;
+                grid-column:1;
+            }
+            
+        }
+        @media (max-width: 664px){
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(2, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+
             }
         }
     }

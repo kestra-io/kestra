@@ -31,8 +31,16 @@
             padding: 9px;
             border-radius: 7px;
             box-shadow:
-                0px 4px 12px 0px #53009F,
-                1px 1px 0px 0px #FF4BBD;
+                0px 4px 12px 0px #53009F0D,
+                1px 1px 0px 0px #FF4BBD,
+                1px 1px 0px 0px #FFFFFF0D inset;
+
+            .dark & {
+                box-shadow:
+                    0px 4px 12px 0px #53009F,
+                    1px 1px 0px 0px #FF4BBD
+                    1px 1px 0px 0px #FFFFFF0D inset;
+            }
 
             & > img.blueprint-dark {
                 display: none;

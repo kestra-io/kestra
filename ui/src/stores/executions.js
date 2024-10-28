@@ -24,8 +24,8 @@ export default {
     actions: {
         restartExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/${options.executionId}/restart`,
-                null,
+                `${apiUrl(this)}/executions/${options.executionId}/restart-with-input`,
+                options.formData,
                 {
                     params: {
                         revision: options.revision
@@ -91,7 +91,7 @@ export default {
         },
         replayExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/${options.executionId}/replay`,
+                `${apiUrl(this)}/executions/${options.executionId}/replay-with-input`,
                 options.formData,
                 {
                     headers: {

@@ -97,9 +97,6 @@
 
     export default {
         components: {InputsForm},
-        mounted(){
-        
-        },
         props: {
             component: {
                 type: String,
@@ -147,7 +144,7 @@
                     this.loadRevision()
                     setTimeout(() => {
                         this.fillInputsFromExecution()
-                    },200)
+                    },800   ) 
                 }
             }
         },

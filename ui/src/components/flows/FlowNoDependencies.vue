@@ -19,13 +19,6 @@
             flowImage() {
                 return (localStorage.getItem("theme") || "light") === "light" ? flowImageLight : flowImageDark;
             },
-            themeClass() {
-                return (localStorage.getItem("theme") || "light") === "light" ? "theme-light" : "theme-dark";
-            },
-            dependenciesDocsUrl() {
-                return "https://kestra.io/docs/ui/flows#dependencies";
-            },
-
         }
     };
 </script>

@@ -52,9 +52,17 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-mainClassName = "io.kestra.cli.App"
-sourceCompatibility = 21
-targetCompatibility = 21
+final mainClassName = "io.kestra.cli.App"
+final targetJavaVersion = JavaVersion.VERSION_21
+
+application {
+    mainClass = mainClassName
+}
+
+java {
+    sourceCompatibility = targetJavaVersion
+    targetCompatibility = targetJavaVersion
+}
 
 dependencies {
     implementation project(":cli")
@@ -68,8 +76,10 @@ allprojects {
     if (it.name != 'platform') {
         group "io.kestra"
 
-        sourceCompatibility = 21
-        targetCompatibility = 21
+        java {
+            sourceCompatibility = targetJavaVersion
+            targetCompatibility = targetJavaVersion
+        }
 
         repositories {
             mavenCentral()
@@ -154,8 +164,10 @@ subprojects {
     if (it.name != 'platform') {
         apply plugin: "com.adarshr.test-logger"
 
-        sourceCompatibility = 21
-        targetCompatibility = 21
+        java {
+            sourceCompatibility = targetJavaVersion
+            targetCompatibility = targetJavaVersion
+        }
 
         dependencies {
             // Platform

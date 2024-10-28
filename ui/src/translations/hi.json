@@ -896,7 +896,7 @@
       "title_no_triggers": "आपके flow में कोई Triggers नहीं हैं।"
     },
     "dependency-view": {
-      "title_no_deps": "इस Flow के लिए कोई dependencies सेट नहीं हैं।",
+      "title_no_deps": "इस Flow के लिए कोई निर्भरता निर्धारित नहीं की गई है।",
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     }
   }

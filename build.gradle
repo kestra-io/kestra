@@ -1,4 +1,5 @@
 import net.e175.klaus.zip.ZipPrefixer
+import org.owasp.dependencycheck.gradle.extension.AnalyzerExtension
 
 buildscript {
     repositories {
@@ -325,9 +326,12 @@ dependencyCheck {
     failBuildOnCVSS = 7
 
     // disable the .NET assembly analyzer as otherwise it wants to analyze EXE file
-    analyzers {
-        assemblyEnabled = false
-    }
+    analyzers(new Action<AnalyzerExtension>() {
+        @Override
+        void execute(AnalyzerExtension analyzerExtension) {
+            analyzerExtension.assemblyEnabled = false
+        }
+    })
 
     // configure a suppression file
     suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
@@ -340,7 +344,7 @@ dependencyCheck {
  **********************************************************************************************************************/
 allprojects {
     gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
+        tasks.withType(JavaCompile).configureEach {
             options.encoding = "UTF-8"
             options.compilerArgs.add("-parameters")
             options.compilerArgs.add("-Xlint:all")
@@ -349,7 +353,7 @@ allprojects {
     }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
@@ -394,20 +398,21 @@ shadowJar.dependsOn 'ui:assembleFrontend'
 /**********************************************************************************************************************\
  * Executable Jar
  **********************************************************************************************************************/
-def executableDir = file("${buildDir}/executable")
-def executable = file("${buildDir}/executable/${project.name}-${project.version}")
+def executableDir = layout.buildDirectory.dir("executable")
+def executable = layout.buildDirectory.file("executable/${project.name}-${project.version}").get().asFile
 
-task writeExecutableJar() {
+tasks.register('writeExecutableJar') {
     group "build"
     description "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]
 
     doFirst {
-        executableDir.mkdirs()
+        executableDir.get().asFile.mkdirs()
     }
 
     doLast {
-        executable.setBytes(file("${buildDir}/libs/${project.name}-${project.version}.jar").readBytes())
+        final shadowJar = layout.buildDirectory.file("libs/${project.name}-${project.version}.jar")
+        executable.setBytes(shadowJar.get().asFile.readBytes())
         ByteArrayOutputStream executableBytes = new ByteArrayOutputStream()
         executableBytes.write("\n: <<END_OF_KESTRA_SELFRUN\r\n".getBytes())
         executableBytes.write(file("gradle/jar/selfrun.bat").readBytes())
@@ -419,13 +424,13 @@ task writeExecutableJar() {
     }
 }
 
-task executableJar(type: Zip) {
+tasks.register('executableJar', Zip) {
     group "build"
     description "Zip the executable jar"
     dependsOn = [writeExecutableJar]
 
     archiveFileName = "${project.name}-${project.version}.zip"
-    destinationDirectory = file("${buildDir}/archives")
+    destinationDirectory = layout.buildDirectory.dir('archives')
 
     from executableDir
     archiveClassifier.set(null)
@@ -434,8 +439,9 @@ task executableJar(type: Zip) {
 /**********************************************************************************************************************\
  * Standalone
  **********************************************************************************************************************/
-task runLocal(type: JavaExec) {
+tasks.register('runLocal', JavaExec) {
     group = "application"
+    description = "Run Kestra as server local"
     classpath = project(":cli").sourceSets.main.runtimeClasspath
     mainClass = mainClassName
     environment 'MICRONAUT_ENVIRONMENTS', 'override'
@@ -470,7 +476,7 @@ subprojects {
         }
     }
 
-    task sourcesJar(type: Jar) {
+    tasks.register('sourcesJar', Jar) {
         dependsOn = [':core:copyGradleProperties']
         dependsOn = [':ui:assembleFrontend']
         archiveClassifier.set('sources')
@@ -479,12 +485,12 @@ subprojects {
     sourcesJar.dependsOn ':core:copyGradleProperties'
     sourcesJar.dependsOn ':ui:assembleFrontend'
 
-    task javadocJar(type: Jar) {
+    tasks.register('javadocJar', Jar) {
         archiveClassifier.set('javadoc')
         from javadoc
     }
 
-    task testsJar(type: Jar) {
+    tasks.register('testsJar', Jar) {
         archiveClassifier.set('tests')
         from sourceSets.test.output
     }

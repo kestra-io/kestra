@@ -77,19 +77,7 @@
                 this.$emit(type, event);
             },
             loadData() {
-                this.loading = true;
-                if (this.execution) {
-                    this.$store.dispatch("execution/loadGraph", {
-                        id: this.execution.id,
-                        params: {
-                            subflows: this.expandedSubflows
-                        }
-                    }).finally(() => {
-                        this.loading = false;
-                    });
-                } else {
-                    this.loading = false;
-                }
+                this.loadGraph();
             },
             isUnused: function (nodeByUid, nodeUid) {
                 let nodeToCheck = nodeByUid[nodeUid];
@@ -121,6 +109,8 @@
 
             },
             loadGraph(force) {
+                this.loading = true;
+
                 if (this.execution && (force || (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id))) {
                     this.previousExecutionId = this.execution.id;
                     this.$store.dispatch("execution/loadGraph", {
@@ -173,7 +163,11 @@
                         this.expandedSubflows = this.previousExpandedSubflows;
 
                         this.handleSubflowsSSE();
-                    })
+                    }).finally(() => {
+                        this.loading = false;
+                    });
+                } else {
+                    this.loading = false;
                 }
             },
             onExpandSubflow(expandedSubflows) {

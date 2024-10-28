@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -35,7 +36,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to add or overwrite labels for the current execution at runtime."
+    title = "Allow to add or overwrite labels for the current execution at runtime.",
+    description = "Trying to pass a system label (a label starting with `system_`) will fail the task."
 )
 @Plugin(
     examples = {
@@ -131,11 +133,17 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                 );
             }));
 
+            // check for system labels: none can be passed at runtime
+            Optional<Map.Entry<String, String>> first = newLabels.entrySet().stream().filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX)).findFirst();
+            if (first.isPresent()) {
+                throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().getKey() + "=" + first.get().getValue());
+            }
+
             return execution.withLabels(newLabels.entrySet().stream()
-                    .map(throwFunction(entry -> new Label(
+                    .map(entry -> new Label(
                         entry.getKey(),
                         entry.getValue()
-                    )))
+                    ))
                     .toList());
         } else {
             throw new IllegalVariableEvaluationException("Unknown value type: " + labels.getClass());

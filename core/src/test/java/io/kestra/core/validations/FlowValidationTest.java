@@ -43,6 +43,14 @@ class FlowValidationTest {
         assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_id=id"));
     }
 
+    @Test
+    void validFlowShouldSucceed() {
+        Flow flow = this.parse("flows/valids/minimal.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(false));
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

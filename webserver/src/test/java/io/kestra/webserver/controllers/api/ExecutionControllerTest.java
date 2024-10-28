@@ -1594,13 +1594,28 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
-    void shouldRefuseSystemLabels() {
+    void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system_label:system", null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         ));
+
+        assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldRefuseSystemLabelsWhenUpdatingLabels() throws QueueException, TimeoutException {
+        // update label on a terminated execution
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("system_label", "value"))),
+                Execution.class
+            )
+        );
 
         assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }

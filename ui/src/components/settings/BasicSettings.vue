@@ -278,7 +278,7 @@
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = localStorage.getItem("theme") || "light";
             this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
-            this.pendingSettings.chartColor = localStorage.getItem("scheme") || "default";
+            this.pendingSettings.chartColor = localStorage.getItem("scheme") || "classic";
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";

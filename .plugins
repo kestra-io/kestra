@@ -68,6 +68,7 @@
 #io.kestra.plugin:plugin-neo4j:LATEST
 #io.kestra.plugin:plugin-notifications:LATEST
 #io.kestra.plugin:plugin-openai:LATEST
+#io.kestra.plugin:plugin-opensearch:LATEST
 #io.kestra.plugin:plugin-powerbi:LATEST
 #io.kestra.plugin:plugin-pulsar:LATEST
 #io.kestra.plugin:plugin-redis:LATEST

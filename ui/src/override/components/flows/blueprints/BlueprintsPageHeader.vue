@@ -1,5 +1,5 @@
 <template>
-    <nav class="header container">
+    <nav class="header">
         <div class="image-box">
             <img src="../../../../assets/icons/blueprint.svg" :alt="$t('blueprints.header.alt')">
             <img src="../../../../assets/icons/blueprint-dark.svg" :alt="$t('blueprints.header.alt')" class="blueprint-dark">
@@ -18,7 +18,8 @@
         align-items: center;
         gap: 16px;
         padding-top: calc(4 * var(--spacer));
-        padding-bottom: calc(2 * var(--spacer));
+        padding-bottom: calc(1 * var(--spacer));
+        margin: 0 calc(2 * var(--spacer));
 
         .catch-phrase {
             color: var(--bs-heading-color);

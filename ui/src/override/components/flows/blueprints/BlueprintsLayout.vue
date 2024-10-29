@@ -1,8 +1,15 @@
 <template>
-    <div class="blueprints">
+    <slot v-if="embed" />
+    <div class="blueprints" v-else>
         <slot />
     </div>
 </template>
+
+<script setup lang="ts">
+    defineProps<{
+        embed: boolean;
+    }>();
+</script>
 
 <style scoped lang="scss">
     .blueprints {

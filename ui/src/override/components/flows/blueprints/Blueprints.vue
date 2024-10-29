@@ -1,8 +1,8 @@
 <template>
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
-    <blueprints-layout>
+    <blueprints-layout :embed="embed">
         <blueprints-page-header v-if="!embed" />
-        <section :class="{'container': !embed}" class="main-container" v-bind="$attrs">
+        <section class="main-container" v-bind="$attrs">
             <blueprint-detail v-if="selectedBlueprintId" :embed="embed" :blueprint-id="selectedBlueprintId" @back="selectedBlueprintId = undefined" :blueprint-base-uri="blueprintUri" />
             <blueprints-browser @loaded="$emit('loaded', $event)" :class="{'d-none': !!selectedBlueprintId}" :embed="embed" :blueprint-base-uri="blueprintUri" @go-to-detail="blueprintId => selectedBlueprintId = blueprintId" />
         </section>

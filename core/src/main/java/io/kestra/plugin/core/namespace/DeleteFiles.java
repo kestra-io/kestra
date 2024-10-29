@@ -94,6 +94,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         defaultValue = "false"
     )
     @PluginProperty(dynamic = false)
+    @Builder.Default
     private Boolean deleteParentFolder = false;
 
     @SuppressWarnings("unchecked")

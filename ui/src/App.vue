@@ -1,6 +1,6 @@
 <template>
     <el-config-provider>
-        <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
+        <left-menu v-if="configs" @menu-collapse="onMenuCollapse" @mobile-menu-collapse="onMobileMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main v-if="loaded">
             <router-view v-if="!error" />
@@ -112,6 +112,19 @@
             onMenuCollapse(collapse) {
                 document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed");
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
+            },
+            onMobileMenuCollapse(collapse) {
+                console.log("I am called",collapse)
+                const htmldocument=document.getElementsByTagName("html")[0];
+                const nav= document.querySelector(".top-bar");
+                if(collapse){
+                    if(htmldocument) htmldocument.style.paddingLeft="0";
+                    if(nav) nav.style.marginLeft="65px";
+                }else{
+                    if(htmldocument) htmldocument.style.paddingLeft="64px";
+                    if(nav) nav.style.marginLeft="0";
+                }
+                
             },
             displayApp() {
                 // this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");

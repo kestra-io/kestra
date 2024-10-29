@@ -20,7 +20,11 @@
         <template #footer />
 
         <template #toggle-icon>
-            <el-button>
+            <el-button id="toggleButton" v-if="isMobile" @click.stop="onMobileCollapse">
+                <chevron-double-up v-if="!isMobileCollapse" />
+                <chevron-double-down v-if="isMobileCollapse" />
+            </el-button>
+            <el-button v-if="!isMobile">
                 <chevron-double-right v-if="collapsed" />
                 <chevron-double-left v-else />
             </el-button>
@@ -46,6 +50,8 @@
     import Environment from "../../components/layout/Environment.vue";
     import ChevronDoubleLeft from "vue-material-design-icons/ChevronDoubleLeft.vue";
     import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
+    import ChevronDoubleUp from "vue-material-design-icons/ChevronDoubleUp.vue";
+    import ChevronDoubleDown from "vue-material-design-icons/ChevronDoubleDown.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
@@ -73,11 +79,13 @@
         components: {
             ChevronDoubleLeft,
             ChevronDoubleRight,
+            ChevronDoubleDown,
+            ChevronDoubleUp,
             SidebarMenu,
             Environment,
             DateAgo,
         },
-        emits: ["menu-collapse"],
+        emits: ["menu-collapse","mobile-menu-collapse"],
         methods: {
             flattenMenu(menu) {
                 return menu.reduce((acc, item) => {
@@ -93,6 +101,38 @@
                 this.collapsed = folded;
                 localStorage.setItem("menuCollapsed", folded ? "true" : "false");
                 this.$emit("menu-collapse", folded);
+            },
+
+            onMobileCollapse() {
+                
+                const sidemenu = document.querySelector("#side-menu");
+                const vsmwrapper=document.querySelectorAll("#side-menu .vsm--wrapper")[0];
+                const vsmToggle=document.querySelector(".vsm--toggle-btn #toggleButton")
+                const Toggle=document.querySelector(".vsm--toggle-btn")
+                console.log(vsmToggle)
+                if(!this.isMobileCollapse){
+                    if(sidemenu) sidemenu.style.height="64px";
+                    if(vsmwrapper) vsmwrapper.style.display="none";
+                    if (vsmToggle) {
+                        const currentHeight = parseInt(window.getComputedStyle(vsmToggle).height, 10);
+                        const currentWidth = parseInt(window.getComputedStyle(vsmToggle).width, 10);
+                        vsmToggle.style.height = (currentHeight + 32) + "px";
+                        vsmToggle.style.width = (currentWidth + 32) + "px";
+                    }
+                    if(Toggle) Toggle.classList.add("toggle")
+                }else{
+                    if(sidemenu) sidemenu.style.height="100vh";
+                    if(vsmwrapper) vsmwrapper.style.display="flex";
+                    if (vsmToggle) {
+                        const currentHeight = parseInt(window.getComputedStyle(vsmToggle).height, 10);
+                        const currentWidth = parseInt(window.getComputedStyle(vsmToggle).width, 10);
+                        vsmToggle.style.height = (currentHeight - 32) + "px";
+                        vsmToggle.style.width = (currentWidth - 12) + "px";
+                    }
+                    if(Toggle) Toggle.classList.remove("toggle")
+                }
+                this.isMobileCollapse = !this.isMobileCollapse;
+                this.$emit("mobile-menu-collapse",this.isMobileCollapse)
             },
             disabledCurrentRoute(items) {
                 return items
@@ -300,10 +340,10 @@
                 });
             },
             checkMobileWidth(){
-                
+                this.isMobile=window.innerWidth<=768? true:false;
                 if(window.innerWidth<=768 || localStorage.getItem("collapsed")==="true"){
                     this.collapsed = true;  
-                    this.$emit("menu-collapse", "i emitted");
+                    this.$emit("menu-collapse", true);
                 }if(window.innerWidth>768 && localStorage.getItem("menuCollapsed")==="false"){
                     this.collapsed = false;
                     this.$emit("menu-collapse", false);
@@ -343,6 +383,8 @@
         },
         data() {
             return {
+                isMobileCollapse:false,
+                isMobile:window.innerWidth<=768?true:false,
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
                 localMenu: []
             };
@@ -542,6 +584,9 @@
         .el-tooltip__trigger .lock-icon.material-design-icon > .material-design-icon__svg {
             bottom: 0 !important;
             margin-left: 5px;
+        }
+        .toggle{
+            padding:0;
         }
     }
 

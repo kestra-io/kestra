@@ -897,6 +897,7 @@
     "dependency-view": {
       "title_no_deps": "Keine Abhängigkeiten sind für diesen Flow festgelegt.",
       "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
-    }
+    },
+    "create_flow": "Flow erstellen"
   }
 }

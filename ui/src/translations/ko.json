@@ -897,6 +897,7 @@
     "dependency-view": {
       "title_no_deps": "이 Flow에는 설정된 종속성이 없습니다.",
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
-    }
+    },
+    "create_flow": "Flow 생성"
   }
 }

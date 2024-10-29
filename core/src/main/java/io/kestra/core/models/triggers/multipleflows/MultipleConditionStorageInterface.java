@@ -15,25 +15,35 @@ public interface MultipleConditionStorageInterface {
     List<MultipleConditionWindow> expired(String tenantId);
 
     default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
+
+        ZonedDateTime start;
+        ZonedDateTime end;
+
         ZonedDateTime now = ZonedDateTime.now()
             .withNano(0);
 
-        if (multipleCondition.getWindow().toDays() > 0) {
-            now = now.withHour(0);
-        }
+        if (multipleCondition.getLatencySLA() != null) {
+            // with latency, the start is always the start of the day
+            start = now.truncatedTo(ChronoUnit.DAYS);
+            end = start.plusSeconds(multipleCondition.getLatencySLA().getDeadline().toSecondOfDay());
+        } else {
+            if (multipleCondition.getWindow().toDays() > 0) {
+                now = now.withHour(0);
+            }
 
-        if (multipleCondition.getWindow().toHours() > 0) {
-            now = now.withMinute(0);
-        }
+            if (multipleCondition.getWindow().toHours() > 0) {
+                now = now.withMinute(0);
+            }
 
-        if (multipleCondition.getWindow().toMinutes() > 0) {
-            now = now.withSecond(0)
-                .withMinute(0)
-                .plusMinutes(multipleCondition.getWindow().toMinutes() * (now.getMinute() / multipleCondition.getWindow().toMinutes()));
-        }
+            if (multipleCondition.getWindow().toMinutes() > 0) {
+                now = now.withSecond(0)
+                    .withMinute(0)
+                    .plusMinutes(multipleCondition.getWindow().toMinutes() * (now.getMinute() / multipleCondition.getWindow().toMinutes()));
+            }
 
-        ZonedDateTime start = multipleCondition.getWindowAdvance() == null ? now : now.plus(multipleCondition.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
-        ZonedDateTime end = start.plus(multipleCondition.getWindow()).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS);
+            start = multipleCondition.getWindowAdvance() == null ? now : now.plus(multipleCondition.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
+            end = start.plus(multipleCondition.getWindow()).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS);
+        }
 
         return this.get(flow, multipleCondition.getId())
             .filter(m -> m.isValid(ZonedDateTime.now()))

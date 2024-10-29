@@ -1,5 +1,29 @@
 <template>
     <div v-if="execution" class="execution-overview">
+        <div v-if="execution.state.current === 'FAILED'" class="error-container">
+            <div class="error-header" @click="isExpanded = !isExpanded">
+                <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span class="error-message">{{ errorMessage }}</span>
+                <span class="toggle-icon">
+                    <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
+                        <path d="M18 15l-6-6-6 6" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                </span>
+            </div>
+            <div v-if="isExpanded" class="error-stack">
+                <div v-for="(line, index) in stackTrace.split('\n')" :key="index" class="stack-line">
+                    {{ line }}
+                </div>
+            </div>
+        </div>
+
         <el-row class="mb-3">
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
@@ -148,7 +172,25 @@
                         this.$route.params
                     );
                 }
+            },
+            execution: {
+                handler(newExecution) {
+                    if (newExecution?.error) {
+                        this.errorMessage = newExecution.error.message || "";
+                        this.stackTrace = newExecution.error.stacktrace || [];
+                    }
+                    else {
+                        this.errorMessage = "";
+                        this.stackTrace = [];
+                    }
+                },
+                immediate: true
             }
+        },
+        data() {
+            return {
+                isExpanded: false
+            };
         },
         computed: {
             ...mapState("execution", ["flow", "execution"]),
@@ -225,6 +267,58 @@
 .crud-align {
     display: flex;
     align-items: center;
+}
+
+.error-container {
+    background-color: #1e1e1e;
+    border: 1px solid #ff6b6b;
+    border-radius: 4px;
+    color: #ffffff;
+    margin: 10px 0 30px 0;
+}
+
+.error-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px;
+}
+
+.error-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    color: #ff6b6b;
+}
+
+.error-message {
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.toggle-icon {
+    font-size: 1.2em;
+    color: #ff6b6b;
+    display: flex;
+    align-items: center;
+}
+
+.arrow-icon {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.error-stack {
+    background-color: var(--bs-body-bg);
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.stack-line {
+    font-size: 0.9em;
+    margin-bottom: 5px;
 }
 
 .execution-overview {

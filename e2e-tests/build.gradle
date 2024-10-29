@@ -10,7 +10,7 @@ dependencies {
 /**********************************************************************************************************************\
  * ./gradlew playwright
  **********************************************************************************************************************/
-task playwright(type: JavaExec) {
+tasks.register('playwright', JavaExec) {
     classpath sourceSets.test.runtimeClasspath
     mainClass = 'com.microsoft.playwright.CLI'
 }

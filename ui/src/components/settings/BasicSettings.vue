@@ -1,5 +1,11 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title">
+        <template #additional-right>
+            <el-button @click="saveAllSettings()" type="primary">
+                {{ $t("settings.blocks.save.fields.name") }}
+            </el-button>
+        </template>
+    </top-nav-bar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
@@ -183,18 +189,6 @@
                 </Row>
             </template>
         </Block>
-
-        <Block last>
-            <template #content>
-                <Row>
-                    <Column>
-                        <el-button @click="saveAllSettings()" class="w-60" type="primary">
-                            {{ $t("settings.blocks.save.fields.name") }}
-                        </el-button>
-                    </Column>
-                </Row>
-            </template>
-        </Block>
     </Wrapper>
 </template>
 
@@ -284,7 +278,7 @@
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = localStorage.getItem("theme") || "light";
             this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
-            this.pendingSettings.chartColor = localStorage.getItem("scheme") || "default";
+            this.pendingSettings.chartColor = localStorage.getItem("scheme") || "classic";
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";

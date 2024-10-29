@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "पहला कदम हमेशा सबसे कठिन होता है।",
           "2": "अपने अगले flow को किक-स्टार्ट करने के लिए Blueprints का अन्वेषण करें।"
-        }
+        },
+        "alt": "ब्लूप्रिंट्स आइकन"
       },
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।"
     },
@@ -895,8 +896,9 @@
       "title_no_triggers": "आपके flow में कोई Triggers नहीं हैं।"
     },
     "dependency-view": {
-      "title_no_deps": "इस Flow के लिए कोई dependencies सेट नहीं हैं।",
+      "title_no_deps": "इस Flow के लिए कोई निर्भरता निर्धारित नहीं की गई है।",
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
-    }
+    },
+    "create_flow": "फ़्लो बनाएं"
   }
 }

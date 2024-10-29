@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Первый шаг всегда самый трудный.",
           "2": "Исследуйте blueprints, чтобы начать ваш следующий flow."
-        }
+        },
+        "alt": "Иконка Blueprints"
       },
       "empty": "Нет blueprints для отображения."
     },
@@ -897,6 +898,7 @@
     "dependency-view": {
       "title_no_deps": "Для этого Flow зависимости не установлены.",
       "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
-    }
+    },
+    "create_flow": "Создать Flow"
   }
 }

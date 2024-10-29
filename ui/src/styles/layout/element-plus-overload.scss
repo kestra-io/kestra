@@ -9,18 +9,18 @@
         &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info) {
             --el-button-hover-text-color: var(--bs-body-color);
         }
-             
+
              &:hover {
                 border-color: #8008f6 !important;
-                background-color: #404559 !important; 
-                color: white !important; 
+                background-color: #404559 !important;
+                color: white !important;
             }
     }
- 
+
       &:hover {
         border-color: #890fff !important;
-        background-color: #f5f5ff !important; 
-        color:  black !important; 
+        background-color: #f5f5ff !important;
+        color:  black !important;
     }
 
     .el-input-group--append & [class*=el-icon] + span {
@@ -502,6 +502,46 @@ form.ks-horizontal {
             .el-tabs__item {
                 &.is-active > a {
                     color: var(--bs-body-color);
+                }
+            }
+        }
+    }
+
+    &.el-tabs--card{
+        .el-tabs__nav-wrap{
+            margin-bottom: 1px; // fix tabs overflowing over the bottom line
+        }
+        & > .el-tabs__header .el-tabs__nav{
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--el-border-color-light);
+            gap: 2px;
+            .el-tabs__item{
+                padding: 0 !important;
+                border: none;
+                &:first-child a{
+                    margin-left: 1px;
+                    border-top-left-radius: 3px;
+                }
+                &:last-child a{
+                    border-top-right-radius: 3px;
+                }
+                a{
+                    padding-top: 7px;
+                    padding-bottom: 7px;
+                    font-weight: normal!important;
+                    color: var(--el-text-color-regular);
+                    &:hover{
+                        background-color: var(--card-bg-hover);
+                    }
+                }
+                &.is-active a{
+                    box-shadow:
+                        0 0 0 1px var(--el-bg-color),
+                        0 0 0 2px var(--bs-primary);
+                    background-color: var(--el-bg-color);
+                    color: var(--token-content-link);
+                    position: relative;
+                    z-index: 1;
                 }
             }
         }

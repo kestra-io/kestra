@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -125,5 +128,38 @@ public class MultipleConditionTriggerCaseTest {
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         receive.blockLast();
         assertThat(ended.size(), is(2));
+    }
+
+    public void flowFilters() throws InterruptedException, TimeoutException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> flowFilters = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId().equals("flow-trigger-flow-filters-flow-listen")) {
+                flowFilters.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        // first one
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.flow-filters", "flow-trigger-flow-filters-flow-a", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // second one
+        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.flow-filters", "flow-trigger-flow-filters-flow-b", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // trigger is done
+        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        receive.blockLast();
+        assertThat(flowFilters.get(), notNullValue());
+
+        Execution triggerExecution = flowFilters.get();
+
+        assertThat(triggerExecution.getTaskRunList().size(), is(1));
+        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

@@ -889,6 +889,14 @@
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "no_data": "无可用数据",
-    "informative notice": "注意事项"
+    "informative notice": "注意事项",
+    "triggers-view": {
+      "desc_no_triggers": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>的信息。",
+      "title_no_triggers": "您的flow没有任何Triggers。"
+    },
+    "dependency-view": {
+      "title_no_deps": "此 Flow 没有设置依赖项。",
+      "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
+    }
   }
 }

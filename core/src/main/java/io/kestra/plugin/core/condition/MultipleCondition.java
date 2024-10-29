@@ -12,10 +12,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,10 +21,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -56,7 +50,6 @@ import java.util.stream.Stream;
                 "      - id: multiple",
                 "        type: io.kestra.plugin.core.condition.MultipleCondition",
                 "        window: P1D",
-                "        windowAdvance: P0D",
                 "        conditions:",
                 "          flow-a:",
                 "            type: io.kestra.plugin.core.condition.ExecutionFlowCondition",
@@ -87,9 +80,9 @@ public class MultipleCondition extends Condition {
             "The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window, " +
             "the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes")
     @PluginProperty
-    private Duration window;
+    @Builder.Default
+    private Duration window = Duration.ofDays(1);
 
-    @NotNull
     @Schema(
         title = "The window advance duration",
         description = "Allow to specify the start hour of the window\n" +
@@ -114,8 +107,7 @@ public class MultipleCondition extends Condition {
 
     /**
      * This conditions will only validate previously calculated value on
-     * {@link FlowService#multipleFlowTrigger(Stream, Flow, Execution, MultipleConditionStorageInterface)}} and save on {@link MultipleConditionStorageInterface}
-     * by the executor.
+     * {@link MultipleConditionStorageInterface#get(Flow, String)}} and {@link MultipleConditionStorageInterface#save(List)} by the executor.
      * The real validation is done here.
      */
     @Override

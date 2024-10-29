@@ -277,14 +277,13 @@
             };
         },
         created() {
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
             const store = useStore();
 
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = localStorage.getItem("theme") || "light";
-            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
+            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
             this.pendingSettings.chartColor = localStorage.getItem("scheme") || "default";
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
@@ -440,8 +439,9 @@
             },
             editorThemesOptions() {
                 return  [
-                    {value: "vs", text: "Light"},
-                    {value: "dark", text: "Dark"}
+                    {value: "light", text: "Light"},
+                    {value: "dark", text: "Dark"},
+                    {value: "syncWithSystem", text: "Sync With System"}
                 ]
             },
             dateFormats() {

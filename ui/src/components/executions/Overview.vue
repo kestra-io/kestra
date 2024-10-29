@@ -274,18 +274,14 @@
     border: 1px solid #ff6b6b;
     border-radius: 4px;
     color: #ffffff;
-    margin: 15px;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    margin: 10px 0 30px 0;
 }
 
 .error-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+    padding: 20px 20px;
 }
 
 .error-icon {

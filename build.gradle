@@ -27,7 +27,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
 
     // front
-    id 'org.siouan.frontend-jdk17' version '8.1.0' apply false
+    id 'org.siouan.frontend-jdk21' version '9.0.0' apply false
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
@@ -38,7 +38,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "10.0.4" apply false
+    id "org.owasp.dependencycheck" version "11.0.0" apply false
 }
 
 idea {
@@ -331,6 +331,8 @@ dependencyCheck {
 
     // configure a suppression file
     suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
+
+    nvd.apiKey = System.getenv("NVD_API_KEY")
 }
 
 /**********************************************************************************************************************\

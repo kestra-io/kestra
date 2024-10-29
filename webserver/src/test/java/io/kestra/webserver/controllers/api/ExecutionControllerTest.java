@@ -181,7 +181,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///io/kestra/tests/inputs/executions/"));
         assertThat(result.getInputs().containsKey("bool"), is(true));
         assertThat(result.getInputs().get("bool"), nullValue());
-        assertThat(result.getLabels().size(), is(5));
+        assertThat(result.getLabels().size(), is(6));
         assertThat(result.getLabels().getFirst(), is(new Label("flow-label-1", "flow-label-1")));
         assertThat(result.getLabels().get(1), is(new Label("flow-label-2", "flow-label-2")));
         assertThat(result.getLabels().get(2), is(new Label("a", "label-1")));
@@ -1544,5 +1544,79 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
 
         assertThat(executionResult, notNullValue());
         assertThat(executionResult.get("url"), is("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id")));
+    }
+
+    @Test
+    void shouldPauseARunningFlow() throws QueueException, TimeoutException {
+        Execution result = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/pause", null));
+        assertThat(response.getStatus(), is(HttpStatus.OK));
+
+        // resume it, it should then go to completion
+        response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/resume", null));
+        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/pause", null)));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
+
+        // pausing an already completed flow will result in errors
+        Execution completed = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+
+        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + completed.getId() + "/pause", null)));
+        assertThat(notRunning.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldPauseByIdsRunningFlows() throws TimeoutException, QueueException {
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/pause/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void shouldPauseByQueryRunningFlows() throws TimeoutException, QueueException {
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
+        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system_label:system", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        ));
+
+        assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldRefuseSystemLabelsWhenUpdatingLabels() throws QueueException, TimeoutException {
+        // update label on a terminated execution
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("system_label", "value"))),
+                Execution.class
+            )
+        );
+
+        assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
     }
 }

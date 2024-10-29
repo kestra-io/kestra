@@ -705,6 +705,12 @@
             "flows": "Экспортировать все flows",
             "templates": "Экспортировать все шаблоны"
           }
+        },
+        "save": {
+          "label": "Сохранить настройки",
+          "fields": {
+            "name": "Сохранить изменения"
+          }
         }
       }
     },
@@ -875,6 +881,22 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "delete confirm multiple": "Вы уверены, что хотите удалить <code>{name}</code> KV?",
     "show task condition": "Показать условие task",
-    "empty search": "Результаты поиска пусты"
+    "empty search": "Результаты поиска пусты",
+    "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
+    "pause": "Пауза",
+    "bulk pause": "Вы уверены, что хотите приостановить выполнение <code>{executionCount}</code>?",
+    "invalid bulk pause": "Не удалось приостановить выполнения",
+    "pause done": "Выполнение приостановлено",
+    "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
+    "no_data": "Нет данных",
+    "informative notice": "Примечание(я)",
+    "triggers-view": {
+      "desc_no_triggers": "Узнайте больше о <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> в нашей документации.",
+      "title_no_triggers": "Ваш flow не имеет никаких Triggers."
+    },
+    "dependency-view": {
+      "title_no_deps": "Для этого Flow зависимости не установлены.",
+      "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
+    }
   }
 }

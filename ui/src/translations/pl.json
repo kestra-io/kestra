@@ -705,6 +705,12 @@
             "flows": "Eksportuj Wszystkie Flows",
             "templates": "Eksportuj Wszystkie Szablony"
           }
+        },
+        "save": {
+          "label": "Zapisz preferencje",
+          "fields": {
+            "name": "Zapisz zmiany"
+          }
         }
       }
     },
@@ -875,6 +881,22 @@
     "add-trigger-in-editor": "Najpierw dodaj Trigger do swojego Flow",
     "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
     "show task condition": "Pokaż warunek taska",
-    "empty search": "Wyniki wyszukiwania są puste"
+    "empty search": "Wyniki wyszukiwania są puste",
+    "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
+    "pause": "Wstrzymaj",
+    "bulk pause": "Czy na pewno chcesz wstrzymać wykonanie <code>{executionCount}</code>?",
+    "invalid bulk pause": "Nie można wstrzymać wykonania",
+    "pause done": "Wykonanie jest PAUSED",
+    "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "no_data": "Brak dostępnych danych",
+    "informative notice": "Notatka(i)",
+    "triggers-view": {
+      "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> w naszej dokumentacji.",
+      "title_no_triggers": "Twój flow nie ma żadnych triggerów."
+    },
+    "dependency-view": {
+      "title_no_deps": "Brak zależności ustawionych dla tego Flow.",
+      "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
+    }
   }
 }

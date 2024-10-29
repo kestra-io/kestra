@@ -5,15 +5,14 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.NamespaceUtils;
+import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.annotation.WebServerEnabled;
 import io.kestra.webserver.controllers.api.BlueprintController.BlueprintItem;
-import io.kestra.webserver.controllers.api.BlueprintController.BlueprintTagItem;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
@@ -22,9 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.util.Collection;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -54,39 +51,23 @@ public class FlowAutoLoaderService {
     @Inject
     private NamespaceUtils namespaceUtils;
 
+    @Inject
+    private VersionProvider versionProvider;
+
     @SuppressWarnings("unchecked")
     public void load() {
-        // Gets the tag ID for 'Getting Started'.
         try {
-            Optional<String> optionalTagId = Mono.from(httpClient
-                    .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/tags"),
-                        Argument.listOf(BlueprintTagItem.class)
-                    )
-                )
-                .blockOptional()
-                .stream()
-                .map(HttpResponse::body)
-                .flatMap(Collection::stream)
-                .filter(it -> it.getName().equalsIgnoreCase("Getting Started"))
-                .map(BlueprintTagItem::getId)
-                .findFirst();
-
-            if (optionalTagId.isEmpty()) {
-                return;
-            }
-
             // Loads all flows.
             Integer count = Mono.from(httpClient
                     .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/?tags=" + optionalTagId.get()),
+                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/versions/" + versionProvider.getVersion() + "?tags=getting-started"),
                         Argument.of(PagedResults.class, BlueprintItem.class)
                     ))
                 .map(response -> ((PagedResults<BlueprintItem>)response.body()).getResults())
                 .flatMapIterable(Function.identity())
                 .flatMap(it -> Mono.from(httpClient
                     .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/" + it.getId() + "/flow"),
+                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/" + it.getId() + "/versions/" + versionProvider.getVersion() + "/flow"),
                         Argument.STRING
                     )).mapNotNull(response -> {
                         String body = response.body();

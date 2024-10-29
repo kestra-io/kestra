@@ -210,6 +210,10 @@
     "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
+    "pause": "Pause",
+    "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be process, and the execution will have to be resumed manually.",
+    "pause confirm": "Are you sure to pause execution <code>{id}</code>?",
+    "pause done": "Execution is paused",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "No data available for current task",
@@ -376,6 +380,7 @@
     "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
+    "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -403,6 +408,7 @@
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
+    "invalid bulk pause": "Could not pause executions",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
@@ -523,6 +529,7 @@
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
     "warning detected": "Warning(s) detected",
+    "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
     "open": "Open",
@@ -736,6 +743,12 @@
             "flows": "Export All Flows",
             "templates": "Export All Templates"
           }
+        },
+        "save": {
+          "label": "Save Preferences",
+          "fields": {
+            "name": "Save Changes"
+          }
         }
       }
     },
@@ -887,9 +900,18 @@
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
+    "dependency-view": {
+      "title_no_deps": "No dependencies are set for this Flow.",
+      "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+    },
+    "triggers-view": {
+      "title_no_triggers": "Your flow does't have any Triggers.",
+      "desc_no_triggers": "Read more about <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in our documentation."
+    },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
     "change_status": "Change status",
-    "files": "Files"
+    "files": "Files",
+    "no_data": "No data available"
   }
 }

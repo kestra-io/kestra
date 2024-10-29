@@ -34,6 +34,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.stream.Streams;
 
 import java.io.*;
 import java.net.URI;
@@ -462,17 +463,6 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                 inputs.putAll(runContext.render(this.inputs, itemsVariable));
                             }
 
-                            List<Label> labels = new ArrayList<>();
-                            if (this.inheritLabels && currentExecution.getLabels() != null && !currentExecution.getLabels().isEmpty()) {
-                                labels.addAll(currentExecution.getLabels());
-                            }
-
-                            if (this.labels != null) {
-                                for (Map.Entry<String, String> entry : this.labels.entrySet()) {
-                                    labels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-                                }
-                            }
-
                             // these are special outputs to be able to compute the iteration map of the parent taskrun
                             var outputs = Output.builder()
                                 .numberOfBatches(splits.size())
@@ -491,6 +481,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                         .withIteration(iteration),
                                     inputs,
                                     labels,
+                                    inheritLabels,
                                     scheduleOn
                                 );
                         }

@@ -140,7 +140,7 @@
                 </el-card>
             </template>
 
-            <template #table>
+            <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -185,6 +185,9 @@
                             </el-button>
                             <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
                                 {{ $t("resume") }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                {{ $t("pause") }}
                             </el-button>
                         </bulk-select>
                         <el-dialog
@@ -298,7 +301,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="scope.row.labels" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -431,10 +434,11 @@
     import Utils from "../../utils/utils";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import PauseBox from "vue-material-design-icons/PauseBox.vue";
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -625,6 +629,7 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -696,7 +701,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             } if (!query.scope) {
                 query.scope = defaultNamespace === "system" ? ["SYSTEM"] : ["USER"];
             }
@@ -705,6 +710,17 @@
             });
         },
         methods: {
+            filteredLabels(labels) {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return labels?.filter(label => {
+                    // Check if the label key matches any prefix but allow it if it's in the query
+                    return !toIgnore.some(prefix => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
+                });
+            },
             executionParams(row) {
                 return {
                     namespace: row.namespace,
@@ -837,6 +853,14 @@
                     "execution/queryResumeExecution",
                     "execution/bulkResumeExecution",
                     "executions resumed"
+                );
+            },
+            pauseExecutions() {
+                this.genericConfirmAction(
+                    "bulk pause",
+                    "execution/queryPauseExecution",
+                    "execution/bulkPauseExecution",
+                    "executions paused"
                 );
             },
             restartExecutions() {

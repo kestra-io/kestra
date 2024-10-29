@@ -176,6 +176,15 @@
         return undefined;
     });
 
+    const flowInfos = computed(() => {
+        if (isFlow()) {
+            const infos = props.flowValidation?.infos  ?? [];
+            return infos.length === 0 ? undefined : infos;
+        }
+
+        return undefined;
+    });
+
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
     };
@@ -983,6 +992,7 @@
                 tooltip-placement="bottom-start"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
+                :infos="flowInfos"
             />
 
             <EditorButtons
@@ -1263,7 +1273,7 @@
         }
 
         &::-webkit-scrollbar {
-            width: 2px;
+            width: 10px;
             height: 2px;
         }
 
@@ -1273,7 +1283,7 @@
 
         &::-webkit-scrollbar-thumb {
             background: var(--bs-primary);
-            border-radius: 0px;
+            border-radius: 20px;
         }
     }
 

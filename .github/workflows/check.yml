@@ -68,7 +68,7 @@ jobs:
       - uses: rlespinasse/github-slug-action@v4
 
       - name: Publish allure report
-        uses: andrcuns/allure-publish-action@v2.7.1
+        uses: andrcuns/allure-publish-action@v2.8.0
         if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,8 +91,8 @@ jobs:
         if: ${{ github.ref == 'refs/heads/develop' && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
-          mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/jacocoTestReport.xml
-          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'jacoco') }}
+          mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/test/jacocoTestReport.xml
+          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, 'jacoco') }}
 
 
       # report test

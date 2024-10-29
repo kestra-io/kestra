@@ -35,7 +35,7 @@
                 <search-field :router="!embed" placeholder="search blueprint" @search="s => q = s" class="blueprints-search" />
             </template>
             <template #table>
-                <el-alert type="info" v-if="!blueprints || blueprints.length === 0" :closable="false">
+                <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                     {{ $t('blueprints.empty') }}
                 </el-alert>
                 <el-card
@@ -209,9 +209,9 @@
                 }
 
                 if (this.system) {
-                    query.tags = "54";
+                    query.tags = "system";
                 } else if (this.$route.query.selectedTag || this.selectedTag) {
-                    query.tags =this.$route.query.selectedTag || this.selectedTag;
+                    query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
                 return this.$http

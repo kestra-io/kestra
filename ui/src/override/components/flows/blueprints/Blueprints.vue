@@ -51,5 +51,6 @@
     .main-container {
         padding-top: 6px !important;
         padding-bottom: 4rem;
+        margin: 0 32px;
     }
 </style>

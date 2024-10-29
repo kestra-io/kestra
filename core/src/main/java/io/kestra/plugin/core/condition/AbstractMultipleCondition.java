@@ -32,7 +32,14 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
     @Schema(title = "A unique id for the whole flow")
     @PluginProperty
-    protected String id;
+    private String id;
+
+    @Schema(
+        title = "Latency SLA to use instead of a sliding window",
+        description = "This allow to specify at which time in a day, at least, the flow should be triggered when all conditions are met."
+    )
+    @PluginProperty
+    private LatencySLA latencySLA;
 
     @NotNull
     @Schema(

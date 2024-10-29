@@ -26,6 +26,7 @@
     import VueTour from "./components/onboarding/VueTour.vue";
     import posthog from "posthog-js";
 
+
     export default {
         name: "App",
         components: {
@@ -114,17 +115,25 @@
                 document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
             },
             onMobileMenuCollapse(collapse) {
-                console.log("I am called",collapse)
                 const htmldocument=document.getElementsByTagName("html")[0];
                 const nav= document.querySelector(".top-bar");
-                if(collapse){
-                    if(htmldocument) htmldocument.style.paddingLeft="0";
-                    if(nav) nav.style.marginLeft="65px";
-                }else{
-                    if(htmldocument) htmldocument.style.paddingLeft="64px";
-                    if(nav) nav.style.marginLeft="0";
+                const navbar = document.getElementById("topbar");
+                if (navbar) {
+                    navbar.removeAttribute("id");
                 }
-                
+                if(collapse){
+                    if(htmldocument){
+                        htmldocument.classList.add("docclass");
+                        htmldocument.classList.remove("menu-collapsed");
+                    }                    
+                    if(nav) nav.classList.add("navclass");                               
+                }else{
+                    if(htmldocument){
+                        htmldocument.classList.remove("docclass");
+                        htmldocument.classList.add("menu-collapsed");
+                    }
+                    if(nav) nav.classList.remove("navclass");
+                }                
             },
             displayApp() {
                 // this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
@@ -228,6 +237,7 @@
             envName() {
                 this.setTitleEnvSuffix();
             }
+            
         }
     };
 </script>
@@ -235,5 +245,12 @@
 <style lang="scss">
 @use "styles/vendor";
 @use "styles/app";
+
+   .navclass{
+      margin-left:65px;
+   }
+   .docclass{
+      padding-left:0;
+   }
 </style>
 

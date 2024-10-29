@@ -104,35 +104,28 @@
             },
 
             onMobileCollapse() {
-                
                 const sidemenu = document.querySelector("#side-menu");
                 const vsmwrapper=document.querySelectorAll("#side-menu .vsm--wrapper")[0];
-                const vsmToggle=document.querySelector(".vsm--toggle-btn #toggleButton")
                 const Toggle=document.querySelector(".vsm--toggle-btn")
-                console.log(vsmToggle)
-                if(!this.isMobileCollapse){
-                    if(sidemenu) sidemenu.style.height="64px";
-                    if(vsmwrapper) vsmwrapper.style.display="none";
-                    if (vsmToggle) {
-                        const currentHeight = parseInt(window.getComputedStyle(vsmToggle).height, 10);
-                        const currentWidth = parseInt(window.getComputedStyle(vsmToggle).width, 10);
-                        vsmToggle.style.height = (currentHeight + 32) + "px";
-                        vsmToggle.style.width = (currentWidth + 32) + "px";
+                if(this.isMobile){  
+                    if(Toggle) Toggle.disabled = true;
+                    if(!this.isMobileCollapse){
+                        if(sidemenu) sidemenu.style.height="64px";
+                        if(vsmwrapper) vsmwrapper.style.display="none";
+                    }else{
+                        if(sidemenu) sidemenu.style.height="100vh";
+                        if(vsmwrapper) vsmwrapper.style.display="flex";
                     }
-                    if(Toggle) Toggle.classList.add("toggle")
+                    this.isMobileCollapse = !this.isMobileCollapse;
+                    this.$emit("mobile-menu-collapse",this.isMobileCollapse)
                 }else{
+                    if(Toggle) Toggle.disabled = false;
                     if(sidemenu) sidemenu.style.height="100vh";
                     if(vsmwrapper) vsmwrapper.style.display="flex";
-                    if (vsmToggle) {
-                        const currentHeight = parseInt(window.getComputedStyle(vsmToggle).height, 10);
-                        const currentWidth = parseInt(window.getComputedStyle(vsmToggle).width, 10);
-                        vsmToggle.style.height = (currentHeight - 32) + "px";
-                        vsmToggle.style.width = (currentWidth - 12) + "px";
-                    }
-                    if(Toggle) Toggle.classList.remove("toggle")
+                    this.$emit("mobile-menu-collapse",false)
+                    
                 }
-                this.isMobileCollapse = !this.isMobileCollapse;
-                this.$emit("mobile-menu-collapse",this.isMobileCollapse)
+              
             },
             disabledCurrentRoute(items) {
                 return items
@@ -341,7 +334,22 @@
             },
             checkMobileWidth(){
                 this.isMobile=window.innerWidth<=768? true:false;
-                if(window.innerWidth<=768 || localStorage.getItem("collapsed")==="true"){
+                if(this.isMobile && !this.isCollpseCalled){    
+                    // this.onMobileCollapse("menu")
+                    const sidemenu = document.querySelector("#side-menu");
+                    const vsmwrapper=document.querySelectorAll("#side-menu .vsm--wrapper")[0];
+                    if(sidemenu) sidemenu.style.height="64px";
+                    if(vsmwrapper) vsmwrapper.style.display="none";
+                    this.$emit("mobile-menu-collapse",true)
+                    this.isMobileCollapse=true;
+                    this.isCollpseCalled=true;
+                    
+                }
+                else if(!this.isMobile && this.isCollpseCalled){
+                    this.onMobileCollapse()
+                    this.isCollpseCalled=false;
+                }
+                if(!this.isMobile && (window.innerWidth<=768 || localStorage.getItem("collapsed")==="true")){
                     this.collapsed = true;  
                     this.$emit("menu-collapse", true);
                 }if(window.innerWidth>768 && localStorage.getItem("menuCollapsed")==="false"){
@@ -385,6 +393,7 @@
             return {
                 isMobileCollapse:false,
                 isMobile:window.innerWidth<=768?true:false,
+                isCollpseCalled:false,
                 collapsed: localStorage.getItem("menuCollapsed") === "true",
                 localMenu: []
             };
@@ -587,7 +596,13 @@
         }
         .toggle{
             padding:0;
+            
         }
+        .toggleButton{
+            height:64px;
+            width:64px;
+        }
+      
     }
 
 </style>

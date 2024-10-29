@@ -1,5 +1,5 @@
 <template>
-    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar" v-if="displayNavBar">
+    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar" id="topbar" ref="topnavbar" v-if="displayNavBar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
                 <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
@@ -219,6 +219,11 @@
                 gap: calc(var(--spacer) / 2);
                 align-items: center;
             }
+        }
+    }
+    @media(max-width:768px){
+        #topbar{
+            margin-left:65px;
         }
     }
 </style>

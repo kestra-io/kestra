@@ -1,5 +1,11 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title">
+        <template #additional-right>
+            <el-button @click="saveAllSettings()" type="primary">
+                {{ $t("settings.blocks.save.fields.name") }}
+            </el-button>
+        </template>
+    </top-nav-bar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
@@ -178,18 +184,6 @@
                     <Column>
                         <el-button v-if="canReadTemplates" :icon="Download" @click="exportTemplates()" :hidden="!configs?.isTemplateEnabled" class="w-100">
                             {{ $t("settings.blocks.export.fields.templates") }}
-                        </el-button>
-                    </Column>
-                </Row>
-            </template>
-        </Block>
-
-        <Block last>
-            <template #content>
-                <Row>
-                    <Column>
-                        <el-button @click="saveAllSettings()" class="w-60" type="primary">
-                            {{ $t("settings.blocks.save.fields.name") }}
                         </el-button>
                     </Column>
                 </Row>

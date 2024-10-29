@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Der erste Schritt ist immer der schwerste.",
           "2": "Erkunden Sie Blueprints, um Ihren nächsten Flow zu starten."
-        }
+        },
+        "alt": "Blueprints-Symbol"
       },
       "empty": "Keine Blueprints zum Anzeigen."
     },

@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
           "2": "Odkryj blueprints, aby rozpocząć swój następny flow."
-        }
+        },
+        "alt": "Ikona Blueprintów"
       },
       "empty": "Brak blueprintów do wyświetlenia."
     },
@@ -891,7 +892,7 @@
     "no_data": "Brak dostępnych danych",
     "informative notice": "Notatka(i)",
     "triggers-view": {
-      "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> w naszej dokumentacji.",
+      "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
       "title_no_triggers": "Twój flow nie ma żadnych triggerów."
     },
     "dependency-view": {

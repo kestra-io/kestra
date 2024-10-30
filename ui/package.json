@@ -90,7 +90,7 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.24.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.24.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.24.3"
   },
   "overrides": {
     "bootstrap": {

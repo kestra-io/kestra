@@ -26,7 +26,7 @@
     "chart.js": "^4.4.5",
     "chartjs-chart-treemap": "^3.0.0",
     "core-js": "^3.38.1",
-    "cronstrue": "^2.50.0",
+    "cronstrue": "^2.51.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.8.6",
     "humanize-duration": "^3.32.1",

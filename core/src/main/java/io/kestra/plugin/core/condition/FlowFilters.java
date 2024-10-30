@@ -108,13 +108,13 @@ public class FlowFilters extends AbstractMultipleCondition {
 
         @Override
         public boolean test(ConditionContext conditionContext) throws InternalException {
-            String namespace = upstreamFlow.namespace.as(conditionContext.getRunContext(), String.class);
+            String namespace = conditionContext.getRunContext().render(upstreamFlow.namespace).as(String.class).orElse(null);
             if (!conditionContext.getExecution().getNamespace().equals(namespace)) {
                 return false;
             }
 
             if (upstreamFlow.flowId != null) {
-                String flowId = upstreamFlow.flowId.as(conditionContext.getRunContext(), String.class);
+                String flowId = conditionContext.getRunContext().render(upstreamFlow.flowId).as(String.class).orElse(null);
                 if (!conditionContext.getExecution().getFlowId().equals(flowId)) {
                     return false;
                 }
@@ -122,7 +122,7 @@ public class FlowFilters extends AbstractMultipleCondition {
 
             // we need to only evaluate on namespace and flow for simulated executions
             if (upstreamFlow.states != null && !ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(SIMULATED_EXECUTION)) {
-                List<State.Type> states = upstreamFlow.states.asList(conditionContext.getRunContext(), State.Type.class);
+                List<State.Type> states = conditionContext.getRunContext().render(upstreamFlow.states).asList(State.Type.class);
                 return states.contains(conditionContext.getExecution().getState().getCurrent());
             }
 

@@ -37,7 +37,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Schema(
     title = "Allow to add or overwrite labels for the current execution at runtime.",
-    description = "Trying to pass a system label (a label starting with `system_`) will fail the task."
+    description = "Trying to pass a system label (a label starting with `system.`) will fail the task."
 )
 @Plugin(
     examples = {

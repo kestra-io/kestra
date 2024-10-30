@@ -39,8 +39,8 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_label=system_key"));
-        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_id=id"));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system.label=system_key"));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system.id=id"));
     }
 
     @Test

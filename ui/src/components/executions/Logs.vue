@@ -45,7 +45,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button-group class="min-w-auto">
-                    <restart :initial-inputs="flow" :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                    <restart :flow="flow" :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                     <el-button @click="downloadContent()">
                         <kicon :tooltip="$t('download logs')">
                             <download />

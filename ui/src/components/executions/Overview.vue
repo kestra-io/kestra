@@ -7,7 +7,7 @@
             <el-col :span="12" class="d-flex gap-2 justify-content-end">
                 <set-labels :execution="execution" />
                 <restart is-replay :flow="flow" :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                <restart :initial-inputs="flow" :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <restart :flow="flow" :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <kill :execution="execution" class="ms-0" />

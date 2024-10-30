@@ -779,26 +779,6 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Restart a new execution from an old one")
     public Execution restart(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
-    ) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-        this.controlRevision(execution.get(), revision);
-
-        Execution restart = executionService.restart(execution.get(), revision);
-        executionQueue.emit(restart);
-        eventPublisher.publishEvent(new CrudEvent<>(restart, execution.get(), CrudEventType.UPDATE));
-
-        return restart;
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/restart-with-input")
-    @Operation(tags = {"Executions"}, summary = "Restart a new execution from an old one")
-    public Execution restartWithInput(
-        @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {
@@ -914,38 +894,15 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay")
+    @Post(uri = "/{executionId}/replay", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
     public Execution replay(
-        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
-        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
-    ) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-
-        this.controlRevision(execution.get(), revision);
-
-        Execution replay = executionService.replay(execution.get(), taskRunId, revision);
-        executionQueue.emit(replay);
-        eventPublisher.publishEvent(new CrudEvent<>(replay, execution.get(), CrudEventType.CREATE));
-
-        return replay;
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay-with-input", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
-    public Execution replayWithInput(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-
         if (execution.isEmpty()) {
             return null;
         }

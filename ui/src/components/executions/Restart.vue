@@ -51,7 +51,7 @@
         </template>
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
-        <inputs-form :initial-inputs="initialInputs.inputs" :flow="initialInputs" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+        <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
         <div class="bottom-buttons" v-if="!embed">
             <div class="left-align">
                 <el-form-item>
@@ -128,10 +128,6 @@
                 type: String,
                 default: "bottom"
             },
-            initialInputs: {
-                type: Array,
-                default: undefined
-            },
             flow: {
                 type: Object,
                 default: undefined,
@@ -142,16 +138,13 @@
             isOpen(newValue) {
                 if (newValue) {
                     this.loadRevision()
-                    setTimeout(() => {
-                        this.fillInputsFromExecution()
-                    },800   ) 
                 }
             }
         },
         methods: {
             fillInputsFromExecution(){
                 const nonEmptyInputNames = Object.keys(this.execution.inputs);
-                this.initialInputs.inputs
+                this.flow.inputs
                     .filter(input => nonEmptyInputNames.includes(input.id))
                     .forEach(input => {
                         let value = this.execution.inputs[input.id];
@@ -181,7 +174,7 @@
             restart() {
                 this.isOpen = false
                 const inputs = this.purgeInputs(this.inputs)
-                const formData = inputsToFormDate(this, this.initialInputs.inputs, inputs);
+                const formData = inputsToFormDate(this, this.flow.inputs, inputs);
 
                 this.$store
                     .dispatch(`execution/${this.replayOrRestart}Execution`, {

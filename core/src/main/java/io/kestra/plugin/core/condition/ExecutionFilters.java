@@ -34,8 +34,10 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of executions.",
-    description = "Trigger when all the executions are successfully executed corresponding on a set of conditions for the first time during the `window` duration."
+    title = "Condition for a list of conditions on multiple executions.",
+    description = """
+        Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
+        The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
 )
 @Plugin(
     examples = {

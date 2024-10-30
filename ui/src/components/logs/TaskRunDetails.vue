@@ -127,7 +127,7 @@
             DynamicScrollerItem,
             Download
         },
-        emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level","fetch-logs"],
+        emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {
             logCursor: {
                 type: String,
@@ -152,10 +152,6 @@
             excludeMetas: {
                 type: Array,
                 default: () => [],
-            },
-            logs: {
-                type: Array,
-                default: undefined,
             },
             forcedAttemptNumber: {
                 type: Number,
@@ -220,9 +216,6 @@
         watch: {
             "shownAttemptsUid.length": function (openedTaskrunsCount) {
                 this.$emit("opened-taskruns-count", openedTaskrunsCount);
-            },
-            logs(newValue){
-                this.rawLogs = newValue
             },
             level: function () {
                 this.rawLogs = [];
@@ -584,20 +577,14 @@
                     return;
                 }
 
-                if (this.logs === undefined) {
-                    this.$store.dispatch("execution/loadLogs", {
-                        executionId,
-                        params: {
-                            minLevel: this.level
-                        },
-                        store: false
-                    }).then(logs => {
-                        this.rawLogs = logs
-                    });
-                } else {
-                    // logs are fetched by parent component
-                    this.$emit("fetch-logs")
-                }
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId,
+                    params: {
+                        minLevel: this.level
+                    }
+                }).then(logs => {
+                    this.rawLogs = logs
+                });
             },
             attempts(taskRun) {
                 if (this.followedExecution.state.current === State.RUNNING || this.forcedAttemptNumber === undefined) {

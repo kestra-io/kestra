@@ -42,8 +42,12 @@
                 }
 
                 .el-form-item__content {
-                    > * {
+                    > *:not(.el-button-group) {
                         width: 200px;
+                    }
+
+                    > .el-button-group {
+                        max-width: 200px;
                     }
                 }
             }

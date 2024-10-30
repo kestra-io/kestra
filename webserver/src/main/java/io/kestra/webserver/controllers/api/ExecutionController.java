@@ -688,7 +688,7 @@ public class ExecutionController {
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
 
-        // check for system labels: none can be passed at execution creation time except system_correlationId
+        // check for system labels: none can be passed at execution creation time except system.correlationId
         Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());

@@ -41,7 +41,7 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
 
         String labelsOverriderTaskRunId = execution.findTaskRunsByTaskId("override-labels").getFirst().getId();
         assertThat(execution.getLabels(), containsInAnyOrder(
-            is(new Label("system_correlationId", execution.getId())),
+            is(new Label(Label.CORRELATION_ID, execution.getId())),
             is(new Label("flowLabelKey", "flowLabelValue")),
             is(new Label("overriddenFlowLabelKey", "io.kestra.tests.labels-update-task")),
             is(new Label("keyFromJson", "valueFromJson")),

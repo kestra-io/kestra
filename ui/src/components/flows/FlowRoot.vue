@@ -332,7 +332,7 @@
                     return false;
                 }
 
-                return this.flow.labels?.system_readOnly === "true" ?? false;
+                return this.flow.labels?.["system.readOnly"] === "true" ?? false;
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

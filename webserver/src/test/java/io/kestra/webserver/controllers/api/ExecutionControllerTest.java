@@ -1597,7 +1597,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system_label:system", null)
+                .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system.label:system", null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         ));
@@ -1612,7 +1612,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
 
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("system_label", "value"))),
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("system.label", "value"))),
                 Execution.class
             )
         );

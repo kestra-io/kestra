@@ -9,6 +9,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -16,7 +17,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,31 +35,19 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     private String id;
 
     @Schema(
-        title = "Latency SLA to use instead of a sliding window",
-        description = "This allow to specify at which time in a day, at least, the flow should be triggered when all conditions are met."
+        title = "SLA to define the time period for evaluating the conditions",
+        description = """
+        You can evaluate the conditions on three different ways:
+        1. Using a duration window (`type: DURATION_WINDOW`), this is the default, and is configured by default for a 1 day duration window. A duration window express the evaluation period as a start time and a end time that are moving each time the evaluation time reach the end time, keeping the size of the window to the defined duration. For example, a one day duration windows will always evaluate executions during 24h starting at 00:00:00.
+        2. Using a sliding window (`type: SLIDING_WINDOW`). A sliding window express a period of time that is fixed in size and depends on the evaluation time. For example, a sliding window of 1 hour will evaluate executions of the past hour (so between now and one hour before now).
+        3. Using a daily deadline (`type: DAILY_TIME_DEADLINE`). A daily deadline express the evaluation period as "before a specific time in a day". For example, a daily deadline of 09:00:00 will evaluate executions between 00:00:00 and 09:00:00 each day.
+        4. Using a daily window (`type: DAILY_TIME_WINDOW`). A daily window express the evaluation period as "between two specific time in a day". For example, a daily windows of 06:00:00 and 09:00:00 will evaluate executions between 00:06:00 and 09:00:00 each day.
+        """
     )
     @PluginProperty
-    private LatencySLA latencySLA;
-
-    @NotNull
-    @Schema(
-        title = "The duration of the window",
-        description = """
-            See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available duration value.
-            The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window,
-            the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes.""")
-    @PluginProperty
     @Builder.Default
-    private Duration window = Duration.ofDays(1);
-
-    @Schema(
-        title = "The window advance duration",
-        description = """
-            Allow to specify the start hour of the window.
-            Eg: you want a window of 6 hours (window=PT6H). By default the check will be done between: 00:00 and 06:00 - 06:00 and 12:00 - 12:00 and 18:00 - 18:00 and 00:00.
-            If you want to check the window between: 03:00 and 09:00 - 09:00 and 15:00 - 15:00 and 21:00 - 21:00 and 3:00, you will have to shift the window of 3 hours by settings windowAdvance: PT3H.""")
-    @PluginProperty
-    private Duration windowAdvance;
+    @Valid
+    protected SLA sla = SLA.builder().build();
 
     /**
      * This conditions will only validate previously calculated value on

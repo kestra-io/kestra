@@ -67,7 +67,7 @@
             :log-cursor="logCursor"
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
-            @fetch-logs="fetchLogs(executionId)"
+            @fetch-logs="fetchLogs"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :target-execution="execution"
             :target-flow="flow"
@@ -89,10 +89,10 @@
                         :item="item"
                         :active="active"
                         :size-dependencies="[item.message]"
-                        :data-index="index"   
-                        :ref="el => setLogLineRef(index, el)"  
-                    >   
-                        <log-line   
+                        :data-index="index"
+                        :ref="el => setLogLineRef(index, el)"
+                    >
+                        <log-line
                             @click="temporalCursor = index.toString()"
                             class="line"
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
@@ -100,7 +100,7 @@
                             :level="level"
                             :filter="filter"
                             :log="item"
-                            title              
+                            title
                         />
                     </DynamicScrollerItem>
                 </template>
@@ -262,7 +262,7 @@
             },
             setRawView() {
                 this.raw_view = !this.raw_view;
-                if(this.raw_view && this.temporalCursor!==undefined)      
+                if(this.raw_view && this.temporalCursor!==undefined)
                 {
                     setTimeout(() => {
                         this.scrollToLog(this.temporalCursor),300
@@ -276,7 +276,7 @@
                 }
             },
             fetchLogs(executionId = this.execution.id)
-            {   
+            {
                 this.$store.dispatch("execution/loadLogs", {
                     executionId: executionId,
                     params: {
@@ -301,7 +301,7 @@
 
                 return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
             },
-            previousLogForLevel(level) { 
+            previousLogForLevel(level) {
                 const temporalIndex = this.temporalLogIndicesByLevel[level];
                 const logIndicesForLevel = this.logIndicesByLevel[level];
                 if(this.temporalCursor  === undefined || level !== this.cursorLogLevel || this.logCursor === undefined  ){
@@ -315,10 +315,10 @@
                     this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
                 }
             },
-            nextLogForLevel(level) { 
+            nextLogForLevel(level) {
                 const temporalIndex = this.temporalLogIndicesByLevel[level];
                 const logIndicesForLevel = this.logIndicesByLevel[level]; // ["1/0"]
-                if(this.temporalCursor  === undefined || level !== this.cursorLogLevel || this.logCursor === undefined ){ 
+                if(this.temporalCursor  === undefined || level !== this.cursorLogLevel || this.logCursor === undefined ){
                     this.temporalCursor = temporalIndex?.[0];
                     this.logCursor = logIndicesForLevel?.[0];
                 }
@@ -327,7 +327,7 @@
                     this.temporalCursor = sorted?.[sorted.indexOf(this.temporalCursor) + 1] ?? sorted[0];
                     const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
                     this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
-                }  
+                }
             },
             clearLogLevel(level) {
                 if ((this.logCursor !== undefined || this.temporalCursor!== undefined) && this.cursorLogLevel === level) {

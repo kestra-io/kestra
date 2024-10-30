@@ -155,7 +155,7 @@
             },
             logs: {
                 type: Array,
-                default: () => [],
+                default: undefined,
             },
             forcedAttemptNumber: {
                 type: Number,
@@ -197,7 +197,7 @@
                 fullscreen: false,
                 followed: false,
                 shownAttemptsUid: [],
-                defaultLogs: [],
+                rawLogs: [],
                 timer: undefined,
                 timeout: undefined,
                 selectedAttemptNumberByTaskRunId: {},
@@ -222,10 +222,10 @@
                 this.$emit("opened-taskruns-count", openedTaskrunsCount);
             },
             logs(newValue){
-                this.defaultLogs = newValue
+                this.rawLogs = newValue
             },
             level: function () {
-                this.defaultLogs = [];
+                this.rawLogs = [];
                 this.loadLogs(this.followedExecution.id);
             },
             execution: function () {
@@ -411,7 +411,7 @@
                 return LogUtils.levelOrLower(this.level);
             },
             filteredLogs() {
-                return this.defaultLogs.filter(log => this.levelOrLower.includes(log.level));
+                return this.rawLogs.filter(log => this.levelOrLower.includes(log.level));
             }
         },
         methods: {
@@ -503,7 +503,7 @@
                             clearTimeout(this.timeout);
                             this.timeout = setTimeout(() => {
                                 this.timer = moment()
-                                this.defaultLogs = this.defaultLogs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }, 100);
@@ -512,7 +512,7 @@
                             if (moment().diff(this.timer, "seconds") > 0.5) {
                                 clearTimeout(this.timeout);
                                 this.timer = moment()
-                                this.defaultLogs = this.defaultLogs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }
@@ -583,7 +583,21 @@
                 if (!this.showLogs) {
                     return;
                 }
-                this.$emit("fetch-logs",executionId)
+
+                if (this.logs === undefined) {
+                    this.$store.dispatch("execution/loadLogs", {
+                        executionId,
+                        params: {
+                            minLevel: this.level
+                        },
+                        store: false
+                    }).then(logs => {
+                        this.rawLogs = logs
+                    });
+                } else {
+                    // logs are fetched by parent component
+                    this.$emit("fetch-logs")
+                }
             },
             attempts(taskRun) {
                 if (this.followedExecution.state.current === State.RUNNING || this.forcedAttemptNumber === undefined) {

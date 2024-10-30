@@ -33,13 +33,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             } else {
                 formData.append(inputName, inputValue);
             }
-        } else if (input.required) {
-            submitor.$toast().error(
-                submitor.$t("invalid field", {name: inputName}),
-                submitor.$t("form error")
-            )
-
-            return;
         }
     }
     return formData;

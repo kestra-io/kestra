@@ -213,7 +213,6 @@
         emits: ["update:modelValue", "confirm"],
         created() {
             this.inputsList.push(...(this.initialInputs ?? []));
-            this.validateInputs();
         },
         mounted() {
             setTimeout(() => {

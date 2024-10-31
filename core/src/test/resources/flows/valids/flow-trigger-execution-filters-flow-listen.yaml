@@ -1,0 +1,66 @@
+id: flow-trigger-execution-filters-flow-listen
+namespace: io.kestra.tests.trigger.execution-filters
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions:
+      - id: executionFilters
+        type: io.kestra.plugin.core.condition.ExecutionFilters
+        filters:
+          - id: flow1
+            conditions:
+              - field: NAMESPACE
+                type: EQUAL_TO
+                value: io.kestra.tests.trigger.execution-filters
+              - field: FLOW_ID
+                type: EQUAL_TO
+                value: flow-trigger-execution-filters-flow-a
+              - field: STATE
+                type: IN
+                values: [SUCCESS, WARNING, CANCELLED]
+              - field: STATE
+                type: NOT_IN
+                values: [FAILED, CANCELLED]
+          - id: flow2
+            conditions:
+              - field: NAMESPACE
+                type: EQUAL_TO
+                value: io.kestra.tests.trigger.execution-filters
+              - field: FLOW_ID
+                type: EQUAL_TO
+                value: flow-trigger-execution-filters-flow-b
+              - field: EXPRESSION
+                type: IS_TRUE
+                value: "{{outputs.output.values.variable == 'toto'}}"
+              - field: EXPRESSION
+                type: IS_FALSE
+                value: "{{outputs.output.values.variable == 'titi'}}"
+              - field: LABEL
+                type: EQUAL_TO
+                value: "some:label"
+              - field: LABEL
+                type: NOT_EQUAL_TO
+                value: "other:label"
+              - field: FLOW_ID
+                type: REGEX
+                value: .*trigger-execution-filters.*
+              - field: FLOW_ID
+                type: CONTAINS
+                value: trigger-execution-filters
+              - field: FLOW_ID
+                type: STARTS_WITH
+                value: flow-trigger-execution
+              - field: FLOW_ID
+                type: ENDS_WITH
+                value: filters-flow-b
+              - field: LABEL
+                type: IS_NULL
+                value: other
+              - field: LABEL
+                type: IS_NOT_NULL
+                value: some
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

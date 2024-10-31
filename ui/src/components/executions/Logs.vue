@@ -26,7 +26,7 @@
                     :total-count="countByLogLevel[logLevel]"
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
-                    @close="clearLogLevel(logLevel)"
+                    @close="logCursor = undefined"
                 />
             </el-form-item>
             <el-form-item>
@@ -38,7 +38,7 @@
                 <el-tooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <el-button @click="setRawView()">
+                    <el-button @click="toggleViewType">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                     </el-button>
                 </el-tooltip>
@@ -58,7 +58,6 @@
         <task-run-details
             v-if="!raw_view"
             ref="logs"
-            :logs="Array.isArray(logs) ? logs : []"
             :level="level"
             :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
             :filter="filter"
@@ -67,7 +66,6 @@
             :log-cursor="logCursor"
             @follow="forwardEvent('follow', $event)"
             @opened-taskruns-count="openedTaskrunsCount = $event"
-            @fetch-logs="fetchLogs(executionId)"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :target-execution="execution"
             :target-flow="flow"
@@ -77,30 +75,28 @@
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
-                :min-item-size="getTemporalLogsSize()"
-                key-field="uniqueId"
+                :min-item-size="50"
+                key-field="index"
                 class="log-lines"
                 :buffer="200"
                 :prerender="20"
-                :key="filterUpdateCount"
             >
-                <template #default="{item, index, active}">
+                <template #default="{item, active}">
                     <DynamicScrollerItem
                         :item="item"
                         :active="active"
                         :size-dependencies="[item.message]"
-                        :data-index="index"   
-                        :ref="el => setLogLineRef(index, el)"  
-                    >   
-                        <log-line   
-                            @click="temporalCursor = index.toString()"
+                        :data-index="item.index"
+                    >
+                        <log-line
+                            @click="logCursor = item.index.toString()"
                             class="line"
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
-                            :cursor="temporalCursor!==undefined && item.index == temporalCursor"
+                            :cursor="item.index.toString() === logCursor"
                             :level="level"
                             :filter="filter"
                             :log="item"
-                            title              
+                            title
                         />
                     </DynamicScrollerItem>
                 </template>
@@ -148,10 +144,7 @@
                 openedTaskrunsCount: 0,
                 raw_view: false,
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined,
-                temporalCursor: undefined,
-                logLineRefs: {},
-                filterUpdateCount: 0
+                logCursor: undefined
             };
         },
         created() {
@@ -162,23 +155,27 @@
             level: {
                 handler() {
                     if (this.raw_view) {
-                        this.fetchLogs();
+                        this.$store.dispatch("execution/loadLogs", {
+                            executionId: this.execution.id,
+                            minLevel: this.level
+                        })
                     }
-                },
-                immediate: true
+                }
             },
-            temporalCursor(newValue) {
+            logCursor(newValue) {
                 if (newValue !== undefined && this.raw_view) {
                     this.scrollToLog(newValue);
                 }
-            },
+            }
         },
         computed: {
             State() {
                 return State
             },
             temporalLogs() {
-                if (!this.logs?.length) return [];
+                if (!this.logs?.length) {
+                    return [];
+                }
 
                 const filtered = this.logs.filter(log => {
                     if (!this.filter) return true;
@@ -187,24 +184,8 @@
 
                 return filtered.map((logLine, index) => ({
                     ...logLine,
-                    index,
-                    uniqueId: `${logLine.timestamp || ""}-${logLine.taskId || ""}-${index}`
+                    index
                 }));
-            },
-            temporalLogIndicesByLevel()
-            {
-                const groupedLogIndices = this.temporalLogs.reduce((acc, item) => {
-                    if (!acc[item.level]) {
-                        acc[item.level] = [];
-                    }
-                    acc[item.level].push(item.index.toString());
-                    return acc;
-                }, {});
-                const defaultLevels = Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []]));
-                return Object.entries(defaultLevels).reduce((acc, [level, array]) => {
-                    acc[level] = groupedLogIndices[level] || array;
-                    return acc;
-                }, {});
             },
             ...mapState("execution", ["execution", "logs", "flow"]),
             downloadName() {
@@ -217,26 +198,35 @@
                 return LogUtils.levelOrLower(this.level);
             },
             countByLogLevel() {
-                return !this.raw_view ? Object.fromEntries(Object.entries(this.logIndicesByLevel).map(([level, indices]) => [level, indices.length])):
-                    Object.fromEntries(Object.entries(this.temporalLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
+                return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
             },
             cursorLogLevel() {
-                return !this.raw_view? Object.entries(this.logIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0]:
-                    Object.entries(this.temporalLogIndicesByLevel).find(([_, indices]) => indices.includes(this.temporalCursor))?.[0];
+                return Object.entries(this.viewTypeAwareLogIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
             },
             cursorIdxForLevel() {
-                return !this.raw_view ? this.logIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor):
-                    this.temporalLogIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.temporalCursor)
+                return this.viewTypeAwareLogIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
+            },
+            temporalViewLogIndicesByLevel() {
+                const temporalViewLogIndicesByLevel = this.temporalLogs.reduce((acc, item) => {
+                    if (!acc[item.level]) {
+                        acc[item.level] = [];
+                    }
+                    acc[item.level].push(item.index.toString());
+                    return acc;
+                }, {});
+                LogUtils.levelOrLower(undefined).forEach(level => {
+                    if (!temporalViewLogIndicesByLevel[level]) {
+                        temporalViewLogIndicesByLevel[level] = [];
+                    }
+                });
+
+                return temporalViewLogIndicesByLevel
+            },
+            viewTypeAwareLogIndicesByLevel() {
+                return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
             }
         },
         methods: {
-            setLogLineRef(index, el) {
-                if (el) {
-                    this.logLineRefs[index] = el;
-                } else {
-                    delete this.logLineRefs[index];
-                }
-            },
             downloadContent() {
                 this.$store.dispatch("execution/downloadLogs", {
                     executionId: this.execution.id,
@@ -255,34 +245,13 @@
             },
             onChange() {
                 this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
-                if(this.raw_view) this.filterUpdateCount++
             },
             expandCollapseAll() {
                 this.$refs.logs.toggleExpandCollapseAll();
             },
-            setRawView() {
+            toggleViewType() {
+                this.logCursor = undefined;
                 this.raw_view = !this.raw_view;
-                if(this.raw_view && this.temporalCursor!==undefined)      
-                {
-                    setTimeout(() => {
-                        this.scrollToLog(this.temporalCursor),300
-                    });
-                }
-                else if(!this.raw_view && this.logCursor !== undefined)
-                {
-                    setTimeout(() => {
-                        this.$refs.logs.scrollToLog(this.logCursor),300
-                    });
-                }
-            },
-            fetchLogs(executionId = this.execution.id)
-            {   
-                this.$store.dispatch("execution/loadLogs", {
-                    executionId: executionId,
-                    params: {
-                        minLevel: this.level
-                    },
-                })
             },
             sortLogsByViewOrder(a, b) {
                 const aSplit = a.split("/");
@@ -301,60 +270,28 @@
 
                 return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
             },
-            previousLogForLevel(level) { 
-                const temporalIndex = this.temporalLogIndicesByLevel[level];
-                const logIndicesForLevel = this.logIndicesByLevel[level];
-                if(this.temporalCursor  === undefined || level !== this.cursorLogLevel || this.logCursor === undefined  ){
-                    this.temporalCursor = temporalIndex?.[temporalIndex.length - 1];
+            previousLogForLevel(level) {
+                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
+                if (this.logCursor === undefined) {
                     this.logCursor = logIndicesForLevel?.[logIndicesForLevel.length - 1];
+                    return;
                 }
-                else{
-                    const sorted = [...temporalIndex, this.temporalCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                    this.temporalCursor = sorted?.[sorted.indexOf(this.temporalCursor) - 1] ?? sorted[sorted.length - 1];
-                    const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                    this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
-                }
+
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
             },
-            nextLogForLevel(level) { 
-                const temporalIndex = this.temporalLogIndicesByLevel[level];
-                const logIndicesForLevel = this.logIndicesByLevel[level]; // ["1/0"]
-                if(this.temporalCursor  === undefined || level !== this.cursorLogLevel || this.logCursor === undefined ){ 
-                    this.temporalCursor = temporalIndex?.[0];
+            nextLogForLevel(level) {
+                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
+                if (this.logCursor === undefined) {
                     this.logCursor = logIndicesForLevel?.[0];
+                    return;
                 }
-                else{
-                    const sorted = [...temporalIndex, this.temporalCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                    this.temporalCursor = sorted?.[sorted.indexOf(this.temporalCursor) + 1] ?? sorted[0];
-                    const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                    this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
-                }  
-            },
-            clearLogLevel(level) {
-                if ((this.logCursor !== undefined || this.temporalCursor!== undefined) && this.cursorLogLevel === level) {
-                    this.logCursor = undefined;
-                    this.temporalCursor = undefined
-                }
-            },
-            getTemporalLogsSize()
-            {
-                return this.logs ? this.logs.length : 50;
+
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
-                this.$nextTick(() => {
-                    if (!index || !this.$refs.logScroller) return;
-                    const parsedIndex = parseInt(index);
-                    const scroller = this.$refs.logScroller;
-                    scroller.scrollToItem(parsedIndex, {
-                    });
-                    setTimeout(() => {
-                        if (this.logLineRefs[parsedIndex]?.$el) {
-                            this.logLineRefs[parsedIndex].$el.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start"
-                            });
-                        }
-                    }, 50);
-                })
+                this.$refs.logScroller.scrollToItem(index);
             }
         }
     };

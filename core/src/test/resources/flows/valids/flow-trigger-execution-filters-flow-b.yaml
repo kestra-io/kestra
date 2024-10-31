@@ -1,0 +1,15 @@
+id: flow-trigger-execution-filters-flow-b
+namespace: io.kestra.tests.trigger.execution-filters
+
+labels:
+  some: label
+  custom_correlationId: custom
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"
+  - id: output
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      variable: toto

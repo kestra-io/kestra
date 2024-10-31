@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 revision: 2
 
 labels:
-  system_readOnly: "true"
+  system.readOnly: "true"
 
 tasks:
 - id: date

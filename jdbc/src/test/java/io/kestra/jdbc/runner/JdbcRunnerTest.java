@@ -232,6 +232,11 @@ public abstract class JdbcRunnerTest {
         multipleConditionTriggerCaseTest.flowFilters();
     }
 
+    @Test
+    void multipleConditionTriggerExecutionFilters() throws Exception {
+        multipleConditionTriggerCaseTest.executionFilters();
+    }
+
     @RetryingTest(5)
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);

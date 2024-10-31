@@ -14,7 +14,7 @@
                 </slot>
             </h1>
         </div>
-        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
@@ -25,7 +25,7 @@
                 </el-button>
             </div>
             <slot name="additional-right" />
-            <div class="d-flex fixed-buttons">
+            <div class="d-flex fixed-buttons icons">
                 <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
                         <HelpBox />
@@ -163,8 +163,8 @@
                     () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
-            }
-        }
+            },
+        },
     };
 </script>,
 <style lang="scss" scoped>
@@ -218,6 +218,33 @@
                 margin: 0;
                 gap: calc(var(--spacer) / 2);
                 align-items: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(3, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+                
+
+            }
+            .icons{
+                grid-row:2;
+                grid-column:2;
+                display: contents;
+            }
+            
+        }
+        @media (max-width: 664px){
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(2, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+
             }
         }
     }

@@ -50,18 +50,18 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
     @Override
     public Output run(RunContext runContext) throws Exception {
         String value = String.format(
-                "%s - %s - %s - %s",
-                string.as(runContext, String.class),
-                number.as(runContext, Integer.class),
-                withDefault.as(runContext, String.class),
-                someDuration.as(runContext, Duration.class)
-            );
+            "%s - %s - %s - %s",
+            runContext.render(string).as(String.class).orElseThrow(),
+            runContext.render(number).as(Integer.class).orElseThrow(),
+            runContext.render(withDefault).as(String.class).orElseThrow(),
+            runContext.render(someDuration).as(Duration.class).orElseThrow()
+        );
 
-        Level level = this.level.as(runContext, Level.class);
+        Level level =runContext.render(this.level).as(Level.class).orElseThrow();
 
-        List<String> list = items.asList(runContext, String.class);
+        List<String> list = runContext.render(items).asList(String.class);
 
-        Map<String, String> map = properties.asMap(runContext, String.class, String.class);
+        Map<String, String> map = runContext.render(properties).asMap(String.class, String.class);
 
         List<Message> outputMessages = data.flux(runContext, Message.class, message -> Message.fromMap(message))
             .collectList()

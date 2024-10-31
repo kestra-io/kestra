@@ -43,9 +43,9 @@
 </template>
 
 <script setup>
-    import {shallowRef, watch, onUpdated, onMounted, ref, computed} from "vue";
+    import {shallowRef, computed} from "vue";
     import {useStore} from "vuex";
-    import {useRouter, useRoute} from "vue-router";
+    import {useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
 
     import {SidebarMenu} from "vue-sidebar-menu";
@@ -73,59 +73,22 @@
 
     import DateAgo from "../../components/layout/DateAgo.vue"
     import Environment from "../../components/layout/Environment.vue";
-
-    const store = useStore()
-    const $router = useRouter()
-    const $route = useRoute()
-    const {t, locale} = useI18n()
-
-    const configs = computed(() => store.state.misc.configs);
+    import {useLeftMenu} from "./useLeftMenu";
 
     const $emit = defineEmits(["menu-collapse"])
 
-    function flattenMenu(menu) {
-        return menu.reduce((acc, item) => {
-            if (item.child) {
-                acc.push(...flattenMenu(item.child));
-            }
-
-            acc.push(item);
-            return acc;
-        }, []);
-    }
-
-    function onToggleCollapse(folded) {
-        collapsed.value = folded;
-        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
-        $emit("menu-collapse", folded);
-    }
-
-    function disabledCurrentRoute(items) {
-        return items
-            .map(r => {
-                if (r.href === $route.path) {
-                    r.disabled = true;
-                }
-
-                // route hack is still needed for blueprints
-                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
-                    r.class = "vsm--link_active";
-                }
-
-                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
-                    r.class = "vsm--link_active";
-                    r.child = disabledCurrentRoute(r.child);
-                }
-
-                return r;
-            })
-    }
+    const $router = useRouter()
+    const {t} = useI18n()
+    const store = useStore()
 
     function routeStartWith(route) {
         return $router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
     }
 
-    function generateMenu() {
+    const configs = computed(() => store.state.misc.configs);
+
+
+    const generatedMenu = computed(() => {
         return [
             {
                 href: {name: "home"},
@@ -301,53 +264,15 @@
                 }
             }
         ];
-    }
-
-    function expandParentIfNeeded() {
-        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-            e.click()
-        });
-    }
-
-    onUpdated(() => {
-        // Required here because in mounted() the menu is not yet rendered
-        expandParentIfNeeded();
     })
 
-    watch(locale, () => {
-        localMenu.value = disabledCurrentRoute(generateMenu());
 
-    }, {deep: true});
-
-    const menu = computed(() => {
-        return disabledCurrentRoute(generateMenu());
-    });
-
-    const $el = ref(null);
-
-    watch(menu, (newVal, oldVal) => {
-              // Check if the active menu item has changed, if yes then update the menu
-              if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
-                  JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
-                  localMenu.value = newVal;
-                  $el.value?.querySelectorAll(".vsm--item span").forEach(e => {
-                      //empty icon name on mouseover
-                      e.setAttribute("title", "")
-                  });
-              }
-          },
-          {
-              flush: "post",
-              deep: true
-          });
-
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
-    const localMenu = ref([])
-
-
-    onMounted(() => {
-        localMenu.value = menu.value;
-    })
+    const {
+        collapsed,
+        onToggleCollapse,
+        localMenu,
+        $el
+    } = useLeftMenu($emit, generatedMenu);
 </script>
 
 <style lang="scss">

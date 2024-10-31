@@ -1,5 +1,6 @@
 <template>
     <sidebar-menu
+        ref="$el"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu="localMenu"
@@ -314,7 +315,7 @@
     })
 
     watch(locale, () => {
-        this.localMenu = this.disabledCurrentRoute(generateMenu());
+        localMenu.value = disabledCurrentRoute(generateMenu());
 
     }, {deep: true});
 
@@ -322,12 +323,14 @@
         return disabledCurrentRoute(generateMenu());
     });
 
+    const $el = ref(null);
+
     watch(menu, (newVal, oldVal) => {
               // Check if the active menu item has changed, if yes then update the menu
               if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
                   JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
-                  this.localMenu = newVal;
-                  this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                  localMenu.value = newVal;
+                  $el.value?.querySelectorAll(".vsm--item span").forEach(e => {
                       //empty icon name on mouseover
                       e.setAttribute("title", "")
                   });

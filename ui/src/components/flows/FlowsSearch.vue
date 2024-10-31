@@ -24,12 +24,6 @@
                 </template>
 
                 <template #table>
-                    <!-- <div v-if="search === undefined || search.length === 0">
-                        <el-alert type="info" class="mb-3" :closable="false">
-                            {{ $t('empty search') }}
-                        </el-alert>
-                    </div> -->
-
                     <template v-for="(item, i) in search" :key="`card-${i}`">
                         <el-card class="mb-2" shadow="never">
                             <template #header>

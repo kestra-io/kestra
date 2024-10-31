@@ -95,7 +95,7 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
             is(new Label(Label.CORRELATION_ID, execution.getId())),
             is(new Label("intValue", "42")),
             is(new Label("boolValue", "true")),
-            is(new Label("floatLabel", "3.14")),
+            is(new Label("floatValue", "3.14")),
             is(new Label("taskRunId", labelsTaskRunId)),
             is(new Label("existingLabel", "someValue"))
         ));

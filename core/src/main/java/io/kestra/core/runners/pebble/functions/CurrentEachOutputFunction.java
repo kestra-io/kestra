@@ -27,7 +27,10 @@ public class CurrentEachOutputFunction implements Function {
         if (parents != null && !parents.isEmpty()) {
             Collections.reverse(parents);
             for (Map<?, ?> parent : parents) {
-                outputs = (Map<?, ?>) outputs.get(((Map<?, ?>) parent.get("taskrun")).get("value"));
+                Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
+                if (taskrun != null) {
+                    outputs = (Map<?, ?>) outputs.get(taskrun.get("value"));
+                }
             }
         }
         Map<?, ?> taskrun = (Map<?, ?>) context.getVariable("taskrun");

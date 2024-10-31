@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
+import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -215,6 +216,37 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertNull(values.getFirst().exception());
         Assertions.assertFalse(storageInterface.exists(null, URI.create(values.getFirst().value().toString())));
+    }
+
+    @Test
+    void resolveInputsWithStrictDefaultTyping() {
+        // Given
+        StringInput input1 = StringInput.builder()
+            .id("input1")
+            .validator("\\d")
+            .defaults("0")
+            .required(false)
+            .build();
+        IntInput input2 = IntInput.builder()
+            .id("input2")
+            .defaults(0)
+            .required(false)
+            .build();
+
+        List<Input<?>> inputs = List.of(input1, input2);
+
+        Map<String, Object> data = Map.of("input42", "foo");
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+
+        // Then
+        Assertions.assertEquals(
+            List.of(
+                new InputAndValue(input1, "0", true, null),
+                new InputAndValue(input2, 0, true, null)),
+            values
+        );
     }
 
     private static final class MemoryCompletedFileUpload implements CompletedFileUpload {

@@ -244,7 +244,7 @@ class FlowInputOutputTest {
         Assertions.assertEquals(
             List.of(
                 new InputAndValue(input1, "0", true, null),
-                new InputAndValue(input2, "0", true, null)),
+                new InputAndValue(input2, 0, true, null)),
             values
         );
     }

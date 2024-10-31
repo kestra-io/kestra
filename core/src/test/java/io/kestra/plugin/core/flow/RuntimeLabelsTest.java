@@ -78,7 +78,7 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
             (flow, createdExecution) -> Map.of(
                 "intLabel", 42,
                 "boolLabel", true,
-                "longLabel", 1000000L
+                "floatLabel", 3.14f
             ),
             null,
             List.of(
@@ -95,7 +95,7 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
             is(new Label(Label.CORRELATION_ID, execution.getId())),
             is(new Label("intValue", "42")),
             is(new Label("boolValue", "true")),
-            is(new Label("longValue", "1000000")),
+            is(new Label("floatLabel", "3.14")),
             is(new Label("taskRunId", labelsTaskRunId)),
             is(new Label("existingLabel", "someValue"))
         ));

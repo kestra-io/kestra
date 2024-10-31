@@ -315,7 +315,6 @@
     background-color: var(--bs-body-bg);
     border-radius: 4px;
     padding: 10px;
-    margin-top: 5px;
     overflow-x: auto; 
 }
 

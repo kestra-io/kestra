@@ -41,9 +41,14 @@
     </sidebar-menu>
 </template>
 
-<script>
+<script setup>
+    import {shallowRef, watch, onUpdated, onMounted, ref, computed} from "vue";
+    import {useStore} from "vuex";
+    import {useRouter, useRoute} from "vue-router";
+    import {useI18n} from "vue-i18n";
+
     import {SidebarMenu} from "vue-sidebar-menu";
-    import Environment from "../../components/layout/Environment.vue";
+
     import ChevronDoubleLeft from "vue-material-design-icons/ChevronDoubleLeft.vue";
     import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
@@ -56,294 +61,290 @@
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import TimerCogOutline from "vue-material-design-icons/TimerCogOutline.vue";
-    import {mapState} from "vuex";
     import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
     import Connection from "vue-material-design-icons/Connection.vue";
-    import {shallowRef} from "vue";
-
     import VectorIntersection from "vue-material-design-icons/VectorIntersection.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
     import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
     import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
     import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
-    import DateAgo from "../../components/layout/DateAgo.vue"
     import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
 
-    export default {
-        components: {
-            ChevronDoubleLeft,
-            ChevronDoubleRight,
-            SidebarMenu,
-            Environment,
-            DateAgo,
-        },
-        emits: ["menu-collapse"],
-        methods: {
-            flattenMenu(menu) {
-                return menu.reduce((acc, item) => {
-                    if (item.child) {
-                        acc.push(...this.flattenMenu(item.child));
-                    }
+    import DateAgo from "../../components/layout/DateAgo.vue"
+    import Environment from "../../components/layout/Environment.vue";
 
-                    acc.push(item);
-                    return acc;
-                }, []);
-            },
-            onToggleCollapse(folded) {
-                this.collapsed = folded;
-                localStorage.setItem("menuCollapsed", folded ? "true" : "false");
-                this.$emit("menu-collapse", folded);
-            },
-            disabledCurrentRoute(items) {
-                return items
-                    .map(r => {
-                        if (r.href === this.$route.path) {
-                            r.disabled = true;
-                        }
+    const store = useStore()
+    const $router = useRouter()
+    const $route = useRoute()
+    const {t, locale} = useI18n()
 
-                        // route hack is still needed for blueprints
-                        if (r.href !== "/" && (this.$route.path.startsWith(r.href) || r.routes?.includes(this.$route.name))) {
-                            r.class = "vsm--link_active";
-                        }
+    const configs = computed(() => store.state.misc.configs);
 
-                        if (r.child && r.child.some(c => this.$route.path.startsWith(c.href) || c.routes?.includes(this.$route.name))) {
-                            r.class = "vsm--link_active";
-                            r.child = this.disabledCurrentRoute(r.child);
-                        }
+    const $emit = defineEmits(["menu-collapse"])
 
-                        return r;
-                    })
-            },
-            routeStartWith(route) {
-                return this.$router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
-            },
-            generateMenu() {
-                return [
-                    {
-                        href: {name: "home"},
-                        title: this.$t("homeDashboard.title"),
-                        icon: {
-                            element: shallowRef(ViewDashboardVariantOutline),
-                            class: "menu-icon",
-                        },
-                    },
-                    {
-                        href: {name: "flows/list"},
-                        routes: this.routeStartWith("flows"),
-                        title: this.$t("flows"),
-                        icon: {
-                            element: shallowRef(FileTreeOutline),
-                            class: "menu-icon",
-                        },
-                        exact: false,
-                    },
-                    {
-                        href: {name: "templates/list"},
-                        routes: this.routeStartWith("templates"),
-                        title: this.$t("templates"),
-                        icon: {
-                            element: shallowRef(ContentCopy),
-                            class: "menu-icon",
-                        },
-                        hidden: !this.configs.isTemplateEnabled
-                    },
-                    {
-                        href: {name: "executions/list"},
-                        routes: this.routeStartWith("executions"),
-                        title: this.$t("executions"),
-                        icon: {
-                            element: shallowRef(TimelineClockOutline),
-                            class: "menu-icon"
-                        },
-                    },
-                    {
-                        href: {name: "taskruns/list"},
-                        routes: this.routeStartWith("taskruns"),
-                        title: this.$t("taskruns"),
-                        icon: {
-                            element: shallowRef(ChartTimeline),
-                            class: "menu-icon"
-                        },
-                        hidden: !this.configs.isTaskRunEnabled
-                    },
-                    {
-                        href: {name: "logs/list"},
-                        routes: this.routeStartWith("logs"),
-                        title: this.$t("logs"),
-                        icon: {
-                            element: shallowRef(TimelineTextOutline),
-                            class: "menu-icon"
-                        },
-                    },
-                    {
-                        href: {name: "namespaces"},
-                        routes: this.routeStartWith("namespaces"),
-                        title: this.$t("namespaces"),
-                        icon: {
-                            element: shallowRef(VectorIntersection),
-                            class: "menu-icon"
-                        }
-                    },
-                    {
-                        href: {name: "blueprints"},
-                        routes: this.routeStartWith("blueprints"),
-                        title: this.$t("blueprints.title"),
-                        icon: {
-                            element: shallowRef(BallotOutline),
-                            class: "menu-icon"
-                        },
-                    },
-                    {
-                        href: {name: "plugins/list"},
-                        routes: this.routeStartWith("plugins"),
-                        title: this.$t("plugins.names"),
-                        icon: {
-                            element: shallowRef(Connection),
-                            class: "menu-icon"
-                        },
-                    },
-                    {
-                        href: {name: "docs/view"},
-                        routes: this.routeStartWith("docs/view"),
-                        title: this.$t("docs"),
-                        icon: {
-                            element: shallowRef(FileTableOutline),
-                            class: "menu-icon"
-                        }
-                    },
-                    {
-                        title: this.$t("administration"),
-                        routes: this.routeStartWith("admin"),
-                        icon: {
-                            element: shallowRef(ShieldAccountVariantOutline),
-                            class: "menu-icon"
-                        },
-                        child: [
-                            {
-                                title: this.$t("iam"),
-                                icon: {
-                                    element: shallowRef(AccountOutline),
-                                    class: "menu-icon"
-                                },
-                                disabled: true,
-                                attributes: {
-                                    locked: true
-                                }
-                            },
-                            {
-                                title: this.$t("auditlogs"),
-                                icon: {
-                                    element: shallowRef(ShieldCheckOutline),
-                                    class: "menu-icon"
-                                },
-                                disabled: true,
-                                attributes: {
-                                    locked: true
-                                }
-                            },
-                            {
-                                href: {name: "admin/triggers"},
-                                routes: this.routeStartWith("admin/triggers"),
-                                title: this.$t("triggers"),
-                                icon: {
-                                    element: shallowRef(TimerCogOutline),
-                                    class: "menu-icon"
-                                }
-                            },
-                            {
-                                title: this.$t("cluster"),
-                                icon: {
-                                    element: shallowRef(ServerOutline),
-                                    class: "menu-icon"
-                                },
-                                disabled: true,
-                                attributes: {
-                                    locked: true
-                                }
-                            },
-                            {
-                                title: this.$t("tenants"),
-                                icon: {
-                                    element: shallowRef(ShieldLockOutline),
-                                    class: "menu-icon"
-                                },
-                                disabled: true,
-                                attributes: {
-                                    locked: true
-                                }
-                            },
-                            {
-                                href: {name: "admin/stats"},
-                                routes: this.routeStartWith("admin/stats"),
-                                title: this.$t("stats"),
-                                icon: {
-                                    element: shallowRef(ChartBoxOutline),
-                                    class: "menu-icon"
-                                },
-                            }
-                        ]
-                    },
-                    {
-                        href: {name: "settings"},
-                        routes: this.routeStartWith("admin/settings"),
-                        title: this.$t("settings.label"),
-                        icon: {
-                            element: shallowRef(CogOutline),
-                            class: "menu-icon"
-                        }
-                    }
-                ];
-            },
-            expandParentIfNeeded() {
-                document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-                    e.click()
-                });
+    function flattenMenu(menu) {
+        return menu.reduce((acc, item) => {
+            if (item.child) {
+                acc.push(...flattenMenu(item.child));
             }
-        },
-        updated() {
-            // Required here because in mounted() the menu is not yet rendered
-            this.expandParentIfNeeded();
-        },
-        watch: {
-            "$i18n.locale": {
-                deep: true,
-                handler(){
-                    this.localMenu = this.disabledCurrentRoute(this.generateMenu());
+
+            acc.push(item);
+            return acc;
+        }, []);
+    }
+
+    function onToggleCollapse(folded) {
+        collapsed.value = folded;
+        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+        $emit("menu-collapse", folded);
+    }
+
+    function disabledCurrentRoute(items) {
+        return items
+            .map(r => {
+                if (r.href === $route.path) {
+                    r.disabled = true;
+                }
+
+                // route hack is still needed for blueprints
+                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                }
+
+                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                    r.child = disabledCurrentRoute(r.child);
+                }
+
+                return r;
+            })
+    }
+
+    function routeStartWith(route) {
+        return $router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
+    }
+
+    function generateMenu() {
+        return [
+            {
+                href: {name: "home"},
+                title: t("homeDashboard.title"),
+                icon: {
+                    element: shallowRef(ViewDashboardVariantOutline),
+                    class: "menu-icon",
+                },
+            },
+            {
+                href: {name: "flows/list"},
+                routes: routeStartWith("flows"),
+                title: t("flows"),
+                icon: {
+                    element: shallowRef(FileTreeOutline),
+                    class: "menu-icon",
+                },
+                exact: false,
+            },
+            {
+                href: {name: "templates/list"},
+                routes: routeStartWith("templates"),
+                title: t("templates"),
+                icon: {
+                    element: shallowRef(ContentCopy),
+                    class: "menu-icon",
+                },
+                hidden: !configs.value.isTemplateEnabled
+            },
+            {
+                href: {name: "executions/list"},
+                routes: routeStartWith("executions"),
+                title: t("executions"),
+                icon: {
+                    element: shallowRef(TimelineClockOutline),
+                    class: "menu-icon"
+                },
+            },
+            {
+                href: {name: "taskruns/list"},
+                routes: routeStartWith("taskruns"),
+                title: t("taskruns"),
+                icon: {
+                    element: shallowRef(ChartTimeline),
+                    class: "menu-icon"
+                },
+                hidden: !configs.value.isTaskRunEnabled
+            },
+            {
+                href: {name: "logs/list"},
+                routes: routeStartWith("logs"),
+                title: t("logs"),
+                icon: {
+                    element: shallowRef(TimelineTextOutline),
+                    class: "menu-icon"
+                },
+            },
+            {
+                href: {name: "namespaces"},
+                routes: routeStartWith("namespaces"),
+                title: t("namespaces"),
+                icon: {
+                    element: shallowRef(VectorIntersection),
+                    class: "menu-icon"
                 }
             },
-            menu: {
-                handler(newVal, oldVal) {
-                    // Check if the active menu item has changed, if yes then update the menu
-                    if (JSON.stringify(this.flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
-                        JSON.stringify(this.flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
-                        this.localMenu = newVal;
-                        this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                            //empty icon name on mouseover
-                            e.setAttribute("title", "")
-                        });
-                    }
+            {
+                href: {name: "blueprints"},
+                routes: routeStartWith("blueprints"),
+                title: t("blueprints.title"),
+                icon: {
+                    element: shallowRef(BallotOutline),
+                    class: "menu-icon"
                 },
-                flush: "post",
-                deep: true
             },
-        },
-        data() {
-            return {
-                collapsed: localStorage.getItem("menuCollapsed") === "true",
-                localMenu: []
-            };
-        },
-        computed: {
-            ...
-                mapState("misc", ["configs"]),
-            menu() {
-                return this.disabledCurrentRoute(this.generateMenu());
+            {
+                href: {name: "plugins/list"},
+                routes: routeStartWith("plugins"),
+                title: t("plugins.names"),
+                icon: {
+                    element: shallowRef(Connection),
+                    class: "menu-icon"
+                },
             },
-        },
-        mounted() {
-            this.localMenu = this.menu;
-        }
-    };
+            {
+                href: {name: "docs/view"},
+                routes: routeStartWith("docs/view"),
+                title: t("docs"),
+                icon: {
+                    element: shallowRef(FileTableOutline),
+                    class: "menu-icon"
+                }
+            },
+            {
+                title: t("administration"),
+                routes: routeStartWith("admin"),
+                icon: {
+                    element: shallowRef(ShieldAccountVariantOutline),
+                    class: "menu-icon"
+                },
+                child: [
+                    {
+                        title: t("iam"),
+                        icon: {
+                            element: shallowRef(AccountOutline),
+                            class: "menu-icon"
+                        },
+                        disabled: true,
+                        attributes: {
+                            locked: true
+                        }
+                    },
+                    {
+                        title: t("auditlogs"),
+                        icon: {
+                            element: shallowRef(ShieldCheckOutline),
+                            class: "menu-icon"
+                        },
+                        disabled: true,
+                        attributes: {
+                            locked: true
+                        }
+                    },
+                    {
+                        href: {name: "admin/triggers"},
+                        routes: routeStartWith("admin/triggers"),
+                        title: t("triggers"),
+                        icon: {
+                            element: shallowRef(TimerCogOutline),
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        title: t("cluster"),
+                        icon: {
+                            element: shallowRef(ServerOutline),
+                            class: "menu-icon"
+                        },
+                        disabled: true,
+                        attributes: {
+                            locked: true
+                        }
+                    },
+                    {
+                        title: t("tenants"),
+                        icon: {
+                            element: shallowRef(ShieldLockOutline),
+                            class: "menu-icon"
+                        },
+                        disabled: true,
+                        attributes: {
+                            locked: true
+                        }
+                    },
+                    {
+                        href: {name: "admin/stats"},
+                        routes: routeStartWith("admin/stats"),
+                        title: t("stats"),
+                        icon: {
+                            element: shallowRef(ChartBoxOutline),
+                            class: "menu-icon"
+                        },
+                    }
+                ]
+            },
+            {
+                href: {name: "settings"},
+                routes: routeStartWith("admin/settings"),
+                title: t("settings.label"),
+                icon: {
+                    element: shallowRef(CogOutline),
+                    class: "menu-icon"
+                }
+            }
+        ];
+    }
+
+    function expandParentIfNeeded() {
+        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
+            e.click()
+        });
+    }
+
+    onUpdated(() => {
+        // Required here because in mounted() the menu is not yet rendered
+        expandParentIfNeeded();
+    })
+
+    watch(locale, () => {
+        this.localMenu = this.disabledCurrentRoute(generateMenu());
+
+    }, {deep: true});
+
+    const menu = computed(() => {
+        return disabledCurrentRoute(generateMenu());
+    });
+
+    watch(menu, (newVal, oldVal) => {
+              // Check if the active menu item has changed, if yes then update the menu
+              if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
+                  JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
+                  this.localMenu = newVal;
+                  this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                      //empty icon name on mouseover
+                      e.setAttribute("title", "")
+                  });
+              }
+          },
+          {
+              flush: "post",
+              deep: true
+          });
+
+    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    const localMenu = ref([])
+
+
+    onMounted(() => {
+        localMenu.value = menu.value;
+    })
 </script>
 
 <style lang="scss">

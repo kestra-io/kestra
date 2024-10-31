@@ -270,7 +270,7 @@
 }
 
 .error-container {
-    background-color: #1e1e1e;
+    background-color:var(--bs-border-color);
     border: 1px solid #ff6b6b;
     border-radius: 4px;
     color: #ffffff;
@@ -278,6 +278,7 @@
 }
 
 .error-header {
+    background-color: var(--bs-body-bg);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -294,6 +295,7 @@
 .error-message {
     font-weight: bold;
     flex-grow: 1;
+    color: var(--el-text-color-regular);
 }
 
 .toggle-icon {
@@ -313,12 +315,14 @@
     background-color: var(--bs-body-bg);
     border-radius: 4px;
     padding: 10px;
-    margin-top: 10px;
+    margin-top: 5px;
+    overflow-x: auto; 
 }
 
 .stack-line {
     font-size: 0.9em;
     margin-bottom: 5px;
+    color: var(--el-text-color-regular);
 }
 
 .execution-overview {

@@ -16,6 +16,7 @@ import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
+import page from "./page";
 
 export default {
     modules: {
@@ -36,6 +37,7 @@ export default {
         taskrun,
         trigger,
         editor,
-        doc
+        doc,
+        page
     }
 }

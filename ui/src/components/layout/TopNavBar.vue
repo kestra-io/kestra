@@ -164,6 +164,10 @@
                     () => {}
                 )
             }
+        },
+        mounted(){
+            this.$store.commit("page/setTitle", this.title);
+            this.$store.commit("page/setBreadcrumb", this.breadcrumb);
         }
     };
 </script>,

@@ -67,4 +67,37 @@ class RuntimeLabelsTest extends AbstractMemoryRunnerTest {
         String labelsTaskRunId = execution.findTaskRunsByTaskId("labels").getFirst().getId();
         assertThat(execution.getLabels(), hasItem(new Label("someLabel", labelsTaskRunId)));
     }
+
+    @Test
+    void primitiveTypeLabels() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "primitive-labels-flow",
+            null,
+            (flow, createdExecution) -> Map.of(
+                "intLabel", 42,
+                "boolLabel", true,
+                "longLabel", 1000000L
+            ),
+            null,
+            List.of(
+                new Label("existingLabel", "someValue")
+            )
+        );
+
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        String labelsTaskRunId = execution.findTaskRunsByTaskId("update-labels").getFirst().getId();
+
+        assertThat(execution.getLabels(), containsInAnyOrder(
+            is(new Label(Label.CORRELATION_ID, execution.getId())),
+            is(new Label("intValue", "42")),
+            is(new Label("boolValue", "true")),
+            is(new Label("longValue", "1000000")),
+            is(new Label("taskRunId", labelsTaskRunId)),
+            is(new Label("existingLabel", "someValue"))
+        ));
+    }
 }

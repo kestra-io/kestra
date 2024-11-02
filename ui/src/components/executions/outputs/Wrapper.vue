@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef} from "vue";
+    import {ref, computed, shallowRef, onMounted} from "vue";
     import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
@@ -210,6 +210,28 @@
 
     const expandedValue = ref([])
     const selected = ref([]);
+
+    onMounted(() => {
+        // console.log("onMounted")
+        // console.log(outputs.value)
+        // if (outputs.value.length > 0) {
+        //     selected.value = [outputs.value[1].value]
+        //     console.log(outputs.value[1])
+        //     if (outputs.value[1].children) {
+        //         selected.value.push(outputs.value[1].children[1].value)
+        //     }
+        // }
+        const defaultSelectedTask = outputs.value?.[1];
+        if (defaultSelectedTask) {
+            selected.value = [defaultSelectedTask.value]
+
+            const defaultSelectedChild = defaultSelectedTask.children?.[1];
+            if (defaultSelectedChild)
+                selected.value.push(defaultSelectedChild.value)
+        }
+            
+    })
+
     const selectedValue = computed(() => {
         if (selected.value?.length) return selected.value[selected.value.length - 1];
         return undefined;

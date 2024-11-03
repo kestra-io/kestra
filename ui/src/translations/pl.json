@@ -843,7 +843,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger.",
+    "trigger_check_warning": "Ostrzeżenie: Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji '??', aby rozwiązać problem. Na przykład, zamiast 'trigger.date', użyj 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",

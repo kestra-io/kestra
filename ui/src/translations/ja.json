@@ -843,7 +843,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。",
+    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",

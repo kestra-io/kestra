@@ -843,7 +843,7 @@
     "webhook link copied": "Link del Webhook copiato.",
     "copy url": "Copia URL",
     "scheduleDate": "Data di pianificazione",
-    "trigger_check_warning": "Avviso: Rilevato l'uso della variabile `trigger`, l'esecuzione manuale del tuo flow non soddisferà la variabile trigger.",
+    "trigger_check_warning": "Avviso: L'uso delle variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza '??' per risolvere il problema. Ad esempio, invece di 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",

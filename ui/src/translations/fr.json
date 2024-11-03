@@ -843,7 +843,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
-    "trigger_check_warning": "Avertissement : L'utilisation de variables de trigger ne fonctionnera pas avec l'exécution manuelle de flow. Ajoutez l'opérateur de coalescence '??' pour résoudre le problème. Par exemple, au lieu de 'trigger.date', utilisez 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Avertissement : L'utilisation de variables trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence '??' pour résoudre le problème. Par exemple, au lieu de 'trigger.date', utilisez 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(par namespace)",
       "id": "ID",

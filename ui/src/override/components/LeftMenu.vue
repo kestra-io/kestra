@@ -88,7 +88,7 @@
     const configs = computed(() => store.state.misc.configs);
 
 
-    const generatedMenu = computed(() => {
+    const generateMenu = () => {
         return [
             {
                 href: {name: "home"},
@@ -264,15 +264,14 @@
                 }
             }
         ];
-    })
-
+    }
 
     const {
         collapsed,
         onToggleCollapse,
         localMenu,
         sideBarRef
-    } = useLeftMenu($emit, generatedMenu);
+    } = useLeftMenu($emit, generateMenu);
 </script>
 
 <style lang="scss">

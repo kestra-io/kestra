@@ -12,7 +12,7 @@ import {useStore} from "vuex";
 import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
 
-export function useLeftMenu($emit, generatedMenu) {
+export function useLeftMenu($emit, generateMenu) {
     const $route = useRoute()
     const {locale, t} = useI18n()
     const store = useStore()
@@ -67,10 +67,6 @@ export function useLeftMenu($emit, generatedMenu) {
         expandParentIfNeeded();
     })
 
-    watch(locale, () => {
-        localMenu.value = disabledCurrentRoute(generatedMenu.value);
-    }, {deep: true});
-
     const menu = computed(() => {
         return [
             ...(store.state.starred.pages?.length ? [{
@@ -85,9 +81,14 @@ export function useLeftMenu($emit, generatedMenu) {
                     }
                 })
             }] : []),
-            ...disabledCurrentRoute(generatedMenu.value)
+            ...disabledCurrentRoute(generateMenu())
         ];
     });
+
+
+    watch(locale, () => {
+        localMenu.value = menu.value;
+    }, {deep: true});
 
     /**
      * @type {import("vue").Ref<typeof import('vue-sidebar-menu').SidebarMenu>}

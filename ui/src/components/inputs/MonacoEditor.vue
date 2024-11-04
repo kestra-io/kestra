@@ -304,7 +304,7 @@
                 })
             }
 
-            // Exposing functions globally for testing putposes
+            // Exposing functions globally for testing purposes
             window.pasteToEditor = (textToPaste) => {this.editor.executeEdits("", [{range: this.editor.getSelection(), text: textToPaste}])};
             window.clearEditor = () => {this.editor.getModel().setValue("")};
         },

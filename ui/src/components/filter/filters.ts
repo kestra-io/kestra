@@ -1,13 +1,13 @@
-const RECENTS = "recent";
+const RECENT = "recent";
 const SAVED = "saved";
 
 export const getRecentItems = (prefix) => {
-    const recents = localStorage.getItem(`${RECENTS}__${prefix}`);
+    const recents = localStorage.getItem(`${RECENT}__${prefix}`);
     return recents ? JSON.parse(recents) : [];
 };
 
 export const setRecentItems = (prefix, value) => {
-    localStorage.setItem(`${RECENTS}__${prefix}`, JSON.stringify(value));
+    localStorage.setItem(`${RECENT}__${prefix}`, JSON.stringify(value));
 };
 
 export const removeRecentItem = (prefix, element) => {

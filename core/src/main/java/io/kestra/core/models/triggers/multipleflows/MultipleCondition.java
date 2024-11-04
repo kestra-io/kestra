@@ -18,6 +18,8 @@ public interface MultipleCondition {
 
     SLA getSla();
 
+    Boolean getResetOnSuccess();
+
     Map<String, Condition> getConditions();
 
     @Getter

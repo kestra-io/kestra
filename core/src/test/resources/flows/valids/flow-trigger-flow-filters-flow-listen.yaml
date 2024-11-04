@@ -7,6 +7,7 @@ triggers:
     conditions:
       - id: flowFilters
         type: io.kestra.plugin.core.condition.FlowFilters
+        resetOnSuccess: false
         upstreamFlows:
           - namespace: io.kestra.tests.trigger.flow-filters
             flowId: flow-trigger-flow-filters-flow-a

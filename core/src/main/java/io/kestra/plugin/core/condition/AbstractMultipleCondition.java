@@ -35,7 +35,7 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     private String id;
 
     @Schema(
-        title = "SLA to define the time period for evaluating the conditions",
+        title = "SLA to define the time period (or window) for evaluating the conditions",
         description = """
         You can evaluate the conditions on three different ways:
         1. Using a duration window (`type: DURATION_WINDOW`), this is the default, and is configured by default for a 1 day duration window. A duration window express the evaluation period as a start time and a end time that are moving each time the evaluation time reach the end time, keeping the size of the window to the defined duration. For example, a one day duration windows will always evaluate executions during 24h starting at 00:00:00.
@@ -48,6 +48,18 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     @Builder.Default
     @Valid
     protected SLA sla = SLA.builder().build();
+
+    @Schema(
+        title = "Whether to reset the conditions evaluation result after a first successful evaluation in the time period.",
+        description = """
+            By default, after a successful evaluation of the set of conditions, the evaluation result is reset, so, the same set of conditions needs to be successfully evaluated again in the same time period to trigger a new execution.
+            This means that to create multiple executions, the same set of conditions needs to be evaluated multiple times.
+            You can disable this by setting this property to false so that, on a same period, each time one of the conditions from the set of conditions is evaluated again after a successful evaluation, it will trigger a new execution."""
+    )
+    @PluginProperty
+    @NotNull
+    @Builder.Default
+    private Boolean resetOnSuccess = true;
 
     /**
      * This conditions will only validate previously calculated value on

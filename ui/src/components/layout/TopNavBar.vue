@@ -12,7 +12,14 @@
                 <slot name="title">
                     {{ title }}
                 </slot>
-                <el-button v-if="!notStarrable" class="star-button" :icon="StarOutlineIcon" circle @click="onStarClick" />
+                <el-button
+                    v-if="!notStarrable"
+                    class="star-button"
+                    :class="{'star-active': starred}"
+                    :icon="StarOutlineIcon"
+                    circle
+                    @click="onStarClick"
+                />
             </h1>
         </div>
         <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
@@ -187,14 +194,10 @@
                 } else {
                     this.$store.dispatch("starred/add", {
                         path:this.$route.fullPath,
-                        label: this.title,
+                        label: `${this.breadcrumb[0].label}: ${this.title}`,
                     })
                 }
             }
-        },
-        mounted(){
-            this.$store.commit("page/setTitle", this.title);
-            this.$store.commit("page/setBreadcrumb", this.breadcrumb);
         }
     };
 </script>,
@@ -223,6 +226,10 @@
         .star-button{
             margin-left: var(--spacer);
             border: none;
+        }
+
+        .star-active {
+            color: var(--bs-primary);
         }
 
         :deep(.el-breadcrumb__item) {

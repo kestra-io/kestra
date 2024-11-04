@@ -77,7 +77,7 @@ export function useLeftMenu($emit, generateMenu) {
                 },
                 child: store.state.starred.pages.map(p => {
                     return {
-                        component: () => h("a", {href: p.path, style: "padding: 0 4px;"}, p.label),
+                        component: () => h("a", {href: p.path, style: "display:block;padding: 0 4px;white-space: nowrap;overflow:hidden;text-overflow:ellipsis;"}, p.label),
                     }
                 })
             }] : []),

@@ -66,13 +66,6 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {
-        getRecentItems,
-        removeRecentItem,
-        getSavedItems,
-        removeSavedItem,
-    } from "../../filters";
-
     import Item from "./Item.vue";
 
     import History from "vue-material-design-icons/History.vue";
@@ -81,22 +74,26 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
+    import {useFilters} from "../../filters";
+    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} =
+        useFilters(props.prefix);
+
     let recents = ref<{ name: string; value: object }[]>([]);
     let saved = ref<{ name: string; value: object }[]>([]);
 
     const loadAll = () => {
-        recents.value = getRecentItems(props.prefix).reverse();
-        saved.value = getSavedItems(props.prefix).reverse();
+        recents.value = getRecentItems().reverse();
+        saved.value = getSavedItems().reverse();
     };
 
     loadAll();
 
     const remove = (prefix, index) => {
         if (prefix === "recents") {
-            removeRecentItem(props.prefix, recents.value[index]);
+            removeRecentItem(recents.value[index]);
             recents.value.splice(index, 1);
         } else if (prefix === "saved") {
-            removeSavedItem(props.prefix, saved.value[index]);
+            removeSavedItem(saved.value[index]);
             saved.value.splice(index, 1);
         }
     };

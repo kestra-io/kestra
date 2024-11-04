@@ -42,8 +42,6 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {getSavedItems, setSavedItems} from "../filters";
-
     import Save from "vue-material-design-icons/ContentSaveOutline.vue";
 
     const props = defineProps({
@@ -51,6 +49,9 @@
         prefix: {type: String, required: true},
         current: {type: Object, required: true},
     });
+
+    import {useFilters} from "../filters";
+    const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
     const toggle = (isVisible = false) => {
@@ -63,13 +64,9 @@
     const input = ref<InstanceType<typeof ElInput> | null>(null);
     const label = ref("");
     const save = () => {
-        const items = getSavedItems(props.prefix);
+        const items = getSavedItems();
 
-        setSavedItems(props.prefix, [
-            ...items,
-            {name: label.value, value: props.current},
-        ]);
-
+        setSavedItems([...items, {name: label.value, value: props.current}]);
         toast.saved(t("filters.save.dialog.confirmation", {name: label.value}));
 
         toggle();

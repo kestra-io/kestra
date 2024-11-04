@@ -1,34 +1,17 @@
-const RECENT = "recent";
-const SAVED = "saved";
+const getItem = (key) => JSON.parse(localStorage.getItem(key) || "[]");
+const setItem = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+const filterItems = (items, element) => items.filter((item) => JSON.stringify(item) !== JSON.stringify(element));
 
-export const getRecentItems = (prefix) => {
-    const recents = localStorage.getItem(`${RECENT}__${prefix}`);
-    return recents ? JSON.parse(recents) : [];
-};
+export function useFilters(prefix) {
+    const keys = {recent: `recent__${prefix}`, saved: `saved__${prefix}`};
 
-export const setRecentItems = (prefix, value) => {
-    localStorage.setItem(`${RECENT}__${prefix}`, JSON.stringify(value));
-};
+    return {
+        getRecentItems: () => getItem(keys.recent),
+        setRecentItems: (value) => setItem(keys.recent, value),
+        removeRecentItem: (element) => setItem(keys.recent, filterItems(getItem(keys.recent), element)),
 
-export const removeRecentItem = (prefix, element) => {
-    let recents = getRecentItems(prefix).filter(
-        (item) => JSON.stringify(item) !== JSON.stringify(element),
-    );
-    setRecentItems(prefix, recents);
-};
-
-export const getSavedItems = (prefix) => {
-    const saved = localStorage.getItem(`${SAVED}__${prefix}`);
-    return saved ? JSON.parse(saved) : [];
-};
-
-export const setSavedItems = (prefix, value) => {
-    localStorage.setItem(`${SAVED}__${prefix}`, JSON.stringify(value));
-};
-
-export const removeSavedItem = (prefix, element) => {
-    let saved = getSavedItems(prefix).filter(
-        (item) => JSON.stringify(item) !== JSON.stringify(element),
-    );
-    setSavedItems(prefix, saved);
-};
+        getSavedItems: () => getItem(keys.saved),
+        setSavedItems: (value) => setItem(keys.saved, value),
+        removeSavedItem: (element) => setItem(keys.saved, filterItems(getItem(keys.saved), element)),
+    };
+}

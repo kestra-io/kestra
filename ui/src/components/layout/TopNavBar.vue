@@ -12,14 +12,6 @@
                 <slot name="title">
                     {{ title }}
                 </slot>
-                <el-button
-                    v-if="!notStarrable"
-                    class="star-button"
-                    :class="{'star-active': starred}"
-                    :icon="StarOutlineIcon"
-                    circle
-                    @click="onStarClick"
-                />
             </h1>
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
@@ -115,9 +107,6 @@
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
-    import StarIcon from "vue-material-design-icons/Star.vue";
-
 
     export default {
         components: {
@@ -142,17 +131,12 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
-            },
-            notStarrable: {
-                type: Boolean,
-                default: false
             }
         },
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
             ...mapState("log", ["logs"]),
-            ...mapState("starred", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -164,12 +148,6 @@
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
-            },
-            StarOutlineIcon() {
-                return this.starred ? StarIcon : StarOutlineIcon
-            },
-            starred() {
-                return this.pages.some(page => page.path === this.$route.fullPath)
             },
         },
         methods: {
@@ -186,18 +164,6 @@
                     () => {}
                 )
             },
-            onStarClick() {
-                if (this.starred) {
-                    this.$store.dispatch("starred/remove", {
-                        path:this.$route.fullPath
-                    })
-                } else {
-                    this.$store.dispatch("starred/add", {
-                        path:this.$route.fullPath,
-                        label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
-                    })
-                }
-            }
         },
     };
 </script>,
@@ -219,17 +185,7 @@
 
         h1 {
             line-height: 1.6;
-            display: flex !important;
-            align-items: center;
-        }
-
-        .star-button{
-            margin-left: var(--spacer);
-            border: none;
-        }
-
-        .star-active {
-            color: var(--bs-primary);
+            display: block !important;
         }
 
         :deep(.el-breadcrumb__item) {
@@ -271,7 +227,7 @@
                 grid-template-rows: repeat(2, auto);
                 gap:10px;
                 overflow: hidden;
-
+                
 
             }
             .icons{
@@ -279,7 +235,7 @@
                 grid-column:2;
                 display: contents;
             }
-
+            
         }
         @media (max-width: 664px){
             .mycontainer{

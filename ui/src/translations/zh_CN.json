@@ -843,7 +843,7 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
-    "trigger_check_warning": "警告：使用trigger变量无法与手动flow执行一起工作。请添加“??”合并运算符来解决此问题。例如，不要使用“trigger.date”，而是使用“trigger.date ?? execution.startDate”。",
+    "trigger_check_warning": "警告：使用trigger变量无法与手动flow执行一起工作。请添加'??'合并运算符来解决此问题。例如，不要使用'trigger.date'，而是使用'trigger.date ?? execution.startDate'。",
     "dashboard": {
       "per_namespace": "（每个namespace）",
       "id": "ID",

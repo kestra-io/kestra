@@ -843,7 +843,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: trigger 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
+    "trigger_check_warning": "경고: trigger 변수를 사용하면 수동 flow 실행에서 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
     "dashboard": {
       "per_namespace": "(네임스페이스별)",
       "id": "ID",

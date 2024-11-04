@@ -1,5 +1,5 @@
 <template>
-    <Header v-if="!embed" not-starrable />
+    <Header v-if="!embed" />
 
     <div class="filters">
         <el-row :gutter="10" class="mx-0">

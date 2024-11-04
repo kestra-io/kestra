@@ -16,7 +16,6 @@ import taskrun from "./taskruns"
 import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
-import starred from "./starred";
 
 export default {
     modules: {
@@ -37,7 +36,6 @@ export default {
         taskrun,
         trigger,
         editor,
-        doc,
-        starred
+        doc
     }
 }

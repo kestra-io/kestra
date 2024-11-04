@@ -14,7 +14,7 @@ dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.16"
     def protobufVersion = "3.25.5"
-    def bouncycastleVersion = "1.78.1"
+    def bouncycastleVersion = "1.79"
     def aetherVersion = "1.1.0"
     def jollydayVersion = "0.29.0"
     def jsonschemaVersion = "4.35.0"

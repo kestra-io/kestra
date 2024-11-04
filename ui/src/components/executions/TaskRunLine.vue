@@ -378,7 +378,7 @@
 
         .more-dropdown-button {
             padding: .5rem;
-            margin-bottom: .5rem;
+            height: 100%; 
             border: 1px solid rgba($white, .05);
 
             &:not(:hover) {

@@ -194,7 +194,7 @@
                 } else {
                     this.$store.dispatch("starred/add", {
                         path:this.$route.fullPath,
-                        label: `${this.breadcrumb[0].label}: ${this.title}`,
+                        label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
                     })
                 }
             }

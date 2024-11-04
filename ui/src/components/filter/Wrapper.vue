@@ -21,7 +21,7 @@
         <el-button-group class="d-inline-flex">
             <Save :disabled="!Object.keys(current).length" :prefix :current />
             <Refresh
-                v-if="refresh.show"
+                v-if="refresh.shown"
                 :can-auto-refresh="refresh.canAutoRefresh"
                 @refresh="refresh.callback"
             />
@@ -47,7 +47,7 @@
         refresh: {
             type: Object,
             default: () => ({
-                show: false,
+                shown: false,
                 canAutoRefresh: true,
                 callback: () => {},
             }),

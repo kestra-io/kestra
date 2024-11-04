@@ -1,6 +1,6 @@
 <template>
     <sidebar-menu
-        ref="$el"
+        ref="sideBarRef"
         data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu="localMenu"
@@ -271,7 +271,7 @@
         collapsed,
         onToggleCollapse,
         localMenu,
-        $el
+        sideBarRef
     } = useLeftMenu($emit, generatedMenu);
 </script>
 

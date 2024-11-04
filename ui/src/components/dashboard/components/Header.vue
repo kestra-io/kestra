@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title" :not-starrable="notStarrable">
         <template #additional-right v-if="canCreate">
             <ul>
                 <li>
@@ -29,6 +29,10 @@
     import TopNavBar from "../../layout/TopNavBar.vue";
 
     import Plus from "vue-material-design-icons/Plus.vue";
+
+    defineProps({
+        notStarrable: Boolean,
+    });
 
     const store = useStore();
     const {t} = useI18n({useScope: "global"});

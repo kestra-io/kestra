@@ -8,10 +8,11 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle">
+            <h1 class="h5 fw-semibold m-0 d-inline-fle items-center">
                 <slot name="title">
                     {{ title }}
                 </slot>
+                <el-button v-if="!notStarrable" class="star-button" :icon="StarOutlineIcon" circle @click="onStarClick" />
             </h1>
         </div>
         <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
@@ -107,6 +108,9 @@
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+
 
     export default {
         components: {
@@ -131,12 +135,17 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
+            },
+            notStarrable: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
             ...mapState("log", ["logs"]),
+            ...mapState("starred", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -148,6 +157,12 @@
             },
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
+            },
+            StarOutlineIcon() {
+                return this.starred ? StarIcon : StarOutlineIcon
+            },
+            starred() {
+                return this.pages.some(page => page.path === this.$route.fullPath)
             },
         },
         methods: {
@@ -163,6 +178,18 @@
                     () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
+            },
+            onStarClick() {
+                if (this.starred) {
+                    this.$store.dispatch("starred/remove", {
+                        path:this.$route.fullPath
+                    })
+                } else {
+                    this.$store.dispatch("starred/add", {
+                        path:this.$route.fullPath,
+                        label: this.title,
+                    })
+                }
             }
         },
         mounted(){
@@ -189,7 +216,13 @@
 
         h1 {
             line-height: 1.6;
-            display: block !important;
+            display: flex !important;
+            align-items: center;
+        }
+
+        .star-button{
+            margin-left: var(--spacer);
+            border: none;
         }
 
         :deep(.el-breadcrumb__item) {

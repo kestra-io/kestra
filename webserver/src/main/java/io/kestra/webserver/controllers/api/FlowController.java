@@ -21,7 +21,7 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.services.PluginDefaultService;
@@ -90,7 +90,7 @@ public class FlowController {
     private FlowService flowService;
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private GraphService graphService;
@@ -135,7 +135,7 @@ public class FlowController {
         @Parameter(description = "The flow") @Body String flow,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
-        FlowWithSource flowParsed = yamlFlowParser.parse(flow, Flow.class).withSource(flow);
+        FlowWithSource flowParsed = yamlParser.parse(flow, Flow.class).withSource(flow);
 
         return graphService.flowGraph(flowParsed, subflows);
     }
@@ -248,7 +248,7 @@ public class FlowController {
     public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
-        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+        Flow flowParsed = yamlParser.parse(flow, Flow.class);
 
         return HttpResponse.ok(doCreate(flowParsed, flow));
     }
@@ -291,7 +291,7 @@ public class FlowController {
             namespace,
             sources
                 .stream()
-                .map(flow -> FlowWithSource.of(yamlFlowParser.parse(flow, Flow.class), flow.trim()))
+                .map(flow -> FlowWithSource.of(yamlParser.parse(flow, Flow.class), flow.trim()))
                 .toList(),
             delete
         );
@@ -419,7 +419,7 @@ public class FlowController {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+        Flow flowParsed = yamlParser.parse(flow, Flow.class);
 
         return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
@@ -468,7 +468,7 @@ public class FlowController {
             null,
             sources
                 .stream()
-                .map(flow -> FlowWithSource.of(yamlFlowParser.parse(flow, Flow.class), flow.trim()))
+                .map(flow -> FlowWithSource.of(yamlParser.parse(flow, Flow.class), flow.trim()))
                 .toList(),
             delete
         );
@@ -566,7 +566,7 @@ public class FlowController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    Flow flowParse = yamlFlowParser.parse(flow, Flow.class);
+                    Flow flowParse = yamlParser.parse(flow, Flow.class);
                     Integer sentRevision = flowParse.getRevision();
                     if (sentRevision != null) {
                         Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantService.resolveTenant(), flowParse.getNamespace(), flowParse.getId()))
@@ -656,10 +656,10 @@ public class FlowController {
 
         try {
             if (section == TaskValidationType.TASKS) {
-                Task taskParse = yamlFlowParser.parse(task, Task.class);
+                Task taskParse = yamlParser.parse(task, Task.class);
                 modelValidator.validate(taskParse);
             } else if (section == TaskValidationType.TRIGGERS) {
-                AbstractTrigger triggerParse = yamlFlowParser.parse(task, AbstractTrigger.class);
+                AbstractTrigger triggerParse = yamlParser.parse(task, AbstractTrigger.class);
                 modelValidator.validate(triggerParse);
             }
         } catch (ConstraintViolationException e) {

@@ -2,7 +2,7 @@ package io.kestra.cli;
 
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -62,7 +62,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     public static String buildYamlBody(Path directory) throws IOException {
         try(var files = Files.walk(directory)) {
             return files.filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
+                .filter(YamlParser::isValidExtension)
                 .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
                 .collect(Collectors.joining("\n---\n"));
         }
@@ -71,7 +71,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     // bug in micronaut, we can't inject YamlFlowParser & ModelValidator, so we inject from implementation
     public Integer call(
         Class<?> cls,
-        YamlFlowParser yamlFlowParser,
+        YamlParser yamlParser,
         ModelValidator modelValidator,
         Function<Object, String> identity,
         Function<Object, List<String>> warningsFunction,
@@ -85,10 +85,10 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         if(this.local) {
             try(var files = Files.walk(directory)) {
                 files.filter(Files::isRegularFile)
-                    .filter(YamlFlowParser::isValidExtension)
+                    .filter(YamlParser::isValidExtension)
                     .forEach(path -> {
                         try {
-                            Object parse = yamlFlowParser.parse(path.toFile(), cls);
+                            Object parse = yamlParser.parse(path.toFile(), cls);
                             modelValidator.validate(parse);
                             stdOut("@|green \u2713|@ - " + identity.apply(parse));
                             List<String> warnings = warningsFunction.apply(parse);

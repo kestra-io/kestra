@@ -843,7 +843,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
-    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen.",
+    "trigger_check_warning": "Warnung: Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den '??' Coalesce-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von 'trigger.date' 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(pro Namespace)",
       "id": "ID",

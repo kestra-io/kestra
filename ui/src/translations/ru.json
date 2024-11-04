@@ -843,7 +843,7 @@
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
-    "trigger_check_warning": "Предупреждение: Обнаружено использование переменной `trigger`, выполнение вашего flow вручную не выполнит переменную trigger.",
+    "trigger_check_warning": "Предупреждение: Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения '??', чтобы решить проблему. Например, вместо 'trigger.date' используйте 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(на namespace)",
       "id": "ID",

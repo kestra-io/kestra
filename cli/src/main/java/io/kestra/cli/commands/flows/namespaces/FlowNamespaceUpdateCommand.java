@@ -3,7 +3,7 @@ package io.kestra.cli.commands.flows.namespaces;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.IncludeHelperExpander;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -28,7 +28,7 @@ import java.util.List;
 @Slf4j
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
-    public YamlFlowParser yamlFlowParser;
+    public YamlParser yamlParser;
 
     @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "replace namespace of all flows by the one provided")
     public boolean override = false;
@@ -41,7 +41,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
         try (var files = Files.walk(directory)) {
             List<String> flows = files
                 .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
+                .filter(YamlParser::isValidExtension)
                 .map(path -> {
                     try {
                         return IncludeHelperExpander.expand(Files.readString(path, Charset.defaultCharset()), path.getParent());

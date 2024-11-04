@@ -31,17 +31,17 @@ public abstract class StorageService {
 
             if (storageSplitInterface.getBytes() != null) {
                 ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
-                Number convert = readableBytesTypeConverter.convert(storageSplitInterface.getBytes().as(runContext, String.class), Number.class)
+                Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
 
-                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
+                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
                     bufferedReader, (bytes, size) -> bytes >= convert.longValue());
             } else if (storageSplitInterface.getPartitions() != null) {
-                splited = StorageService.partition(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
-                    bufferedReader, storageSplitInterface.getPartitions().as(runContext, Integer.class));
+                splited = StorageService.partition(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                    bufferedReader, runContext.render(storageSplitInterface.getPartitions()).as(Integer.class).orElseThrow());
             } else if (storageSplitInterface.getRows() != null) {
-                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator(), String.class),
-                    bufferedReader, throwBiFunction((bytes, size) -> size >= storageSplitInterface.getRows().as(runContext, Integer.class)));
+                splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
+                    bufferedReader, throwBiFunction((bytes, size) -> size >= runContext.render(storageSplitInterface.getRows()).as(Integer.class).orElseThrow()));
             } else {
                 throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
             }

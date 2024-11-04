@@ -914,6 +914,28 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "No data available"
+    "no_data": "No data available",
+    "filters": {
+      "label": "Choose filters",
+      "options": {
+        "namespace": "Namespace",
+        "state": "State",
+        "scope": "Scope",
+        "date": "Date"
+      },
+      "recent": {
+        "label": "Recent searches",
+        "empty": "You still haven't searched for anything."
+      },
+      "save": {
+        "label": "Saved searches",
+        "dialog": {
+          "heading": "Save current search",
+          "placeholder": "Label",
+          "hint": "How do you want to label this search criteria?",
+          "confirmation": "Search criteria <code>{name}</code>"
+        }
+      }
+    }
   }
 }

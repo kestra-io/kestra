@@ -52,8 +52,8 @@
                     </code>
                 </div>
 
-                <el-collapse class="mb-3 debug bordered">
-                    <el-collapse-item>
+                <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
+                    <el-collapse-item name="debug">
                         <template #title>
                             <span>{{ t('eval.title') }}</span>
                         </template>
@@ -123,6 +123,7 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
 
     import Editor from "../../inputs/Editor.vue";
+    const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
@@ -209,28 +210,19 @@
     };
 
     const expandedValue = ref([])
-    const selected = ref([]);
+    const selected = ref<string[]>([]);
 
     onMounted(() => {
-        // console.log("onMounted")
-        // console.log(outputs.value)
-        // if (outputs.value.length > 0) {
-        //     selected.value = [outputs.value[1].value]
-        //     console.log(outputs.value[1])
-        //     if (outputs.value[1].children) {
-        //         selected.value.push(outputs.value[1].children[1].value)
-        //     }
-        // }
-        const defaultSelectedTask = outputs.value?.[1];
-        if (defaultSelectedTask) {
-            selected.value = [defaultSelectedTask.value]
+        const task = outputs.value?.[1];
+        if (!task) return;
 
-            const defaultSelectedChild = defaultSelectedTask.children?.[1];
-            if (defaultSelectedChild)
-                selected.value.push(defaultSelectedChild.value)
-        }
-            
-    })
+        selected.value = [task.value];
+        
+        const child = task.children?.[1];
+        if (child) selected.value.push(child.value);
+
+        debugCollapse.value = "debug";
+    });
 
     const selectedValue = computed(() => {
         if (selected.value?.length) return selected.value[selected.value.length - 1];

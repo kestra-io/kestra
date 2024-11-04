@@ -14,17 +14,13 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import jakarta.validation.Valid;
@@ -49,12 +45,12 @@ import java.util.stream.Stream;
             code = """
                 id: if
                 namespace: company.team
-                
+
                 inputs:
                   - id: string
                     type: STRING
                     required: true
-                
+
                 tasks:
                   - id: if
                     type: io.kestra.plugin.core.flow.If
@@ -72,7 +68,7 @@ import java.util.stream.Stream;
     },
     aliases = "io.kestra.core.tasks.flows.If"
 )
-public class If extends Task implements FlowableTask<VoidOutput> {
+public class If extends Task implements FlowableTask<If.Output> {
     @PluginProperty(dynamic = true)
     @Schema(
         title = "The `If` condition which can be any expression that evaluates to a boolean value.",
@@ -138,8 +134,15 @@ public class If extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        String rendered = runContext.render(condition);
-        if (TruthUtils.isTruthy(rendered)) {
+        // We need to evaluate the condition once, so if the condition is impacted during the processing or a branch, the same branch is always taken.
+        // This can exist for ex if the condition is based on a KV and the KV is changed in the branch.
+        // For this, we evaluate the condition in the outputs() method and get it from the outputs.
+        if (parentTaskRun.getOutputs() == null || parentTaskRun.getOutputs().get("evaluationResult") == null) {
+            throw new IllegalVariableEvaluationException("Unable to find the 'evaluationResult' output, this may indicate that the condition evaluation fail, check your execution logs for more information.");
+        }
+
+        Boolean evaluationResult = (Boolean) parentTaskRun.getOutputs().get("evaluationResult");
+        if (Boolean.TRUE.equals(evaluationResult)) {
             return FlowableUtils.resolveTasks(then, parentTaskRun);
         }
         return FlowableUtils.resolveTasks(_else, parentTaskRun);
@@ -172,5 +175,19 @@ public class If extends Task implements FlowableTask<VoidOutput> {
             this.isAllowFailure(),
             this.isAllowWarning()
         );
+    }
+
+    @Override
+     public If.Output outputs(RunContext runContext) throws Exception {
+        String rendered = runContext.render(condition);
+        boolean evaluationResult = TruthUtils.isTruthy(rendered);
+        return If.Output.builder().evaluationResult(evaluationResult).build();
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "Condition evaluation result.")
+        public Boolean evaluationResult;
     }
 }

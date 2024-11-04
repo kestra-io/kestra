@@ -900,6 +900,6 @@
       "desc_no_deps": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação."
     },
     "create_flow": "Criar Flow",
-    "starred": "Favoritos"
+    "starred": "Estrelado"
   }
 }

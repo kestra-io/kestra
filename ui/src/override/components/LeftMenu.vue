@@ -87,7 +87,9 @@
 
     const configs = computed(() => store.state.misc.configs);
 
-
+    // This object seems to be a good candidate for a computed value
+    // but cannot be. When it becomes a computed, the hack to set current
+    // route as active in the blueprints activates pages forever.
     const generateMenu = () => {
         return [
             {

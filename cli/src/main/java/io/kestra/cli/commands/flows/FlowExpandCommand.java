@@ -3,7 +3,7 @@ package io.kestra.cli.commands.flows;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
@@ -21,7 +21,7 @@ public class FlowExpandCommand extends AbstractCommand {
     private Path file;
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private ModelValidator modelValidator;
@@ -31,7 +31,7 @@ public class FlowExpandCommand extends AbstractCommand {
         super.call();
         stdErr("Warning, this functionality is deprecated and will be removed at some point.");
         String content = IncludeHelperExpander.expand(Files.readString(file), file.getParent());
-        Flow flow = yamlFlowParser.parse(content, Flow.class);
+        Flow flow = yamlParser.parse(content, Flow.class);
         modelValidator.validate(flow);
         stdOut(content);
         return 0;

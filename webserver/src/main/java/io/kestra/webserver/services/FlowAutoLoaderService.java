@@ -2,7 +2,7 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -46,7 +46,7 @@ public class FlowAutoLoaderService {
     protected HttpClient httpClient;
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private NamespaceUtils namespaceUtils;
@@ -78,7 +78,7 @@ public class FlowAutoLoaderService {
                     })
                 )
                 .map(source -> {
-                    Flow flow = yamlFlowParser.parse(source, Flow.class);
+                    Flow flow = yamlParser.parse(source, Flow.class);
                     repository.create(flow, source, pluginDefaultService.injectDefaults(flow.withSource(source)));
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;

@@ -30,12 +30,30 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
         }
         else if (p.hasToken(JsonToken.START_OBJECT)) {
             // deserialize as map
-            Map<String, String> ret = ctxt.readValue(p, Map.class);
+            Map<String, Object> ret = ctxt.readValue(p, Map.class);
             return ret == null ? null : ret.entrySet().stream()
-                .map(entry -> new Label(entry.getKey(), entry.getValue()))
+                .map(this::validateAndCreateLabel)
                 .toList();
         }
         throw new IllegalArgumentException("Unable to deserialize value as it's neither an object neither an array");
+    }
+
+    private Label validateAndCreateLabel(Map.Entry<String, Object> entry) {
+        Object value = entry.getValue();
+        if (isAllowedType(value)) {
+            return new Label(entry.getKey(), String.valueOf(value));
+        } else {
+            throw new IllegalArgumentException("Unsupported type for key: " + entry.getKey() + ", value: " + value);
+        }
+    }
+
+    private static boolean isAllowedType(Object value) {
+        return value instanceof String ||
+            value instanceof Integer ||
+            value instanceof Long ||
+            value instanceof Float ||
+            value instanceof Double ||
+            value instanceof Boolean;
     }
 
     @Override

@@ -6,7 +6,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
@@ -244,7 +244,7 @@ public class TemplateController {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
-                    Template templateParse = new YamlFlowParser().<Template>parse(template, Template.class);
+                    Template templateParse = new YamlParser().<Template>parse(template, Template.class);
 
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
@@ -354,7 +354,7 @@ public class TemplateController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Template parsed = new YamlFlowParser().parse(source, Template.class);
+                Template parsed = new YamlParser().parse(source, Template.class);
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -366,7 +366,7 @@ public class TemplateController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Template parsed = new YamlFlowParser().parse(source, Template.class);
+                    Template parsed = new YamlParser().parse(source, Template.class);
                     importTemplate(parsed);
                 }
             }

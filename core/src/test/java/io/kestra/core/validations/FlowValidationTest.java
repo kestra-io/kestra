@@ -2,7 +2,7 @@ package io.kestra.core.validations;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -22,7 +22,7 @@ class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
     @Inject
-    private YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    private YamlParser yamlParser = new YamlParser();
 
     @Test
     void invalidRecursiveFlow() {
@@ -57,6 +57,6 @@ class FlowValidationTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 }

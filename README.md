@@ -142,7 +142,7 @@ Kestra provides an intuitive UI that allows you to interactively build and visua
 
 - **Drag-and-Drop Interface:** add and rearrange tasks from the Topology Editor.
 - **Real-Time Validation:** instant feedback on your workflow's syntax and structure to catch errors early.
-- **Auto-Completion:** smart suggestions as you type.
+- **Auto-Completion:** smart suggestions as you type to write flow code quickly and without syntax errors.
 - **Live Topology View:** see your workflow as a Directed Acyclic Graph (DAG) that updates in real-time.
 
 ---
@@ -167,9 +167,9 @@ Create custom plugins to extend Kestra's capabilities. Check out our [Plugin Dev
 Stay connected and get support:
 
 - **Slack:** Join our [Slack community](https://kestra.io/slack) to ask questions and share ideas.
-- **X(formerly Twitter):** Follow us on [X(formerly Twitter)](https://x.com/kestra_io) for the latest updates.
-- **YouTube:** Subscribe to our [YouTube channel](https://www.youtube.com/@kestra-io) for tutorials and webinars.
-- **LinkedIn:** Connect with us on [LinkedIn](https://www.linkedin.com/company/kestra/).
+- **LinkedIn:** Follow us on [LinkedIn](https://www.linkedin.com/company/kestra/) — next to Slack and GitHub, this is our main channel to share updates and product announcements.
+- **YouTube:** Subscribe to our [YouTube channel](https://www.youtube.com/@kestra-io) for educational video content. We publish new videos every week!
+- **X:** Follow us on [X](https://x.com/kestra_io) if you're still active there.
 
 ---
 
@@ -180,6 +180,7 @@ We welcome contributions of all kinds!
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
 - **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contribute) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
+- **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
 
 ---
 

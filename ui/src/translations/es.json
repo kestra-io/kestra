@@ -843,7 +843,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: Se detectó el uso de la variable `trigger`, ejecutar tu flow manualmente no cumplirá con la variable trigger.",
+    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",

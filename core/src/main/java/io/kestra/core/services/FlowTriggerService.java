@@ -128,12 +128,12 @@ public class FlowTriggerService {
             Stream.concat(
                 multipleConditionWindowsByFlow.entrySet().stream()
                     .map(e -> Map.entry(
-                        e.getKey().getMultipleCondition().getConditions(),
+                        e.getKey().getMultipleCondition(),
                         e.getValue()
                     ))
-                    .filter(e -> e.getKey().size() == Optional.ofNullable(e.getValue().getResults())
-                        .map(Map::size)
-                        .orElse(0))
+                    .filter(e -> Boolean.TRUE.equals(e.getKey().getResetOnSuccess()) &&
+                        e.getKey().getConditions().size() == Optional.ofNullable(e.getValue().getResults()).map(Map::size).orElse(0)
+                    )
                     .map(Map.Entry::getValue),
                 multipleConditionStorage.get().expired(execution.getTenantId()).stream()
             ).forEach(multipleConditionStorage.get()::delete);

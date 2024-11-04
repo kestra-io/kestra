@@ -147,6 +147,9 @@ public class ExecutionController {
     private ConditionService conditionService;
 
     @Inject
+    private ConcurrencyLimitService concurrencyLimitService;
+
+    @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
@@ -1674,6 +1677,102 @@ public class ExecutionController {
 
         return setLabelsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/unqueue")
+    @Operation(tags = {"Executions"}, summary = "Unqueue an execution")
+    public Execution unqueue(
+        @Parameter(description = "The execution id") @PathVariable String executionId
+    ) throws Exception {
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        Execution restart = concurrencyLimitService.unqueue(execution.get());
+        executionQueue.emit(restart);
+        eventPublisher.publishEvent(new CrudEvent<>(restart, execution.get(), CrudEventType.UPDATE));
+
+        return restart;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/unqueue/by-ids")
+    @Operation(tags = {"Executions"}, summary = "Unqueue a list of executions")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Unqueued with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    public MutableHttpResponse<?> unqueueByIds(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) throws Exception {
+        List<Execution> executions = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+
+            if (execution.isPresent() && execution.get().getState().getCurrent() != State.Type.QUEUED) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not in state QUEUED",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (execution.isEmpty()) {
+                invalids.add(ManualConstraintViolation.of(
+                    "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else {
+                executions.add(execution.get());
+            }
+        }
+        if (!invalids.isEmpty()) {
+            return HttpResponse.badRequest(BulkErrorResponse
+                .builder()
+                .message("invalid bulk unqueue")
+                .invalids(invalids)
+                .build()
+            );
+        }
+        for (Execution execution : executions) {
+            Execution restart = concurrencyLimitService.unqueue(execution);
+            executionQueue.emit(restart);
+            eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
+        }
+
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/unqueue/by-query")
+    @Operation(tags = {"Executions"}, summary = "Unqueue executions filter by query parameters")
+    public HttpResponse<?> unqueueByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
+        @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+    ) throws Exception {
+        validateTimeline(startDate, endDate);
+
+        var ids = getExecutionIds(query, scope, namespace, flowId, startDate, endDate, timeRange, state, labels, triggerExecutionId, childFilter);
+
+        return unqueueByIds(ids);
+    }
+
     private List<String> getExecutionIds(String query, List<FlowScope> scope, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, Duration timeRange, List<State.Type> state, List<String> labels, String triggerExecutionId, ExecutionRepositoryInterface.ChildFilter childFilter) {
         return executionRepository
             .find(

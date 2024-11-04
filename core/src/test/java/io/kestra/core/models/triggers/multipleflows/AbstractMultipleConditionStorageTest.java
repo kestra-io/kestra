@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Test;
 import io.kestra.plugin.core.condition.ExecutionFlowCondition;
 import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition.SLA;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition.Type;
 import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +35,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void allDefault() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(null, null);
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
 
@@ -49,7 +52,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void daily() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofDays(1), Duration.ofSeconds(0));
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofDays(1)).windowAdvance(Duration.ofSeconds(0)).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
 
@@ -66,7 +69,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void dailyAdvance() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofDays(1), Duration.ofHours(4).negated());
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofDays(1)).windowAdvance(Duration.ofHours(4).negated()).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
 
@@ -83,7 +86,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void hourly() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofHours(1), Duration.ofHours(4).negated());
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofHours(1)).windowAdvance(Duration.ofHours(4).negated()).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
 
@@ -101,7 +104,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void minutely() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofMinutes(15), Duration.ofMinutes(5).negated());
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofMinutes(15)).windowAdvance(Duration.ofMinutes(5).negated()).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
 
@@ -114,7 +117,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void expiration() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofSeconds(1), Duration.ofMinutes(0).negated());
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofSeconds(1)).windowAdvance(Duration.ofMinutes(0).negated()).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
@@ -138,7 +141,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void expired() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofSeconds(2), Duration.ofMinutes(0).negated());
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().window(Duration.ofSeconds(2)).windowAdvance(Duration.ofMinutes(0).negated()).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
@@ -157,10 +160,10 @@ public abstract class AbstractMultipleConditionStorageTest {
     }
 
     @Test
-    void deadline() throws Exception {
+    void dailyTimeDeadline() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(LocalTime.now().plusSeconds(1L));
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().type(Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now().plusSeconds(1)).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
@@ -178,15 +181,42 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(expired.size(), is(1));
     }
 
-    private static Pair<Flow, MultipleCondition> mockFlow(Duration window, Duration advance) {
-        return mockFlow(window, advance, null);
+    @Test
+    void dailyTimeWindow() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        LocalTime startTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().type(Type.DAILY_TIME_WINDOW).startTime(startTime).endTime(startTime.plusMinutes(5)).build());
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults().get("a"), is(true));
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(0));
     }
 
-    private static Pair<Flow, MultipleCondition> mockFlow(LocalTime deadline) {
-        return mockFlow(null, null, deadline);
+    @Test
+    void slidingWindow() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(SLA.builder().type(Type.SLIDING_WINDOW).window(Duration.ofHours(1)).build());
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults().get("a"), is(true));
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(0));
     }
 
-    private static Pair<Flow, MultipleCondition> mockFlow(Duration window, Duration advance, LocalTime deadline) {
+    private static Pair<Flow, MultipleCondition> mockFlow(SLA sla) {
         var multipleCondition = MultipleCondition.builder()
             .id("condition-multiple")
             .conditions(ImmutableMap.of(
@@ -198,16 +228,9 @@ public abstract class AbstractMultipleConditionStorageTest {
                     .flowId("flow-b")
                     .namespace(NAMESPACE)
                     .build()
-            ));
-        if (window != null) {
-            multipleCondition.window(window);
-        }
-        if (advance != null) {
-            multipleCondition.windowAdvance(advance);
-        }
-        if (deadline != null) {
-            multipleCondition.latencySLA(io.kestra.core.models.triggers.multipleflows.MultipleCondition.LatencySLA.builder().deadline(deadline).build());
-        }
+            ))
+            .sla(sla)
+            .build();
 
         Flow flow = Flow.builder()
             .namespace(NAMESPACE)
@@ -215,10 +238,10 @@ public abstract class AbstractMultipleConditionStorageTest {
             .revision(1)
             .triggers(Collections.singletonList(io.kestra.plugin.core.trigger.Flow.builder()
                 .id("trigger-flow")
-                .conditions(Collections.singletonList(multipleCondition.build()))
+                .conditions(Collections.singletonList(multipleCondition))
                 .build()))
             .build();
 
-        return Pair.of(flow, multipleCondition.build());
+        return Pair.of(flow, multipleCondition);
     }
 }

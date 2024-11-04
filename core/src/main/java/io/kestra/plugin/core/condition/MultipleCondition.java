@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Duration;
 import java.util.*;
 
 @SuperBuilder
@@ -19,8 +21,10 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of flows.",
-    description = "Trigger when all the flows are successfully executed for the first time during the `window` duration."
+    title = "Condition for a list of conditions on multiple executions.",
+    description = """
+        Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
+        The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
 )
 @Plugin(
     examples = {
@@ -37,7 +41,8 @@ import java.util.*;
                 "        - SUCCESS",
                 "      - id: multiple",
                 "        type: io.kestra.plugin.core.condition.MultipleCondition",
-                "        window: P1D",
+                "        sla:",
+                "          window: PT12H",
                 "        conditions:",
                 "          flow-a:",
                 "            type: io.kestra.plugin.core.condition.ExecutionFlowCondition",
@@ -54,11 +59,35 @@ import java.util.*;
 )
 @Slf4j
 public class MultipleCondition extends AbstractMultipleCondition {
+    @Schema(
+        title = "The duration of the window",
+        description = "Deprecated, use `sla.window` instead.")
+    @PluginProperty
+    @Deprecated
+    private Duration window;
+
+    public void setWindow(Duration window) {
+        this.window = window;
+        this.sla = this.getSla() == null ? SLA.builder().window(window).build() : this.getSla().withWindow(window);
+    }
+
+    @Schema(
+        title = "The window advance duration",
+        description = "Deprecated, use `sla.windowAdvance` instead.")
+    @PluginProperty
+    @Deprecated
+    private Duration windowAdvance;
+
+    public void setWindowAdvance(Duration windowAdvance) {
+        this.windowAdvance = windowAdvance;
+        this.sla = this.getSla() == null ? SLA.builder().windowAdvance(windowAdvance).build() : this.getSla().withWindowAdvance(windowAdvance);
+    }
+
     @NotNull
     @NotEmpty
     @Schema(
         title = "The list of conditions to wait for",
-        description = "The key must be unique for a trigger since it will be use to store previous result."
+        description = "The key must be unique for a trigger because it will be use to store the previous evaluation result."
     )
     @PluginProperty(
         additionalProperties = Condition.class

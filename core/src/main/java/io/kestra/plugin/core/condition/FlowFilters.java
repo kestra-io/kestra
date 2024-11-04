@@ -29,8 +29,10 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of flows.",
-    description = "Trigger when all the flows are successfully executed for the first time during the `window` duration."
+    title = "Condition for a list of conditions on multiple executions.",
+    description = """
+        Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
+        The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
 )
 @Plugin(
     examples = {

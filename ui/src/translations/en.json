@@ -121,6 +121,7 @@
     "source": "Source",
     "home": "Home",
     "create": "Create",
+    "create_flow": "Create Flow",
     "add flow": "Add flow",
     "from": "From",
     "to": "To",
@@ -290,7 +291,8 @@
         "catch phrase": {
           "1": "The first step is always the hardest.",
           "2": "Explore blueprints to kick-start your next flow."
-        }
+        },
+        "alt": "Blueprints Icon"
       }
     },
     "use": "Use",
@@ -529,6 +531,7 @@
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
     "warning detected": "Warning(s) detected",
+    "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
     "preview": "Preview",
     "open": "Open",
@@ -742,6 +745,12 @@
             "flows": "Export All Flows",
             "templates": "Export All Templates"
           }
+        },
+        "save": {
+          "label": "Save Preferences",
+          "fields": {
+            "name": "Save Changes"
+          }
         }
       }
     },
@@ -866,7 +875,7 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
+    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
@@ -876,7 +885,7 @@
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",
       "executions_in_progress": "Executions In Progress",
-      "see_all":"See all",
+      "see_all": "See all",
       "next_scheduled_executions": "Next Scheduled Executions",
       "next_execution_date": "Next Execution Date",
       "id": "ID",
@@ -893,9 +902,18 @@
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
+    "dependency-view": {
+      "title_no_deps": "No dependencies are set for this Flow.",
+      "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+    },
+    "triggers-view": {
+      "title_no_triggers": "Your flow does't have any Triggers.",
+      "desc_no_triggers": "Read more about <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in our documentation."
+    },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
     "change_status": "Change status",
-    "files": "Files"
+    "files": "Files",
+    "no_data": "No data available"
   }
 }

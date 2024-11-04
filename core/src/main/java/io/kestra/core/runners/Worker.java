@@ -19,6 +19,7 @@ import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.utils.Await;
@@ -361,11 +362,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         }
 
-        var flowLabels = workerTrigger.getConditionContext().getFlow().getLabels();
-        if (flowLabels != null) {
+        var flow = workerTrigger.getConditionContext().getFlow();
+        if (flow.getLabels() != null) {
             evaluate = evaluate.map(execution -> {
                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                    executionLabels.addAll(flowLabels);
+                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
                     return execution.withLabels(executionLabels);
                 }
             );

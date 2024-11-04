@@ -548,7 +548,7 @@
                     autocompletions = ["id", "type"];
                     break;
                 case "error":
-                    autocompletions = ["taskId"];
+                    autocompletions = ["taskId", "message", "stackTrace"];
                     break;
                 default: {
                     let match = field.match(/^outputs\.([^.]+)$/);

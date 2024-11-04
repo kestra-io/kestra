@@ -29,10 +29,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.GraphService;
+import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
@@ -111,6 +108,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.models.Label.CORRELATION_ID;
+import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -532,7 +531,7 @@ public class ExecutionController {
 
         var result = execution.get();
         if (flow.getLabels() != null) {
-            result = result.withLabels(flow.getLabels());
+            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
@@ -582,7 +581,8 @@ public class ExecutionController {
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Execution execution = Execution.newExecution(flow, parseLabels(labels));
+        List<Label> parsedLabels = parseLabels(labels);
+        Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), execution, inputs)
             .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
@@ -603,7 +603,8 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
     ) throws IOException {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        Execution current = Execution.newExecution(flow, null, parseLabels(labels), scheduleDate);
+        List<Label> parsedLabels = parseLabels(labels);
+        Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate);
         Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
             .handle((executionInputs, sink) -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
@@ -666,7 +667,7 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
-                execution.outputs(),
+                execution.getOutputs(),
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -682,10 +683,17 @@ public class ExecutionController {
         }
     }
 
-    private List<Label> parseLabels(List<String> labels) {
-        return labels == null ? null : RequestUtils.toMap(labels).entrySet().stream()
+    protected List<Label> parseLabels(List<String> labels) {
+        List<Label> parsedLabels =  labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
+
+        // check for system labels: none can be passed at execution creation time except system.correlationId
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
+        }
+        return parsedLabels;
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
@@ -1692,6 +1700,12 @@ public class ExecutionController {
     }
 
     private Execution setLabels(Execution execution, List<Label> labels) {
+        // check for system labels: none can be passed at runtime
+        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        if (first.isPresent()) {
+            throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
+        }
+
         Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
         if (execution.getLabels() != null) {
             execution.getLabels().forEach(
@@ -1705,9 +1719,7 @@ public class ExecutionController {
         }
 
         Execution newExecution = execution
-            .toBuilder()
-            .labels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList())
-            .build();
+            .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());
         eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
 
         return executionRepository.save(newExecution);

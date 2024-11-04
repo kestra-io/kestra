@@ -20,6 +20,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -76,7 +77,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     Map<String, Object> outputs;
 
-    @With
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     List<Label> labels;
@@ -142,17 +142,15 @@ public class Execution implements DeletedInterface, TenantInterface {
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        List<Label> executionLabels = new ArrayList<>();
-        if (flow.getLabels() != null) {
-            executionLabels.addAll(flow.getLabels());
-        }
-
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
         if (labels != null) {
             executionLabels.addAll(labels);
         }
-        if (!executionLabels.isEmpty()) {
-            execution = execution.withLabels(executionLabels);
+        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            // add a correlation ID if none exist
+            executionLabels.add(new Label(Label.CORRELATION_ID, execution.getId()));
         }
+        execution = execution.withLabels(executionLabels);
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
@@ -160,6 +158,8 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return execution;
     }
+
+
 
     public static class ExecutionBuilder {
         void prebuild() {
@@ -195,6 +195,31 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.labels,
             this.variables,
             this.state.withState(state),
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.error
+        );
+    }
+
+    public Execution withLabels(List<Label> labels) {
+
+
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            labels,
+            this.variables,
+            this.state,
             this.parentId,
             this.originalId,
             this.trigger,

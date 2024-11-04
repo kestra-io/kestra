@@ -2,6 +2,7 @@ package io.kestra.core.models.tasks.retrys;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import dev.failsafe.RetryPolicyBuilder;
+import io.kestra.core.validations.RandomRetryValidation;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@RandomRetryValidation
 public class Random extends AbstractRetry {
     @NotNull
     @JsonInclude

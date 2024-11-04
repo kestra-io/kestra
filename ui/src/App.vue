@@ -159,6 +159,7 @@
                         api_host: apiConfig.posthog.apiHost,
                         ui_host: "https://eu.posthog.com",
                         capture_pageview: false,
+                        capture_pageleave: true,
                         autocapture: false,
                     }
                 )
@@ -198,7 +199,7 @@
                 }
             },
         },
-        watch: {   
+        watch: {
             $route: {
                 async handler(route) {
                     if(route.name === "home" && this.isOSS) {
@@ -206,13 +207,13 @@
                         await this.$store.dispatch("execution/findExecutions", {size: 10}).then(response => {
                             this.executions = response?.total ?? 0;
                         })
-                        
+
                         if (!this.executions && !this.overallTotal) {
                             this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                        }                  
-                    } 
-                }             
-            },    
+                        }
+                    }
+                }
+            },
             envName() {
                 this.setTitleEnvSuffix();
             }

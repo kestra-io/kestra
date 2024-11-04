@@ -11,6 +11,7 @@ const cleanInputs = (inputsList, values) => {
 
 export const inputsToFormDate = (submitor, inputsList, values) => {
     values = cleanInputs(inputsList, values);
+    if(Object.keys(values).length === 0) return;
 
     const formData = new FormData();
     for (let input of inputsList || []) {
@@ -32,13 +33,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             } else {
                 formData.append(inputName, inputValue);
             }
-        } else if (input.required) {
-            submitor.$toast().error(
-                submitor.$t("invalid field", {name: inputName}),
-                submitor.$t("form error")
-            )
-
-            return;
         }
     }
     return formData;

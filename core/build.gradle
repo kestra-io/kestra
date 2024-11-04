@@ -3,7 +3,7 @@ configurations {
     implementation.extendsFrom(micronaut)
 }
 
-task copyGradleProperties(type: Copy) {
+tasks.register('copyGradleProperties', Copy) {
     group = "build"
     shouldRunAfter compileJava
 

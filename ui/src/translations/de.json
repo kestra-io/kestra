@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Der erste Schritt ist immer der schwerste.",
           "2": "Erkunden Sie Blueprints, um Ihren nächsten Flow zu starten."
-        }
+        },
+        "alt": "Blueprints-Symbol"
       },
       "empty": "Keine Blueprints zum Anzeigen."
     },
@@ -705,6 +706,12 @@
             "flows": "Alle Flows exportieren",
             "templates": "Alle Vorlagen exportieren"
           }
+        },
+        "save": {
+          "label": "Präferenzen speichern",
+          "fields": {
+            "name": "Änderungen speichern"
+          }
         }
       }
     },
@@ -836,7 +843,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
-    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen.",
+    "trigger_check_warning": "Warnung: Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den '??' Coalesce-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von 'trigger.date' 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(pro Namespace)",
       "id": "ID",
@@ -881,6 +888,17 @@
     "bulk pause": "Sind Sie sicher, dass Sie die Ausführung(en) <code>{executionCount}</code> pausieren möchten?",
     "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
     "pause done": "Die Ausführung ist PAUSED.",
-    "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss."
+    "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
+    "no_data": "Keine Daten verfügbar",
+    "informative notice": "Hinweis(e)",
+    "triggers-view": {
+      "desc_no_triggers": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in unserer Dokumentation.",
+      "title_no_triggers": "Ihr Flow hat keine Trigger."
+    },
+    "dependency-view": {
+      "title_no_deps": "Keine Abhängigkeiten sind für diesen Flow festgelegt.",
+      "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
+    },
+    "create_flow": "Flow erstellen"
   }
 }

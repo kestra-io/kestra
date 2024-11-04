@@ -7,6 +7,10 @@ tasks:
   - type: io.kestra.plugin.core.debug.Echo
     id: task-2
     format: task 2
+  # as logs are async, to get your own logs reliably on tasks that run quickly, you must sleep a little
+  - type: io.kestra.plugin.core.flow.Sleep
+    id: sleep
+    duration: PT0.1S
   - type: io.kestra.plugin.core.log.Fetch
     id: get-log-task
     tasksId:

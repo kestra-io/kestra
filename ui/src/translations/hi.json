@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "पहला कदम हमेशा सबसे कठिन होता है।",
           "2": "अपने अगले flow को किक-स्टार्ट करने के लिए Blueprints का अन्वेषण करें।"
-        }
+        },
+        "alt": "ब्लूप्रिंट्स आइकन"
       },
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।"
     },
@@ -705,6 +706,12 @@
             "flows": "सभी Flows निर्यात करें",
             "templates": "सभी templates निर्यात करें"
           }
+        },
+        "save": {
+          "label": "प्राथमिकताएँ सहेजें",
+          "fields": {
+            "name": "परिवर्तनों को सहेजें"
+          }
         }
       }
     },
@@ -836,7 +843,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "चेतावनी: `trigger` वेरिएबल का उपयोग पाया गया है, आपके flow को मैन्युअली निष्पादित करने से trigger वेरिएबल पूरा नहीं होगा।",
+    "trigger_check_warning": "चेतावनी: मैन्युअल flow निष्पादन के साथ trigger वेरिएबल का उपयोग काम नहीं करेगा। समस्या को हल करने के लिए '??' कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, 'trigger.date' के बजाय 'trigger.date ?? execution.startDate' का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -881,6 +888,17 @@
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
     "invalid bulk pause": "निष्पादन को PAUSE नहीं किया जा सका",
     "pause done": "निष्पादन PAUSED है",
-    "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।"
+    "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
+    "no_data": "कोई डेटा उपलब्ध नहीं है",
+    "informative notice": "नोट(s)",
+    "triggers-view": {
+      "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> के बारे में हमारे दस्तावेज़ में और पढ़ें।",
+      "title_no_triggers": "आपके flow में कोई Triggers नहीं हैं।"
+    },
+    "dependency-view": {
+      "title_no_deps": "इस Flow के लिए कोई निर्भरता निर्धारित नहीं की गई है।",
+      "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
+    },
+    "create_flow": "फ़्लो बनाएं"
   }
 }

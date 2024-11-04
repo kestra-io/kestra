@@ -1,0 +1,21 @@
+id: flow-trigger-flow-filters-flow-listen
+namespace: io.kestra.tests.trigger.flow-filters
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions:
+      - id: flowFilters
+        type: io.kestra.plugin.core.condition.FlowFilters
+        upstreamFlows:
+          - namespace: io.kestra.tests.trigger.flow-filters
+            flowId: flow-trigger-flow-filters-flow-a
+            states: [SUCCESS, WARNING]
+          - namespace: io.kestra.tests.trigger.flow-filters
+            flowId: flow-trigger-flow-filters-flow-b
+            states: [SUCCESS]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

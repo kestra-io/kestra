@@ -42,6 +42,7 @@ html.dark {
     --bs-link-hover-color: #D0CDF9;
 
     #{--card-bg}: $card-bg;
+    #{--card-bg-hover}: darken($card-bg, 3);
     #{--input-bg}: $input-bg;
 
     --el-bg-color: var(--bs-body-bg);
@@ -145,6 +146,7 @@ html.dark {
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
+    #{--token-content-link}: #BBBBFF;
 
     .shiki, .shiki span {
         font-style: var(--shiki-dark-font-style) !important;

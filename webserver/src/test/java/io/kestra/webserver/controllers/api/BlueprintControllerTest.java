@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.controllers.api.BlueprintController;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -28,6 +29,9 @@ class BlueprintControllerTest {
     @Inject
     @Client("/")
     HttpClient client;
+
+    @Inject
+    VersionProvider versionProvider;
 
     @SuppressWarnings("unchecked")
     @Test
@@ -55,12 +59,12 @@ class BlueprintControllerTest {
         assertThat(blueprints.get(1).getId(), is("2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/versions/" + versionProvider.getVersion() + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
     }
 
     @Test
     void blueprintFlow(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/id_1/flow.*"))
+        stubFor(get(urlMatching("/v1/blueprints/id_1/.*/flow.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBodyFile("blueprint-flow.yaml"))
@@ -74,13 +78,13 @@ class BlueprintControllerTest {
         assertThat(blueprintFlow, not(emptyOrNullString()));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/flow")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/versions/" + versionProvider.getVersion() + "/flow")));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void blueprintGraph(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/id_1/graph.*"))
+        stubFor(get(urlMatching("/v1/blueprints/id_1/.*/graph.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBodyFile("blueprint-graph.json"))
@@ -100,7 +104,7 @@ class BlueprintControllerTest {
         assertThat(clusters.size(), is(1));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/graph")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/versions/" + versionProvider.getVersion() + "/graph")));
     }
 
     @Test
@@ -125,13 +129,13 @@ class BlueprintControllerTest {
         assertThat(blueprint.getTags(), contains("3", "2"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/id_1/versions/" + versionProvider.getVersion())));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void blueprintTags(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlMatching("/v1/blueprints/tags.*"))
+        stubFor(get(urlMatching("/v1/blueprints/.*/tags.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBodyFile("blueprint-tags.json"))
@@ -148,6 +152,6 @@ class BlueprintControllerTest {
         assertThat(blueprintTags.getFirst().getPublishedAt(), is(Instant.parse("2023-06-01T08:37:10.171Z")));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/tags?q=someQuery")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo("/v1/blueprints/versions/" + versionProvider.getVersion() + "/tags?q=someQuery")));
     }
 }

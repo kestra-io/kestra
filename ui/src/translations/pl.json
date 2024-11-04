@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
           "2": "Odkryj blueprints, aby rozpocząć swój następny flow."
-        }
+        },
+        "alt": "Ikona Blueprintów"
       },
       "empty": "Brak blueprintów do wyświetlenia."
     },
@@ -705,6 +706,12 @@
             "flows": "Eksportuj Wszystkie Flows",
             "templates": "Eksportuj Wszystkie Szablony"
           }
+        },
+        "save": {
+          "label": "Zapisz preferencje",
+          "fields": {
+            "name": "Zapisz zmiany"
+          }
         }
       }
     },
@@ -836,7 +843,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger.",
+    "trigger_check_warning": "Ostrzeżenie: Użycie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji '??', aby rozwiązać problem. Na przykład, zamiast 'trigger.date', użyj 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -881,6 +888,17 @@
     "bulk pause": "Czy na pewno chcesz wstrzymać wykonanie <code>{executionCount}</code>?",
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
-    "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie."
+    "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
+    "no_data": "Brak dostępnych danych",
+    "informative notice": "Notatka(i)",
+    "triggers-view": {
+      "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
+      "title_no_triggers": "Twój flow nie ma żadnych triggerów."
+    },
+    "dependency-view": {
+      "title_no_deps": "Brak zależności ustawionych dla tego Flow.",
+      "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
+    },
+    "create_flow": "Utwórz Flow"
   }
 }

@@ -29,6 +29,23 @@ public abstract class AbstractMultipleConditionStorageTest {
     abstract protected void save(MultipleConditionStorageInterface multipleConditionStorage, Flow flow, List<MultipleConditionWindow> multipleConditionWindows);
 
     @Test
+    void allDefault() {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(null, null);
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+
+        assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("00:00:00")));
+        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+
+        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("23:59:59.999")));
+        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+    }
+
+    @Test
     void daily() {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
@@ -139,11 +156,39 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(expired.size(), is(1));
     }
 
+    @Test
+    void deadline() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(LocalTime.now().plusSeconds(1L));
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults().get("a"), is(true));
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(0));
+
+        Thread.sleep(1005);
+
+        expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(1));
+    }
+
     private static Pair<Flow, MultipleCondition> mockFlow(Duration window, Duration advance) {
-        MultipleCondition multipleCondition = MultipleCondition.builder()
+        return mockFlow(window, advance, null);
+    }
+
+    private static Pair<Flow, MultipleCondition> mockFlow(LocalTime deadline) {
+        return mockFlow(null, null, deadline);
+    }
+
+    private static Pair<Flow, MultipleCondition> mockFlow(Duration window, Duration advance, LocalTime deadline) {
+        var multipleCondition = MultipleCondition.builder()
             .id("condition-multiple")
-            .window(window)
-            .windowAdvance(advance)
             .conditions(ImmutableMap.of(
                 "flow-a", ExecutionFlowCondition.builder()
                     .flowId("flow-a")
@@ -153,8 +198,16 @@ public abstract class AbstractMultipleConditionStorageTest {
                     .flowId("flow-b")
                     .namespace(NAMESPACE)
                     .build()
-            ))
-            .build();
+            ));
+        if (window != null) {
+            multipleCondition.window(window);
+        }
+        if (advance != null) {
+            multipleCondition.windowAdvance(advance);
+        }
+        if (deadline != null) {
+            multipleCondition.latencySLA(io.kestra.core.models.triggers.multipleflows.MultipleCondition.LatencySLA.builder().deadline(deadline).build());
+        }
 
         Flow flow = Flow.builder()
             .namespace(NAMESPACE)
@@ -162,10 +215,10 @@ public abstract class AbstractMultipleConditionStorageTest {
             .revision(1)
             .triggers(Collections.singletonList(io.kestra.plugin.core.trigger.Flow.builder()
                 .id("trigger-flow")
-                .conditions(Collections.singletonList(multipleCondition))
+                .conditions(Collections.singletonList(multipleCondition.build()))
                 .build()))
             .build();
 
-        return Pair.of(flow, multipleCondition);
+        return Pair.of(flow, multipleCondition.build());
     }
 }

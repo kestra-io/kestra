@@ -88,6 +88,7 @@
 
                 <template #table>
                     <select-table
+                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -216,6 +217,8 @@
                             </el-table-column>
                         </template>
                     </select-table>
+
+                    <el-empty v-else :description="$t('no_data')" />
                 </template>
             </data-table>
         </div>
@@ -604,4 +607,18 @@
     .flow-id {
         min-width: 200px;
     }
+    :deep(.el-select),
+    :deep(.el-select-dropdown),
+    :deep(.label-filter),
+    :deep(.namespace-select),
+    :deep(.search-field) {
+        .el-input__inner,
+        .el-input__wrapper,
+        .el-select-dropdown__item,
+        .el-tag,
+        input {
+            font-size: 16px; 
+        }
+    }
+
 </style>

@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "最初の一歩が一番難しい。",
           "2": "次のFlowを始めるためにBlueprintsを探索してください。"
-        }
+        },
+        "alt": "ブループリントアイコン"
       },
       "empty": "設計図が表示されていません。"
     },
@@ -705,6 +706,12 @@
             "flows": "すべてのflowをエクスポート",
             "templates": "すべてのテンプレートをエクスポート"
           }
+        },
+        "save": {
+          "label": "設定を保存",
+          "fields": {
+            "name": "変更を保存"
+          }
         }
       }
     },
@@ -836,7 +843,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。",
+    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -881,6 +888,17 @@
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
-    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。"
+    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "no_data": "データがありません",
+    "informative notice": "注記",
+    "triggers-view": {
+      "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
+      "title_no_triggers": "あなたのflowにはトリガーがありません。"
+    },
+    "dependency-view": {
+      "title_no_deps": "このFlowには依存関係が設定されていません。",
+      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
+    },
+    "create_flow": "フローを作成"
   }
 }

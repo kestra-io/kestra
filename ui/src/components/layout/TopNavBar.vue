@@ -8,7 +8,7 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle items-center">
+            <h1 class="h5 fw-semibold m-0 d-inline-fle">
                 <slot name="title">
                     {{ title }}
                 </slot>
@@ -271,7 +271,7 @@
                 grid-template-rows: repeat(2, auto);
                 gap:10px;
                 overflow: hidden;
-                
+
 
             }
             .icons{
@@ -279,7 +279,7 @@
                 grid-column:2;
                 display: contents;
             }
-            
+
         }
         @media (max-width: 664px){
             .mycontainer{

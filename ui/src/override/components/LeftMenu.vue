@@ -27,7 +27,7 @@
     import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
     import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
 
-    import SideBar from "../../components/SideBar.vue"
+    import SideBar from "../../components/layout/SideBar.vue"
 
     const {t} = useI18n()
     const $router = useRouter()

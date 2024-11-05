@@ -63,8 +63,9 @@
     import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
-    import DateAgo from "./layout/DateAgo.vue"
-    import Environment from "./layout/Environment.vue";
+    import DateAgo from "./DateAgo.vue"
+    import Environment from "./Environment.vue";
+    import BookmarkLink from "./BookmarkLink.vue";
 
 
     const props = defineProps({
@@ -142,7 +143,7 @@
                 },
                 child: store.state.starred.pages.map(p => {
                     return {
-                        component: () => h("a", {href: p.path, title: p.label, style: "display:block;padding: 0 4px;white-space: nowrap;overflow:hidden;text-overflow:ellipsis;"}, p.label),
+                        component: () => h(BookmarkLink, {href: p.path, title: p.label}, () => p.label),
                     }
                 })
             }] : []),
@@ -207,13 +208,13 @@
 
                 span.img {
                     height: 100%;
-                    background: url(../assets/logo.svg) 0 0 no-repeat;
+                    background: url(../../assets/logo.svg) 0 0 no-repeat;
                     background-size: 179px 55px;
                     display: block;
                     transition: 0.2s all;
 
                     html.dark & {
-                        background: url(../assets/logo-white.svg) 0 0 no-repeat;
+                        background: url(../../assets/logo-white.svg) 0 0 no-repeat;
                         background-size: 179px 55px;
                     }
                 }

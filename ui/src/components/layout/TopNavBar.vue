@@ -169,8 +169,11 @@
                 return this.starred ? StarIcon : StarOutlineIcon
             },
             starred() {
-                return this.pages.some(page => page.path === this.$route.fullPath)
+                return this.pages.some(page => page.path === this.currentFavURI)
             },
+            currentFavURI() {
+                return window.location.pathname
+            }
         },
         methods: {
             restartGuidedTour() {
@@ -189,13 +192,11 @@
             onStarClick() {
                 if (this.starred) {
                     this.$store.dispatch("starred/remove", {
-                        // eslint-disable-next-line no-undef
-                        path: `${KESTRA_BASE_PATH}/${this.$route.fullPath}`
+                        path: this.currentFavURI
                     })
                 } else {
                     this.$store.dispatch("starred/add", {
-                        // eslint-disable-next-line no-undef
-                        path: `${KESTRA_BASE_PATH}/${this.$route.fullPath}`,
+                        path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
                     })
                 }

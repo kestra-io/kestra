@@ -13,7 +13,6 @@
                     {{ title }}
                 </slot>
                 <el-button
-                    v-if="!notStarrable"
                     class="star-button"
                     :class="{'star-active': starred}"
                     :icon="StarOutlineIcon"
@@ -143,10 +142,6 @@
                 type: Array,
                 default: undefined
             },
-            notStarrable: {
-                type: Boolean,
-                default: false
-            }
         },
         computed: {
             ...mapState("api", ["version"]),

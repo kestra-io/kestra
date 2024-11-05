@@ -410,7 +410,7 @@
     },
     "cancel": "Cancel",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Overview",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -421,6 +421,7 @@
       "errorLogs": "Errors logs",
       "no executions": "Ready to see your flow in action?"
     },
+    "dashboards": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",

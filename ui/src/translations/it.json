@@ -900,6 +900,14 @@
       "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione."
     },
     "create_flow": "Crea Flow",
-    "starred": "Preferiti"
+    "starred": "Preferiti",
+    "invalid bulk unqueue": "Impossibile rimuovere dalla coda le esecuzioni",
+    "unqueue done": "L'esecuzione è in coda",
+    "bulk unqueue": "Sei sicuro di voler rimuovere dalla coda <code>{executionCount}</code> esecuzione/i?",
+    "unqueue title": "Esegui la rimozione dalla coda dell'esecuzione <code>{id}</code>.<br/>Nota che non rispetterà il limite di concorrenza del flow, quindi potrebbero esserci più esecuzioni in corso rispetto al limite consentito.",
+    "unqueue": "Rimuovi dalla coda",
+    "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
+    "unqueue confirm": "Sei sicuro di voler rimuovere dalla coda l'esecuzione <code>{id}</code>?"
   }
 }

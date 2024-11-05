@@ -900,6 +900,14 @@
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
     "create_flow": "创建Flow",
-    "starred": "加星"
+    "starred": "已加星标",
+    "invalid bulk unqueue": "无法取消排队的执行",
+    "unqueue done": "执行已出队列",
+    "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
+    "unqueue title": "取消执行<code>{id}</code>。<br/>请注意，它将不遵循flow并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue": "出队列",
+    "executions paused": "<code>{executionCount}</code> 次执行已暂停",
+    "executions unqueue": "<code>{executionCount}</code> 次执行已出队",
+    "unqueue confirm": "您确定要取消排队执行<code>{id}</code>吗？"
   }
 }

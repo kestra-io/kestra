@@ -900,6 +900,14 @@
       "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
     },
     "create_flow": "Flow erstellen",
-    "starred": "Markiert"
+    "starred": "Markiert",
+    "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
+    "unqueue done": "Ausführung ist nicht in der Warteschlange",
+    "bulk unqueue": "Möchten Sie wirklich <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen?",
+    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Beachten Sie, dass dies das Nebenläufigkeitslimit des Flow nicht beachtet, sodass mehr Ausführungen als das erlaubte Limit laufen könnten.",
+    "unqueue": "Aus Warteschlange entfernen",
+    "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
+    "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?"
   }
 }

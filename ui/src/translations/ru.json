@@ -900,6 +900,14 @@
       "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
     },
     "create_flow": "Создать Flow",
-    "starred": "Избранное"
+    "starred": "Избранное",
+    "invalid bulk unqueue": "Не удалось удалить выполнения из очереди",
+    "unqueue done": "Выполнение снято с очереди",
+    "bulk unqueue": "Вы уверены, что хотите удалить из очереди выполнение(я) <code>{executionCount}</code>?",
+    "unqueue title": "Извлечь выполнение <code>{id}</code> из очереди.<br/>Обратите внимание, что это не будет учитывать ограничение на параллельность flow, поэтому может выполняться больше задач, чем разрешено.",
+    "unqueue": "Удалить из очереди",
+    "executions paused": "<code>{executionCount}</code> выполнение(я) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> выполнение(я) в очереди",
+    "unqueue confirm": "Вы уверены, что хотите снять выполнение из очереди <code>{id}</code>?"
   }
 }

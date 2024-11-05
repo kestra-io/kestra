@@ -900,6 +900,14 @@
       "desc_no_deps": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação."
     },
     "create_flow": "Criar Flow",
-    "starred": "Favoritos"
+    "starred": "Favoritos",
+    "invalid bulk unqueue": "Não foi possível remover as execuções da fila",
+    "unqueue done": "A execução está fora da fila",
+    "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
+    "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Note que isso não obedecerá ao limite de concorrência do flow, então mais execuções podem estar em execução do que o limite permitido.",
+    "unqueue": "Desenfileirar",
+    "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) desfiladas",
+    "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?"
   }
 }

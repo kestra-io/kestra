@@ -900,6 +900,14 @@
       "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
     },
     "create_flow": "Utwórz Flow",
-    "starred": "Oznaczone gwiazdką"
+    "starred": "Oznaczone gwiazdką",
+    "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
+    "unqueue done": "Wykonanie jest odkolejkowane",
+    "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
+    "unqueue title": "Usuń z kolejki wykonanie <code>{id}</code>.<br/>Zwróć uwagę, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
+    "unqueue": "Usuń z kolejki",
+    "executions paused": "<code>{executionCount}</code> wykonanie(a) wstrzymane",
+    "executions unqueue": "<code>{executionCount}</code> wykonanie(a) w kolejce",
+    "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?"
   }
 }

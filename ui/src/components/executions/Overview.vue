@@ -1,13 +1,13 @@
 <template>
     <div v-if="execution" class="execution-overview">
-        <div v-if="execution.state.current === 'FAILED'" class="error-container">
+        <div v-if="execution.error" class="error-container">
             <div class="error-header" @click="isExpanded = !isExpanded">
                 <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-                <span class="error-message">{{ errorMessage }}</span>
+                <span class="error-message">{{ execution.error.message }}</span>
                 <span class="toggle-icon">
                     <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
                         <path d="M18 15l-6-6-6 6" />
@@ -18,7 +18,7 @@
                 </span>
             </div>
             <div v-if="isExpanded" class="error-stack">
-                <div v-for="(line, index) in stackTrace.split('\n')" :key="index" class="stack-line">
+                <div v-for="(line, index) in execution.error.stacktrace?.split('\n')" :key="index" class="stack-line">
                     {{ line }}
                 </div>
             </div>
@@ -179,19 +179,6 @@
                         this.$route.params
                     );
                 }
-            },
-            execution: {
-                handler(newExecution) {
-                    if (newExecution?.error) {
-                        this.errorMessage = newExecution.error.message || "";
-                        this.stackTrace = newExecution.error.stacktrace || [];
-                    }
-                    else {
-                        this.errorMessage = "";
-                        this.stackTrace = [];
-                    }
-                },
-                immediate: true
             }
         },
         data() {

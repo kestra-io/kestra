@@ -45,7 +45,7 @@ abstract public class AbstractSchedulerTest {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
-            .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup))
+            .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup, null))
             .build();
 
         return createFlow(Collections.singletonList(schedule), List.of(

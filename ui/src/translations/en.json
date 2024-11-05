@@ -568,6 +568,8 @@
     "flow deleted, you can restore it": "The flow has been deleted and this is a read-only view. You can still restore it.",
     "workers": "Workers",
     "worker group": "Worker Group",
+    "worker group key": "Worker Group key",
+    "worker group fallback": "Worker Group fallback",
     "version": "Version",
     "services": "Services",
     "cluster": "Cluster",

@@ -201,6 +201,6 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public boolean delete(Path path) throws IOException {
-        return storage.delete(tenant, NamespaceFile.of(namespace, path).storagePath().toUri());
+        return storage.delete(tenant, URI.create(path.toString().replace("\\","/")));
     }
 }

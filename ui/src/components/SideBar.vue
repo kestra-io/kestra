@@ -240,7 +240,6 @@
             font-size: 1.5em;
             background-color: transparent !important;
             padding-bottom: 15px;
-            height: 30px !important;
             width: 30px !important;
 
             svg {

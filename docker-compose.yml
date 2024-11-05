@@ -39,7 +39,7 @@ services:
         kestra:
           server:
             basic-auth:
-              enabled: false
+              enabled: true
               username: "${KESTRA_USERNAME}" # must be a valid email address
               password: ${KESTRA_PASSWORD}
           repository:

@@ -189,11 +189,13 @@
             onStarClick() {
                 if (this.starred) {
                     this.$store.dispatch("starred/remove", {
-                        path:this.$route.fullPath
+                        // eslint-disable-next-line no-undef
+                        path: `${KESTRA_BASE_PATH}/${this.$route.fullPath}`
                     })
                 } else {
                     this.$store.dispatch("starred/add", {
-                        path:this.$route.fullPath,
+                        // eslint-disable-next-line no-undef
+                        path: `${KESTRA_BASE_PATH}/${this.$route.fullPath}`,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
                     })
                 }

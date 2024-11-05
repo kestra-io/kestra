@@ -63,8 +63,8 @@
     import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
-    import DateAgo from "../../components/layout/DateAgo.vue"
-    import Environment from "../../components/layout/Environment.vue";
+    import DateAgo from "./layout/DateAgo.vue"
+    import Environment from "./layout/Environment.vue";
 
 
     const props = defineProps({
@@ -207,13 +207,13 @@
 
                 span.img {
                     height: 100%;
-                    background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
+                    background: url(../assets/logo.svg) 0 0 no-repeat;
                     background-size: 179px 55px;
                     display: block;
                     transition: 0.2s all;
 
                     html.dark & {
-                        background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+                        background: url(../assets/logo-white.svg) 0 0 no-repeat;
                         background-size: 179px 55px;
                     }
                 }

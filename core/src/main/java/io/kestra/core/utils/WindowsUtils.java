@@ -1,5 +1,6 @@
 package io.kestra.core.utils;
 
+import java.net.URI;
 import java.util.regex.Matcher;
 
 public class WindowsUtils {
@@ -15,5 +16,9 @@ public class WindowsUtils {
             unixPath = "/" + unixPath;
         }
         return unixPath;
+    }
+
+    public static URI windowsToUnixURI(URI uri) {
+        return URI.create(windowsToUnixPath(uri.toString()));
     }
 }

@@ -46,7 +46,6 @@
 <style scoped lang="scss">
     .el-button {
         white-space: nowrap;
-        height: 100%;
 
         &.no-label {
             padding: 8px;

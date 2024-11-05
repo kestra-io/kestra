@@ -1,17 +1,110 @@
-const getItem = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-const setItem = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-const filterItems = (items, element) => items.filter((item) => JSON.stringify(item) !== JSON.stringify(element));
+import {useI18n} from "vue-i18n";
+
+export type OptionType = {
+    label: string;
+    value: {
+        label: string;
+        comparator?: undefined;
+        value: string[];
+    };
+    options: {
+        label: string;
+        value: string;
+    }[];
+};
+
+const getItem = (key) => {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+};
+
+const setItem = (key, value) => {
+    return localStorage.setItem(key, JSON.stringify(value));
+};
+
+const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
+const filterItems = (items, element) => {
+    return items.filter((item) => compare(item, element));
+};
 
 export function useFilters(prefix) {
+    const {t} = useI18n({useScope: "global"});
+
     const keys = {recent: `recent__${prefix}`, saved: `saved__${prefix}`};
 
-    return {
-        getRecentItems: () => getItem(keys.recent),
-        setRecentItems: (value) => setItem(keys.recent, value),
-        removeRecentItem: (element) => setItem(keys.recent, filterItems(getItem(keys.recent), element)),
+    const COMPARATORS = {
+        IS: t("filters.comparators.is"),
+        IS_ONE_OF: t("filters.comparators.is_one_of"),
+        IS_NOT: t("filters.comparators.is_not"),
+        IS_NOT_ONE_OF: t("filters.comparators.is_not_one_off"),
+        CONTAINS: t("filters.comparators.contains"),
+        NOT_CONTAINS: t("filters.comparators.not_contains"),
+    };
 
-        getSavedItems: () => getItem(keys.saved),
-        setSavedItems: (value) => setItem(keys.saved, value),
-        removeSavedItem: (element) => setItem(keys.saved, filterItems(getItem(keys.saved), element)),
+    const OPTIONS: OptionType[] = [
+        {
+            label: t("filters.options.namespace"),
+            value: {label: "namespace", comparator: undefined, value: []},
+            options: [
+                {
+                    label: COMPARATORS.IS,
+                    value: COMPARATORS.IS,
+                },
+            ],
+        },
+        {
+            label: t("filters.options.state"),
+            value: {label: "state", comparator: undefined, value: []},
+            options: [
+                {
+                    label: COMPARATORS.IS_ONE_OF,
+                    value: COMPARATORS.IS_ONE_OF,
+                },
+                {
+                    label: COMPARATORS.IS_NOT_ONE_OF,
+                    value: COMPARATORS.IS_NOT_ONE_OF,
+                },
+            ],
+        },
+        {
+            label: t("filters.options.scope"),
+            value: {label: "scope", comparator: undefined, value: []},
+            options: [
+                {
+                    label: COMPARATORS.IS_ONE_OF,
+                    value: COMPARATORS.IS_ONE_OF,
+                },
+            ],
+        },
+        {
+            label: t("filters.options.date"),
+            value: {label: "date", comparator: undefined, value: []},
+            options: [],
+        },
+    ];
+
+    return {
+        getRecentItems: () => {
+            return getItem(keys.recent);
+        },
+        setRecentItems: (value) => {
+            return setItem(keys.recent, value);
+        },
+        removeRecentItem: (element) => {
+            const filtered = filterItems(getItem(keys.recent), element);
+            return setItem(keys.recent, filtered);
+        },
+
+        getSavedItems: () => {
+            return getItem(keys.saved);
+        },
+        setSavedItems: (value) => {
+            return setItem(keys.saved, value);
+        },
+        removeSavedItem: (element) => {
+            const filtered = filterItems(getItem(keys.saved), element);
+            return setItem(keys.saved, filtered);
+        },
+
+        OPTIONS,
     };
 }

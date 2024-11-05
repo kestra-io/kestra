@@ -10,7 +10,8 @@ import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.time.ZonedDateTime;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
 
     @Override
     public List<MultipleConditionWindow> expired(String tenantId) {
-        ZonedDateTime now = ZonedDateTime.now();
+        Instant now = Instant.now();
 
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -54,9 +55,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("start_date").lt(now.toOffsetDateTime())
-                            .and(field("end_date").lt(now.toOffsetDateTime()))
-                            .and(buildTenantCondition(tenantId))
+                        field("end_date").lt(Timestamp.from(now)).and(buildTenantCondition(tenantId))
                     );
 
                 return this.jdbcRepository.fetch(select);

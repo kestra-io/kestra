@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -132,19 +133,20 @@ public class FlowInputOutput {
 
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
+            .publishOn(Schedulers.boundedElastic())
             .<AbstractMap.SimpleEntry<String, String>>handle((input, sink) -> {
-                try {
-                    if (input instanceof CompletedFileUpload fileUpload) {
-                        if (!uploadFiles) {
-                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
-                            URI from = URI.create("kestra://" + StorageContext
-                                .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
-                                .getContextStorageURI()
-                            );
-                            sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
-                            return;
-                        }
+                if (input instanceof CompletedFileUpload fileUpload) {
+                    if (!uploadFiles) {
                         final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
+                        URI from = URI.create("kestra://" + StorageContext
+                            .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
+                            .getContextStorageURI()
+                        );
+                        fileUpload.discard();
+                        sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
+                    } else {
+                        try {
+                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
 
                             File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
@@ -161,11 +163,17 @@ public class FlowInputOutput {
                                     tempFile.deleteOnExit();
                                 }
                             }
-                    } else {
-                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
+                        } catch (IOException e) {
+                            fileUpload.discard();
+                            sink.error(e);
+                        }
                     }
-                } catch (IOException e) {
-                    sink.error(e);
+                } else {
+                    try {
+                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
+                    } catch (IOException e) {
+                        sink.error(e);
+                    }
                 }
             })
             .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);

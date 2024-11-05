@@ -273,5 +273,9 @@ class FlowInputOutputTest {
         public boolean isComplete() {
             return true;
         }
+
+        @Override
+        public void discard() {
+        }
     }
 }

@@ -829,6 +829,7 @@ public class FlowController {
                 }
             }
         } else {
+            fileUpload.discard();
             throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
         }
 

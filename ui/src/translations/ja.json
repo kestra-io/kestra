@@ -900,6 +900,14 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
-    "starred": "スター付き"
+    "starred": "スター付き",
+    "invalid bulk unqueue": "実行をキューから外すことができませんでした",
+    "unqueue done": "実行はキューから外されました",
+    "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
+    "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>これは flow の並行性制限に従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue": "キュー解除",
+    "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
+    "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外れました",
+    "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？"
   }
 }

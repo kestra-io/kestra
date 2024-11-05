@@ -1,18 +1,5 @@
 import {useI18n} from "vue-i18n";
 
-export type OptionType = {
-    label: string;
-    value: {
-        label: string;
-        comparator?: undefined;
-        value: string[];
-    };
-    options: {
-        label: string;
-        value: string;
-    }[];
-};
-
 const getItem = (key) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
 };
@@ -40,45 +27,26 @@ export function useFilters(prefix) {
         NOT_CONTAINS: t("filters.comparators.not_contains"),
     };
 
-    const OPTIONS: OptionType[] = [
+    const OPTIONS = [
         {
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
-            options: [
-                {
-                    label: COMPARATORS.IS,
-                    value: COMPARATORS.IS,
-                },
-            ],
+            comparators: [COMPARATORS.IS],
         },
         {
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
-            options: [
-                {
-                    label: COMPARATORS.IS_ONE_OF,
-                    value: COMPARATORS.IS_ONE_OF,
-                },
-                {
-                    label: COMPARATORS.IS_NOT_ONE_OF,
-                    value: COMPARATORS.IS_NOT_ONE_OF,
-                },
-            ],
+            comparators: [COMPARATORS.IS_ONE_OF, COMPARATORS.IS_NOT_ONE_OF],
         },
         {
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
-            options: [
-                {
-                    label: COMPARATORS.IS_ONE_OF,
-                    value: COMPARATORS.IS_ONE_OF,
-                },
-            ],
+            comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             label: t("filters.options.date"),
             value: {label: "date", comparator: undefined, value: []},
-            options: [],
+            comparators: [],
         },
     ];
 

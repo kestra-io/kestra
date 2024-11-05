@@ -63,6 +63,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -74,12 +75,11 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../../filters";
-    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} =
-        useFilters(props.prefix);
+    import {useFilters} from "../../filters.js";
+    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
-    let recents = ref<{ name: string; value: object }[]>([]);
-    let saved = ref<{ name: string; value: object }[]>([]);
+    let recents = ref([]);
+    let saved = ref([]);
 
     const loadAll = () => {
         recents.value = getRecentItems().reverse();
@@ -89,13 +89,11 @@
     loadAll();
 
     const remove = (prefix, index) => {
-        if (prefix === "recents") {
-            removeRecentItem(recents.value[index]);
-            recents.value.splice(index, 1);
-        } else if (prefix === "saved") {
-            removeSavedItem(saved.value[index]);
-            saved.value.splice(index, 1);
-        }
+        const list = prefix === "recents" ? recents : saved;
+        const action = prefix === "recents" ? removeRecentItem : removeSavedItem;
+
+        action(list.value[index]);
+        list.value.splice(index, 1);
     };
 </script>
 

@@ -50,15 +50,13 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../filters";
+    import {useFilters} from "../filters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
     const toggle = (isVisible = false) => {
         visible.value = isVisible;
-
-        // Clearing input each time dialog closes
-        if (!isVisible) label.value = "";
+        if (!isVisible) label.value = ""; // Clearing input each time dialog closes
     };
 
     const input = ref<InstanceType<typeof ElInput> | null>(null);
@@ -67,8 +65,9 @@
         const items = getSavedItems();
 
         setSavedItems([...items, {name: label.value, value: props.current}]);
-        toast.saved(t("filters.save.dialog.confirmation", {name: label.value}));
 
         toggle();
+
+        toast.saved(t("filters.save.dialog.confirmation", {name: label.value}));
     };
 </script>

@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex align-items-center w-100 item">
-        <div class="col-3 text-truncate">
+        <div v-if="item.name" class="col-3 text-truncate">
             <span class="small">{{ item.name }}</span>
         </div>
 
@@ -24,12 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    interface Item {
-        name: string;
-        value: object;
-    }
-
-    defineProps<{ item: Item }>();
+    defineProps({item: {type: Object, required: true}});
 </script>
 
 <style lang="scss" scoped>

@@ -16,4 +16,12 @@ import jakarta.validation.constraints.Pattern;
 public class WorkerGroup {
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
     private String key;
+
+    private Fallback fallback;
+
+    public enum Fallback {
+        FAIL,
+        WAIT,
+        CANCEL,
+    }
 }

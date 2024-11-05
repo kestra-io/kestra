@@ -436,7 +436,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                 }
                                 else {
                                     if (workerTask.getTask().isSendToWorkerTask()) {
-                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask);
+                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(group -> group.getKey()).orElse(null), workerTask);
                                     }
                                     if (workerTask.getTask().isFlowable()) {
                                         workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));

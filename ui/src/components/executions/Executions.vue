@@ -916,10 +916,12 @@
                         }),
                     ]),
                     h(ElAlert, {
-                        title: this.$t("execution-warn-deleting-still-running"),
+                        title:  this.$t("execution-warn-title"),
+                        description: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
-                        closable: false
+                        closable: false,
+                        class: "custom-warning"
                     }),
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
@@ -1036,8 +1038,29 @@
     };
 </script>
 
+
 <style scoped lang="scss">
-    .padding-bottom {
-        padding-bottom: 4rem;
-    }
+	.padding-bottom {
+		  padding-bottom: 4rem;
+	}
+	.custom-warning {
+		  border: 1px solid #ffb703;
+		  border-radius: 7px;
+		  box-shadow: 1px 1px 3px 1px #ffb703;
+		  padding: 10px 8px;
+
+		  :deep(.el-alert__title) {
+			font-size: 16px;
+			color: #ffb703;
+			font-weight: bold;
+		  }
+
+		  :deep(.el-alert__description) {
+			font-size: 12px;
+		  }
+
+		  :deep(.el-alert__icon) {
+			color: #ffb703;
+		  }
+	}
 </style>

@@ -900,6 +900,14 @@
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
-    "starred": "Estrellado"
+    "starred": "Estrellas",
+    "invalid bulk unqueue": "No se pudieron desencolar las ejecuciones",
+    "unqueue done": "La ejecución está descolada",
+    "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
+    "unqueue title": "Desencolar ejecución <code>{id}</code>.<br/>Tenga en cuenta que no obedecerá el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
+    "unqueue": "Desencolar",
+    "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> ejecución(es) descoladas",
+    "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?"
   }
 }

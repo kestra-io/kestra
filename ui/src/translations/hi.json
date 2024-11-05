@@ -900,6 +900,14 @@
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
     "create_flow": "फ़्लो बनाएं",
-    "starred": "सितारे लगाए गए"
+    "starred": "सितारे लगे हुए",
+    "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं कर सका",
+    "unqueue done": "निष्पादन कतार से बाहर है",
+    "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
+    "unqueue title": "Execution <code>{id}</code> को अनक्यू करें।<br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल रहे हो सकते हैं।",
+    "unqueue": "अनक्यू करें",
+    "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) कतार से बाहर",
+    "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करने के लिए सुनिश्चित हैं?"
   }
 }

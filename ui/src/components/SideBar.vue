@@ -278,6 +278,21 @@
             }
         }
 
+        .vsm--title span:first-child{
+            flex-grow: 0;
+        }
+
+        .vsm--arrow_default{
+            width: 8px;
+            &:before{
+                border-left-width: 1px;
+                border-bottom-width: 1px;
+                height: 4px;
+                width: 4px;
+                top: 3px;
+            }
+        }
+
         .vsm--toggle-btn {
             padding-top: 16px;
             padding-bottom: 16px;

@@ -29,7 +29,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the flow filter conditions are met.",
+    title = "Run a flow if the flow filter conditions are met in a time window.",
     description = """
         This example will trigger an execution of `myflow` once all flow filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours.
 

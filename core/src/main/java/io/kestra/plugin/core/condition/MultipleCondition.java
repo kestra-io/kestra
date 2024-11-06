@@ -22,7 +22,7 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of conditions on multiple executions.",
+    title = "Run a flow if the list of conditions are met in a time window.",
     description = """
         This task is deprecated, use io.kestra.plugin.core.condition.ExecutionFilters or io.kestra.plugin.core.condition.FlowFilters instead.
         Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.

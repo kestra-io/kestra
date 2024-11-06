@@ -13,6 +13,15 @@ const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };
 
+export const formatLabel = (value) => {
+    let label = value.label;
+
+    if (value.comparator) label += `:${value.comparator}`;
+    if (value.value.length) label += `:${value.value.join(", ")}`;
+
+    return label;
+};
+
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 

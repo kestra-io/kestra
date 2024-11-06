@@ -867,9 +867,9 @@
       "storage": "Delete internal storage files"
     },
     "scope_filter": {
-      "all": "All {label}",
-      "user": "User {label}",
-      "system": "System {label}"
+      "all": "all {label}",
+      "user": "user {label}",
+      "system": "system {label}"
     },
     "data": "Data",
     "webhook link copied": "Webhook link copied.",
@@ -921,7 +921,8 @@
         "namespace": "Namespace",
         "state": "State",
         "scope": "Scope",
-        "date": "Date"
+        "date": "Date",
+        "text": "text"
       },
       "comparators": {
         "is": "is",

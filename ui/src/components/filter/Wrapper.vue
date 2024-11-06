@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex w-100 filters">
+    <section class="d-inline-flex filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -28,9 +28,9 @@
             <template v-else-if="dropdowns.second.shown">
                 <el-option
                     v-for="comparator in dropdowns.first.value.comparators"
-                    :key="comparator"
+                    :key="comparator.value"
                     :value="comparator"
-                    :label="comparator"
+                    :label="comparator.label"
                     @click="() => comparatorCallback(comparator)"
                     @keydown.enter="() => comparatorCallback(comparator)"
                 />
@@ -38,10 +38,10 @@
             <template v-else-if="dropdowns.third.shown">
                 <el-option
                     v-for="filter in valueOptions"
-                    :key="filter"
+                    :key="filter.value"
                     :value="filter"
-                    :label="filter"
-                    @click="() => valueCallback(filter)"
+                    :label="filter.label"
+                    @click="() => valueCallback(filter.value)"
                 />
             </template>
         </el-select>
@@ -128,8 +128,8 @@
             let current = "";
 
             parts.forEach((part) => {
-                current = current ? current + "." + part : part;
-                result.add(current);
+                current = current ? `${current}.${part}` : part;
+                result.add({label: current, value: current});
             });
         });
 
@@ -137,8 +137,14 @@
     };
 
     const scopeOptions = [
-        t("scope_filter.user", {label: props.prefix}),
-        t("scope_filter.system", {label: props.prefix}),
+        {
+            label: t("scope_filter.user", {label: props.prefix}),
+            value: t("scope_filter.user", {label: props.prefix}),
+        },
+        {
+            label: t("scope_filter.system", {label: props.prefix}),
+            value: t("scope_filter.system", {label: props.prefix}),
+        },
     ];
 
     const valueOptions = computed(() => {
@@ -152,7 +158,10 @@
             return scopeOptions;
 
         case "state":
-            return State.arrayAllStates().map((s) => s.name);
+            return State.arrayAllStates().map((s) => ({
+                label: s.name,
+                value: s.name,
+            }));
 
         default:
             return [];
@@ -174,7 +183,6 @@
             const label = t("filters.options.text");
             const index = current.value.findIndex((i) => i.label === label);
 
-            // TODO: Make sure it is only done for text
             if (index !== -1) current.value[index].value = [v.at(-1)];
             else current.value.push({label, value: [v.at(-1)]});
         }
@@ -198,6 +206,13 @@
 
 <style lang="scss">
 .filters {
+    width: -webkit-fill-available;
+
+    .el-select {
+        // Combined width of buttons on the sides of select
+        width: calc(100% - 237px);
+    }
+
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
@@ -211,6 +226,15 @@
             & .el-tag__close {
                 color: var(--bs-gray-900);
             }
+        }
+    }
+
+    & .el-select__selection {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+
+        &::-webkit-scrollbar {
+            height: 0px;
         }
     }
 

@@ -16,7 +16,7 @@ const filterItems = (items, element) => {
 export const formatLabel = (value) => {
     let label = value.label;
 
-    if (value.comparator) label += `:${value.comparator}`;
+    if (value.comparator?.label) label += `:${value.comparator.label}`;
     if (value.value.length) label += `:${value.value.join(", ")}`;
 
     return label;
@@ -40,17 +40,36 @@ export function useFilters(prefix) {
         {
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
-            comparators: [COMPARATORS.IS],
+            comparators: [
+                {
+                    label: COMPARATORS.IS,
+                    value: COMPARATORS.IS,
+                },
+            ],
         },
         {
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
-            comparators: [COMPARATORS.IS_ONE_OF, COMPARATORS.IS_NOT_ONE_OF],
+            comparators: [
+                {
+                    label: COMPARATORS.IS_ONE_OF,
+                    value: COMPARATORS.IS_ONE_OF,
+                },
+                {
+                    label: COMPARATORS.IS_NOT_ONE_OF,
+                    value: COMPARATORS.IS_NOT_ONE_OF,
+                },
+            ],
         },
         {
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
-            comparators: [COMPARATORS.IS_ONE_OF],
+            comparators: [
+                {
+                    label: COMPARATORS.IS_ONE_OF,
+                    value: COMPARATORS.IS_ONE_OF,
+                },
+            ],
         },
         {
             label: t("filters.options.date"),

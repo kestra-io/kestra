@@ -640,7 +640,7 @@
     "false": "असत्य",
     "undefined": "अपरिभाषित",
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
-    "execution-warn-deleting-still-running": "महत्वपूर्ण चेतावनी: हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency issues, flow dependency management असंगतताएँ, और आपके instance पर zombie processes हो सकते हैं, जो सिस्टम प्रदर्शन को खराब कर सकते हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं इससे पहले कि आप deletion के साथ आगे बढ़ें।",
+    "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। बिना समाप्त हुए executions को हटाने से concurrency समस्याएं, flow निर्भरता प्रबंधन असंगतताएं, और आपके instance पर zombie प्रक्रियाएं हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
     "originalCreatedDate": "मूल निर्माण तिथि",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "अनक्यू करें",
     "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> execution(s) कतार से बाहर",
-    "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करने के लिए सुनिश्चित हैं?"
+    "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करने के लिए सुनिश्चित हैं?",
+    "execution-warn-title": "महत्वपूर्ण WARNING!"
   }
 }

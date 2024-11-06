@@ -640,7 +640,7 @@
     "false": "Falso",
     "undefined": "Indefinido",
     "execution-include-non-terminated": "Incluir execuções não terminadas?",
-    "execution-warn-deleting-still-running": "Aviso Importante: Recomendamos fortemente que você cancele esta ação e encerre quaisquer execuções em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de compreender totalmente esses riscos antes de prosseguir com a exclusão.",
+    "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de compreender completamente esses riscos antes de prosseguir com a exclusão.",
     "originalCreatedDate": "Data de criação original",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "Desenfileirar",
     "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> execução(ões) desfiladas",
-    "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?"
+    "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?",
+    "execution-warn-title": "Aviso Importante!"
   }
 }

@@ -640,7 +640,7 @@
     "false": "Falso",
     "undefined": "Indefinido",
     "execution-include-non-terminated": "¿Incluir ejecuciones no terminadas?",
-    "execution-warn-deleting-still-running": "Advertencia Importante: Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrency, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo cual puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
+    "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrency, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "Desencolar",
     "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> ejecución(es) descoladas",
-    "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?"
+    "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?",
+    "execution-warn-title": "¡Advertencia Importante!"
   }
 }

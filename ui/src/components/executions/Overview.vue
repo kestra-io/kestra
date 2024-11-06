@@ -80,7 +80,11 @@
 
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
-            <KestraCascader :options="transform(execution.inputs)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.inputs)"
+                :execution="execution"
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.variables" class="my-5">

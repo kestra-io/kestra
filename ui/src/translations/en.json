@@ -687,7 +687,8 @@
     "false": "False",
     "undefined": "Undefined",
     "execution-include-non-terminated": "Include non-terminated executions?",
-    "execution-warn-deleting-still-running": "Important Warning: We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
+    "execution-warn-title": "Important Warning!",
+    "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
     "originalCreatedDate": "Original creation date",
     "welcome": {
       "started": {

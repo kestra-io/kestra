@@ -640,7 +640,7 @@
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
-    "execution-warn-deleting-still-running": "Ważne Ostrzeżenie: Zdecydowanie zalecamy anulowanie tej akcji i zakończenie wszystkich trwających wykonania najpierw. Usunięcie nieukończonych wykonań może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
+    "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i najpierw zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "Usuń z kolejki",
     "executions paused": "<code>{executionCount}</code> wykonanie(a) wstrzymane",
     "executions unqueue": "<code>{executionCount}</code> wykonanie(a) w kolejce",
-    "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?"
+    "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
+    "execution-warn-title": "Ważne Ostrzeżenie!"
   }
 }

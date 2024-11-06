@@ -34,7 +34,7 @@
     const store = useStore()
 
     function routeStartWith(route) {
-        return $router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
+        return $router?.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
     }
 
     const configs = computed(() => store.state.misc.configs);

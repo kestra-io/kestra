@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> 실행 대기열에서 제거됨",
     "unqueue confirm": "실행 <code>{id}</code>의 대기열을 해제하시겠습니까?",
-    "execution-warn-title": "중요한 WARNING!"
+    "execution-warn-title": "중요한 WARNING!",
+    "worker group key": "작업자 그룹 key",
+    "worker group fallback": "워크 그룹 폴백"
   }
 }

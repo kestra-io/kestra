@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> выполнение(я) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> выполнение(я) в очереди",
     "unqueue confirm": "Вы уверены, что хотите снять выполнение из очереди <code>{id}</code>?",
-    "execution-warn-title": "Важное предупреждение!"
+    "execution-warn-title": "Важное предупреждение!",
+    "worker group key": "Ключ группы Worker",
+    "worker group fallback": "Группа Worker резервный вариант"
   }
 }

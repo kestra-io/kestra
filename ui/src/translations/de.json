@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
     "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
-    "execution-warn-title": "Wichtige Warnung!"
+    "execution-warn-title": "Wichtige Warnung!",
+    "worker group key": "Worker-Gruppe {key}",
+    "worker group fallback": "Arbeitsgruppe Fallback"
   }
 }

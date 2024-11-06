@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> wykonanie(a) wstrzymane",
     "executions unqueue": "<code>{executionCount}</code> wykonanie(a) w kolejce",
     "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
-    "execution-warn-title": "Ważne Ostrzeżenie!"
+    "execution-warn-title": "Ważne Ostrzeżenie!",
+    "worker group key": "Klucz grupy Worker",
+    "worker group fallback": "Grupa Workerów zapasowa"
   }
 }

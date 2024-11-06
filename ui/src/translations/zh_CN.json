@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> 次执行已暂停",
     "executions unqueue": "<code>{executionCount}</code> 次执行已出队",
     "unqueue confirm": "您确定要取消排队执行<code>{id}</code>吗？",
-    "execution-warn-title": "重要警告！"
+    "execution-warn-title": "重要警告！",
+    "worker group key": "工作组 key",
+    "worker group fallback": "工作组回退"
   }
 }

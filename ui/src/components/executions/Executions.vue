@@ -189,6 +189,9 @@
                             <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </el-button>
+                            <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                {{ $t("unqueue") }}
+                            </el-button>
                         </bulk-select>
                         <el-dialog
                             v-if="isOpenLabelsModal"
@@ -435,6 +438,7 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 </script>
 
 <script>
@@ -466,7 +470,6 @@
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
-    import DateAgo from "../layout/DateAgo.vue";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
@@ -861,6 +864,14 @@
                     "execution/queryPauseExecution",
                     "execution/bulkPauseExecution",
                     "executions paused"
+                );
+            },
+            unqueueExecutions() {
+                this.genericConfirmAction(
+                    "bulk unqueue",
+                    "execution/queryUnqueueExecution",
+                    "execution/bulkUnqueueExecution",
+                    "executions unqueue"
                 );
             },
             restartExecutions() {

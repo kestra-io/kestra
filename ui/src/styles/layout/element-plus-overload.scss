@@ -923,7 +923,7 @@ form.ks-horizontal {
                 --el-tag-bg-color: #FFFFFF;
                 --el-tag-hover-color: var(--el-color-#{$i}-dark-2);
                 --el-tag-border-color: var(--el-color-#{$i});
-                body.dark &{
+                html.dark &{
                     --el-tag-bg-color: #{darken(map.get($element-colors, $i, 'base'), 45%)};
                 }
             }

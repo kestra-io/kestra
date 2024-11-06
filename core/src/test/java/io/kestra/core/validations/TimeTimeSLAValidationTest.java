@@ -1,8 +1,7 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.triggers.SLA;
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.models.triggers.TimeSLA;
 import io.kestra.core.models.validations.ModelValidator;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -18,13 +17,13 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.containsString;
 
 @KestraTest
-class SLAValidationTest {
+class TimeTimeSLAValidationTest {
     @Inject
     private ModelValidator modelValidator;
 
     @Test
     void shouldDefaultSLA() {
-        var sla = SLA.builder().build();
+        var sla = TimeSLA.builder().build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -32,7 +31,7 @@ class SLAValidationTest {
 
     @Test
     void shouldValidateDailyDeadline() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -40,7 +39,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateDailyDeadlineWhenMissingParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_DEADLINE).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_DEADLINE).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -50,7 +49,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateDailyDeadlineWhenInvalidParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -60,7 +59,7 @@ class SLAValidationTest {
 
     @Test
     void shouldValidateDailyTimeWindow() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -68,7 +67,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateDailyTimeWindowWhenMissingParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_WINDOW).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_WINDOW).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -79,7 +78,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateDailyTimeWindowWhenInvalidParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -90,7 +89,7 @@ class SLAValidationTest {
 
     @Test
     void shouldValidateDurationWindow() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DURATION_WINDOW).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DURATION_WINDOW).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -98,7 +97,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateDurationWindowWhenInvalidParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.DURATION_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.DURATION_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -108,7 +107,7 @@ class SLAValidationTest {
 
     @Test
     void shouldValidateSlidingWindow() {
-        var sla = SLA.builder().type(MultipleCondition.Type.SLIDING_WINDOW).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.SLIDING_WINDOW).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -116,7 +115,7 @@ class SLAValidationTest {
 
     @Test
     void shouldNotValidateSlidingWindowWhenInvalidParam() {
-        var sla = SLA.builder().type(MultipleCondition.Type.SLIDING_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeSLA.builder().type(TimeSLA.Type.SLIDING_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));

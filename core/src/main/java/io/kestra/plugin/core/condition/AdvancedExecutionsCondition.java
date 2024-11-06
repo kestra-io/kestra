@@ -9,7 +9,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
-import io.kestra.core.validations.ExecutionFiltersConditionValidation;
+import io.kestra.core.validations.PreconditionFilterValidation;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -34,9 +34,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the execution filter conditions are met in a time window.",
+    title = "Run a flow if the execution filter preconditions are met in a time window.",
     description = """
-        This example will trigger an execution of `myflow` once all execution filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours."""
+        This example will trigger an execution of `myflow` once all execution filter conditions are met in a specific period of time (`timeSLA`) — by default, a `window` of 24 hours."""
 )
 @Plugin(
     examples = {
@@ -52,11 +52,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     type: io.kestra.plugin.core.trigger.Flow
                     conditions:
                       - id: poll_for_flows
-                        type: io.kestra.plugin.core.condition.ExecutionFilters
-                        filters:
+                        type: io.kestra.plugin.core.condition.AdvancedExecutionsCondition
+                        preconditions:
                           - id: flow1
                             operand: AND
-                            conditions:
+                            filters:
                               - field: NAMESPACE
                                 type: EQUAL_TO
                                 value: company.team
@@ -68,7 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                                 values: [SUCCESS, WARNING, CANCELLED]
                           - id: flow2
                             operand: AND
-                            conditions:
+                            filters:
                               - field: NAMESPACE
                                 type: EQUAL_TO
                                 value: company.team
@@ -92,33 +92,33 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         )
     }
 )
-public class ExecutionFilters extends AbstractMultipleCondition {
+public class AdvancedExecutionsCondition extends AbstractMultipleCondition {
     @NotNull
     @NotEmpty
     @Valid
     @PluginProperty
-    @Schema(title = "A list of execution filters.")
-    private List<ExecutionFilters.Filter> filters;
+    @Schema(title = "A list of preconditions to met, in the form of execution filters.")
+    private List<ExecutionFilter> preconditions;
 
     /**
-     * Will emulate multiple conditions based on the filters property.
+     * Will emulate multiple conditions based on the preconditions property.
      */
     @JsonIgnore
     @Override
     public Map<String, io.kestra.core.models.conditions.Condition> getConditions() {
-        return filters.stream()
+        return preconditions.stream()
             .map(filter -> Map.entry(
                 filter.getId(),
-                new ExecutionFilters.FilterCondition(filter)
+                new AdvancedExecutionsCondition.FilterCondition(filter)
             ))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Hidden
     public static class FilterCondition extends io.kestra.core.models.conditions.Condition {
-        private final ExecutionFilters.Filter filter;
+        private final ExecutionFilter filter;
 
-        private FilterCondition(ExecutionFilters.Filter filter) {
+        private FilterCondition(ExecutionFilter filter) {
             this.filter = Objects.requireNonNull(filter);
         }
 
@@ -126,40 +126,40 @@ public class ExecutionFilters extends AbstractMultipleCondition {
         public boolean test(ConditionContext conditionContext) throws InternalException {
             // we need to only evaluate on namespace and flow for simulated executions
             boolean simulated = ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(SIMULATED_EXECUTION);
-            Stream<Condition> toEvaluate = simulated ? filter.conditions.stream().filter(condition -> condition.field == Field.NAMESPACE || condition.field == Field.FLOW_ID) : filter.conditions.stream();
+            Stream<Filter> toEvaluate = simulated ? filter.filters.stream().filter(filter -> filter.field == Field.NAMESPACE || filter.field == Field.FLOW_ID) : filter.filters.stream();
 
             return switch (filter.operand) {
-                case AND -> toEvaluate.allMatch(throwPredicate(condition -> evaluate(conditionContext, condition)));
-                case OR -> toEvaluate.anyMatch(throwPredicate(condition -> evaluate(conditionContext, condition)));
+                case AND -> toEvaluate.allMatch(throwPredicate(filter -> evaluate(conditionContext, filter)));
+                case OR -> toEvaluate.anyMatch(throwPredicate(filter -> evaluate(conditionContext, filter)));
             };
         }
 
-        private boolean evaluate(ConditionContext conditionContext, Condition condition) throws IllegalVariableEvaluationException {
-            String fieldValue = switch (condition.field) {
+        private boolean evaluate(ConditionContext conditionContext, Filter filter) throws IllegalVariableEvaluationException {
+            String fieldValue = switch (filter.field) {
                 case FLOW_ID -> conditionContext.getExecution().getFlowId();
                 case NAMESPACE -> conditionContext.getExecution().getNamespace();
                 case STATE -> conditionContext.getExecution().getState().getCurrent().toString();
-                case EXPRESSION -> conditionContext.getRunContext().render(condition.value);
+                case EXPRESSION -> conditionContext.getRunContext().render(filter.value);
                 case LABEL -> conditionContext.getExecution().getLabels().stream()
-                    .filter(label -> label.key().equals(extractLabelKey(condition.value)))
+                    .filter(label -> label.key().equals(extractLabelKey(filter.value)))
                     .findFirst()
                     .map(label -> label.key() + ":" + label.value())
                     .orElse(null);
             };
 
-            return switch (condition.type) {
-                case EQUAL_TO -> condition.value.equals(fieldValue);
-                case NOT_EQUAL_TO -> !condition.value.equals(fieldValue);
-                case IN -> condition.values.contains(fieldValue);
-                case NOT_IN -> !condition.values.contains(fieldValue);
+            return switch (filter.type) {
+                case EQUAL_TO -> filter.value.equals(fieldValue);
+                case NOT_EQUAL_TO -> !filter.value.equals(fieldValue);
+                case IN -> filter.values.contains(fieldValue);
+                case NOT_IN -> !filter.values.contains(fieldValue);
                 case IS_TRUE -> TruthUtils.isTruthy(fieldValue);
                 case IS_FALSE -> !TruthUtils.isTruthy(fieldValue);
                 case IS_NULL -> fieldValue == null;
                 case IS_NOT_NULL -> fieldValue != null;
-                case STARTS_WITH -> fieldValue != null && fieldValue.startsWith(condition.value);
-                case ENDS_WITH -> fieldValue != null && fieldValue.endsWith(condition.value);
-                case REGEX -> fieldValue != null && fieldValue.matches(condition.value);
-                case CONTAINS -> fieldValue != null && fieldValue.contains(condition.value);
+                case STARTS_WITH -> fieldValue != null && fieldValue.startsWith(filter.value);
+                case ENDS_WITH -> fieldValue != null && fieldValue.endsWith(filter.value);
+                case REGEX -> fieldValue != null && fieldValue.matches(filter.value);
+                case CONTAINS -> fieldValue != null && fieldValue.contains(filter.value);
             };
         }
 
@@ -176,25 +176,25 @@ public class ExecutionFilters extends AbstractMultipleCondition {
     @Builder
     @Getter
     @Jacksonized
-    public static class Filter {
+    public static class ExecutionFilter {
         @NotNull
         @NotEmpty
         @PluginProperty
-        @Schema(title = "A unique identifier for the filter")
+        @Schema(title = "A unique identifier for the precondition.")
         private String id;
 
         @NotNull
         @Builder.Default
         @PluginProperty
-        @Schema(title = "The operand to apply between all conditions of the filter.")
+        @Schema(title = "The operand to apply between all filters of the precondition.")
         private Operand operand = Operand.AND;
 
         @NotNull
         @NotEmpty
         @Valid
         @PluginProperty
-        @Schema(title = "The list of conditions.")
-        private List<Condition> conditions;
+        @Schema(title = "The list of filters.")
+        private List<Filter> filters;
     }
 
     public enum Operand {
@@ -204,8 +204,8 @@ public class ExecutionFilters extends AbstractMultipleCondition {
 
     @Builder
     @Getter
-    @ExecutionFiltersConditionValidation
-    public static class Condition {
+    @PreconditionFilterValidation
+    public static class Filter {
         @NotNull
         @PluginProperty
         @Schema(
@@ -230,7 +230,7 @@ public class ExecutionFilters extends AbstractMultipleCondition {
         @NotNull
         @PluginProperty
         @Schema(
-            title = "The type of condition.",
+            title = "The type of filter.",
             description = "Can be set to one of the following: `EQUAL_TO`, `NOT_EQUAL_TO`, `IS_NULL`, `IS_NOT_NULL`, `IS_TRUE`, `IS_FALSE`, `STARTS_WITH`, `ENDS_WITH`, `REGEX`, `CONTAINS`. Depending on the `type`, you will need to also set the `value` or `values` property."
         )
         private Type type;

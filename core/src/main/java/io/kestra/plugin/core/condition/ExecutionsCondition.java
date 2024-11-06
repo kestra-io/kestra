@@ -29,9 +29,9 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the flow filter conditions are met in a time window.",
+    title = "Run a flow if the flow filter preconditions are met in a time window.",
     description = """
-        This example will trigger an execution of `myflow` once all flow filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours.
+        This example will trigger an execution of `myflow` once all flow filter conditions are met in a specific period of time (`timeSLA`) — by default, a `window` of 24 hours.
 
         To reproduce this example, you can create two upstream flows (`myflow1` and `myflow2`) as follows:
 
@@ -69,8 +69,8 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     conditions:
                       - id: poll_for_flows
-                        type: io.kestra.plugin.core.condition.FlowFilters
-                        upstreamFlows:
+                        type: io.kestra.plugin.core.condition.ExecutionsCondition
+                        preconditions:
                           - namespace: company.team
                             flowId: myflow1
                             states: [SUCCESS, WARNING]
@@ -85,21 +85,21 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         )
     }
 )
-public class FlowFilters extends AbstractMultipleCondition {
+public class ExecutionsCondition extends AbstractMultipleCondition {
     @NotNull
     @NotEmpty
-    @Schema(title = "The list of upstream flows to wait for.")
+    @Schema(title = "A list of preconditions to met, in the form of upstream flows.")
     @PluginProperty
-    private List<UpstreamFlow> upstreamFlows;
+    private List<UpstreamFlow> preconditions;
 
     /**
-     * Will emulate multiple conditions based on the upstreamFlows property.
+     * Will emulate multiple conditions based on the preconditions property.
      */
     @JsonIgnore
     @Override
     public Map<String, Condition> getConditions() {
         AtomicInteger conditionId = new AtomicInteger();
-        return upstreamFlows.stream()
+        return preconditions.stream()
             .map(upstreamFlow -> Map.entry(
                 "condition_" + conditionId.incrementAndGet(),
                 new UpstreamFlowCondition(upstreamFlow)

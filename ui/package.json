@@ -18,7 +18,7 @@
     "@kestra-io/ui-libs": "^0.0.69",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
-    "@vue-flow/core": "^1.41.2",
+    "@vue-flow/core": "^1.41.4",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",

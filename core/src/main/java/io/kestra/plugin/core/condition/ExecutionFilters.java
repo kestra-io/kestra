@@ -34,46 +34,47 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of conditions on multiple executions.",
+    title = "Run a flow if the execution filter conditions are met.",
     description = """
-        Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
-        The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
+        This example will trigger an execution of `myflow` once all execution filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours."""
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "A flow that is waiting for 2 flows to run successfully in a day with complex filters",
+            title = "A flow that is waiting for two other flows to run successfully within a 1-day-period with fine-grained filter conditions.",
             code = """
-                id: execution-filters
+                id: myflow
                 namespace: company.team
 
                 triggers:
-                  - id: flowFilters
+                  - id: wait_for_upstream
                     type: io.kestra.plugin.core.trigger.Flow
                     conditions:
-                      - id: executionFilters
+                      - id: poll_for_flows
                         type: io.kestra.plugin.core.condition.ExecutionFilters
                         filters:
                           - id: flow1
+                            operand: AND
                             conditions:
                               - field: NAMESPACE
                                 type: EQUAL_TO
                                 value: company.team
                               - field: FLOW_ID
                                 type: EQUAL_TO
-                                value: myflow
+                                value: flow1
                               - field: STATE
                                 type: IN
                                 values: [SUCCESS, WARNING, CANCELLED]
                           - id: flow2
+                            operand: AND
                             conditions:
                               - field: NAMESPACE
                                 type: EQUAL_TO
                                 value: company.team
                               - field: FLOW_ID
                                 type: EQUAL_TO
-                                value: myflow2
+                                value: flow2
                               - field: STATE
                                 type: EQUAL_TO
                                 values: SUCCESS
@@ -82,12 +83,12 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                                 value: "{{outputs.output.values.variable == 'value'}}"
                               - field: LABEL
                                 type: EQUAL_TO
-                                value: "some:label"
+                                value: "myLabelKey:myLabelValue"
 
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
-                    message: I'm triggered by two flows!"""
+                    message: I'm triggered after two other flows!"""
         )
     }
 )
@@ -96,7 +97,7 @@ public class ExecutionFilters extends AbstractMultipleCondition {
     @NotEmpty
     @Valid
     @PluginProperty
-    @Schema(title = "The list of execution filters.")
+    @Schema(title = "A list of execution filters.")
     private List<ExecutionFilters.Filter> filters;
 
     /**
@@ -208,14 +209,20 @@ public class ExecutionFilters extends AbstractMultipleCondition {
         @NotNull
         @PluginProperty
         @Schema(
-            title = "The field the condition applied to.",
+            title = "The field which will be filtered.",
             description = """
-                Labels have a special handling, they must be matched by their value using a special syntax: `key:value`.
-                For example, to match executions that have a label with the key `productId` you can use this filter:
-                ```
-              - field: LABEL
-                type: IS_NOT_NULL
-                value: productId
+                Labels are matched using the syntax: `key:value`. You can filter for executions matching specific key-value pairs using the `EQUAL_TO` type:
+                ```yaml
+                  - field: LABEL
+                    type: EQUAL_TO
+                    value: "myLabelKey:myLabelValue"
+                 ```
+
+                To filter for executions with a given label key regardless of the label value, you can use the `IS_NOT_NULL` type. For example, to filter for executions with a label with the key `productId`, you can use the following filter:
+                ```yaml
+                  - field: LABEL
+                    type: IS_NOT_NULL
+                    value: productId
                 ```"""
         )
         private Field field;
@@ -224,20 +231,20 @@ public class ExecutionFilters extends AbstractMultipleCondition {
         @PluginProperty
         @Schema(
             title = "The type of condition.",
-            description = "Depending on the type, you will need to also set the `value` or `values` property."
+            description = "Can be set to one of the following: `EQUAL_TO`, `NOT_EQUAL_TO`, `IS_NULL`, `IS_NOT_NULL`, `IS_TRUE`, `IS_FALSE`, `STARTS_WITH`, `ENDS_WITH`, `REGEX`, `CONTAINS`. Depending on the `type`, you will need to also set the `value` or `values` property."
         )
         private Type type;
 
         @PluginProperty
         @Schema(
-            title = "The single value to filter the field on.",
-            description = "Must be set for the following types: EQUAL_TO, NOT_EQUAL_TO, IS_NULL, IS_NOT_NULL, IS_TRUE, IS_FALSE, STARTS_WITH, ENDS_WITH, REGEX, CONTAINS."
+            title = "The single value to filter the `field` on.",
+            description = "Must be set according to its `type`."
         )
         private String value;
 
         @PluginProperty
         @Schema(
-            title = "The list of values to filter the field on.",
+            title = "The list of values to filter the `field` on.",
             description = "Must be set for the following types: IN, NOT_IN."
         )
         private List<String> values;

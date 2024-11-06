@@ -29,25 +29,46 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of conditions on multiple executions.",
+    title = "Run a flow if the flow filter conditions are met.",
     description = """
-        Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
-        The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
+        This example will trigger an execution of `myflow` once all flow filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours.
+
+        To reproduce this example, you can create two upstream flows (`myflow1` and `myflow2`) as follows:
+
+        ```yaml
+        id: myflow1
+        namespace: company.team
+        tasks:
+          - id: hello
+            type: io.kestra.plugin.core.log.Log
+            message: Hello from {{ flow.id }}
+        ```
+
+        ```yaml
+        id: myflow2
+        namespace: company.team
+        tasks:
+          - id: hello
+            type: io.kestra.plugin.core.log.Log
+            message: Hello from {{ flow.id }}
+        ```
+        Now, create `myflow` with the `Flow` trigger waiting for given `FlowFilters` to be met.
+        """
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
-            title = "A flow that is waiting for 2 flows to run successfully in a day",
+            title = "A flow that is waiting for two other flows to run successfully within a 1-day-period.",
             code = """
-                id: flow-filters
+                id: myflow
                 namespace: company.team
 
                 triggers:
-                  - id: flowFilters
+                  - id: wait_for_upstream
                     type: io.kestra.plugin.core.trigger.Flow
                     conditions:
-                      - id: flowFilters
+                      - id: poll_for_flows
                         type: io.kestra.plugin.core.condition.FlowFilters
                         upstreamFlows:
                           - namespace: company.team
@@ -60,7 +81,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
-                    message: I'm triggered by two flows!"""
+                    message: I'm triggered after two flows!"""
         )
     }
 )
@@ -96,7 +117,7 @@ public class FlowFilters extends AbstractMultipleCondition {
         @Schema(title = "The flow id.")
         private Property<String> flowId;
 
-        @Schema(title = "The Execution states.")
+        @Schema(title = "The execution states.")
         private Property<List<State.Type>> states;
     }
 

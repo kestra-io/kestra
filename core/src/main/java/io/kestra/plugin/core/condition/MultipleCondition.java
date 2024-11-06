@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.triggers.SLA;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -23,6 +24,7 @@ import java.util.*;
 @Schema(
     title = "Condition for a list of conditions on multiple executions.",
     description = """
+        This task is deprecated, use io.kestra.plugin.core.condition.ExecutionFilters or io.kestra.plugin.core.condition.FlowFilters instead.
         Will trigger an executions when all the flows defined by the conditions are successfully executed in a specific period of time.
         The period is defined by the `sla` property and is by default a sliding window of 24 hours."""
 )
@@ -58,6 +60,7 @@ import java.util.*;
     aliases = "io.kestra.core.models.conditions.types.MultipleCondition"
 )
 @Slf4j
+@Deprecated
 public class MultipleCondition extends AbstractMultipleCondition {
     @Schema(
         title = "The duration of the window",

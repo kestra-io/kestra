@@ -441,7 +441,6 @@ public class ExecutorService {
         }
 
         return executor.withTaskRun(
-            // TODO - saveFlowableOutput seems to be only useful for Template
             this.saveFlowableOutput(nextTaskRuns, executor),
             "handleNext"
         );

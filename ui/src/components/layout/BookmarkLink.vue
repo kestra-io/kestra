@@ -1,9 +1,12 @@
 <script lang="ts" setup>
     import {ref} from "vue"
+    import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+
+    const {t} = useI18n();
 
     const $store = useStore()
 
@@ -41,8 +44,8 @@
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
         <div class="buttons">
-            <PencilOutline @click="startEditBookmark" />
-            <DeleteOutline @click="deleteBookmark" />
+            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
+            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
         </div>
         <a :href="href" :title="updatedTitle">
             {{ updatedTitle }}
@@ -57,7 +60,7 @@
             color: var(--el-text-color-regular);
             position: absolute;
             z-index: 1;
-            top: calc(.5 * var(--spacer));
+            top: calc(.35 * var(--spacer));
             right: calc(.5 * var(--spacer));
             display: none;
             gap: calc(.5 * var(--spacer));

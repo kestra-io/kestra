@@ -1051,27 +1051,38 @@
 
 
 <style scoped lang="scss">
-	.padding-bottom {
-		  padding-bottom: 4rem;
-	}
-	.custom-warning {
-		  border: 1px solid #ffb703;
-		  border-radius: 7px;
-		  box-shadow: 1px 1px 3px 1px #ffb703;
-		  padding: 10px 8px;
+.padding-bottom {
+    padding-bottom: 4rem;
+}
+.custom-warning {
+    border: 1px solid #ffb703;
+    border-radius: 7px;
+    box-shadow: 1px 1px 3px 1px #ffb703;
 
-		  :deep(.el-alert__title) {
-			font-size: 16px;
-			color: #ffb703;
-			font-weight: bold;
-		  }
+    :deep(.el-alert__title) {
+        font-size: 16px;
+        color: #ffb703;
+        font-weight: bold;
+    }
 
-		  :deep(.el-alert__description) {
-			font-size: 12px;
-		  }
+    :deep(.el-alert__description) {
+        font-size: 12px;
+    }
 
-		  :deep(.el-alert__icon) {
-			color: #ffb703;
-		  }
-	}
+    :deep(.el-alert__icon) {
+        color: #ffb703;
+    }
+}
+</style>
+
+<style lang="scss">
+.el-message-box {
+    padding: 2rem;
+    max-width: initial;
+    width: 500px;
+
+    .custom-warning {
+        margin: 1rem 0;
+    }
+}
 </style>

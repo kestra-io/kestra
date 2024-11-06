@@ -8,21 +8,21 @@
             :prop="input.id"
         >
             <!-- Radio Button Group Rendering -->
-                        <el-radio-group
-                            v-if="input.isRadio"
-                            v-model="inputs[input.id]"
-                            @update:model-value="onChange"
-                            class="w-100"
-                        >
-                            <el-radio
-                                v-for="item in input.values"
-                                :key="item"
-                                :label="item"
-                                :value="item"
-                            >
-                                {{ item }}
-                            </el-radio>
-                        </el-radio-group>
+            <el-radio-group
+                v-if="input.isRadio"
+                v-model="inputs[input.id]"
+                @update:model-value="onChange"
+                class="w-100"
+            >
+                <el-radio
+                    v-for="item in input.values"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                >
+                            {{ item }}
+                </el-radio>
+            </el-radio-group>
 
             <editor
                 :full-height="false"

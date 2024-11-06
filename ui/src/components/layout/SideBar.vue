@@ -143,7 +143,7 @@
                 },
                 child: store.state.starred.pages.map(p => {
                     return {
-                        component: () => h(BookmarkLink, {href: p.path, title: p.label}, () => p.label),
+                        component: () => h(BookmarkLink, {href: p.path, title: p.label}),
                     }
                 })
             }] : []),

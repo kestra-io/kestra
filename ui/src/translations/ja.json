@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
     "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外れました",
     "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
-    "execution-warn-title": "重要なWarning!"
+    "execution-warn-title": "重要なWarning!",
+    "worker group key": "ワーカーグループキー",
+    "worker group fallback": "ワーカーグループフォールバック"
   }
 }

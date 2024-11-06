@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
     "unqueue confirm": "Sei sicuro di voler rimuovere dalla coda l'esecuzione <code>{id}</code>?",
-    "execution-warn-title": "Avviso Importante!"
+    "execution-warn-title": "Avviso Importante!",
+    "worker group key": "Chiave del gruppo di Worker",
+    "worker group fallback": "Gruppo di Worker di riserva"
   }
 }

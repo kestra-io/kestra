@@ -909,6 +909,8 @@
     "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> execution(s) कतार से बाहर",
     "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करने के लिए सुनिश्चित हैं?",
-    "execution-warn-title": "महत्वपूर्ण WARNING!"
+    "execution-warn-title": "महत्वपूर्ण WARNING!",
+    "worker group key": "वर्कर ग्रुप key",
+    "worker group fallback": "वर्कर ग्रुप फॉलबैक"
   }
 }

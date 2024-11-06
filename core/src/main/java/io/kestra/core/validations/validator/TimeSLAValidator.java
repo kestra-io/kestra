@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.models.triggers.SLA;
-import io.kestra.core.validations.SLAValidation;
+import io.kestra.core.models.triggers.TimeSLA;
+import io.kestra.core.validations.TimeSLAValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -12,12 +12,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Introspected
-public class SLAValidator implements ConstraintValidator<SLAValidation, SLA> {
+public class TimeSLAValidator implements ConstraintValidator<TimeSLAValidation, TimeSLA> {
 
     @Override
     public boolean isValid(
-        @Nullable SLA value,
-        @NonNull AnnotationValue<SLAValidation> annotationMetadata,
+        @Nullable TimeSLA value,
+        @NonNull AnnotationValue<TimeSLAValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
         if (value == null) {
             return true;

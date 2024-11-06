@@ -1,7 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.SLA;
+import io.kestra.core.models.triggers.TimeSLA;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Duration;
@@ -18,7 +18,7 @@ public interface MultipleConditionStorageInterface {
 
     default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
-        SLA sla = multipleCondition.getSla();
+        TimeSLA sla = multipleCondition.getTimeSLA();
 
         var startAndEnd = switch (sla.getType()) {
             case DURATION_WINDOW -> {

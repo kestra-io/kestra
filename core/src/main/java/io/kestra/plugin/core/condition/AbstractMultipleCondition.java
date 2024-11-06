@@ -5,7 +5,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.triggers.SLA;
+import io.kestra.core.models.triggers.TimeSLA;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
@@ -36,7 +36,7 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     private String id;
 
     @Schema(
-        title = "SLA to define the time period (or window) for evaluating conditions",
+        title = "SLA to define the time period (or window) for evaluating preconditions.",
         description = """
         You can set the `type` of `sla` to one of the following values:
         1. `DURATION_WINDOW`: this is the default `type`. It uses a start time (`windowAdvance`) and end time (`window`) that are moving forward to the next interval whenever the evaluation time reaches the end time, based on the defined duration `window`. For example, with a 1-day window (the default option: `window: PT1D`), the SLA conditions are always evaluated during 24h starting at midnight (i.e. at time 00:00:00) each day. If you set `windowAdvance: PT6H`, the window will start at 6 AM each day. If you set `windowAdvance: PT6H` and you also override the `window` property to `PT6H`, the window will start at 6 AM and last for 6 hours — as a result, Kestra will check the SLA conditions during the following time periods: 06:00 to 12:00, 12:00 to 18:00, 18:00 to 00:00, and 00:00 to 06:00, and so on.
@@ -48,7 +48,7 @@ public abstract class AbstractMultipleCondition extends Condition implements Mul
     @PluginProperty
     @Builder.Default
     @Valid
-    protected SLA sla = SLA.builder().build();
+    protected TimeSLA timeSLA = TimeSLA.builder().build();
 
     @Schema(
         title = "Whether to reset the evaluation results of SLA conditions after a first successful evaluation within the given time period.",

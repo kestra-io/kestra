@@ -1,6 +1,6 @@
 package io.kestra.core.validations.validator;
 
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.models.triggers.SLA;
 import io.kestra.core.validations.SLAValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
@@ -12,11 +12,11 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Introspected
-public class SLAValidator implements ConstraintValidator<SLAValidation, MultipleCondition.SLA> {
+public class SLAValidator implements ConstraintValidator<SLAValidation, SLA> {
 
     @Override
     public boolean isValid(
-        @Nullable MultipleCondition.SLA value,
+        @Nullable SLA value,
         @NonNull AnnotationValue<SLAValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
         if (value == null) {

@@ -34,7 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the execution filter conditions are met.",
+    title = "Run a flow if the execution filter conditions are met in a time window.",
     description = """
         This example will trigger an execution of `myflow` once all execution filter conditions are met in a specific period of time (`sla`) — by default, a `window` of 24 hours."""
 )

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.plugin.core.condition.ExecutionFlowCondition;
 import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition.SLA;
+import io.kestra.core.models.triggers.SLA;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition.Type;
 import org.junitpioneer.jupiter.RetryingTest;
 

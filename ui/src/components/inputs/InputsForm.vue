@@ -20,7 +20,7 @@
                     :label="item"
                     :value="item"
                 >
-                            {{ item }}
+                {{ item }}
                 </el-radio>
             </el-radio-group>
 

@@ -36,6 +36,7 @@
                 <resume :execution="execution" />
                 <pause :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
+                <unqueue :execution="execution" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>
         </el-row>
@@ -100,6 +101,7 @@
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
     import Pause from "./Pause.vue";
+    import Unqueue from "./Unqueue.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -119,6 +121,7 @@
             Restart,
             Resume,
             Pause,
+            Unqueue,
             Kill,
             DateAgo,
             Labels,
@@ -315,7 +318,7 @@
     background-color: var(--bs-body-bg);
     border-radius: 4px;
     padding: 10px;
-    overflow-x: auto; 
+    overflow-x: auto;
 }
 
 .stack-line {

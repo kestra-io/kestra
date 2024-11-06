@@ -295,6 +295,22 @@ export default {
         bulkSetLabels({_commit}, options) {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
         },
+        unqueue(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/unqueue`);
+        },
+        bulkUnqueueExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/unqueue/by-ids`,
+                options.executionsId
+            )
+        },
+        queryUnqueueExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/unqueue/by-query`,
+                {},
+                {params: options}
+            )
+        },
         loadFlowForExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
                 .then(response => {

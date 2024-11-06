@@ -78,7 +78,7 @@
     "eslint-plugin-vue": "^9.30.0",
     "jsdom": "^25.0.1",
     "monaco-editor": "^0.52.0",
-    "monaco-yaml": "^5.2.2",
+    "monaco-yaml": "^5.2.3",
     "prettier": "^3.3.3",
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",

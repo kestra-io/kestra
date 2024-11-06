@@ -640,7 +640,7 @@
     "false": "Falsch",
     "undefined": "Nicht definiert",
     "execution-include-non-terminated": "Nicht beendete Ausführungen einbeziehen?",
-    "execution-warn-deleting-still-running": "Wichtige Warnung: Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Problemen mit der Nebenläufigkeit, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit der Löschung fortfahren.",
+    "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Nebenläufigkeitsproblemen, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit dem Löschen fortfahren.",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "Aus Warteschlange entfernen",
     "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
-    "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?"
+    "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
+    "execution-warn-title": "Wichtige Warnung!"
   }
 }

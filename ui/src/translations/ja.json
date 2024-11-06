@@ -640,7 +640,7 @@
     "false": "False",
     "undefined": "未定義",
     "execution-include-non-terminated": "終了していない実行を含めますか？",
-    "execution-warn-deleting-still-running": "重要な警告: このアクションをキャンセルし、進行中の実行をまず停止することを強くお勧めします。未終了の実行を削除すると、concurrencyの問題、flow依存関係管理の不整合、およびインスタンス上のゾンビプロセスが発生し、システムパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-deleting-still-running": "このアクションをキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。終了していないexecutionを削除すると、concurrencyの問題、flow依存管理の不整合、インスタンス上のゾンビプロセスが発生し、システムのパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "キュー解除",
     "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
     "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外れました",
-    "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？"
+    "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
+    "execution-warn-title": "重要なWarning!"
   }
 }

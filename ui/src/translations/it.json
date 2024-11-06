@@ -640,7 +640,7 @@
     "false": "Falso",
     "undefined": "Non definito",
     "execution-include-non-terminated": "Includere esecuzioni non terminate?",
-    "execution-warn-deleting-still-running": "Avviso Importante: Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concurrency, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
+    "execution-warn-deleting-still-running": "Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concurrency, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
     "originalCreatedDate": "Data di creazione originale",
     "welcome": {
       "started": {
@@ -908,6 +908,7 @@
     "unqueue": "Rimuovi dalla coda",
     "executions paused": "<code>{executionCount}</code> esecuzione(i) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> esecuzione(i) in coda",
-    "unqueue confirm": "Sei sicuro di voler rimuovere dalla coda l'esecuzione <code>{id}</code>?"
+    "unqueue confirm": "Sei sicuro di voler rimuovere dalla coda l'esecuzione <code>{id}</code>?",
+    "execution-warn-title": "Avviso Importante!"
   }
 }

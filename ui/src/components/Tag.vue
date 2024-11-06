@@ -26,7 +26,7 @@
         align-items: center;
         padding: 3px 6px;
         border-radius: 4px;
-        border: 1px solid #A2EFFF;
+        border: 1px solid #5BB8FF;
         background-color: #5BB8FF33;
         color: #A2EFFF;
 

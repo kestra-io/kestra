@@ -137,11 +137,14 @@ public class If extends Task implements FlowableTask<If.Output> {
         // We need to evaluate the condition once, so if the condition is impacted during the processing or a branch, the same branch is always taken.
         // This can exist for ex if the condition is based on a KV and the KV is changed in the branch.
         // For this, we evaluate the condition in the outputs() method and get it from the outputs.
+        // But unfortunately, the output may not have yet been computed in some cases, like if the task is inside a flowable, in this case we compute the result anyway.
+        Boolean evaluationResult;
         if (parentTaskRun.getOutputs() == null || parentTaskRun.getOutputs().get("evaluationResult") == null) {
-            throw new IllegalVariableEvaluationException("Unable to find the 'evaluationResult' output, this may indicate that the condition evaluation fail, check your execution logs for more information.");
+            evaluationResult = isTrue(runContext);
+        } else {
+            evaluationResult = (Boolean) parentTaskRun.getOutputs().get("evaluationResult");
         }
 
-        Boolean evaluationResult = (Boolean) parentTaskRun.getOutputs().get("evaluationResult");
         if (Boolean.TRUE.equals(evaluationResult)) {
             return FlowableUtils.resolveTasks(then, parentTaskRun);
         }
@@ -178,10 +181,14 @@ public class If extends Task implements FlowableTask<If.Output> {
     }
 
     @Override
-     public If.Output outputs(RunContext runContext) throws Exception {
-        String rendered = runContext.render(condition);
-        boolean evaluationResult = TruthUtils.isTruthy(rendered);
+    public If.Output outputs(RunContext runContext) throws Exception {
+        Boolean evaluationResult = isTrue(runContext);
         return If.Output.builder().evaluationResult(evaluationResult).build();
+    }
+
+    private Boolean isTrue(RunContext runContext) throws IllegalVariableEvaluationException {
+        String rendered = runContext.render(condition);
+        return TruthUtils.isTruthy(rendered);
     }
 
     @Builder

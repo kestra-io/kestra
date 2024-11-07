@@ -167,7 +167,13 @@
                 return this.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
-                return window.location.pathname
+                // make sure the value changes when the route changes
+                // by mentionning the route in the computed properties
+                // we create a hook into vues reactivity system to update when it updates
+                if(this.$route) {
+                    return `${window.location.pathname}${window.location.search.replace(/&?page=[^&]*/i, "")}`
+                }
+                return ""
             }
         },
         methods: {
@@ -227,7 +233,7 @@
         }
 
         .star-active {
-            color: var(--bs-primary);
+            color: #9470FF;
         }
 
         :deep(.el-breadcrumb__item) {

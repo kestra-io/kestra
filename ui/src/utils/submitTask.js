@@ -40,7 +40,6 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
 
 export const executeTask = (submitor, flow, values, options) => {
     const formData = inputsToFormDate(submitor, flow.inputs, values);
-
     submitor.$store
         .dispatch("execution/triggerExecution", {
             ...options,
@@ -56,7 +55,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })
@@ -68,7 +67,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })

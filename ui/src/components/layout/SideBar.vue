@@ -318,6 +318,8 @@
 
         .vsm--dropdown {
             background-color: var(--bs-gray-100);
+            border-radius: 4px;
+            margin-bottom: calc(.5 * var(--spacer));
 
             .vsm--title {
                 top: 3px;

@@ -164,6 +164,7 @@ $system: #5BB8FF;
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--bs-border-color);
+    overflow:hidden;
 
     &.system {
         border-color: $system;
@@ -198,16 +199,22 @@ $system: #5BB8FF;
     .node {
         flex: 1;
         display: flex;
+        padding: 2.25rem;
+        transition: background-color 0.3s, padding 0.3s, border-radius 0.3s;;
         align-items: center;
         justify-content: space-between;
         color: var(--el-text-color-regular);
+
 
         &.system {
             color: $system;
         }
 
         &:hover {
-            background: transparent;
+            background-color: var(--el-color-primary-light-9);
+            padding: 1.5rem;
+            color: var(--el-color-primary-dark-3);
+            border-radius: 150px;
         }
 
         & .system {

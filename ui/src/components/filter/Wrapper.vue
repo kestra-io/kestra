@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex filters">
+    <section class="d-inline-flex global-filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -9,7 +9,7 @@
             allow-create
             filterable
             multiple
-            @change="(value) => textSearch(value)"
+            @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
@@ -32,7 +32,6 @@
                     :value="comparator"
                     :label="comparator.label"
                     @click="() => comparatorCallback(comparator)"
-                    @keydown.enter="() => comparatorCallback(comparator)"
                 />
             </template>
             <template v-else-if="dropdowns.third.shown">
@@ -59,6 +58,12 @@
 </template>
 
 <script setup lang="ts">
+// TODO: Allow selection of values on Enter key
+// TODO: Improve highlighting of already selected items in second and third dropdowns
+// TODO: Make sure changes are propagated on search click and URLs are properly updated
+// TODO: Add remaining filter options for Executions context first
+// TODO: Add button to handle the table options (show charts, selection of visible columns)
+
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
@@ -115,7 +120,11 @@
         if (!visible) dropdowns.value = {...INITIAL_DROPDOWNS};
     };
     const valueCallback = (value) => {
-        current.value[dropdowns.value.third.index].value.push(value);
+        const values = current.value[dropdowns.value.third.index].value;
+        const index = values.indexOf(value);
+
+        if (index === -1) values.push(value);
+        else values.splice(index, 1);
     };
 
     // TODO: Fetch namespaces if not present in store
@@ -178,7 +187,11 @@
         return OPTIONS.filter((o) => props.include.includes(o.value?.label));
     });
 
-    const textSearch = (v) => {
+    const changeCallback = (v) => {
+        // Clearing the input field after value is being submitted
+        select.value.states.inputValue = "";
+
+        // Adding of text search string
         if (Array.isArray(v) && typeof v.at(-1) === "string") {
             const label = t("filters.options.text");
             const index = current.value.findIndex((i) => i.label === label);
@@ -205,10 +218,10 @@
 </script>
 
 <style lang="scss">
-.filters {
+.global-filters {
     width: -webkit-fill-available;
 
-    .el-select {
+    & .el-select {
         // Combined width of buttons on the sides of select
         width: calc(100% - 237px);
     }

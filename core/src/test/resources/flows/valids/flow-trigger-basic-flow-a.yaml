@@ -1,6 +1,9 @@
 id: flow-trigger-basic-flow-a
 namespace: io.kestra.tests.trigger.basic
 
+labels:
+  some: label
+
 tasks:
   - id: only
     type: io.kestra.plugin.core.debug.Return

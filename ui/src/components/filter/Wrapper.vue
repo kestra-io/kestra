@@ -127,7 +127,12 @@
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
     };
     const dropdownClosedCallback = (visible) => {
-        if (!visible) dropdowns.value = {...INITIAL_DROPDOWNS};
+        if (!visible) {
+            dropdowns.value = {...INITIAL_DROPDOWNS};
+
+            // If last filter item selection was not completed, remove it from array
+            if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+        }
     };
     const valueCallback = (value) => {
         const values = current.value[dropdowns.value.third.index].value;
@@ -142,23 +147,39 @@
         }
     };
 
-    // TODO: Fetch namespaces if not present in store
-    const namespaces = computed(() => store.state.namespace.datatypeNamespaces);
-    const namespaceOptions = () => {
-        let result = new Set();
+    import action from "../../models/action";
+    import permission from "../../models/permission";
 
-        namespaces.value.forEach((namespace) => {
-            let parts = namespace.split(".");
+    const user = computed(() => store.state.auth.user);
+
+    const namespaceOptions = ref([]);
+    const parseNamespaces = (namespaces) => {
+        const result = [];
+
+        namespaces.forEach((namespace) => {
             let current = "";
-
-            parts.forEach((part) => {
+            namespace.split(".").forEach((part) => {
                 current = current ? `${current}.${part}` : part;
-                result.add({label: current, value: current});
+                result.push({label: current, value: current});
             });
         });
 
-        return Array.from(result);
+        return [...new Map(result.map((item) => [item.value, item])).values()];
     };
+    const loadNamespaces = () => {
+        const p = permission.NAMESPACE;
+        const a = action.READ;
+
+        if (user.value && user.value.hasAnyActionOnAnyNamespace(p, a)) {
+            const dataType = "flow";
+            store
+                .dispatch("namespace/loadNamespacesForDatatype", {dataType})
+                .then((r) => (namespaceOptions.value = parseNamespaces(r)));
+        }
+    };
+
+    // Load all namespaces only if that filter is included
+    if (props.include.includes("namespace")) loadNamespaces();
 
     const scopeOptions = [
         {
@@ -176,7 +197,7 @@
 
         switch (type) {
         case "namespace":
-            return namespaceOptions();
+            return namespaceOptions.value;
 
         case "scope":
             return scopeOptions;

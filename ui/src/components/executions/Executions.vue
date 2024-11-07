@@ -39,99 +39,11 @@
             :embed="embed"
         >
             <template #navbar v-if="isDisplayedTop">
-                <el-form-item>
-                    <search-field />
-                </el-form-item>
-                <el-form-item v-if="$route.name !== 'flows/update'">
-                    <namespace-select
-                        :value="selectedNamespace"
-                        data-type="flow"
-                        :disabled="!!namespace"
-                        @update:model-value="onDataTableValue('namespace', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <status-filter-buttons
-                        :value="Utils.asArray($route.query.state)"
-                        @update:model-value="onDataTableValue('state', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <date-filter
-                        @update:is-relative="onDateFilterTypeChange"
-                        @update:filter-value="onDataTableValue"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <scope-filter-buttons
-                        :label="$t('executions')"
-                        :value="$route.query.scope"
-                        :system="namespace === 'system'"
-                        @update:model-value="onDataTableValue('scope', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <label-filter
-                        :model-value="$route.query.labels"
-                        @update:model-value="onDataTableValue('labels', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-input
-                        :placeholder="$t('trigger execution id')"
-                        clearable
-                        :model-value="$route.query.triggerExecutionId"
-                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-select
-                        :placeholder="$t('trigger filter.title')"
-                        v-model="childFilter"
-                        :persistent="false"
-                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
-                    >
-                        <el-option
-                            v-for="(col, val) in $tm('trigger filter.options')"
-                            :key="val"
-                            :label="col"
-                            :value="val"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <el-select
-                        v-model="displayColumns"
-                        multiple
-                        collapse-tags
-                        collapse-tags-tooltip
-                        @change="onDisplayColumnsChange"
-                    >
-                        <el-option
-                            v-for="col in optionalColumns"
-                            :key="col.label"
-                            :label="$t(col.label)"
-                            :value="col.prop"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <el-switch
-                        :model-value="showChart"
-                        @update:model-value="onShowChartChange"
-                        :active-text="$t('show chart')"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <filters :storage-key="filterStorageKey" />
-                </el-form-item>
-                <el-form-item>
-                    <refresh-button
-                        :can-auto-refresh="canAutoRefresh"
-                        class="float-right"
-                        @refresh="refresh"
-                    />
-                </el-form-item>
+                <KestraFilter
+                    prefix="executions"
+                    :include="['namespace', 'state', 'scope', 'labels', 'child']"
+                    :refresh="{shown: true, canAutoRefresh, callback: refresh}"
+                />
             </template>
 
             <template #top>
@@ -434,10 +346,10 @@
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Import from "vue-material-design-icons/Import.vue";
-    import Utils from "../../utils/utils";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
+    import KestraFilter from "../filter/Wrapper.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 </script>
 
@@ -450,14 +362,6 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
-    import SearchField from "../layout/SearchField.vue";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import LabelFilter from "../labels/LabelFilter.vue";
-    import DateFilter from "./date-select/DateFilter.vue";
-    import RefreshButton from "../layout/RefreshButton.vue"
-    import Filters from "../saved-filters/Filters.vue";
-    import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
-    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -481,14 +385,6 @@
             Status,
             TextSearch,
             DataTable,
-            SearchField,
-            NamespaceSelect,
-            LabelFilter,
-            DateFilter,
-            RefreshButton,
-            Filters,
-            StatusFilterButtons,
-            ScopeFilterButtons,
             Kicon,
             Labels,
             Id,

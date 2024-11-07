@@ -833,7 +833,7 @@
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
     "scope_filter": {
-      "all": "Tout {label}",
+      "all": "Tous les {label}",
       "user": "Utilisateur {label}",
       "system": "Système {label}"
     },
@@ -902,13 +902,13 @@
     "create_flow": "Créer Flow",
     "starred": "Étoilé",
     "invalid bulk unqueue": "Impossible de retirer les exécutions de la file d'attente",
-    "unqueue done": "L'exécution est défilée",
+    "unqueue done": "L'exécution est retirée de la file d'attente",
     "bulk unqueue": "Êtes-vous sûr de vouloir retirer de la file d'attente <code>{executionCount}</code> exécution(s) ?",
-    "unqueue title": "Défilement de l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue title": "Défilér l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
     "unqueue": "Défilement",
-    "executions paused": "<code>{executionCount}</code> exécution(s) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> exécution(s) en file d'attente",
-    "unqueue confirm": "Êtes-vous sûr de vouloir retirer l'exécution <code>{id}</code> de la file d'attente ?",
+    "executions paused": "<code>{executionCount}</code> exécution(s) en PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> exécution(s) en attente",
+    "unqueue confirm": "Êtes-vous sûr de vouloir retirer de la file d'attente l'exécution <code>{id}</code> ?",
     "execution-warn-title": "Avertissement Important !",
     "worker group key": "Clé du groupe de Worker",
     "worker group fallback": "Groupe de Worker de secours"

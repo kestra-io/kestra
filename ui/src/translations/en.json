@@ -926,6 +926,42 @@
     "change_status": "Change status",
     "files": "Files",
     "no_data": "No data available",
-    "starred": "Starred"
+    "starred": "Starred",
+    "filters": {
+      "label": "Choose filters",
+      "empty": "No data.",
+      "options": {
+        "namespace": "Namespace",
+        "state": "State",
+        "scope": "Scope",
+        "labels": "Labels",
+        "child": "Child",
+        "text": "text"
+      },
+      "comparators": {
+        "is": "is",
+        "is_one_of": "is one of",
+        "is_not": "is not",
+        "is_not_one_off": "is not one of",
+        "contains": "contains",
+        "not_contains": "not_contains"
+      },
+      "recent": {
+        "label": "Recent searches",
+        "empty": "You still haven't searched for anything."
+      },
+      "save": {
+        "label": "Saved searches",
+        "dialog": {
+          "heading": "Save current search",
+          "placeholder": "Label",
+          "hint": "How do you want to label this search criteria?",
+          "confirmation": "Search criteria <code>{name}</code>"
+        }
+      },
+      "labels": {
+        "placeholder": "Type label as 'key:value'"
+      }
+    }
   }
 }

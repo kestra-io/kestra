@@ -640,7 +640,7 @@
     "false": "假",
     "undefined": "未定义",
     "execution-include-non-terminated": "包括未终止的执行？",
-    "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致，以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
+    "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
     "originalCreatedDate": "原始创建日期",
     "welcome": {
       "started": {
@@ -904,10 +904,10 @@
     "invalid bulk unqueue": "无法取消排队的执行",
     "unqueue done": "执行已出队列",
     "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
-    "unqueue title": "取消执行<code>{id}</code>。<br/>请注意，它将不遵循flow并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue title": "取消执行 <code>{id}</code>。<br/>请注意，它将不遵循 flow 并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unqueue": "出队列",
     "executions paused": "<code>{executionCount}</code> 次执行已暂停",
-    "executions unqueue": "<code>{executionCount}</code> 次执行已出队",
+    "executions unqueue": "<code>{executionCount}</code> 次执行未排队",
     "unqueue confirm": "您确定要取消排队执行<code>{id}</code>吗？",
     "execution-warn-title": "重要警告！",
     "worker group key": "工作组 key",

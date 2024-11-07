@@ -69,7 +69,6 @@
 // - Relative date
 // - Absoute date
 // - labels
-// child excutions
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -265,7 +264,10 @@
     };
 
     const triggerSearch = () => {
-        setRecentItems([...getRecentItems(), {value: current.value}]);
+        if (current.value.length) {
+            setRecentItems([...getRecentItems(), {value: current.value}]);
+        }
+
         router.push({query: encodeParams(current.value)});
     };
 

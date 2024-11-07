@@ -33,7 +33,11 @@
         },
         computed: {
             generateTableColumns() {
-                return Object.keys(this.value[0]);
+                const allKeys = new Set();
+                this.value.forEach(item => {
+                    Object.keys(item).forEach(key => allKeys.add(key));
+                });
+                return Array.from(allKeys);
             }
         },
         methods: {

@@ -206,7 +206,13 @@ export default class Utils {
     }
 
     static getTheme() {
-        return localStorage.getItem("theme") || "light";
+        let theme = localStorage.getItem("theme") || "light";
+
+        if(theme === "syncWithSystem") {
+            theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        
+        return theme;
     }
 
     static getLang() {

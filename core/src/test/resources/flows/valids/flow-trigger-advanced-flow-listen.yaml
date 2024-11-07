@@ -1,21 +1,21 @@
-id: flow-trigger-execution-filters-flow-listen
-namespace: io.kestra.tests.trigger.execution-filters
+id: flow-trigger-advanced-flow-listen
+namespace: io.kestra.tests.trigger.advanced
 
 triggers:
   - id: flow
     type: io.kestra.plugin.core.trigger.Flow
     conditions:
       - id: executionFilters
-        type: io.kestra.plugin.core.condition.ExecutionFilters
-        filters:
+        type: io.kestra.plugin.core.condition.AdvancedExecutionsCondition
+        preconditions:
           - id: flow1
-            conditions:
+            filters:
               - field: NAMESPACE
                 type: EQUAL_TO
-                value: io.kestra.tests.trigger.execution-filters
+                value: io.kestra.tests.trigger.advanced
               - field: FLOW_ID
                 type: EQUAL_TO
-                value: flow-trigger-execution-filters-flow-a
+                value: flow-trigger-advanced-flow-a
               - field: STATE
                 type: IN
                 values: [SUCCESS, WARNING, CANCELLED]
@@ -23,13 +23,13 @@ triggers:
                 type: NOT_IN
                 values: [FAILED, CANCELLED]
           - id: flow2
-            conditions:
+            filters:
               - field: NAMESPACE
                 type: EQUAL_TO
-                value: io.kestra.tests.trigger.execution-filters
+                value: io.kestra.tests.trigger.advanced
               - field: FLOW_ID
                 type: EQUAL_TO
-                value: flow-trigger-execution-filters-flow-b
+                value: flow-trigger-advanced-flow-b
               - field: EXPRESSION
                 type: IS_TRUE
                 value: "{{outputs.output.values.variable == 'toto'}}"
@@ -44,16 +44,16 @@ triggers:
                 value: "other:label"
               - field: FLOW_ID
                 type: REGEX
-                value: .*trigger-execution-filters.*
+                value: .*trigger-advanced.*
               - field: FLOW_ID
                 type: CONTAINS
-                value: trigger-execution-filters
+                value: trigger-advanced
               - field: FLOW_ID
                 type: STARTS_WITH
-                value: flow-trigger-execution
+                value: flow-trigger-advanced
               - field: FLOW_ID
                 type: ENDS_WITH
-                value: filters-flow-b
+                value: advanced-flow-b
               - field: LABEL
                 type: IS_NULL
                 value: other

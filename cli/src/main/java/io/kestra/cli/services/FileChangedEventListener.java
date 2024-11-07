@@ -5,7 +5,7 @@ import io.kestra.core.models.flows.FlowWithPath;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowListenersInterface;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
@@ -37,7 +37,7 @@ public class FileChangedEventListener {
     private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private ModelValidator modelValidator;
@@ -229,7 +229,7 @@ public class FileChangedEventListener {
 
     private Optional<Flow> parseFlow(String content, Path entry) {
         try {
-            Flow flow = yamlFlowParser.parse(content, Flow.class);
+            Flow flow = yamlParser.parse(content, Flow.class);
             modelValidator.validate(flow);
             return Optional.of(flow);
         } catch (ConstraintViolationException e) {

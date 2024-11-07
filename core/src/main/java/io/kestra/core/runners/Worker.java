@@ -642,6 +642,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         return dynamicWorkerResults
             .stream()
             .map(WorkerTaskResult::getTaskRun)
+            .map(taskRun -> taskRun.withDynamic(true))
             .toList();
     }
 

@@ -42,36 +42,8 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, @NonNull Integer offset, boolean forUpdate) {
-        var select = ctx.select(
-                AbstractJdbcRepository.field("value"),
-                AbstractJdbcRepository.field("offset")
-            )
-            .from(this.table)
-            .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()));
-
-        if (offset != 0) {
-            select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
-        }
-
-        if (consumerGroup != null) {
-            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
-        } else {
-            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
-        }
-
-        var limitSelect = select
-            .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(configuration.getPollSize());
-        ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
-
-        if (forUpdate) {
-            configuredSelect = limitSelect.forUpdate().skipLocked();
-        }
-
-        return configuredSelect
-            .fetchMany()
-            .getFirst();
+    protected Condition buildTypeCondition(String type) {
+        return DSL.condition("type = CAST(? AS queue_type)", type);
     }
 
     @Override

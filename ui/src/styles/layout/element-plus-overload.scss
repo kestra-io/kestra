@@ -914,6 +914,21 @@ form.ks-horizontal {
             --el-tag-hover-color: var(--el-color-#{$i}-dark-2);
         }
     }
+
+    &.el-tag--plain {
+        border: 1px solid var(--el-tag-border-color);
+        @each $i in ($types) {
+            &.el-tag--#{$i} {
+                --el-tag-text-color: var(--el-color-#{$i});
+                --el-tag-bg-color: #FFFFFF;
+                --el-tag-hover-color: var(--el-color-#{$i}-dark-2);
+                --el-tag-border-color: var(--el-color-#{$i});
+                html.dark &{
+                    --el-tag-bg-color: #{darken(map.get($element-colors, $i, 'base'), 45%)};
+                }
+            }
+        }
+    }
 }
 
 // avatar

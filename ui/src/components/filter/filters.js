@@ -33,7 +33,7 @@ export const encodeParams = (filters) => {
 
 export const decodeParams = (query, include) => {
     return Object.entries(query)
-        .filter(([key]) => include.includes(key) || key === "q") // Include specified keys and 'q'
+        .filter(([key]) => [...include, "q"].includes(key)) // Include all specified keys and 'q'
         .map(([key, value]) => ({
             label: key === "q" ? "text" : key,
             value: Array.isArray(value)
@@ -68,16 +68,6 @@ export function useFilters(prefix) {
             value: t("filters.comparators.is_not_one_off"),
             multiple: true,
         },
-        CONTAINS: {
-            label: t("filters.comparators.contains"),
-            value: t("filters.comparators.contains"),
-            multiple: true,
-        },
-        NOT_CONTAINS: {
-            label: t("filters.comparators.not_contains"),
-            value: t("filters.comparators.not_contains"),
-            multiple: true,
-        },
     };
 
     const OPTIONS = [
@@ -95,11 +85,6 @@ export function useFilters(prefix) {
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
-        },
-        {
-            label: t("filters.options.date"),
-            value: {label: "date", comparator: undefined, value: []},
-            comparators: [],
         },
     ];
 

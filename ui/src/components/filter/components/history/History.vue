@@ -3,11 +3,11 @@
         trigger="click"
         placement="bottom-start"
         @visible-change="loadAll"
-        class="recents"
     >
         <el-button :icon="History" class="rounded-0 rounded-start" />
+
         <template #dropdown>
-            <el-dropdown-menu class="py-2" style="width: 400px">
+            <el-dropdown-menu class="py-2 dropdown">
                 <p class="title">
                     {{ t("filters.recent.label") }}
                 </p>
@@ -19,20 +19,21 @@
                         {{ t("filters.recent.empty") }}
                     </small>
                 </el-dropdown-item>
-                <el-dropdown-item
-                    v-else
-                    v-for="(recent, recentIndex) in recents.slice(0, 5)"
-                    :key="recent"
-                    @click="emits('search', recent.value)"
-                >
-                    <Item :item="recent">
-                        <template #delete>
-                            <DeleteOutline
-                                @click.stop="remove('recents', recentIndex)"
-                            />
-                        </template>
-                    </Item>
-                </el-dropdown-item>
+                <template v-else>
+                    <el-dropdown-item
+                        v-for="(recent, rIdx) in recents.slice(0, 5)"
+                        :key="rIdx"
+                        @click="emits('search', recent.value)"
+                    >
+                        <Item :item="recent">
+                            <template #delete>
+                                <DeleteOutline
+                                    @click.stop="remove('recents', rIdx)"
+                                />
+                            </template>
+                        </Item>
+                    </el-dropdown-item>
+                </template>
 
                 <template v-if="saved.length">
                     <p class="pt-3 title">
@@ -40,16 +41,14 @@
                     </p>
                     <div class="overflow-x-auto saved scroller">
                         <el-dropdown-item
-                            v-for="(save, savedIndex) in saved"
-                            :key="save"
+                            v-for="(save, sIdx) in saved"
+                            :key="sIdx"
                             @click="emits('search', save.value)"
                         >
                             <Item :item="save">
                                 <template #delete>
                                     <DeleteOutline
-                                        @click.stop="
-                                            remove('saved', savedIndex)
-                                        "
+                                        @click.stop="remove('saved', sIdx)"
                                     />
                                 </template>
                             </Item>
@@ -76,7 +75,8 @@
     const props = defineProps({prefix: {type: String, required: true}});
 
     import {useFilters} from "../../filters.js";
-    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} = useFilters(props.prefix);
+    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} =
+        useFilters(props.prefix);
 
     let recents = ref([]);
     let saved = ref([]);
@@ -98,6 +98,10 @@
 </script>
 
 <style lang="scss">
+.dropdown {
+    width: 400px;
+}
+
 .title {
     margin: 0;
     padding: calc(1rem / 4) 0 0 1rem;

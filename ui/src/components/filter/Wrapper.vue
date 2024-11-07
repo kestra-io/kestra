@@ -46,7 +46,7 @@
         </el-select>
 
         <el-button-group class="d-inline-flex">
-            <el-button @click="triggerSearch" :icon="Magnify" />
+            <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh
                 v-if="refresh.shown"
@@ -64,7 +64,6 @@
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
 // TODO: Submit search on Enter key press
 // TODO: On mounted, make sure that existing route parameters are loaded into the filters
-// TODO: Rework all components
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -233,6 +232,7 @@
         router.push({query: encodeParams(current.value)});
     };
 
+    // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
 </script>
 

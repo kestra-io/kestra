@@ -1,12 +1,12 @@
 <template>
-    <el-button :disabled @click="toggle(true)" :icon="Save" />
+    <el-button :disabled :icon="Save" @click="toggle(true)" />
 
     <el-dialog
-        @opened="input?.focus"
         v-model="visible"
         :title="t('filters.save.dialog.heading')"
         :width="400"
         align-center
+        @opened="input?.focus"
     >
         <section class="pb-3">
             <span class="text-secondary">
@@ -15,9 +15,9 @@
             <el-input
                 ref="input"
                 v-model="label"
-                @keydown.enter.prevent="save()"
                 :placeholder="t('filters.save.dialog.placeholder')"
                 class="pt-1"
+                @keydown.enter.prevent="save()"
             />
         </section>
         <template #footer>
@@ -56,7 +56,9 @@
     const visible = ref(false);
     const toggle = (isVisible = false) => {
         visible.value = isVisible;
-        if (!isVisible) label.value = ""; // Clearing input each time dialog closes
+
+        // Clearing input each time dialog closes
+        if (!isVisible) label.value = "";
     };
 
     const input = ref<InstanceType<typeof ElInput> | null>(null);

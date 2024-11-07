@@ -63,6 +63,7 @@
 // TODO: Make sure changes are propagated on search click and URLs are properly updated
 // TODO: Add remaining filter options for Executions context first
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
+// TODO: Submit search on Enter key press
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -72,6 +73,9 @@
 
     import {useStore} from "vuex";
     const store = useStore();
+
+    import {useRouter} from "vue-router";
+    const router = useRouter();
 
     import Refresh from "../layout/RefreshButton.vue";
 
@@ -94,7 +98,7 @@
         },
     });
 
-    import {formatLabel, useFilters} from "./filters.js";
+    import {formatLabel, encodeParams, useFilters} from "./filters.js";
     const {getRecentItems, setRecentItems, OPTIONS} = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
@@ -125,6 +129,11 @@
 
         if (index === -1) values.push(value);
         else values.splice(index, 1);
+
+        if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
+            // If selection is not multiple, close the dropdown
+            select.value.dropdownMenuVisible = false;
+        }
     };
 
     // TODO: Fetch namespaces if not present in store
@@ -207,13 +216,14 @@
         );
     };
 
-    const triggerSearch = () => {
-        setRecentItems([...getRecentItems(), {value: current.value}]);
-    };
-
     const handleHistoryItems = (value) => {
         if (value) current.value = value;
         select.value?.focus();
+    };
+
+    const triggerSearch = () => {
+        setRecentItems([...getRecentItems(), {value: current.value}]);
+        router.push({query: encodeParams(current.value)});
     };
 </script>
 

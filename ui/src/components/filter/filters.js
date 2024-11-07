@@ -22,54 +22,68 @@ export const formatLabel = (value) => {
     return label;
 };
 
+export const encodeParams = (filters) => {
+    return filters.reduce((query, filter) => {
+        const label = filter.label === "text" ? "q" : filter.label; // To conform with BE endpoint
+
+        query[label] = filter.value.map((v) => encodeURIComponent(v));
+        return query;
+    }, {});
+};
+
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 
     const keys = {recent: `recent__${prefix}`, saved: `saved__${prefix}`};
 
     const COMPARATORS = {
-        IS: t("filters.comparators.is"),
-        IS_ONE_OF: t("filters.comparators.is_one_of"),
-        IS_NOT: t("filters.comparators.is_not"),
-        IS_NOT_ONE_OF: t("filters.comparators.is_not_one_off"),
-        CONTAINS: t("filters.comparators.contains"),
-        NOT_CONTAINS: t("filters.comparators.not_contains"),
+        IS: {
+            label: t("filters.comparators.is"),
+            value: t("filters.comparators.is"),
+            multiple: false,
+        },
+        IS_ONE_OF: {
+            label: t("filters.comparators.is_one_of"),
+            value: t("filters.comparators.is_one_of"),
+            multiple: true,
+        },
+        IS_NOT: {
+            label: t("filters.comparators.is_not"),
+            value: t("filters.comparators.is_not"),
+            multiple: false,
+        },
+        IS_NOT_ONE_OF: {
+            label: t("filters.comparators.is_not_one_off"),
+            value: t("filters.comparators.is_not_one_off"),
+            multiple: true,
+        },
+        CONTAINS: {
+            label: t("filters.comparators.contains"),
+            value: t("filters.comparators.contains"),
+            multiple: true,
+        },
+        NOT_CONTAINS: {
+            label: t("filters.comparators.not_contains"),
+            value: t("filters.comparators.not_contains"),
+            multiple: true,
+        },
     };
 
     const OPTIONS = [
         {
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
-            comparators: [
-                {
-                    label: COMPARATORS.IS,
-                    value: COMPARATORS.IS,
-                },
-            ],
+            comparators: [COMPARATORS.IS],
         },
         {
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
-            comparators: [
-                {
-                    label: COMPARATORS.IS_ONE_OF,
-                    value: COMPARATORS.IS_ONE_OF,
-                },
-                {
-                    label: COMPARATORS.IS_NOT_ONE_OF,
-                    value: COMPARATORS.IS_NOT_ONE_OF,
-                },
-            ],
+            comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
-            comparators: [
-                {
-                    label: COMPARATORS.IS_ONE_OF,
-                    value: COMPARATORS.IS_ONE_OF,
-                },
-            ],
+            comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             label: t("filters.options.date"),

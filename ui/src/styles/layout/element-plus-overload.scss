@@ -85,6 +85,8 @@
 }
 
 .el-input, .el-input-number, .el-select, .el-date-editor.el-input {
+
+    background-color: var(--bs-body-bg);
     width: 100%;
 }
 
@@ -216,10 +218,6 @@
 
 .el-input-number__increase, .el-input-number__decrease {
     background: var(--bs-white);
-
-    html.dark & {
-        background: var(--bs-gray-600);
-    }
 }
 
 .el-input-number__increase:hover, .el-input-number__decrease:hover {
@@ -229,6 +227,7 @@
 }
 
 .el-input-file {
+
     .el-input__inner::file-selector-button {
         background: var(--bs-primary);
         border: 0;
@@ -710,7 +709,7 @@ form.ks-horizontal {
     }
 
     .el-input__prefix, .el-input__inner, .el-input__inner::placeholder {
-        color: var(--bs-body-color);
+        background-color: var(--bs-body-bg);
     }
 
     .el-input__suffix-inner {

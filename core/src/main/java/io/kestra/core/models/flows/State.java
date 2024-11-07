@@ -1,8 +1,12 @@
 package io.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.DurationSerializer;
+import com.fasterxml.jackson.datatype.jsr310.util.DurationUnitConverter;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -84,10 +88,11 @@ public class State {
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT) // force serialization as timestamp as the database column is using a number
     public Duration getDuration() {
         return Duration.between(
             this.histories.getFirst().getDate(),
-            this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
+            this.histories.size() > 1 ? this.histories.getLast().getDate() : Instant.now()
         );
     }
 

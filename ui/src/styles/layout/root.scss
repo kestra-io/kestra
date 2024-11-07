@@ -54,6 +54,7 @@
     #{--font-size-base}: $font-size-base;
     #{--font-size-lg}: $font-size-lg;
     #{--card-bg}: $card-bg;
+    #{--card-bg-hover}: darken($card-bg, 2);
     #{--input-bg}: $input-bg;
 
     #{--bs-border-color}: #E5E4F7;
@@ -153,6 +154,8 @@
     #{--bs-border-danger}: var(--border-failed);
     #{--bs-border-warning}: var(--border-warning);
     #{--bs-border-success}: var(--border-success);
+    #{--token-content-link}: #8405FF;
+
 }
 
 $logLevels: "trace", "debug", "info", "warn", "error";

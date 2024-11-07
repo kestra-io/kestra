@@ -3,7 +3,7 @@ package io.kestra.cli.commands.flows;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.Graph2DotService;
 import io.kestra.core.utils.GraphUtils;
 import io.micronaut.context.ApplicationContext;
@@ -29,7 +29,7 @@ public class FlowDotCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        YamlFlowParser parser = applicationContext.getBean(YamlFlowParser.class);
+        YamlParser parser = applicationContext.getBean(YamlParser.class);
         Flow flow = parser.parse(file.toFile(), Flow.class);
 
         GraphCluster graph = GraphUtils.of(flow, null);

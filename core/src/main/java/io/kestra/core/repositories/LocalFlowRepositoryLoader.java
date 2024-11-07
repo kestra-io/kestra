@@ -2,7 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.PluginDefaultService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -19,7 +19,6 @@ import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Slf4j
 public class LocalFlowRepositoryLoader {
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -72,13 +71,13 @@ public class LocalFlowRepositoryLoader {
         Map<String, Flow> flowByUidInRepository = flowRepository.findAllForAllTenants().stream()
             .collect(Collectors.toMap(Flow::uidWithoutRevision, Function.identity()));
         List<Path> list = Files.walk(basePath.toPath())
-            .filter(YamlFlowParser::isValidExtension)
+            .filter(YamlParser::isValidExtension)
             .toList();
 
         for (Path file : list) {
             try {
                 String flowSource = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
-                Flow parse = yamlFlowParser.parse(file.toFile(), Flow.class);
+                Flow parse = yamlParser.parse(file.toFile(), Flow.class);
                 modelValidator.validate(parse);
 
                 Flow inRepository = flowByUidInRepository.get(parse.uidWithoutRevision());

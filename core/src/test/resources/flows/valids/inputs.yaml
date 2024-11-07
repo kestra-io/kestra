@@ -104,6 +104,11 @@ inputs:
       value: value1
     - key: key2
       value: value2
+# required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
+- name: empty
+  type: STRING
+  defaults: ''
+  required: true
 
 tasks:
 - id: string

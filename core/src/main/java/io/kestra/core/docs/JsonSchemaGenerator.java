@@ -23,6 +23,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -211,7 +212,7 @@ public class JsonSchemaGenerator {
                 }
             });
 
-        // resolve dynamic types from Property
+        // resolve dynamic types from Property and make EncryptedString looks like a string
         builder.forFields().withTargetTypeOverridesResolver(target -> {
             ResolvedType javaType = target.getType();
             if (javaType.isInstanceOf(Property.class)) {
@@ -239,6 +240,11 @@ public class JsonSchemaGenerator {
                         context.resolve(String.class)
                     );
                 }
+            } else if (javaType.isInstanceOf(EncryptedString.class)) {
+                TypeContext context = target.getContext();
+                return List.of(
+                    context.resolve(String.class)
+                );
             }
 
             return null;

@@ -2,7 +2,7 @@ package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.AbstractValidateCommand;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -41,7 +41,7 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
         try (var files = Files.walk(directory)) {
             List<String> flows = files
                 .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
+                .filter(YamlParser::isValidExtension)
                 .map(path -> {
                     try {
                         return IncludeHelperExpander.expand(Files.readString(path, Charset.defaultCharset()), path.getParent());

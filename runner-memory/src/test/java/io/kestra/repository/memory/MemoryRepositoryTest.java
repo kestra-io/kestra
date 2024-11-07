@@ -2,7 +2,7 @@ package io.kestra.repository.memory;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 public class MemoryRepositoryTest {
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
@@ -30,7 +30,7 @@ public class MemoryRepositoryTest {
               - id: some-task
                 type: io.kestra.core.tasks.debugs.Return
                 format: "Hello, World!\"""";
-        Flow flow = yamlFlowParser.parse(flowSource, Flow.class);
+        Flow flow = yamlParser.parse(flowSource, Flow.class);
         flowRepositoryInterface.create(flow, flowSource, flow);
 
         assertThat(flowRepositoryInterface.findAll(null).size(), is(1));

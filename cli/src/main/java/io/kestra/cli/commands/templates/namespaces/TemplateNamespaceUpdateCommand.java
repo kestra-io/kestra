@@ -2,10 +2,9 @@ package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
-import io.kestra.cli.commands.templates.TemplateValidateCommand;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
@@ -17,7 +16,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import jakarta.validation.ConstraintViolationException;
 
 @CommandLine.Command(
@@ -29,7 +28,7 @@ import jakarta.validation.ConstraintViolationException;
 @TemplateEnabled
 public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
-    public YamlFlowParser yamlFlowParser;
+    public YamlParser yamlParser;
 
     @Override
     public Integer call() throws Exception {
@@ -38,8 +37,8 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
         try (var files = Files.walk(directory)) {
             List<Template> templates = files
                 .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
-                .map(path -> yamlFlowParser.parse(path.toFile(), Template.class))
+                .filter(YamlParser::isValidExtension)
+                .map(path -> yamlParser.parse(path.toFile(), Template.class))
                 .toList();
 
             if (templates.isEmpty()) {

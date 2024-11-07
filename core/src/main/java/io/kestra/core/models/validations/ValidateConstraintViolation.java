@@ -34,6 +34,7 @@ public class ValidateConstraintViolation {
     private boolean outdated;
     private List<String> deprecationPaths;
     private List<String> warnings;
+    private List<String> infos;
 
     @JsonIgnore
     public String getIdentity(){

@@ -1,0 +1,19 @@
+id: primitive-labels-flow
+namespace: io.kestra.tests
+
+inputs:
+  - name: intLabel
+    type: INT
+  - name: floatLabel
+    type: FLOAT
+  - name: boolLabel
+    type: BOOLEAN
+
+tasks:
+  - id: update-labels
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      intValue: "{{inputs.intLabel}}"
+      floatValue: "{{inputs.floatLabel}}"
+      boolValue: "{{inputs.boolLabel}}"
+      taskRunId: "{{taskrun.id}}"

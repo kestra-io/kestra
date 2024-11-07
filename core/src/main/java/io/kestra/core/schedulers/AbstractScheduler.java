@@ -564,7 +564,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .namespace(f.getTriggerContext().getNamespace())
                             .flowId(f.getTriggerContext().getFlowId())
                             .flowRevision(f.getFlow().getRevision())
-                            .labels(f.getFlow().getLabels())
+                            .labels(LabelService.labelsExcludingSystem(f.getFlow()))
                             .state(new State().withState(State.Type.FAILED))
                             .error(ExecutionError.from(ie))
                             .build();
@@ -822,7 +822,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build();
         try {
-            this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger), workerTrigger);
+            this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger).map(group -> group.getKey()).orElse(null), workerTrigger);
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
         }

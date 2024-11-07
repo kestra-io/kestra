@@ -27,6 +27,8 @@ public class QueueService {
             return ((Executor) object).getExecution().getId();
         } else if (object.getClass() == MetricEntry.class) {
             return null;
+        } else if (object.getClass() == ExecutionRunning.class) {
+            return ((ExecutionRunning) object).getExecution().getId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

@@ -1,7 +1,7 @@
 <template>
     <span>
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
+        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
             <check-circle class="text-success" />
         </el-button>
 
@@ -54,12 +54,45 @@
                             {{ $t("warning detected") }}
                         </span>
                     </el-header>
-                    <el-main>{{ warnings.join("\n") }}</el-main>
+                    <el-main>
+                        {{ warnings.join("\n") }}
+                        <br v-if="infos">
+                        {{ infos?.join("\n") }}
+                    </el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning">
                 <alert class="text-warning" />
                 <span class="text-warning label">{{ $t("warning detected") }}</span>
+            </el-button>
+        </el-tooltip>
+
+        <!-- Infos -->
+        <el-tooltip
+            effect="light"
+            v-if="infos && !warnings"
+            popper-class="p-0 bg-transparent"
+            :placement="tooltipPlacement"
+            :show-arrow="false"
+            raw-content
+            transition=""
+            :persistent="true"
+            :hide-after="0"
+        >
+            <template #content>
+                <el-container class="validation-tooltip">
+                    <el-header>
+                        <alert class="align-middle text-info" />
+                        <span class="align-middle">
+                            {{ $t("informative notice") }}
+                        </span>
+                    </el-header>
+                    <el-main>{{ infos.join("<\n") }}</el-main>
+                </el-container>
+            </template>
+            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
+                <alert class="text-info" />
+                <span class="text-info label">{{ $t("informative notice") }}</span>
             </el-button>
         </el-tooltip>
     </span>
@@ -83,6 +116,10 @@
                 default: undefined
             },
             warnings: {
+                type: Array,
+                default: undefined
+            },
+            infos: {
                 type: Array,
                 default: undefined
             },

@@ -59,6 +59,10 @@
             }
         }
 
+        .el-button-group {
+            display: flex;
+        }
+        
         > * {
             padding: 0 8px;
         }

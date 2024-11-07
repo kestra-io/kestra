@@ -8,7 +8,7 @@
                         data-test-id="dashboard-create-button"
                     >
                         <el-button :icon="Plus" type="primary">
-                            {{ $t("create") }}
+                            {{ $t("create_flow") }}
                         </el-button>
                     </router-link>
                 </li>

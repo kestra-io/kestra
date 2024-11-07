@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "最初の一歩が一番難しい。",
           "2": "次のFlowを始めるためにBlueprintsを探索してください。"
-        }
+        },
+        "alt": "ブループリントアイコン"
       },
       "empty": "設計図が表示されていません。"
     },
@@ -639,7 +640,7 @@
     "false": "False",
     "undefined": "未定義",
     "execution-include-non-terminated": "終了していない実行を含めますか？",
-    "execution-warn-deleting-still-running": "重要な警告: このアクションをキャンセルし、進行中の実行をまず停止することを強くお勧めします。未終了の実行を削除すると、concurrencyの問題、flow依存関係管理の不整合、およびインスタンス上のゾンビプロセスが発生し、システムパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-deleting-still-running": "このアクションをキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。終了していないexecutionを削除すると、concurrencyの問題、flow依存管理の不整合、インスタンス上のゾンビプロセスが発生し、システムのパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
       "started": {
@@ -704,6 +705,12 @@
           "fields": {
             "flows": "すべてのflowをエクスポート",
             "templates": "すべてのテンプレートをエクスポート"
+          }
+        },
+        "save": {
+          "label": "設定を保存",
+          "fields": {
+            "name": "変更を保存"
           }
         }
       }
@@ -836,7 +843,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。",
+    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -881,6 +888,29 @@
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
-    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。"
+    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "no_data": "データがありません",
+    "informative notice": "注記",
+    "triggers-view": {
+      "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
+      "title_no_triggers": "あなたのflowにはトリガーがありません。"
+    },
+    "dependency-view": {
+      "title_no_deps": "このFlowには依存関係が設定されていません。",
+      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
+    },
+    "create_flow": "フローを作成",
+    "starred": "スター付き",
+    "invalid bulk unqueue": "実行をキューから外すことができませんでした",
+    "unqueue done": "実行はキューから外されました",
+    "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
+    "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>これは flow の並行性制限に従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue": "キュー解除",
+    "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
+    "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外れました",
+    "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
+    "execution-warn-title": "重要なWarning!",
+    "worker group key": "ワーカーグループキー",
+    "worker group fallback": "ワーカーグループフォールバック"
   }
 }

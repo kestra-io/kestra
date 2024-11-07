@@ -86,4 +86,14 @@ class IfTest  extends AbstractMemoryRunnerTest {
         assertThat(execution.findTaskRunsByTaskId("when-true").isEmpty(), is(true));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
+
+    @Test
+    void ifInFlowable() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-in-flowable", null,
+            (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
+
+        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
 }

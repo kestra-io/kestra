@@ -17,7 +17,7 @@
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
 
     defineProps({
-        heading: {type: String, required: true},
+        heading: {type: String, default: ""},
         note: {type: String, default: undefined},
         last: {type: Boolean, default: false},
     });

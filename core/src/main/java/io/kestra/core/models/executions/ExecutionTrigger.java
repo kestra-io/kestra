@@ -1,6 +1,5 @@
 package io.kestra.core.models.executions;
 
-import io.kestra.plugin.core.trigger.Webhook;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;

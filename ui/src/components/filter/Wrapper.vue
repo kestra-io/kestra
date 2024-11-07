@@ -63,7 +63,6 @@
 // TODO: Add remaining filter options for Executions context first
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
 // TODO: Submit search on Enter key press
-// TODO: On mounted, make sure that existing route parameters are loaded into the filters
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";

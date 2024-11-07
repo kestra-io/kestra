@@ -65,7 +65,7 @@
 
     import DateAgo from "./DateAgo.vue"
     import Environment from "./Environment.vue";
-    import BookmarkLink from "./BookmarkLink.vue";
+    import BookmarkLinks from "./BookmarkLinks.vue";
 
 
     const props = defineProps({
@@ -141,11 +141,10 @@
                     element: shallowRef(StarOutline),
                     class: "menu-icon",
                 },
-                child: store.state.starred.pages.map(p => {
-                    return {
-                        component: () => h(BookmarkLink, {href: p.path, title: p.label}),
-                    }
-                })
+                child: [{
+
+                    component: () => h(BookmarkLinks, {pages: store.state.starred.pages}),
+                }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())
         ];

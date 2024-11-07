@@ -233,7 +233,7 @@
         }
 
         .star-active {
-            color: var(--bs-primary);
+            color: #9470FF;
         }
 
         :deep(.el-breadcrumb__item) {

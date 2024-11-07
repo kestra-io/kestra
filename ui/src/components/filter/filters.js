@@ -70,21 +70,39 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
+            key: "labels",
+            label: t("filters.options.labels"),
+            value: {label: "labels", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "childFilter",
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
     ];
-
     const encodeParams = (filters) => {
-        const encode = (values) => values.map((v) => encodeURIComponent(v));
+        const encode = (values, key) => {
+            return values.map((v) => {
+                const encoded = encodeURIComponent(v);
+                return key === "labels"
+                    ? encoded.replace(/%3A/g, ":")
+                    : encoded;
+            });
+        };
 
         return filters.reduce((query, filter) => {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
+            const key = match
+                ? match.key
+                : filter.label === "text"
+                  ? "q"
+                  : null;
 
-            if (match) query[match.key] = encode(filter.value);
-            else if (filter.label === "text") query["q"] = encode(filter.value);
+            if (key) {
+                query[key] = encode(filter.value, key);
+            }
 
             return query;
         }, {});

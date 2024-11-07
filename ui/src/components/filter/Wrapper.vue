@@ -9,6 +9,7 @@
             allow-create
             filterable
             multiple
+            :no-data-text="emptyLabel"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -63,12 +64,8 @@
 // TODO: Improve highlighting of already selected items in second and third dropdowns
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
 
+// TODO: Add remaining filter options for Executions context (Relative date, Absolute date)
 // TODO: Replace usage of filters throughout the application & add missing filters
-
-// TODO: Add remaining filter options for Executions context
-// - Relative date
-// - Absoute date
-// - labels
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -109,12 +106,14 @@
         useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
         second: {shown: true, index: -1},
         third: {shown: true, index: -1},
     };
     const dropdowns = ref({...INITIAL_DROPDOWNS});
+    const closeDropdown = () => (select.value.dropdownMenuVisible = false);
     const filterCallback = (value) => {
         dropdowns.value.first = {shown: false, value};
         dropdowns.value.second = {shown: true, index: current.value.length};
@@ -123,6 +122,10 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
+        emptyLabel.value =
+            current.value[dropdowns.value.second.index].label === "labels"
+                ? t("filters.labels.placeholder")
+                : t("filters.empty");
 
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
@@ -144,7 +147,7 @@
 
         if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
             // If selection is not multiple, close the dropdown
-            select.value.dropdownMenuVisible = false;
+            closeDropdown();
         }
     };
 
@@ -239,17 +242,27 @@
     });
 
     const changeCallback = (v) => {
+        if (!Array.isArray(v) || !v.length) return;
+
+        if (typeof v.at(-1) === "string") {
+            if (v.at(-2)?.label === "labels") {
+                // Adding labels to proper filter
+                v.at(-2).value?.push(v.at(-1));
+                closeDropdown();
+            } else {
+                // Adding text search string
+                const label = t("filters.options.text");
+                const index = current.value.findIndex((i) => i.label === label);
+
+                if (index !== -1) current.value[index].value = [v.at(-1)];
+                else current.value.push({label, value: [v.at(-1)]});
+            }
+        } else {
+        // TODO: If there already is property with same label and comparator, add value to it
+        }
+
         // Clearing the input field after value is being submitted
         select.value.states.inputValue = "";
-
-        // Adding of text search string
-        if (Array.isArray(v) && typeof v.at(-1) === "string") {
-            const label = t("filters.options.text");
-            const index = current.value.findIndex((i) => i.label === label);
-
-            if (index !== -1) current.value[index].value = [v.at(-1)];
-            else current.value.push({label, value: [v.at(-1)]});
-        }
     };
 
     const removeItem = (value) => {

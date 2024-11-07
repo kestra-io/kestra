@@ -917,11 +917,12 @@
     "no_data": "No data available",
     "filters": {
       "label": "Choose filters",
+      "empty": "No data.",
       "options": {
         "namespace": "Namespace",
         "state": "State",
         "scope": "Scope",
-        "date": "Date",
+        "labels": "Labels",
         "child": "Child",
         "text": "text"
       },
@@ -945,6 +946,9 @@
           "hint": "How do you want to label this search criteria?",
           "confirmation": "Search criteria <code>{name}</code>"
         }
+      },
+      "labels": {
+        "placeholder": "Type label as 'key:value'"
       }
     }
   }

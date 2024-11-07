@@ -22,26 +22,6 @@ export const formatLabel = (value) => {
     return label;
 };
 
-export const encodeParams = (filters) => {
-    return filters.reduce((query, filter) => {
-        const label = filter.label === "text" ? "q" : filter.label; // To conform with BE endpoint
-
-        query[label] = filter.value.map((v) => encodeURIComponent(v));
-        return query;
-    }, {});
-};
-
-export const decodeParams = (query, include) => {
-    return Object.entries(query)
-        .filter(([key]) => [...include, "q"].includes(key)) // Include all specified keys and 'q'
-        .map(([key, value]) => ({
-            label: key === "q" ? "text" : key,
-            value: Array.isArray(value)
-                ? value.map(decodeURIComponent)
-                : [decodeURIComponent(value)],
-        }));
-};
-
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 
@@ -72,21 +52,65 @@ export function useFilters(prefix) {
 
     const OPTIONS = [
         {
+            key: "namespace",
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "state",
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
+            key: "scope",
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
+        {
+            key: "childFilter",
+            label: t("filters.options.child"),
+            value: {label: "child", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
     ];
+
+    const encodeParams = (filters) => {
+        const encode = (values) => values.map((v) => encodeURIComponent(v));
+
+        return filters.reduce((query, filter) => {
+            const match = OPTIONS.find((o) => o.value.label === filter.label);
+
+            if (match) query[match.key] = encode(filter.value);
+            else if (filter.label === "text") query["q"] = encode(filter.value);
+
+            return query;
+        }, {});
+    };
+
+    const decodeParams = (query, include) => {
+        return Object.entries(query)
+            .filter(
+                ([key]) =>
+                    key === "q" ||
+                    OPTIONS.some(
+                        (o) => o.key === key && include.includes(o.value.label),
+                    ),
+            )
+            .map(([key, value]) => {
+                const label =
+                    key === "q"
+                        ? "text"
+                        : OPTIONS.find((o) => o.key === key)?.value.label ||
+                          key;
+                const decodedValue = Array.isArray(value)
+                    ? value.map(decodeURIComponent)
+                    : [decodeURIComponent(value)];
+                return {label, value: decodedValue};
+            });
+    };
 
     return {
         getRecentItems: () => {
@@ -112,5 +136,7 @@ export function useFilters(prefix) {
         },
 
         OPTIONS,
+        encodeParams,
+        decodeParams,
     };
 }

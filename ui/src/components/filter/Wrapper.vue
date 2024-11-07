@@ -58,11 +58,18 @@
 </template>
 
 <script setup lang="ts">
-// TODO: Allow selection of values on Enter key
+// TODO: Allow selection of values in dropdown on Enter key press
+// TODO: Submit filter query on Enter key press
 // TODO: Improve highlighting of already selected items in second and third dropdowns
-// TODO: Add remaining filter options for Executions context first
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
-// TODO: Submit search on Enter key press
+
+// TODO: Replace usage of filters throughout the application & add missing filters
+
+// TODO: Add remaining filter options for Executions context
+// - Relative date
+// - Absoute date
+// - labels
+// child excutions
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -98,13 +105,9 @@
         },
     });
 
-    import {
-        formatLabel,
-        encodeParams,
-        decodeParams,
-        useFilters,
-    } from "./filters.js";
-    const {getRecentItems, setRecentItems, OPTIONS} = useFilters(props.prefix);
+    import {formatLabel, useFilters} from "./filters.js";
+    const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
+        useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const INITIAL_DROPDOWNS = {
@@ -191,6 +194,17 @@
         },
     ];
 
+    const childOptions = [
+        {
+            label: t("trigger filter.options.CHILD"),
+            value: "CHILD",
+        },
+        {
+            label: t("trigger filter.options.MAIN"),
+            value: "MAIN",
+        },
+    ];
+
     const valueOptions = computed(() => {
         const type = current.value.at(-1)?.label;
 
@@ -206,6 +220,9 @@
                 label: s.name,
                 value: s.name,
             }));
+
+        case "child":
+            return childOptions;
 
         default:
             return [];

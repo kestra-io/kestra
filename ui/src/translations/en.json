@@ -922,6 +922,7 @@
         "state": "State",
         "scope": "Scope",
         "date": "Date",
+        "child": "Child",
         "text": "text"
       },
       "comparators": {

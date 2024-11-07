@@ -911,6 +911,42 @@
     "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करना चाहते हैं?",
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "worker group key": "वर्कर ग्रुप key",
-    "worker group fallback": "वर्कर ग्रुप फॉलबैक"
+    "worker group fallback": "वर्कर ग्रुप फॉलबैक",
+    "filters": {
+      "comparators": {
+        "contains": "शामिल है",
+        "is": "है",
+        "is_one_of": "में से एक है",
+        "not_contains": "not_contains",
+        "is_not_one_off": "नहीं है उनमें से एक",
+        "is_not": "नहीं है"
+      },
+      "recent": {
+        "label": "हाल की खोजें",
+        "empty": "आपने अभी तक कुछ भी खोजा नहीं है।"
+      },
+      "labels": {
+        "placeholder": "'label' को 'key:value' के रूप में टाइप करें"
+      },
+      "save": {
+        "dialog": {
+          "hint": "आप इस खोज मानदंड को किस तरह से लेबल करना चाहते हैं?",
+          "heading": "वर्तमान खोज सहेजें",
+          "confirmation": "खोज मानदंड <code>{name}</code>",
+          "placeholder": "लेबल"
+        },
+        "label": "सहेजे गए खोजें"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "क्षेत्र",
+        "text": "मुझे अनुवाद के लिए कोई पाठ प्रदान नहीं किया गया है। कृपया अनुवाद के लिए पाठ प्रदान करें।",
+        "labels": "लेबल्स",
+        "state": "स्थिति",
+        "child": "बच्चा"
+      },
+      "empty": "कोई डेटा नहीं।",
+      "label": "फिल्टर चुनें"
+    }
   }
 }

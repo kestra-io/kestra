@@ -911,6 +911,42 @@
     "unqueue confirm": "Êtes-vous sûr de vouloir retirer de la file d'attente l'exécution <code>{id}</code> ?",
     "execution-warn-title": "Avertissement Important !",
     "worker group key": "Clé du groupe de Worker",
-    "worker group fallback": "Groupe de Worker de secours"
+    "worker group fallback": "Groupe de Worker de secours",
+    "filters": {
+      "comparators": {
+        "contains": "contient",
+        "is": "est",
+        "is_one_of": "est l'un des",
+        "not_contains": "ne_contient_pas",
+        "is_not_one_off": "n'est pas l'un de",
+        "is_not": "n'est pas"
+      },
+      "recent": {
+        "label": "Recherches récentes",
+        "empty": "Vous n'avez pas encore effectué de recherche."
+      },
+      "labels": {
+        "placeholder": "Tapez le label comme 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Comment souhaitez-vous étiqueter ce critère de recherche ?",
+          "heading": "Enregistrer la recherche actuelle",
+          "confirmation": "Critères de recherche <code>{name}</code>",
+          "placeholder": "Étiquette"
+        },
+        "label": "Recherches enregistrées"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Portée",
+        "text": "I'm sorry, but it seems that the text you want to translate is missing. Could you please provide the text again?",
+        "labels": "Étiquettes",
+        "state": "État",
+        "child": "Enfant"
+      },
+      "empty": "Aucune donnée.",
+      "label": "Choisir des filtres"
+    }
   }
 }

@@ -911,6 +911,42 @@
     "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?",
     "execution-warn-title": "Aviso Importante!",
     "worker group key": "Grupo de Worker key",
-    "worker group fallback": "Grupo de Worker de reserva"
+    "worker group fallback": "Grupo de Worker de reserva",
+    "filters": {
+      "comparators": {
+        "contains": "contém",
+        "is": "é",
+        "is_one_of": "é um dos",
+        "not_contains": "não_contém",
+        "is_not_one_off": "não é um dos",
+        "is_not": "não é"
+      },
+      "recent": {
+        "label": "Pesquisas recentes",
+        "empty": "Você ainda não pesquisou por nada."
+      },
+      "labels": {
+        "placeholder": "Digite o label como 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Como você deseja rotular este critério de busca?",
+          "heading": "Salvar pesquisa atual",
+          "confirmation": "Critérios de busca <code>{name}</code>",
+          "placeholder": "Etiqueta"
+        },
+        "label": "Pesquisas salvas"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Escopo",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you need translated?",
+        "labels": "Rótulos",
+        "state": "Estado",
+        "child": "Filho"
+      },
+      "empty": "Sem dados.",
+      "label": "Escolher filtros"
+    }
   }
 }

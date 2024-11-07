@@ -911,6 +911,42 @@
     "unqueue confirm": "실행 <code>{id}</code>의 대기열을 해제하시겠습니까?",
     "execution-warn-title": "중요한 WARNING!",
     "worker group key": "워크 그룹 key",
-    "worker group fallback": "작업자 그룹 대체"
+    "worker group fallback": "작업자 그룹 대체",
+    "filters": {
+      "comparators": {
+        "contains": "포함합니다",
+        "is": "입니다",
+        "is_one_of": "중 하나입니다.",
+        "not_contains": "포함되지 않음",
+        "is_not_one_off": "중 하나가 아닙니다.",
+        "is_not": "아님"
+      },
+      "recent": {
+        "label": "최근 검색",
+        "empty": "아직 아무 것도 검색하지 않았습니다."
+      },
+      "labels": {
+        "placeholder": "'label'을 'key:value'로 입력하세요."
+      },
+      "save": {
+        "dialog": {
+          "hint": "이 검색 기준에 어떤 레이블을 지정하시겠습니까?",
+          "heading": "현재 검색 저장",
+          "confirmation": "검색 기준 <code>{name}</code>",
+          "placeholder": "레이블"
+        },
+        "label": "저장된 검색"
+      },
+      "options": {
+        "namespace": "네임스페이스",
+        "scope": "범위",
+        "text": "텍스트",
+        "labels": "레이블",
+        "state": "상태",
+        "child": "자식"
+      },
+      "empty": "데이터 없음.",
+      "label": "필터 선택"
+    }
   }
 }

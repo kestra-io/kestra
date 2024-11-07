@@ -911,6 +911,42 @@
     "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
     "execution-warn-title": "重要なWarning!",
     "worker group key": "ワーカーグループキー",
-    "worker group fallback": "ワーカーグループフォールバック"
+    "worker group fallback": "ワーカーグループフォールバック",
+    "filters": {
+      "comparators": {
+        "contains": "含む",
+        "is": "です",
+        "is_one_of": "のいずれかです",
+        "not_contains": "含まれていない",
+        "is_not_one_off": "のいずれでもありません",
+        "is_not": "ではありません"
+      },
+      "recent": {
+        "label": "最近の検索",
+        "empty": "まだ何も検索していません。"
+      },
+      "labels": {
+        "placeholder": "'label' を 'key:value' と入力してください"
+      },
+      "save": {
+        "dialog": {
+          "hint": "この検索条件にどのようなラベルを付けますか？",
+          "heading": "現在の検索を保存",
+          "confirmation": "検索条件 <code>{name}</code>",
+          "placeholder": "ラベル"
+        },
+        "label": "保存された検索"
+      },
+      "options": {
+        "namespace": "Namespace（ネームスペース）",
+        "scope": "スコープ",
+        "text": "テキスト",
+        "labels": "ラベル",
+        "state": "状態",
+        "child": "子"
+      },
+      "empty": "データがありません。",
+      "label": "フィルターを選択"
+    }
   }
 }

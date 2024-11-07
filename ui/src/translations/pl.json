@@ -911,6 +911,42 @@
     "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
     "execution-warn-title": "Ważne Ostrzeżenie!",
     "worker group key": "Klucz grupy Worker",
-    "worker group fallback": "Grupa Workerów awaryjna"
+    "worker group fallback": "Grupa Workerów awaryjna",
+    "filters": {
+      "comparators": {
+        "contains": "zawiera",
+        "is": "jest",
+        "is_one_of": "jest jednym z",
+        "not_contains": "nie_zawiera",
+        "is_not_one_off": "nie jest jednym z",
+        "is_not": "nie jest"
+      },
+      "recent": {
+        "label": "Ostatnie wyszukiwania",
+        "empty": "Nie wyszukałeś jeszcze niczego."
+      },
+      "labels": {
+        "placeholder": "Wpisz label jako 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?",
+          "heading": "Zapisz bieżące wyszukiwanie",
+          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
+          "placeholder": "Etykieta"
+        },
+        "label": "Zapisane wyszukiwania"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Zakres",
+        "text": "tekst",
+        "labels": "Etykiety",
+        "state": "Stan",
+        "child": "Dziecko"
+      },
+      "empty": "Brak danych.",
+      "label": "Wybierz filtry"
+    }
   }
 }

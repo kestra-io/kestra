@@ -12,9 +12,16 @@
                 <slot name="title">
                     {{ title }}
                 </slot>
+                <el-button
+                    class="star-button"
+                    :class="{'star-active': starred}"
+                    :icon="StarOutlineIcon"
+                    circle
+                    @click="onStarClick"
+                />
             </h1>
         </div>
-        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
                 <global-search class="trigger-flow-guided-step" />
             </div>
@@ -25,7 +32,7 @@
                 </el-button>
             </div>
             <slot name="additional-right" />
-            <div class="d-flex fixed-buttons">
+            <div class="d-flex fixed-buttons icons">
                 <el-dropdown popper-class="">
                     <el-button class="no-focus dropdown-button">
                         <HelpBox />
@@ -107,6 +114,9 @@
     import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+
 
     export default {
         components: {
@@ -131,12 +141,13 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
-            }
+            },
         },
         computed: {
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
             ...mapState("log", ["logs"]),
+            ...mapState("starred", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -149,6 +160,21 @@
             shouldDisplayDeleteButton() {
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
             },
+            StarOutlineIcon() {
+                return this.starred ? StarIcon : StarOutlineIcon
+            },
+            starred() {
+                return this.pages.some(page => page.path === this.currentFavURI)
+            },
+            currentFavURI() {
+                // make sure the value changes when the route changes
+                // by mentionning the route in the computed properties
+                // we create a hook into vues reactivity system to update when it updates
+                if(this.$route) {
+                    return `${window.location.pathname}${window.location.search.replace(/&?page=[^&]*/i, "")}`
+                }
+                return ""
+            }
         },
         methods: {
             restartGuidedTour() {
@@ -163,8 +189,20 @@
                     () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
+            },
+            onStarClick() {
+                if (this.starred) {
+                    this.$store.dispatch("starred/remove", {
+                        path: this.currentFavURI
+                    })
+                } else {
+                    this.$store.dispatch("starred/add", {
+                        path: this.currentFavURI,
+                        label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
+                    })
+                }
             }
-        }
+        },
     };
 </script>,
 <style lang="scss" scoped>
@@ -185,7 +223,17 @@
 
         h1 {
             line-height: 1.6;
-            display: block !important;
+            display: flex !important;
+            align-items: center;
+        }
+
+        .star-button{
+            margin-left: var(--spacer);
+            border: none;
+        }
+
+        .star-active {
+            color: #9470FF;
         }
 
         :deep(.el-breadcrumb__item) {
@@ -218,6 +266,33 @@
                 margin: 0;
                 gap: calc(var(--spacer) / 2);
                 align-items: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(3, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+
+
+            }
+            .icons{
+                grid-row:2;
+                grid-column:2;
+                display: contents;
+            }
+
+        }
+        @media (max-width: 664px){
+            .mycontainer{
+                display:grid;
+                grid-template-columns:repeat(2, minmax(0,auto));
+                grid-template-rows: repeat(2, auto);
+                gap:10px;
+                overflow: hidden;
+
             }
         }
     }

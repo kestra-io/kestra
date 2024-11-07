@@ -31,7 +31,7 @@
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
-                            <VectorIntersection class="me-2 icon" />
+                            <DotsSquare class="me-2 icon" />
                             <span class="pe-3">{{ namespaceLabel(data.label) }}</span>
                             <span v-if="data.system" class="system">{{ $t("system_namespace") }}</span>
                         </div>
@@ -60,7 +60,7 @@
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import VectorIntersection from "vue-material-design-icons/VectorIntersection.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
 
     const store = useStore();

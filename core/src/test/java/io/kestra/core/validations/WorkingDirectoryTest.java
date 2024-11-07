@@ -75,7 +75,7 @@ public class WorkingDirectoryTest {
                     .id("log")
                     .type(Log.class.getName())
                     .message("Hello World")
-                    .workerGroup(new WorkerGroup("toto"))
+                    .workerGroup(new WorkerGroup("toto", null))
                     .build()
                 )
             )

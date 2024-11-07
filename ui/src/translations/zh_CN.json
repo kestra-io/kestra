@@ -640,7 +640,7 @@
     "false": "假",
     "undefined": "未定义",
     "execution-include-non-terminated": "包括未终止的执行？",
-    "execution-warn-deleting-still-running": "重要警告：我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能会导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全理解这些风险。",
+    "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
     "originalCreatedDate": "原始创建日期",
     "welcome": {
       "started": {
@@ -843,7 +843,7 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
-    "trigger_check_warning": "警告：检测到使用 `trigger` 变量，手动执行您的 flow 不会满足 trigger 变量。",
+    "trigger_check_warning": "警告：使用trigger变量无法与手动flow执行一起工作。请添加“??”合并运算符来解决此问题。例如，不要使用“trigger.date”，而是使用“trigger.date ?? execution.startDate”。",
     "dashboard": {
       "per_namespace": "（每个namespace）",
       "id": "ID",
@@ -899,6 +899,54 @@
       "title_no_deps": "此 Flow 未设置任何依赖项。",
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
-    "create_flow": "创建Flow"
+    "create_flow": "创建Flow",
+    "starred": "已加星标",
+    "invalid bulk unqueue": "无法取消排队的执行",
+    "unqueue done": "执行已出队列",
+    "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
+    "unqueue title": "取消执行 <code>{id}</code>。<br/>请注意，它将不遵循 flow 并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue": "出队列",
+    "executions paused": "<code>{executionCount}</code> 次执行已暂停",
+    "executions unqueue": "<code>{executionCount}</code> 次执行未排队",
+    "unqueue confirm": "您确定要取消排队执行<code>{id}</code>吗？",
+    "execution-warn-title": "重要警告！",
+    "worker group key": "工作组 key",
+    "worker group fallback": "工作组回退",
+    "filters": {
+      "comparators": {
+        "contains": "包含",
+        "is": "是",
+        "is_one_of": "是其中之一",
+        "not_contains": "不包含",
+        "is_not_one_off": "不是其中之一",
+        "is_not": "不是"
+      },
+      "recent": {
+        "label": "最近的搜索",
+        "empty": "您还没有搜索任何内容。"
+      },
+      "labels": {
+        "placeholder": "输入label为'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "您想如何标记此搜索条件？",
+          "heading": "保存当前搜索",
+          "confirmation": "搜索条件 <code>{name}</code>",
+          "placeholder": "标签"
+        },
+        "label": "保存的搜索"
+      },
+      "options": {
+        "namespace": "命名空间",
+        "scope": "范围",
+        "text": "文本",
+        "labels": "标签",
+        "state": "状态",
+        "child": "子项"
+      },
+      "empty": "无数据。",
+      "label": "选择过滤器"
+    }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex ms-2 me-2 el-select__wrapper space-between" :class="{border: isSelected, ['log-border-' + level.toLowerCase()]: isSelected, 'shadow-none': isSelected}">
+    <div class="d-flex el-select__wrapper space-between" :class="{border: isSelected, ['log-border-' + level.toLowerCase()]: isSelected, 'shadow-none': isSelected}">
         <div class="d-flex align-items-center gap-2">
             <span :class="'circle log-bg-' + level.toLowerCase()" />
             <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level }}</span>
@@ -49,6 +49,7 @@
     .el-select__wrapper.space-between {
         justify-content: space-between;
         cursor: unset;
+        white-space: nowrap;
 
         &:hover {
             box-shadow: 0 0 0 1px var(--el-border-color) inset;

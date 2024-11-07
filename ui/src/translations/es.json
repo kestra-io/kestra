@@ -640,7 +640,7 @@
     "false": "Falso",
     "undefined": "Indefinido",
     "execution-include-non-terminated": "¿Incluir ejecuciones no terminadas?",
-    "execution-warn-deleting-still-running": "Advertencia Importante: Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrency, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo cual puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
+    "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
       "started": {
@@ -843,7 +843,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: Se detectó el uso de la variable `trigger`, ejecutar tu flow manualmente no cumplirá con la variable trigger.",
+    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -899,6 +899,54 @@
       "title_no_deps": "No se han establecido dependencias para este Flow.",
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
-    "create_flow": "Crear Flow"
+    "create_flow": "Crear Flow",
+    "starred": "Estrellado",
+    "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
+    "unqueue done": "La ejecución está descolada",
+    "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
+    "unqueue title": "Desencolar ejecución <code>{id}</code>.<br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
+    "unqueue": "Desencolar",
+    "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> ejecución(es) en cola",
+    "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?",
+    "execution-warn-title": "¡Advertencia Importante!",
+    "worker group key": "Clave del grupo de Worker",
+    "worker group fallback": "Grupo de Worker de respaldo",
+    "filters": {
+      "comparators": {
+        "contains": "contiene",
+        "is": "es",
+        "is_one_of": "es uno de",
+        "not_contains": "no_contiene",
+        "is_not_one_off": "no es uno de",
+        "is_not": "no es"
+      },
+      "recent": {
+        "label": "Búsquedas recientes",
+        "empty": "Todavía no has buscado nada."
+      },
+      "labels": {
+        "placeholder": "Escriba label como 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?",
+          "heading": "Guardar búsqueda actual",
+          "confirmation": "Criterios de búsqueda <code>{name}</code>",
+          "placeholder": "Etiqueta"
+        },
+        "label": "Búsquedas guardadas"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Ámbito",
+        "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
+        "labels": "Etiquetas",
+        "state": "Estado",
+        "child": "Niño"
+      },
+      "empty": "Sin datos.",
+      "label": "Elegir filtros"
+    }
   }
 }

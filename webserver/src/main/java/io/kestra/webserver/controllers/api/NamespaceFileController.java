@@ -6,6 +6,7 @@ import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.core.utils.WindowsUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -154,7 +155,7 @@ public class NamespaceFileController {
         @Part CompletedFileUpload fileContent
     ) throws IOException, URISyntaxException {
         String tenantId = tenantService.resolveTenant();
-        if(fileContent.getFilename().toLowerCase().endsWith(".zip")) {
+        if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
                 ZipEntry entry;
                 while ((entry = archive.getNextEntry()) != null) {
@@ -162,11 +163,13 @@ public class NamespaceFileController {
                         continue;
                     }
 
-                    putNamespaceFile(tenantId, namespace, URI.create("/" + entry.getName()), new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes())));
+                    try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes()))) {
+                        putNamespaceFile(tenantId, namespace, URI.create("/" + entry.getName()), inputStream);
+                    }
                 }
             }
         } else {
-            try(BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(fileContent.getInputStream()) {
                 // Done to bypass the wrong available() output of the CompletedFileUpload InputStream
                 @Override
                 public synchronized int available() {

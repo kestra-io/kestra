@@ -228,13 +228,13 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void multipleConditionTriggerFlowFilters() throws Exception {
-        multipleConditionTriggerCaseTest.flowFilters();
+    void multipleConditionTriggerBasicExecutionsCondition() throws Exception {
+        multipleConditionTriggerCaseTest.basicExecutionsCondition();
     }
 
     @Test
-    void multipleConditionTriggerExecutionFilters() throws Exception {
-        multipleConditionTriggerCaseTest.executionFilters();
+    void multipleConditionTriggerAdvancedExecutionsConditions() throws Exception {
+        multipleConditionTriggerCaseTest.advancedExecutionsConditions();
     }
 
     @RetryingTest(5)
@@ -373,7 +373,7 @@ public abstract class JdbcRunnerTest {
     void dynamicTask() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
 
-        assertThat(execution.getTaskRunList().size(), is(2));
+        assertThat(execution.getTaskRunList().size(), is(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 

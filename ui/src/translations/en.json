@@ -215,6 +215,10 @@
     "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be process, and the execution will have to be resumed manually.",
     "pause confirm": "Are you sure to pause execution <code>{id}</code>?",
     "pause done": "Execution is paused",
+    "unqueue": "Unqueue",
+    "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey to the flow concurrency limit so more executions could be running than the allowed limit.",
+    "unqueue confirm": "Are you sure to unqueue execution <code>{id}</code>?",
+    "unqueue done": "Execution is unqueued",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "No data available for current task",
@@ -383,6 +387,7 @@
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
+    "bulk unqueue": "Are you sure you want to unqueue <code>{executionCount}</code> execution(s)?",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -405,12 +410,15 @@
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
+    "executions paused": "<code>{executionCount}</code> executions(s) paused",
+    "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
     "invalid bulk replay": "Could not replay executions",
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
+    "invalid bulk unqueue": "Could not unqueue executions",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
@@ -560,6 +568,8 @@
     "flow deleted, you can restore it": "The flow has been deleted and this is a read-only view. You can still restore it.",
     "workers": "Workers",
     "worker group": "Worker Group",
+    "worker group key": "Worker Group key",
+    "worker group fallback": "Worker Group fallback",
     "version": "Version",
     "services": "Services",
     "cluster": "Cluster",
@@ -679,7 +689,8 @@
     "false": "False",
     "undefined": "Undefined",
     "execution-include-non-terminated": "Include non-terminated executions?",
-    "execution-warn-deleting-still-running": "Important Warning: We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
+    "execution-warn-title": "Important Warning!",
+    "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
     "originalCreatedDate": "Original creation date",
     "welcome": {
       "started": {
@@ -875,7 +886,7 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Usage of the `trigger` variable detected, executing your flow manually won't fullfill the trigger variable.",
+    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
@@ -914,6 +925,43 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "No data available"
+    "no_data": "No data available",
+    "starred": "Starred",
+    "filters": {
+      "label": "Choose filters",
+      "empty": "No data.",
+      "options": {
+        "namespace": "Namespace",
+        "state": "State",
+        "scope": "Scope",
+        "labels": "Labels",
+        "child": "Child",
+        "text": "text"
+      },
+      "comparators": {
+        "is": "is",
+        "is_one_of": "is one of",
+        "is_not": "is not",
+        "is_not_one_off": "is not one of",
+        "contains": "contains",
+        "not_contains": "not_contains"
+      },
+      "recent": {
+        "label": "Recent searches",
+        "empty": "You still haven't searched for anything."
+      },
+      "save": {
+        "label": "Saved searches",
+        "dialog": {
+          "heading": "Save current search",
+          "placeholder": "Label",
+          "hint": "How do you want to label this search criteria?",
+          "confirmation": "Search criteria <code>{name}</code>"
+        }
+      },
+      "labels": {
+        "placeholder": "Type label as 'key:value'"
+      }
+    }
   }
 }

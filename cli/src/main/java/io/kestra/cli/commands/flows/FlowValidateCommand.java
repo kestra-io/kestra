@@ -3,7 +3,7 @@ package io.kestra.cli.commands.flows;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
@@ -17,7 +17,7 @@ import java.util.List;
 )
 public class FlowValidateCommand extends AbstractValidateCommand {
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private ModelValidator modelValidator;
@@ -29,7 +29,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
     public Integer call() throws Exception {
         return this.call(
             Flow.class,
-            yamlFlowParser,
+            yamlParser,
             modelValidator,
             (Object object) -> {
                 Flow flow = (Flow) object;

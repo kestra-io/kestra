@@ -1,5 +1,5 @@
-id: flow-trigger-execution-filters-flow-b
-namespace: io.kestra.tests.trigger.execution-filters
+id: flow-trigger-advanced-flow-b
+namespace: io.kestra.tests.trigger.advanced
 
 labels:
   some: label

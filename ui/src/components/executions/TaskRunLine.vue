@@ -44,7 +44,7 @@
         </div>
 
         <el-select
-            class="d-none d-md-inline-block"
+            class="d-none d-md-inline-block attempt-select"
             :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="forwardEvent('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
@@ -378,7 +378,7 @@
 
         .more-dropdown-button {
             padding: .5rem;
-            margin-bottom: .5rem;
+            height: 100%; 
             border: 1px solid rgba($white, .05);
 
             &:not(:hover) {
@@ -390,4 +390,10 @@
             background-color: transparent !important;
         }
     }
+</style>
+
+<style lang="scss">
+.attempt-select > .el-select__wrapper {
+    height: 100%;
+}
 </style>

@@ -93,11 +93,11 @@ public class FlowAutoLoaderService {
                 .orElse(0);
             log.info(
                 "Loaded {} \"Getting Started\" flows from community blueprints. " +
-                "You can disable this feature by setting 'kestra.tutorial-flows.enabled=false'.", count);
+                "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.", count);
         } catch (Exception e) {
             // Kestra's API is likely to be unavailable.
             log.warn("Unable to load \"Getting Started\" flows from community blueprints. " +
-                "You can disable this feature by setting 'kestra.tutorial-flows.enabled=false'. Cause: {}", e.getMessage());
+                "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'. Cause: {}", e.getMessage());
         }
     }
 }

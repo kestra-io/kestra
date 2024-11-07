@@ -640,7 +640,7 @@
     "false": "असत्य",
     "undefined": "अपरिभाषित",
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
-    "execution-warn-deleting-still-running": "महत्वपूर्ण चेतावनी: हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency issues, flow dependency management असंगतताएँ, और आपके instance पर zombie processes हो सकते हैं, जो सिस्टम प्रदर्शन को खराब कर सकते हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं इससे पहले कि आप deletion के साथ आगे बढ़ें।",
+    "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। बिना समाप्त हुए executions को हटाने से concurrency समस्याएं, flow निर्भरता प्रबंधन असंगतताएं, और आपके instance पर zombie प्रक्रियाएं हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
     "originalCreatedDate": "मूल निर्माण तिथि",
     "welcome": {
       "started": {
@@ -843,7 +843,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "चेतावनी: मैन्युअल flow निष्पादन के साथ trigger वेरिएबल का उपयोग काम नहीं करेगा। समस्या को हल करने के लिए '??' कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, 'trigger.date' के बजाय 'trigger.date ?? execution.startDate' का उपयोग करें।",
+    "trigger_check_warning": "चेतावनी: ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए '??' कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, 'trigger.date' के बजाय 'trigger.date ?? execution.startDate' का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -899,6 +899,18 @@
       "title_no_deps": "इस Flow के लिए कोई निर्भरता निर्धारित नहीं की गई है।",
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
-    "create_flow": "फ़्लो बनाएं"
+    "create_flow": "फ़्लो बनाएं",
+    "starred": "सितारे लगे हुए",
+    "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं कर सका",
+    "unqueue done": "निष्पादन कतार से बाहर है",
+    "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
+    "unqueue title": "Execution <code>{id}</code> को अनक्यू करें।<br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल रहे हो सकते हैं।",
+    "unqueue": "अनक्यू करें",
+    "executions paused": "<code>{executionCount}</code> execution(s) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> execution(s) कतार से बाहर",
+    "unqueue confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को अनक्यू करने के लिए सुनिश्चित हैं?",
+    "execution-warn-title": "महत्वपूर्ण WARNING!",
+    "worker group key": "वर्कर ग्रुप key",
+    "worker group fallback": "वर्कर ग्रुप फॉलबैक"
   }
 }

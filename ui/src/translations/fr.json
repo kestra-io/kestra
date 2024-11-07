@@ -640,7 +640,7 @@
     "false": "Faux",
     "undefined": "Non défini",
     "execution-include-non-terminated": "Inclure les exécutions non terminées ?",
-    "execution-warn-deleting-still-running": "Avertissement Important : Nous vous recommandons fortement d'annuler cette action et de tuer toutes les exécutions en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
+    "execution-warn-deleting-still-running": "Nous vous recommandons fortement d'annuler cette action et de terminer toute exécution en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
     "originalCreatedDate": "Date de création originale",
     "welcome": {
       "started": {
@@ -899,6 +899,18 @@
       "title_no_deps": "Aucune dépendance n'est définie pour ce Flow.",
       "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation."
     },
-    "create_flow": "Créer Flow"
+    "create_flow": "Créer Flow",
+    "starred": "Étoilé",
+    "invalid bulk unqueue": "Impossible de retirer les exécutions de la file d'attente",
+    "unqueue done": "L'exécution est défilée",
+    "bulk unqueue": "Êtes-vous sûr de vouloir retirer de la file d'attente <code>{executionCount}</code> exécution(s) ?",
+    "unqueue title": "Défilement de l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue": "Défilement",
+    "executions paused": "<code>{executionCount}</code> exécution(s) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> exécution(s) en file d'attente",
+    "unqueue confirm": "Êtes-vous sûr de vouloir retirer l'exécution <code>{id}</code> de la file d'attente ?",
+    "execution-warn-title": "Avertissement Important !",
+    "worker group key": "Clé du groupe de Worker",
+    "worker group fallback": "Groupe de Worker de secours"
   }
 }

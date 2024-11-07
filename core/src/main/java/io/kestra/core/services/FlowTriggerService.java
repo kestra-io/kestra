@@ -123,17 +123,17 @@ public class FlowTriggerService {
             .map(Optional::get)
             .toList();
 
-        if(multipleConditionStorage.isPresent() && multipleConditionWindowsByFlow != null) {
+        if(multipleConditionStorage.isPresent()) {
             // purge fulfilled or expired multiple condition windows
             Stream.concat(
-                multipleConditionWindowsByFlow.keySet().stream()
-                    .map(f -> Map.entry(
-                        f.getMultipleCondition().getConditions(),
-                        multipleConditionStorage.get().getOrCreate(f.getFlow(), f.getMultipleCondition())
+                multipleConditionWindowsByFlow.entrySet().stream()
+                    .map(e -> Map.entry(
+                        e.getKey().getMultipleCondition(),
+                        e.getValue()
                     ))
-                    .filter(e -> e.getKey().size() == Optional.ofNullable(e.getValue().getResults())
-                        .map(Map::size)
-                        .orElse(0))
+                    .filter(e -> Boolean.TRUE.equals(e.getKey().getResetOnSuccess()) &&
+                        e.getKey().getConditions().size() == Optional.ofNullable(e.getValue().getResults()).map(Map::size).orElse(0)
+                    )
                     .map(Map.Entry::getValue),
                 multipleConditionStorage.get().expired(execution.getTenantId()).stream()
             ).forEach(multipleConditionStorage.get()::delete);

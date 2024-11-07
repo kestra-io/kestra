@@ -878,7 +878,7 @@
       "storage": "Delete internal storage files"
     },
     "scope_filter": {
-      "all": "all {label}",
+      "all": "All {label}",
       "user": "User {label}",
       "system": "System {label}"
     },

@@ -65,7 +65,7 @@
 
     import DateAgo from "./DateAgo.vue"
     import Environment from "./Environment.vue";
-    import BookmarkLinks from "./BookmarkLinks.vue";
+    import BookmarkLinkList from "./BookmarkLinkList.vue";
 
 
     const props = defineProps({
@@ -143,7 +143,7 @@
                 },
                 child: [{
 
-                    component: () => h(BookmarkLinks, {pages: store.state.starred.pages}),
+                    component: () => h(BookmarkLinkList, {pages: store.state.starred.pages}),
                 }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())

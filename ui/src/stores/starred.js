@@ -1,7 +1,9 @@
+const LOCAL_STORAGE_KEY = "starred.bookmarks"
+
 export default {
     namespaced: true,
     state: {
-        pages: localStorage.getItem("starred.pages") ? JSON.parse(localStorage.getItem("starred.pages")) : [],
+        pages: localStorage.getItem(LOCAL_STORAGE_KEY) ? JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) : [],
     },
 
     mutations: {
@@ -40,7 +42,7 @@ export default {
         },
         updateAll({commit}, pages) {
             commit("setPages", pages)
-            localStorage.setItem("starred.pages", JSON.stringify(pages))
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pages))
         }
     },
 }

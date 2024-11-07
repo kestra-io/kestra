@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex global-filters">
+    <section class="d-inline-flex pb-3 global-filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -60,10 +60,11 @@
 <script setup lang="ts">
 // TODO: Allow selection of values on Enter key
 // TODO: Improve highlighting of already selected items in second and third dropdowns
-// TODO: Make sure changes are propagated on search click and URLs are properly updated
 // TODO: Add remaining filter options for Executions context first
 // TODO: Add button to handle the table options (show charts, selection of visible columns)
 // TODO: Submit search on Enter key press
+// TODO: On mounted, make sure that existing route parameters are loaded into the filters
+// TODO: Rework all components
 
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
@@ -74,8 +75,9 @@
     import {useStore} from "vuex";
     const store = useStore();
 
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
+    const route = useRoute();
 
     import Refresh from "../layout/RefreshButton.vue";
 
@@ -98,7 +100,12 @@
         },
     });
 
-    import {formatLabel, encodeParams, useFilters} from "./filters.js";
+    import {
+        formatLabel,
+        encodeParams,
+        decodeParams,
+        useFilters,
+    } from "./filters.js";
     const {getRecentItems, setRecentItems, OPTIONS} = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
@@ -157,11 +164,11 @@
     const scopeOptions = [
         {
             label: t("scope_filter.user", {label: props.prefix}),
-            value: t("scope_filter.user", {label: props.prefix}),
+            value: "USER",
         },
         {
             label: t("scope_filter.system", {label: props.prefix}),
-            value: t("scope_filter.system", {label: props.prefix}),
+            value: "SYSTEM",
         },
     ];
 
@@ -225,6 +232,8 @@
         setRecentItems([...getRecentItems(), {value: current.value}]);
         router.push({query: encodeParams(current.value)});
     };
+
+    current.value = decodeParams(route.query, props.include);
 </script>
 
 <style lang="scss">

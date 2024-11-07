@@ -868,8 +868,8 @@
     },
     "scope_filter": {
       "all": "all {label}",
-      "user": "user {label}",
-      "system": "system {label}"
+      "user": "User {label}",
+      "system": "System {label}"
     },
     "data": "Data",
     "webhook link copied": "Webhook link copied.",

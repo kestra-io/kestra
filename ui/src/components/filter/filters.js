@@ -31,6 +31,17 @@ export const encodeParams = (filters) => {
     }, {});
 };
 
+export const decodeParams = (query, include) => {
+    return Object.entries(query)
+        .filter(([key]) => include.includes(key) || key === "q") // Include specified keys and 'q'
+        .map(([key, value]) => ({
+            label: key === "q" ? "text" : key,
+            value: Array.isArray(value)
+                ? value.map(decodeURIComponent)
+                : [decodeURIComponent(value)],
+        }));
+};
+
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 

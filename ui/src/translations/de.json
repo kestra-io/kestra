@@ -903,14 +903,14 @@
     "starred": "Markiert",
     "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
-    "bulk unqueue": "Möchten Sie wirklich <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen?",
-    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Beachten Sie, dass dies das Nebenläufigkeitslimit des Flow nicht beachtet, sodass mehr Ausführungen als das erlaubte Limit laufen könnten.",
+    "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
+    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Bitte beachten Sie, dass dies das Nebenläufigkeitslimit des Flows nicht berücksichtigt, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
     "unqueue": "Aus Warteschlange entfernen",
     "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
     "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
     "execution-warn-title": "Wichtige Warnung!",
-    "worker group key": "Worker-Gruppe {key}",
+    "worker group key": "Worker-Gruppe Schlüssel",
     "worker group fallback": "Arbeitsgruppe Fallback"
   }
 }

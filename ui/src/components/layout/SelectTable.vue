@@ -17,9 +17,13 @@
             </el-table>
         </template>
 
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
+
+<script setup>
+    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
+</script>
 
 <script>
     export default {

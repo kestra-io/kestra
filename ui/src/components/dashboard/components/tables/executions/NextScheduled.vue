@@ -137,7 +137,7 @@
                 />
             </div>
         </div>
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
 
@@ -145,6 +145,7 @@
     import {onBeforeMount, watch, ref} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
 
     import moment from "moment";
 

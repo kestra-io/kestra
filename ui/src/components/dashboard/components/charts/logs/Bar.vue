@@ -19,7 +19,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
 
@@ -29,6 +29,7 @@
 
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+    import NoDataAvailable from "../components/layout/NoDataAvailable.vue";
 
     import {barLegend} from "../legend.js";
 

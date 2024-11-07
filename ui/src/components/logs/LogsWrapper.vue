@@ -50,7 +50,7 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" />
                             </template>
-                            <el-empty v-else :description="$t('no_data')" />
+                            <NoDataAvailable v-else />
                         </div>
                     </el-card>
                 </template>
@@ -79,6 +79,7 @@
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";

@@ -34,7 +34,7 @@
             class="tall"
         />
         
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
 <script setup>
@@ -51,6 +51,7 @@
     import {getScheme} from "../../../../../utils/scheme.js";
 
     import Check from "vue-material-design-icons/Check.vue";
+    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
 
     const {t} = useI18n({useScope: "global"});
     const isSmallScreen = ref(window.innerWidth < 610);

@@ -38,7 +38,7 @@
                             </template>
                         </el-card>
                     </template>
-                    <el-empty v-if="search === undefined || search.length === 0" :description="$t('no_data')" />
+                    <NoDataAvailable v-if="search === undefined || search.length === 0" />
                 </template>
             </data-table>
         </div>
@@ -52,6 +52,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
+    import NoDataAvailable from "../layout/NoDataAvailable.vue";
     import SearchField from "../layout/SearchField.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";

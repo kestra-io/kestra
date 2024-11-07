@@ -13,7 +13,7 @@
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
-                <el-empty v-else :description="$t('no_data')" />
+                <NoDataAvailable v-else />
             </div>
             <div id="totals" />
         </div>
@@ -26,6 +26,7 @@
     import {useI18n} from "vue-i18n";
 
     import {Doughnut} from "vue-chartjs";
+    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
 
     import {totalsLegend} from "../legend.js";
 

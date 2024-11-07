@@ -218,7 +218,7 @@
                         </template>
                     </select-table>
 
-                    <el-empty v-else :description="$t('no_data')" />
+                    <NoDataAvailable v-else />
                 </template>
             </data-table>
         </div>
@@ -228,6 +228,7 @@
 <script setup>
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
+    import NoDataAvailable from "../layout/NoDataAvailable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";

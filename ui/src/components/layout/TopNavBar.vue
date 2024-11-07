@@ -175,7 +175,7 @@
                     return window.location.pathname
                         + window.location.search
                             // remove the parameters that are permanently changing
-                            .replace(/&?(page|startDate|endDate)=[^&]*/ig, "")
+                            .replace(/&?page=[^&]*/ig, "")
                             // fix if this resulted in a "?&" url
                             .replace(/\?&/, "?")
                 }

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-    import {ref} from "vue"
+    import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
@@ -17,6 +17,7 @@
 
     const editing = ref(false)
     const updatedTitle = ref(props.title)
+    const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
     function deleteBookmark() {
         $store.dispatch("starred/remove", {
@@ -26,6 +27,10 @@
 
     function startEditBookmark() {
         editing.value = true
+        nextTick(() => {
+            titleInput.value?.focus()
+            titleInput.value?.select()
+        })
     }
 
     function renameBookmark() {
@@ -40,7 +45,7 @@
 <template>
     <div class="wrapper">
         <div v-if="editing" class="inputs">
-            <el-input v-model="updatedTitle" @keyup.enter="renameBookmark" />
+            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
         <div class="buttons">

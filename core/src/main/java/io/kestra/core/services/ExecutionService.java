@@ -15,6 +15,7 @@ import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -92,6 +93,9 @@ public class ExecutionService {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+
+    @Inject
+    private ConcurrencyLimitService concurrencyLimitService;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId) {
         Optional<Execution> maybeExecution = executionRepository.findById(tenant, executionId);
@@ -756,5 +760,35 @@ public class ExecutionService {
         }
 
         return nextDate;
+    }
+
+    /**
+     * Force run the execution, it must be in a non-terminal state.
+     * - CREATED executions will be moved to RUNNING
+     * - QUEUED executions will be unqueued
+     * - PAUSED executions will be resumed
+     * All other non-terminated states will be no-op.
+     */
+    public Execution forceRun(Execution execution) throws Exception {
+        if (execution.getState().isTerminated()) {
+            throw new IllegalArgumentException("Only non terminated executions can be forced run.");
+        }
+
+        if (execution.getState().isCreated()) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        if (execution.getState().getCurrent() == State.Type.QUEUED) {
+            return concurrencyLimitService.unqueue(execution);
+        }
+
+        if (execution.getState().getCurrent() == State.Type.PAUSED) {
+            Flow flow = flowRepositoryInterface.findByExecution(execution);
+            return resume(execution, flow, State.Type.RUNNING);
+        }
+
+        // for all other states, we just return the same execution,
+        // it will be resent to the queue and forced re-processed.
+        return execution;
     }
 }

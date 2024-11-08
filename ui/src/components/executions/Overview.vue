@@ -37,6 +37,7 @@
                 <pause :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
                 <unqueue :execution="execution" />
+                <force-run :execution="execution" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>
         </el-row>
@@ -106,6 +107,7 @@
     import Resume from "./Resume.vue";
     import Pause from "./Pause.vue";
     import Unqueue from "./Unqueue.vue";
+    import ForceRun from "./ForceRun.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -126,6 +128,7 @@
             Resume,
             Pause,
             Unqueue,
+            ForceRun,
             Kill,
             DateAgo,
             Labels,

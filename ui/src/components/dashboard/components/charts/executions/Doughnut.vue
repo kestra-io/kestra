@@ -13,7 +13,7 @@
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
-                <NoDataAvailable v-else/>
+                <NoDataAvailable v-else />
             </div>
             <div id="totals" />
         </div>

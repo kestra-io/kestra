@@ -21,9 +21,10 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.net.URI;
+import java.net.URI;y
 import java.util.Collections;
 import java.util.HashSet;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -119,7 +120,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         long count = matched
             .stream()
             .map(Rethrow.throwFunction(file -> {
-                if (namespace.delete(file)) {
+                if (namespace.delete(NamespaceFile.of(renderedNamespace, Path.of(file.path().replace("\\","/"))).storagePath())) {
                     logger.debug(String.format("Deleted %s", (file.path())));
 
                     if (Boolean.TRUE.equals(deleteParentFolder)) {

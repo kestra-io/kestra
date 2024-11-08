@@ -640,7 +640,7 @@
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
-    "execution-warn-deleting-still-running": "Ważne Ostrzeżenie: Zdecydowanie zalecamy anulowanie tej akcji i zakończenie wszystkich trwających wykonania najpierw. Usunięcie nieukończonych wykonań może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
+    "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
       "started": {
@@ -899,6 +899,54 @@
       "title_no_deps": "Brak zależności ustawionych dla tego Flow.",
       "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
     },
-    "create_flow": "Utwórz Flow"
+    "create_flow": "Utwórz Flow",
+    "starred": "Oznaczone gwiazdką",
+    "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
+    "unqueue done": "Wykonanie jest odkolejkowane",
+    "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
+    "unqueue title": "Usuń z kolejki wykonanie <code>{id}</code>.<br/>Zwróć uwagę, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
+    "unqueue": "Usuń z kolejki",
+    "executions paused": "<code>{executionCount}</code> wykonanie(a) wstrzymane",
+    "executions unqueue": "<code>{executionCount}</code> wykonanie(a) w kolejce",
+    "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
+    "execution-warn-title": "Ważne Ostrzeżenie!",
+    "worker group key": "Klucz grupy Worker",
+    "worker group fallback": "Grupa Workerów awaryjna",
+    "filters": {
+      "comparators": {
+        "contains": "zawiera",
+        "is": "jest",
+        "is_one_of": "jest jednym z",
+        "not_contains": "nie_zawiera",
+        "is_not_one_off": "nie jest jednym z",
+        "is_not": "nie jest"
+      },
+      "recent": {
+        "label": "Ostatnie wyszukiwania",
+        "empty": "Nie wyszukałeś jeszcze niczego."
+      },
+      "labels": {
+        "placeholder": "Wpisz label jako 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?",
+          "heading": "Zapisz bieżące wyszukiwanie",
+          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
+          "placeholder": "Etykieta"
+        },
+        "label": "Zapisane wyszukiwania"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Zakres",
+        "text": "tekst",
+        "labels": "Etykiety",
+        "state": "Stan",
+        "child": "Dziecko"
+      },
+      "empty": "Brak danych.",
+      "label": "Wybierz filtry"
+    }
   }
 }

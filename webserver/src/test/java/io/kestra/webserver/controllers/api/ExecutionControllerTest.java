@@ -46,11 +46,9 @@ import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1618,5 +1616,48 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldUnqueueAQueuedFlow() throws QueueException, TimeoutException {
+        // run a first flow so the second is queued
+        runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
+        Execution result = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+
+        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/unqueue", null));
+        assertThat(response.getStatus(), is(HttpStatus.OK));
+
+        var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/pause", null)));
+        assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
+
+        // pausing an already completed flow will result in errors
+        Execution completed = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+
+        var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + completed.getId() + "/unqueue", null)));
+        assertThat(notRunning.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+    }
+
+    @Test
+    void shouldUnqueueByIdsQueuedFlows() throws TimeoutException, QueueException {
+        // run a first flow so the others are queued
+        runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
+        Execution result1 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+        Execution result2 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+        Execution result3 = runUntilQueued("io.kestra.tests", "flow-concurrency-queue");
+
+        BulkResponse response = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/unqueue/by-ids", List.of(result1.getId(), result2.getId(), result3.getId())),
+            BulkResponse.class
+        );
+        assertThat(response.getCount(), is(3));
+    }
+
+    private Execution runUntilQueued(String namespace, String flowId) throws TimeoutException, QueueException {
+        Flow flow = flowRepositoryInterface.findById(null, namespace, flowId).orElseThrow();
+        Execution execution = Execution.newExecution(flow, null);
+        return runnerUtils.awaitExecution(
+            it -> it.getState().getCurrent() == State.Type.QUEUED,
+            throwRunnable(() -> this.executionQueue.emit(execution)),
+            Duration.ofSeconds(1));
     }
 }

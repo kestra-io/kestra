@@ -1,5 +1,5 @@
-id: flow-trigger-execution-filters-flow-a
-namespace: io.kestra.tests.trigger.execution-filters
+id: flow-trigger-basic-flow-b
+namespace: io.kestra.tests.trigger.basic
 
 tasks:
   - id: only

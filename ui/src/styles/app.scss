@@ -48,6 +48,12 @@ html {
     }
 }
 
+html.dark{
+    code{
+        color: #ffffff;
+    }
+}
+
 // main layout
 main {
     display: flex;

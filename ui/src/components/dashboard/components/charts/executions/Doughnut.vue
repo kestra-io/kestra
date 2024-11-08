@@ -13,13 +13,22 @@
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
-                <el-empty v-else :description="$t('no_data')" />
+                <NoDataAvailable v-else/>
             </div>
             <div id="totals" />
         </div>
     </div>
 </template>
 
+<script>
+    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
+
+    export default {
+        components: {
+            NoDataAvailable
+        },
+    };
+</script>
 
 <script setup>
     import {computed} from "vue";

@@ -19,9 +19,19 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
+
+<script>
+    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
+
+    export default {
+        components: {
+            NoDataAvailable
+        },
+    };
+</script>
 
 <script setup>
     import {computed} from "vue";

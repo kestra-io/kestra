@@ -217,8 +217,8 @@
                             </el-table-column>
                         </template>
                     </select-table>
-
-                    <el-empty v-else :description="$t('no_data')" />
+                    
+                    <NoDataAvailable v-else />
                 </template>
             </data-table>
         </div>
@@ -252,6 +252,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
+    import NoDataAvailable from "../layout/NoDataAvailable.vue";
     import StateChart from "../stats/StateChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
@@ -282,7 +283,8 @@
             LabelFilter,
             ScopeFilterButtons,
             TopNavBar,
-            ExecutionsBar
+            ExecutionsBar,
+            NoDataAvailable
         },
         props: {
             topbar: {

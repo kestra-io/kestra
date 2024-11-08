@@ -34,15 +34,28 @@
             class="tall"
         />
         
-        <el-empty v-else :description="$t('no_data')" />
+        <NoDataAvailable v-else />
     </div>
 </template>
+
+<script>
+    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
+
+    export default {
+        components: {
+            NoDataAvailable
+        },
+    };
+</script>
+
 <script setup>
     import {computed, ref, onMounted, onUnmounted} from "vue";
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+
+    
 
     import {barLegend} from "../legend.js";
 

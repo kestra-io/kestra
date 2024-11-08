@@ -947,6 +947,14 @@
       },
       "empty": "データがありません。",
       "label": "フィルターを選択"
-    }
+    },
+    "force run title": "実行 <code>{id}</code> を強制的に実行します。",
+    "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
+    "force run done": "実行は強制的にRUNNINGです。",
+    "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run": "強制実行",
+    "invalid bulk force run": "実行を強制的に開始できませんでした",
+    "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。"
   }
 }

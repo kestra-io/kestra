@@ -7,13 +7,13 @@
     import noDataImageLight from "../../assets/light.png";
     
     export default {
-      name: "NoDataAvailable",
-      computed: {
-        noDataImage() {
-          return (localStorage.getItem("theme") || "light") === "light"
-            ? noDataImageLight
-            : noDataImageDark;
+        name: "NoDataAvailable",
+        computed: {
+            noDataImage() {
+                return (localStorage.getItem("theme") || "light") === "light"
+                    ? noDataImageLight
+                    : noDataImageDark;
+            },
         },
-      },
     };
 </script>

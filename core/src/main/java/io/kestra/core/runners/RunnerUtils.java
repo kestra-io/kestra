@@ -20,17 +20,19 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.annotation.Value;
-import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
@@ -76,51 +78,95 @@ public class RunnerUtils {
     @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
 
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in, Publisher<StreamingFileUpload> files) throws IOException {
-        if (files == null) {
-            return this.typedInputs(flow, execution, in);
-        }
+    /**
+     * Utility method for retrieving types inputs for a flow.
+     *
+     * @param flow      The Flow.
+     * @param execution The Execution.
+     * @param inputs        The Flow's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(final Flow flow,
+                                           final Execution execution,
+                                           final Publisher<CompletedPart> inputs) throws IOException {
+        return this.typedInputs(flow.getInputs(), execution, inputs);
+    }
 
-        Map<String, String> uploads = Flux.from(files)
+    /**
+     * Utility method for retrieving types inputs for a flow.
+     *
+     * @param inputs      The inputs
+     * @param execution The Execution.
+     * @param in        The Execution's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(final List<Input<?>> inputs,
+                                           final Execution execution,
+                                           final Publisher<CompletedPart> in) throws IOException {
+        Map<String, Object> uploads = Flux.from(in)
             .subscribeOn(Schedulers.boundedElastic())
-            .map(throwFunction(file -> {
-                File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
-                Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
-                Boolean bool = Mono.from(uploadPublisher).block();
+            .map(throwFunction(input -> {
+                if (input instanceof CompletedFileUpload fileUpload) {
+                    try {
+                        File tempFile = File.createTempFile(fileUpload.getFilename() + "_", ".upl");
+                        try (var inputStream = fileUpload.getInputStream();
+                             var outputStream = new FileOutputStream(tempFile)) {
+                            long transferredBytes = inputStream.transferTo(outputStream);
+                            if (transferredBytes == 0) {
+                                fileUpload.discard();
+                                throw new RuntimeException("Can't upload file: " + fileUpload.getFilename());
+                            }
+                        }
+                        URI from = storageInterface.from(execution, fileUpload.getFilename(), tempFile);
+                        if (!tempFile.delete()) {
+                            tempFile.deleteOnExit();
+                        }
 
-                if (!bool) {
-                    throw new RuntimeException("Can't upload");
+                        return new AbstractMap.SimpleEntry<>(
+                            fileUpload.getFilename(),
+                            (Object) from.toString()
+                        );
+                    } catch (IOException e) {
+                        fileUpload.discard();
+                        throw e;
+                    }
+
+                } else {
+                    return new AbstractMap.SimpleEntry<>(
+                        input.getName(),
+                        (Object) new String(input.getBytes())
+                    );
                 }
-
-                URI from = storageInterface.from(execution, file.getFilename(), tempFile);
-                //noinspection ResultOfMethodCallIgnored
-                tempFile.delete();
-
-                return new AbstractMap.SimpleEntry<>(
-                    file.getFilename(),
-                    from.toString()
-                );
             }))
             .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .block();
 
-        Map<String, Object> merged = new HashMap<>();
-        if (in != null) {
-            merged.putAll(in);
-        }
-        merged.putAll(uploads);
+        return this.typedInputs(inputs, execution, uploads);
+    }
 
-        return this.typedInputs(flow, execution, merged);
+    /**
+     * Utility method for retrieving types inputs for a flow.
+     *
+     * @param flow      The Flow.
+     * @param execution The Execution.
+     * @param in        The Execution's inputs.
+     * @return The Map of typed inputs.
+     */
+    public Map<String, Object> typedInputs(
+        final Flow flow,
+        final Execution execution,
+        final Map<String, Object> in
+    ) {
+        return this.typedInputs(
+            flow.getInputs(),
+            execution,
+            in
+        );
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, Object> in) {
-        if (flow.getInputs() == null) {
-            return ImmutableMap.of();
-        }
-
-        Map<String, Object> results = flow
-            .getInputs()
+    public Map<String, Object> typedInputs(List<Input<?>> inputs, Execution execution, Map<String, Object> in) {
+        Map<String, Object> results = ListUtils.emptyOnNull(inputs)
             .stream()
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
                 Object current = in == null ? null : in.get(input.getId());

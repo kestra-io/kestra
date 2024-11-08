@@ -42,6 +42,7 @@ import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -60,6 +61,7 @@ import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
@@ -84,6 +86,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -511,83 +514,80 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
     @Deprecated
-    public Execution trigger(
+    @SingleResult
+    public Publisher<Execution> trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") HttpRequest<?> inputs,
+        @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        return this.create(namespace, id, inputs, labels, files, wait, revision);
+        return this.create(namespace, id, inputs, labels, wait, revision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Create a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
-    public Execution create(
+    @SingleResult
+    public Publisher<Execution> create(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The inputs") HttpRequest<?> inputs, // FIXME we had to inject the HttpRequest here due to https://github.com/micronaut-projects/micronaut-core/issues/9694
+        @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue List<String> labels,
-        @Parameter(description = "The inputs of type file") @Nullable @Part Publisher<StreamingFileUpload> files,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
-        if (find.isEmpty()) {
-            return null;
-        }
-
-        Flow found = find.get();
-        if (found.isDisabled()) {
-            throw new IllegalStateException("Cannot execute disabled flow");
-        }
-
-        if (found instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
-        }
-
-        Map<String, Object> inputMap = (Map<String, Object>) inputs.getBody(Map.class).orElse(null);
-        Execution current = runnerUtils.newExecution(
-            found,
-            throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputMap, files)),
-            parseLabels(labels)
-        );
-
-        executionQueue.emit(current);
-        eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
-
-        if (!wait) {
-            return current;
-        }
-
-        AtomicReference<Runnable> cancel = new AtomicReference<>();
-
-        return Mono
-            .<Execution>create(emitter -> {
-                Runnable receive = this.executionQueue.receive(either -> {
-                    if (either.isRight()) {
-                        log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
-                        return;
-                    }
-
-                    Execution item = either.getLeft();
-                    if (item.getId().equals(current.getId()) && this.isStopFollow(found, item)) {
-                        emitter.success(item);
-                    }
-                });
-
-                cancel.set(receive);
-            })
-            .doFinally((signalType) -> {
-                if (cancel.get() != null) {
-                    cancel.get().run();
+        return Mono.create(sink -> {
+                Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id, revision);
+                if (find.isEmpty()) {
+                    sink.success();
+                    return;
                 }
-            })
-            .block();
+
+                Flow found = find.get();
+                if (found.isDisabled()) {
+                    sink.error(new IllegalStateException("Cannot execute disabled flow"));
+                    return;
+                }
+
+                if (found instanceof FlowWithException fwe) {
+                    sink.error(new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException()));
+                    return;
+                }
+
+                try {
+                    Execution current = runnerUtils.newExecution(
+                        found,
+                        throwBiFunction((flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs)),
+                        parseLabels(labels)
+                    );
+
+                    executionQueue.emit(current);
+                    eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
+
+                    if (!wait) {
+                        sink.success(current);
+                    }
+
+                    Runnable receive = this.executionQueue.receive(either -> {
+                        if (either.isRight()) {
+                            log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
+                            sink.success();
+                        }
+
+                        Execution item = either.getLeft();
+                        if (item.getId().equals(current.getId()) && this.isStopFollow(found, item)) {
+                            sink.success(item);
+                        }
+                    });
+
+                    sink.onDispose(() -> receive.run());
+                } catch (IOException e) {
+                    sink.error(new RuntimeException(e));
+                }
+            });
     }
 
     private List<Label> parseLabels(List<String> labels) {

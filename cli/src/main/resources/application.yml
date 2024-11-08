@@ -16,7 +16,7 @@ micronaut:
     max-request-size: 10GB
     multipart:
       max-file-size: 10GB
-      disk: true
+      mixed: true
     read-idle-timeout: 60m
     write-idle-timeout: 60m
     idle-timeout: 60m

@@ -3,8 +3,8 @@
 </template>
 
 <script>
-  import noDataImageDark from "../../assets/home/dark.png"
-  import noDataImageLight from "../../assets/home/light.png"
+  import noDataImageDark from "../../assets/dark.png"
+  import noDataImageLight from "../../assets/light.png"
   export default {
     name: "NoDataAvailable",
     computed: {

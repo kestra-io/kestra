@@ -27,7 +27,7 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto py-2 px-4 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
@@ -164,7 +164,6 @@ $system: #5BB8FF;
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--bs-border-color);
-    overflow:hidden;
 
     &.system {
         border-color: $system;
@@ -191,6 +190,14 @@ $system: #5BB8FF;
         overflow: hidden;
         background: transparent;
 
+        &:hover {
+            background: var(--bs-body-bg);
+            color: $active;
+        }
+        .el-tree-node__expand-icon {
+            display: none;
+        }
+
         .icon {
             color: $active;
         }
@@ -199,22 +206,18 @@ $system: #5BB8FF;
     .node {
         flex: 1;
         display: flex;
-        padding: 2.25rem;
-        transition: background-color 0.3s, padding 0.3s, border-radius 0.3s;;
         align-items: center;
         justify-content: space-between;
+        padding: 0 1rem;
         color: var(--el-text-color-regular);
-
 
         &.system {
             color: $system;
         }
 
         &:hover {
-            background-color: var(--el-color-primary-light-9);
-            padding: 1.5rem;
-            color: var(--el-color-primary-dark-3);
-            border-radius: 150px;
+            background: transparent;
+            color: $active;
         }
 
         & .system {

@@ -156,8 +156,6 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    import NoDataAvailable from "../../components/layout/NoDataAvailable.vue";
-
     import moment from "moment";
 
     import Check from "vue-material-design-icons/Check.vue";

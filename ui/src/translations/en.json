@@ -226,7 +226,7 @@
     "force run done": "Execution is forced run",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
-    "no data current task": "No data available for current task",
+    "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -933,7 +933,7 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "No data available",
+    "no_data": "Looks like there's nothing here… yet! Adjust your filters, or give it another go!",
     "starred": "Starred",
     "filters": {
       "label": "Choose filters",

@@ -195,6 +195,7 @@ def main(
     to_translate = get_keys_to_translate(input_file)
     to_translate = remove_en_prefix(to_translate)
     target_flat = flatten_dict(target_dict)
+    # Remove the previously translated keys from the list of keys in the `en.json` update that require translation.
     remove_keys_from_dict(to_translate,target_flat)
     if len(to_translate) > 0:
         translated_flat_dict = translate_dict(to_translate, target_language)

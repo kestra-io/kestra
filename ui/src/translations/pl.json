@@ -192,7 +192,7 @@
     "resumed done": "Wykonanie zostało wznowione",
     "toggle output": "Przełącz wyjścia",
     "metrics": "Metryki",
-    "no data current task": "Brak danych dla bieżącego task",
+    "no data current task": "Brak dostępnych danych dla bieżącego taska",
     "outputs": "Wyjścia",
     "output": "Wyjście",
     "eval": {
@@ -889,7 +889,7 @@
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "no_data": "Brak dostępnych danych",
+    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze! Dostosuj swoje filtry lub spróbuj ponownie!",
     "informative notice": "Notatka(i)",
     "triggers-view": {
       "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",

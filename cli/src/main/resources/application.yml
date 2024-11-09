@@ -191,5 +191,5 @@ kestra:
 
   hidden-labels:
     prefixes:
-      - system_
-      - internal_
+      - system.
+      - internal.

@@ -31,11 +31,11 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-class YamlFlowParserTest {
+class YamlParserTest {
     private static ObjectMapper mapper = JacksonMapper.ofJson();
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Inject
     private ModelValidator modelValidator;
@@ -167,7 +167,7 @@ class YamlFlowParserTest {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
         String s = mapper.writeValueAsString(flow);
-        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system_readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
+        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 
     @Test
@@ -212,7 +212,7 @@ class YamlFlowParserTest {
         TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
         Map<String, Object> flow = JacksonMapper.ofYaml().readValue(flowSource, TYPE_REFERENCE);
 
-        Flow parse = yamlFlowParser.parse(flow, Flow.class, false);
+        Flow parse = yamlParser.parse(flow, Flow.class, false);
 
         assertThat(parse.getId(), is("duplicate"));
     }
@@ -244,7 +244,7 @@ class YamlFlowParserTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 
     private Flow parseString(String path) throws IOException {
@@ -253,6 +253,6 @@ class YamlFlowParserTest {
 
         String input = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        return yamlFlowParser.parse(input, Flow.class);
+        return yamlParser.parse(input, Flow.class);
     }
 }

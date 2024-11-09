@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -103,7 +102,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             .map(throwFunction(context -> nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
                 .orElse(ZonedDateTime.now().plusYears(1) // it's not ideal, but we need a date or the trigger will keep evaluated
             )))
-            .orElse(dates.asList(conditionContext.getRunContext(), ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
+            .orElse(conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
             .truncatedTo(ChronoUnit.SECONDS);
     }
 
@@ -117,7 +116,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException {
         // the previous date is "the previous date of the next date"
         ZonedDateTime now = ZonedDateTime.now();
-        List<ZonedDateTime> previousDates = dates.asList(conditionContext.getRunContext(), ZonedDateTime.class).stream()
+        List<ZonedDateTime> previousDates = conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream()
             .sorted()
             .takeWhile(date -> date.isBefore(now))
             .toList()
@@ -127,7 +126,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> filter) throws IllegalVariableEvaluationException {
-        return dates.asList(runContext, ZonedDateTime.class).stream().sorted()
+        return runContext.render(dates).asList(ZonedDateTime.class).stream().sorted()
             .filter(date -> filter.test(date))
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()

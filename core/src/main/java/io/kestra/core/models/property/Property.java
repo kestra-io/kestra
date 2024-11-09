@@ -3,7 +3,6 @@ package io.kestra.core.models.property;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,9 +72,129 @@ public class Property<T> {
     /**
      * Render a property then convert it to its target type.<br>
      *
+     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#as(Class)
+     */
+    public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression);
+            property.value = MAPPER.convertValue(rendered, clazz);
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property with additional variables, then convert it to its target type.<br>
+     *
+     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#as(Class, Map)
+     */
+    public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression, variables);
+            property.value = MAPPER.convertValue(rendered, clazz);
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property then convert it as a list of target type.<br>
+     *
+     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#asList(Class)
+     */
+    public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression);
+            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
+            try {
+                property.value = MAPPER.readValue(rendered, type);
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property with additional variables, then convert it as a list of target type.<br>
+     *
+     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
+     */
+    public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression, variables);
+            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
+            try {
+                property.value = MAPPER.readValue(rendered, type);
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property then convert it as a map of target types.<br>
+     *
+     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class)
+     */
+    public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression);
+            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+            try {
+                property.value = MAPPER.readValue(rendered, type);
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property with additional variables, then convert it as a map of target types.<br>
+     *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
      */
+    public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (property.value == null) {
+            String rendered =  runContext.render(property.expression, variables);
+            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+            try {
+                property.value = MAPPER.readValue(rendered, type);
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
+        }
+
+        return property.value;
+    }
+
+    /**
+     * Render a property then convert it to its target type.<br>
+     *
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
+     * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
+     */
+    @Deprecated(forRemoval = true)
     public T as(RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression);
@@ -90,7 +209,10 @@ public class Property<T> {
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
      */
+    @Deprecated(forRemoval = true)
     public T as(RunContext runContext, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression, variables);
@@ -105,11 +227,14 @@ public class Property<T> {
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
      */
-    public <I> T asList(RunContext runContext, Class<I> clazz) throws IllegalVariableEvaluationException {
+    @Deprecated(forRemoval = true)
+    public <I> T asList(RunContext runContext, Class<I> itemClazz) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression);
-            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, clazz);
+            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
                 this.value = MAPPER.readValue(rendered, type);
             } catch (JsonProcessingException e) {
@@ -125,11 +250,14 @@ public class Property<T> {
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
      */
-    public <I> T asList(RunContext runContext, Class<I> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    @Deprecated(forRemoval = true)
+    public <I> T asList(RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression, variables);
-            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, clazz);
+            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
                 this.value = MAPPER.readValue(rendered, type);
             } catch (JsonProcessingException e) {
@@ -145,7 +273,10 @@ public class Property<T> {
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
      */
+    @Deprecated(forRemoval = true)
     public <K,V> T asMap(RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression);
@@ -165,7 +296,10 @@ public class Property<T> {
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
+     *
+     * @deprecated use RunContext.render(Property) instead.
      */
+    @Deprecated(forRemoval = true)
     public <K,V> T asMap(RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (this.value == null) {
             String rendered =  runContext.render(expression, variables);

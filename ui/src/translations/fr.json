@@ -192,7 +192,7 @@
     "resumed done": "L'exécution est reprise",
     "toggle output": "Voir les sorties",
     "metrics": "Mesures",
-    "no data current task": "Aucune données pour cette tache",
+    "no data current task": "Il n'y a pas de données disponibles pour la tâche actuelle.",
     "outputs": "Sorties",
     "output": "Sortie",
     "eval": {
@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "La première étape est toujours la plus difficile.",
           "2": "Explorez les blueprints pour créer rapidement vos flows."
-        }
+        },
+        "alt": "Icône des Blueprints"
       },
       "empty": "Aucun blueprint à afficher."
     },
@@ -639,7 +640,7 @@
     "false": "Faux",
     "undefined": "Non défini",
     "execution-include-non-terminated": "Inclure les exécutions non terminées ?",
-    "execution-warn-deleting-still-running": "Avertissement Important : Nous vous recommandons fortement d'annuler cette action et de tuer toutes les exécutions en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
+    "execution-warn-deleting-still-running": "Nous vous recommandons fortement d'annuler cette action et de terminer toute exécution en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
     "originalCreatedDate": "Date de création originale",
     "welcome": {
       "started": {
@@ -832,7 +833,7 @@
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
     "scope_filter": {
-      "all": "Tout {label}",
+      "all": "Tous les {label}",
       "user": "Utilisateur {label}",
       "system": "Système {label}"
     },
@@ -842,7 +843,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
-    "trigger_check_warning": "Avertissement : Utilisation de la variable `trigger` détectée, l'exécution manuelle de votre flow ne remplira pas la variable trigger.",
+    "trigger_check_warning": "Avertissement : L'utilisation de variables trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence '??' pour résoudre le problème. Par exemple, au lieu de 'trigger.date', utilisez 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(par namespace)",
       "id": "ID",
@@ -888,7 +889,7 @@
     "invalid bulk pause": "Impossible de mettre en pause les exécutions",
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
-    "no_data": "Aucune donnée disponible",
+    "no_data": "On dirait qu'il n'y a rien ici… pour l'instant ! Ajustez vos filtres, ou réessayez !",
     "informative notice": "Note(s)",
     "triggers-view": {
       "desc_no_triggers": "En savoir plus sur les <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> dans notre documentation.",
@@ -897,6 +898,63 @@
     "dependency-view": {
       "title_no_deps": "Aucune dépendance n'est définie pour ce Flow.",
       "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation."
-    }
+    },
+    "create_flow": "Créer Flow",
+    "starred": "Étoilé",
+    "invalid bulk unqueue": "Impossible de retirer les exécutions de la file d'attente",
+    "unqueue done": "L'exécution est retirée de la file d'attente",
+    "bulk unqueue": "Êtes-vous sûr de vouloir retirer de la file d'attente <code>{executionCount}</code> exécution(s) ?",
+    "unqueue title": "Défilér l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue": "Défilement",
+    "executions paused": "<code>{executionCount}</code> exécution(s) en PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> exécution(s) en attente",
+    "unqueue confirm": "Êtes-vous sûr de vouloir retirer de la file d'attente l'exécution <code>{id}</code> ?",
+    "execution-warn-title": "Avertissement Important !",
+    "worker group key": "Clé du groupe de Worker",
+    "worker group fallback": "Groupe de Worker de secours",
+    "filters": {
+      "comparators": {
+        "contains": "contient",
+        "is": "est",
+        "is_one_of": "est l'un des",
+        "not_contains": "ne_contient_pas",
+        "is_not_one_off": "n'est pas l'un de",
+        "is_not": "n'est pas"
+      },
+      "recent": {
+        "label": "Recherches récentes",
+        "empty": "Vous n'avez pas encore effectué de recherche."
+      },
+      "labels": {
+        "placeholder": "Tapez le label comme 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Comment souhaitez-vous étiqueter ce critère de recherche ?",
+          "heading": "Enregistrer la recherche actuelle",
+          "confirmation": "Critères de recherche <code>{name}</code>",
+          "placeholder": "Étiquette"
+        },
+        "label": "Recherches enregistrées"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Portée",
+        "text": "I'm sorry, but it seems that the text you want to translate is missing. Could you please provide the text again?",
+        "labels": "Étiquettes",
+        "state": "État",
+        "child": "Enfant"
+      },
+      "empty": "Aucune donnée.",
+      "label": "Choisir des filtres"
+    },
+    "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s) en cours d'exécution",
+    "force run done": "L'exécution est forcée d'exécuter",
+    "force run confirm": "Êtes-vous sûr de vouloir forcer l'exécution <code>{id}</code>?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâche en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront retirées de la file d'attente.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
+    "force run": "Forcer l'exécution",
+    "invalid bulk force run": "Impossible de forcer l'exécution des exécutions",
+    "bulk force run": "Êtes-vous sûr de vouloir forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâches en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront désenfilées.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
+    "force run tooltip": "Forcer l'exécution à s'exécuter. Cela peut créer des exécutions de tâche en double, si possible utilisez une autre action."
   }
 }

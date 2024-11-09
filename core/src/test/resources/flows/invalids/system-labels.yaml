@@ -2,8 +2,8 @@ id: system-labels
 namespace: io.kestra.tests
 
 labels:
-  system_label: system_key
-  system_id: id
+  system.label: system_key
+  system.id: id
   another: label
 
 tasks:

@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4">
+        <div class="pt-4" v-if="props.flow">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -137,6 +137,7 @@
                 />
             </div>
         </div>
+        <el-empty v-else :description="$t('no_data')" />
     </div>
 </template>
 

@@ -192,7 +192,7 @@
     "resumed done": "La ejecución se ha reanudado",
     "toggle output": "Alternar salidas",
     "metrics": "Métricas",
-    "no data current task": "No hay datos disponibles para la tarea actual",
+    "no data current task": "No hay datos disponibles para el task actual.",
     "outputs": "Salidas",
     "output": "Salida",
     "eval": {
@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "El primer paso siempre es el más difícil.",
           "2": "Explora blueprints para iniciar tu próximo flujo."
-        }
+        },
+        "alt": "Icono de Blueprints"
       },
       "empty": "No hay blueprints para mostrar."
     },
@@ -639,7 +640,7 @@
     "false": "Falso",
     "undefined": "Indefinido",
     "execution-include-non-terminated": "¿Incluir ejecuciones no terminadas?",
-    "execution-warn-deleting-still-running": "Advertencia Importante: Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrency, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo cual puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
+    "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
       "started": {
@@ -842,7 +843,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: Se detectó el uso de la variable `trigger`, ejecutar tu flow manualmente no cumplirá con la variable trigger.",
+    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -888,7 +889,7 @@
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
-    "no_data": "No hay datos disponibles",
+    "no_data": "Parece que no hay nada aquí… ¡todavía! Ajusta tus filtros o inténtalo de nuevo.",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Lee más sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> en nuestra documentación.",
@@ -897,6 +898,63 @@
     "dependency-view": {
       "title_no_deps": "No se han establecido dependencias para este Flow.",
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
-    }
+    },
+    "create_flow": "Crear Flow",
+    "starred": "Estrellado",
+    "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
+    "unqueue done": "La ejecución está descolada",
+    "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
+    "unqueue title": "Desencolar ejecución <code>{id}</code>.<br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
+    "unqueue": "Desencolar",
+    "executions paused": "<code>{executionCount}</code> ejecución(es) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> ejecución(es) en cola",
+    "unqueue confirm": "¿Está seguro de descolar la ejecución <code>{id}</code>?",
+    "execution-warn-title": "¡Advertencia Importante!",
+    "worker group key": "Clave del grupo de Worker",
+    "worker group fallback": "Grupo de Worker de respaldo",
+    "filters": {
+      "comparators": {
+        "contains": "contiene",
+        "is": "es",
+        "is_one_of": "es uno de",
+        "not_contains": "no_contiene",
+        "is_not_one_off": "no es uno de",
+        "is_not": "no es"
+      },
+      "recent": {
+        "label": "Búsquedas recientes",
+        "empty": "Todavía no has buscado nada."
+      },
+      "labels": {
+        "placeholder": "Escriba label como 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?",
+          "heading": "Guardar búsqueda actual",
+          "confirmation": "Criterios de búsqueda <code>{name}</code>",
+          "placeholder": "Etiqueta"
+        },
+        "label": "Búsquedas guardadas"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Ámbito",
+        "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
+        "labels": "Etiquetas",
+        "state": "Estado",
+        "child": "Niño"
+      },
+      "empty": "Sin datos.",
+      "label": "Elegir filtros"
+    },
+    "force run title": "Forzar la ejecución de <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
+    "force run done": "La ejecución es forzada a RUNNING",
+    "force run confirm": "¿Está seguro de forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se descolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
+    "force run": "Forzar ejecución",
+    "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
+    "bulk force run": "¿Está seguro de que desea forzar la ejecución de <code>{executionCount}</code> ejecución(es)?<br/><br/>ADVERTENCIA: forzar la ejecución de una ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se des-encolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
+    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción."
   }
 }

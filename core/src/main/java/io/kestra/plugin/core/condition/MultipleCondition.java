@@ -1,38 +1,32 @@
 package io.kestra.plugin.core.condition;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
-import io.kestra.core.services.FlowService;
+import io.kestra.core.models.triggers.TimeSLA;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a list of flows.",
-    description = "Trigger when all the flows are successfully executed for the first time during the `window` duration."
+    title = "Run a flow if the list of preconditions are met in a time window.",
+    description = """
+        This task is deprecated, use io.kestra.plugin.core.condition.ExecutionsCondition or io.kestra.plugin.core.condition.AdvancedExecutionsCondition instead.
+        Will trigger an executions when all the flows defined by the preconditions are successfully executed in a specific period of time.
+        The period is defined by the `timeSLA` property and is by default a duration window of 24 hours."""
 )
 @Plugin(
     examples = {
@@ -49,7 +43,8 @@ import java.util.stream.Stream;
                 "        - SUCCESS",
                 "      - id: multiple",
                 "        type: io.kestra.plugin.core.condition.MultipleCondition",
-                "        window: P1D",
+                "        sla:",
+                "          window: PT12H",
                 "        conditions:",
                 "          flow-a:",
                 "            type: io.kestra.plugin.core.condition.ExecutionFlowCondition",
@@ -65,96 +60,40 @@ import java.util.stream.Stream;
     aliases = "io.kestra.core.models.conditions.types.MultipleCondition"
 )
 @Slf4j
-public class MultipleCondition extends Condition {
-    @NotNull
-    @NotBlank
-    @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
-    @Schema(title = "A unique id for the whole flow")
-    @PluginProperty
-    protected String id;
-
-    @NotNull
+@Deprecated
+public class MultipleCondition extends AbstractMultipleCondition {
     @Schema(
         title = "The duration of the window",
-        description = "See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available duration value.\n" +
-            "The start of the window is always based on midnight except if you set windowAdvance parameter. Eg if you have a 10 minutes (PT10M) window, " +
-            "the first window will be 00:00 to 00:10 and a new window will be started each 10 minutes")
+        description = "Deprecated, use `timeSLA.window` instead.")
     @PluginProperty
-    @Builder.Default
-    private Duration window = Duration.ofDays(1);
+    @Deprecated
+    private Duration window;
+
+    public void setWindow(Duration window) {
+        this.window = window;
+        this.timeSLA = this.getTimeSLA() == null ? TimeSLA.builder().window(window).build() : this.getTimeSLA().withWindow(window);
+    }
 
     @Schema(
         title = "The window advance duration",
-        description = "Allow to specify the start hour of the window\n" +
-        "Eg: you want a window of 6 hours (window=PT6H). By default the check will be done between: \n" +
-            "00:00 and 06:00 - 06:00 and 12:00 - 12:00 and 18:00 - 18:00 and 00:00 " +
-            "If you want to check the window between: \n" +
-            "03:00 and 09:00 - 09:00 and 15:00 - 15:00 and 21:00 - 21:00 and 3:00" +
-            "You will have to shift the window of 3 hours by settings windowAdvance: PT3H")
+        description = "Deprecated, use `timeSLA.windowAdvance` instead.")
     @PluginProperty
+    @Deprecated
     private Duration windowAdvance;
+
+    public void setWindowAdvance(Duration windowAdvance) {
+        this.windowAdvance = windowAdvance;
+        this.timeSLA = this.getTimeSLA() == null ? TimeSLA.builder().windowAdvance(windowAdvance).build() : this.getTimeSLA().withWindowAdvance(windowAdvance);
+    }
 
     @NotNull
     @NotEmpty
     @Schema(
-        title = "The list of conditions to wait for",
-        description = "The key must be unique for a trigger since it will be use to store previous result."
+        title = "The list of preconditions to wait for",
+        description = "The key must be unique for a trigger because it will be used to store the previous evaluation result."
     )
     @PluginProperty(
         additionalProperties = Condition.class
     )
     private Map<String, Condition> conditions;
-
-    /**
-     * This conditions will only validate previously calculated value on
-     * {@link MultipleConditionStorageInterface#get(Flow, String)}} and {@link MultipleConditionStorageInterface#save(List)} by the executor.
-     * The real validation is done here.
-     */
-    @Override
-    public boolean test(ConditionContext conditionContext) throws InternalException {
-        MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getMultipleConditionStorage();
-        Objects.requireNonNull(multipleConditionStorage);
-
-        Optional<MultipleConditionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());
-
-        Map<String, Boolean> results = conditions
-            .keySet()
-            .stream()
-            .map(condition -> new AbstractMap.SimpleEntry<>(
-                condition,
-                (triggerExecutionWindow.isPresent() &&
-                    triggerExecutionWindow.get().getResults() != null &&
-                    triggerExecutionWindow.get().getResults().containsKey(condition) &&
-                    triggerExecutionWindow.get().getResults().get(condition)
-                )
-            ))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        long validatedCount = results
-            .entrySet()
-            .stream()
-            .filter(Map.Entry::getValue)
-            .count();
-
-        boolean result = conditions.size() == validatedCount;
-
-        if (result && log.isDebugEnabled()) {
-            log.debug(
-                "[namespace: {}] [flow: {}] Multiple conditions validated !",
-                conditionContext.getFlow().getNamespace(),
-                conditionContext.getFlow().getId()
-            );
-        } else if (log.isTraceEnabled()) {
-            log.trace(
-                "[namespace: {}] [flow: {}] Multiple conditions failed ({}/{}) with '{}'",
-                conditionContext.getFlow().getNamespace(),
-                conditionContext.getFlow().getId(),
-                validatedCount,
-                conditions.size(),
-                results
-            );
-        }
-
-         return result;
-    }
 }

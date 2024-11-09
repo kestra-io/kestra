@@ -25,7 +25,7 @@ class LabelServiceTest {
     @Test
     void shouldFilterSystemLabels() {
         Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label("system_Label", "systemValue")))
+            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
             .build();
 
         List<Label> labels = LabelService.labelsExcludingSystem(flow);
@@ -38,7 +38,7 @@ class LabelServiceTest {
     void shouldReturnLabelsFromFlowAndTrigger() {
         RunContext runContext = runContextFactory.of(Map.of("variable", "variableValue"));
         Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label("system_Label", "systemValue")))
+            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
             .build();
         AbstractTrigger trigger = Schedule.builder()
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
@@ -54,7 +54,7 @@ class LabelServiceTest {
     void shouldFilterNonRenderableLabels() {
         RunContext runContext = runContextFactory.of();
         Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label("system_Label", "systemValue")))
+            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
             .build();
         AbstractTrigger trigger = Schedule.builder()
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))

@@ -74,7 +74,7 @@ public class Data<T> {
      */
     public Flux<T> flux(RunContext runContext, Class<T> clazz, Function<Map<String, Object>, T> mapper) throws IllegalVariableEvaluationException {
         if (isFromURI()) {
-            URI uri = fromURI.as(runContext, URI.class);
+            URI uri = runContext.render(fromURI).as(URI.class).orElseThrow();
             try {
                 var reader = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)));
                 return FileSerde.readAll(reader, clazz)
@@ -92,12 +92,12 @@ public class Data<T> {
         }
 
         if (isFromMap()) {
-            Map<String, Object> map = fromMap.asMap(runContext, String.class, Object.class);
+            Map<String, Object> map = runContext.render(fromMap).asMap(String.class, Object.class);
             return Mono.just(map).flux().map(mapper);
         }
 
         if (isFromList()) {
-            List<Map<String, Object>> list = fromList.asList(runContext, Map.class);
+            List<Map<String, Object>> list = runContext.render(fromList).asList(Map.class);
             return Flux.fromIterable(list).map(mapper);
         }
 
@@ -115,10 +115,7 @@ public class Data<T> {
      * If a fromURI is present, performs the given action with the URI, otherwise does nothing.
      */
     public void ifFromURI(RunContext runContext, Consumer<URI> consumer) throws IllegalVariableEvaluationException {
-        if (isFromURI()) {
-            URI uri = fromURI.as(runContext, URI.class);
-            consumer.accept(uri);
-        }
+        runContext.render(fromURI).as(URI.class).ifPresent(uri -> consumer.accept(uri));
     }
 
     /**
@@ -133,7 +130,7 @@ public class Data<T> {
      */
     public void ifFromMap(RunContext runContext, Consumer<Map<String, Object>> consumer) throws IllegalVariableEvaluationException {
         if (isFromMap()) {
-            Map<String, Object> map = fromMap.asMap(runContext, String.class, Object.class);
+            Map<String, Object> map = runContext.render(fromMap).asMap(String.class, Object.class);
             consumer.accept(map);
         }
     }
@@ -150,7 +147,7 @@ public class Data<T> {
      */
     public void ifFromList(RunContext runContext, Consumer<List<Map<String, Object>>> consumer) throws IllegalVariableEvaluationException {
         if (isFromList()) {
-            List<Map<String, Object>> list = fromList.asList(runContext, Map.class);
+            List<Map<String, Object>> list = runContext.render(fromList).asList(Map.class);
             consumer.accept(list);
         }
     }

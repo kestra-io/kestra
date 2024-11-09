@@ -192,7 +192,7 @@
     "resumed done": "La ejecución se ha reanudado",
     "toggle output": "Alternar salidas",
     "metrics": "Métricas",
-    "no data current task": "No hay datos disponibles para la tarea actual",
+    "no data current task": "No hay datos disponibles para el task actual.",
     "outputs": "Salidas",
     "output": "Salida",
     "eval": {

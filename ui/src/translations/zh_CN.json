@@ -192,7 +192,7 @@
     "resumed done": "执行已恢复",
     "toggle output": "切换输出",
     "metrics": "指标",
-    "no data current task": "当前任务没有可用数据",
+    "no data current task": "当前task没有可用数据",
     "outputs": "输出",
     "output": "输出",
     "eval": {

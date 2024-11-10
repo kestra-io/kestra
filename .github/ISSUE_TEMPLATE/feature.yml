@@ -7,6 +7,13 @@ body:
       placeholder: Tell us more about your feature request
     validations:
       required: true
+  - type: dropdown
+    attributes:
+      label: Priority
+      options:
+        - High
+        - Medium
+        - Low  
 labels:
   - enhancement
   - area/backend

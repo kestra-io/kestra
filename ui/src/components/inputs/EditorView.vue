@@ -395,6 +395,8 @@
         persistEditorWidth();
 
         store.commit("editor/closeAllTabs");
+
+        document.removeEventListener("click", hideTabContextMenu);
     });
 
     const stopTour = () => {
@@ -926,6 +928,58 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    const tabContextMenu = ref({
+        visible: false,
+        x: 0,
+        y: 0,
+        tab: null,
+        index: null,
+    });
+
+    const onTabContextMenu = (event, tab, index) => {
+        tabContextMenu.value = {
+            visible: true,
+            x: event.clientX,
+            y: event.clientY,
+            tab: tab,
+            index: index,
+        };
+
+        document.addEventListener("click", hideTabContextMenu);
+    };
+
+    const hideTabContextMenu = () => {
+        tabContextMenu.value.visible = false;
+        document.removeEventListener("click", hideTabContextMenu);
+    };
+
+    const closeTabs = (tabsToClose, openTab) => {
+        tabsToClose.forEach(tab => {
+            store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
+        });
+        store.commit("editor/changeOpenedTabs", {action: "open", ...openTab});
+        hideTabContextMenu();
+    };
+
+    const closeAllTabs = () => {
+        const tabs = store.state.editor.tabs;
+        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
+        closeTabs(tabs.filter(tab => tab !== firstTab), firstTab);
+    };
+
+    const closeOtherTabs = (tab) => {
+        const tabs = store.state.editor.tabs;
+        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
+        closeTabs(tabs.filter(t => t !== firstTab && t !== tab), tab);
+    };
+
+    const closeTabsToRight = (index) => {
+        const tabs = store.state.editor.tabs;
+        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
+        closeTabs(tabs.slice(index + 1).filter(tab => tab !== firstTab), tabs[index]);
+    };
+
 </script>
 
 <template>
@@ -955,6 +1009,7 @@
                 :class="{'tab-active': isActiveTab(tab)}"
                 @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
+                @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
             >
                 <TypeIcon :name="tab.name" />
                 <el-tooltip
@@ -976,6 +1031,21 @@
                 />
             </el-button>
         </el-scrollbar>
+
+        <el-menu
+            v-if="tabContextMenu.visible"
+            :style="{position: 'fixed', left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`, zIndex: 9999}"
+        >
+            <el-menu-item @click="closeAllTabs">
+                Close all tabs
+            </el-menu-item>
+            <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
+                Close other tabs
+            </el-menu-item>
+            <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
+                Close tabs to the right
+            </el-menu-item>
+        </el-menu>
 
         <div class="d-inline-flex">
             <switch-view

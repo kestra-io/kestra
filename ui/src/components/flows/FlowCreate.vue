@@ -65,6 +65,7 @@
                     const selectedNamespace = this.$route.query.namespace || "company.team";
                     this.source = `id: myflow
 namespace: ${selectedNamespace}
+
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log

@@ -77,7 +77,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                                 value: flow2
                               - field: STATE
                                 type: EQUAL_TO
-                                values: SUCCESS
+                                value: SUCCESS
                               - field: EXPRESSION
                                 type: IS_TRUE
                                 value: "{{outputs.output.values.variable == 'value'}}"

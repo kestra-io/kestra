@@ -192,7 +192,7 @@
     "resumed done": "Ausführung ist fortgesetzt",
     "toggle output": "Outputs umschalten",
     "metrics": "Metriken",
-    "no data current task": "Keine Daten für aktuellen Task verfügbar",
+    "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -889,7 +889,7 @@
     "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "no_data": "Keine Daten verfügbar",
+    "no_data": "Es sieht so aus, als wäre hier… noch nichts! Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "informative notice": "Hinweis(e)",
     "triggers-view": {
       "desc_no_triggers": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in unserer Dokumentation.",
@@ -903,14 +903,58 @@
     "starred": "Markiert",
     "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
-    "bulk unqueue": "Möchten Sie wirklich <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen?",
-    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Beachten Sie, dass dies das Nebenläufigkeitslimit des Flow nicht beachtet, sodass mehr Ausführungen als das erlaubte Limit laufen könnten.",
+    "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
+    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Bitte beachten Sie, dass dies das Nebenläufigkeitslimit des Flows nicht berücksichtigt, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
     "unqueue": "Aus Warteschlange entfernen",
     "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
     "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
     "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
     "execution-warn-title": "Wichtige Warnung!",
-    "worker group key": "Worker-Gruppe {key}",
-    "worker group fallback": "Arbeitsgruppe Fallback"
+    "worker group key": "Worker-Gruppe Schlüssel",
+    "worker group fallback": "Arbeitsgruppe Fallback",
+    "filters": {
+      "comparators": {
+        "contains": "enthält",
+        "is": "ist",
+        "is_one_of": "ist einer von",
+        "not_contains": "nicht_enthält",
+        "is_not_one_off": "ist nicht einer von",
+        "is_not": "ist nicht"
+      },
+      "recent": {
+        "label": "Letzte Suchanfragen",
+        "empty": "Sie haben noch nichts gesucht."
+      },
+      "labels": {
+        "placeholder": "Geben Sie das Label als 'key:value' ein."
+      },
+      "save": {
+        "dialog": {
+          "hint": "Wie möchten Sie dieses Suchkriterium labeln?",
+          "heading": "Aktuelle Suche speichern",
+          "confirmation": "Suchkriterien <code>{name}</code>",
+          "placeholder": "Label"
+        },
+        "label": "Gespeicherte Suchen"
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Umfang",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+        "labels": "Labels",
+        "state": "Zustand",
+        "child": "Kind"
+      },
+      "empty": "Keine Daten.",
+      "label": "Filter auswählen"
+    },
+    "force run title": "Erzwinge die Ausführung <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> Ausführung(en) erzwungener Lauf",
+    "force run done": "Ausführung ist erzwungener Lauf",
+    "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
+    "force run": "Erzwungene Ausführung",
+    "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
+    "bulk force run": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) erzwingen möchten?<br/><br/>WARNUNG: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
+    "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion."
   }
 }

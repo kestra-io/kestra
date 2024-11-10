@@ -130,7 +130,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             The trigger will be evaluated for each state change of matching executions. Keep in mind that if a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. The Flow trigger listening to a `PAUSED` state will be evaluated twice in this case.
             ::
             ::alert{type="warning"}
-            Note that a Flow trigger cannot react to the `CREATED` state.
+            Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::"""
     )
     @Builder.Default

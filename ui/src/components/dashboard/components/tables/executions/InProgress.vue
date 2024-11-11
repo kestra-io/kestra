@@ -107,7 +107,8 @@
                 />
             </div>
         </div>
-        <el-empty v-else :description="$t('no_data')" />
+
+        <NoData v-else />
     </div>
 </template>
 
@@ -119,6 +120,7 @@
     import moment from "moment";
 
     import States from "../../States.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
 

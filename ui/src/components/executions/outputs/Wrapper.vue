@@ -36,7 +36,6 @@
                 </template>
             </el-cascader-panel>
         </el-col>
-        
         <el-col
             v-if="multipleSelected || selectedValue"
             :xs="24"
@@ -44,79 +43,73 @@
             :md="8"
             :lg="8"
             :xl="6"
-            class="d-flex p-3"
+            class="d-flex p-3 wrapper"
         >
-            <div ref="wrapperRef" class="wrapper resizable-section">
-                <div ref="resizerRef" class="resizer" />
-
-                <div class="content">
-                    <div class="w-100 overflow-auto">
-                        <div class="d-flex justify-content-between pe-none fs-5 values">
-                            <code class="d-block">
-                                {{ selectedNode()?.label ?? 'Value' }}
-                            </code>
-                        </div>
-
-                        <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
-                            <el-collapse-item name="debug">
-                                <template #title>
-                                    <span>{{ t('eval.title') }}</span>
-                                </template>
-
-                                <div class="d-flex flex-column p-3 debug">
-                                    <editor
-                                        ref="debugEditor"
-                                        :full-height="false"
-                                        :input="true"
-                                        :navbar="false"
-                                        :model-value="computedDebugValue"
-                                        @confirm="onDebugExpression($event)"
-                                        class="w-100"
-                                    />
-
-                                    <el-button
-                                        type="primary"
-                                        @click="onDebugExpression(debugEditor.editor.getValue())"
-                                        class="mt-3"
-                                    >
-                                        {{ t('eval.title') }}
-                                    </el-button>
-
-                                    <editor
-                                        v-if="debugExpression"
-                                        :read-only="true"
-                                        :input="true"
-                                        :full-height="false"
-                                        :navbar="false"
-                                        :minimap="false"
-                                        :model-value="debugExpression"
-                                        :lang="isJSON ? 'json' : ''"
-                                        class="mt-3"
-                                    />
-                                </div>
-                            </el-collapse-item>
-                        </el-collapse>
-
-                        <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
-                            <p><strong>{{ debugError }}</strong></p>
-                            <div class="my-2">
-                                <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
-                                <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
-                            </div>
-                            <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
-                        </el-alert>
-
-                        <VarValue :value="selectedValue" :execution="execution" />
-                        <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
-                    </div>
+            <div class="w-100 overflow-auto">
+                <div class="d-flex justify-content-between pe-none fs-5 values">
+                    <code class="d-block">
+                        {{ selectedNode()?.label ?? 'Value' }}
+                    </code>
                 </div>
+
+                <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
+                    <el-collapse-item name="debug">
+                        <template #title>
+                            <span>{{ t('eval.title') }}</span>
+                        </template>
+
+                        <div class="d-flex flex-column p-3 debug">
+                            <editor
+                                ref="debugEditor"
+                                :full-height="false"
+                                :input="true"
+                                :navbar="false"
+                                :model-value="computedDebugValue"
+                                @confirm="onDebugExpression($event)"
+                                class="w-100"
+                            />
+
+                            <el-button
+                                type="primary"
+                                @click="onDebugExpression(debugEditor.editor.getValue())"
+                                class="mt-3"
+                            >
+                                {{ t('eval.title') }}
+                            </el-button>
+
+                            <editor
+                                v-if="debugExpression"
+                                :read-only="true"
+                                :input="true"
+                                :full-height="false"
+                                :navbar="false"
+                                :minimap="false"
+                                :model-value="debugExpression"
+                                :lang="isJSON ? 'json' : ''"
+                                class="mt-3"
+                            />
+                        </div>
+                    </el-collapse-item>
+                </el-collapse>
+
+                <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
+                    <p><strong>{{ debugError }}</strong></p>
+                    <div class="my-2">
+                        <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
+                        <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                    </div>
+                    <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
+                </el-alert>
+
+                <VarValue :value="selectedValue" :execution="execution" />
+                <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
             </div>
         </el-col>
     </el-row>
 </template>
 
 <script setup lang="ts">
-    import {ref,computed, shallowRef, onMounted, onBeforeUnmount} from "vue";
+    import {ref, computed, shallowRef, onMounted} from "vue";
     import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
@@ -133,62 +126,6 @@
     const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
-    const wrapperRef = ref(null);
-    const resizerRef = ref(null);
-    let isResizing = false;
-
-
-    const startResize = (_event) => {
-        
-        isResizing = true;
-        document.addEventListener("mousemove",resize);
-        document.addEventListener("mouseup",stopResize);
-       
-    };
-
-    const resize = (event) => {
-        if (!isResizing || !wrapperRef.value) return;
-
-        
-        
-        let startRightEdge = wrapperRef.value.getBoundingClientRect().right;
-
-        
-        const newWidth = startRightEdge - event.clientX;
-
-        if (newWidth > 0) {
-            wrapperRef.value.style.width = `${newWidth}px`;
-            wrapperRef.value.style.right = "20px"; 
-            wrapperRef.value.style.left = ""; 
-        }
-    };
-    
-    const stopResize = () => {
-        isResizing = false;
-        document.removeEventListener("mousemove", resize);
-        document.removeEventListener("mouseup", stopResize);
-    };
-
-    onMounted(() => {
-        
-        setTimeout(() => {
-            if (resizerRef.value) {
-                
-                resizerRef.value.addEventListener("mousedown", startResize);
-                
-            } else {
-                
-            }
-        }, 0); 
-    });
-
-
-    onBeforeUnmount(() => {
-        if (resizerRef.value) {
-            resizerRef.value.removeEventListener("mousedown", startResize);
-        }
-    });
-
     const computedDebugValue = computed(() => {
         const task = selectedTask()?.taskId;
         if(!task) return "";
@@ -403,29 +340,6 @@
 
     .wrapper {
         background: var(--card-bg);
-        overflow: auto;
-        
-        min-width: 18vw; 
-        
-        width: 18vw; 
-        padding-left: 10px; 
-        position: absolute;
-        top: 0;
-        right: 0; 
-        height: 100vh; 
-    }
-
-
-    .resizer {
-        width: 0.1vw; 
-        max-width: 5px; 
-        background-color: gray;
-        cursor: ew-resize;
-        position: absolute;
-        top: 0;
-        left: 0; 
-        bottom: 0;
-        z-index: 2; 
     }
 
     .el-cascader-menu {

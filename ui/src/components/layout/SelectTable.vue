@@ -21,7 +21,6 @@
     </div>
 </template>
 
-
 <script>
     import NoData from "../layout/NoData.vue";
 

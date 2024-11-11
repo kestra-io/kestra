@@ -139,27 +139,27 @@
 
 
     const startResize = (_event) => {
-        console.log("mousedown déclenché");
+        
         isResizing = true;
         document.addEventListener("mousemove",resize);
         document.addEventListener("mouseup",stopResize);
-        console.log("dddddddddddddd");
+       
     };
 
     const resize = (event) => {
         if (!isResizing || !wrapperRef.value) return;
 
-        // Position actuelle de la souris et position de départ du bord droit
+        
         
         let startRightEdge = wrapperRef.value.getBoundingClientRect().right;
 
-        // Calculer la nouvelle largeur
+        
         const newWidth = startRightEdge - event.clientX;
 
-        if (newWidth > 0) { // Assurer une largeur positive
+        if (newWidth > 0) {
             wrapperRef.value.style.width = `${newWidth}px`;
-            wrapperRef.value.style.right = "20px"; // Garder le bord droit fixe
-            wrapperRef.value.style.left = ""; // Assurer que `left` est effacé
+            wrapperRef.value.style.right = "20px"; 
+            wrapperRef.value.style.left = ""; 
         }
     };
     
@@ -170,16 +170,16 @@
     };
 
     onMounted(() => {
-        console.log("Montage du composant");
+        
         setTimeout(() => {
             if (resizerRef.value) {
-                console.log("L'élément resizerRef est bien attaché !");
+                
                 resizerRef.value.addEventListener("mousedown", startResize);
                 
             } else {
-                console.log("L'élément resizerRef n'a pas été trouvé.");
+                console.log("The resizerRef element was not found.");
             }
-        }, 0); // Retarder l'exécution pour être sûr que l'élément soit monté
+        }, 0); 
     });
 
 
@@ -405,27 +405,27 @@
         background: var(--card-bg);
         overflow: auto;
         
-        min-width: 18vw; /* Largeur minimale en fonction de la taille de l'écran */
+        min-width: 18vw; 
         
-        width: 18vw; /* Largeur initiale en fonction de la taille de l'écran */
-        padding-left: 10px; /* Ajustement pour espacer la poignée de redimensionnement */
+        width: 18vw; 
+        padding-left: 10px; 
         position: absolute;
         top: 0;
-        right: 0; /* Positionne la div sur le bord droit de la page */
-        height: 100vh; /* Assure la hauteur de toute la page */
+        right: 0; 
+        height: 100vh; 
     }
 
 
     .resizer {
-        width: 0.1vw; /* Largeur responsive par rapport à la taille de l'écran */
-        max-width: 5px; /* Limite de largeur pour éviter qu'elle ne devienne trop large */
+        width: 0.1vw; 
+        max-width: 5px; 
         background-color: gray;
         cursor: ew-resize;
         position: absolute;
         top: 0;
-        left: 0; /* Aligne la poignée de redimensionnement à gauche */
+        left: 0; 
         bottom: 0;
-        z-index: 2; /* La rend interactive pour le redimensionnement */
+        z-index: 2; 
     }
 
     .el-cascader-menu {

@@ -672,7 +672,8 @@
             "default_namespace": "Namespace Padrão",
             "log_level": "Nível de Log Padrão",
             "log_display": "Exibição de Log Padrão",
-            "execute_flow": "Executar o Flow"
+            "execute_flow": "Executar o Flow",
+            "execute_default_tab": "Aba de Execução Padrão"
           }
         },
         "theme": {

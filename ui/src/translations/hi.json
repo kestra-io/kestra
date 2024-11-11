@@ -672,7 +672,8 @@
             "default_namespace": "पूर्व-निर्धारित Namespace",
             "log_level": "Log स्तर",
             "log_display": "Log प्रदर्शन",
-            "execute_flow": "Flow निष्पादित करें"
+            "execute_flow": "Flow निष्पादित करें",
+            "execute_default_tab": "डिफ़ॉल्ट Execution टैब"
           }
         },
         "theme": {

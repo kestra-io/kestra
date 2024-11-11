@@ -672,7 +672,8 @@
             "default_namespace": "デフォルトNamespace",
             "log_level": "デフォルトLogレベル",
             "log_display": "デフォルトLog表示",
-            "execute_flow": "Flowを実行"
+            "execute_flow": "Flowを実行",
+            "execute_default_tab": "デフォルト実行タブ"
           }
         },
         "theme": {

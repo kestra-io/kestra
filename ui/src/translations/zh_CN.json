@@ -672,7 +672,8 @@
             "default_namespace": "默认命名空间",
             "log_level": "默认日志级别",
             "log_display": "默认日志显示",
-            "execute_flow": "执行流程"
+            "execute_flow": "执行流程",
+            "execute_default_tab": "默认执行选项卡"
           }
         },
         "theme": {

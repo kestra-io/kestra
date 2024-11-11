@@ -44,9 +44,9 @@
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
                         <el-select :model-value="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
                             <el-option
-                                v-for="item in executeDefaultTab"
-                                :key="item.text"
-                                :label="$t(`${item.text}`)"
+                                v-for="item in executeDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
                                 :value="item.value"
                             />
                         </el-select>
@@ -511,28 +511,31 @@
                     }
                 ]
             },
-            executeDefaultTab() {
-                //user can choose from one of the below tabs to be shown by default after opening the exection page
+            executeDefaultTabOptions() {
                 return [
                     {
                         value : "overview",
-                        text : "Overview",
+                        label: this.$t("overview")
                     },
                     {
                         value : "gantt",
-                        text : "Gantt",
+                        label: this.$t("gantt")
                     },
                     {
                         value : "logs",
-                        text : "Logs",
+                        label: this.$t("logs")
                     },
                     {
                         value : "topology",
-                        text : "Topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value: "outputs",
+                        label: this.$t("outputs")
                     },
                     {
                         value : "metrics",
-                        text : "Metrics",
+                        label: this.$t("metrics")
                     }
                 ]
             }

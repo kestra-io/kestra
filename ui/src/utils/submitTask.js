@@ -40,6 +40,7 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
 
 export const executeTask = (submitor, flow, values, options) => {
     const formData = inputsToFormDate(submitor, flow.inputs, values);
+
     submitor.$store
         .dispatch("execution/triggerExecution", {
             ...options,

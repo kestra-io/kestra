@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :breadcrumb="routeInfo.breadcrumb">
+    <top-nav-bar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
         <template #title>
             <template v-if="deleted">
                 <Alert class="text-warning me-2" />Deleted:&nbsp;

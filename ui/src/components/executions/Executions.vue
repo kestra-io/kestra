@@ -85,7 +85,7 @@
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
                             </el-button>
-                            <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
+                            <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                                 {{ $t("delete") }}
                             </el-button>
                             <el-button
@@ -103,6 +103,9 @@
                             </el-button>
                             <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
                                 {{ $t("unqueue") }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                {{ $t("force run") }}
                             </el-button>
                         </bulk-select>
                         <el-dialog
@@ -351,6 +354,7 @@
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
     import KestraFilter from "../filter/Wrapper.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>
 
 <script>
@@ -768,6 +772,14 @@
                     "execution/queryUnqueueExecution",
                     "execution/bulkUnqueueExecution",
                     "executions unqueue"
+                );
+            },
+            forceRunExecutions() {
+                this.genericConfirmAction(
+                    "bulk force run",
+                    "execution/queryForceRunExecution",
+                    "execution/bulkForceRunExecution",
+                    "executions force run"
                 );
             },
             restartExecutions() {

@@ -469,7 +469,7 @@
         }
 
 
-        updateParams();
+        updateParams(route.query);
     });
 </script>
 

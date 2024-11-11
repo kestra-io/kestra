@@ -311,6 +311,22 @@ export default {
                 {params: options}
             )
         },
+        forceRun(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/force-run`);
+        },
+        bulkForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-ids`,
+                options.executionsId
+            )
+        },
+        queryForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-query`,
+                {},
+                {params: options}
+            )
+        },
         loadFlowForExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
                 .then(response => {

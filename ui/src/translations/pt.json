@@ -192,7 +192,7 @@
     "resumed done": "Execução foi retomada",
     "toggle output": "Alternar outputs",
     "metrics": "Métricas",
-    "no data current task": "Nenhum dado disponível para a task atual",
+    "no data current task": "Não há dados disponíveis para a tarefa atual",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -889,7 +889,7 @@
     "invalid bulk pause": "Não foi possível pausar as execuções",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "no_data": "Sem dados disponíveis",
+    "no_data": "Parece que não há nada aqui... ainda! Ajuste seus filtros ou tente novamente!",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Leia mais sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> em nossa documentação.",
@@ -947,6 +947,14 @@
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros"
-    }
+    },
+    "force run title": "Forçar a execução da execução <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "force run done": "A execução é forçada a correr",
+    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
+    "force run": "Executar forçadamente",
+    "invalid bulk force run": "Não foi possível forçar a execução das execuções",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
+    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação."
   }
 }

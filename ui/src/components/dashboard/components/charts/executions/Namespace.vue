@@ -32,7 +32,7 @@
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
 
-    import {Bar} from "vue-chartjs";    
+    import {Bar} from "vue-chartjs";
 
     import {barLegend} from "../legend.js";
 

@@ -24,7 +24,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <el-empty v-else :description="$t('no_data')" />
+        <NoData v-else />
     </div>
 </template>
 
@@ -38,6 +38,8 @@
 
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 

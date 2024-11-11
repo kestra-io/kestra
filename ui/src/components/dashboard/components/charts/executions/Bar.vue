@@ -34,9 +34,10 @@
             class="tall"
         />
         
-        <el-empty v-else :description="$t('no_data')" />
+        <NoData v-else />
     </div>
 </template>
+
 <script setup>
     import {computed, ref, onMounted, onUnmounted} from "vue";
     import {useI18n} from "vue-i18n";
@@ -49,6 +50,8 @@
     import Utils from "../../../../../utils/utils.js";
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 

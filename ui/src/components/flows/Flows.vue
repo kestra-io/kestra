@@ -218,7 +218,7 @@
                         </template>
                     </select-table>
 
-                    <el-empty v-else :description="$t('no_data')" />
+                    <NoData v-else />
                 </template>
             </data-table>
         </div>
@@ -235,6 +235,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Filters from "../saved-filters/Filters.vue";
+    import NoData from "../layout/NoData.vue";
 </script>
 
 <script>

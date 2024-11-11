@@ -13,22 +13,12 @@
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
-                <NoDataAvailable v-else />
+                <NoData v-else />
             </div>
             <div id="totals" />
         </div>
     </div>
 </template>
-
-<script>
-    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
-
-    export default {
-        components: {
-            NoDataAvailable
-        },
-    };
-</script>
 
 <script setup>
     import {computed} from "vue";
@@ -41,6 +31,8 @@
     import Utils from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 

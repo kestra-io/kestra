@@ -217,8 +217,8 @@
                             </el-table-column>
                         </template>
                     </select-table>
-                    
-                    <NoDataAvailable v-else />
+
+                    <NoData v-else />
                 </template>
             </data-table>
         </div>
@@ -235,6 +235,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Filters from "../saved-filters/Filters.vue";
+    import NoData from "../layout/NoData.vue";
 </script>
 
 <script>
@@ -252,7 +253,6 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
-    import NoDataAvailable from "../layout/NoDataAvailable.vue";
     import StateChart from "../stats/StateChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
@@ -283,8 +283,7 @@
             LabelFilter,
             ScopeFilterButtons,
             TopNavBar,
-            ExecutionsBar,
-            NoDataAvailable
+            ExecutionsBar
         },
         props: {
             topbar: {

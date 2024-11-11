@@ -34,19 +34,9 @@
             class="tall"
         />
         
-        <NoDataAvailable v-else />
+        <NoData v-else />
     </div>
 </template>
-
-<script>
-    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
-
-    export default {
-        components: {
-            NoDataAvailable
-        },
-    };
-</script>
 
 <script setup>
     import {computed, ref, onMounted, onUnmounted} from "vue";
@@ -55,13 +45,13 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    
-
     import {barLegend} from "../legend.js";
 
     import Utils from "../../../../../utils/utils.js";
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 

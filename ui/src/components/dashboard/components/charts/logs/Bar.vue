@@ -19,19 +19,9 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <NoDataAvailable v-else />
+        <NoData v-else />
     </div>
 </template>
-
-<script>
-    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
-
-    export default {
-        components: {
-            NoDataAvailable
-        },
-    };
-</script>
 
 <script setup>
     import {computed} from "vue";
@@ -45,6 +35,8 @@
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 

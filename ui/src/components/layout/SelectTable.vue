@@ -17,16 +17,16 @@
             </el-table>
         </template>
 
-        <NoDataAvailable v-else />
+        <NoData v-else />
     </div>
 </template>
 
 
 <script>
-    import NoDataAvailable from "../layout/NoDataAvailable.vue";
+    import NoData from "../layout/NoData.vue";
 
     export default {
-        components: NoDataAvailable,
+        components: NoData,
         data() {
             return {
                 hasSelection: false

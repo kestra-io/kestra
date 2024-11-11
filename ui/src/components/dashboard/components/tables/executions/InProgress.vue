@@ -107,19 +107,10 @@
                 />
             </div>
         </div>
-        <NoDataAvailable v-else />
+
+        <NoData v-else />
     </div>
 </template>
-
-<script>
-    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
-
-    export default {
-        components: {
-            NoDataAvailable
-        },
-    };
-</script>
 
 <script setup>
     import {onBeforeMount, ref} from "vue";
@@ -129,6 +120,7 @@
     import moment from "moment";
 
     import States from "../../States.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
 

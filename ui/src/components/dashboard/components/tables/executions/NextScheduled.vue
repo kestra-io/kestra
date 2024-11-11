@@ -137,19 +137,10 @@
                 />
             </div>
         </div>
-        <NoDataAvailable v-else />
+
+        <NoData v-else />
     </div>
 </template>
-
-<script>
-    import NoDataAvailable from "../../../../layout/NoDataAvailable.vue";
-
-    export default {
-        components: {
-            NoDataAvailable
-        },
-    };
-</script>
 
 <script setup>
     import {onBeforeMount, watch, ref} from "vue";
@@ -157,6 +148,8 @@
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 

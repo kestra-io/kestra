@@ -36,6 +36,7 @@
                 </template>
             </el-cascader-panel>
         </el-col>
+        
         <el-col
             v-if="multipleSelected || selectedValue"
             :xs="24"
@@ -43,73 +44,79 @@
             :md="8"
             :lg="8"
             :xl="6"
-            class="d-flex p-3 wrapper"
+            class="d-flex p-3"
         >
-            <div class="w-100 overflow-auto">
-                <div class="d-flex justify-content-between pe-none fs-5 values">
-                    <code class="d-block">
-                        {{ selectedNode()?.label ?? 'Value' }}
-                    </code>
-                </div>
+            <div ref="wrapperRef" class="wrapper resizable-section">
+                <div ref="resizerRef" class="resizer" />
 
-                <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
-                    <el-collapse-item name="debug">
-                        <template #title>
-                            <span>{{ t('eval.title') }}</span>
-                        </template>
-
-                        <div class="d-flex flex-column p-3 debug">
-                            <editor
-                                ref="debugEditor"
-                                :full-height="false"
-                                :input="true"
-                                :navbar="false"
-                                :model-value="computedDebugValue"
-                                @confirm="onDebugExpression($event)"
-                                class="w-100"
-                            />
-
-                            <el-button
-                                type="primary"
-                                @click="onDebugExpression(debugEditor.editor.getValue())"
-                                class="mt-3"
-                            >
-                                {{ t('eval.title') }}
-                            </el-button>
-
-                            <editor
-                                v-if="debugExpression"
-                                :read-only="true"
-                                :input="true"
-                                :full-height="false"
-                                :navbar="false"
-                                :minimap="false"
-                                :model-value="debugExpression"
-                                :lang="isJSON ? 'json' : ''"
-                                class="mt-3"
-                            />
+                <div class="content">
+                    <div class="w-100 overflow-auto">
+                        <div class="d-flex justify-content-between pe-none fs-5 values">
+                            <code class="d-block">
+                                {{ selectedNode()?.label ?? 'Value' }}
+                            </code>
                         </div>
-                    </el-collapse-item>
-                </el-collapse>
 
-                <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
-                    <p><strong>{{ debugError }}</strong></p>
-                    <div class="my-2">
-                        <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
-                        <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                        <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
+                            <el-collapse-item name="debug">
+                                <template #title>
+                                    <span>{{ t('eval.title') }}</span>
+                                </template>
+
+                                <div class="d-flex flex-column p-3 debug">
+                                    <editor
+                                        ref="debugEditor"
+                                        :full-height="false"
+                                        :input="true"
+                                        :navbar="false"
+                                        :model-value="computedDebugValue"
+                                        @confirm="onDebugExpression($event)"
+                                        class="w-100"
+                                    />
+
+                                    <el-button
+                                        type="primary"
+                                        @click="onDebugExpression(debugEditor.editor.getValue())"
+                                        class="mt-3"
+                                    >
+                                        {{ t('eval.title') }}
+                                    </el-button>
+
+                                    <editor
+                                        v-if="debugExpression"
+                                        :read-only="true"
+                                        :input="true"
+                                        :full-height="false"
+                                        :navbar="false"
+                                        :minimap="false"
+                                        :model-value="debugExpression"
+                                        :lang="isJSON ? 'json' : ''"
+                                        class="mt-3"
+                                    />
+                                </div>
+                            </el-collapse-item>
+                        </el-collapse>
+
+                        <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
+                            <p><strong>{{ debugError }}</strong></p>
+                            <div class="my-2">
+                                <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
+                                <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                            </div>
+                            <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
+                        </el-alert>
+
+                        <VarValue :value="selectedValue" :execution="execution" />
+                        <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
                     </div>
-                    <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
-                </el-alert>
-
-                <VarValue :value="selectedValue" :execution="execution" />
-                <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
+                </div>
             </div>
         </el-col>
     </el-row>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted} from "vue";
+    import {ref,computed, shallowRef, onMounted, onBeforeUnmount} from "vue";
     import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
@@ -126,6 +133,62 @@
     const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
+    const wrapperRef = ref(null);
+    const resizerRef = ref(null);
+    let isResizing = false;
+
+
+    const startResize = (_event) => {
+        console.log("mousedown déclenché");
+        isResizing = true;
+        document.addEventListener("mousemove",resize);
+        document.addEventListener("mouseup",stopResize);
+        console.log("dddddddddddddd");
+    };
+
+    const resize = (event) => {
+        if (!isResizing || !wrapperRef.value) return;
+
+        // Position actuelle de la souris et position de départ du bord droit
+        
+        let startRightEdge = wrapperRef.value.getBoundingClientRect().right;
+
+        // Calculer la nouvelle largeur
+        const newWidth = startRightEdge - event.clientX;
+
+        if (newWidth > 0) { // Assurer une largeur positive
+            wrapperRef.value.style.width = `${newWidth}px`;
+            wrapperRef.value.style.right = "20px"; // Garder le bord droit fixe
+            wrapperRef.value.style.left = ""; // Assurer que `left` est effacé
+        }
+    };
+    
+    const stopResize = () => {
+        isResizing = false;
+        document.removeEventListener("mousemove", resize);
+        document.removeEventListener("mouseup", stopResize);
+    };
+
+    onMounted(() => {
+        console.log("Montage du composant");
+        setTimeout(() => {
+            if (resizerRef.value) {
+                console.log("L'élément resizerRef est bien attaché !");
+                resizerRef.value.addEventListener("mousedown", startResize);
+                
+            } else {
+                console.log("L'élément resizerRef n'a pas été trouvé.");
+            }
+        }, 0); // Retarder l'exécution pour être sûr que l'élément soit monté
+    });
+
+
+    onBeforeUnmount(() => {
+        if (resizerRef.value) {
+            resizerRef.value.removeEventListener("mousedown", startResize);
+        }
+    });
+
     const computedDebugValue = computed(() => {
         const task = selectedTask()?.taskId;
         if(!task) return "";
@@ -340,6 +403,29 @@
 
     .wrapper {
         background: var(--card-bg);
+        overflow: auto;
+        
+        min-width: 18vw; /* Largeur minimale en fonction de la taille de l'écran */
+        
+        width: 18vw; /* Largeur initiale en fonction de la taille de l'écran */
+        padding-left: 10px; /* Ajustement pour espacer la poignée de redimensionnement */
+        position: absolute;
+        top: 0;
+        right: 0; /* Positionne la div sur le bord droit de la page */
+        height: 100vh; /* Assure la hauteur de toute la page */
+    }
+
+
+    .resizer {
+        width: 0.1vw; /* Largeur responsive par rapport à la taille de l'écran */
+        max-width: 5px; /* Limite de largeur pour éviter qu'elle ne devienne trop large */
+        background-color: gray;
+        cursor: ew-resize;
+        position: absolute;
+        top: 0;
+        left: 0; /* Aligne la poignée de redimensionnement à gauche */
+        bottom: 0;
+        z-index: 2; /* La rend interactive pour le redimensionnement */
     }
 
     .el-cascader-menu {

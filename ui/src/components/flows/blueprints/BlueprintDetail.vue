@@ -58,6 +58,9 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>About this blueprint</h4>
+                    <div v-if="!system" class="tags text-uppercase">
+                        <p> {{ tagsToString(blueprint.tags) }} </p>
+                    </div>
                     <markdown :source="blueprint.description" />
                 </template>
             </el-col>
@@ -82,6 +85,7 @@
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Markdown from "../../layout/Markdown.vue";
+    import BlueprintsBrowser from "../override/components/flows/blueprints/BlueprintsBrowser.vue";
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
@@ -89,12 +93,13 @@
     import {apiUrl} from "override/utils/route";
 
     export default {
-        components: {Markdown, CopyToClipboard},
+        components: {Markdown, CopyToClipboard, BlueprintsBrowser},
         emits: ["back"],
         data() {
             return {
                 flowGraph: undefined,
                 blueprint: undefined,
+                tags: undefined,
                 breadcrumb: [
                     {
                         label: this.$t("blueprints.title"),
@@ -122,6 +127,14 @@
             blueprintBaseUri: {
                 type: String,
                 default: undefined,
+            },
+            system: {
+                type: Boolean,
+                default: false
+            },
+            tagsResponseMapper: {
+                type: Function,
+                default: tagsResponse => Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
             }
         },
         methods: {
@@ -137,6 +150,9 @@
                         }
                     })
                 }
+            },
+            tagsToString(blueprintTags) {
+                return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
             }
         },
         async created() {
@@ -237,38 +253,56 @@
             height: 30vh;
             width: 100%;
         }
+    }
 
-        .plugins-container {
+    .tags {
+        color: #9ca1de;
+        display: inline;
+        font-family: Source Code Pro, monospace;
+        font-size: 1.375rem;
+        font-weight: 700;
+        text-transform: uppercase;
+
+        p {
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        html.dark & {
+            color: #c11c84;
+        }
+    }    
+
+    .plugins-container {
+        display: flex;
+        flex-wrap: wrap;
+        > div {
+            background: var(--card-bg);
+            border-radius: var(--bs-border-radius);
+            min-width : 100px;
+            width: 100px;
+            height : 100px;
+            padding: $spacer;
+            margin-right: $spacer;
+            margin-bottom: $spacer;
             display: flex;
             flex-wrap: wrap;
-            > div {
-                background: var(--card-bg);
-                border-radius: var(--bs-border-radius);
-                min-width : 100px;
-                width: 100px;
-                height : 100px;
-                padding: $spacer;
-                margin-right: $spacer;
-                margin-bottom: $spacer;
-                display: flex;
-                flex-wrap: wrap;
-                border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--bs-border-color);
 
-                :deep(.wrapper) {
-                    .icon {
-                        height: 100%;
-                        margin: 0;
-                    }
-
-                    .hover {
-                        position: static;
-                        background: none;
-                        border-top: 0;
-                        font-size: var(--font-size-sm);
-                    }
-
+            :deep(.wrapper) {
+                .icon {
+                    height: 100%;
+                    margin: 0;
                 }
+
+                .hover {
+                    position: static;
+                    background: none;
+                    border-top: 0;
+                    font-size: var(--font-size-sm);
+                }
+
             }
-        }
-    }
+         }
+     }
 </style>

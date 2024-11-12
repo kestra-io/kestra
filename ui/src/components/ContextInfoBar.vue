@@ -49,6 +49,10 @@
     line-height: normal;
 }
 
+.wrapper button:hover{
+    border-color: var(--bs-primary);
+}
+
 .buttonIcon{
     transform: rotate(90deg);
     margin-bottom: 8px;

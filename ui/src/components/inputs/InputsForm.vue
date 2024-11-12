@@ -7,23 +7,6 @@
             :required="input.required !== false"
             :prop="input.id"
         >
-            <!-- Radio Button Group Rendering -->
-            <el-radio-group
-                v-if="input.isRadio"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
-                class="w-100"
-            >
-                <el-radio
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
-                >
-                    {{ item }}
-                </el-radio>
-            </el-radio-group>
-
             <editor
                 :full-height="false"
                 :input="true"
@@ -37,7 +20,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-else-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 :allow-create="input.allowCustomValue"
@@ -52,6 +35,21 @@
                     {{ item }}
                 </el-option>
             </el-select>
+            <el-radio-group
+                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-model="inputs[input.id]"
+                @update:model-value="onChange"
+                class="w-100"
+            >
+                <el-radio
+                    v-for="item in input.values"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                >
+                    {{ item }}
+                </el-radio>
+            </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -75,6 +73,7 @@
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 show-password

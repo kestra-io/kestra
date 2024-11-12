@@ -672,7 +672,8 @@
             "default_namespace": "Domyślny Namespace",
             "log_level": "Domyślna Poziom Logs",
             "log_display": "Domyślne Wyświetlanie Log",
-            "execute_flow": "Wykonaj Flow"
+            "execute_flow": "Wykonaj Flow",
+            "execute_default_tab": "Domyślna karta Execution"
           }
         },
         "theme": {

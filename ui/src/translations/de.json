@@ -672,7 +672,8 @@
             "default_namespace": "Standard-Namespace",
             "log_level": "Standard-Log-Ebene",
             "log_display": "Standard-Log-Anzeige",
-            "execute_flow": "Flow ausführen"
+            "execute_flow": "Flow ausführen",
+            "execute_default_tab": "Standard-Ausführungs-Registerkarte"
           }
         },
         "theme": {

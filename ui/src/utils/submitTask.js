@@ -56,7 +56,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })
@@ -68,7 +68,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })

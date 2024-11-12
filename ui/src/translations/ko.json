@@ -672,7 +672,8 @@
             "default_namespace": "기본 Namespace",
             "log_level": "기본 Log 레벨",
             "log_display": "기본 Log 표시",
-            "execute_flow": "Flow 실행"
+            "execute_flow": "Flow 실행",
+            "execute_default_tab": "기본 실행 탭"
           }
         },
         "theme": {

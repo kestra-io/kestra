@@ -38,7 +38,8 @@
                             </template>
                         </el-card>
                     </template>
-                    <el-empty v-if="search === undefined || search.length === 0" :description="$t('no_data')" />
+
+                    <NoData v-if="search === undefined || search.length === 0" />
                 </template>
             </data-table>
         </div>
@@ -53,6 +54,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
+    import NoData from "../layout/NoData.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";
     import TopNavBar from "../layout/TopNavBar.vue";
@@ -63,7 +65,8 @@
             NamespaceSelect,
             DataTable,
             SearchField,
-            TopNavBar
+            TopNavBar,
+            NoData
         },
         data() {
             return {

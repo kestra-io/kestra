@@ -672,7 +672,8 @@
             "default_namespace": "Namespace predefinito",
             "log_level": "Livello di Log predefinito",
             "log_display": "Visualizzazione Log predefinita",
-            "execute_flow": "Esegui il Flow"
+            "execute_flow": "Esegui il Flow",
+            "execute_default_tab": "Scheda di Esecuzione Predefinita"
           }
         },
         "theme": {

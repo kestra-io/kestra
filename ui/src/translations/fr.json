@@ -672,7 +672,8 @@
             "default_namespace": "Espace de noms par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut",
             "log_display": "Affichage des journaux par défaut",
-            "execute_flow": "Exécuter le flow"
+            "execute_flow": "Exécuter le flow",
+            "execute_default_tab": "Onglet d'exécution par défaut"
           }
         },
         "theme": {

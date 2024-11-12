@@ -672,7 +672,8 @@
             "default_namespace": "Namespace по умолчанию",
             "log_level": "Уровень логов по умолчанию",
             "log_display": "Отображение логов по умолчанию",
-            "execute_flow": "Выполнить Flow"
+            "execute_flow": "Выполнить Flow",
+            "execute_default_tab": "Вкладка выполнения по умолчанию"
           }
         },
         "theme": {

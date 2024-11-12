@@ -190,6 +190,10 @@
 
     const childOptions = [
         {
+            label: t("trigger filter.options.ALL"),
+            value: "ALL",
+        },
+        {
             label: t("trigger filter.options.CHILD"),
             value: "CHILD",
         },

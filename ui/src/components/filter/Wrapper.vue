@@ -55,14 +55,6 @@
 </template>
 
 <script setup lang="ts">
-// TODO: Allow selection of values in dropdown on Enter key press
-// TODO: Submit filter query on Enter key press
-// TODO: Improve highlighting of already selected items in second and third dropdowns
-// TODO: Add button to handle the table options (show charts, selection of visible columns)
-
-// TODO: Add remaining filter options for Executions context (Relative date, Absolute date)
-// TODO: Replace usage of filters throughout the application & add missing filters
-
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
@@ -137,8 +129,6 @@
         }
     };
     const valueCallback = (filter) => {
-        // TODO: If there already is property with same label and comparator, add value to it
-
         const values = current.value[dropdowns.value.third.index].value;
         const index = values.indexOf(filter.value);
 

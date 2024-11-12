@@ -201,6 +201,18 @@
         },
     ];
 
+    const relativeDateOptions = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
     const valueOptions = computed(() => {
         const type = current.value.at(-1)?.label;
 
@@ -219,6 +231,9 @@
 
         case "child":
             return childOptions;
+
+        case "relative_date":
+            return relativeDateOptions;
 
         default:
             return [];

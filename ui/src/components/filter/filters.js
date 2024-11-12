@@ -48,6 +48,16 @@ export function useFilters(prefix) {
             value: t("filters.comparators.is_not_one_off"),
             multiple: true,
         },
+        IN: {
+            label: t("filters.comparators.in"),
+            value: t("filters.comparators.in"),
+            multiple: false,
+        },
+        BETWEEN: {
+            label: t("filters.comparators.between"),
+            value: t("filters.comparators.between"),
+            multiple: false,
+        },
     };
 
     const OPTIONS = [
@@ -80,6 +90,18 @@ export function useFilters(prefix) {
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "timeRange",
+            label: t("filters.options.relative_date"),
+            value: {label: "relative_date", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IN],
+        },
+        {
+            key: "date",
+            label: t("filters.options.absolute_date"),
+            value: {label: "absolute_date", comparator: undefined, value: []},
+            comparators: [COMPARATORS.BETWEEN],
         },
     ];
     const encodeParams = (filters) => {

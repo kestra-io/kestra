@@ -380,6 +380,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import DateAgo from "../layout/DateAgo.vue";
 
     import {filterLabels} from "./utils"
 
@@ -395,7 +396,8 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            ExecutionsBar
+            ExecutionsBar,
+            DateAgo
         },
         emits: ["state-count"],
         props: {

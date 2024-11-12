@@ -22,10 +22,10 @@
 </template>
 
 <script>
-    import NoData from "../layout/NoData.vue";
+    import NoData from "./NoData.vue";
 
     export default {
-        components: NoData,
+        components: {NoData},
         data() {
             return {
                 hasSelection: false

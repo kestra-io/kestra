@@ -56,7 +56,8 @@ public class Extension extends AbstractExtension {
         List<BinaryOperator> operators = new ArrayList<>();
 
         operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(
+                new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }
@@ -93,6 +94,8 @@ public class Extension extends AbstractExtension {
         filters.put("endsWith", new EndsWithFilter());
         filters.put("values", new ValuesFilter());
         filters.put("toIon", new ToIonFilter());
+        filters.put("string", new StringFilter()); // Register the StringFilter
+
         return filters;
     }
 
@@ -142,5 +145,3 @@ public class Extension extends AbstractExtension {
         return null;
     }
 }
-
-

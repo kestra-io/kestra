@@ -41,7 +41,7 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
-                    @click="() => valueCallback(filter.value)"
+                    @click="() => valueCallback(filter)"
                 />
             </template>
         </el-select>
@@ -101,16 +101,21 @@
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
-        second: {shown: true, index: -1},
-        third: {shown: true, index: -1},
+        second: {shown: false, index: -1},
+        third: {shown: false, index: -1},
     };
     const dropdowns = ref({...INITIAL_DROPDOWNS});
     const closeDropdown = () => (select.value.dropdownMenuVisible = false);
-    const filterCallback = (value) => {
-        dropdowns.value.first = {shown: false, value};
+    const filterCallback = (option) => {
+        option.value = {
+            label: option.value?.label ?? "Unknown",
+            comparator: undefined,
+            value: [],
+        };
+        dropdowns.value.first = {shown: false, value: option};
         dropdowns.value.second = {shown: true, index: current.value.length};
 
-        current.value.push(value.value);
+        current.value.push(option.value);
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
@@ -119,6 +124,7 @@
                 ? t("filters.labels.placeholder")
                 : t("filters.empty");
 
+        dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
     };
@@ -130,11 +136,13 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         }
     };
-    const valueCallback = (value) => {
-        const values = current.value[dropdowns.value.third.index].value;
-        const index = values.indexOf(value);
+    const valueCallback = (filter) => {
+        // TODO: If there already is property with same label and comparator, add value to it
 
-        if (index === -1) values.push(value);
+        const values = current.value[dropdowns.value.third.index].value;
+        const index = values.indexOf(filter.value);
+
+        if (index === -1) values.push(filter.value);
         else values.splice(index, 1);
 
         if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
@@ -253,8 +261,6 @@
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
             }
-        } else {
-        // TODO: If there already is property with same label and comparator, add value to it
         }
 
         // Clearing the input field after value is being submitted

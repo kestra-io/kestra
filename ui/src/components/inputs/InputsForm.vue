@@ -73,7 +73,6 @@
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"
-                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 show-password

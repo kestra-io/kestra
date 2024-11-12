@@ -44,7 +44,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
     )
     @NotNull
     @Builder.Default
-    Boolean isRadio = false;  // New field added here
+    Boolean isRadio = false;
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
@@ -72,7 +72,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
                 .id(getId())
                 .type(getType())
                 .allowCustomValue(getAllowCustomValue())
-                .isRadio(isRadio)  // Include isRadio in the builder
+                .isRadio(isRadio)
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())

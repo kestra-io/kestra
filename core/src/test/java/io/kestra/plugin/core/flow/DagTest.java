@@ -6,7 +6,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 
 public class DagTest extends AbstractMemoryRunnerTest {
     @Inject
-    YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    YamlParser yamlParser = new YamlParser();
 
     @Inject
     ModelValidator modelValidator;
@@ -70,6 +70,6 @@ public class DagTest extends AbstractMemoryRunnerTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 }

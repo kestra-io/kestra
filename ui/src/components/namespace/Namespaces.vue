@@ -24,10 +24,10 @@
             v-for="(namespace, index) in hierarchy(namespaces)"
             :key="index"
             :span="24"
-            class="my-1 py-2 px-4 namespaces"
+            class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto py-2 px-4 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
@@ -164,7 +164,6 @@ $system: #5BB8FF;
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--bs-border-color);
-    background: var(--bs-body-bg);
 
     &.system {
         border-color: $system;
@@ -182,10 +181,14 @@ $system: #5BB8FF;
         --el-tree-node-hover-bg-color: transparent;
     }
 
+    .rounded-full {
+        border-radius: var(--bs-border-radius-lg);
+    }
+
     .el-tree-node__content {
         height: 2.25rem;
         overflow: hidden;
-        background: var(--bs-body-bg);
+        background: transparent;
 
         .icon {
             color: $active;
@@ -204,7 +207,7 @@ $system: #5BB8FF;
         }
 
         &:hover {
-            background: var(--bs-body-bg);
+            background: transparent;
         }
 
         & .system {

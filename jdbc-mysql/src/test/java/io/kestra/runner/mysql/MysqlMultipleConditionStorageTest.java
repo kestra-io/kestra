@@ -6,7 +6,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.repository.mysql.MysqlRepository;
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import java.util.List;
 
 class MysqlMultipleConditionStorageTest extends AbstractMultipleConditionStorageTest {
-    @Inject
-    ApplicationContext applicationContext;
-
     @Inject
     JdbcTestUtils jdbcTestUtils;
 
@@ -29,7 +25,7 @@ class MysqlMultipleConditionStorageTest extends AbstractMultipleConditionStorage
     }
 
     protected void save(MultipleConditionStorageInterface multipleConditionStorage, Flow flow, List<MultipleConditionWindow> multipleConditionWindows) {
-        ((MysqlMultipleConditionStorage) multipleConditionStorage).save(multipleConditionWindows);
+        multipleConditionStorage.save(multipleConditionWindows);
     }
 
 

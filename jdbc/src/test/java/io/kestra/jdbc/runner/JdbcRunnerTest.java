@@ -227,6 +227,16 @@ public abstract class JdbcRunnerTest {
         multipleConditionTriggerCaseTest.failed();
     }
 
+    @Test
+    void multipleConditionTriggerBasicExecutionsCondition() throws Exception {
+        multipleConditionTriggerCaseTest.basicExecutionsCondition();
+    }
+
+    @Test
+    void multipleConditionTriggerAdvancedExecutionsConditions() throws Exception {
+        multipleConditionTriggerCaseTest.advancedExecutionsConditions();
+    }
+
     @RetryingTest(5)
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
@@ -363,7 +373,7 @@ public abstract class JdbcRunnerTest {
     void dynamicTask() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
 
-        assertThat(execution.getTaskRunList().size(), is(2));
+        assertThat(execution.getTaskRunList().size(), is(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 

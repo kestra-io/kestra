@@ -140,7 +140,7 @@
                 </el-card>
             </template>
 
-            <template #table>
+            <template #table v-if="executions.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -188,6 +188,9 @@
                             </el-button>
                             <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                {{ $t("unqueue") }}
                             </el-button>
                         </bulk-select>
                         <el-dialog
@@ -301,7 +304,7 @@
 
                         <el-table-column v-if="displayColumn('labels')" :label="$t('labels')">
                             <template #default="scope">
-                                <labels :labels="scope.row.labels" />
+                                <labels :labels="filteredLabels(scope.row.labels)" />
                             </template>
                         </el-table-column>
 
@@ -435,10 +438,11 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import DataTable from "../layout/DataTable.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import Status from "../Status.vue";
@@ -466,7 +470,6 @@
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
-    import DateAgo from "../layout/DateAgo.vue";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
@@ -629,6 +632,7 @@
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["flow"]),
+            ...mapGetters("misc", ["configs"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -709,6 +713,17 @@
             });
         },
         methods: {
+            filteredLabels(labels) {
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
+                // Extract only the keys from the route query labels
+                const allowedLabels = this.$route.query.labels ? this.$route.query.labels.map(label => label.split(":")[0]) : [];
+
+                return labels?.filter(label => {
+                    // Check if the label key matches any prefix but allow it if it's in the query
+                    return !toIgnore.some(prefix => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
+                });
+            },
             executionParams(row) {
                 return {
                     namespace: row.namespace,
@@ -851,6 +866,14 @@
                     "executions paused"
                 );
             },
+            unqueueExecutions() {
+                this.genericConfirmAction(
+                    "bulk unqueue",
+                    "execution/queryUnqueueExecution",
+                    "execution/bulkUnqueueExecution",
+                    "executions unqueue"
+                );
+            },
             restartExecutions() {
                 this.genericConfirmAction(
                     "bulk restart",
@@ -904,10 +927,12 @@
                         }),
                     ]),
                     h(ElAlert, {
-                        title: this.$t("execution-warn-deleting-still-running"),
+                        title:  this.$t("execution-warn-title"),
+                        description: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
-                        closable: false
+                        closable: false,
+                        class: "custom-warning"
                     }),
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
@@ -1024,8 +1049,40 @@
     };
 </script>
 
+
 <style scoped lang="scss">
-    .padding-bottom {
-        padding-bottom: 4rem;
+.padding-bottom {
+    padding-bottom: 4rem;
+}
+.custom-warning {
+    border: 1px solid #ffb703;
+    border-radius: 7px;
+    box-shadow: 1px 1px 3px 1px #ffb703;
+
+    :deep(.el-alert__title) {
+        font-size: 16px;
+        color: #ffb703;
+        font-weight: bold;
     }
+
+    :deep(.el-alert__description) {
+        font-size: 12px;
+    }
+
+    :deep(.el-alert__icon) {
+        color: #ffb703;
+    }
+}
+</style>
+
+<style lang="scss">
+.el-message-box {
+    padding: 2rem;
+    max-width: initial;
+    width: 500px;
+
+    .custom-warning {
+        margin: 1rem 0;
+    }
+}
 </style>

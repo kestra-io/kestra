@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -312,10 +313,7 @@ public final class RunVariables {
                     builder.put("labels", execution.getLabels()
                         .stream()
                         .filter(label -> label.value() != null && label.key() != null)
-                        .map(label -> new AbstractMap.SimpleEntry<>(
-                            label.key(),
-                            label.value()
-                        ))
+                        .map(label -> mapLabel(label))
                         // using an accumulator in case labels with the same key exists: the first is kept
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
                     );
@@ -346,6 +344,23 @@ public final class RunVariables {
             }
 
             return builder.build();
+        }
+    }
+
+    private static Map.Entry<String, Object> mapLabel(Label label) {
+        if (label.key().startsWith(Label.SYSTEM_PREFIX)) {
+            return Map.entry(
+                label.key().substring(0, Label.SYSTEM_PREFIX.length() - 1),
+                Map.entry(
+                    label.key().substring(Label.SYSTEM_PREFIX.length()),
+                    label.value()
+                )
+            );
+        } else {
+            return Map.entry(
+                label.key(),
+                label.value()
+            );
         }
     }
 

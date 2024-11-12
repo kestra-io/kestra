@@ -1,6 +1,8 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.utils.WindowsUtils;
 import jakarta.annotation.Nullable;
+import org.apache.commons.io.FilenameUtils;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -47,8 +49,7 @@ public record NamespaceFile(
             return of(namespace, (Path) null);
         }
 
-        Path path = Path.of(uri.getPath());
-
+        Path path = Path.of(WindowsUtils.windowsToUnixPath(uri.getPath()));
         final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
             if (!uri.getScheme().equalsIgnoreCase("kestra")) {

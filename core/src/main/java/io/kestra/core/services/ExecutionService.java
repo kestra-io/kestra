@@ -702,15 +702,20 @@ public class ExecutionService {
         State.Type newStateType,
         Boolean toRestart
     ) throws InternalException {
-        Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-
         State alterState;
-        if (!task.isFlowable() || task instanceof WorkingDirectory) {
-            // The current task run is the reference task run, its default state will be newState
+        if (Boolean.TRUE.equals(originalTaskRun.getDynamic())) {
+            // dynamic task runs (task runs from dynamic worker task results) are fake task runs,
+            // we cannot get their corresponding task so we blidinly translate them to the new state.
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
-            // The current task run is an ascendant of the reference task run
-            alterState = originalTaskRun.withState(State.Type.RUNNING).getState();
+            Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
+            if (!task.isFlowable() || task instanceof WorkingDirectory) {
+                // The current task run is the reference task run, its default state will be newState
+                alterState = originalTaskRun.withState(newStateType).getState();
+            } else {
+                // The current task run is an ascendant of the reference task run
+                alterState = originalTaskRun.withState(State.Type.RUNNING).getState();
+            }
         }
 
         return originalTaskRun

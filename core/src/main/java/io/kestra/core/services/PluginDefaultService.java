@@ -17,7 +17,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -54,7 +54,7 @@ public class PluginDefaultService {
     protected PluginGlobalDefaultConfiguration pluginGlobalDefault;
 
     @Inject
-    protected YamlFlowParser yamlFlowParser;
+    protected YamlParser yamlParser;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -224,7 +224,7 @@ public class PluginDefaultService {
             flowAsMap.put("pluginDefaults", pluginDefaults);
         }
 
-        return yamlFlowParser.parse(flowAsMap, Flow.class, false);
+        return yamlParser.parse(flowAsMap, Flow.class, false);
     }
 
     /**

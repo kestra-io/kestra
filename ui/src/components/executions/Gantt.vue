@@ -378,7 +378,6 @@
 
                     small {
                         margin-left: 5px;
-                        color: var(--bs-gray-600);
                         font-family: var(--bs-font-monospace);
                         font-size: var(--font-size-xs)
                     }

@@ -23,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -69,6 +70,9 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.server.preview.max-rows:5000}")
     private Integer maxPreviewRows;
 
+    @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
+    private List<String> hiddenLabelsPrefixes;
+
 
     @Get("{/tenant}/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -88,7 +92,8 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build()
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
-            .systemNamespace(namespaceUtils.getSystemFlowNamespace());
+            .systemNamespace(namespaceUtils.getSystemFlowNamespace())
+            .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -148,6 +153,8 @@ public class MiscController {
         Boolean isBasicAuthEnabled;
 
         String systemNamespace;
+
+        List<String> hiddenLabelsPrefixes;
     }
 
     @Value

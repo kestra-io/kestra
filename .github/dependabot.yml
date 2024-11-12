@@ -32,7 +32,6 @@ updates:
       timezone: "Europe/Paris"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade"]
-    reviewers: ["MilosPaunovic"]
     ignore:
       # Ignore major versions greater than 8, as it's still known to be flaky
       - dependency-name: "eslint"

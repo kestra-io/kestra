@@ -1,0 +1,12 @@
+id: warnings-and-infos
+namespace: io.kestra.unittest
+tasks:
+  - id: echo
+    type: io.kestra.plugin.core.debug.Echo
+    format: I'm an echo
+  - id: alias
+    type: io.kestra.core.tasks.log.Log
+    message: I'm an alias
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀

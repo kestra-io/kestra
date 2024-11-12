@@ -37,7 +37,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-else-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 :allow-create="input.allowCustomValue"

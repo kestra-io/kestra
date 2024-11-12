@@ -3,7 +3,7 @@ package io.kestra.core.models.flows;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class FlowTest {
     @Inject
-    YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    YamlParser yamlParser = new YamlParser();
 
     @Inject
     ModelValidator modelValidator;
@@ -160,6 +160,6 @@ class FlowTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 }

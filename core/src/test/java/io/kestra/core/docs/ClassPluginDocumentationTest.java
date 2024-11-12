@@ -105,7 +105,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getDocLicense(), nullValue());
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type"), is("object"));
-            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(1));
+            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(2));
         }));
     }
 

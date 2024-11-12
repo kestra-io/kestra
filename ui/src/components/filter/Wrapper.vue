@@ -275,7 +275,7 @@
     const triggerSearch = () => {
         if (current.value.length) {
             const r = getRecentItems().filter((i) => i.value !== current.value);
-            setRecentItems([...r], {value: current.value});
+            setRecentItems([...r, {value: current.value}]);
         }
 
         router.push({query: encodeParams(current.value)});

@@ -228,13 +228,8 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void multipleConditionTriggerBasicExecutionsCondition() throws Exception {
-        multipleConditionTriggerCaseTest.basicExecutionsCondition();
-    }
-
-    @Test
-    void multipleConditionTriggerAdvancedExecutionsConditions() throws Exception {
-        multipleConditionTriggerCaseTest.advancedExecutionsConditions();
+    void flowTriggerPreconditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
     @RetryingTest(5)

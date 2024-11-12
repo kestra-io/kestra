@@ -212,7 +212,7 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public List<String> allTriggerIds() {
         return this.triggers != null ? this.triggers.stream()
-            .filter(trigger -> trigger.getId() != null) // this can happen when validation a flow under creation
+            .filter(trigger -> trigger != null && trigger.getId() != null) // this can happen when validating a flow under creation
             .map(AbstractTrigger::getId)
             .collect(Collectors.toList()) : Collections.emptyList();
     }

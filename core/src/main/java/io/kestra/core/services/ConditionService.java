@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -97,6 +98,23 @@ public class ConditionService {
         );
 
         return this.valid(flow, conditions, conditionContext);
+    }
+
+    public boolean isValid(MultipleCondition preconditions, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+        ConditionContext conditionContext = this.conditionContext(
+            runContextFactory.of(flow, execution),
+            flow,
+            execution,
+            multipleConditionStorage
+        );
+
+        try {
+            return preconditions == null || preconditions.test(conditionContext);
+        } catch (Exception e) {
+            logException(flow, preconditions, conditionContext, e);
+
+            return false;
+        }
     }
 
     public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {

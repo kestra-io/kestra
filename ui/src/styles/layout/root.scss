@@ -42,6 +42,8 @@
     --input-suffix-color: #574F6C;
     --white-black-font-color: #{$black};
     --top-navbar-height: 79px;
+    --global-margin-left-right: 32px;
+
 }
 
 :root {
@@ -157,6 +159,11 @@
     #{--token-content-link}: #8405FF;
 
 }
+.namespace-page, .executions-page, .flows-homepage, .logs-page {
+    margin-left: var(--global-margin-left-right);
+    margin-right: var(--global-margin-left-right);
+}
+
 
 $logLevels: "trace", "debug", "info", "warn", "error";
 @each $logLevel in $logLevels {

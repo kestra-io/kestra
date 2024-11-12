@@ -134,19 +134,15 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>();
-        List<AbstractTrigger> triggers = flow.getTriggers();
-        if (
-            triggers != null &&
-                triggers.stream().anyMatch(trigger -> {
-                    if (trigger instanceof io.kestra.plugin.core.trigger.Flow flowTrigger) {
-                        return Optional.ofNullable(flowTrigger.getConditions()).map(List::isEmpty).orElse(true);
-                    }
-
-                    return false;
-                    })
-        ) {
-            warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the conditions property to the Flow trigger.");
-        }
+        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
+            .toList();
+        flowTriggers.forEach(flowTrigger -> {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
+                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
 
         return warnings;
     }

@@ -432,7 +432,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(8));
+        assertThat(namespaces.size(), is(7));
     }
 
     @Test

@@ -42,7 +42,7 @@
                 <KestraFilter
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child']"
-                    :refresh="{shown: true, canAutoRefresh, callback: refresh}"
+                    :refresh="{shown: true, callback: refresh}"
                 />
             </template>
 
@@ -505,7 +505,6 @@
                 ],
                 displayColumns: [],
                 childFilter: "ALL",
-                canAutoRefresh: false,
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
@@ -708,9 +707,6 @@
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
-            },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000

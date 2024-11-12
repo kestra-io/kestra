@@ -49,11 +49,7 @@
         <el-button-group class="d-inline-flex">
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
-            <Refresh
-                v-if="refresh.shown"
-                :can-auto-refresh="refresh.canAutoRefresh"
-                @refresh="refresh.callback"
-            />
+            <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
         </el-button-group>
     </section>
 </template>
@@ -93,11 +89,7 @@
         include: {type: Array, required: true},
         refresh: {
             type: Object,
-            default: () => ({
-                shown: false,
-                canAutoRefresh: true,
-                callback: () => {},
-            }),
+            default: () => ({shown: false, callback: () => {}}),
         },
     });
 

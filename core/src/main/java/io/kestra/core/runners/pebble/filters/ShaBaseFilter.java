@@ -11,14 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ShaBaseFilter implements Filter {
-
-
-    private String Algorithm;
-
+abstract class ShaBaseFilter implements Filter {
+    private final String algorithm;
 
     public ShaBaseFilter(String algorithm) {
-        Algorithm = algorithm;
+        this.algorithm = algorithm;
     }
 
     @Override
@@ -33,16 +30,14 @@ public class ShaBaseFilter implements Filter {
             return null;
         }
 
-        if (input instanceof String) {
-            MessageDigest digest = null;
-            byte[] encodedHash = null;
+        if (input instanceof String str) {
             try {
-                digest = MessageDigest.getInstance(Algorithm);
-                encodedHash = digest.digest(((String) input).getBytes(StandardCharsets.UTF_8));
+                MessageDigest digest = MessageDigest.getInstance(algorithm);
+                byte[]encodedHash = digest.digest((str).getBytes(StandardCharsets.UTF_8));
+                return bytesToHex(encodedHash);
             } catch (Exception e) {
                 throw new PebbleException(e, "Hashing exception encountered\n", lineNumber, self.getName());
             }
-            return bytesToHex(encodedHash);
         } else {
             throw new PebbleException(null, "Need a string to hash\n", lineNumber, self.getName());
         }
@@ -50,8 +45,8 @@ public class ShaBaseFilter implements Filter {
 
     private static String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(2 * bytes.length);
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xff & bytes[i]);
+        for (byte aByte : bytes) {
+            String hex = Integer.toHexString(0xff & aByte);
             if (hex.length() == 1) {
                 hexString.append('0');
             }

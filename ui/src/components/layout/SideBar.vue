@@ -187,6 +187,7 @@
 
 <style lang="scss">
     #side-menu {
+        position: static;
         z-index: 1039;
         border-right: 1px solid var(--bs-border-color);
 

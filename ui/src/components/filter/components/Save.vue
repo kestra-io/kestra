@@ -1,5 +1,9 @@
 <template>
-    <el-button :disabled :icon="Save" @click="toggle(true)" />
+    <el-tooltip v-if="disabled" :content="t('filters.save.tooltip')">
+        <el-button disabled :icon="Save" @click="toggle(true)" />
+    </el-tooltip>
+
+    <el-button v-else :icon="Save" @click="toggle(true)" />
 
     <el-dialog
         v-model="visible"
@@ -19,6 +23,11 @@
                 class="pt-1"
                 @keydown.enter.prevent="save()"
             />
+        </section>
+        <section class="current-tags">
+            <el-tag v-for="(item, index) in current" :key="index" class="m-1">
+                {{ formatLabel(item) }}
+            </el-tag>
         </section>
         <template #footer>
             <div class="dialog-footer">
@@ -50,7 +59,7 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../filters.js";
+    import {formatLabel, useFilters} from "../filters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
@@ -73,3 +82,10 @@
         toast.saved(t("filters.save.dialog.confirmation", {name: label.value}));
     };
 </script>
+
+<style lang="scss">
+.current-tags .el-tag {
+    background: var(--bs-border-color) !important;
+    color: var(--bs-gray-900);
+}
+</style>

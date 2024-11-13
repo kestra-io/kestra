@@ -1,6 +1,6 @@
 
 <script lang="ts" setup>
-    import {ref, watch, computed, getCurrentInstance,  onUnmounted} from "vue";
+    import {ref, watch, computed, getCurrentInstance,  onUnmounted, nextTick} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -8,6 +8,7 @@
     import MDCRenderer from "@kestra-io/ui-libs/src/components/content/MDCRenderer.vue";
     import DocsLayout from "./DocsLayout.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
+    import ContextChildCard from "./ContextChildCard.vue";
 
     const parse = useMarkdownParser();
     const store = useStore();
@@ -19,6 +20,8 @@
         title: pageMetadata.value?.title ?? t("docs"),
     }))
 
+    const emit = defineEmits(["update:docPath"]);
+
     onUnmounted(() => {
         ast.value = undefined
         store.commit("doc/setDocPath", undefined);
@@ -29,12 +32,15 @@
         [...Object.keys(getCurrentInstance()?.appContext.components ?? {})
             .filter(componentName => componentName.startsWith("Prose"))
             .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-            .map(name => [name, "prose-" + name]), ["a", ContextDocsLink]]
+            .map(name => [name, "prose-" + name]), ["a", ContextDocsLink], ["ChildCard", ContextChildCard]]
     );
 
 
     watch(docPath, async (val) => {
         refreshPage(val);
+        nextTick(() => {
+            emit("update:docPath", val);
+        });
     }, {immediate: true});
 
     async function refreshPage(val) {

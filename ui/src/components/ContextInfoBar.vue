@@ -21,6 +21,8 @@
 
     const panelWidth = ref(400)
 
+    const panel = ref<HTMLElement | null>(null)
+
     const activeTab = ref("")
 
     const {startResizing, resizing} = useResizablePanel(activeTab)
@@ -56,6 +58,12 @@
 
         return {startResizing, resizing}
     }
+
+    function scrollToTop(){
+        if(panel.value) {
+            panel.value.scrollTop = 0
+        }
+    }
 </script>
 
 <template>
@@ -79,11 +87,11 @@
         <div style="flex:1" />
         <span class="versionNumber">{{ configs?.version }}</span>
     </div>
-    <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+    <div ref="panel" class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
             <Close />
         </button>
-        <ContextDocs v-if="activeTab === 'docs'" />
+        <ContextDocs v-if="activeTab === 'docs'" @update:doc-path="scrollToTop" />
         <template v-else>
             {{ activeTab }}
         </template>

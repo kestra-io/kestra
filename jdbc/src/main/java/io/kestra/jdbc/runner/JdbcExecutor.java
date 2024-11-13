@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
@@ -25,10 +26,7 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.*;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.Either;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.*;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -161,6 +159,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Inject
     private LogService logService;
 
+    @Inject
+    private SLAMonitorStorage slaMonitorStorage;
+
+    @Inject
+    private SLAService slaService;
+
     private final FlowRepositoryInterface flowRepository;
 
     private final JdbcServiceLivenessCoordinator serviceLivenessCoordinator;
@@ -223,6 +227,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             TimeUnit.SECONDS
         );
 
+        ScheduledFuture<?> scheduledSLAMonitorFuture = scheduledDelay.scheduleAtFixedRate(
+            this::executionSLAMonitor,
+            0,
+            1,
+            TimeUnit.SECONDS
+        );
+
         // look at exceptions on the scheduledDelay thread
         Thread.ofVirtual().name("jdbc-delay-exception-watcher").start(
             () -> {
@@ -233,6 +244,23 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 } catch (ExecutionException | InterruptedException | CancellationException e) {
                     if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
+                        close();
+                        KestraContext.getContext().shutdown();
+                    }
+                }
+            }
+        );
+
+        // look at exceptions on the scheduledSLAMonitorFuture thread
+        Thread.ofVirtual().name("jdbc-sla-monitor-exception-watcher").start(
+            () -> {
+                Await.until(scheduledSLAMonitorFuture::isDone);
+
+                try {
+                    scheduledSLAMonitorFuture.get();
+                } catch (ExecutionException | InterruptedException | CancellationException e) {
+                    if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
+                        log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
                         close();
                         KestraContext.getContext().shutdown();
                     }
@@ -379,6 +407,21 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     );
                 }
 
+                // create an SLA monitor if needed
+                if (execution.getState().getCurrent() == State.Type.CREATED && !ListUtils.isEmpty(flow.getSla())) {
+                    List<SLAMonitor> monitors = flow.getSla().stream()
+                        .filter(ExecutionMonitoringSLA.class::isInstance)
+                        .map( ExecutionMonitoringSLA.class::cast)
+                        .map(sla -> SLAMonitor.builder()
+                            .executionId(execution.getId())
+                            .slaId(((SLA) sla).getId())
+                            .deadline(execution.getState().getStartDate().plus(sla.getDuration()))
+                            .build()
+                        )
+                        .toList();
+                    monitors.forEach(monitor -> slaMonitorStorage.save(monitor));
+                }
+
                 // queue execution if needed (limit concurrency)
                 if (execution.getState().getCurrent() == State.Type.CREATED && flow.getConcurrency() != null) {
                     ExecutionCount count = executionRepository.executionCounts(
@@ -409,6 +452,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
                     }
                 }
+
+                // handle execution changed SLA
+                executor = executorService.handleExecutionChangedSLA(executor);
 
                 // process the execution
                 if (log.isDebugEnabled()) {
@@ -872,6 +918,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         subflowExecutionStorage.delete(subflowExecution);
                     });
 
+                // purge SLA monitors
+                if (!ListUtils.isEmpty(executor.getFlow().getSla()) && executor.getFlow().getSla().stream().anyMatch(ExecutionMonitoringSLA.class::isInstance)) {
+                    slaMonitorStorage.purge(executor.getExecution().getId());
+                }
+
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                     executionQueuedStorage.pop(executor.getFlow().getTenantId(),
@@ -965,6 +1016,45 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
                         Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
+                    }
+                } catch (Exception e) {
+                    executor = handleFailedExecutionFromExecutor(executor, e);
+                }
+
+                return Pair.of(
+                    executor,
+                    pair.getRight()
+                );
+            });
+
+            if (result != null) {
+                this.toExecution(result);
+            }
+        });
+    }
+
+    private void executionSLAMonitor() {
+        if (shutdown.get()) {
+            return;
+        }
+
+        slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
+            Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
+                Executor executor = new Executor(pair.getLeft(), null);
+                Flow flow = flowRepository.findByExecution(pair.getLeft());
+                Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
+                if (sla.isEmpty()) {
+                    // this can happen in case the flow has been updated and the SLA removed
+                    log.debug("Cannot find the SLA '{}' if the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                    return null;
+                }
+
+                try {
+                    RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                    Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
+                    if (violation.isPresent()) { // should always be true
+                        log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                        executor = executorService.processViolation(runContext, executor, violation.get());
                     }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);

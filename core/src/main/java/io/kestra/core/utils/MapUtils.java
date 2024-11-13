@@ -142,6 +142,13 @@ public class MapUtils {
     }
 
     /**
+     * Utility method that returns true if the map is null or empty.
+     */
+    public static boolean isEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
+    }
+
+    /**
      * Creates a hash map that can hold <code>numMappings</code> entry.
      * This is a copy of the same methods available starting with Java 19.
      */

@@ -1,0 +1,28 @@
+id: sla-execution-condition
+namespace: io.kestra.tests
+
+inputs:
+  - id: string
+    type: SELECT
+    values:
+      - PASS
+      - CANCEL
+      - LABEL
+    defaults: PASS
+
+sla:
+  - id: condition
+    type: EXECUTION_CONDITION
+    behavior: CANCEL
+    condition: "{{inputs.string == 'CANCEL'}}"
+  - id: condition
+    type: EXECUTION_CONDITION
+    behavior: NONE
+    condition: "{{inputs.string == 'LABEL'}}"
+    labels:
+      system.sla: violated
+
+tasks:
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "true"

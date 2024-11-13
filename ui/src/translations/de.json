@@ -915,10 +915,8 @@
     "worker group fallback": "Arbeitsgruppe Fallback",
     "filters": {
       "comparators": {
-        "contains": "enthält",
         "is": "ist",
         "is_one_of": "ist einer von",
-        "not_contains": "nicht_enthält",
         "is_not_one_off": "ist nicht einer von",
         "is_not": "ist nicht"
       },

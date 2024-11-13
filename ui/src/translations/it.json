@@ -915,10 +915,8 @@
     "worker group fallback": "Gruppo di Worker di riserva",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "è",
         "is_one_of": "è uno di",
-        "not_contains": "non_contiene",
         "is_not_one_off": "non è uno di",
         "is_not": "non è"
       },

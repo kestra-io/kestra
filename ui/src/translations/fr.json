@@ -915,10 +915,8 @@
     "worker group fallback": "Groupe de Worker de secours",
     "filters": {
       "comparators": {
-        "contains": "contient",
         "is": "est",
         "is_one_of": "est l'un des",
-        "not_contains": "ne_contient_pas",
         "is_not_one_off": "n'est pas l'un de",
         "is_not": "n'est pas"
       },

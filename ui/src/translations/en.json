@@ -945,6 +945,8 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
         "text": "text"
       },
       "comparators": {
@@ -952,8 +954,8 @@
         "is_one_of": "is one of",
         "is_not": "is not",
         "is_not_one_off": "is not one of",
-        "contains": "contains",
-        "not_contains": "not_contains"
+        "in": "in",
+        "between": "between"
       },
       "recent": {
         "label": "Recent searches",

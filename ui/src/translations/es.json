@@ -915,10 +915,8 @@
     "worker group fallback": "Grupo de Worker de respaldo",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "es",
         "is_one_of": "es uno de",
-        "not_contains": "no_contiene",
         "is_not_one_off": "no es uno de",
         "is_not": "no es"
       },

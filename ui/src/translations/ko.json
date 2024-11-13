@@ -915,10 +915,8 @@
     "worker group fallback": "작업자 그룹 대체",
     "filters": {
       "comparators": {
-        "contains": "포함합니다",
         "is": "입니다",
         "is_one_of": "중 하나입니다.",
-        "not_contains": "포함되지 않음",
         "is_not_one_off": "중 하나가 아닙니다.",
         "is_not": "아님"
       },

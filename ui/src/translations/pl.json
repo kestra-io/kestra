@@ -915,10 +915,8 @@
     "worker group fallback": "Grupa Workerów awaryjna",
     "filters": {
       "comparators": {
-        "contains": "zawiera",
         "is": "jest",
         "is_one_of": "jest jednym z",
-        "not_contains": "nie_zawiera",
         "is_not_one_off": "nie jest jednym z",
         "is_not": "nie jest"
       },

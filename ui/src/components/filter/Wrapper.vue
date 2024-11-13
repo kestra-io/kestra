@@ -9,13 +9,20 @@
             allow-create
             filterable
             multiple
-            :no-data-text="emptyLabel"
+            popper-class="global-filters-select"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
             <template #label="{value}">
                 <span>{{ formatLabel(value) }} </span>
+            </template>
+            <template #empty>
+                <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
+                <DateRange
+                    v-else
+                    @update:model-value="(v) => valueCallback(v, true)"
+                />
             </template>
             <template v-if="dropdowns.first.shown">
                 <el-option
@@ -55,14 +62,6 @@
 </template>
 
 <script setup lang="ts">
-// TODO: Allow selection of values in dropdown on Enter key press
-// TODO: Submit filter query on Enter key press
-// TODO: Improve highlighting of already selected items in second and third dropdowns
-// TODO: Add button to handle the table options (show charts, selection of visible columns)
-
-// TODO: Add remaining filter options for Executions context (Relative date, Absolute date)
-// TODO: Replace usage of filters throughout the application & add missing filters
-
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
@@ -83,6 +82,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
+    import DateRange from "../layout/DateRange.vue";
 
     const props = defineProps({
         prefix: {type: String, required: true},
@@ -136,14 +136,17 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         }
     };
-    const valueCallback = (filter) => {
-        // TODO: If there already is property with same label and comparator, add value to it
+    const valueCallback = (filter, isDate) => {
+        if (!isDate) {
+            const values = current.value[dropdowns.value.third.index].value;
+            const index = values.indexOf(filter.value);
 
-        const values = current.value[dropdowns.value.third.index].value;
-        const index = values.indexOf(filter.value);
-
-        if (index === -1) values.push(filter.value);
-        else values.splice(index, 1);
+            if (index === -1) values.push(filter.value);
+            else values.splice(index, 1);
+        } else {
+            const match = current.value.find((v) => v.label === "absolute_date");
+            if (match) match.value = [filter];
+        }
 
         if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
             // If selection is not multiple, close the dropdown
@@ -211,6 +214,23 @@
         },
     ];
 
+    const relativeDateOptions = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
+    const isDatePickerShown = computed(() => {
+        const c = current?.value?.at(-1);
+        return c?.label === "absolute_date" && c.comparator;
+    });
+
     const valueOptions = computed(() => {
         const type = current.value.at(-1)?.label;
 
@@ -229,6 +249,12 @@
 
         case "child":
             return childOptions;
+
+        case "relative_date":
+            return relativeDateOptions;
+
+        case "absolute_date":
+            return [];
 
         default:
             return [];
@@ -339,5 +365,12 @@
 
 .el-button-group .el-button--primary:last-child {
     border-left: none;
+}
+
+.global-filters-select {
+    & .el-date-editor.el-input__wrapper {
+        background-color: initial;
+        box-shadow: none;
+    }
 }
 </style>

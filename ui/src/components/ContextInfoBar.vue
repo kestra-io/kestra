@@ -64,15 +64,23 @@
             panel.value.scrollTop = 0
         }
     }
+
+    function setActiveTab(tab: string){
+        if(activeTab.value === tab){
+            activeTab.value = ""
+        }else{
+            activeTab.value = tab
+        }
+    }
 </script>
 
 <template>
     <div class="barWrapper">
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
-        <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => activeTab = 'news'">
+        <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => setActiveTab('news')">
             <MessageOutline class="buttonIcon" />News
         </button>
-        <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => activeTab = 'docs'">
+        <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => setActiveTab('docs')">
             <FileDocument class="buttonIcon" />Docs
         </button>
         <a href="#" class="barButton">

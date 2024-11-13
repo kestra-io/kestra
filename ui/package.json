@@ -89,7 +89,7 @@
     "vitest": "^2.1.4"
   },
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.24.4",
+    "@rollup/rollup-darwin-arm64": "^4.26.0",
     "@rollup/rollup-linux-x64-gnu": "^4.24.4"
   },
   "overrides": {

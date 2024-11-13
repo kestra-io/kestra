@@ -13,11 +13,15 @@ const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };
 
-export const formatLabel = (value) => {
-    let label = value.label;
+export const formatLabel = (option) => {
+    let {label, comparator, value} = option;
 
-    if (value.comparator?.label) label += `:${value.comparator.label}`;
-    if (value.value.length) label += `:${value.value.join(", ")}`;
+    if (comparator?.label) label += `:${comparator.label}`;
+
+    if (value.length) {
+        if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
+        else label += `:${value[0]?.startDate}:and:${value[0]?.endDate}`;
+    }
 
     return label;
 };
@@ -47,6 +51,16 @@ export function useFilters(prefix) {
             label: t("filters.comparators.is_not_one_off"),
             value: t("filters.comparators.is_not_one_off"),
             multiple: true,
+        },
+        IN: {
+            label: t("filters.comparators.in"),
+            value: t("filters.comparators.in"),
+            multiple: false,
+        },
+        BETWEEN: {
+            label: t("filters.comparators.between"),
+            value: t("filters.comparators.between"),
+            multiple: false,
         },
     };
 
@@ -81,6 +95,18 @@ export function useFilters(prefix) {
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
+        {
+            key: "timeRange",
+            label: t("filters.options.relative_date"),
+            value: {label: "relative_date", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IN],
+        },
+        {
+            key: "date",
+            label: t("filters.options.absolute_date"),
+            value: {label: "absolute_date", comparator: undefined, value: []},
+            comparators: [COMPARATORS.BETWEEN],
+        },
     ];
     const encodeParams = (filters) => {
         const encode = (values, key) => {
@@ -99,14 +125,16 @@ export function useFilters(prefix) {
 
         return filters.reduce((query, filter) => {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
-            const key = match
-                ? match.key
-                : filter.label === "text"
-                  ? "q"
-                  : null;
+            let key = match ? match.key : filter.label === "text" ? "q" : null;
 
             if (key) {
-                query[key] = encode(filter.value, key);
+                if (key !== "date") query[key] = encode(filter.value, key);
+                else {
+                    const {startDate, endDate} = filter.value[0];
+
+                    query.startDate = startDate;
+                    query.endDate = endDate;
+                }
             }
 
             return query;
@@ -114,7 +142,7 @@ export function useFilters(prefix) {
     };
 
     const decodeParams = (query, include) => {
-        return Object.entries(query)
+        const params = Object.entries(query)
             .filter(
                 ([key]) =>
                     key === "q" ||
@@ -128,11 +156,23 @@ export function useFilters(prefix) {
                         ? "text"
                         : OPTIONS.find((o) => o.key === key)?.value.label ||
                           key;
+
                 const decodedValue = Array.isArray(value)
                     ? value.map(decodeURIComponent)
                     : [decodeURIComponent(value)];
+
                 return {label, value: decodedValue};
             });
+
+        // Handle the date functionality by grouping startDate and endDate if they exist
+        if (query.startDate && query.endDate) {
+            params.push({
+                label: "absolute_date:between",
+                value: [{startDate: query.startDate, endDate: query.endDate}],
+            });
+        }
+
+        return params;
     };
 
     return {

@@ -915,12 +915,12 @@
     "worker group fallback": "工作组回退",
     "filters": {
       "comparators": {
-        "contains": "包含",
         "is": "是",
         "is_one_of": "是其中之一",
-        "not_contains": "不包含",
         "is_not_one_off": "不是其中之一",
-        "is_not": "不是"
+        "is_not": "不是",
+        "between": "之间",
+        "in": "在"
       },
       "recent": {
         "label": "最近的搜索",
@@ -944,7 +944,9 @@
         "text": "文本",
         "labels": "标签",
         "state": "状态",
-        "child": "子项"
+        "child": "子项",
+        "absolute_date": "绝对日期",
+        "relative_date": "相对日期"
       },
       "empty": "无数据。",
       "label": "选择过滤器"

@@ -915,12 +915,12 @@
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "filters": {
       "comparators": {
-        "contains": "शामिल है",
         "is": "है",
         "is_one_of": "में से एक है",
-        "not_contains": "not_contains",
         "is_not_one_off": "नहीं है उनमें से एक",
-        "is_not": "नहीं है"
+        "is_not": "नहीं है",
+        "between": "के बीच",
+        "in": "में"
       },
       "recent": {
         "label": "हाल की खोजें",
@@ -944,7 +944,9 @@
         "text": "मुझे अनुवाद के लिए कोई पाठ प्रदान नहीं किया गया है। कृपया अनुवाद के लिए पाठ प्रदान करें।",
         "labels": "लेबल्स",
         "state": "स्थिति",
-        "child": "बच्चा"
+        "child": "बच्चा",
+        "absolute_date": "सटीक तिथि",
+        "relative_date": "सापेक्ष तिथि"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें"

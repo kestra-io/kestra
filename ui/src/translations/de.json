@@ -915,12 +915,12 @@
     "worker group fallback": "Arbeitsgruppe Fallback",
     "filters": {
       "comparators": {
-        "contains": "enthält",
         "is": "ist",
         "is_one_of": "ist einer von",
-        "not_contains": "nicht_enthält",
         "is_not_one_off": "ist nicht einer von",
-        "is_not": "ist nicht"
+        "is_not": "ist nicht",
+        "between": "zwischen",
+        "in": "im"
       },
       "recent": {
         "label": "Letzte Suchanfragen",
@@ -944,7 +944,9 @@
         "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
         "labels": "Labels",
         "state": "Zustand",
-        "child": "Kind"
+        "child": "Kind",
+        "absolute_date": "Absolutes Datum",
+        "relative_date": "Relatives Datum"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen"

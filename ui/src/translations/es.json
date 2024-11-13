@@ -915,12 +915,12 @@
     "worker group fallback": "Grupo de Worker de respaldo",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "es",
         "is_one_of": "es uno de",
-        "not_contains": "no_contiene",
         "is_not_one_off": "no es uno de",
-        "is_not": "no es"
+        "is_not": "no es",
+        "between": "entre",
+        "in": "en"
       },
       "recent": {
         "label": "Búsquedas recientes",
@@ -944,7 +944,9 @@
         "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
         "labels": "Etiquetas",
         "state": "Estado",
-        "child": "Niño"
+        "child": "Niño",
+        "absolute_date": "Fecha absoluta",
+        "relative_date": "Fecha relativa"
       },
       "empty": "Sin datos.",
       "label": "Elegir filtros"

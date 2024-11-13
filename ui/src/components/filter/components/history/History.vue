@@ -7,7 +7,7 @@
         <el-button :icon="History" class="rounded-0 rounded-start" />
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 dropdown">
+            <el-dropdown-menu class="py-2 history-dropdown">
                 <p class="title">
                     {{ t("filters.recent.label") }}
                 </p>
@@ -98,7 +98,7 @@
 </script>
 
 <style lang="scss">
-.dropdown {
+.history-dropdown {
     width: 400px;
 }
 

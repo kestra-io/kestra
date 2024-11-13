@@ -672,7 +672,8 @@
             "default_namespace": "默认命名空间",
             "log_level": "默认日志级别",
             "log_display": "默认日志显示",
-            "execute_flow": "执行流程"
+            "execute_flow": "执行流程",
+            "execute_default_tab": "默认执行选项卡"
           }
         },
         "theme": {
@@ -889,7 +890,7 @@
     "invalid bulk pause": "无法暂停执行",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
-    "no_data": "看起来这里还没有内容……还不如调整你的过滤器，或者再试一次！",
+    "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "informative notice": "注意事项",
     "triggers-view": {
       "desc_no_triggers": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>的信息。",
@@ -914,12 +915,12 @@
     "worker group fallback": "工作组回退",
     "filters": {
       "comparators": {
-        "contains": "包含",
         "is": "是",
         "is_one_of": "是其中之一",
-        "not_contains": "不包含",
         "is_not_one_off": "不是其中之一",
-        "is_not": "不是"
+        "is_not": "不是",
+        "between": "之间",
+        "in": "在"
       },
       "recent": {
         "label": "最近的搜索",
@@ -935,7 +936,8 @@
           "confirmation": "搜索条件 <code>{name}</code>",
           "placeholder": "标签"
         },
-        "label": "保存的搜索"
+        "label": "保存的搜索",
+        "tooltip": "您不能保存空的搜索条件。"
       },
       "options": {
         "namespace": "命名空间",
@@ -943,10 +945,15 @@
         "text": "文本",
         "labels": "标签",
         "state": "状态",
-        "child": "子项"
+        "child": "子项",
+        "absolute_date": "绝对日期",
+        "relative_date": "相对日期"
       },
       "empty": "无数据。",
-      "label": "选择过滤器"
+      "label": "选择过滤器",
+      "settings": {
+        "show_chart": "显示主图表"
+      }
     },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",

@@ -16,3 +16,6 @@ triggers:
     conditions:
       - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition
         namespace: io.kestra.tests.trigger
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+        in:
+          - SUCCESS

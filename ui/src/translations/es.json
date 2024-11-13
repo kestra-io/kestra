@@ -672,7 +672,8 @@
             "default_namespace": "Namespace Predeterminado",
             "log_level": "Nivel de Log Predeterminado",
             "log_display": "Visualización de Log Predeterminada",
-            "execute_flow": "Ejecutar el Flow"
+            "execute_flow": "Ejecutar el Flow",
+            "execute_default_tab": "Pestaña de Ejecución Predeterminada"
           }
         },
         "theme": {
@@ -889,7 +890,7 @@
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
-    "no_data": "Parece que no hay nada aquí… ¡todavía! Ajusta tus filtros o inténtalo de nuevo.",
+    "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Lee más sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> en nuestra documentación.",
@@ -914,12 +915,12 @@
     "worker group fallback": "Grupo de Worker de respaldo",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "es",
         "is_one_of": "es uno de",
-        "not_contains": "no_contiene",
         "is_not_one_off": "no es uno de",
-        "is_not": "no es"
+        "is_not": "no es",
+        "between": "entre",
+        "in": "en"
       },
       "recent": {
         "label": "Búsquedas recientes",
@@ -935,7 +936,8 @@
           "confirmation": "Criterios de búsqueda <code>{name}</code>",
           "placeholder": "Etiqueta"
         },
-        "label": "Búsquedas guardadas"
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +945,15 @@
         "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
         "labels": "Etiquetas",
         "state": "Estado",
-        "child": "Niño"
+        "child": "Niño",
+        "absolute_date": "Fecha absoluta",
+        "relative_date": "Fecha relativa"
       },
       "empty": "Sin datos.",
-      "label": "Elegir filtros"
+      "label": "Elegir filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
     },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
     import {computed, ref, watch, type Ref} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
+    import ContextDocs from "./docs/ContextDocs.vue"
 
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -43,7 +44,7 @@
         watchThrottled(x, () => {
             if(resizing.value){
                 const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
-                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), 800)
+                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth / 2)
             }
         }, {throttle:20})
 
@@ -55,7 +56,6 @@
 
         return {startResizing, resizing}
     }
-
 </script>
 
 <template>
@@ -83,7 +83,10 @@
         <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
             <Close />
         </button>
-        {{ activeTab }}
+        <ContextDocs v-if="activeTab === 'docs'" />
+        <template v-else>
+            {{ activeTab }}
+        </template>
     </div>
 </template>
 
@@ -162,10 +165,11 @@
     transition: width .3s;
     width: 0;
     position: relative;
+    overflow-y: auto;
 }
 
 .panelWrapper .closeButton{
-    position: absolute;
+    position: fixed;
     top: var(--spacer);
     right: var(--spacer);
     color: var(--bs-tertiary-color);

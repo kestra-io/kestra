@@ -936,7 +936,8 @@
           "confirmation": "検索条件 <code>{name}</code>",
           "placeholder": "ラベル"
         },
-        "label": "保存された検索"
+        "label": "保存された検索",
+        "tooltip": "空の検索条件を保存することはできません。"
       },
       "options": {
         "namespace": "Namespace（ネームスペース）",
@@ -949,7 +950,10 @@
         "relative_date": "相対日付"
       },
       "empty": "データがありません。",
-      "label": "フィルターを選択"
+      "label": "フィルターを選択",
+      "settings": {
+        "show_chart": "メインチャートを表示"
+      }
     },
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
     "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",

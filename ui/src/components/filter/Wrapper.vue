@@ -10,6 +10,7 @@
             filterable
             multiple
             popper-class="global-filters-select"
+            :class="{charts: charts.shown}"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -57,6 +58,7 @@
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
+            <Settings :charts />
         </el-button-group>
     </section>
 </template>
@@ -79,6 +81,8 @@
 
     import History from "./components/history/History.vue";
     import Save from "./components/Save.vue";
+    import Settings from "./components/Settings.vue";
+
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
@@ -90,6 +94,10 @@
         refresh: {
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
+        },
+        charts: {
+            type: Object,
+            default: () => ({shown: false, value: false, callback: () => {}}),
         },
     });
 
@@ -136,7 +144,7 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         }
     };
-    const valueCallback = (filter, isDate) => {
+    const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
             const values = current.value[dropdowns.value.third.index].value;
             const index = values.indexOf(filter.value);
@@ -324,6 +332,10 @@
     & .el-select {
         // Combined width of buttons on the sides of select
         width: calc(100% - 237px);
+
+        &.charts {
+            width: calc(100% - 285px);
+        }
     }
 
     & .el-select__wrapper {
@@ -365,6 +377,10 @@
 
 .el-button-group .el-button--primary:last-child {
     border-left: none;
+}
+
+.el-button-group > .el-dropdown > .el-button {
+    border-left-color: transparent;
 }
 
 .global-filters-select {

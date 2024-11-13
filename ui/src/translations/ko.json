@@ -936,7 +936,8 @@
           "confirmation": "검색 기준 <code>{name}</code>",
           "placeholder": "레이블"
         },
-        "label": "저장된 검색"
+        "label": "저장된 검색",
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },
       "options": {
         "namespace": "네임스페이스",
@@ -949,7 +950,10 @@
         "relative_date": "상대 날짜"
       },
       "empty": "데이터 없음.",
-      "label": "필터 선택"
+      "label": "필터 선택",
+      "settings": {
+        "show_chart": "주요 차트 표시"
+      }
     },
     "force run title": "실행 <code>{id}</code> 강제 실행.",
     "executions force run": "<code>{executionCount}</code> 실행 강제 실행",

@@ -963,12 +963,16 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
           "hint": "How do you want to label this search criteria?",
           "confirmation": "Search criteria <code>{name}</code>"
         }
+      },
+      "settings": {
+        "show_chart": "Show main chart"
       },
       "labels": {
         "placeholder": "Type label as 'key:value'"

@@ -936,7 +936,8 @@
           "confirmation": "搜索条件 <code>{name}</code>",
           "placeholder": "标签"
         },
-        "label": "保存的搜索"
+        "label": "保存的搜索",
+        "tooltip": "您不能保存空的搜索条件。"
       },
       "options": {
         "namespace": "命名空间",
@@ -949,7 +950,10 @@
         "relative_date": "相对日期"
       },
       "empty": "无数据。",
-      "label": "选择过滤器"
+      "label": "选择过滤器",
+      "settings": {
+        "show_chart": "显示主图表"
+      }
     },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",

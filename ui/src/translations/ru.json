@@ -936,7 +936,8 @@
           "confirmation": "Критерии поиска <code>{name}</code>",
           "placeholder": "Метка"
         },
-        "label": "Сохраненные поиски"
+        "label": "Сохраненные поиски",
+        "tooltip": "Вы не можете сохранить пустые критерии поиска."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Относительная дата"
       },
       "empty": "Нет данных.",
-      "label": "Выберите фильтры"
+      "label": "Выберите фильтры",
+      "settings": {
+        "show_chart": "Показать главный график"
+      }
     },
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",

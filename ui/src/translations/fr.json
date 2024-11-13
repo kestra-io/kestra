@@ -936,7 +936,8 @@
           "confirmation": "Critères de recherche <code>{name}</code>",
           "placeholder": "Étiquette"
         },
-        "label": "Recherches enregistrées"
+        "label": "Recherches enregistrées",
+        "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Date relative"
       },
       "empty": "Aucune donnée.",
-      "label": "Choisir des filtres"
+      "label": "Choisir des filtres",
+      "settings": {
+        "show_chart": "Afficher le graphique principal"
+      }
     },
     "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s) en cours d'exécution",

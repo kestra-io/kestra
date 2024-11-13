@@ -936,7 +936,8 @@
           "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
           "placeholder": "Etykieta"
         },
-        "label": "Zapisane wyszukiwania"
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Data względna"
       },
       "empty": "Brak danych.",
-      "label": "Wybierz filtry"
+      "label": "Wybierz filtry",
+      "settings": {
+        "show_chart": "Pokaż główny wykres"
+      }
     },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",

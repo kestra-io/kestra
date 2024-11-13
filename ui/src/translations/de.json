@@ -809,6 +809,12 @@
       "empty": {
         "title": "Derzeit keine Registerkarten geöffnet",
         "message": "Sie können Namespace-Dateien aus der Seitenleiste erstellen oder importieren und sich das Einführungsvideo für unseren Editor ansehen."
+      },
+      "close": {
+        "other": "Andere Registerkarten schließen",
+        "tab": "Registerkarte schließen",
+        "right": "Rechts schließen",
+        "all": "Alle Registerkarten schließen"
       }
     },
     "curl": {

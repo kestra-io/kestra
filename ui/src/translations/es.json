@@ -809,6 +809,12 @@
       "empty": {
         "title": "No hay pestañas abiertas actualmente",
         "message": "Puedes crear o importar archivos de namespace desde la barra lateral y puedes ver el video de introducción para nuestro Editor."
+      },
+      "close": {
+        "other": "Cerrar otras pestañas",
+        "tab": "Cerrar pestaña",
+        "right": "Cerrar a la derecha",
+        "all": "Cerrar todas las pestañas"
       }
     },
     "curl": {

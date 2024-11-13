@@ -809,6 +809,12 @@
       "empty": {
         "title": "Nenhuma aba aberta no momento",
         "message": "Você pode criar ou importar arquivos de namespace na barra lateral e pode assistir ao vídeo de introdução do nosso Editor."
+      },
+      "close": {
+        "other": "Fechar outras abas",
+        "tab": "Fechar aba",
+        "right": "Fechar à direita",
+        "all": "Fechar todas as abas"
       }
     },
     "curl": {

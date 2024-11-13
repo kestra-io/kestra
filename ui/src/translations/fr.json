@@ -809,6 +809,12 @@
       "empty": {
         "title": "Aucun onglet actuellement ouvert",
         "message": "Vous pouvez créer ou importer des fichiers de namespace à partir de la barre latérale et vous pouvez consulter la vidéo d'introduction pour notre éditeur."
+      },
+      "close": {
+        "other": "Fermer les autres onglets",
+        "tab": "Fermer l'onglet",
+        "right": "Fermer à droite",
+        "all": "Fermer tous les onglets"
       }
     },
     "curl": {

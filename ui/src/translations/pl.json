@@ -809,6 +809,12 @@
       "empty": {
         "title": "Obecnie brak otwartych zakładek",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora."
+      },
+      "close": {
+        "other": "Zamknij inne karty",
+        "tab": "Zamknij kartę",
+        "right": "Zamknij po prawej",
+        "all": "Zamknij wszystkie karty"
       }
     },
     "curl": {

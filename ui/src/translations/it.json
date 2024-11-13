@@ -809,6 +809,12 @@
       "empty": {
         "title": "Nessuna scheda attualmente aperta",
         "message": "Puoi creare o importare file namespace dalla barra laterale e puoi guardare il video introduttivo per il nostro Editor."
+      },
+      "close": {
+        "other": "Chiudi le altre schede",
+        "tab": "Chiudi scheda",
+        "right": "Chiudi a destra",
+        "all": "Chiudi tutte le schede"
       }
     },
     "curl": {

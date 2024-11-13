@@ -92,6 +92,9 @@ public abstract class JdbcRunnerTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private SLATestCase slaTestCase;
+
     @BeforeAll
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
@@ -472,5 +475,30 @@ public abstract class JdbcRunnerTest {
     @Test
     void shouldScheduleOnDate() throws QueueException, InterruptedException {
         scheduleDateCaseTest.shouldScheduleOnDate();
+    }
+
+    @Test
+    void maxDurationSLAShouldFail() throws QueueException, TimeoutException {
+        slaTestCase.maxDurationSLAShouldFail();
+    }
+
+    @Test
+    void maxDurationSLAShouldPass() throws QueueException, TimeoutException {
+        slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    void executionConditionSLAShouldPass() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldPass();
+    }
+
+    @Test
+    void executionConditionSLAShouldCancel() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldCancel();
+    }
+
+    @Test
+    void executionConditionSLAShouldLabel() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldLabel();
     }
 }

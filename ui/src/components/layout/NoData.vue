@@ -1,5 +1,9 @@
 <template>
-    <el-empty :image :description />
+    <el-empty :image image-size="180">
+        <template #description>
+            <span v-html="description" />
+        </template>
+    </el-empty>
 </template>
 
 <script setup lang="ts">
@@ -19,9 +23,12 @@
     const description = computed(() => props.text ?? t("no_data"));
 </script>
 
-<style scoped lang="scss">
-    ::v-deep .el-empty__image {
-        width: 300px;
-        height: auto;
+<style lang="scss">
+.el-empty {
+    padding-top: 0;
+
+    .el-empty__description {
+        font-size: var(--el-font-size-small);
     }
+}
 </style>

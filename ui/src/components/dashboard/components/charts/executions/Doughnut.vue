@@ -147,5 +147,5 @@ $height: 200px;
 .tall {
     height: $height;
     max-height: $height;
-}   
+}
 </style>

@@ -1,6 +1,8 @@
 <template>
     <div class="p-4 responsive-container">
-        <div class="d-flex flex-wrap justify-content-between pb-4 info-container">
+        <div
+            class="d-flex flex-wrap justify-content-between pb-4 info-container"
+        >
             <div class="info-block">
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("executions") }}</span>
@@ -14,7 +16,9 @@
             </div>
 
             <div class="switch-container">
-                <div class="d-flex justify-content-end align-items-center switch-content">
+                <div
+                    class="d-flex justify-content-end align-items-center switch-content"
+                >
                     <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
@@ -33,7 +37,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        
+
         <NoData v-else />
     </div>
 </template>
@@ -211,7 +215,6 @@
     const duration = ref(true);
 </script>
 
-
 Copy code
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
@@ -219,57 +222,61 @@ Copy code
 $height: 200px;
 
 .tall {
-  height: $height;
-  max-height: $height;
+    height: $height;
+    max-height: $height;
 }
 
 .small {
-  font-size: $font-size-xs;
-  color: $gray-700;
+    font-size: $font-size-xs;
+    color: $gray-700;
 
-  html.dark & {
-    color: $gray-300;
-  }
+    html.dark & {
+        color: $gray-300;
+    }
+}
+
+.responsive-container {
+    min-height: 100%;
 }
 
 @media (max-width: 610px) {
-  .responsive-container {
-    padding: 2px;
-  }
+    .responsive-container {
+        padding: 2px;
+    }
 
-  .info-container {
-    flex-direction: column;
-    text-align: center;
-  }
+    .info-container {
+        flex-direction: column;
+        text-align: center;
+    }
 
-  .info-block {
-    margin-bottom: 15px;
-  }
+    .info-block {
+        margin-bottom: 15px;
+    }
 
-  .switch-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
+    .switch-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
 
-  .switch-content {
-    justify-content: center;
-  }
+    .switch-content {
+        justify-content: center;
+    }
 
-  .fs-2 {
-    font-size: 1.5rem;
-  }
+    .fs-2 {
+        font-size: 1.5rem;
+    }
 
-  .fs-6 {
-    font-size: 0.875rem;
-  }
+    .fs-6 {
+        font-size: 0.875rem;
+    }
 
-  .small {
-    font-size: 0.75rem;
-  }
+    .small {
+        font-size: 0.75rem;
+    }
 
-  .pe-2 {
-    padding-right: 0.5rem;
-  }
+    .pe-2 {
+        padding-right: 0.5rem;
+    }
 }
 </style>

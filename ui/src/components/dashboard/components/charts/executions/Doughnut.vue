@@ -4,7 +4,7 @@
             {{ t("dashboard.total_executions") }}
         </span>
 
-        <div class="d-flex flex-row align-items-center h-100">
+        <div class="d-flex flex-row align-items-center justify-content-center h-100">
             <div class="w-75">
                 <Doughnut
                     v-if="total > 0"
@@ -147,9 +147,5 @@ $height: 200px;
 .tall {
     height: $height;
     max-height: $height;
-}
-
-.align-items-center {
-    justify-content: center;
-}    
+}   
 </style>

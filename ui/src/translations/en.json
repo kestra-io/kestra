@@ -963,6 +963,7 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",

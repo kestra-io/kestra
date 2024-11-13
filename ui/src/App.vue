@@ -227,5 +227,14 @@
 <style lang="scss">
 @use "styles/vendor";
 @use "styles/app";
+#app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+#app main {
+    flex: 1;
+    overflow: auto;
+}
 </style>
 

@@ -915,10 +915,8 @@
     "worker group fallback": "Группа Worker резервный вариант",
     "filters": {
       "comparators": {
-        "contains": "содержит",
         "is": "является",
         "is_one_of": "является одним из",
-        "not_contains": "не_содержит",
         "is_not_one_off": "не является одним из",
         "is_not": "не является"
       },

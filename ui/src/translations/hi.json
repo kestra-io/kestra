@@ -915,10 +915,8 @@
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "filters": {
       "comparators": {
-        "contains": "शामिल है",
         "is": "है",
         "is_one_of": "में से एक है",
-        "not_contains": "not_contains",
         "is_not_one_off": "नहीं है उनमें से एक",
         "is_not": "नहीं है"
       },

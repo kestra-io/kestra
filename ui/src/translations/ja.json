@@ -915,10 +915,8 @@
     "worker group fallback": "ワーカーグループフォールバック",
     "filters": {
       "comparators": {
-        "contains": "含む",
         "is": "です",
         "is_one_of": "のいずれかです",
-        "not_contains": "含まれていない",
         "is_not_one_off": "のいずれでもありません",
         "is_not": "ではありません"
       },

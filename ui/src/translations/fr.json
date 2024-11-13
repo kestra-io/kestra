@@ -918,7 +918,9 @@
         "is": "est",
         "is_one_of": "est l'un des",
         "is_not_one_off": "n'est pas l'un de",
-        "is_not": "n'est pas"
+        "is_not": "n'est pas",
+        "between": "entre",
+        "in": "dans"
       },
       "recent": {
         "label": "Recherches récentes",
@@ -942,7 +944,9 @@
         "text": "I'm sorry, but it seems that the text you want to translate is missing. Could you please provide the text again?",
         "labels": "Étiquettes",
         "state": "État",
-        "child": "Enfant"
+        "child": "Enfant",
+        "absolute_date": "Date absolue",
+        "relative_date": "Date relative"
       },
       "empty": "Aucune donnée.",
       "label": "Choisir des filtres"

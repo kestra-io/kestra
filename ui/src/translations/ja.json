@@ -918,7 +918,9 @@
         "is": "です",
         "is_one_of": "のいずれかです",
         "is_not_one_off": "のいずれでもありません",
-        "is_not": "ではありません"
+        "is_not": "ではありません",
+        "between": "間",
+        "in": "内"
       },
       "recent": {
         "label": "最近の検索",
@@ -942,7 +944,9 @@
         "text": "テキスト",
         "labels": "ラベル",
         "state": "状態",
-        "child": "子"
+        "child": "子",
+        "absolute_date": "絶対日付",
+        "relative_date": "相対日付"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択"

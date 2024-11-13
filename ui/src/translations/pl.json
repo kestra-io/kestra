@@ -918,7 +918,9 @@
         "is": "jest",
         "is_one_of": "jest jednym z",
         "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest"
+        "is_not": "nie jest",
+        "between": "pomiędzy",
+        "in": "w"
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
@@ -942,7 +944,9 @@
         "text": "tekst",
         "labels": "Etykiety",
         "state": "Stan",
-        "child": "Dziecko"
+        "child": "Dziecko",
+        "absolute_date": "Data bezwzględna",
+        "relative_date": "Data względna"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry"

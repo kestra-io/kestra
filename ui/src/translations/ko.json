@@ -918,7 +918,9 @@
         "is": "입니다",
         "is_one_of": "중 하나입니다.",
         "is_not_one_off": "중 하나가 아닙니다.",
-        "is_not": "아님"
+        "is_not": "아님",
+        "between": "사이에",
+        "in": "안에"
       },
       "recent": {
         "label": "최근 검색",
@@ -942,7 +944,9 @@
         "text": "텍스트",
         "labels": "레이블",
         "state": "상태",
-        "child": "자식"
+        "child": "자식",
+        "absolute_date": "절대 날짜",
+        "relative_date": "상대 날짜"
       },
       "empty": "데이터 없음.",
       "label": "필터 선택"

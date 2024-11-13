@@ -918,7 +918,9 @@
         "is": "è",
         "is_one_of": "è uno di",
         "is_not_one_off": "non è uno di",
-        "is_not": "non è"
+        "is_not": "non è",
+        "between": "tra",
+        "in": "nel"
       },
       "recent": {
         "label": "Ricerche recenti",
@@ -942,7 +944,9 @@
         "text": "I'm sorry, but it seems like there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate into Italian?",
         "labels": "Etichette",
         "state": "Stato",
-        "child": "Bambino"
+        "child": "Bambino",
+        "absolute_date": "Data assoluta",
+        "relative_date": "Data relativa"
       },
       "empty": "Nessun dato.",
       "label": "Scegli filtri"

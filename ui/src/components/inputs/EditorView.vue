@@ -953,16 +953,16 @@
 
     const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
 
+    const closeTab = (tab, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
+    };
+
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
             store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
         });
         store.commit("editor/changeOpenedTabs", {action: "open", ...openTab});
         hideTabContextMenu();
-    };
-
-    const closeTab = (tab, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
     };
 
     const closeAllTabs = () => {

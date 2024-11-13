@@ -275,7 +275,8 @@ export default {
                     }
                 }
 
-                commit("setFilePreview", data)
+                commit("setFilePreview", data);
+                return data;
             })
         },
         setLabels(_, options) {
@@ -307,6 +308,22 @@ export default {
         queryUnqueueExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/unqueue/by-query`,
+                {},
+                {params: options}
+            )
+        },
+        forceRun(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/force-run`);
+        },
+        bulkForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-ids`,
+                options.executionsId
+            )
+        },
+        queryForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-query`,
                 {},
                 {params: options}
             )

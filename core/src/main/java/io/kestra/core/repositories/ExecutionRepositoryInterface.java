@@ -32,6 +32,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Optional<Execution> findById(String tenantId, String id, boolean allowDeleted);
 
+    Optional<Execution> findByIdWithoutAcl(String tenantId, String id);
+
     ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);
 
     /**
@@ -42,6 +44,17 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
      * @return a {@link Flux} of one or more executions.
      */
     Flux<Execution> findAllByTriggerExecutionId(String tenantId, String triggerExecutionId);
+
+    /**
+     * Finds the latest execution for the given flow and s.
+     *
+     * @param tenantId  The tenant ID.
+     * @param namespace The namespace of execution.
+     * @param flowId    The flow ID  of execution.
+     * @param states     The execution's states.
+     * @return an optional {@link Execution}.
+     */
+    Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states);
 
     ArrayListTotal<Execution> find(
         Pageable pageable,

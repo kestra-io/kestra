@@ -936,7 +936,8 @@
           "confirmation": "Critérios de busca <code>{name}</code>",
           "placeholder": "Etiqueta"
         },
-        "label": "Pesquisas salvas"
+        "label": "Pesquisas salvas",
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Data relativa"
       },
       "empty": "Sem dados.",
-      "label": "Escolher filtros"
+      "label": "Escolher filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
     },
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",

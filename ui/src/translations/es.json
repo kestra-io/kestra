@@ -936,7 +936,8 @@
           "confirmation": "Criterios de búsqueda <code>{name}</code>",
           "placeholder": "Etiqueta"
         },
-        "label": "Búsquedas guardadas"
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Fecha relativa"
       },
       "empty": "Sin datos.",
-      "label": "Elegir filtros"
+      "label": "Elegir filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
     },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",

@@ -936,7 +936,8 @@
           "confirmation": "खोज मानदंड <code>{name}</code>",
           "placeholder": "लेबल"
         },
-        "label": "सहेजे गए खोजें"
+        "label": "सहेजे गए खोजें",
+        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।"
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "सापेक्ष तिथि"
       },
       "empty": "कोई डेटा नहीं।",
-      "label": "फिल्टर चुनें"
+      "label": "फिल्टर चुनें",
+      "settings": {
+        "show_chart": "मुख्य चार्ट दिखाएं"
+      }
     },
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",

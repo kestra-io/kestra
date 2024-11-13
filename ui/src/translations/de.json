@@ -936,7 +936,8 @@
           "confirmation": "Suchkriterien <code>{name}</code>",
           "placeholder": "Label"
         },
-        "label": "Gespeicherte Suchen"
+        "label": "Gespeicherte Suchen",
+        "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
       "options": {
         "namespace": "Namespace",
@@ -949,7 +950,10 @@
         "relative_date": "Relatives Datum"
       },
       "empty": "Keine Daten.",
-      "label": "Filter auswählen"
+      "label": "Filter auswählen",
+      "settings": {
+        "show_chart": "Hauptdiagramm anzeigen"
+      }
     },
     "force run title": "Erzwinge die Ausführung <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> Ausführung(en) erzwungener Lauf",

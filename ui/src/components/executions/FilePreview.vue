@@ -3,21 +3,21 @@
         Preview
     </el-button>
     <drawer
-        v-if="selectedPreview === value && filePreview"
+        v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
         <template #header>
             {{ $t("preview") }}
         </template>
         <template #default>
-            <el-alert v-if="filePreview.truncated" show-icon type="warning" :closable="false" class="mb-2">
+            <el-alert v-if="preview.truncated" show-icon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
             </el-alert>
-            <list-preview v-if="filePreview.type === 'LIST'" :value="filePreview.content" />
-            <img v-else-if="filePreview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
-            <pdf-preview v-else-if="filePreview.type === 'PDF'" :source="filePreview.content" />
-            <markdown v-else-if="filePreview.type === 'MARKDOWN'" :source="filePreview.content" />
-            <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="filePreview.content" :lang="extensionToMonacoLang" read-only />
+            <list-preview v-if="preview.type === 'LIST'" :value="preview.content" />
+            <img v-else-if="preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
+            <pdf-preview v-else-if="preview.type === 'PDF'" :source="preview.content" />
+            <markdown v-else-if="preview.type === 'MARKDOWN'" :source="preview.content" />
+            <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="preview.content" :lang="extensionToMonacoLang" read-only />
             <el-form class="ks-horizontal max-size mt-3">
                 <el-form-item :label="$t('row count')">
                     <el-select
@@ -79,7 +79,8 @@
             },
             executionId: {
                 type: String,
-                required: true
+                required: false,
+                default: undefined
             }
         },
         data() {
@@ -96,7 +97,8 @@
                     {value: "Cp1252", label: "Windows 1252"},
                     {value: "UTF-16", label: "UTF-16"},
                     {value: "Cp500", label: "EBCDIC IBM-500"},
-                ]
+                ],
+                preview: undefined
             }
         },
         mounted() {
@@ -107,7 +109,7 @@
             ...mapState("execution", ["filePreview"]),
             ...mapGetters("misc", ["configs"]),
             extensionToMonacoLang() {
-                switch (this.filePreview.extension) {
+                switch (this.preview.extension) {
                 case "json":
                     return "json";
                 case "jsonl":
@@ -122,30 +124,44 @@
                 case "py":
                     return "python"
                 default:
-                    return this.filePreview.extension;
+                    return this.preview.extension;
                 }
             },
             imageContent() {
-                return "data:image/" + this.extension + ";base64," + this.filePreview.content;
+                return "data:image/" + this.extension + ";base64," + this.preview.content;
             },
             maxPreviewOptions() {
                 return [10, 25, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configs.preview.max)
             }
         },
+        emits: ["preview"],
         methods: {
             getFilePreview() {
+                let data = {
+                    path: this.value,
+                    maxRows: this.maxPreview,
+                    encoding: this.encoding.value
+                };
                 this.selectedPreview = this.value;
-
-                this.$store
-                    .dispatch("execution/filePreview", {
-                        executionId: this.executionId,
-                        path: this.value,
-                        maxRows: this.maxPreview,
-                        encoding: this.encoding.value
-                    })
-                    .then(() => {
-                        this.isPreviewOpen = true;
+                if (this.executionId !== undefined) {
+                    this.$store
+                        .dispatch("execution/filePreview", {
+                            executionId: this.executionId,
+                            ...data
+                        })
+                        .then(response => {
+                            this.preview = response;
+                            this.isPreviewOpen = true;
+                        });
+                } else {
+                    this.$emit("preview", {
+                        data: data,
+                        callback: (response) => {
+                            this.preview = response;
+                            this.isPreviewOpen = true;
+                        }
                     });
+                }
             },
         }
     }

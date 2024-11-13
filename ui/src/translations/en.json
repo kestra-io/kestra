@@ -940,7 +940,7 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "Looks like there's nothing here… yet! Adjust your filters, or give it another go!",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
     "filters": {
       "label": "Choose filters",
@@ -951,6 +951,8 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
         "text": "text"
       },
       "comparators": {
@@ -958,8 +960,8 @@
         "is_one_of": "is one of",
         "is_not": "is not",
         "is_not_one_off": "is not one of",
-        "contains": "contains",
-        "not_contains": "not_contains"
+        "in": "in",
+        "between": "between"
       },
       "recent": {
         "label": "Recent searches",
@@ -967,12 +969,16 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
           "hint": "How do you want to label this search criteria?",
           "confirmation": "Search criteria <code>{name}</code>"
         }
+      },
+      "settings": {
+        "show_chart": "Show main chart"
       },
       "labels": {
         "placeholder": "Type label as 'key:value'"

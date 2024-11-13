@@ -12,6 +12,7 @@ import io.kestra.core.services.ExecutionService;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -48,16 +49,16 @@ public class RestartCaseTest {
 
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
+            execution -> execution.getState().getCurrent() == State.Type.SUCCESS && execution.getId().equals(firstExecution.getId()),
             throwRunnable(() -> {
                 Execution restartedExec = executionService.restart(firstExecution, null);
-                executionQueue.emit(restartedExec);
-
                 assertThat(restartedExec, notNullValue());
                 assertThat(restartedExec.getId(), is(firstExecution.getId()));
                 assertThat(restartedExec.getParentId(), nullValue());
                 assertThat(restartedExec.getTaskRunList().size(), is(3));
                 assertThat(restartedExec.getState().getCurrent(), is(State.Type.RESTARTED));
+
+                executionQueue.emit(restartedExec);
             }),
             Duration.ofSeconds(60)
         );

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+    import {computed} from "vue";
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import FileDocument from "vue-material-design-icons/FileDocument.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
@@ -6,6 +7,12 @@
     import Calendar from "vue-material-design-icons/Calendar.vue"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+
+    import {useStore} from "vuex";
+
+    const store = useStore();
+
+    const configs = computed(() => store.state.misc.configs);
 </script>
 
 <template>
@@ -25,6 +32,8 @@
         <button>
             <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
         </button>
+        <div style="flex:1" />
+        <span class="versionNumber">{{ configs.version }}</span>
     </div>
 </template>
 
@@ -36,11 +45,13 @@
     text-orientation: mixed;
     border-left: 1px solid var(--el-border-color);
     display: flex;
+    align-items: center;
     gap: 8px;
+    background: var(--card-bg);
 }
 
 .wrapper button{
-    background:  #404559;
+    background:  var(--bs-border-color);
     border-radius: 5px;
     border: 1px solid var(--el-border-color);
     padding: 10px 5px;
@@ -61,7 +72,12 @@
 .openIcon{
     transform: rotate(90deg);
     margin-top: 8px;
-    color: #C3BBE3;
+    color: var(--bs-tertiary-color);
     font-size: 12px;
+}
+
+.versionNumber{
+    font-size: 12px;
+    color: var(--bs-tertiary-color);
 }
 </style>

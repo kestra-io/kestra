@@ -107,7 +107,7 @@
                     })
                     .then(() => {
                         this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("cancel done"));
+                        this.$toast().success(this.$t("killed done"));
                     });
             },
             loadDefinition() {

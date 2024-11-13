@@ -890,7 +890,7 @@
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
-    "no_data": "여기에는 아직 아무것도 없는 것 같아요… 필터를 조정하거나 다시 시도해 보세요!",
+    "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "informative notice": "노트(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>에 대한 자세한 내용은 문서를 참조하세요.",

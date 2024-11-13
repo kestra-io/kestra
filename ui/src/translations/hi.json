@@ -890,7 +890,7 @@
     "invalid bulk pause": "निष्पादन को PAUSE नहीं किया जा सका",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "no_data": "ऐसा लगता है कि यहाँ कुछ भी नहीं है... अभी तक! अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएं!",
+    "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "informative notice": "नोट(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> के बारे में हमारे दस्तावेज़ में और पढ़ें।",

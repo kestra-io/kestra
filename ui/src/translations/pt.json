@@ -890,7 +890,7 @@
     "invalid bulk pause": "Não foi possível pausar as execuções",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "no_data": "Parece que não há nada aqui... ainda! Ajuste seus filtros ou tente novamente!",
+    "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Leia mais sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> em nossa documentação.",

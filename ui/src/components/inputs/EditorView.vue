@@ -1030,7 +1030,7 @@
 
         <el-menu
             v-if="tabContextMenu.visible"
-            :style="{position: 'fixed', left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`, zIndex: 9999}"
+            :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
             class="tabs-context"
         >
             <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
@@ -1441,10 +1441,13 @@
     }
 
     ul.tabs-context {
+        position: fixed;
+        z-index: 9999;
         border-right: none;
         
         & li {
             height: 30px;
+            padding: 16px;
             font-size: var(--el-font-size-small);
             color: var(--bs-gray-700);
 

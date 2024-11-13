@@ -869,6 +869,12 @@
       "empty": {
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      },
+      "close": {
+        "tab": "Close tab",
+        "all": "Close all tabs",
+        "other": "Close other tabs",
+        "right": "Close to the right"
       }
     },
     "curl": {

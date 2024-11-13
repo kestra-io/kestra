@@ -8,6 +8,7 @@
                 <errors :code="error" />
             </template>
         </main>
+        <context-info-bar />
         <VueTour />
     </el-config-provider>
 </template>
@@ -18,6 +19,7 @@
 
 <script>
     import {ElMessageBox, ElSwitch} from "element-plus";
+    import ContextInfoBar from "./components/ContextInfoBar.vue";
     import {h, ref} from "vue";
     import LeftMenu from "override/components/LeftMenu.vue";
     import ErrorToast from "./components/ErrorToast.vue";
@@ -32,6 +34,7 @@
             LeftMenu,
             ErrorToast,
             VueTour,
+            ContextInfoBar
         },
         data() {
             return {

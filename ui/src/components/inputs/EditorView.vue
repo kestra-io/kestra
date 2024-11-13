@@ -259,9 +259,6 @@
             action: "open",
         });
     };
-    const closeTab = (tab, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
-    };
 
     const persistViewType = (value) => {
         viewType.value = value;
@@ -954,6 +951,8 @@
         document.removeEventListener("click", hideTabContextMenu);
     };
 
+    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
             store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
@@ -962,24 +961,21 @@
         hideTabContextMenu();
     };
 
+    const closeTab = (tab, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
+    };
+
     const closeAllTabs = () => {
-        const tabs = store.state.editor.tabs;
-        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
-        closeTabs(tabs.filter(tab => tab !== firstTab), firstTab);
+        closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
     };
 
     const closeOtherTabs = (tab) => {
-        const tabs = store.state.editor.tabs;
-        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
-        closeTabs(tabs.filter(t => t !== firstTab && t !== tab), tab);
+        closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
     };
 
     const closeTabsToRight = (index) => {
-        const tabs = store.state.editor.tabs;
-        const firstTab = tabs.find(tab => tab.name === "Flow" || tab.persistent);
-        closeTabs(tabs.slice(index + 1).filter(tab => tab !== firstTab), tabs[index]);
+        closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
     };
-
 </script>
 
 <template>
@@ -1035,15 +1031,19 @@
         <el-menu
             v-if="tabContextMenu.visible"
             :style="{position: 'fixed', left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`, zIndex: 9999}"
+            class="tabs-context"
         >
+            <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+                {{ $t("namespace_editor.close.tab") }}
+            </el-menu-item>
             <el-menu-item @click="closeAllTabs">
-                Close all tabs
+                {{ $t("namespace_editor.close.all") }}
             </el-menu-item>
             <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
-                Close other tabs
+                {{ $t("namespace_editor.close.other") }}
             </el-menu-item>
             <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
-                Close tabs to the right
+                {{ $t("namespace_editor.close.right") }}
             </el-menu-item>
         </el-menu>
 
@@ -1437,6 +1437,20 @@
         p {
             line-height: 22px;
             font-size: 14px;
+        }
+    }
+
+    ul.tabs-context {
+        border-right: none;
+        
+        & li {
+            height: 30px;
+            font-size: var(--el-font-size-small);
+            color: var(--bs-gray-700);
+
+            &:hover {
+                color: var(--bs-secondary);            
+            }
         }
     }
 </style>

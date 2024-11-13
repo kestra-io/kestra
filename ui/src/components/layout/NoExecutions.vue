@@ -1,43 +1,112 @@
-vue
 <template>
     <el-card>
-        <div class="header-image-container">
-            <img :src="noExecutionsInFlowImage" alt="No Executions">
-        </div>
-        <div class="container" :class="themeClass">
-            <h1 class="title">
-                {{ $t('no-executions-view.title') }}
-            </h1>
-            <p class="subtitle">
-                {{ $t('no-executions-view.sub_title') }}
-            </p>
-            <el-button type="primary" size="small" text>
-                {{ $t('no-executions-view.launch_execution') }}
-            </el-button>
-        </div>
+        <el-container class="header-image-container">
+            <el-image :src="noExecutionsInFlowImage" alt="No Executions" fit="contain" />
+        </el-container>
+        <el-container :class="['container', themeClass]">
+            <el-main>
+                <el-title level="1" style="font-weight: 900;">
+                    {{ $t('no-executions-view.title') }}
+                </el-title>
+                <el-title level="1">
+                    {{ $t('no-executions-view.Kestra') }}
+                </el-title>
+                <el-row>
+                    <el-col :span="24">
+                        <el-title level="2">
+                            {{ $t('no-executions-view.sub_title') }}
+                        </el-title>
+                    </el-col>
+                    <el-col :span="24" style="margin-top: 30px;">
+                        <router-link :to="{name: 'flows/list'}">
+                            <el-button size="large" type="primary">
+                                {{ $t('execute') }}
+                            </el-button>
+                        </router-link>
+                    </el-col>
+                    <el-col :span="24" style="margin-top: 30px; font-weight: 900;">
+                        <el-title level="2">
+                            {{ $t('no-executions-view.guidance_desc') }}
+                        </el-title>
+                    </el-col>
+                    <el-col :span="24">
+                        <el-title level="2">
+                            {{ $t('no-executions-view.guidance_sub_desc') }}
+                        </el-title>
+                    </el-col>
+                </el-row>
+            </el-main>
+        </el-container>
+    
+        <el-container :class="['container', themeClass]">
+            <el-row class="card__wrap--outer" type="flex" justify="start" gutter="20">
+                <el-col :span="8" class="card__wrap--inner">
+                    <el-card shadow="hover" class="card">
+                        <div class="card__item">
+                            <el-title level="3">
+                                {{ $t('no-executions-view.get_started_title') }}
+                            </el-title>
+                        </div>
+                        <div class="card__sub">
+                            <el-title level="3">
+                                {{ $t('no-executions-view.get_started_desc') }}
+                            </el-title>
+                        </div>
+                        <div class="card__footer">
+                            <el-title level="3">
+                                <el-link href="https://kestra.io/docs/installation" target="__blank" type="primary">
+                                    Learn more →
+                                </el-link>
+                            </el-title>
+                        </div>
+                    </el-card>
+                </el-col>
+
+                <el-col :span="8" class="card__wrap--inner">
+                    <el-card shadow="hover" class="card" style="width: 12vw;">
+                        <div class="card__item">
+                            <el-title level="3" style="margin-bottom: 10px;">
+                                {{ $t('no-executions-view.workflow_components_title') }}
+                            </el-title>
+                        </div>
+                        <div class="card__sub">
+                            <el-title level="3">
+                                {{ $t('no-executions-view.workflow_components_desc') }}
+                            </el-title>
+                        </div>
+                      
+                        <div class="card__footer">
+                            <el-link href="https://kestra.io/docs/getting-started/workflow-components" target="__blank" type="primary" style="padding-top: 35px;">
+                                Learn more →
+                            </el-link>
+                        </div>
+                    </el-card>
+                </el-col>
+
+                <el-col :span="8" class="card__wrap--inner">
+                    <el-card shadow="hover" class="card">
+                        <div class="card__item">
+                            <el-title level="3" style="margin-bottom: 10px;">
+                                {{ $t('no-executions-view.videos_tutorials_title') }}
+                            </el-title>
+                        </div>
+                        <div class="card__sub">
+                            <el-title level="3" style="margin-bottom: 10px;">
+                                {{ $t('no-executions-view.videos_tutorials_desc') }}
+                            </el-title>
+                        </div>
+                        <div class="card__footer">
+                            <el-link href="https://kestra.io/docs/tutorial" target="__blank" type="primary" style="padding-top: 53px;">
+                                Watch →
+                            </el-link>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+        </el-container>
     </el-card>
-    <div class="guidance">
-        <h2>{{ $t('no-executions-view.guidance_desc') }}</h2>
-        <h2>{{ $t('no-executions-view.guidance_sub_desc') }}</h2>
-        <div class="cards">
-            <div class="card">
-                <h3>{{ $t('no-executions-view.get_started_title') }}</h3>
-                <p>{{ $t('no-executions-view.get_started_desc') }}</p>
-                <a href="#" class="link">Learn more →</a>
-            </div>
-            <div class="card">
-                <h3>{{ $t('no-executions-view.workflow_components_title') }}</h3>
-                <p>{{ $t('no-executions-view.workflow_components_desc') }}</p>
-                <a href="#" class="link">Learn more →</a>
-            </div>
-            <div class="card">
-                <h3>{{ $t('no-executions-view.videos_tutorials_title') }}</h3>
-                <p>{{ $t('no-executions-view.videos_tutorials_desc') }}</p>
-                <a href="#" class="link">Watch →</a>
-            </div>
-        </div>
-    </div>
 </template>
+
 
 <script>
     import noExecutionsImage from "../../assets/onboarding/onboarding-ready-to-flow.svg"
@@ -63,15 +132,10 @@ vue
     align-items: center;
 }
 .container {
+  margin-top:20px;
   text-align: center;
-  min-height: 100vh;
-}
-.title {
-  font-size: var(--el-font-size);
-  margin-bottom: 5px;
-}
-.subtitle {
-  font-size: var(--el-font-size-extra-small);
+  font-size: var(--el-font-size-small);
+  justify-content: center;
 }
 .theme-light {
     color: #000;
@@ -79,34 +143,39 @@ vue
 .theme-dark {
     color: #fff;
 }
-.cards {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-}
 .card {
+  flex-grow: 1;
+  display: flex; 
+  flex-direction: column;
   border-radius: 8px;
-  padding: 20px;
-  width: 200px;
   transition: transform 0.2s;
+  height: 30vh;
+  width: 10vw;
+  position: sticky;
+  top: 5vh;
+  left: 10vw;
 }
 .card:hover {
   transform: scale(1.05);
 }
-.link {
-  color: #5c5cff;
-  text-decoration: none;
+
+.card__wrap--outer {
+  display: flex;
+  flex-wrap: wrap;
+  text-align: left;
+  font-size: var(--el-font-size-extra-small);
 }
-.onboarding-glow {
-  animation: glowAnimation 1s infinite alternate;
+
+.card__wrap--inner {
+  margin-bottom: 20px;
 }
-@keyframes glowAnimation {
-  0% {
-    box-shadow: 0px 0px 0px 0px #8405FF;
-  }
-  100% {
-    box-shadow: 0px 0px 50px 2px #8405FF;
-  }
+
+.card__item {
+  margin-bottom: 10px;
+}
+
+.card__footer {
+  overflow: hidden;
+  padding-top: 10px;
 }
 </style>

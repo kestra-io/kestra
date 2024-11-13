@@ -13,11 +13,15 @@ const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };
 
-export const formatLabel = (value) => {
-    let label = value.label;
+export const formatLabel = (option) => {
+    let {label, comparator, value} = option;
 
-    if (value.comparator?.label) label += `:${value.comparator.label}`;
-    if (value.value.length) label += `:${value.value.join(", ")}`;
+    if (comparator?.label) label += `:${comparator.label}`;
+
+    if (value.length) {
+        if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
+        else label += `:${value[0]?.startDate}:and:${value[0]?.endDate}`;
+    }
 
     return label;
 };
@@ -121,14 +125,16 @@ export function useFilters(prefix) {
 
         return filters.reduce((query, filter) => {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
-            const key = match
-                ? match.key
-                : filter.label === "text"
-                  ? "q"
-                  : null;
+            let key = match ? match.key : filter.label === "text" ? "q" : null;
 
             if (key) {
-                query[key] = encode(filter.value, key);
+                if (key !== "date") query[key] = encode(filter.value, key);
+                else {
+                    const {startDate, endDate} = filter.value[0];
+
+                    query.startDate = startDate;
+                    query.endDate = endDate;
+                }
             }
 
             return query;
@@ -136,7 +142,7 @@ export function useFilters(prefix) {
     };
 
     const decodeParams = (query, include) => {
-        return Object.entries(query)
+        const params = Object.entries(query)
             .filter(
                 ([key]) =>
                     key === "q" ||
@@ -150,11 +156,23 @@ export function useFilters(prefix) {
                         ? "text"
                         : OPTIONS.find((o) => o.key === key)?.value.label ||
                           key;
+
                 const decodedValue = Array.isArray(value)
                     ? value.map(decodeURIComponent)
                     : [decodeURIComponent(value)];
+
                 return {label, value: decodedValue};
             });
+
+        // Handle the date functionality by grouping startDate and endDate if they exist
+        if (query.startDate && query.endDate) {
+            params.push({
+                label: "absolute_date:between",
+                value: [{startDate: query.startDate, endDate: query.endDate}],
+            });
+        }
+
+        return params;
     };
 
     return {

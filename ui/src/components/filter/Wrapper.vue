@@ -9,13 +9,20 @@
             allow-create
             filterable
             multiple
-            :no-data-text="emptyLabel"
+            popper-class="global-filters-select"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
             <template #label="{value}">
                 <span>{{ formatLabel(value) }} </span>
+            </template>
+            <template #empty>
+                <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
+                <DateRange
+                    v-else
+                    @update:model-value="(v) => valueCallback(v, true)"
+                />
             </template>
             <template v-if="dropdowns.first.shown">
                 <el-option
@@ -75,6 +82,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
+    import DateRange from "../layout/DateRange.vue";
 
     const props = defineProps({
         prefix: {type: String, required: true},
@@ -128,12 +136,17 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         }
     };
-    const valueCallback = (filter) => {
-        const values = current.value[dropdowns.value.third.index].value;
-        const index = values.indexOf(filter.value);
+    const valueCallback = (filter, isDate) => {
+        if (!isDate) {
+            const values = current.value[dropdowns.value.third.index].value;
+            const index = values.indexOf(filter.value);
 
-        if (index === -1) values.push(filter.value);
-        else values.splice(index, 1);
+            if (index === -1) values.push(filter.value);
+            else values.splice(index, 1);
+        } else {
+            const match = current.value.find((v) => v.label === "absolute_date");
+            if (match) match.value = [filter];
+        }
 
         if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
             // If selection is not multiple, close the dropdown
@@ -213,6 +226,11 @@
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ];
 
+    const isDatePickerShown = computed(() => {
+        const c = current?.value?.at(-1);
+        return c?.label === "absolute_date" && c.comparator;
+    });
+
     const valueOptions = computed(() => {
         const type = current.value.at(-1)?.label;
 
@@ -234,6 +252,9 @@
 
         case "relative_date":
             return relativeDateOptions;
+
+        case "absolute_date":
+            return [];
 
         default:
             return [];
@@ -344,5 +365,12 @@
 
 .el-button-group .el-button--primary:last-child {
     border-left: none;
+}
+
+.global-filters-select {
+    & .el-date-editor.el-input__wrapper {
+        background-color: initial;
+        box-shadow: none;
+    }
 }
 </style>

@@ -59,10 +59,10 @@ main {
     }
 
     > section.container {
-        margin: var(--spacer) auto 0;
+        margin: 24px 0;
         min-width: 100%;
         transition: padding 0.3s ease;
-        padding: 0 calc(var(--offset-from-menu));
+        padding: 0 32px;
 
         &.full-height {
             flex: 1;

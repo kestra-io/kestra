@@ -42,7 +42,7 @@
                 <KestraFilter
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child']"
-                    :refresh="{shown: true, canAutoRefresh, callback: refresh}"
+                    :refresh="{shown: true, callback: refresh}"
                 />
             </template>
 
@@ -380,6 +380,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import DateAgo from "../layout/DateAgo.vue";
 
     import {filterLabels} from "./utils"
 
@@ -395,7 +396,8 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            ExecutionsBar
+            ExecutionsBar,
+            DateAgo
         },
         emits: ["state-count"],
         props: {
@@ -505,7 +507,6 @@
                 ],
                 displayColumns: [],
                 childFilter: "ALL",
-                canAutoRefresh: false,
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
@@ -708,9 +709,6 @@
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
-            },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000

@@ -84,12 +84,17 @@ export function useFilters(prefix) {
     ];
     const encodeParams = (filters) => {
         const encode = (values, key) => {
-            return values.map((v) => {
-                const encoded = encodeURIComponent(v);
-                return key === "labels"
-                    ? encoded.replace(/%3A/g, ":")
-                    : encoded;
-            });
+            return values
+                .map((v) => {
+                    if (key === "childFilter" && v === "ALL") {
+                        return null;
+                    }
+                    const encoded = encodeURIComponent(v);
+                    return key === "labels"
+                        ? encoded.replace(/%3A/g, ":")
+                        : encoded;
+                })
+                .filter((v) => v !== null);
         };
 
         return filters.reduce((query, filter) => {

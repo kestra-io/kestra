@@ -148,4 +148,8 @@ $height: 200px;
     height: $height;
     max-height: $height;
 }
+
+.align-items-center {
+    justify-content: center;
+}    
 </style>

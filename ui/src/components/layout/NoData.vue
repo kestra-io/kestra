@@ -18,3 +18,10 @@
     const image = computed(() => (Utils.getTheme() === "light" ? Light : Dark));
     const description = computed(() => props.text ?? t("no_data"));
 </script>
+
+<style scoped lang="scss">
+    ::v-deep .el-empty__image {
+        width: 300px;
+        height: auto;
+    }
+</style>

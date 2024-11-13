@@ -934,7 +934,7 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "Looks like there's nothing here… yet! Adjust your filters, or give it another go!",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
     "filters": {
       "label": "Choose filters",

@@ -7,8 +7,9 @@
     import Slack from "vue-material-design-icons/Slack.vue"
     import Github from "vue-material-design-icons/Github.vue"
     import Calendar from "vue-material-design-icons/Calendar.vue"
-
+    import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+
 
     import {useStore} from "vuex";
 
@@ -79,6 +80,9 @@
         <span class="versionNumber">{{ configs?.version }}</span>
     </div>
     <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+        <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
+            <Close />
+        </button>
         {{ activeTab }}
     </div>
 </template>
@@ -157,6 +161,16 @@
 .panelWrapper{
     transition: width .3s;
     width: 0;
+    position: relative;
+}
+
+.panelWrapper .closeButton{
+    position: absolute;
+    top: var(--spacer);
+    right: var(--spacer);
+    color: var(--bs-tertiary-color);
+    background: none;
+    border: none;
 }
 
 .panelTabResizing{

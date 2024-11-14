@@ -23,6 +23,7 @@ public class GetFileURI implements Function {
             throw new PebbleException(null, ERROR_MESSAGE, lineNumber, self.getName());
         }
 
+
         Object path = args.get("path");
         @SuppressWarnings("unchecked")
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");

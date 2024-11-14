@@ -1,5 +1,11 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title">
+        <template #additional-right>
+            <el-button @click="saveAllSettings()" type="primary">
+                {{ $t("settings.blocks.save.fields.name") }}
+            </el-button>
+        </template>
+    </top-nav-bar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
@@ -31,6 +37,17 @@
                                 :key="item"
                                 :label="$t(`open in ${item}`)"
                                 :value="item"
+                            />
+                        </el-select>
+                    </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
+                        <el-select :model-value="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                            <el-option
+                                v-for="item in executeDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
                             />
                         </el-select>
                     </Column>
@@ -183,18 +200,6 @@
                 </Row>
             </template>
         </Block>
-
-        <Block last>
-            <template #content>
-                <Row>
-                    <Column>
-                        <el-button @click="saveAllSettings()" class="w-60" type="primary">
-                            {{ $t("settings.blocks.save.fields.name") }}
-                        </el-button>
-                    </Column>
-                </Row>
-            </template>
-        </Block>
     </Wrapper>
 </template>
 
@@ -256,7 +261,8 @@
                     editorFontFamily: undefined,
                     executeFlowBehaviour: undefined,
                     envName: undefined,
-                    envColor: undefined
+                    envColor: undefined,
+                    executeDefaultTab: undefined
                 },
                 settingsKeyMapping: {
                     chartColor: "scheme",
@@ -277,15 +283,18 @@
             };
         },
         created() {
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
             const store = useStore();
 
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
             this.pendingSettings.theme = localStorage.getItem("theme") || "light";
-            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
-            this.pendingSettings.chartColor = localStorage.getItem("scheme") || "default";
+            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
+
+            let scheme = localStorage.getItem("scheme") || "classic";
+            if(scheme === "default") scheme = "classic";
+            this.pendingSettings.chartColor =  scheme
+
             this.pendingSettings.dateFormat = localStorage.getItem(DATE_FORMAT_STORAGE_KEY) || "llll";
             this.pendingSettings.timezone = localStorage.getItem(TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
             this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
@@ -294,6 +303,7 @@
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
+            this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
@@ -364,6 +374,9 @@
             },
             onExecuteFlowBehaviourChange(value) {
                 this.pendingSettings.executeFlowBehaviour = value;
+            },
+            onExecuteDefaultTabChange(value){
+                this.pendingSettings.executeDefaultTab = value;
             },
             saveAllSettings() {
                 Object.keys(this.pendingSettings).forEach((key) => {
@@ -440,8 +453,9 @@
             },
             editorThemesOptions() {
                 return  [
-                    {value: "vs", text: "Light"},
-                    {value: "dark", text: "Dark"}
+                    {value: "light", text: "Light"},
+                    {value: "dark", text: "Dark"},
+                    {value: "syncWithSystem", text: "Sync With System"}
                 ]
             },
             dateFormats() {
@@ -494,6 +508,34 @@
                     {
                         value: "'SimSun', sans-serif",
                         text: "SimSun"
+                    }
+                ]
+            },
+            executeDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "gantt",
+                        label: this.$t("gantt")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value: "outputs",
+                        label: this.$t("outputs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
                     }
                 ]
             }

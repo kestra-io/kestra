@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class YamlFlowParser {
+public class YamlParser {
     private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
@@ -34,7 +34,7 @@ public class YamlFlowParser {
     }
 
     public <T> T parse(String input, Class<T> cls) {
-        return readFlow(input, cls, type(cls));
+        return read(input, cls, type(cls));
     }
 
 
@@ -59,7 +59,7 @@ public class YamlFlowParser {
     public <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return readFlow(input, cls, type(cls));
+            return read(input, cls, type(cls));
 
         } catch (IOException e) {
             throw new ConstraintViolationException(
@@ -77,7 +77,7 @@ public class YamlFlowParser {
         }
     }
 
-    private <T> T readFlow(String input, Class<T> objectClass, String resource) {
+    private <T> T read(String input, Class<T> objectClass, String resource) {
         try {
             return STRICT_MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
@@ -91,8 +91,7 @@ public class YamlFlowParser {
     private static <T> void jsonProcessingExceptionHandler(T target, String resource, JsonProcessingException e) throws ConstraintViolationException {
         if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
             throw constraintViolationException;
-        }
-        else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
+        } else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
             // This error is thrown when a non-existing task is used
             throw new ConstraintViolationException(
                 "Invalid type: " + invalidTypeIdException.getTypeId(),
@@ -113,8 +112,7 @@ public class YamlFlowParser {
                     )
                 )
             );
-        }
-        else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+        } else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
             var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
             throw new ConstraintViolationException(
                 message,
@@ -127,8 +125,7 @@ public class YamlFlowParser {
                         null
                     )
                 ));
-        }
-        else {
+        } else {
             throw new ConstraintViolationException(
                 "Illegal "+ resource +" yaml: " + e.getMessage(),
                 Collections.singleton(
@@ -136,7 +133,7 @@ public class YamlFlowParser {
                         e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
                         target,
                         (Class<T>) target.getClass(),
-                        "flow",
+                        "yaml",
                         null
                     )
                 )

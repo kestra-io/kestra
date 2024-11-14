@@ -26,7 +26,7 @@
                     :total-count="countByLogLevel[logLevel]"
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
-                    @close="clearLogLevel(logLevel)"
+                    @close="logCursor = undefined"
                 />
             </el-form-item>
             <el-form-item>
@@ -38,7 +38,7 @@
                 <el-tooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <el-button @click="setRawView()">
+                    <el-button @click="toggleViewType">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                     </el-button>
                 </el-tooltip>
@@ -71,15 +71,36 @@
             :target-flow="flow"
             :show-progress-bar="false"
         />
-        <el-card v-else>
-            <template v-for="log in logs" :key="`${log.timestamp}-${log.taskRun}`">
-                <log-line
-                    :level="level"
-                    filter=""
-                    :log="log"
-                    title
-                />
-            </template>
+        <el-card v-else class="attempt-wrapper">
+            <DynamicScroller
+                ref="logScroller"
+                :items="temporalLogs"
+                :min-item-size="50"
+                key-field="index"
+                class="log-lines"
+                :buffer="200"
+                :prerender="20"
+            >
+                <template #default="{item, active}">
+                    <DynamicScrollerItem
+                        :item="item"
+                        :active="active"
+                        :size-dependencies="[item.message]"
+                        :data-index="item.index"
+                    >
+                        <log-line
+                            @click="logCursor = item.index.toString()"
+                            class="line"
+                            :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
+                            :cursor="item.index.toString() === logCursor"
+                            :level="level"
+                            :filter="filter"
+                            :log="item"
+                            title
+                        />
+                    </DynamicScrollerItem>
+                </template>
+            </DynamicScroller>
         </el-card>
     </div>
 </template>
@@ -92,6 +113,8 @@
     import Kicon from "../Kicon.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
+    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
     import State from "../../utils/state";
     import Utils from "../../utils/utils";
@@ -109,7 +132,9 @@
             Download,
             Magnify,
             Collapse,
-            Restart
+            Restart,
+            DynamicScroller,
+            DynamicScrollerItem,
         },
         data() {
             return {
@@ -126,9 +151,41 @@
             this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
             this.filter = (this.$route.query.q || undefined);
         },
+        watch:{
+            level: {
+                handler() {
+                    if (this.raw_view) {
+                        this.$store.dispatch("execution/loadLogs", {
+                            executionId: this.execution.id,
+                            minLevel: this.level
+                        })
+                    }
+                }
+            },
+            logCursor(newValue) {
+                if (newValue !== undefined && this.raw_view) {
+                    this.scrollToLog(newValue);
+                }
+            }
+        },
         computed: {
             State() {
                 return State
+            },
+            temporalLogs() {
+                if (!this.logs?.length) {
+                    return [];
+                }
+
+                const filtered = this.logs.filter(log => {
+                    if (!this.filter) return true;
+                    return log.message?.toLowerCase().includes(this.filter.toLowerCase());
+                });
+
+                return filtered.map((logLine, index) => ({
+                    ...logLine,
+                    index
+                }));
             },
             ...mapState("execution", ["execution", "logs", "flow"]),
             downloadName() {
@@ -141,13 +198,32 @@
                 return LogUtils.levelOrLower(this.level);
             },
             countByLogLevel() {
-                return Object.fromEntries(Object.entries(this.logIndicesByLevel).map(([level, indices]) => [level, indices.length]));
+                return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
             },
             cursorLogLevel() {
-                return Object.entries(this.logIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
+                return Object.entries(this.viewTypeAwareLogIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
             },
             cursorIdxForLevel() {
-                return this.logIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
+                return this.viewTypeAwareLogIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
+            },
+            temporalViewLogIndicesByLevel() {
+                const temporalViewLogIndicesByLevel = this.temporalLogs.reduce((acc, item) => {
+                    if (!acc[item.level]) {
+                        acc[item.level] = [];
+                    }
+                    acc[item.level].push(item.index.toString());
+                    return acc;
+                }, {});
+                LogUtils.levelOrLower(undefined).forEach(level => {
+                    if (!temporalViewLogIndicesByLevel[level]) {
+                        temporalViewLogIndicesByLevel[level] = [];
+                    }
+                });
+
+                return temporalViewLogIndicesByLevel
+            },
+            viewTypeAwareLogIndicesByLevel() {
+                return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
             }
         },
         methods: {
@@ -173,14 +249,9 @@
             expandCollapseAll() {
                 this.$refs.logs.toggleExpandCollapseAll();
             },
-            setRawView() {
+            toggleViewType() {
+                this.logCursor = undefined;
                 this.raw_view = !this.raw_view;
-                if(this.raw_view) {
-                    this.$store.dispatch("execution/loadLogs", {
-                        executionId: this.execution.id,
-                        minLevel: this.level
-                    })
-                }
             },
             sortLogsByViewOrder(a, b) {
                 const aSplit = a.split("/");
@@ -200,7 +271,7 @@
                 return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
             },
             previousLogForLevel(level) {
-                const logIndicesForLevel = this.logIndicesByLevel[level];
+                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
                 if (this.logCursor === undefined) {
                     this.logCursor = logIndicesForLevel?.[logIndicesForLevel.length - 1];
                     return;
@@ -210,7 +281,7 @@
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
             },
             nextLogForLevel(level) {
-                const logIndicesForLevel = this.logIndicesByLevel[level];
+                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
                 if (this.logCursor === undefined) {
                     this.logCursor = logIndicesForLevel?.[0];
                     return;
@@ -219,16 +290,53 @@
                 const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
-            clearLogLevel(level) {
-                if (this.logCursor !== undefined && this.cursorLogLevel === level) {
-                    this.logCursor = undefined;
-                }
-                if (this.level === level) {
-                    this.level = undefined;
-                    this.onChange();
-                }
-            }   
-
+            scrollToLog(index) {
+                this.$refs.logScroller.scrollToItem(index);
+            }
         }
     };
 </script>
+
+<style lang="scss" scoped>
+@import "@kestra-io/ui-libs/src/scss/variables";
+    .attempt-wrapper {
+        background-color: var(--bs-white);
+
+        :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
+            border-top: 1px solid var(--bs-border-color);
+        }
+
+        html.dark & {
+            background-color: var(--bs-gray-100);
+        }
+
+        .attempt-wrapper & {
+            border-radius: .25rem;
+        }
+        }
+    .log-lines {
+        max-height: calc(100vh - 335px);
+        transition: max-height 0.2s ease-out;
+        margin-top: calc(var(--spacer) / 2);
+
+        .line {
+            padding: calc(var(--spacer) / 2);
+
+            &.cursor {
+                background-color: var(--bs-gray-300)
+            }
+        }
+
+        &::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--bs-gray-500);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--bs-primary);
+        }
+        }
+</style>

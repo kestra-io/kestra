@@ -4,4 +4,4 @@ namespace: io.kestra.tests
 tasks:
   - id: firstLevel
     type: io.kestra.plugin.core.log.Log
-    message: "My grandparent is {{labels.system_correlationId}}"
+    message: "My grandparent is {{labels.system.correlationId}}"

@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
-            <ul>
+            <ul id="list">
                 <li v-if="isAllowedEdit">
                     <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
                         <el-button :icon="Api">
@@ -148,4 +148,30 @@
     };
 </script>
 <style>
+@media (max-width: 768px) {
+           
+       
+           #list {
+                display:contents;
+                background-color: blue;
+            }
+            #list  li:first-child {
+                grid-row:1;
+                grid-column:1;
+            } 
+          
+            #list  li:nth-child(2){
+                grid-row:1;
+                grid-column:2;
+            }
+            #list  li:nth-child(3){
+                grid-row:1;
+                grid-column:3;
+            }
+            #list li:nth-child(4){
+                grid-row:2;
+                grid-column:1;
+            }   
+        }
+
 </style>

@@ -1,10 +1,12 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
@@ -18,6 +20,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -642,5 +645,30 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(validation.isPresent(), is(true));
         assertThat(validation.get().getLabels().size(), is(1));
         assertThat(validation.get().getLabels().getFirst(), is(label));
+    }
+
+    @Test
+    void shouldFindLatestExecutionGivenState() {
+        Execution earliest = buildWithCreatedDate(Instant.now().minus(Duration.ofMinutes(10)));
+        Execution latest = buildWithCreatedDate(Instant.now().minus(Duration.ofMinutes(5)));
+
+        executionRepository.save(earliest);
+        executionRepository.save(latest);
+
+        Optional<Execution> result = executionRepository.findLatestForStates(null, "io.kestra.unittest", "full", List.of(State.Type.CREATED));
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getId(), is(latest.getId()));
+    }
+
+    private static Execution buildWithCreatedDate(Instant instant) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("full")
+            .flowRevision(1)
+            .state(new State(State.Type.CREATED, List.of(new State.History(State.Type.CREATED, instant))))
+            .inputs(ImmutableMap.of("test", "value"))
+            .taskRunList(List.of())
+            .build();
     }
 }

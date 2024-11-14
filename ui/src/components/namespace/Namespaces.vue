@@ -27,11 +27,11 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto py-2 px-4 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
-                            <VectorIntersection class="me-2 icon" />
+                            <DotsSquare class="me-2 icon" />
                             <span class="pe-3">{{ namespaceLabel(data.label) }}</span>
                             <span v-if="data.system" class="system">{{ $t("system_namespace") }}</span>
                         </div>
@@ -60,7 +60,7 @@
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import VectorIntersection from "vue-material-design-icons/VectorIntersection.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
 
     const store = useStore();
@@ -190,6 +190,14 @@ $system: #5BB8FF;
         overflow: hidden;
         background: transparent;
 
+        &:hover {
+            background: var(--bs-body-bg);
+            color: $active;
+        }
+        .el-tree-node__expand-icon {
+            display: none;
+        }
+
         .icon {
             color: $active;
         }
@@ -200,6 +208,7 @@ $system: #5BB8FF;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 0 1rem;
         color: var(--el-text-color-regular);
 
         &.system {
@@ -208,6 +217,7 @@ $system: #5BB8FF;
 
         &:hover {
             background: transparent;
+            color: $active;
         }
 
         & .system {

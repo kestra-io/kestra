@@ -11,7 +11,7 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.core.utils.IdUtils;
@@ -33,7 +33,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.annotation.Testable;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +77,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     @Test
     void id() {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
-        Flow flow = new YamlFlowParser().parse(result, Flow.class);
+        Flow flow = new YamlParser().parse(result, Flow.class);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
     }
@@ -315,7 +314,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
 
         String deletedResult = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "?allowDeleted=true"), String.class);
-        Flow deletedFlow = new YamlFlowParser().parse(deletedResult, Flow.class);
+        Flow deletedFlow = new YamlParser().parse(deletedResult, Flow.class);
 
         assertThat(deletedFlow.isDeleted(), is(true));
     }
@@ -433,7 +432,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(6));
+        assertThat(namespaces.size(), is(8));
     }
 
     @Test
@@ -926,7 +925,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     }
 
     private Flow parseFlow(String flow) {
-        return new YamlFlowParser().parse(flow, Flow.class);
+        return new YamlParser().parse(flow, Flow.class);
     }
 
     private String generateFlowAsString(String friendlyId, String namespace, String format) {

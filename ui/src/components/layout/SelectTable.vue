@@ -17,12 +17,15 @@
             </el-table>
         </template>
 
-        <el-empty v-else :description="$t('no_data')" />
+        <NoData v-else />
     </div>
 </template>
 
 <script>
+    import NoData from "./NoData.vue";
+
     export default {
+        components: {NoData},
         data() {
             return {
                 hasSelection: false
@@ -77,6 +80,7 @@
         background-color: var(--bs-gray-100-darken-3);
         border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
         border-bottom: 1px solid var(--bs-border-color);
+        overflow-x: auto;
 
         & ~ .el-table {
             z-index: 0;

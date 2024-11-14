@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4">
+        <div class="pt-4" v-if="props.flow">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -137,6 +137,8 @@
                 />
             </div>
         </div>
+
+        <NoData v-else />
     </div>
 </template>
 
@@ -146,6 +148,8 @@
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 

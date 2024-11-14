@@ -35,7 +35,7 @@
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
                                 </el-tooltip>
-                                <div @click="onTaskSelect(item.task)" class="cursor-pointer" :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
+                                <div @click="onTaskSelect(item.id)" class="cursor-pointer" :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
                                     <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
                                         <template #content>
                                             <span style="white-space: pre-wrap;">
@@ -45,7 +45,6 @@
                                         <div
                                             :style="{left: item.start + '%', width: item.width + '%'}"
                                             class="task-progress"
-                                            @click="onTaskSelect(item.id)"
                                         >
                                             <div class="progress">
                                                 <div

@@ -1,5 +1,6 @@
 <template>
     <el-table
+        v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
         stripe
@@ -146,6 +147,13 @@
         </el-table-column>
     </el-table>
 
+    <empty-state
+        v-else
+        :title="$t('triggers-view.title_no_triggers')"
+        :description="$t('triggers-view.desc_no_triggers')"
+        :image="TriggersEmptyImage"
+    />
+
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <span v-html="$t('backfill executions')" />
@@ -230,9 +238,11 @@
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
+    import EmptyState from "../layout/EmptyState.vue";
+    import TriggersEmptyImage from "../../assets/triggers_empty.svg";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
         data() {
             return {
                 triggerId: undefined,
@@ -270,6 +280,8 @@
                 return this.flow.triggers.find(trigger => trigger.id === this.triggerId);
             },
             triggersWithType() {
+                if(!this.flow.triggers) return [];
+
                 let flowTriggers = this.flow.triggers.map(trigger => {
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
@@ -290,6 +302,8 @@
                 return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
             },
             loadData() {
+                if(!this.triggersWithType.length) return;
+
                 this.$store
                     .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length})
                     .then(triggers => this.triggers = triggers.results);

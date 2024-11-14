@@ -20,6 +20,7 @@ import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
@@ -46,10 +47,10 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @Schema(
     title = "Schedule a flow based on a CRON expression.",
-    description = "You can add multiple schedule(s) to a flow.\n" +
-        "The scheduler keeps track of the last scheduled date, allowing you to easily backfill missed executions.\n" +
+    description = "You can add multiple Schedule triggers to a flow.\n" +
+        "The scheduler keeps track of the last scheduled date, allowing you to easily [backfill](https://kestra.io/docs/concepts/backfill) missed executions.\n" +
         "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date.\n" +
-        "By default, Schedules will use UTC. If you need a different timezone, use the `timezone` property to update it."
+        "By default, all schedules will use UTC. If you need a different timezone, add the `timezone` property to your trigger definition."
 )
 @Plugin(
     examples = {
@@ -65,13 +66,13 @@ import java.util.stream.Stream;
                 type: io.kestra.plugin.scripts.shell.Commands
                 runner: PROCESS
                 commands:
-                  - echo "{{ execution.startDate ?? trigger.date }}"
+                  - echo "{{ trigger.date ?? execution.startDate }}"
                   - sleep $((RANDOM % 60 + 1))
 
             triggers:
               - id: every_15_minutes
                 type: io.kestra.plugin.core.trigger.Schedule
-                cron: '*/15 * * * *'
+                cron: "*/15 * * * *"
             """
         ),
         @Example(
@@ -425,23 +426,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext, Backfill backfill) throws IllegalVariableEvaluationException {
-        List<Label> labels = new ArrayList<>();
-
-        if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
-        }
+        List<Label> labels = LabelService.fromTrigger(runContext, conditionContext.getFlow(), this);
 
         if (backfill != null && backfill.getLabels() != null) {
             for (Label label : backfill.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        if (this.getLabels() != null) {
-            for (Label label : this.getLabels()) {
                 final var value = runContext.render(label.value());
                 if (value != null) {
                     labels.add(new Label(label.key(), value));

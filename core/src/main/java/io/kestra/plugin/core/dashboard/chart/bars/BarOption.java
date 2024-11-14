@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Collections;
+import java.util.List;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -21,4 +24,11 @@ public class BarOption extends ChartOption implements WithLegend, WithTooltip {
 
     @Builder.Default
     private LegendOption legend = LegendOption.builder().build();
+
+    private String colorByColumn;
+
+    @Override
+    public List<String> neededColumns() {
+        return colorByColumn == null ? Collections.emptyList() : List.of(colorByColumn);
+    }
 }

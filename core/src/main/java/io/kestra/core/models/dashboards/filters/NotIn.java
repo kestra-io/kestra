@@ -24,5 +24,5 @@ public class NotIn <F extends Enum<F>> extends AbstractFilter<F> {
 
     @NotNull
     @Schema(anyOf = {Number[].class, String[].class, ZonedDateTime[].class})
-    private List<Object> value;
+    private List<Object> values;
 }

@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DashboardWithSource;
+import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
@@ -26,6 +29,8 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +46,9 @@ public class DashboardController {
 
     @Inject
     protected TenantService tenantService;
+
+    @Inject
+    protected ModelValidator modelValidator;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
@@ -70,6 +78,7 @@ public class DashboardController {
         @Parameter(description = "The dashboard") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
         Dashboard dashboardParsed = YAML_PARSER.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        modelValidator.validate(dashboardParsed);
 
         if (dashboardParsed.getId() != null) {
             throw new IllegalArgumentException("Dashboard id is not editable");
@@ -90,6 +99,7 @@ public class DashboardController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Dashboard dashboardToSave = JacksonMapper.ofYaml().readValue(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        modelValidator.validate(dashboardToSave);
 
         return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
     }
@@ -112,13 +122,34 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{id}/graph/{graphId}")
+    @Post(uri = "{id}/graph/{graphId}")
     @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard graph")
-    public Object dashboardGraph(
+    public List<Map<String, Object>> dashboardGraph(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The graph id") @PathVariable String graphId,
         @Parameter(description = "The filters to apply") @Body Map<String, Object> filters
-    ) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    ) throws IOException {
+        ZonedDateTime startDate = Optional.ofNullable(filters.get("startDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
+        ZonedDateTime endDate = Optional.ofNullable(filters.get("endDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("startDate and endDate filters are required");
+        }
+
+        String tenantId = tenantService.resolveTenant();
+        DashboardWithSource dashboardWithSource = dashboardRepository.get(tenantId, id).orElse(null);
+        if (dashboardWithSource == null) {
+            return null;
+        }
+
+        Chart<?> chart = dashboardWithSource.getCharts().stream().filter(g -> g.getId().equals(graphId)).findFirst().orElse(null);
+        if (chart == null) {
+            return null;
+        }
+
+        if (chart instanceof DataChart dataChart) {
+            return this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate);
+        }
+
+        throw new IllegalArgumentException("Only data charts can be generated.");
     }
 }

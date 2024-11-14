@@ -495,7 +495,6 @@ public class JsonSchemaGenerator {
                 .flatMap(registeredPlugin -> registeredPlugin.getCharts().stream())
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .<ResolvedType>mapMulti((clz, consumer) -> {
-
                     if (DataChart.class.isAssignableFrom(clz)) {
                         TypeVariable<? extends Class<? extends Chart<?>>> dataFilterType = clz.getTypeParameters()[1];
                         ParameterizedType chartAwareColumnDescriptor = ((ParameterizedType) ((WildcardType) ((ParameterizedType) dataFilterType.getBounds()[0]).getActualTypeArguments()[1]).getUpperBounds()[0]);

@@ -4,13 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
-import io.kestra.core.validations.ExecutionsDataFilterValidation;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Set;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -18,22 +19,27 @@ import lombok.experimental.SuperBuilder;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
-@ExecutionsDataFilterValidation
-public class Executions<C extends ColumnDescriptor<Executions.Fields>> extends DataFilter<Executions.Fields, C> {
+public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Logs.Fields, C> {
     @Override
-    public Class<? extends QueryBuilderInterface<Executions.Fields>> repositoryClass() {
-        return ExecutionRepositoryInterface.class;
+    public Class<? extends QueryBuilderInterface<Logs.Fields>> repositoryClass() {
+        return LogRepositoryInterface.class;
+    }
+
+    @Override
+    public Set<Fields> aggregationForbiddenFields() {
+        return Set.of(Fields.MESSAGE);
     }
 
     public enum Fields {
-        ID,
         NAMESPACE,
         FLOW_ID,
-        FLOW_REVISION,
-        STATE,
-        DURATION,
-        LABELS,
-        START_DATE,
-        END_DATE
+        EXECUTION_ID,
+        TASK_ID,
+        DATE,
+        TASK_RUN_ID,
+        ATTEMPT_NUMBER,
+        TRIGGER_ID,
+        LEVEL,
+        MESSAGE
     }
 }

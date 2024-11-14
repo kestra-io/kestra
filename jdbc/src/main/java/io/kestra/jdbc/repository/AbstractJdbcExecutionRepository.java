@@ -2,13 +2,11 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.executions.statistics.ExecutionCountStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionStatistics;
-import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.executions.statistics.*;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -22,39 +20,29 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
+import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Record2;
-import org.jooq.Record3;
-import org.jooq.Result;
-import org.jooq.Results;
-import org.jooq.SQLDialect;
-import org.jooq.Select;
-import org.jooq.SelectConditionStep;
-import org.jooq.SelectForUpdateOfStep;
-import org.jooq.SelectHavingStep;
-import org.jooq.Table;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1096,5 +1084,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         );
 
         return mapper::get;
+    }
+
+    @Override
+    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        throw new NotImplementedException();
     }
 }

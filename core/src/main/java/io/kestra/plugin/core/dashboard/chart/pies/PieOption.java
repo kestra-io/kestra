@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Collections;
+import java.util.List;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -24,6 +27,13 @@ public class PieOption extends ChartOption implements WithLegend, WithTooltip {
 
     @Builder.Default
     private PieGraphStyle graphStyle = PieGraphStyle.PIE;
+
+    private String colorByColumn;
+
+    @Override
+    public List<String> neededColumns() {
+        return colorByColumn == null ? Collections.emptyList() : List.of(colorByColumn);
+    }
 
     enum PieGraphStyle {
         PIE,

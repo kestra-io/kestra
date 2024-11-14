@@ -2,27 +2,29 @@ package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.utils.NamespaceUtils;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.NamespaceUtils;
+import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -658,6 +660,39 @@ public abstract class AbstractExecutionRepositoryTest {
         Optional<Execution> result = executionRepository.findLatestForStates(null, "io.kestra.unittest", "full", List.of(State.Type.CREATED));
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getId(), is(latest.getId()));
+    }
+
+    @Test
+    void fetchData() throws IOException {
+        String tenantId = "data-tenant";
+        Execution execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(State.Type.CREATED, List.of(new State.History(State.Type.CREATED, Instant.now()))))
+            .taskRunList(List.of())
+            .build();
+
+        execution = executionRepository.save(execution);
+
+        List<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of(
+                    "count", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                    "country", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.LABELS).labelKey("country").build(),
+                    "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build()
+                )).build(),
+            ZonedDateTime.now().minus(1, ChronoUnit.DAYS),
+            ZonedDateTime.now()
+        );
+
+        assertThat(data.size(), is(1));
+        assertThat(data.get(0).get("count"), is(1L));
+        assertThat(data.get(0).get("country"), is("FR"));
+        assertThat(data.get(0).get("date"), is(execution.getState().getStartDate()));
     }
 
     private static Execution buildWithCreatedDate(Instant instant) {

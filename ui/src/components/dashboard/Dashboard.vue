@@ -432,15 +432,15 @@
             router.replace({query: {...route.query, flowId: props.flowID}});
         }
 
-    // if (!route.query.namespace && props.restoreURL) {
-    //     router.replace({query: {...route.query, namespace: defaultNamespace}});
-    //     filters.value.namespace = route.query.namespace || defaultNamespace;
-    // }
-    // else {
-    //     filters.value.namespace = null
-    // }
+        // if (!route.query.namespace && props.restoreURL) {
+        //     router.replace({query: {...route.query, namespace: defaultNamespace}});
+        //     filters.value.namespace = route.query.namespace || defaultNamespace;
+        // }
+        // else {
+        //     filters.value.namespace = null
+        // }
 
-    // updateParams(route.query);
+        // updateParams(route.query);
     });
 
     watch(
@@ -453,56 +453,56 @@
 </script>
 
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables";
+    @import "@kestra-io/ui-libs/src/scss/variables";
 
-$spacing: 20px;
+    $spacing: 20px;
 
-.dashboard-filters,
-.dashboard {
-    padding: 0 32px;
+    .dashboard-filters,
+    .dashboard {
+        padding: 0 32px;
 
-    & .el-row {
-        width: 100%;
+        & .el-row {
+            width: 100%;
 
-        & .el-col {
-            padding-bottom: $spacing;
+            & .el-col {
+                padding-bottom: $spacing;
 
-            & div {
-                background: var(--card-bg);
-                border: 1px solid var(--bs-gray-300);
-                border-radius: $border-radius;
+                & div {
+                    background: var(--card-bg);
+                    border: 1px solid var(--bs-gray-300);
+                    border-radius: $border-radius;
 
-                html.dark & {
-                    border-color: var(--bs-gray-600);
+                    html.dark & {
+                        border-color: var(--bs-gray-600);
+                    }
                 }
+            }
+        }
+
+        .description {
+            border: none !important;
+            color: #564a75;
+
+            html.dark & {
+                color: #e3dbff;
             }
         }
     }
 
-    .description {
-        border: none !important;
-        color: #564a75;
+    .dashboard {
+        margin: 0;
+    }
 
-        html.dark & {
-            color: #e3dbff;
+    .dashboard-filters {
+        margin: 24px 0 0 0;
+        padding-bottom: 0;
+
+        & .el-row {
+            padding: 0 5px;
+        }
+
+        & .el-col {
+            padding-bottom: 0 !important;
         }
     }
-}
-
-.dashboard {
-    margin: 0;
-}
-
-.dashboard-filters {
-    margin: 24px 0 0 0;
-    padding-bottom: 0;
-
-    & .el-row {
-        padding: 0 5px;
-    }
-
-    & .el-col {
-        padding-bottom: 0 !important;
-    }
-}
 </style>

@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
-import io.kestra.core.validations.ExecutionsDataFilterValidation;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,22 +17,21 @@ import lombok.experimental.SuperBuilder;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
-@ExecutionsDataFilterValidation
-public class Executions<C extends ColumnDescriptor<Executions.Fields>> extends DataFilter<Executions.Fields, C> {
+public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFilter<Metrics.Fields, C> {
     @Override
-    public Class<? extends QueryBuilderInterface<Executions.Fields>> repositoryClass() {
-        return ExecutionRepositoryInterface.class;
+    public Class<? extends QueryBuilderInterface<Metrics.Fields>> repositoryClass() {
+        return MetricRepositoryInterface.class;
     }
 
     public enum Fields {
-        ID,
         NAMESPACE,
         FLOW_ID,
-        FLOW_REVISION,
-        STATE,
-        DURATION,
-        LABELS,
-        START_DATE,
-        END_DATE
+        TASK_ID,
+        EXECUTION_ID,
+        TASK_RUN_ID,
+        TYPE,
+        NAME,
+        VALUE,
+        DATE
     }
 }

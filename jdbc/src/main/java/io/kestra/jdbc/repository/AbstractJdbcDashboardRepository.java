@@ -2,8 +2,11 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DashboardWithSource;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -11,10 +14,14 @@ import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -122,5 +129,10 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
 
         return (DashboardWithSource) dashboard.get().toDeleted();
+    }
+
+    @Override
+    public <F extends Enum<F>> List<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        throw new NotImplementedException();
     }
 }

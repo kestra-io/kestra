@@ -13,13 +13,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
-public class TimeseriesOption extends ChartOption implements WithLegend, WithTooltip {
+public class TimeSeriesOption extends ChartOption implements WithLegend, WithTooltip {
     @Builder.Default
     private TooltipBehaviour tooltip = TooltipBehaviour.ALL;
 
@@ -30,8 +31,17 @@ public class TimeseriesOption extends ChartOption implements WithLegend, WithToo
     @NotBlank
     private String column;
 
+    private String colorByColumn;
+
     @Override
     public List<String> neededColumns() {
-        return List.of(column);
+        List<String> neededColumns = new ArrayList<>();
+
+        neededColumns.add(column);
+        if (colorByColumn != null) {
+            neededColumns.add(colorByColumn);
+        }
+
+        return neededColumns;
     }
 }

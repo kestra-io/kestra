@@ -3,7 +3,6 @@ package io.kestra.core.models.dashboards.charts;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ChartOption;
-import io.kestra.core.validations.DataChartValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -18,7 +17,6 @@ import lombok.experimental.SuperBuilder;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
-@DataChartValidation
 public abstract class Chart<P extends ChartOption> implements io.kestra.core.models.Plugin {
     @NotNull
     @NotBlank

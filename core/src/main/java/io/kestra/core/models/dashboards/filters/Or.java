@@ -21,5 +21,5 @@ public class Or <F extends Enum<F>> extends AbstractFilter<F> {
     protected String type = "OR";
 
     @NotNull
-    private List<AbstractFilter<F>> value;
+    private List<AbstractFilter<F>> values;
 }

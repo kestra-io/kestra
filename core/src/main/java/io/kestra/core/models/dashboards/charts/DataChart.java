@@ -21,4 +21,12 @@ import lombok.experimental.SuperBuilder;
 public abstract class DataChart<P extends ChartOption, D extends DataFilter<?, ?>> extends Chart<P> implements io.kestra.core.models.Plugin {
     @NotNull
     private D data;
+
+    public Integer minNumberOfAggregations() {
+        return null;
+    }
+
+    public Integer maxNumberOfAggregations() {
+        return null;
+    }
 }

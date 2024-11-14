@@ -18,4 +18,13 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 public class Bar<F extends Enum<F>, D extends DataFilter<F, ? extends BarColumnDescriptor<F>>> extends DataChart<BarOption, D> {
+    @Override
+    public Integer minNumberOfAggregations() {
+        return 1;
+    }
+
+    @Override
+    public Integer maxNumberOfAggregations() {
+        return 1;
+    }
 }

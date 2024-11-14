@@ -100,6 +100,7 @@
         </div>
     </nav>
 </template>
+
 <script>
     import {mapState, mapGetters} from "vuex";
     import Auth from "override/components/auth/Auth.vue";
@@ -136,7 +137,7 @@
         props: {
             title: {
                 type: String,
-                default: ""
+                required: true
             },
             breadcrumb: {
                 type: Array,
@@ -167,7 +168,18 @@
                 return this.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
-                return window.location.pathname
+                // make sure the value changes when the route changes
+                // by mentionning the route in the computed properties
+                // we create a hook into vues reactivity system to update when it updates
+                if(this.$route) {
+                    return window.location.pathname
+                        + window.location.search
+                            // remove the parameters that are permanently changing
+                            .replace(/&?page=[^&]*/ig, "")
+                            // fix if this resulted in a "?&" url
+                            .replace(/\?&/, "?")
+                }
+                return ""
             }
         },
         methods: {
@@ -190,6 +202,7 @@
                         path: this.currentFavURI
                     })
                 } else {
+                    console.log(this.title, this.breadcrumb)
                     this.$store.dispatch("starred/add", {
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
@@ -198,7 +211,8 @@
             }
         },
     };
-</script>,
+</script>
+
 <style lang="scss" scoped>
     nav {
         top: 0;
@@ -227,7 +241,7 @@
         }
 
         .star-active {
-            color: var(--bs-primary);
+            color: #9470FF;
         }
 
         :deep(.el-breadcrumb__item) {

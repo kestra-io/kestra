@@ -272,12 +272,12 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = store.state.execution.execution.taskRunList.map((task) => {
+        const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs, true, task.taskId) : []};
         });
 
         const HEADING = {label: t("tasks"), heading: true, component: shallowRef(TimelineTextOutline)};
-        tasks.unshift(HEADING);
+        tasks?.unshift(HEADING);
 
         return tasks;
     });

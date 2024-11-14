@@ -93,18 +93,26 @@ public class ExecutionService {
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
-    public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId) {
-        Optional<Execution> maybeExecution = executionRepository.findById(tenant, executionId);
-        if (maybeExecution.isEmpty()) {
-            throw new NoSuchElementException("Execution '"+ executionId + "' not found.");
-        }
+    @Inject
+    private ConcurrencyLimitService concurrencyLimitService;
 
-        var execution = maybeExecution.get();
+    public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
+        Execution execution = getExecution(tenant, executionId, withACL);
+
         if (!execution.getState().isPaused()) {
             throw new IllegalStateException("Execution '"+ executionId + "' is not paused, can't resume it");
         }
 
         return execution;
+    }
+
+    public Execution getExecution(final String tenant, final @NotNull String executionId, boolean withACL) {
+        Optional<Execution> maybeExecution = withACL ?
+            executionRepository.findById(tenant, executionId) :
+            executionRepository.findByIdWithoutAcl(tenant, executionId);
+
+        return maybeExecution
+            .orElseThrow(() -> new NoSuchElementException("Execution '"+ executionId + "' not found."));
     }
 
     /**
@@ -452,7 +460,28 @@ public class ExecutionService {
     }
 
     /**
+     * Validates the inputs for an execution to be resumed.
+     * <p>
+     * The execution must be paused or this call will be a no-op.
+     *
+     * @param execution the execution to resume
+     * @param flow      the flow of the execution
+     * @return the execution in the new state.
+     */
+    public Mono<List<InputAndValue>> validateForResume(final Execution execution, Flow flow) {
+        return getFirstPausedTaskOr(execution, flow)
+            .flatMap(task -> {
+                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), execution, Map.of()));
+                } else {
+                    return Mono.just(Collections.emptyList());
+                }
+            });
+    }
+
+    /**
      * Resume a paused execution to a new state.
+     * <p>
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
@@ -756,5 +785,35 @@ public class ExecutionService {
         }
 
         return nextDate;
+    }
+
+    /**
+     * Force run the execution, it must be in a non-terminal state.
+     * - CREATED executions will be moved to RUNNING
+     * - QUEUED executions will be unqueued
+     * - PAUSED executions will be resumed
+     * All other non-terminated states will be no-op.
+     */
+    public Execution forceRun(Execution execution) throws Exception {
+        if (execution.getState().isTerminated()) {
+            throw new IllegalArgumentException("Only non terminated executions can be forced run.");
+        }
+
+        if (execution.getState().isCreated()) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        if (execution.getState().getCurrent() == State.Type.QUEUED) {
+            return concurrencyLimitService.unqueue(execution);
+        }
+
+        if (execution.getState().getCurrent() == State.Type.PAUSED) {
+            Flow flow = flowRepositoryInterface.findByExecution(execution);
+            return resume(execution, flow, State.Type.RUNNING);
+        }
+
+        // for all other states, we just return the same execution,
+        // it will be resent to the queue and forced re-processed.
+        return execution;
     }
 }

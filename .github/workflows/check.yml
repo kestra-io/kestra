@@ -65,7 +65,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}'
 
-      - uses: rlespinasse/github-slug-action@v4
+      - uses: rlespinasse/github-slug-action@v5
 
       - name: Publish allure report
         uses: andrcuns/allure-publish-action@v2.8.0

@@ -65,7 +65,7 @@
 
     import DateAgo from "./DateAgo.vue"
     import Environment from "./Environment.vue";
-    import BookmarkLink from "./BookmarkLink.vue";
+    import BookmarkLinkList from "./BookmarkLinkList.vue";
 
 
     const props = defineProps({
@@ -141,11 +141,10 @@
                     element: shallowRef(StarOutline),
                     class: "menu-icon",
                 },
-                child: store.state.starred.pages.map(p => {
-                    return {
-                        component: () => h(BookmarkLink, {href: p.path, title: p.label}, () => p.label),
-                    }
-                })
+                child: [{
+
+                    component: () => h(BookmarkLinkList, {pages: store.state.starred.pages}),
+                }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())
         ];
@@ -319,6 +318,8 @@
 
         .vsm--dropdown {
             background-color: var(--bs-gray-100);
+            border-radius: 4px;
+            margin-bottom: calc(.5 * var(--spacer));
 
             .vsm--title {
                 top: 3px;

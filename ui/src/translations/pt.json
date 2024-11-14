@@ -192,7 +192,7 @@
     "resumed done": "Execução foi retomada",
     "toggle output": "Alternar outputs",
     "metrics": "Métricas",
-    "no data current task": "Nenhum dado disponível para a task atual",
+    "no data current task": "Não há dados disponíveis para a tarefa atual",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -640,7 +640,7 @@
     "false": "Falso",
     "undefined": "Indefinido",
     "execution-include-non-terminated": "Incluir execuções não terminadas?",
-    "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de compreender completamente esses riscos antes de prosseguir com a exclusão.",
+    "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de entender completamente esses riscos antes de prosseguir com a exclusão.",
     "originalCreatedDate": "Data de criação original",
     "welcome": {
       "started": {
@@ -672,7 +672,8 @@
             "default_namespace": "Namespace Padrão",
             "log_level": "Nível de Log Padrão",
             "log_display": "Exibição de Log Padrão",
-            "execute_flow": "Executar o Flow"
+            "execute_flow": "Executar o Flow",
+            "execute_default_tab": "Aba de Execução Padrão"
           }
         },
         "theme": {
@@ -808,6 +809,12 @@
       "empty": {
         "title": "Nenhuma aba aberta no momento",
         "message": "Você pode criar ou importar arquivos de namespace na barra lateral e pode assistir ao vídeo de introdução do nosso Editor."
+      },
+      "close": {
+        "other": "Fechar outras abas",
+        "tab": "Fechar aba",
+        "right": "Fechar à direita",
+        "all": "Fechar todas as abas"
       }
     },
     "curl": {
@@ -889,7 +896,7 @@
     "invalid bulk pause": "Não foi possível pausar as execuções",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "no_data": "Sem dados disponíveis",
+    "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Leia mais sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> em nossa documentação.",
@@ -904,13 +911,63 @@
     "invalid bulk unqueue": "Não foi possível remover as execuções da fila",
     "unqueue done": "A execução está fora da fila",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
-    "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Note que isso não obedecerá ao limite de concorrência do flow, então mais execuções podem estar em execução do que o limite permitido.",
+    "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unqueue": "Desenfileirar",
     "executions paused": "<code>{executionCount}</code> execução(ões) PAUSED",
-    "executions unqueue": "<code>{executionCount}</code> execução(ões) desfiladas",
+    "executions unqueue": "<code>{executionCount}</code> execução(ões) na fila",
     "unqueue confirm": "Tem certeza de que deseja desagendar a execução <code>{id}</code>?",
     "execution-warn-title": "Aviso Importante!",
-    "worker group key": "Chave do Grupo de Worker",
-    "worker group fallback": "Grupo de Worker de reserva"
+    "worker group key": "Grupo de Worker key",
+    "worker group fallback": "Grupo de Worker de reserva",
+    "filters": {
+      "comparators": {
+        "is": "é",
+        "is_one_of": "é um dos",
+        "is_not_one_off": "não é um dos",
+        "is_not": "não é",
+        "between": "entre",
+        "in": "em"
+      },
+      "recent": {
+        "label": "Pesquisas recentes",
+        "empty": "Você ainda não pesquisou por nada."
+      },
+      "labels": {
+        "placeholder": "Digite o label como 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Como você deseja rotular este critério de busca?",
+          "heading": "Salvar pesquisa atual",
+          "confirmation": "Critérios de busca <code>{name}</code>",
+          "placeholder": "Etiqueta"
+        },
+        "label": "Pesquisas salvas",
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios."
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Escopo",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you need translated?",
+        "labels": "Rótulos",
+        "state": "Estado",
+        "child": "Filho",
+        "absolute_date": "Data absoluta",
+        "relative_date": "Data relativa"
+      },
+      "empty": "Sem dados.",
+      "label": "Escolher filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
+    },
+    "force run title": "Forçar a execução da execução <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
+    "force run done": "A execução é forçada a correr",
+    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
+    "force run": "Executar forçadamente",
+    "invalid bulk force run": "Não foi possível forçar a execução das execuções",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
+    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação."
   }
 }

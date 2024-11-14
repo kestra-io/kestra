@@ -199,7 +199,7 @@
                         name: "variables",
                         component: "",
                         title: this.$t("variables"),
-                        containerClass: "full-container",
+                        containerClass: "container",
                         props: {
                             type: "variables",
                             tab: "variables",
@@ -211,7 +211,7 @@
                         name: "plugin-defaults",
                         component: "",
                         title: this.$t("plugin defaults"),
-                        containerClass: "full-container",
+                        containerClass: "container",
                         props: {
                             type: "pluginDefaults",
                             tab: "plugin-defaults",

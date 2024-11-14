@@ -1,4 +1,10 @@
-## Flow properties
+### Keyboard Shortcuts
+
+Use the shortcut `CTRL + SPACE` on Windows/Linux or `fn + control + SPACE` on Mac to trigger **autocompletion** listing available properties.
+
+If you want to **comment out** some part of your code, use the `CTRL or ⌘ + K + C` shortcut, and to uncomment it, use `CTRL or ⌘ + K + U`. To remember it, `C` stands for `comment` and `U` stands for `uncomment`.
+
+### Flow properties
 
 Kestra allows you to automate complex flows using a simple declarative interface.
 
@@ -32,7 +38,7 @@ The table below describes all these properties in detail.
 | `concurrency`                | This property allows you to control the number of [concurrent executions](https://kestra.io/docs/workflow-components/concurrency) of a given flow by setting the `limit` key. Executions beyond that limit will be queued by default — you can customize that by configuring the `behavior` property which can be set to `QUEUE` (default), `CANCEL` or `FAIL`.                                                                                                                                                                                                                        |
 | `retry`                    | This property allows you set a flow-level `retry` policy to restart the execution if any task fails. The retry `behavior` is customizable — you can choose to `CREATE_NEW_EXECUTION` or `RETRY_FAILED_TASK` (default). Only with the `CREATE_NEW_EXECUTION` behavior, the `attempt` of the execution is incremented. Otherwise, only the failed task run is restarted (incrementing the attempt of the task run rather than the execution). Apart from the `behavior` property, the `retry` policy is identical to [task retries](https://kestra.io/docs/workflow-components/retries). |
 
-## Task documentation
+### Task documentation
 
 Each flow consists of **tasks**.
 
@@ -40,7 +46,7 @@ To inspect properties of a **specific task**, click anywhere in that task code w
 
 Note that you need an active Internet connection to view that documentation, as it's served via an API.
 
-## Task properties
+### Task properties
 
 The following core properties are available in all tasks.
 
@@ -59,7 +65,7 @@ The following core properties are available in all tasks.
 
 
 
-## Flow example
+### Flow example
 
 Here is an example flow. It uses a `Log` task available in Kestra core for testing purposes and demonstrates how to use `labels`, `inputs`, `variables`, `triggers` and `description`.
 
@@ -107,7 +113,8 @@ triggers:
 
 You can add documentation to flows, tasks, inputs or triggers using the `description` property in which you can use the [Markdown](https://en.wikipedia.org/wiki/Markdown) syntax. All markdown descriptions will be rendered in the UI.
 
-## Pebble templating
+### Pebble templating
+
 Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) allowing you to dynamically render variables, inputs and outputs within the execution context using [Pebble expressions](https://kestra.io/docs/concepts/expression). For example, the `{{ flow.namespace }}` expression allows accessing the namespace of the current flow and the `{{ printContext() }}` function allows you to print the entire context of the execution, which is useful for debugging.
 
 The table below lists common Pebble expressions and functions.
@@ -258,7 +265,7 @@ The table below lists Pebble filter expressions:
 
 
 
-## Links to learn more
+### Links to learn more
 
 * Follow the step-by-step [tutorial](https://kestra.io/docs/tutorial)
 * Check the [documentation](https://kestra.io/docs)

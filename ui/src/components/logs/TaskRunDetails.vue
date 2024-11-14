@@ -261,7 +261,8 @@
                         this.$nextTick(() => {
                             const parentScroller = this.$refs.taskRunScroller?.$el?.parentNode?.closest(".vue-recycle-scroller");
                             if (parentScroller) {
-                                this.$refs.taskRunScroller.$el.style.maxHeight = `${parentScroller.computedStyleMap().get("max-height").value - parentScroller.clientHeight}px`;
+                                const scrollerStyles = window.getComputedStyle(parentScroller);
+                                this.$refs.taskRunScroller.$el.style.maxHeight = `${scrollerStyles.getPropertyValue("max-height") - parentScroller.clientHeight}px`;
                             }
                         })
                     }

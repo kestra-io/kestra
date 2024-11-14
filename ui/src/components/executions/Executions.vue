@@ -77,7 +77,7 @@
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
                             </el-button>
-                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
+                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                                 {{ $t("replay") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
@@ -338,6 +338,31 @@
             </el-button>
         </template>
     </el-dialog>
+
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeReplayToast()" />
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpenReplayModal = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button @click="replyLatestExecutions()">
+                {{ $t('replay latest revision') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="replayExecutions()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -513,6 +538,7 @@
                 executionLabels: [],
                 actionOptions: {},
                 refreshDates: false,
+                isOpenReplayModal: false,
                 changeStatusDialogVisible: false,
                 selectedStatus: undefined
             };
@@ -790,12 +816,56 @@
                 );
             },
             replayExecutions() {
-                this.genericConfirmAction(
-                    "bulk replay",
+                this.isOpenReplayModal = false;
+                
+                this.genericConfirmCallback(
                     "execution/queryReplayExecution",
                     "execution/bulkReplayExecution",
                     "executions replayed"
                 );
+            },
+            replyLatestExecutions() {
+                this.isOpenReplayModal = false;
+                
+                const selectedExecutions = this.executions.filter(e => this.selection.includes(e.id));
+                
+                const uniqueFlows = [...new Set(selectedExecutions.map(e => ({
+                    namespace: e.namespace,
+                    flowId: e.flowId
+                })))];
+
+                const promises = uniqueFlows.map(flow => 
+                    this.$store.dispatch("flow/loadRevisions", {
+                        namespace: flow.namespace,
+                        id: flow.flowId
+                    })
+                );
+
+                Promise.all(promises)
+                    .then(revisionsArray => {
+                        const latestRevisions = {};
+                        uniqueFlows.forEach((flow, index) => {
+                            const revisions = revisionsArray[index];
+                            latestRevisions[flow.flowId] = revisions[revisions.length - 1].revision;
+                        });
+
+                        return this.$store.dispatch("execution/bulkReplayExecution", {
+                            executionsId: this.selection,
+                            latestRevisions
+                        });
+                    })
+                    .then(r => {
+                        this.$toast().success(this.$t("executions replayed", {executionCount: r.data.count}));
+                        this.loadData();
+                    })
+                    .catch(e => {
+                        this.$toast().error(e?.invalids?.map(exec => {
+                            return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                        }), this.$t(e.message));
+                    });
+            },
+            changeReplayToast() {
+                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
             },
             changeStatus() {
                 this.changeStatusDialogVisible = false;

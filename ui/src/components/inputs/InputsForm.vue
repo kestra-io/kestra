@@ -171,12 +171,16 @@
                 </template>
             </template>
         </el-form-item>
+        <ValidationError :errors="inputErrors" />
     </template>
+
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-
+<script setup>
+    import ValidationError from "../flows/ValidationError.vue";
+</script>
 <script>
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -192,6 +196,11 @@
             YamlUtils() {
                 return YamlUtils
             },
+            inputErrors() {
+                return this.inputsList.filter(it => it.errors && it.errors.length > 0).length > 0 ?
+                    this.inputsList.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
+                    null
+            }
         },
         components: {Editor, Markdown, DurationPicker},
         props: {

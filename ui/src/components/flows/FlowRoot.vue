@@ -227,7 +227,7 @@
                             showFilters: true,
                             restoreurl: false,
                         },
-                        containerClass: "full-container p-4"
+                        containerClass: "container"
                     });
                 }
 

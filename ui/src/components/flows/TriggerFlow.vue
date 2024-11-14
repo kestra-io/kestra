@@ -31,6 +31,7 @@
                 >
                     <el-select
                         v-model="localFlow"
+                        value-key="id"
                     >
                         <el-option
                             v-for="flow in flowsExecutable"

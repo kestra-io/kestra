@@ -146,14 +146,6 @@
                         this.inputs[input.id] = Inputs.normalize(input.type, value);
                     });
             },
-            purgeInputs(inputs){
-                for (let input in inputs) {
-                    if (inputs[input] === undefined || inputs[input] === "") {
-                        delete inputs[input];
-                    }
-                }
-                return inputs;
-            },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
                     formRef.validate((valid) => {
@@ -161,9 +153,8 @@
                             return false;
                         }
 
-                        const inputs = this.purgeInputs(this.inputs)
 
-                        executeTask(this, this.flow, inputs, {
+                        executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
                             id: this.flow.id,

@@ -50,7 +50,7 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" />
                             </template>
-                            <el-empty v-else :description="$t('no_data')" />
+                            <NoData v-else />
                         </div>
                     </el-card>
                 </template>
@@ -86,6 +86,7 @@
     import DateFilter from "../executions/date-select/DateFilter.vue";
     import LogLevelSelector from "./LogLevelSelector.vue";
     import DataTable from "../../components/layout/DataTable.vue";
+    import NoData from "../layout/NoData.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
@@ -97,7 +98,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs, NoData},
         props: {
             logLevel: {
                 type: String,

@@ -960,8 +960,11 @@
         "is_one_of": "is one of",
         "is_not": "is not",
         "is_not_one_off": "is not one of",
+        "contains": "contains",
+        "not_contains": "not contains",
         "in": "in",
-        "between": "between"
+        "between": "between",
+        "starts_with": "starts with"
       },
       "recent": {
         "label": "Recent searches",

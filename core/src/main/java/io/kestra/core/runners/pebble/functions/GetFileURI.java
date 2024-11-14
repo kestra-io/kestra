@@ -14,7 +14,7 @@ public class GetFileURI implements Function {
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of("flow");
+        return List.of("path");
     }
 
     @Override

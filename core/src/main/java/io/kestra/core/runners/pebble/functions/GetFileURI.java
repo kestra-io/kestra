@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GetFileURI implements Function {
-    private static final String ERROR_MESSAGE = "The 'getFileURI' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
+    private static final String ERROR_MESSAGE = "The 'getFileURI' function expects an argument 'path' that is a path to a namespace file.";
 
     @Override
     public List<String> getArgumentNames() {

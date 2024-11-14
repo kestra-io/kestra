@@ -58,6 +58,9 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>About this blueprint</h4>
+                    <div v-if="!system" class="tags text-uppercase">
+                        <p> {{ tagsToString(blueprint.tags) }} </p>
+                    </div>
                     <markdown :source="blueprint.description" />
                 </template>
             </el-col>
@@ -78,6 +81,7 @@
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import TopNavBar from "../../layout/TopNavBar.vue";
+    import BlueprintsBrowser from "../override/components/flows/blueprints/BlueprintsBrowser.vue";
 </script>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
@@ -89,12 +93,13 @@
     import {apiUrl} from "override/utils/route";
 
     export default {
-        components: {Markdown, CopyToClipboard},
+        components: {Markdown, CopyToClipboard, BlueprintsBrowser},
         emits: ["back"],
         data() {
             return {
                 flowGraph: undefined,
                 blueprint: undefined,
+                tags: undefined,
                 breadcrumb: [
                     {
                         label: this.$t("blueprints.title"),
@@ -122,6 +127,14 @@
             blueprintBaseUri: {
                 type: String,
                 default: undefined,
+            },
+            system: {
+                type: Boolean,
+                default: false
+            },
+            tagsResponseMapper: {
+                type: Function,
+                default: tagsResponse => Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
             }
         },
         methods: {
@@ -137,6 +150,9 @@
                         }
                     })
                 }
+            },
+            tagsToString(blueprintTags) {
+                return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
             }
         },
         async created() {
@@ -271,4 +287,18 @@
             }
         }
     }
+    
+    .tags {
+        color: #9ca1de;
+        display: inline;
+        font-family: Source Code Pro, monospace;
+        font-size: 1.375rem;
+        font-weight: 700;
+        text-transform: uppercase;
+            
+        p {
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+    } 
 </style>

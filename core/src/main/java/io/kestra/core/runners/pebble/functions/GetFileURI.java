@@ -17,6 +17,7 @@ public class GetFileURI implements Function {
         return List.of("path");
     }
 
+
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         if (!args.containsKey("path")) {

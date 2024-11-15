@@ -78,7 +78,9 @@
         </el-select>
 
         <el-button-group class="d-inline-flex">
-            <el-button :icon="Magnify" @click="triggerSearch" />
+            <kicon :tooltip="$t('search')" placement="bottom">
+                <el-button :icon="Magnify" @click="triggerSearch" />
+            </kicon>
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
@@ -112,6 +114,7 @@
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
     import Dashboards from "./components/Dashboards.vue";
+    import Kicon from "../Kicon.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -453,7 +456,7 @@
         router.push({query: encodeParams(current.value)});
     };
 
-    // Include paramters from URL directly to filter
+    // Include parameters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
 
     const addNamespaceFilter = (namespace) => {

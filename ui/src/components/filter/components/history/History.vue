@@ -4,7 +4,9 @@
         placement="bottom-start"
         @visible-change="loadAll"
     >
-        <el-button :icon="History" class="rounded-0 rounded-start" />
+        <kicon :tooltip="$t('filters.recent.label')" placement="bottom">
+            <el-button :icon="History" class="rounded-0 rounded-start" />
+        </kicon>
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 history-dropdown">
@@ -67,6 +69,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import HistoryItem from "./HistoryItem.vue";
+    import Kicon from "../../../Kicon.vue";
 
     import History from "vue-material-design-icons/History.vue";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";

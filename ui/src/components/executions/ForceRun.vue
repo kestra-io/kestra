@@ -6,7 +6,6 @@
         :hide-after="0"
         :content="$t('force run tooltip')"
         raw-content
-        :placement="tooltipPosition"
     >
         <component
             :is="component"

@@ -109,6 +109,7 @@
                     this.selectedTaskRuns = [];
                     this.paint();
                 }
+                newValue.state?.current === State.SUCCESS && (this.compute());
             },
             forEachItemsTaskRunIds: {
                 handler(newValue, oldValue) {

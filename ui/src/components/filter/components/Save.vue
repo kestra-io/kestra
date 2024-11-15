@@ -59,7 +59,7 @@
         current: {type: Object, required: true},
     });
 
-    import {formatLabel, useFilters} from "../filters.js";
+    import {formatLabel, useFilters} from "../useFilters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);

@@ -328,14 +328,18 @@
                     const options = {id: this.execution.id};
                     this.$store.dispatch("execution/validateResume", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         });
                 } else {
                     this.$emit("validation", {
                         formData: formData,
                         callback: (response) => {
-                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         }
                     });

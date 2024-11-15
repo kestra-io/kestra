@@ -219,9 +219,14 @@
     "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey to the flow concurrency limit so more executions could be running than the allowed limit.",
     "unqueue confirm": "Are you sure to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
+    "force run": "Force run",
+    "force run title": "Force run execution <code>{id}</code>.",
+    "force run tooltip": "Force the execution to run. It can creates duplicate task executions, if possible use another action.",
+    "force run confirm": "Are you sure to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run done": "Execution is forced run",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
-    "no data current task": "No data available for current task",
+    "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -388,6 +393,7 @@
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
     "bulk unqueue": "Are you sure you want to unqueue <code>{executionCount}</code> execution(s)?",
+    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -412,6 +418,7 @@
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
     "executions paused": "<code>{executionCount}</code> executions(s) paused",
     "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
+    "executions force run": "<code>{executionCount}</code> executions(s) forced run",
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
@@ -419,6 +426,7 @@
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
     "invalid bulk unqueue": "Could not unqueue executions",
+    "invalid bulk force run": "Could not force run executions",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
@@ -722,7 +730,8 @@
             "default_namespace": "Default Namespace",
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
-            "execute_flow": "Execute the Flow"
+            "execute_flow": "Execute the Flow",
+            "execute_default_tab": "Default Execution Tab"
           }
         },
         "theme": {
@@ -860,6 +869,12 @@
       "empty": {
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      },
+      "close": {
+        "tab": "Close tab",
+        "all": "Close all tabs",
+        "other": "Close other tabs",
+        "right": "Close to the right"
       }
     },
     "curl": {
@@ -925,7 +940,7 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "No data available",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
     "filters": {
       "label": "Choose filters",
@@ -936,6 +951,8 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
         "text": "text"
       },
       "comparators": {
@@ -944,7 +961,10 @@
         "is_not": "is not",
         "is_not_one_off": "is not one of",
         "contains": "contains",
-        "not_contains": "not_contains"
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
       },
       "recent": {
         "label": "Recent searches",
@@ -952,6 +972,7 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -959,9 +980,14 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
+      "settings": {
+        "show_chart": "Show main chart"
+      },
       "labels": {
         "placeholder": "Type label as 'key:value'"
       }
-    }
+    },
+    "item": "item",
+    "items": "items"
   }
 }

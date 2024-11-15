@@ -192,7 +192,7 @@
     "resumed done": "Wykonanie zostało wznowione",
     "toggle output": "Przełącz wyjścia",
     "metrics": "Metryki",
-    "no data current task": "Brak danych dla bieżącego task",
+    "no data current task": "Brak dostępnych danych dla bieżącego taska",
     "outputs": "Wyjścia",
     "output": "Wyjście",
     "eval": {
@@ -672,7 +672,8 @@
             "default_namespace": "Domyślny Namespace",
             "log_level": "Domyślna Poziom Logs",
             "log_display": "Domyślne Wyświetlanie Log",
-            "execute_flow": "Wykonaj Flow"
+            "execute_flow": "Wykonaj Flow",
+            "execute_default_tab": "Domyślna karta Execution"
           }
         },
         "theme": {
@@ -808,6 +809,12 @@
       "empty": {
         "title": "Obecnie brak otwartych zakładek",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora."
+      },
+      "close": {
+        "other": "Zamknij inne karty",
+        "tab": "Zamknij kartę",
+        "right": "Zamknij po prawej",
+        "all": "Zamknij wszystkie karty"
       }
     },
     "curl": {
@@ -889,7 +896,7 @@
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "no_data": "Brak dostępnych danych",
+    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "informative notice": "Notatka(i)",
     "triggers-view": {
       "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
@@ -914,12 +921,15 @@
     "worker group fallback": "Grupa Workerów awaryjna",
     "filters": {
       "comparators": {
-        "contains": "zawiera",
         "is": "jest",
         "is_one_of": "jest jednym z",
-        "not_contains": "nie_zawiera",
         "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest"
+        "is_not": "nie jest",
+        "between": "pomiędzy",
+        "in": "w",
+        "not_contains": "nie zawiera",
+        "starts_with": "zaczyna się od",
+        "contains": "zawiera"
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
@@ -935,7 +945,8 @@
           "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
           "placeholder": "Etykieta"
         },
-        "label": "Zapisane wyszukiwania"
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +954,25 @@
         "text": "tekst",
         "labels": "Etykiety",
         "state": "Stan",
-        "child": "Dziecko"
+        "child": "Dziecko",
+        "absolute_date": "Data bezwzględna",
+        "relative_date": "Data względna"
       },
       "empty": "Brak danych.",
-      "label": "Wybierz filtry"
-    }
+      "label": "Wybierz filtry",
+      "settings": {
+        "show_chart": "Pokaż główny wykres"
+      }
+    },
+    "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
+    "force run done": "Wymuszone uruchomienie Execution",
+    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie wykonania <code>{id}</code>?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Następujące przejścia zostaną wykonane:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
+    "force run": "Wymuś uruchomienie",
+    "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
+    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> wykonania/ń?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
+    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji.",
+    "item": "element",
+    "items": "elementy"
   }
 }

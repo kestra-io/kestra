@@ -507,8 +507,13 @@ subprojects {
     }
 
     tasks.register('testsJar', Jar) {
+        group = 'build'
+        description = 'Build the tests jar'
+
         archiveClassifier.set('tests')
-        from sourceSets.test.output
+        if (sourceSets.matching { it.name == 'test'}) {
+            from sourceSets.named('test').get().output
+        }
     }
 
     github {

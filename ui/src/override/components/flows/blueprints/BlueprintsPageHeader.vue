@@ -5,11 +5,22 @@
             <img src="../../../../assets/icons/blueprint-dark.svg" :alt="$t('blueprints.header.alt')" class="blueprint-dark">
         </div>
         <h4 class="catch-phrase">
-            {{ $t("blueprints.header.catch phrase.2") }}
+            {{ $t(phrase) }}
         </h4>
     </nav>
 </template>
 
+<script>
+    export default {
+        props: {
+            phrase: {
+                type: String,
+                required: false,
+                default: "blueprints.header.catch phrase.2"
+            },
+        },
+    }
+</script>
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
 

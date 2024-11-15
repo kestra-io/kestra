@@ -41,8 +41,9 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child']"
-                    :refresh="{shown: true, canAutoRefresh, callback: refresh}"
+                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :refresh="{shown: true, callback: refresh}"
+                    :charts="{shown: true, value: showChart, callback: onShowChartChange}"
                 />
             </template>
 
@@ -85,7 +86,7 @@
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
                             </el-button>
-                            <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
+                            <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                                 {{ $t("delete") }}
                             </el-button>
                             <el-button
@@ -103,6 +104,9 @@
                             </el-button>
                             <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
                                 {{ $t("unqueue") }}
+                            </el-button>
+                            <el-button v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                {{ $t("force run") }}
                             </el-button>
                         </bulk-select>
                         <el-dialog
@@ -349,8 +353,9 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import KestraFilter from "../filter/Wrapper.vue"
+    import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>
 
 <script>
@@ -376,6 +381,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import DateAgo from "../layout/DateAgo.vue";
 
     import {filterLabels} from "./utils"
 
@@ -391,7 +397,8 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            ExecutionsBar
+            ExecutionsBar,
+            DateAgo
         },
         emits: ["state-count"],
         props: {
@@ -501,7 +508,6 @@
                 ],
                 displayColumns: [],
                 childFilter: "ALL",
-                canAutoRefresh: false,
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
@@ -705,9 +711,6 @@
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
             },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
-            },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
@@ -768,6 +771,14 @@
                     "execution/queryUnqueueExecution",
                     "execution/bulkUnqueueExecution",
                     "executions unqueue"
+                );
+            },
+            forceRunExecutions() {
+                this.genericConfirmAction(
+                    "bulk force run",
+                    "execution/queryForceRunExecution",
+                    "execution/bulkForceRunExecution",
+                    "executions force run"
                 );
             },
             restartExecutions() {

@@ -968,6 +968,8 @@
     "force run": "强制运行",
     "invalid bulk force run": "无法强制运行执行",
     "bulk force run": "您确定要强制运行<code>{executionCount}</code>次执行吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的task执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED的tasks将被移动到RUNNING状态。</li><li>RUNNING的tasks将被重新提交。</li><li>QUEUED的tasks将被取消排队。</li><li>PAUSED的tasks将被恢复。</li></ul>",
-    "force run tooltip": "强制执行运行。这可能会创建重复的task执行，如果可能，请使用其他操作。"
+    "force run tooltip": "强制执行运行。这可能会创建重复的task执行，如果可能，请使用其他操作。",
+    "item": "项目",
+    "items": "项目"
   }
 }

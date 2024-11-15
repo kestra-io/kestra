@@ -3,7 +3,7 @@
         <el-button :icon="TableCog" />
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 settings-dropdown">
+            <el-dropdown-menu class="py-2 dropdown-color settings-dropdown">
                 <template v-if="charts.shown">
                     <el-switch
                         :model-value="charts.value"
@@ -34,7 +34,9 @@
 <style lang="scss">
 .settings-dropdown {
     width: 200px;
+    background-color: var(--bs-gray-300) !important;
 }
+
 
 .title {
     margin: 0;

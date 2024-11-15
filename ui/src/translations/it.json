@@ -672,7 +672,8 @@
             "default_namespace": "Namespace predefinito",
             "log_level": "Livello di Log predefinito",
             "log_display": "Visualizzazione Log predefinita",
-            "execute_flow": "Esegui il Flow"
+            "execute_flow": "Esegui il Flow",
+            "execute_default_tab": "Scheda di Esecuzione Predefinita"
           }
         },
         "theme": {
@@ -808,6 +809,12 @@
       "empty": {
         "title": "Nessuna scheda attualmente aperta",
         "message": "Puoi creare o importare file namespace dalla barra laterale e puoi guardare il video introduttivo per il nostro Editor."
+      },
+      "close": {
+        "other": "Chiudi le altre schede",
+        "tab": "Chiudi scheda",
+        "right": "Chiudi a destra",
+        "all": "Chiudi tutte le schede"
       }
     },
     "curl": {
@@ -889,7 +896,7 @@
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
-    "no_data": "Sembra che non ci sia ancora nulla qui... ancora! Regola i tuoi filtri o riprova!",
+    "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
     "informative notice": "Note(s)",
     "triggers-view": {
       "desc_no_triggers": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a> nella nostra documentazione.",
@@ -914,12 +921,15 @@
     "worker group fallback": "Gruppo di Worker di riserva",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "è",
         "is_one_of": "è uno di",
-        "not_contains": "non_contiene",
         "is_not_one_off": "non è uno di",
-        "is_not": "non è"
+        "is_not": "non è",
+        "between": "tra",
+        "in": "nel",
+        "not_contains": "non contiene",
+        "starts_with": "inizia con",
+        "contains": "contiene"
       },
       "recent": {
         "label": "Ricerche recenti",
@@ -935,7 +945,8 @@
           "confirmation": "Criteri di ricerca <code>{name}</code>",
           "placeholder": "Etichetta"
         },
-        "label": "Ricerche salvate"
+        "label": "Ricerche salvate",
+        "tooltip": "Non puoi salvare criteri di ricerca vuoti."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +954,15 @@
         "text": "I'm sorry, but it seems like there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate into Italian?",
         "labels": "Etichette",
         "state": "Stato",
-        "child": "Bambino"
+        "child": "Bambino",
+        "absolute_date": "Data assoluta",
+        "relative_date": "Data relativa"
       },
       "empty": "Nessun dato.",
-      "label": "Scegli filtri"
+      "label": "Scegli filtri",
+      "settings": {
+        "show_chart": "Mostra grafico principale"
+      }
     },
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
@@ -955,6 +971,8 @@
     "force run": "Esegui forzatamente",
     "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
     "bulk force run": "Sei sicuro di voler forzare l'esecuzione di <code>{executionCount}</code>?<br/><br/>WARNING: forzare l'esecuzione non è garantito e potrebbe creare esecuzioni duplicate dei task.<br/><br/>Le seguenti transizioni verranno effettuate:<br/><ul><li>I task in stato CREATED verranno spostati allo stato RUNNING.</li><li>I task in stato RUNNING verranno ri-sottomessi.</li><li>I task in stato QUEUED verranno rimossi dalla coda.</li><li>I task in stato PAUSED verranno ripresi.</li></ul>",
-    "force run tooltip": "Forza l'esecuzione a partire. Può creare esecuzioni duplicate dei task, se possibile utilizza un'altra azione."
+    "force run tooltip": "Forza l'esecuzione a partire. Può creare esecuzioni duplicate dei task, se possibile utilizza un'altra azione.",
+    "item": "elemento",
+    "items": "elementi"
   }
 }

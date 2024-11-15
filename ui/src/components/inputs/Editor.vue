@@ -433,16 +433,8 @@
         height: 100%;
     }
 
-    .el-drawer__body .ks-editor {
-        flex: 1;
-    }
-
-    .el-dialog__body .ks-editor {
+    .el-form .ks-editor {
         display: flex;
-        width: 100%;
-    }
-
-    .el-dialog__body .el-form {
         width: 100%;
     }
 

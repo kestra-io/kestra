@@ -672,7 +672,8 @@
             "default_namespace": "Namespace Padrão",
             "log_level": "Nível de Log Padrão",
             "log_display": "Exibição de Log Padrão",
-            "execute_flow": "Executar o Flow"
+            "execute_flow": "Executar o Flow",
+            "execute_default_tab": "Aba de Execução Padrão"
           }
         },
         "theme": {
@@ -808,6 +809,12 @@
       "empty": {
         "title": "Nenhuma aba aberta no momento",
         "message": "Você pode criar ou importar arquivos de namespace na barra lateral e pode assistir ao vídeo de introdução do nosso Editor."
+      },
+      "close": {
+        "other": "Fechar outras abas",
+        "tab": "Fechar aba",
+        "right": "Fechar à direita",
+        "all": "Fechar todas as abas"
       }
     },
     "curl": {
@@ -889,7 +896,7 @@
     "invalid bulk pause": "Não foi possível pausar as execuções",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "no_data": "Parece que não há nada aqui... ainda! Ajuste seus filtros ou tente novamente!",
+    "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Leia mais sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> em nossa documentação.",
@@ -914,12 +921,15 @@
     "worker group fallback": "Grupo de Worker de reserva",
     "filters": {
       "comparators": {
-        "contains": "contém",
         "is": "é",
         "is_one_of": "é um dos",
-        "not_contains": "não_contém",
         "is_not_one_off": "não é um dos",
-        "is_not": "não é"
+        "is_not": "não é",
+        "between": "entre",
+        "in": "em",
+        "not_contains": "não contém",
+        "starts_with": "começa com",
+        "contains": "contém"
       },
       "recent": {
         "label": "Pesquisas recentes",
@@ -935,7 +945,8 @@
           "confirmation": "Critérios de busca <code>{name}</code>",
           "placeholder": "Etiqueta"
         },
-        "label": "Pesquisas salvas"
+        "label": "Pesquisas salvas",
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +954,15 @@
         "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you need translated?",
         "labels": "Rótulos",
         "state": "Estado",
-        "child": "Filho"
+        "child": "Filho",
+        "absolute_date": "Data absoluta",
+        "relative_date": "Data relativa"
       },
       "empty": "Sem dados.",
-      "label": "Escolher filtros"
+      "label": "Escolher filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
     },
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",
@@ -955,6 +971,8 @@
     "force run": "Executar forçadamente",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
-    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação."
+    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
+    "item": "item",
+    "items": "itens"
   }
 }

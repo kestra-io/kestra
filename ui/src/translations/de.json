@@ -672,7 +672,8 @@
             "default_namespace": "Standard-Namespace",
             "log_level": "Standard-Log-Ebene",
             "log_display": "Standard-Log-Anzeige",
-            "execute_flow": "Flow ausführen"
+            "execute_flow": "Flow ausführen",
+            "execute_default_tab": "Standard-Ausführungs-Registerkarte"
           }
         },
         "theme": {
@@ -808,6 +809,12 @@
       "empty": {
         "title": "Derzeit keine Registerkarten geöffnet",
         "message": "Sie können Namespace-Dateien aus der Seitenleiste erstellen oder importieren und sich das Einführungsvideo für unseren Editor ansehen."
+      },
+      "close": {
+        "other": "Andere Registerkarten schließen",
+        "tab": "Registerkarte schließen",
+        "right": "Rechts schließen",
+        "all": "Alle Registerkarten schließen"
       }
     },
     "curl": {
@@ -889,7 +896,7 @@
     "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "no_data": "Es sieht so aus, als wäre hier… noch nichts! Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
+    "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "informative notice": "Hinweis(e)",
     "triggers-view": {
       "desc_no_triggers": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in unserer Dokumentation.",
@@ -914,12 +921,15 @@
     "worker group fallback": "Arbeitsgruppe Fallback",
     "filters": {
       "comparators": {
-        "contains": "enthält",
         "is": "ist",
         "is_one_of": "ist einer von",
-        "not_contains": "nicht_enthält",
         "is_not_one_off": "ist nicht einer von",
-        "is_not": "ist nicht"
+        "is_not": "ist nicht",
+        "between": "zwischen",
+        "in": "im",
+        "not_contains": "nicht enthält",
+        "starts_with": "beginnt mit",
+        "contains": "enthält"
       },
       "recent": {
         "label": "Letzte Suchanfragen",
@@ -935,7 +945,8 @@
           "confirmation": "Suchkriterien <code>{name}</code>",
           "placeholder": "Label"
         },
-        "label": "Gespeicherte Suchen"
+        "label": "Gespeicherte Suchen",
+        "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +954,15 @@
         "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
         "labels": "Labels",
         "state": "Zustand",
-        "child": "Kind"
+        "child": "Kind",
+        "absolute_date": "Absolutes Datum",
+        "relative_date": "Relatives Datum"
       },
       "empty": "Keine Daten.",
-      "label": "Filter auswählen"
+      "label": "Filter auswählen",
+      "settings": {
+        "show_chart": "Hauptdiagramm anzeigen"
+      }
     },
     "force run title": "Erzwinge die Ausführung <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> Ausführung(en) erzwungener Lauf",
@@ -955,6 +971,8 @@
     "force run": "Erzwungene Ausführung",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "bulk force run": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) erzwingen möchten?<br/><br/>WARNUNG: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
-    "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion."
+    "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion.",
+    "item": "Element",
+    "items": "Elemente"
   }
 }

@@ -24,8 +24,7 @@ import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -95,18 +94,13 @@ public class MultipleConditionTriggerCaseTest {
     }
 
     public void failed() throws InterruptedException, TimeoutException, QueueException {
-        CountDownLatch countDownLatch = new CountDownLatch(2);
-        ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
-
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> listener = new AtomicReference<>();
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
-            synchronized (ended) {
-                Execution execution = either.getLeft();
-                if (execution.getState().getCurrent().isTerminated() && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
-                    if (!ended.containsKey(execution.getId())) {
-                        ended.put(execution.getId(), execution);
-                        countDownLatch.countDown();
-                    }
-                }
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
+                countDownLatch.countDown();
+                listener.set(execution);
             }
         });
 
@@ -117,7 +111,7 @@ public class MultipleConditionTriggerCaseTest {
 
         // wait a little to be sure that the trigger is not launching execution
         Thread.sleep(1000);
-        assertThat(ended.size(), is(1));
+        assertThat(listener.get(), nullValue());
 
         // second one
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
@@ -127,7 +121,8 @@ public class MultipleConditionTriggerCaseTest {
         // trigger was not done
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         receive.blockLast();
-        assertThat(ended.size(), is(2));
+        assertThat(listener.get(), notNullValue());
+        assertThat(listener.get().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     public void basicExecutionsCondition() throws InterruptedException, TimeoutException, QueueException {

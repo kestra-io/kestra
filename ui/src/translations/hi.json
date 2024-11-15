@@ -968,6 +968,8 @@
     "force run": "फोर्स रन",
     "invalid bulk force run": "निष्पादन को जबरन चलाने में असमर्थ",
     "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: किसी execution को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task executions बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
-    "force run tooltip": "प्रवर्तन को चलाने के लिए मजबूर करें। यह डुप्लिकेट task executions बना सकता है, यदि संभव हो तो कोई अन्य क्रिया का उपयोग करें।"
+    "force run tooltip": "प्रवर्तन को चलाने के लिए मजबूर करें। यह डुप्लिकेट task executions बना सकता है, यदि संभव हो तो कोई अन्य क्रिया का उपयोग करें।",
+    "item": "आइटम",
+    "items": "आइटम्स"
   }
 }

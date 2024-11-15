@@ -968,6 +968,8 @@
     "force run": "Forzar ejecución",
     "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
     "bulk force run": "¿Está seguro de que desea forzar la ejecución de <code>{executionCount}</code> ejecución(es)?<br/><br/>ADVERTENCIA: forzar la ejecución de una ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se des-encolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
-    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción."
+    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
+    "item": "elemento",
+    "items": "elementos"
   }
 }

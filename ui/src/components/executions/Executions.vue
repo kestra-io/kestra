@@ -353,7 +353,7 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import KestraFilter from "../filter/Wrapper.vue"
+    import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>

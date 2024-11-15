@@ -81,7 +81,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 tasks:
                   - id: read_file
                     type: io.kestra.plugin.scripts.shell.Commands
-                    runner: PROCESS
+                    taskRunner: 
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                       - cat "{{ inputs.order }}"
 

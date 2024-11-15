@@ -25,7 +25,7 @@
                             {{ $t("error detected") }}
                         </span>
                     </el-header>
-                    <el-main>{{ errors.join("\n") }}</el-main>
+                    <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
                 </el-container>
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error">

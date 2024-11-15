@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-    import {formatLabel} from "../../filters.js";
+    import {formatLabel} from "../../useFilters.js";
 
     defineProps({item: {type: Object, required: true}});
 </script>

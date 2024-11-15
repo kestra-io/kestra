@@ -33,6 +33,7 @@
                     :persistent="false"
                     transition=""
                     :hide-after="0"
+                    :disabled="!configs.commitId"
                 >
                     <template #content>
                         <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
@@ -371,6 +372,7 @@
             span.version {
                 opacity: 0;
                 width: 0;
+                overflow: hidden;
             }
         }
 

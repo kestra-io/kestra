@@ -1,5 +1,5 @@
 <template>
-    <el-empty :image image-size="180">
+    <el-empty :image :image-size="180">
         <template #description>
             <span v-html="description" />
         </template>

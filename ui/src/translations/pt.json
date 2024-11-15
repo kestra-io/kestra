@@ -809,6 +809,12 @@
       "empty": {
         "title": "Nenhuma aba aberta no momento",
         "message": "Você pode criar ou importar arquivos de namespace na barra lateral e pode assistir ao vídeo de introdução do nosso Editor."
+      },
+      "close": {
+        "other": "Fechar outras abas",
+        "tab": "Fechar aba",
+        "right": "Fechar à direita",
+        "all": "Fechar todas as abas"
       }
     },
     "curl": {
@@ -920,7 +926,10 @@
         "is_not_one_off": "não é um dos",
         "is_not": "não é",
         "between": "entre",
-        "in": "em"
+        "in": "em",
+        "not_contains": "não contém",
+        "starts_with": "começa com",
+        "contains": "contém"
       },
       "recent": {
         "label": "Pesquisas recentes",
@@ -962,6 +971,8 @@
     "force run": "Executar forçadamente",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
-    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação."
+    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
+    "item": "item",
+    "items": "itens"
   }
 }

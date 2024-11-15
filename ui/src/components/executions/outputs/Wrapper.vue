@@ -153,10 +153,17 @@
             .post(URL, expression, {headers: {"Content-type": "text/plain",}})
             .then(response => {
                 try {
-                    debugExpression.value = JSON.stringify(JSON.parse(response.data.result), "  ", 2);
+                    const parsedResult = JSON.parse(response.data.result);
+                    const debugOutput = JSON.stringify(parsedResult, "  ", 2);
+                    debugExpression.value = debugOutput;
+
+                    selected.value.push(debugOutput);
+
                     isJSON.value = true;
                 } catch (e) {
                     debugExpression.value = response.data.result;
+
+                    if (response.status === 200) selected.value.push(response.data.result); // Parsing failed, therefore copy raw result
                 }
 
                 debugError.value = response.data.error;
@@ -219,7 +226,10 @@
         selected.value = [task.value];
         
         const child = task.children?.[1];
-        if (child) selected.value.push(child.value);
+        if (child) {
+            selected.value.push(child.value);
+            expandedValue.value = child.path
+        }
 
         debugCollapse.value = "debug";
     });

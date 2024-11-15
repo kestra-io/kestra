@@ -15,7 +15,7 @@
         <el-form-item>
             <template #label>
                 <div class="d-flex flex-column gap-2">
-                    <span class="flex-grow-1">Description</span>
+                    <span class="flex-grow-1">{{ $t("description") }}</span>
                     <el-button-group size="small" class="my-1">
                         <el-button @click="preview = false">
                             <Pencil width="18" height="18" class="me-1" /> Edit

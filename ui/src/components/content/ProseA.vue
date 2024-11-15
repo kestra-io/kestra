@@ -6,6 +6,7 @@
 <script>
     import {mapGetters} from "vuex";
     import path from "path-browserify";
+    import {normalizeDocsPath, normalizeRemoteHref, isRemoteLink} from "./utils";
 
     export default {
         props: {
@@ -22,7 +23,7 @@
         computed: {
             ...mapGetters("doc", ["pageMetadata"]),
             isRemoteLink() {
-                return this.href.startsWith("/") || /https?:\/\/.*/.test(this.href);
+                return isRemoteLink(this.href);
             },
             linkType() {
                 if (this.isRemoteLink) {
@@ -33,13 +34,13 @@
             linkProps() {
                 if (this.isRemoteLink) {
                     return {
-                        href: this.href.startsWith("/") ? "https://kestra.io" + this.href : this.href,
+                        href: normalizeRemoteHref(this.href),
                         target: "_blank"
                     }
                 }
 
 
-                let relativeLink = this.href.replaceAll(/(\/|^)\d+?\.(?!\d)/g, "$1").replace(/(?:\/index)?\.md(#|$)/, "");
+                let relativeLink = normalizeDocsPath(this.href);
                 if (this.pageMetadata.isIndex === false) {
                     relativeLink = "../" + relativeLink;
                 }

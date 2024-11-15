@@ -1,4 +1,5 @@
 <script setup>
+    import {computed} from "vue";
     import {useStore} from "vuex";
 
     import ContextDocsLink from "./ContextDocsLink.vue";
@@ -20,7 +21,7 @@
         currentPage = store.getters["doc/docPath"];
     }
 
-    currentPage = currentPage.replace(/^\/?(.*?)\/?$/, "$1");
+    currentPage = `docs${currentPage.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}`;
 
     const resourcesWithMetadata = await store.dispatch("doc/children", currentPage);
 
@@ -31,14 +32,14 @@
     }
 
     const parentLevel = currentPage.split("/").length;
-    const navigation = Object.entries(resourcesWithMetadata)
+    const navigation = computed(() => Object.entries(resourcesWithMetadata)
         .filter(([path]) => path.split("/").length === parentLevel + 1)
         .filter(([path]) => path !== currentPage)
         .map(([path, metadata]) => ({
             path: path.replace(/^docs\//, ""),
             ...parentMetadata,
             ...metadata
-        }));
+        })));
 
 </script>
 

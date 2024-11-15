@@ -8,7 +8,7 @@ const setItem = (key, value) => {
     return localStorage.setItem(key, JSON.stringify(value));
 };
 
-const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
+export const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
 const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };

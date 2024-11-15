@@ -315,11 +315,4 @@
     :deep(label) {
         padding-right: 0;
     }
-
-    .custom-button{
-        padding-top:14px;
-        padding-bottom:14px;
-        background-color: #272a35 !important;
-    }
-   
 </style>

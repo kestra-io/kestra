@@ -1,5 +1,10 @@
 <template>
-    <div v-show="explorerVisible" class="p-3 sidebar" @click="$refs.tree.setCurrentKey(undefined)">
+    <div
+        v-show="explorerVisible"
+        class="p-3 sidebar"
+        @click="$refs.tree.setCurrentKey(undefined)"
+        @contextmenu.prevent="onTabContextMenu"
+    >
         <div class="d-flex flex-row">
             <el-select
                 v-model="filter"
@@ -324,6 +329,19 @@
                 </div>
             </template>
         </el-dialog>
+
+        <el-menu
+            v-if="tabContextMenu.visible"
+            :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
+            class="tabs-context"
+        >
+            <el-menu-item @click="toggleDialog(true, 'file')">
+                {{ $t("namespace files.create.file") }}
+            </el-menu-item>
+            <el-menu-item @click="toggleDialog(true, 'folder')">
+                {{ $t("namespace files.create.folder") }}
+            </el-menu-item>
+        </el-menu>
     </div>
 </template>
 
@@ -385,7 +403,12 @@
                 confirmation: {visible: false, data: {}},
                 items: undefined,
                 nodeBeforeDrag: undefined,
-                searchResults: []
+                searchResults: [],
+                tabContextMenu: {
+                    visible: false,
+                    x: 0,
+                    y: 0,
+                },
             };
         },
         computed: {
@@ -906,7 +929,20 @@
                 } catch (_error) {
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
-            }
+            },
+            onTabContextMenu(event) {
+                this.tabContextMenu = {
+                    visible: true,
+                    x: event.clientX,
+                    y: event.clientY
+                };
+
+                document.addEventListener("click", this.hideTabContextMenu);
+            },
+            hideTabContextMenu() {
+                this.tabContextMenu.visible = false;
+                document.removeEventListener("click", this.hideTabContextMenu);
+            },
         },
         watch: {
             flow: {
@@ -1021,6 +1057,23 @@
 
             &:hover {
                 color: var(--el-text-color-primary);
+            }
+        }
+
+        ul.tabs-context {
+            position: fixed;
+            z-index: 9999;
+            border-right: none;
+
+            & li {
+                height: 30px;
+                padding: 16px;
+                font-size: var(--el-font-size-small);
+                color: var(--bs-gray-700);
+
+                &:hover {
+                    color: var(--bs-secondary);
+                }
             }
         }
     }

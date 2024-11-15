@@ -58,7 +58,7 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>About this blueprint</h4>
-                    <div class="tags text-uppercase">
+                    <div v-if="tagsToString.length" class="tags text-uppercase">
                         <p> {{ tagsToString }} </p>
                     </div>
                     <markdown :source="blueprint.description" />
@@ -169,7 +169,7 @@
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["icons"]),
             tagsToString() {
-                return this.blueprint?.tags?.join(" ")
+                return this.blueprint?.tags?.join(" ") ?? "";
             },
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);

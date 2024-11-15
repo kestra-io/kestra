@@ -25,13 +25,13 @@
                         :key="rIdx"
                         @click="emits('search', recent.value)"
                     >
-                        <Item :item="recent">
+                        <HistoryItem :item="recent">
                             <template #delete>
                                 <DeleteOutline
                                     @click.stop="remove('recents', rIdx)"
                                 />
                             </template>
-                        </Item>
+                        </HistoryItem>
                     </el-dropdown-item>
                 </template>
 
@@ -45,13 +45,13 @@
                             :key="sIdx"
                             @click="emits('search', save.value)"
                         >
-                            <Item :item="save">
+                            <HistoryItem :item="save">
                                 <template #delete>
                                     <DeleteOutline
                                         @click.stop="remove('saved', sIdx)"
                                     />
                                 </template>
-                            </Item>
+                            </HistoryItem>
                         </el-dropdown-item>
                     </div>
                 </template>
@@ -66,7 +66,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import Item from "./Item.vue";
+    import HistoryItem from "./HistoryItem.vue";
 
     import History from "vue-material-design-icons/History.vue";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
@@ -74,7 +74,7 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../../filters.js";
+    import {useFilters} from "../../useFilters.js";
     const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} =
         useFilters(props.prefix);
 

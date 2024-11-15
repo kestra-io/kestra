@@ -48,14 +48,7 @@
                     v-if="localNamespace && flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
-<<<<<<< HEAD
-                    <el-select
-                        v-model="localFlow"
-                        value-key="id"
-                    >
-=======
                     <el-select v-model="localFlow">
->>>>>>> af68e763e (feat(ui): Added dialog for viewing warnings as markdown #5814)
                         <el-option
                             v-for="flow in flowsExecutable"
                             :key="flow.id"
@@ -70,6 +63,7 @@
             </el-form>
         </el-dialog>
   
+        <!-- Markdown Modal for Trigger Warning -->
         <el-dialog
             v-model="isMarkdownVisible"
             title="Confirmation"

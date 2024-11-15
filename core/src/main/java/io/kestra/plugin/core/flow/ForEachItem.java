@@ -148,7 +148,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: download
-                    type: io.kestra.plugin.fs.http.Download
+                    type: io.kestra.plugin.core.http.Download
                     uri: "https://api.restful-api.dev/objects"
                     contentType: application/json
                     method: GET
@@ -156,12 +156,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     timeout: PT15S
 
                   - id: json_to_ion
-                    type: io.kestra.plugin.serdes.json.JsonReader
+                    type: io.kestra.plugin.serdes.json.JsonToIon
                     from: "{{ outputs.download.uri }}"
                     newLine: false # regular json
 
                   - id: ion_to_jsonl
-                    type: io.kestra.plugin.serdes.json.JsonWriter
+                    type: io.kestra.plugin.serdes.json.IonToJson
                     from: "{{ outputs.json_to_ion.uri }}"
                     newLine: true # JSON-L
 
@@ -180,7 +180,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         ),
         @Example(
             title = """
-                This example shows how to use the combination of `EachSequential` and `ForEachItem` tasks to process files from an S3 bucket. The `EachSequential` iterates over files from the S3 trigger, and the `ForEachItem` task is used to split each file into batches. The `process_batch` subflow is then called with the `data` input parameter set to the URI of the batch to process.
+                This example shows how to use the combination of `ForEach` and `ForEachItem` tasks to process files from an S3 bucket. The `ForEach` iterates over files from the S3 trigger, and the `ForEachItem` task is used to split each file into batches. The `process_batch` subflow is then called with the `data` input parameter set to the URI of the batch to process.
 
                 ```yaml
                 id: process_batch
@@ -203,8 +203,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: loop_over_files
-                    type: io.kestra.plugin.core.flow.EachSequential
-                    value: "{{ trigger.objects | jq('.[].uri') }}"
+                    type: io.kestra.plugin.core.flow.ForEach
+                    values: "{{ trigger.objects | jq('.[].uri') }}"
                     tasks:
                       - id: subflow_per_batch
                         type: io.kestra.plugin.core.flow.ForEachItem

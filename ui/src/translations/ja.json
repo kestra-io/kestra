@@ -926,7 +926,10 @@
         "is_not_one_off": "のいずれでもありません",
         "is_not": "ではありません",
         "between": "間",
-        "in": "内"
+        "in": "内",
+        "not_contains": "含まれていない",
+        "starts_with": "で始まる",
+        "contains": "含む"
       },
       "recent": {
         "label": "最近の検索",

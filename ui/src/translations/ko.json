@@ -926,7 +926,10 @@
         "is_not_one_off": "중 하나가 아닙니다.",
         "is_not": "아님",
         "between": "사이에",
-        "in": "안에"
+        "in": "안에",
+        "not_contains": "포함하지 않음",
+        "starts_with": "시작:",
+        "contains": "포함합니다"
       },
       "recent": {
         "label": "최근 검색",

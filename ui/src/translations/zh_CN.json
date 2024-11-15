@@ -926,7 +926,10 @@
         "is_not_one_off": "不是其中之一",
         "is_not": "不是",
         "between": "之间",
-        "in": "在"
+        "in": "在",
+        "not_contains": "不包含",
+        "starts_with": "以...开始",
+        "contains": "包含"
       },
       "recent": {
         "label": "最近的搜索",

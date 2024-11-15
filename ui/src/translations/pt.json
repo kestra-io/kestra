@@ -926,7 +926,10 @@
         "is_not_one_off": "não é um dos",
         "is_not": "não é",
         "between": "entre",
-        "in": "em"
+        "in": "em",
+        "not_contains": "não contém",
+        "starts_with": "começa com",
+        "contains": "contém"
       },
       "recent": {
         "label": "Pesquisas recentes",

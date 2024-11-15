@@ -926,7 +926,10 @@
         "is_not_one_off": "no es uno de",
         "is_not": "no es",
         "between": "entre",
-        "in": "en"
+        "in": "en",
+        "not_contains": "no contiene",
+        "starts_with": "comienza con",
+        "contains": "contiene"
       },
       "recent": {
         "label": "Búsquedas recientes",

@@ -926,7 +926,10 @@
         "is_not_one_off": "n'est pas l'un de",
         "is_not": "n'est pas",
         "between": "entre",
-        "in": "dans"
+        "in": "dans",
+        "not_contains": "ne contient pas",
+        "starts_with": "commence par",
+        "contains": "contient"
       },
       "recent": {
         "label": "Recherches récentes",

@@ -18,10 +18,10 @@
                     <span class="flex-grow-1">{{ $t("description") }}</span>
                     <el-button-group size="small" class="my-1">
                         <el-button @click="preview = false">
-                            <Pencil width="18" height="18" class="me-1" /> Edit
+                            <Pencil class="me-1" /> Edit
                         </el-button>
                         <el-button @click="preview = true">
-                            <Eye width="18" height="18" class="me-1" /> Preview
+                            <Eye class="me-1" /> Preview
                         </el-button>
                     </el-button-group>
                 </div>

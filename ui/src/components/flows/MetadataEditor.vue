@@ -15,13 +15,13 @@
         <el-form-item>
             <template #label>
                 <div class="d-flex flex-column gap-2">
-                    <code class="flex-grow-1">Description</code>
-                    <el-button-group size="small">
-                        <el-button class="custom-button" @click="preview = false">
-                            <Pencil width="18" height="18" class="icon-spacing" /> Edit
+                    <span class="flex-grow-1">Description</span>
+                    <el-button-group size="small" class="my-1">
+                        <el-button @click="preview = false">
+                            <Pencil width="18" height="18" class="me-1" /> Edit
                         </el-button>
-                        <el-button class="custom-button" @click="preview = true">
-                            <Eye width="18" height="18" class="icon-spacing" /> Preview
+                        <el-button @click="preview = true">
+                            <Eye width="18" height="18" class="me-1" /> Preview
                         </el-button>
                     </el-button-group>
                 </div>
@@ -145,11 +145,12 @@
     </el-form>
 </template>
 <script setup>
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
+    import TaskBasic from "./tasks/TaskBasic.vue";
+
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import TaskBasic from "./tasks/TaskBasic.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import Minus from "vue-material-design-icons/Minus.vue";
 </script>
 <script>
     import {toRaw} from "vue";
@@ -315,13 +316,10 @@
         padding-right: 0;
     }
 
-    .icon-spacing{
-        margin-right:4px;
-    }
-
     .custom-button{
         padding-top:14px;
         padding-bottom:14px;
+        background-color: #272a35 !important;
     }
    
 </style>

@@ -101,7 +101,7 @@
         },
     });
 
-    import {formatLabel, useFilters} from "./filters.js";
+    import {formatLabel, useFilters} from "./useFilters.js";
     const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
         useFilters(props.prefix);
 
@@ -162,8 +162,8 @@
         }
     };
 
-    import action from "../../models/action";
-    import permission from "../../models/permission";
+    import action from "../../models/action.js";
+    import permission from "../../models/permission.js";
 
     const user = computed(() => store.state.auth.user);
 

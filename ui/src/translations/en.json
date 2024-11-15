@@ -983,6 +983,8 @@
       "labels": {
         "placeholder": "Type label as 'key:value'"
       }
-    }
+    },
+    "item": "item",
+    "items": "items"
   }
 }

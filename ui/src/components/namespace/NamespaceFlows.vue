@@ -8,6 +8,7 @@
                 table-layout="auto"
                 fixed
                 @sort-change="onSort"
+                :height="250"
             >
                 <el-table-column
                     prop="id"

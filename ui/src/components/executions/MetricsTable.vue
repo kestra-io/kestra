@@ -16,6 +16,7 @@
                 fixed
                 @row-dblclick="onRowDoubleClick"
                 @sort-change="onSort"
+                :height="250"
             >
                 <el-table-column v-if="showTask" prop="taskId" sortable :label="$t('task')">
                     <template #default="scope">

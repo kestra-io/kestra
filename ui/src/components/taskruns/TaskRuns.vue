@@ -79,6 +79,7 @@
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
                     table-layout="auto"
                     fixed
+                    :height="250"
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                 >

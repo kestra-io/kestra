@@ -1,5 +1,5 @@
 <template>
-    <el-table data-component="FILENAME_PLACEHOLDER" :data="value">
+    <el-table data-component="FILENAME_PLACEHOLDER" :data="value" :height="250">
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
                 <template v-if="isComplex(scope.row[column])">

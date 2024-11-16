@@ -1,5 +1,5 @@
 <template>
-    <el-table table-layout="auto" fixed :data="variables">
+    <el-table :height="250" table-layout="auto" fixed :data="variables">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>

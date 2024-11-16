@@ -15,7 +15,7 @@
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
-                :height="240"
+                :height="250"
             >
                 <el-table-column class-name="next-toggle" width="50">
                     <template #default="scope">

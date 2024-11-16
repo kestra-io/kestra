@@ -2,6 +2,7 @@
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
+        :height="250"
         :data="triggersWithType"
         table-layout="auto"
         @row-dblclick="triggerId = $event.id; isOpen = true"

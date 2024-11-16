@@ -15,7 +15,7 @@
             <el-table
                 :data="executions.results"
                 class="inprogress"
-                :height="240"
+                :height="250"
             >
                 <el-table-column :label="$t('dashboard.id')" width="80">
                     <template #default="scope">

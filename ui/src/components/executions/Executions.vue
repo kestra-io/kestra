@@ -383,7 +383,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
-    import TriggerAvatar from "./TriggerAvatar.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
@@ -403,7 +402,6 @@
             Labels,
             Id,
             TriggerFlow,
-            TriggerAvatar,
             TopNavBar,
             LabelInput,
             ExecutionsBar,

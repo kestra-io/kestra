@@ -1,41 +1,22 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button
-            id="execute-button"
-            :class="{'onboarding-glow': guidedProperties.tourStarted}"
-            :icon="icon.Flash"
-            :type="type"
-            :disabled="isDisabled()"
-            @click="onClick()"
-        >
+        <el-button id="execute-button" :class="{'onboarding-glow': guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-  
-        <el-dialog
-            id="execute-flow-dialog"
-            v-if="isOpen"
-            v-model="isOpen"
-            destroy-on-close
-            :show-close="!guidedProperties.tourStarted"
-            :before-close="(done) => beforeClose(done)"
-            :append-to-body="true"
-        >
+        <el-dialog id="execute-flow-dialog" v-if="isOpen" v-model="isOpen" destroy-on-close :show-close="!guidedProperties.tourStarted" :before-close="(done) => beforeClose(done)" :append-to-body="true">
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <flow-run @execution-trigger="closeModal" :redirect="true" />
         </el-dialog>
-  
-        <el-dialog
-            v-if="isSelectFlowOpen"
-            v-model="isSelectFlowOpen"
-            destroy-on-close
-            :before-close="() => reset()"
-            :append-to-body="true"
-        >
-            <el-form label-position="top">
+        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroy-on-close :before-close="() => reset()" :append-to-body="true">
+            <el-form
+                label-position="top"
+            >
                 <el-form-item :label="$t('namespace')">
-                    <el-select v-model="localNamespace">
+                    <el-select
+                        v-model="localNamespace"
+                    >
                         <el-option
                             v-for="np in namespaces"
                             :key="np"
@@ -48,7 +29,9 @@
                     v-if="localNamespace && flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
-                    <el-select v-model="localFlow">
+                    <el-select
+                        v-model="localFlow"
+                    >
                         <el-option
                             v-for="flow in flowsExecutable"
                             :key="flow.id"
@@ -62,42 +45,23 @@
                 </el-form-item>
             </el-form>
         </el-dialog>
-  
-        <!-- Markdown Modal for Trigger Warning -->
-        <el-dialog
-            v-model="isMarkdownVisible"
-            title="Confirmation"
-            style="margin-top: 300px;"
-            width="30%"
-            :before-close="() => (isMarkdownVisible = false)"
-        >
-            <!-- Render the Markdown content here -->
-            <Markdown :source="$t('trigger_check_warning')" />
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="isMarkdownVisible = false">Close</el-button>
-                    <el-button
-                        type="primary"
-                        @click="proceedWithExecution"
-                    >Proceed</el-button>
-                </span>
-            </template>
-        </el-dialog>
     </div>
 </template>
-  
-  <script>
+
+
+<script>
+    import {h} from "vue";
+
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
-    import Markdown from "../layout/Markdown.vue";
-  
+    import FlowWarningDialog from "./FlowWarningDialog.vue";
+
     export default {
         components: {
-            FlowRun,
-            Markdown
+            FlowRun
         },
         props: {
             flowId: {
@@ -125,7 +89,6 @@
             return {
                 isOpen: false,
                 isSelectFlowOpen: false,
-                isMarkdownVisible: false, // State for Markdown modal visibility
                 localFlow: undefined,
                 localNamespace: undefined,
                 icon: {
@@ -150,7 +113,7 @@
                     return;
                 }
                 else if (this.checkForTrigger) {
-                    this.isMarkdownVisible = true; // Show Markdown modal if the trigger check is met
+                    this.$toast().confirm(h(FlowWarningDialog), () => (this.isOpen = !this.isOpen), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;
@@ -162,10 +125,6 @@
             },
             closeModal() {
                 this.isOpen = false;
-            },
-            proceedWithExecution() {
-                this.isMarkdownVisible = false;
-                this.isOpen = true; // Proceed to open the execute modal
             },
             isDisabled() {
                 return this.disabled || this.flow?.deleted;
@@ -184,7 +143,7 @@
             },
             beforeClose(done){
                 if(this.guidedProperties.tourStarted) return;
-  
+
                 this.reset();
                 done()
             }
@@ -230,7 +189,7 @@
                     if (!this.flowId) {
                         return;
                     }
-  
+
                     this.loadDefinition();
                 },
                 immediate: true
@@ -264,17 +223,17 @@
             }
         }
     };
-  </script>
-  
-  <style scoped>
+</script>
+
+<style scoped>
     .trigger-flow-wrapper {
         display: inline;
     }
-  
+
     .onboarding-glow {
         animation: glowAnimation 1s infinite alternate;
     }
-  
+
     @keyframes glowAnimation {
         0% {
             box-shadow: 0px 0px 0px 0px #8405FF;
@@ -283,5 +242,4 @@
             box-shadow: 0px 0px 50px 2px #8405FF;
         }
     }
-  </style>
-  
+</style>

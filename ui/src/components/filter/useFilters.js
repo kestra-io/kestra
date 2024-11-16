@@ -20,7 +20,24 @@ export const formatLabel = (option) => {
 
     if (value.length) {
         if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
-        else label += `:${value[0]?.startDate}:and:${value[0]?.endDate}`;
+        else {
+            const options = {
+                timeStyle: "medium",
+                dateStyle: "short",
+            };
+            const formatter = new Intl.DateTimeFormat("en-US", options);
+            const startDate = value[0]?.startDate;
+            const endDate = value[0]?.endDate;
+
+            if (startDate && endDate) {
+                const startDateFormatted = formatter.format(new Date(startDate));
+                const endDateFormatted = formatter.format(new Date(endDate));
+
+                label += `:${startDateFormatted}:and:${endDateFormatted}`;
+            } else {
+                label += `:${startDate || ""}:and:${endDate || ""}`;
+            }
+        }
     }
 
     return label;

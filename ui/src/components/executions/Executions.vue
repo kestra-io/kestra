@@ -212,6 +212,7 @@
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                                    class="me-1"
                                 >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
@@ -233,6 +234,12 @@
                         >
                             <template #default="scope">
                                 <status :status="scope.row.state.current" size="small" />
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column :label="$t('triggers')" class-name="row-action">
+                            <template #default="scope">
+                                <trigger-avatar :flow="scope.row" />
                             </template>
                         </el-table-column>
 
@@ -376,6 +383,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import TriggerAvatar from "./TriggerAvatar.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
@@ -395,6 +403,7 @@
             Labels,
             Id,
             TriggerFlow,
+            TriggerAvatar,
             TopNavBar,
             LabelInput,
             ExecutionsBar,
@@ -978,6 +987,19 @@
 
     :deep(.el-alert__icon) {
         color: #ffb703;
+    }
+}
+.me-1 {
+    color: gray;
+    &:hover{
+        color: rgba(var(--bs-link-color-rgb));
+    }
+} 
+html.dark .me-1 {
+    color: var(--bs-tertiary-color)
+    
+    &:hover{
+        color: rgba(var(--bs-link-color-rgb));
     }
 }
 </style>

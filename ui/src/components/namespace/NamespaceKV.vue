@@ -3,7 +3,6 @@
         :data="kvs"
         ref="selectTable"
         :default-sort="{prop: 'id', order: 'ascending'}"
-        stripe
         table-layout="auto"
         fixed
         @selection-change="handleSelectionChange"

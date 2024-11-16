@@ -92,7 +92,6 @@
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
-                        stripe
                         table-layout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
@@ -109,16 +108,16 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
+                                <el-button v-if="canRead" type="success" :icon="Download" @click="exportFlows()">
                                     {{ $t('export') }}
                                 </el-button>
-                                <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                                <el-button v-if="canDelete" type="danger" @click="deleteFlows" :icon="TrashCan">
                                     {{ $t('delete') }}
                                 </el-button>
-                                <el-button v-if="canUpdate && anyFlowDisabled()" @click="enableFlows" :icon="FileDocumentCheckOutline">
+                                <el-button v-if="canUpdate && anyFlowDisabled()" @click="enableFlows" color="#626aef" :icon="FileDocumentCheckOutline">
                                     {{ $t('enable') }}
                                 </el-button>
-                                <el-button v-if="canUpdate && anyFlowEnabled()" @click="disableFlows" :icon="FileDocumentRemoveOutline">
+                                <el-button v-if="canUpdate && anyFlowEnabled()" @click="disableFlows" color="#626aef" plain :icon="FileDocumentRemoveOutline">
                                     {{ $t('disable') }}
                                 </el-button>
                             </bulk-select>
@@ -604,7 +603,19 @@
         display: flex;
         width: 20rem;
     }
-
+    .me-1 {
+        color: gray;
+        margin-right: .25rem;
+        &:hover{
+            color: rgba(var(--bs-link-color-rgb));
+        }
+    }
+    html.dark .me-1 {
+        color: var(--bs-tertiary-color)
+        &:hover{
+            color: rgba(var(--bs-link-color-rgb));
+        }
+    }    
     .flow-id {
         min-width: 200px;
     }

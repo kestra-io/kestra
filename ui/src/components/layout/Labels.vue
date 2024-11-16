@@ -10,9 +10,9 @@
             disable-transitions
         >
             <router-link v-if="filterEnabled" :to="link(key, value)">
-                {{ key }}: {{ value }}
+                {{ value }}
             </router-link>
-            <template v-else>{{ key }}: {{ value }}</template>
+            <template v-else>{{ value }}</template>
         </el-tag>
     </span>
 </template>

@@ -13,6 +13,8 @@ const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };
 
+const DATE_FORMATS = {timeStyle: "short", dateStyle: "short"};
+const formatter = new Intl.DateTimeFormat("en-US", DATE_FORMATS);
 export const formatLabel = (option) => {
     let {label, comparator, value} = option;
 
@@ -21,21 +23,12 @@ export const formatLabel = (option) => {
     if (value.length) {
         if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
         else {
-            const options = {
-                timeStyle: "medium",
-                dateStyle: "short",
-            };
-            const formatter = new Intl.DateTimeFormat("en-US", options);
-            const startDate = value[0]?.startDate;
-            const endDate = value[0]?.endDate;
+            const {startDate, endDate} = value[0];
 
             if (startDate && endDate) {
-                const startDateFormatted = formatter.format(new Date(startDate));
-                const endDateFormatted = formatter.format(new Date(endDate));
-
-                label += `:${startDateFormatted}:and:${endDateFormatted}`;
+                label += `:${formatter.format(new Date(startDate))}:and:${formatter.format(new Date(endDate))}`;
             } else {
-                label += `:${startDate || ""}:and:${endDate || ""}`;
+                label += `:${startDate || "Unknown"} :and: ${endDate || "Unknown"}`;
             }
         }
     }

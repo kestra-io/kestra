@@ -901,7 +901,8 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "warning": "Warning",
+    "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",

@@ -850,7 +850,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために、`??` コアレス演算子を追加してください。例えば、`trigger.date` の代わりに `trigger.date ?? execution.startDate` を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -973,6 +973,7 @@
     "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
     "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。",
     "item": "アイテム",
-    "items": "アイテム"
+    "items": "アイテム",
+    "warning": "警告"
   }
 }

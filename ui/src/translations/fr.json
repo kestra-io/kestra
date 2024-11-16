@@ -850,7 +850,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
-    "trigger_check_warning": "Avertissement : L'utilisation de variables trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence '??' pour résoudre le problème. Par exemple, au lieu de 'trigger.date', utilisez 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(par namespace)",
       "id": "ID",
@@ -973,6 +973,7 @@
     "bulk force run": "Êtes-vous sûr de vouloir forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâches en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront désenfilées.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
     "force run tooltip": "Forcer l'exécution à s'exécuter. Cela peut créer des exécutions de tâche en double, si possible utilisez une autre action.",
     "item": "élément",
-    "items": "éléments"
+    "items": "éléments",
+    "warning": "Avertissement"
   }
 }

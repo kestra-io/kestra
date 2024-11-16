@@ -219,7 +219,7 @@
 
 <style lang="scss">
 code {
-    color: var(--bs-tertiary-color);
+    color: var(--bs-body-color);
 }
 
 .nextscheduled {

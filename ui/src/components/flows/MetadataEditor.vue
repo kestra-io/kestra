@@ -14,14 +14,14 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <div class="d-flex">
-                    <code class="flex-grow-1">description</code>
-                    <el-button-group size="small">
-                        <el-button type="primary" @click="preview = false">
-                            Edit
+                <div class="d-flex flex-column gap-2">
+                    <code class="flex-grow-1 text-lowercase">{{ $t("description") }}</code>
+                    <el-button-group size="small" class="my-1">
+                        <el-button @click="preview = false">
+                            <Pencil class="me-1" /> {{ $t("edit") }}
                         </el-button>
-                        <el-button type="primary" @click="preview = true">
-                            Preview
+                        <el-button @click="preview = true">
+                            <Eye class="me-1" /> {{ $t("preview") }}
                         </el-button>
                     </el-button-group>
                 </div>
@@ -145,9 +145,12 @@
     </el-form>
 </template>
 <script setup>
+    import TaskBasic from "./tasks/TaskBasic.vue";
+
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
-    import TaskBasic from "./tasks/TaskBasic.vue";
 </script>
 <script>
     import {toRaw} from "vue";

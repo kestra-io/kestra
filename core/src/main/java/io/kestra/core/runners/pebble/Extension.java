@@ -41,6 +41,9 @@ public class Extension extends AbstractExtension {
     @Nullable
     private RenderOnceFunction renderOnceFunction;
 
+    @Inject
+    private FileSizeFunction fileSizeFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -131,7 +134,7 @@ public class Extension extends AbstractExtension {
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new PrintContextFunction());
         functions.put("fromIon", new FromIonFunction());
-
+        functions.put("fileSize", fileSizeFunction);
         return functions;
     }
 

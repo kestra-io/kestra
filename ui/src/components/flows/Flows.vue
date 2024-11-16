@@ -603,17 +603,17 @@
         display: flex;
         width: 20rem;
     }
-    .me-1 {
-        color: gray;
+    .link {
+        color: var(--bs-body-color);
         margin-right: .25rem;
         &:hover{
-            color: rgba(var(--bs-link-color-rgb));
+            color: var(--bs-link-hover-color);
         }
     }
-    html.dark .me-1 {
-        color: var(--bs-tertiary-color)
+    html.dark .link {
+        color: var(--bs-body-color);
         &:hover{
-            color: rgba(var(--bs-link-color-rgb));
+            color: var(--bs-link-hover-color);
         }
     }    
     .flow-id {

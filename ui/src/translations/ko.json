@@ -850,7 +850,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: trigger 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
+    "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "dashboard": {
       "per_namespace": "(네임스페이스별)",
       "id": "ID",
@@ -973,6 +973,7 @@
     "bulk force run": "<code>{executionCount}</code> 실행을 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동됩니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
     "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오.",
     "item": "항목",
-    "items": "항목"
+    "items": "항목",
+    "warning": "경고"
   }
 }

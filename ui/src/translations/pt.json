@@ -850,7 +850,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "Aviso: Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência '??' para resolver o problema. Por exemplo, em vez de 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "O uso de variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -973,6 +973,7 @@
     "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
     "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
     "item": "item",
-    "items": "itens"
+    "items": "itens",
+    "warning": "Aviso"
   }
 }

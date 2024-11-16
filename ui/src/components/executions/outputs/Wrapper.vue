@@ -101,7 +101,7 @@
                     <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
                 </el-alert>
 
-                <VarValue :value="selectedValue" :execution="execution" />
+                <VarValue v-if="displayVarValue()" :value="selectedValue" :execution="execution" />
                 <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
             </div>
         </el-col>
@@ -312,6 +312,8 @@
     });
 
     const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
+    const isFile = (value) => typeof(value) === "string" && value.startsWith("kestra:///");
+    const displayVarValue = () => isFile(selectedValue.value) || (selectedValue.value !== debugExpression.value)
 </script>
 
 <style lang="scss">

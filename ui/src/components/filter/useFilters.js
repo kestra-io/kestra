@@ -24,12 +24,7 @@ export const formatLabel = (option) => {
         if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
         else {
             const {startDate, endDate} = value[0];
-
-            if (startDate && endDate) {
-                label += `:${formatter.format(new Date(startDate))}:and:${formatter.format(new Date(endDate))}`;
-            } else {
-                label += `:${startDate || "Unknown"} :and: ${endDate || "Unknown"}`;
-            }
+            label += `:${startDate ? formatter.format(new Date(startDate)) : "Unknown"}:and:${endDate ? formatter.format(new Date(endDate)) : "Unknown"}`;
         }
     }
 

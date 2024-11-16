@@ -171,7 +171,7 @@
 
 <style lang="scss" scoped>
 code {
-    color: var(--bs-tertiary-color);
+    color: var(--bs-body-color);
 }
 
 .inprogress {

@@ -994,8 +994,7 @@
     }
 } 
 html.dark .link {
-    color: var(--bs-body-color)
-    
+    color: var(--bs-body-color);
     &:hover{
         color: var(--bs-link-hover-color);
     }

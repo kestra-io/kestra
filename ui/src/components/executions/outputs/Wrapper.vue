@@ -163,7 +163,8 @@
                 } catch (e) {
                     debugExpression.value = response.data.result;
 
-                    if (response.status === 200) selected.value.push(response.data.result); // Parsing failed, therefore copy raw result
+                    // Parsing failed, therefore, copy raw result
+                    if (response.status === 200) selected.value.push(response.data.result);
                 }
 
                 debugError.value = response.data.error;

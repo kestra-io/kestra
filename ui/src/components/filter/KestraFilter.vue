@@ -80,9 +80,9 @@
     import Refresh from "../layout/RefreshButton.vue";
 
     import History from "./components/history/History.vue";
+    import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
-    import Label from "./components/Label.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 

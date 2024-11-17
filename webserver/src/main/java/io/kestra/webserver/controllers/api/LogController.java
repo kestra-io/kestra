@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.services.LogService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -48,6 +49,9 @@ public class LogController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private LogService logService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
@@ -188,4 +192,20 @@ public class LogController {
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "logs/bulk-delete")
+    @Operation(tags = {"Logs"}, summary = "Bulk delete logs for selected executions")
+    public int bulkDelete(
+        @Parameter(description = "The list of execution ids to delete") @Body List<String> executionIds,
+        @Parameter(description = "The namespace") @Nullable @QueryValue String namespace,
+        @Parameter(description = "The flow identifier") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The log level filter") @Nullable @QueryValue List<Level> logLevels,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
+    ) {
+        validateTimeline(startDate, endDate);
+        return logService.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
+    }
+
 }

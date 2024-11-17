@@ -13,13 +13,12 @@
     const formatter = new Intl.DateTimeFormat("en-US", DATE_FORMATS);
 
     const label = computed(() => props.option?.label);
-    const comparator = computed(() => props.option?.comparator?.value);
+    const comparator = computed(() => props.option?.comparator?.label);
     const value = computed(() => {
         const {value, label, comparator} = props.option;
 
-        if (!value.length) {
-            return;
-        }
+        if (!value.length) return;
+
         if (label !== "absolute_date" && comparator !== "between") {
             return `${value.join(", ")}`;
         }

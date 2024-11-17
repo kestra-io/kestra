@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4">
+        <div class="pt-4" v-if="props.flow">
             <el-table
                 :data="executions.results"
                 class="inprogress"
@@ -107,6 +107,8 @@
                 />
             </div>
         </div>
+
+        <NoData v-else />
     </div>
 </template>
 
@@ -118,6 +120,7 @@
     import moment from "moment";
 
     import States from "../../States.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
 
@@ -174,6 +177,13 @@ code {
 .inprogress {
     --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
+    & a {
+        color: #8e71f7;
+
+        html.dark & {
+            color: #e0e0fc;
+        }
+    }
 }
 
 </style>

@@ -1,9 +1,8 @@
 package io.kestra.cli;
 
-import io.kestra.cli.commands.flows.FlowValidateCommand;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -63,7 +62,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     public static String buildYamlBody(Path directory) throws IOException {
         try(var files = Files.walk(directory)) {
             return files.filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
+                .filter(YamlParser::isValidExtension)
                 .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
                 .collect(Collectors.joining("\n---\n"));
         }
@@ -72,10 +71,11 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     // bug in micronaut, we can't inject YamlFlowParser & ModelValidator, so we inject from implementation
     public Integer call(
         Class<?> cls,
-        YamlFlowParser yamlFlowParser,
+        YamlParser yamlParser,
         ModelValidator modelValidator,
         Function<Object, String> identity,
-        Function<Object, List<String>> warningsFunction
+        Function<Object, List<String>> warningsFunction,
+        Function<Object, List<String>> infosFunction
     ) throws Exception {
         super.call();
 
@@ -85,14 +85,16 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         if(this.local) {
             try(var files = Files.walk(directory)) {
                 files.filter(Files::isRegularFile)
-                    .filter(YamlFlowParser::isValidExtension)
+                    .filter(YamlParser::isValidExtension)
                     .forEach(path -> {
                         try {
-                            Object parse = yamlFlowParser.parse(path.toFile(), cls);
+                            Object parse = yamlParser.parse(path.toFile(), cls);
                             modelValidator.validate(parse);
                             stdOut("@|green \u2713|@ - " + identity.apply(parse));
                             List<String> warnings = warningsFunction.apply(parse);
                             warnings.forEach(warning -> stdOut("@|bold,yellow \u26A0|@ - " + warning));
+                            List<String> infos = infosFunction.apply(parse);
+                            infos.forEach(info -> stdOut("@|bold,blue \u2139|@ - " + info));
                         } catch (ConstraintViolationException e) {
                             stdErr("@|red \u2718|@ - " + path);
                             AbstractValidateCommand.handleException(e, clsName);

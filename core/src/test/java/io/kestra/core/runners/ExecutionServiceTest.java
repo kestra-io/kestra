@@ -249,6 +249,24 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void replayWithADynamicTask() throws Exception {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
+        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.getTaskRunList().get(2).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(3));
+        assertThat(restart.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
     void replayEachPara() throws Exception {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-nested");
         assertThat(execution.getTaskRunList(), hasSize(11));

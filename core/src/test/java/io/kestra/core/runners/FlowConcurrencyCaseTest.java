@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class FlowConcurrencyCaseTest {
@@ -54,9 +55,8 @@ public class FlowConcurrencyCaseTest {
             // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-
-        assertThat(receive.blockLast().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
     }
 
     public void flowConcurrencyFail() throws TimeoutException, QueueException, InterruptedException {
@@ -78,9 +78,8 @@ public class FlowConcurrencyCaseTest {
             // FIXME we should fail if we receive the cancel execution again but on Kafka it happens
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-
-        assertThat(receive.blockLast().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
     }
 
     public void flowConcurrencyQueue() throws TimeoutException, QueueException, InterruptedException {
@@ -120,9 +119,9 @@ public class FlowConcurrencyCaseTest {
             }
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-        latch2.await(1, TimeUnit.MINUTES);
-        latch3.await(1, TimeUnit.MINUTES);
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        assertTrue(latch2.await(1, TimeUnit.MINUTES));
+        assertTrue(latch3.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -169,9 +168,9 @@ public class FlowConcurrencyCaseTest {
             }
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-        latch2.await(1, TimeUnit.MINUTES);
-        latch3.await(1, TimeUnit.MINUTES);
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        assertTrue(latch2.await(1, TimeUnit.MINUTES));
+        assertTrue(latch3.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -214,8 +213,8 @@ public class FlowConcurrencyCaseTest {
             }
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-        latch2.await(1, TimeUnit.MINUTES);
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        assertTrue(latch2.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));

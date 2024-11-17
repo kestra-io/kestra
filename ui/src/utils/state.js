@@ -210,6 +210,10 @@ export default class State {
         return STATE[state] && STATE[state].isFailed;
     }
 
+    static isQueued(state) {
+        return STATE[state] && STATE[state] === STATE.QUEUED;
+    }
+
     static allStates() {
         return _mapValues(STATE, (state) => {
             return {

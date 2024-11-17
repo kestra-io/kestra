@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
@@ -21,12 +22,8 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.JSONB;
+import org.jooq.*;
 import org.jooq.Record;
-import org.jooq.Result;
-import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -64,6 +61,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final MessageProtectionConfiguration messageProtectionConfiguration;
 
+    private final MetricRegistry metricRegistry;
+
     protected final Table<Record> table;
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
@@ -80,6 +79,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
         this.configuration = applicationContext.getBean(Configuration.class);
         this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
+        this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
         JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 
@@ -97,6 +97,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         }
 
         if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
+            metricRegistry
+                .counter(MetricRegistry.QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.TAG_CLASS_NAME, cls.getName())
+                .increment();
+
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
                     throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
@@ -165,7 +169,37 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.receiveFetch(ctx, consumerGroup, offset, true);
     }
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate);
+    protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate) {
+        var select = ctx.select(
+                AbstractJdbcRepository.field("value"),
+                AbstractJdbcRepository.field("offset")
+            )
+            .from(this.table)
+            .where(buildTypeCondition(this.cls.getName()));
+
+        if (offset != 0) {
+            select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
+        }
+
+        if (consumerGroup != null) {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+        } else {
+            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+        }
+
+        var limitSelect = select
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
+            .limit(configuration.getPollSize());
+        ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
+
+        if (forUpdate) {
+            configuredSelect = limitSelect.forUpdate().skipLocked();
+        }
+
+        return configuredSelect
+            .fetchMany()
+            .getFirst();
+    }
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType) {
         return this.receiveFetch(ctx, consumerGroup, queueType, true);
@@ -175,18 +209,26 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
+    protected abstract Condition buildTypeCondition(String type);
+
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
         dslContextWrapper.transaction(configuration -> {
-            Integer integer = DSL
+            var select = DSL
                 .using(configuration)
                 .select(DSL.max(AbstractJdbcRepository.field("offset")).as("max"))
                 .from(table)
-                .fetchAny("max", Integer.class);
+                .where(buildTypeCondition(this.cls.getName()));
+            if (consumerGroup != null) {
+                select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+            } else {
+                select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+            }
 
+            Integer integer = select.fetchAny("max", Integer.class);
             if (integer != null) {
                 maxOffset.set(integer);
             }

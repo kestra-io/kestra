@@ -8,7 +8,7 @@ import io.kestra.plugin.core.condition.ExpressionCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowRelation;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Parallel;
 import io.kestra.plugin.core.flow.Subflow;
@@ -33,7 +33,7 @@ class FlowTopologyServiceTest {
     private FlowTopologyService flowTopologyService;
 
     @Inject
-    private YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    private YamlParser yamlParser = new YamlParser();
 
     @Test
     public void flowTask() {
@@ -210,6 +210,6 @@ class FlowTopologyServiceTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 }

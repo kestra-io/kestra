@@ -1,5 +1,6 @@
 package io.kestra.core.topologies;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -28,6 +29,8 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class FlowTopologyService {
+    public static final Label SIMULATED_EXECUTION = new Label(Label.SYSTEM_PREFIX + "simulatedExecution", "true");
+
     @Inject
     protected ConditionService conditionService;
 
@@ -168,8 +171,8 @@ public class FlowTopologyService {
     protected boolean isTriggerChild(FlowWithSource parent, FlowWithSource child) {
         List<AbstractTrigger> triggers = ListUtils.emptyOnNull(child.getTriggers());
 
-        // simulated execution
-        Execution execution = Execution.newExecution(parent, (f, e) -> null, null, Optional.empty());
+        // simulated execution: we add a "simulated" label so conditions can know that the evaluation is for a simulated execution
+        Execution execution = Execution.newExecution(parent, (f, e) -> null, List.of(SIMULATED_EXECUTION), Optional.empty());
 
         // keep only flow trigger
         List<io.kestra.plugin.core.trigger.Flow> flowTriggers = triggers
@@ -193,8 +196,8 @@ public class FlowTopologyService {
             return true;
         }
 
-        if (condition instanceof MultipleCondition) {
-            List<Condition> multipleConditions = ((MultipleCondition) condition)
+        if (condition instanceof io.kestra.core.models.triggers.multipleflows.MultipleCondition multipleCondition) {
+            List<Condition> multipleConditions = multipleCondition
                 .getConditions()
                 .values()
                 .stream()

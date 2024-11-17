@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-        <div class="d-flex flex justify-content-between pb-4">
+        <div class="d-flex justify-content-between pb-4">
             <div>
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("logs") }}</span>
@@ -11,12 +11,15 @@
                 <div id="logs" />
             </div>
         </div>
+
         <Bar
+            v-if="props.data.length > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+        <NoData v-else />
     </div>
 </template>
 
@@ -32,6 +35,8 @@
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 

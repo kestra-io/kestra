@@ -50,23 +50,14 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" />
                             </template>
-                            <template v-else>
-                                <el-alert type="info" :closable="false" class="m-0">
-                                    {{ $t('no result') }}
-                                </el-alert>
-                            </template>
+                            <NoData v-else />
                         </div>
                     </el-card>
                 </template>
 
-                <template #table>
+                <template #table v-if="logs !== undefined && logs.length > 0">
                     <div v-loading="isLoading">
-                        <div v-if="logs === undefined || logs.length === 0">
-                            <el-alert type="info" :closable="false" class="text-muted">
-                                {{ $t('no result') }}
-                            </el-alert>
-                        </div>
-                        <div v-else class="logs-wrapper">
+                        <div class="logs-wrapper">
                             <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
                                 <log-line
                                     level="TRACE"
@@ -95,6 +86,7 @@
     import DateFilter from "../executions/date-select/DateFilter.vue";
     import LogLevelSelector from "./LogLevelSelector.vue";
     import DataTable from "../../components/layout/DataTable.vue";
+    import NoData from "../layout/NoData.vue";
     import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
@@ -106,7 +98,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs},
+            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs, NoData},
         props: {
             logLevel: {
                 type: String,

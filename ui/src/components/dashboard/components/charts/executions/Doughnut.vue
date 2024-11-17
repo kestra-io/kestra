@@ -4,14 +4,16 @@
             {{ t("dashboard.total_executions") }}
         </span>
 
-        <div class="d-flex flex-row align-items-center h-100">
+        <div class="d-flex flex-row align-items-center justify-content-center h-100">
             <div class="w-75">
                 <Doughnut
+                    v-if="total > 0"
                     :data="parsedData"
                     :options="options"
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
                     class="tall"
                 />
+                <NoData v-else />
             </div>
             <div id="totals" />
         </div>
@@ -30,11 +32,17 @@
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 
+    import NoData from "../../../../layout/NoData.vue";
+
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({
         data: {
             type: Object,
+            required: true,
+        },
+        total: {
+            type: Number,
             required: true,
         },
     });

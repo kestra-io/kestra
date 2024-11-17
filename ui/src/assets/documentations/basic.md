@@ -1,4 +1,10 @@
-## Flow properties
+### Keyboard Shortcuts
+
+Use the shortcut `CTRL + SPACE` on Windows/Linux or `fn + control + SPACE` on Mac to trigger **autocompletion** listing available properties.
+
+If you want to **comment out** some part of your code, use the `CTRL or ⌘ + K + C` shortcut, and to uncomment it, use `CTRL or ⌘ + K + U`. To remember it, `C` stands for `comment` and `U` stands for `uncomment`.
+
+### Flow properties
 
 Kestra allows you to automate complex flows using a simple declarative interface.
 
@@ -32,7 +38,7 @@ The table below describes all these properties in detail.
 | `concurrency`                | This property allows you to control the number of [concurrent executions](https://kestra.io/docs/workflow-components/concurrency) of a given flow by setting the `limit` key. Executions beyond that limit will be queued by default — you can customize that by configuring the `behavior` property which can be set to `QUEUE` (default), `CANCEL` or `FAIL`.                                                                                                                                                                                                                        |
 | `retry`                    | This property allows you set a flow-level `retry` policy to restart the execution if any task fails. The retry `behavior` is customizable — you can choose to `CREATE_NEW_EXECUTION` or `RETRY_FAILED_TASK` (default). Only with the `CREATE_NEW_EXECUTION` behavior, the `attempt` of the execution is incremented. Otherwise, only the failed task run is restarted (incrementing the attempt of the task run rather than the execution). Apart from the `behavior` property, the `retry` policy is identical to [task retries](https://kestra.io/docs/workflow-components/retries). |
 
-## Task documentation
+### Task documentation
 
 Each flow consists of **tasks**.
 
@@ -40,26 +46,26 @@ To inspect properties of a **specific task**, click anywhere in that task code w
 
 Note that you need an active Internet connection to view that documentation, as it's served via an API.
 
-## Task properties
+### Task properties
 
 The following core properties are available in all tasks.
 
-| Property       | Description                                                                                                                                                                           |
-|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`           | A unique identifier for the task                                                                                                                                                      |
-| `type`         | A full Java class name that represents the type of task                                                                                                                               |
-| `description`  | Your custom [documentation](https://kestra.io/docs/workflow-components/descriptions) of what the task does                                                                            |
-| `retry`        | How often should the task be retried in case of a failure, and the [type of retry strategy](https://kestra.io/docs/workflow-components/retries)                                       |
-| `timeout`      | The [maximum time allowed](https://kestra.io/docs/workflow-components/timeout) for the task to complete                                                                               |
-| `disabled`     | A boolean flag indicating whether the task is [disabled or not](https://kestra.io/docs/workflow-components/disabled); if set to `true`, the task will be skipped during the execution |
-| `workerGroup`  | The [group of workers](https://kestra.io/docs/enterprise/worker-group) that are eligible to execute the task; you can specify a `workerGroup.key`                                     |
-| `allowFailure` | A boolean flag allowing to continue the execution even if this task fails                                                                                                             |
-| `logLevel`     | The level of log detail to be stored.                                                                                                                                                 |
+| Property       | Description                                                                                                                                                                                                                                                                                                                                                   |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`           | A unique identifier for the task                                                                                                                                                                                                                                                                                                                              |
+| `type`         | A full Java class name that represents the type of task                                                                                                                                                                                                                                                                                                       |
+| `description`  | Your custom [documentation](https://kestra.io/docs/workflow-components/descriptions) of what the task does                                                                                                                                                                                                                                                    |
+| `retry`        | How often should the task be retried in case of a failure, and the [type of retry strategy](https://kestra.io/docs/workflow-components/retries)                                                                                                                                                                                                               |
+| `timeout`      | The [maximum time allowed](https://kestra.io/docs/workflow-components/timeout) for the task to complete                                                                                                                                                                                                                                                       |
+| `disabled`     | A boolean flag indicating whether the task is [disabled or not](https://kestra.io/docs/workflow-components/disabled); if set to `true`, the task will be skipped during the execution                                                                                                                                                                         |
+| `workerGroup`  | The [group of workers](https://kestra.io/docs/enterprise/worker-group) that are eligible to execute the task; you can specify a `workerGroup.key` and a `workerGroup.fallback` (by default WAIT)                                                                                                                                                              |
+| `allowFailure` | A boolean flag allowing to continue the execution even if this task fails                                                                                                                                                                                                                                                                                     |
+| `logLevel`     | The level of log detail to be stored.                                                                                                                                                                                                                                                                                                                         |
 | `logToFile`     | A boolean that lets you store logs as a file in internal storage. That file can be previewed and downloaded from the Logs and Gantt Execution tabs. When set to true, logs aren’t saved in the database, which is useful for tasks that produce a large amount of logs that would otherwise take up too much space. The same property can be set on triggers. |
 
 
 
-## Flow example
+### Flow example
 
 Here is an example flow. It uses a `Log` task available in Kestra core for testing purposes and demonstrates how to use `labels`, `inputs`, `variables`, `triggers` and `description`.
 
@@ -107,7 +113,8 @@ triggers:
 
 You can add documentation to flows, tasks, inputs or triggers using the `description` property in which you can use the [Markdown](https://en.wikipedia.org/wiki/Markdown) syntax. All markdown descriptions will be rendered in the UI.
 
-## Pebble templating
+### Pebble templating
+
 Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble) allowing you to dynamically render variables, inputs and outputs within the execution context using [Pebble expressions](https://kestra.io/docs/concepts/expression). For example, the `{{ flow.namespace }}` expression allows accessing the namespace of the current flow and the `{{ printContext() }}` function allows you to print the entire context of the execution, which is useful for debugging.
 
 The table below lists common Pebble expressions and functions.
@@ -146,11 +153,14 @@ The table below lists common Pebble expressions and functions.
 | `{{ secret('MY_SECRET') }}`                                                                        | Retrieves secret `MY_SECRET`.                                                                                                   |
 | `{{ namespace.myproject.myvariable }}`                                                             | Accesses namespace variable `myproject.myvariable`.                                                                             |
 | `{{ outputs.taskId.outputAttribute }}`                                                             | Accesses task output attribute.                                                                                                 |
-| `{{ error.taskId }}`                                                                               | In case of failure, accesses the task identifier of the task that fail.                                                         |
+| `{{ error.taskId }}`                                                                               | In case of failure, accesses the task identifier of the last task that fail.                                                    |
+| `{{ error.message }}`                                                                              | In case of failure, accesses the last error message.                                                                            |
+| `{{ error.stackTrace }}`                                                                           | In case of failure, accesses the last error stack trace.                                                                        |
 | `{{ range(0, 3) }}`                                                                                | Generates a list from 0 to 3.                                                                                                   |
 | `{{ block("post") }}`                                                                              | Renders the contents of the ["post" block](https://kestra.io/docs/concepts/expression/function#block).                          |
 | `{{ currentEachOutput(outputs.first) }}`                                                           | Retrieves the current output of a sibling task.                                                                                 |
 | `{{ fromJson('{"foo": [666, 1, 2]}').foo[0] }}`                                                    | Converts a JSON string to an object and accesses its properties.                                                                |
+| `{{ fromIon(read(someItem)).someField }}`                                                          | Converts a ION string to an object and accesses its properties.                                                                 |
 | `{{ yaml('foo: [666, 1, 2]').foo[0] }}`                                                            | Converts a YAML string to an object and accesses its properties.                                                                |
 | `{{ max(user.age, 80) }}`                                                                          | Returns the largest of its numerical arguments.                                                                                 |
 | `{{ min(user.age, 80) }}`                                                                          | Returns the smallest of its numerical arguments.                                                                                |
@@ -211,7 +221,8 @@ The table below lists Pebble filter expressions:
 | `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                               |
 | `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".          |
 | `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
-| `toJson`           | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                               |
+| `toJson`         | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                             |
+| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                               |
 | `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                            |
 | `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                           |
 | `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                   |
@@ -256,7 +267,7 @@ The table below lists Pebble filter expressions:
 
 
 
-## Links to learn more
+### Links to learn more
 
 * Follow the step-by-step [tutorial](https://kestra.io/docs/tutorial)
 * Check the [documentation](https://kestra.io/docs)

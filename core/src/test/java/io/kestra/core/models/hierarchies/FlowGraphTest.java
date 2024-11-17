@@ -11,7 +11,7 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.plugin.core.flow.Switch;
 import io.kestra.core.utils.GraphUtils;
@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.*;
 
 class FlowGraphTest extends AbstractMemoryRunnerTest {
     @Inject
-    private YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    private YamlParser yamlParser = new YamlParser();
 
     @Inject
     private GraphService graphService;
@@ -296,7 +296,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class).withSource(Files.readString(file.toPath()));
+        return yamlParser.parse(file, Flow.class).withSource(Files.readString(file.toPath()));
     }
 
     private AbstractGraph node(FlowGraph flowGraph, String taskId) {

@@ -6,6 +6,7 @@
         table-layout="auto"
         fixed
         @selection-change="handleSelectionChange"
+        @sort-change="handleSort"
     >
         <template #select-actions>
             <bulk-select
@@ -333,6 +334,18 @@
             },
             onTtlChange(value) {
                 this.kv.ttl = value.timeRange
+            },
+            handleSort({prop, order}) {
+                if (prop && order) {
+                    this.kvs.sort((a, b) => {
+                        const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
+                        const modifier = order === "ascending" ? 1 : -1;
+
+                        return typeof valueA === "string"
+                            ? modifier * valueA.localeCompare(valueB)
+                            : modifier * (valueA - valueB);
+                    });
+                }
             }
         },
     };

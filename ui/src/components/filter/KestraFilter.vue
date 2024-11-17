@@ -338,6 +338,10 @@
         }
     }
 
+    & .el-select__placeholder  {
+        color: var(--bs-gray-700);
+    }
+    
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:

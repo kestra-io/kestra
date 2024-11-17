@@ -171,7 +171,7 @@
                 </template>
             </template>
         </el-form-item>
-        <ValidationError :errors="inputErrors" />
+        <ValidationError v-if="inputErrors" :errors="inputErrors" />
     </template>
 
     <el-alert type="info" :show-icon="true" :closable="false" v-else>

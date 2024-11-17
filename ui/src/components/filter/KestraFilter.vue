@@ -101,7 +101,7 @@
         },
     });
 
-    import {formatLabel, useFilters} from "./useFilters.js";
+    import {formatLabel, useFilters, compare} from "./useFilters.js";
     const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
         useFilters(props.prefix);
 
@@ -314,7 +314,7 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => i.value !== current.value);
+            const r = getRecentItems().filter((i) => compare(i.value, current.value));
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -338,6 +338,10 @@
         }
     }
 
+    & .el-select__placeholder  {
+        color: var(--bs-gray-700);
+    }
+    
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:

@@ -809,6 +809,12 @@
       "empty": {
         "title": "No hay pestañas abiertas actualmente",
         "message": "Puedes crear o importar archivos de namespace desde la barra lateral y puedes ver el video de introducción para nuestro Editor."
+      },
+      "close": {
+        "other": "Cerrar otras pestañas",
+        "tab": "Cerrar pestaña",
+        "right": "Cerrar a la derecha",
+        "all": "Cerrar todas las pestañas"
       }
     },
     "curl": {
@@ -844,7 +850,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -890,7 +896,7 @@
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
-    "no_data": "Parece que no hay nada aquí… ¡todavía! Ajusta tus filtros o inténtalo de nuevo.",
+    "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Lee más sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> en nuestra documentación.",
@@ -915,12 +921,15 @@
     "worker group fallback": "Grupo de Worker de respaldo",
     "filters": {
       "comparators": {
-        "contains": "contiene",
         "is": "es",
         "is_one_of": "es uno de",
-        "not_contains": "no_contiene",
         "is_not_one_off": "no es uno de",
-        "is_not": "no es"
+        "is_not": "no es",
+        "between": "entre",
+        "in": "en",
+        "not_contains": "no contiene",
+        "starts_with": "comienza con",
+        "contains": "contiene"
       },
       "recent": {
         "label": "Búsquedas recientes",
@@ -936,7 +945,8 @@
           "confirmation": "Criterios de búsqueda <code>{name}</code>",
           "placeholder": "Etiqueta"
         },
-        "label": "Búsquedas guardadas"
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
       "options": {
         "namespace": "Namespace",
@@ -944,10 +954,15 @@
         "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
         "labels": "Etiquetas",
         "state": "Estado",
-        "child": "Niño"
+        "child": "Niño",
+        "absolute_date": "Fecha absoluta",
+        "relative_date": "Fecha relativa"
       },
       "empty": "Sin datos.",
-      "label": "Elegir filtros"
+      "label": "Elegir filtros",
+      "settings": {
+        "show_chart": "Mostrar gráfico principal"
+      }
     },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
@@ -956,6 +971,9 @@
     "force run": "Forzar ejecución",
     "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
     "bulk force run": "¿Está seguro de que desea forzar la ejecución de <code>{executionCount}</code> ejecución(es)?<br/><br/>ADVERTENCIA: forzar la ejecución de una ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se des-encolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
-    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción."
+    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
+    "item": "elemento",
+    "items": "elementos",
+    "warning": "Advertencia"
   }
 }

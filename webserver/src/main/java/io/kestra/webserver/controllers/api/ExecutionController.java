@@ -1139,7 +1139,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
     ) {
-        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
+        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         return executionService.validateForResume(execution, flow, inputs)
@@ -1158,7 +1158,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
     ) throws Exception {
-        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId);
+        Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs)

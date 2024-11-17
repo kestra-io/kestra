@@ -32,6 +32,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
@@ -128,6 +129,26 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             FluxSink.OverflowStrategy.BUFFER
         );
     }
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId, false))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId))
+                    .and(statesFilter(states))
+                    .orderBy(field("start_date").desc());
+                return this.jdbcRepository.fetchOne(from);
+            });
+    }
 
     @Override
     public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
@@ -143,6 +164,27 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 return this.jdbcRepository.fetchOne(from);
             });
+    }
+
+    @Override
+    public Optional<Execution> findByIdWithoutAcl(String tenantId, String id) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.noAclDefaultFilter(tenantId, false))
+                    .and(field("key").eq(id));
+
+                return this.jdbcRepository.fetchOne(from);
+            });
+    }
+
+    protected Condition noAclDefaultFilter(String tenantId, boolean deleted) {
+        var tenant = buildTenantCondition(tenantId);
+        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);

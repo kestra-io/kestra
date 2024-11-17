@@ -809,6 +809,12 @@
       "empty": {
         "title": "Obecnie brak otwartych zakładek",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora."
+      },
+      "close": {
+        "other": "Zamknij inne karty",
+        "tab": "Zamknij kartę",
+        "right": "Zamknij po prawej",
+        "all": "Zamknij wszystkie karty"
       }
     },
     "curl": {
@@ -844,7 +850,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Użycie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji '??', aby rozwiązać problem. Na przykład, zamiast 'trigger.date', użyj 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Używanie zmiennych trigger nie będzie działać z ręcznym wykonaniem flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -890,7 +896,7 @@
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze! Dostosuj swoje filtry lub spróbuj ponownie!",
+    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "informative notice": "Notatka(i)",
     "triggers-view": {
       "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
@@ -915,12 +921,15 @@
     "worker group fallback": "Grupa Workerów awaryjna",
     "filters": {
       "comparators": {
-        "contains": "zawiera",
         "is": "jest",
         "is_one_of": "jest jednym z",
-        "not_contains": "nie_zawiera",
         "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest"
+        "is_not": "nie jest",
+        "between": "pomiędzy",
+        "in": "w",
+        "not_contains": "nie zawiera",
+        "starts_with": "zaczyna się od",
+        "contains": "zawiera"
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
@@ -936,7 +945,8 @@
           "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
           "placeholder": "Etykieta"
         },
-        "label": "Zapisane wyszukiwania"
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -944,10 +954,15 @@
         "text": "tekst",
         "labels": "Etykiety",
         "state": "Stan",
-        "child": "Dziecko"
+        "child": "Dziecko",
+        "absolute_date": "Data bezwzględna",
+        "relative_date": "Data względna"
       },
       "empty": "Brak danych.",
-      "label": "Wybierz filtry"
+      "label": "Wybierz filtry",
+      "settings": {
+        "show_chart": "Pokaż główny wykres"
+      }
     },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
@@ -956,6 +971,9 @@
     "force run": "Wymuś uruchomienie",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> wykonania/ń?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
-    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji."
+    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji.",
+    "item": "element",
+    "items": "elementy",
+    "warning": "Ostrzeżenie"
   }
 }

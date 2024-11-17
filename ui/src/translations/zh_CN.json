@@ -809,6 +809,12 @@
       "empty": {
         "title": "当前没有打开的标签",
         "message": "你可以从侧边栏创建或导入命名空间文件，也可以查看我们的编辑器介绍视频。"
+      },
+      "close": {
+        "other": "关闭其他标签页",
+        "tab": "关闭标签页",
+        "right": "关闭右侧",
+        "all": "关闭所有标签页"
       }
     },
     "curl": {
@@ -844,7 +850,7 @@
     "webhook link copied": "Webhook链接已复制。",
     "copy url": "复制 URL",
     "scheduleDate": "计划日期",
-    "trigger_check_warning": "警告：使用trigger变量无法与手动flow执行一起工作。请添加“??”合并运算符来解决此问题。例如，不要使用“trigger.date”，而是使用“trigger.date ?? execution.startDate”。",
+    "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "dashboard": {
       "per_namespace": "（每个namespace）",
       "id": "ID",
@@ -890,7 +896,7 @@
     "invalid bulk pause": "无法暂停执行",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
-    "no_data": "看起来这里还没有内容……还不如调整你的过滤器，或者再试一次！",
+    "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "informative notice": "注意事项",
     "triggers-view": {
       "desc_no_triggers": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>的信息。",
@@ -915,12 +921,15 @@
     "worker group fallback": "工作组回退",
     "filters": {
       "comparators": {
-        "contains": "包含",
         "is": "是",
         "is_one_of": "是其中之一",
-        "not_contains": "不包含",
         "is_not_one_off": "不是其中之一",
-        "is_not": "不是"
+        "is_not": "不是",
+        "between": "之间",
+        "in": "在",
+        "not_contains": "不包含",
+        "starts_with": "以...开始",
+        "contains": "包含"
       },
       "recent": {
         "label": "最近的搜索",
@@ -936,7 +945,8 @@
           "confirmation": "搜索条件 <code>{name}</code>",
           "placeholder": "标签"
         },
-        "label": "保存的搜索"
+        "label": "保存的搜索",
+        "tooltip": "您不能保存空的搜索条件。"
       },
       "options": {
         "namespace": "命名空间",
@@ -944,10 +954,15 @@
         "text": "文本",
         "labels": "标签",
         "state": "状态",
-        "child": "子项"
+        "child": "子项",
+        "absolute_date": "绝对日期",
+        "relative_date": "相对日期"
       },
       "empty": "无数据。",
-      "label": "选择过滤器"
+      "label": "选择过滤器",
+      "settings": {
+        "show_chart": "显示主图表"
+      }
     },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
@@ -956,6 +971,9 @@
     "force run": "强制运行",
     "invalid bulk force run": "无法强制运行执行",
     "bulk force run": "您确定要强制运行<code>{executionCount}</code>次执行吗？<br/><br/>WARNING: 强制运行执行不保证成功，并且可能会创建重复的task执行。<br/><br/>将进行以下转换：<br/><ul><li>CREATED的tasks将被移动到RUNNING状态。</li><li>RUNNING的tasks将被重新提交。</li><li>QUEUED的tasks将被取消排队。</li><li>PAUSED的tasks将被恢复。</li></ul>",
-    "force run tooltip": "强制执行运行。这可能会创建重复的task执行，如果可能，请使用其他操作。"
+    "force run tooltip": "强制执行运行。这可能会创建重复的task执行，如果可能，请使用其他操作。",
+    "item": "项目",
+    "items": "项目",
+    "warning": "警告"
   }
 }

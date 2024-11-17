@@ -7,6 +7,7 @@
         table-layout="auto"
         fixed
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
     >
         <template #select-actions>
             <bulk-select
@@ -334,6 +335,27 @@
             },
             onTtlChange(value) {
                 this.kv.ttl = value.timeRange
+            },
+            handleSortChange({prop, order}) {
+                if (prop && order) {
+                    this.kvs.sort((a, b) => {
+                        let valueA = a[prop];
+                        let valueB = b[prop];
+
+                        if (valueA == null) valueA = "";
+                        if (valueB == null) valueB = "";
+
+                        if (order === "ascending") {
+                            return typeof valueA === "string"
+                                ? valueA.localeCompare(valueB)
+                                : valueA - valueB;
+                        } else if (order === "descending") {
+                            return typeof valueB === "string"
+                                ? valueB.localeCompare(valueA)
+                                : valueB - valueA;
+                        }
+                    });
+                }
             }
         },
     };

@@ -336,7 +336,7 @@
             onTtlChange(value) {
                 this.kv.ttl = value.timeRange
             },
-            handleSortChange({prop, order}) {
+            handleSort({prop, order}) {
                 if (prop && order) {
                     this.kvs.sort((a, b) => {
                         const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];

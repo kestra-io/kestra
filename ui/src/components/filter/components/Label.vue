@@ -23,6 +23,7 @@
         if (label !== "absolute_date" && comparator !== "between") {
             return `${value.join(", ")}`;
         }
+
         const {startDate, endDate} = value[0];
         return `${startDate ? formatter.format(new Date(startDate)) : "unknown"}:and:${endDate ? formatter.format(new Date(endDate)) : "unknown"}`;
     });

@@ -169,7 +169,7 @@ export function useFilters(prefix) {
         // Handle the date functionality by grouping startDate and endDate if they exist
         if (query.startDate && query.endDate) {
             params.push({
-                label: "absolute_date:between",
+                label: "absolute_date",
                 value: [{startDate: query.startDate, endDate: query.endDate}],
             });
         }

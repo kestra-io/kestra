@@ -1,6 +1,14 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" plain :icon="icon" :size="size" :class="cls" 
-        plain>
+    <el-button 
+        data-component="FILENAME_PLACEHOLDER" 
+        data-test-id="execution-status" 
+        @click="$emit('click', $event)" 
+        class="status" 
+        plain 
+        :icon="icon" 
+        :size="size" 
+        :class="cls" 
+    >
         <template v-if="label">
             {{ title || $filters.cap($filters.lower(status)) }}
         </template>

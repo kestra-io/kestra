@@ -968,6 +968,12 @@
 .padding-bottom {
     padding-bottom: 4rem;
 }
+code {
+    color: var(--bs-body-color);
+    &:hover {
+    color: var(--bs-link-hover-color);
+    }
+}
 .custom-warning {
     border: 1px solid #ffb703;
     border-radius: 7px;

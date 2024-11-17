@@ -7,7 +7,7 @@
         table-layout="auto"
         fixed
         @selection-change="handleSelectionChange"
-        @sort-change="handleSortChange"
+        @sort-change="handleSort"
     >
         <template #select-actions>
             <bulk-select
@@ -339,21 +339,12 @@
             handleSortChange({prop, order}) {
                 if (prop && order) {
                     this.kvs.sort((a, b) => {
-                        let valueA = a[prop];
-                        let valueB = b[prop];
+                        const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
+                        const modifier = order === "ascending" ? 1 : -1;
 
-                        if (valueA == null) valueA = "";
-                        if (valueB == null) valueB = "";
-
-                        if (order === "ascending") {
-                            return typeof valueA === "string"
-                                ? valueA.localeCompare(valueB)
-                                : valueA - valueB;
-                        } else if (order === "descending") {
-                            return typeof valueB === "string"
-                                ? valueB.localeCompare(valueA)
-                                : valueB - valueA;
-                        }
+                        return typeof valueA === "string"
+                            ? modifier * valueA.localeCompare(valueB)
+                            : modifier * (valueA - valueB);
                     });
                 }
             }

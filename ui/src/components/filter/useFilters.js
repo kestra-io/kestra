@@ -13,24 +13,6 @@ const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
 };
 
-const DATE_FORMATS = {timeStyle: "short", dateStyle: "short"};
-const formatter = new Intl.DateTimeFormat("en-US", DATE_FORMATS);
-export const formatLabel = (option) => {
-    let {label, comparator, value} = option;
-
-    if (comparator?.label) label += `:${comparator.label}`;
-
-    if (value.length) {
-        if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
-        else {
-            const {startDate, endDate} = value[0];
-            label += `:${startDate ? formatter.format(new Date(startDate)) : "Unknown"}:and:${endDate ? formatter.format(new Date(endDate)) : "Unknown"}`;
-        }
-    }
-
-    return label;
-};
-
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 
@@ -187,7 +169,7 @@ export function useFilters(prefix) {
         // Handle the date functionality by grouping startDate and endDate if they exist
         if (query.startDate && query.endDate) {
             params.push({
-                label: "absolute_date:between",
+                label: "absolute_date",
                 value: [{startDate: query.startDate, endDate: query.endDate}],
             });
         }

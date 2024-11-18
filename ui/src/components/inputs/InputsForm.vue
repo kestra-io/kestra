@@ -39,13 +39,13 @@
                 class="w-100"
                 >
             <el-radio
-            v-for="item in input.values"
-                    :key="item"
-                    :label="item"
+                v-for="item in input.values"
+                        :key="item"
+                        :label="item"
                 >
                     {{ item }}
-                    </el-radio>
-                    </el-radio-group>
+            </el-radio>
+            </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"

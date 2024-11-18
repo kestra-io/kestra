@@ -26,7 +26,7 @@
         </section>
         <section class="current-tags">
             <el-tag v-for="(item, index) in current" :key="index" class="m-1">
-                {{ formatLabel(item) }}
+                <Label :option="item" />
             </el-tag>
         </section>
         <template #footer>
@@ -51,6 +51,8 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import Label from "./Label.vue";
+
     import Save from "vue-material-design-icons/ContentSaveOutline.vue";
 
     const props = defineProps({
@@ -59,7 +61,7 @@
         current: {type: Object, required: true},
     });
 
-    import {formatLabel, useFilters} from "../useFilters.js";
+    import {useFilters} from "../useFilters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);

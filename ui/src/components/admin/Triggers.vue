@@ -161,7 +161,7 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.cron" :label="$t('cron')">
+                        <el-table-column :label="$t('cron')">
                             <template #default="scope">
                                 <Cron :cron-expression="scope.row.cron" />
                             </template>
@@ -496,7 +496,6 @@
                     {prop: "date", label: this.$t("date")},
                     {prop: "updatedDate", label: this.$t("updated date")},
                     {prop: "nextExecutionDate", label: this.$t("next execution date")},
-                    {prop: "cron", label: this.$t("cron")},
                     {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
                 ];
 

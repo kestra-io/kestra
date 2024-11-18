@@ -974,6 +974,7 @@
     "force run tooltip": "Forza l'esecuzione a partire. Può creare esecuzioni duplicate dei task, se possibile utilizza un'altra azione.",
     "item": "elemento",
     "items": "elementi",
-    "warning": "Avviso"
+    "warning": "Avviso",
+    "cron": "Cron"
   }
 }

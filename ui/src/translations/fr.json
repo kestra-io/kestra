@@ -974,6 +974,7 @@
     "force run tooltip": "Forcer l'exécution à s'exécuter. Cela peut créer des exécutions de tâche en double, si possible utilisez une autre action.",
     "item": "élément",
     "items": "éléments",
-    "warning": "Avertissement"
+    "warning": "Avertissement",
+    "cron": "Cron"
   }
 }

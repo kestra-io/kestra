@@ -974,6 +974,7 @@
     "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji.",
     "item": "element",
     "items": "elementy",
-    "warning": "Ostrzeżenie"
+    "warning": "Ostrzeżenie",
+    "cron": "Kron"
   }
 }

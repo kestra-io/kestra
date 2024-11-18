@@ -1,4 +1,15 @@
 <template>
+    <el-input
+        v-model="searchQuery"
+        placeholder="Search"
+        clearable
+        :prefix-icon="Search"
+        @clear="onSearch"
+        @compositionstart="onCompositionStart"
+        @compositionend="onCompositionEnd"
+        @input="onSearch"
+        style="width: 30%; margin-bottom: 16px;"
+    />
     <select-table
         :data="kvs"
         ref="selectTable"
@@ -128,6 +139,7 @@
 </template>
 
 <script setup>
+    import {Search} from "@element-plus/icons-vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import Editor from "../inputs/Editor.vue";
@@ -227,8 +239,10 @@
                     value: undefined,
                     ttl: undefined,
                     update: undefined
-                }
-            }
+                },
+                searchQuery: "",
+                isComposing: false, //IME 작동 여부 출력
+            };
         },
         mounted () {
             this.loadKvs();
@@ -253,8 +267,20 @@
                     callback();
                 }
             },
+            onCompositionStart() {
+                this.isComposing = true; // IME 입력 시작
+            },
+            onCompositionEnd(event) {
+                this.isComposing = false; // IME 입력 종료
+                this.searchQuery = event.target.value; // 최종 값 반영
+                this.onSearch(); // 검색 처리
+            },
+            onSearch() {
+                if (this.isComposing) return; // IME 중간 입력 방지
+                console.log(this.searchQuery); // 입력 값을 확인하거나 추가 처리
+            },
             loadKvs() {
-                this.$store.dispatch("namespace/kvsList", {id: this.$route.params.id})
+                this.$store.dispatach("namespace/kvsList", {id: this.$route.params.id})
             },
             kvKeyDuplicate(rule, value, callback) {
                 if (this.kv.update === undefined && this.kvs && this.kvs.find(r => r.key === value)) {

@@ -16,40 +16,36 @@
                 @update:model-value="onChange"
                 @confirm="onSubmit"
             />
-            <el-select
-                :full-height="false"
-                :input="true"
-                :navbar="false"
-                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
-                :allow-create="input.allowCustomValue"
-                filterable
-            >
-                <el-option
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
-                >
-                    {{ item }}
-                </el-option>
-            </el-select>
-            <el-radio-group
-                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
-                class="w-100"
-            >
-                <el-radio
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
-                >
-                    {{ item }}
-                </el-radio>
-            </el-radio-group>
+           <el-select
+             v-if="input.type === 'SELECT'"
+             :model-value="inputs[input.id]"
+             @update:model-value="onChange"
+             :allow-create="input.allowCustomValue"
+             filterable
+           >
+             <el-option
+               v-for="item in input.values"
+               :key="item"
+               :label="item"
+               :value="item"
+             >
+               {{ item }}
+             </el-option>
+           </el-select>
+           <el-radio-group
+             v-if="input.type === 'ENUM'"
+             :model-value="inputs[input.id]"
+             @update:model-value="onChange"
+             class="w-100"
+           >
+             <el-radio
+               v-for="item in input.values"
+               :key="item"
+               :label="item"
+             >
+               {{ item }}
+             </el-radio>
+           </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -79,6 +75,7 @@
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
+                    :data-test-id="`input-form-${input.id}`"
                     v-model="inputs[input.id]"
                     @update:model-value="onChange"
                     :min="input.min"
@@ -89,6 +86,7 @@
             </span>
             <span v-if="input.type === 'FLOAT'">
                 <el-input-number
+                    :data-test-id="`input-form-${input.id}`"
                     v-model="inputs[input.id]"
                     @update:model-value="onChange"
                     :min="input.min"
@@ -98,6 +96,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <el-radio-group
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
@@ -108,18 +107,21 @@
                 <el-radio-button :label="$t('undefined')" :value="undefined" />
             </el-radio-group>
             <el-date-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 type="datetime"
             />
             <el-date-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 type="date"
             />
             <el-time-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
@@ -128,6 +130,7 @@
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
                 <div class="el-input__wrapper">
                     <input
+                        :data-test-id="`input-form-${input.id}`"
                         :id="input.id+'-file'"
                         class="el-input__inner"
                         type="file"
@@ -146,6 +149,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
+                :data-test-id="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputs[input.id]"
             />
@@ -154,16 +158,18 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
+                :data-test-id="`input-form-${input.id}`"
                 lang="yaml"
                 :model-value="inputs[input.id]"
                 @change="onYamlChange(input, $event)"
             />
             <duration-picker
                 v-if="input.type === 'DURATION'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
             />
-            <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" :data-test-id="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">

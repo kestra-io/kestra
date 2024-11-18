@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="props.flow">
+        <div class="pt-4" v-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="inprogress"
@@ -161,6 +161,8 @@
             })
             .then((response) => {
                 if (!response) return;
+
+                console.log
                 executions.value = response;
             });
     };

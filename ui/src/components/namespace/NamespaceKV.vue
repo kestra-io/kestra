@@ -1,17 +1,18 @@
 <template>
-    <el-input
-        v-model="searchQuery"
-        placeholder="Search"
-        clearable
-        :prefix-icon="Search"
-        @clear="onSearch"
-        @compositionstart="onCompositionStart"
-        @compositionend="onCompositionEnd"
-        @input="onSearch"
-        style="width: 30%; margin-bottom: 16px;"
-    />
+    <div class="row mb-3">
+        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <el-input
+                v-model="search"
+                :placeholder="$t('search')"
+                :prefix-icon="Magnify"
+                clearable
+                class="w-100"
+            /> 
+        </div>
+    </div>
+
     <select-table
-        :data="kvs"
+        :data="filteredKeywords"
         ref="selectTable"
         :default-sort="{prop: 'id', order: 'ascending'}"
         stripe
@@ -140,7 +141,6 @@
 </template>
 
 <script setup>
-    import {Search} from "@element-plus/icons-vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import Editor from "../inputs/Editor.vue";
@@ -149,6 +149,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
 </script>
 
 <script>
@@ -165,6 +166,9 @@
         },
         computed: {
             ...mapState("namespace", ["kvs"]),
+            filteredKeywords(){
+                return this.kvs?.filter((kw) => !this.search || kw.key.toLowerCase().includes(this.search.toLowerCase()));
+            },
             kvModalTitle() {
                 return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");
             },
@@ -241,8 +245,7 @@
                     ttl: undefined,
                     update: undefined
                 },
-                searchQuery: "",
-                isComposing: false, //IME 작동 여부 출력
+                search: "",
             };
         },
         mounted () {
@@ -268,20 +271,8 @@
                     callback();
                 }
             },
-            onCompositionStart() {
-                this.isComposing = true; // IME 입력 시작
-            },
-            onCompositionEnd(event) {
-                this.isComposing = false; // IME 입력 종료
-                this.searchQuery = event.target.value; // 최종 값 반영
-                this.onSearch(); // 검색 처리
-            },
-            onSearch() {
-                if (this.isComposing) return; // IME 중간 입력 방지
-                console.log(this.searchQuery); // 입력 값을 확인하거나 추가 처리
-            },
             loadKvs() {
-                this.$store.dispatach("namespace/kvsList", {id: this.$route.params.id})
+                this.$store.dispatch("namespace/kvsList", {id: this.$route.params.id})
             },
             kvKeyDuplicate(rule, value, callback) {
                 if (this.kv.update === undefined && this.kvs && this.kvs.find(r => r.key === value)) {

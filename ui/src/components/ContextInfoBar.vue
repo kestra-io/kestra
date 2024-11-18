@@ -20,7 +20,7 @@
     const configs = computed(() => store.state.misc.configs);
 
 
-    const panelWidth = ref(400)
+    const panelWidth = ref(640)
 
     const panel = ref<HTMLElement | null>(null)
 

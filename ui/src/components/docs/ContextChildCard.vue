@@ -95,4 +95,21 @@
             height: 48px !important;
         }
     }
+
+    .row-cols-1 > *  {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .row-cols-xxl-2{
+        container-type: inline-size;
+    }
+
+    /* If the container is larger than 550px */
+    @container (min-width: 550px) {
+        .row-cols-xxl-2 > * {
+            flex: 0 0 auto;
+            width: 50%;
+        }
+    }
 </style>

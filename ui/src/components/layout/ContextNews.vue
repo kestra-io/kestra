@@ -1,12 +1,14 @@
 <script lang="ts" setup>
     import {ref, computed, onMounted} from "vue";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
     import Markdown from "./Markdown.vue";
     import DateAgo from "./DateAgo.vue";
 
     const store = useStore();
+    const {t} = useI18n();
 
     const feeds = computed(() => store.state.api.feeds);
 
@@ -28,6 +30,7 @@
 
 <template>
     <div class="allContextNews">
+        <h3>{{ t("newsTitle") }}</h3>
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
                 <img class="float-end" :src="feed.image" alt="">
@@ -51,31 +54,6 @@
 <style lang="scss" scoped>
     .allContextNews{
         padding: var(--spacer);
-    }
-
-    .new {
-        font-size: calc(var(--font-size-sm) * 0.7) !important;
-        color: var(--el-color-error);
-        position: absolute;
-        margin-left: 10px;
-        margin-top: -12px;
-
-        animation-name: grow;
-        animation-duration: 1.5s;
-        animation-iteration-count: infinite;
-        animation-timing-function: ease-in;
-    }
-
-    @keyframes grow {
-        0% {
-            transform: scale(0.8);
-        }
-        50%  {
-            transform: scale(1.2);
-        }
-        100% {
-            transform: scale(0.8);
-        }
     }
 
     .post {

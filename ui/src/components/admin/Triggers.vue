@@ -161,6 +161,11 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
+                        <el-table-column v-if="visibleColumns.cron" :label="$t('cron')">
+                            <template #default="scope">
+                                <Cron :cron-expression="scope.row.cron" />
+                            </template>
+                        </el-table-column>
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -261,6 +266,7 @@
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
+    import Cron from "../layout/Cron.vue"
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -490,6 +496,7 @@
                     {prop: "date", label: this.$t("date")},
                     {prop: "updatedDate", label: this.$t("updated date")},
                     {prop: "nextExecutionDate", label: this.$t("next execution date")},
+                    {prop: "cron", label: this.$t("cron")},
                     {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
                 ];
 

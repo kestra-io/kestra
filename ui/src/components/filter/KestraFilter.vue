@@ -357,8 +357,15 @@
 </script>
 
 <style lang="scss">
-.filters {
+@mixin width-available {
+    width: -moz-available;
     width: -webkit-fill-available;
+    // https://caniuse.com/?search=fill-available
+    width: fill-available;
+}
+
+.filters {
+    @include width-available;
 
     & .el-select__placeholder {
         color: var(--bs-gray-700);

@@ -161,6 +161,19 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
+                        <el-table-column :label="$t('cron')">
+                            <template #default="scope">
+                                <Cron :cron-expression="scope.row.cron" />
+                            </template>
+                        </el-table-column>  
+                        <el-table-column :label="$t('details')">
+                            <template #default="scope">
+                                <TriggerAvatar
+                                    :flow="{flowId: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
+                                    :trigger-id="scope.row.id"
+                                />
+                            </template>
+                        </el-table-column>                      
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -261,6 +274,8 @@
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
+    import Cron from "../layout/Cron.vue"
+    import TriggerAvatar from "../flows/TriggerAvatar.vue"
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";

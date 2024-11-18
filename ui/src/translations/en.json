@@ -730,7 +730,8 @@
             "default_namespace": "Default Namespace",
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
-            "execute_flow": "Execute the Flow"
+            "execute_flow": "Execute the Flow",
+            "execute_default_tab": "Default Execution Tab"
           }
         },
         "theme": {
@@ -868,6 +869,12 @@
       "empty": {
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      },
+      "close": {
+        "tab": "Close tab",
+        "all": "Close all tabs",
+        "other": "Close other tabs",
+        "right": "Close to the right"
       }
     },
     "curl": {
@@ -894,7 +901,8 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "warning": "Warning",
+    "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
@@ -933,7 +941,7 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "Looks like there's nothing here… yet! Adjust your filters, or give it another go!",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
     "filters": {
       "label": "Choose filters",
@@ -944,6 +952,8 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
         "text": "text"
       },
       "comparators": {
@@ -952,7 +962,10 @@
         "is_not": "is not",
         "is_not_one_off": "is not one of",
         "contains": "contains",
-        "not_contains": "not_contains"
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
       },
       "recent": {
         "label": "Recent searches",
@@ -960,6 +973,7 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -967,9 +981,15 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
+      "settings": {
+        "show_chart": "Show main chart"
+      },
       "labels": {
         "placeholder": "Type label as 'key:value'"
       }
-    }
+    },
+    "item": "item",
+    "items": "items",
+    "cron": "Cron"
   }
 }

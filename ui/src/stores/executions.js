@@ -215,10 +215,10 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})
         },
         followExecution(_, options) {
-            return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`, {withCredentials: true});
         },
         followLogs(_, options) {
-            return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`, {withCredentials: true});
         },
         loadLogs({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
@@ -275,7 +275,8 @@ export default {
                     }
                 }
 
-                commit("setFilePreview", data)
+                commit("setFilePreview", data);
+                return data;
             })
         },
         setLabels(_, options) {

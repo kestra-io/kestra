@@ -1,7 +1,7 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.validations.TimeSLAValidation;
+import io.kestra.core.validations.TimeWindowValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -13,8 +13,8 @@ import java.time.LocalTime;
 
 @Getter
 @Builder
-@TimeSLAValidation
-public class TimeSLA {
+@TimeWindowValidation
+public class TimeWindow {
     @Schema(
         title = "The type of the SLA",
         description = "The default SLA is a sliding window (`DURATION_WINDOW`) with a window of 24 hours."
@@ -22,7 +22,7 @@ public class TimeSLA {
     @NotNull
     @Builder.Default
     @PluginProperty
-    private TimeSLA.Type type = TimeSLA.Type.DURATION_WINDOW;
+    private TimeWindow.Type type = TimeWindow.Type.DURATION_WINDOW;
 
     @Schema(
         title = "SLA daily deadline",

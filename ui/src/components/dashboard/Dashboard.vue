@@ -480,7 +480,7 @@ $spacing: 20px;
 
 .filters,
 .dashboard {
-    padding: $spacing;
+    padding: 0 32px;
 
     & .el-row {
         width: 100%;
@@ -510,7 +510,12 @@ $spacing: 20px;
     }
 }
 
+.dashboard {
+    margin: 24px 0;
+}
+
 .filters {
+    margin: 24px 0 0 0;
     padding-bottom: 0;
 
     & .el-row {

@@ -41,6 +41,9 @@ public class Extension extends AbstractExtension {
     @Nullable
     private RenderOnceFunction renderOnceFunction;
 
+    @Inject
+    private FileSizeFunction fileSizeFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -93,6 +96,9 @@ public class Extension extends AbstractExtension {
         filters.put("endsWith", new EndsWithFilter());
         filters.put("values", new ValuesFilter());
         filters.put("toIon", new ToIonFilter());
+        filters.put("sha1", new Sha1Filter());
+        filters.put("sha512", new Sha512Filter());
+        filters.put("md5", new Md5Filter());
         return filters;
     }
 
@@ -128,7 +134,7 @@ public class Extension extends AbstractExtension {
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new PrintContextFunction());
         functions.put("fromIon", new FromIonFunction());
-
+        functions.put("fileSize", fileSizeFunction);
         return functions;
     }
 

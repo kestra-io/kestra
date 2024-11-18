@@ -17,12 +17,15 @@
             </el-table>
         </template>
 
-        <el-empty v-else :description="$t('no_data')" />
+        <NoData v-else />
     </div>
 </template>
 
 <script>
+    import NoData from "./NoData.vue";
+
     export default {
+        components: {NoData},
         data() {
             return {
                 hasSelection: false
@@ -34,7 +37,10 @@
                 this.$emit("selection-change", selection);
             },
             computeHeaderSize() {
-                const tableElement = this.$refs.table.$el;
+                const tableElement = this.$refs.table?.$el;
+
+                if(!tableElement) return;
+
                 this.$el.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
                 this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
             }

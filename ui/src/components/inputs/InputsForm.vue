@@ -28,23 +28,23 @@
                     :key="item"
                     :label="item"
                     :value="item"
-                  >
-                    {{ item }}
-                  </el-option>
+                    >
+                {{ item }}
+                </el-option>
                 </el-select>
-                <el-radio-group
+            <el-radio-group
                   v-if="input.type === 'ENUM'"
-                  :model-value="inputs[input.id]"
-                  @update:model-value="onChange"
-                  class="w-100"
+                :model-value="inputs[input.id]"
+                @update:model-value="onChange"
+                class="w-100"
                 >
-                  <el-radio
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                  >
+                <el-radio
+                v-for="item in input.values"
+                :key="item"
+                :label="item"
+                >
                     {{ item }}
-                  </el-radio>
+                </el-radio>
                 </el-radio-group>
             <el-select
                 :full-height="false"

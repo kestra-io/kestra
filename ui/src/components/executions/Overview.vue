@@ -1,13 +1,13 @@
 <template>
     <div v-if="execution" class="execution-overview">
-        <div v-if="execution.error" class="error-container">
-            <div class="error-header" @click="isExpanded = !isExpanded">
+        <div v-if="isFailed()" class="error-container">
+            <div class="error-header" @click="fetchErrorLogs()">
                 <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-                <span class="error-message">{{ execution.error.message }}</span>
+                <span class="error-message">{{ $t('execution failed') }}</span>
                 <span class="toggle-icon">
                     <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
                         <path d="M18 15l-6-6-6 6" />
@@ -18,8 +18,8 @@
                 </span>
             </div>
             <div v-if="isExpanded" class="error-stack">
-                <div v-for="(line, index) in execution.error.stacktrace?.split('\n')" :key="index" class="stack-line">
-                    {{ line }}
+                <div v-for="log in logs" :key="log" class="stack-line">
+                    <span v-if="log.taskId"><span class="fw-bold">{{ $t("task id") }}</span>: {{ log.taskId }} - </span> <span v-if="log.taskRunId"><span class="fw-bold">{{ $t("task run id") }}</span>: {{ log.taskRunId }} - </span> {{ log.message }}
                 </div>
             </div>
         </div>
@@ -184,6 +184,18 @@
                 } else {
                     return this.execution.state.histories[this.execution.state.histories.length - 1].date;
                 }
+            },
+            isFailed() {
+                return State.isFailed(this.execution.state.current);
+            },
+            fetchErrorLogs() {
+                this.isExpanded = !this.isExpanded;
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId: this.execution.id,
+                    params: {
+                        minLevel: "ERROR"
+                    }
+                })
             }
         },
         watch: {
@@ -202,7 +214,7 @@
             };
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapState("execution", ["flow", "execution", "logs"]),
             items() {
                 if (!this.execution) {
                     return []

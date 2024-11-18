@@ -994,6 +994,8 @@
     },
     "item": "item",
     "items": "items",
-    "cron": "Cron"
+    "cron": "Cron",
+    "execution failed": "The execution failed, click here for more details.",
+    "task run id": "TaskRun ID"
   }
 }

@@ -16,6 +16,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -117,6 +118,7 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(5));
     }
 
+    @Disabled //FIXME enable it when we have the new errorLogs() Pebble function
     @Test
     void errors() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

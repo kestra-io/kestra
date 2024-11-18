@@ -396,7 +396,7 @@ public class ExecutorService {
                     e
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                newExecution = newExecution.withState(State.Type.FAILED).withError(ExecutionError.from(e));
+                newExecution = newExecution.withState(State.Type.FAILED);
             }
         }
 

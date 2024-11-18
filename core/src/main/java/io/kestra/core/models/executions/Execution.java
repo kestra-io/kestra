@@ -105,10 +105,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     Instant scheduleDate;
 
-    @With
-    @Nullable
-    ExecutionError error;
-
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -200,8 +196,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
@@ -225,8 +220,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
@@ -260,8 +254,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            taskRun.getError() != null ? taskRun.getError() : this.error
+            this.scheduleDate
         );
     }
 
@@ -283,8 +276,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
@@ -663,7 +655,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()).withError(ExecutionError.from(e)),
+                        this.withTaskRun(t.getTaskRun()),
                         t.getLogs()
                     );
                 } catch (InternalException ex) {
@@ -671,7 +663,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 }
             })
             .orElseGet(() -> new FailedExecutionWithLog(
-                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED).withError(ExecutionError.from(e)) : this.withError(ExecutionError.from(e)),
+                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
                     RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
                 )
             );

@@ -105,9 +105,9 @@
                 :allow-create="input.allowCustomValue"
                 filterable
             >
-            <el-option v-for="item in input.values" :key="item" :label="item" :value="item">
-                {{ item }}
-            </el-option>
+                <el-option v-for="item in input.values" :key="item" :label="item" :value="item">
+                    {{ item }}
+                </el-option>
             </el-select>
             <el-radio-group
                 :data-test-id="`input-form-${input.id}`"

@@ -2,10 +2,13 @@
     import {computed, ref, watch, type Ref} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
+    import ContextNews from "./layout/ContextNews.vue"
 
+    import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import FileDocument from "vue-material-design-icons/FileDocument.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import Github from "vue-material-design-icons/Github.vue"
+    import Calendar from "vue-material-design-icons/Calendar.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
@@ -75,6 +78,9 @@
 <template>
     <div class="barWrapper">
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
+        <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => setActiveTab('news')">
+            <MessageOutline class="buttonIcon" />News
+        </button>
         <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => setActiveTab('docs')">
             <FileDocument class="buttonIcon" />Docs
         </button>
@@ -84,6 +90,9 @@
         <a href="https://github.com/kestra-io/kestra/issues/new/choose" target="_blank" class="barButton">
             <Github class="buttonIcon" />Open an Issue<OpenInNew class="openIcon" />
         </a>
+        <a href="https://kestra.io/demo" class="barButton">
+            <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
+        </a>
         <div style="flex:1" />
         <span class="versionNumber">{{ configs?.version }}</span>
     </div>
@@ -92,6 +101,7 @@
             <Close />
         </button>
         <ContextDocs v-if="activeTab === 'docs'" @update:doc-path="scrollToTop" />
+        <ContextNews v-else-if="activeTab === 'news'" />
         <template v-else>
             {{ activeTab }}
         </template>
@@ -140,6 +150,7 @@
     width: 32px;
     display: block;
     line-height: normal;
+    white-space: nowrap;
 }
 
 .barWrapper .barButton:hover{

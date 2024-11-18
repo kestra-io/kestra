@@ -16,36 +16,36 @@
                 @update:model-value="onChange"
                 @confirm="onSubmit"
             />
-           <el-select
-             v-if="input.type === 'SELECT'"
-             :model-value="inputs[input.id]"
-             @update:model-value="onChange"
-             :allow-create="input.allowCustomValue"
-             filterable
-           >
-             <el-option
-               v-for="item in input.values"
-               :key="item"
-               :label="item"
-               :value="item"
-             >
-               {{ item }}
-             </el-option>
-           </el-select>
-           <el-radio-group
-             v-if="input.type === 'ENUM'"
-             :model-value="inputs[input.id]"
-             @update:model-value="onChange"
-             class="w-100"
-           >
-             <el-radio
-               v-for="item in input.values"
-               :key="item"
-               :label="item"
-             >
-               {{ item }}
-             </el-radio>
-           </el-radio-group>
+            <el-select
+            v-if="input.type === 'SELECT'"
+                :model-value="inputs[input.id]"
+                @update:model-value="onChange"
+                :allow-create="input.allowCustomValue"
+                filterable
+                >
+            <el-option
+                v-for="item in input.values"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                  >
+                    {{ item }}
+                  </el-option>
+                </el-select>
+                <el-radio-group
+                  v-if="input.type === 'ENUM'"
+                  :model-value="inputs[input.id]"
+                  @update:model-value="onChange"
+                  class="w-100"
+                >
+                  <el-radio
+                    v-for="item in input.values"
+                    :key="item"
+                    :label="item"
+                  >
+                    {{ item }}
+                  </el-radio>
+                </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"

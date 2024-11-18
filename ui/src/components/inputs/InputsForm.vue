@@ -97,18 +97,18 @@
             >
                 <el-radio-button v-for="item in input.values" :key="item" :label="item" :value="item" />
             </el-radio-group>
-                <el-select
-                    v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.values.length > 3"
-                    :data-test-id="`input-form-${input.id}`"
-                    v-model="inputs[input.id]"
-                    @update:model-value="onChange"
-                    :allow-create="input.allowCustomValue"
-                    filterable
-                >
-                    <el-option v-for="item in input.values" :key="item" :label="item" :value="item">
-                        {{ item }}
-                    </el-option>
-                </el-select>
+            <el-select
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.values.length > 3"
+                :data-test-id="`input-form-${input.id}`"
+                v-model="inputs[input.id]"
+                @update:model-value="onChange"
+                :allow-create="input.allowCustomValue"
+                filterable
+            >
+            <el-option v-for="item in input.values" :key="item" :label="item" :value="item">
+                {{ item }}
+            </el-option>
+            </el-select>
             <el-radio-group
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"

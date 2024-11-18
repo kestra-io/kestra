@@ -989,6 +989,7 @@
       }
     },
     "item": "item",
-    "items": "items"
+    "items": "items",
+    "cron": "Cron"
   }
 }

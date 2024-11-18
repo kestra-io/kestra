@@ -109,7 +109,7 @@ public class ConditionService {
         );
 
         try {
-            return preconditions == null || preconditions.test(conditionContext);
+            return preconditions == null || preconditions.getConditions() == null || preconditions.test(conditionContext);
         } catch (Exception e) {
             logException(flow, preconditions, conditionContext, e);
 

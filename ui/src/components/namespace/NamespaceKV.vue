@@ -6,7 +6,6 @@
                 :placeholder="$t('search')"
                 :prefix-icon="Magnify"
                 clearable
-                class="w-100"
             /> 
         </div>
     </div>

@@ -18,11 +18,13 @@
             </div>
         </div>
         <Bar
+            v-if="total > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
             class="tall"
         />
+        <NoData v-else />
     </div>
 </template>
 
@@ -36,6 +38,8 @@
 
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 

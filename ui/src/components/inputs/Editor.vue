@@ -117,9 +117,10 @@
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
             themeComputed() {
-                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
-
-                return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs"))
+                const savedEditorTheme = localStorage.getItem("editorTheme");
+                return savedEditorTheme === "syncWithSystem"
+                    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    : (savedEditorTheme === "light" ? "light" : "dark");
             },
             containerClass() {
                 return [
@@ -432,16 +433,8 @@
         height: 100%;
     }
 
-    .el-drawer__body .ks-editor {
-        flex: 1;
-    }
-
-    .el-dialog__body .ks-editor {
+    .el-form .ks-editor {
         display: flex;
-        width: 100%;
-    }
-
-    .el-dialog__body .el-form {
         width: 100%;
     }
 

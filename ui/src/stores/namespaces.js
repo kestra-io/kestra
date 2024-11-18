@@ -169,6 +169,7 @@ export default {
                 .get(`${apiUrl(this)}/${options.dataType}s/distinct-namespaces`)
                 .then((response) => {
                     commit("setDatatypeNamespaces", response.data);
+                    return response.data;
                 });
         }
     },

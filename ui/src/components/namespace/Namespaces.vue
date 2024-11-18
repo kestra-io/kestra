@@ -24,14 +24,14 @@
             v-for="(namespace, index) in hierarchy(namespaces)"
             :key="index"
             :span="24"
-            class="my-1 py-2 px-4 namespaces"
+            class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
-                            <VectorIntersection class="me-2 icon" />
+                            <DotsSquare class="me-2 icon" />
                             <span class="pe-3">{{ namespaceLabel(data.label) }}</span>
                             <span v-if="data.system" class="system">{{ $t("system_namespace") }}</span>
                         </div>
@@ -60,7 +60,7 @@
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import VectorIntersection from "vue-material-design-icons/VectorIntersection.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
 
     const store = useStore();
@@ -164,7 +164,6 @@ $system: #5BB8FF;
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--bs-border-color);
-    background: var(--bs-body-bg);
 
     &.system {
         border-color: $system;
@@ -182,10 +181,22 @@ $system: #5BB8FF;
         --el-tree-node-hover-bg-color: transparent;
     }
 
+    .rounded-full {
+        border-radius: var(--bs-border-radius-lg);
+    }
+
     .el-tree-node__content {
         height: 2.25rem;
         overflow: hidden;
-        background: var(--bs-body-bg);
+        background: transparent;
+
+        &:hover {
+            background: var(--bs-body-bg);
+            color: $active;
+        }
+        .el-tree-node__expand-icon {
+            display: none;
+        }
 
         .icon {
             color: $active;
@@ -197,6 +208,7 @@ $system: #5BB8FF;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        padding: 0 1rem;
         color: var(--el-text-color-regular);
 
         &.system {
@@ -204,7 +216,8 @@ $system: #5BB8FF;
         }
 
         &:hover {
-            background: var(--bs-body-bg);
+            background: transparent;
+            color: $active;
         }
 
         & .system {

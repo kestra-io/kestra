@@ -12,6 +12,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 @confirm="onSubmit"
@@ -21,6 +22,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 :allow-create="input.allowCustomValue"
@@ -40,6 +42,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="multiSelectInputs[input.id]"
                 @update:model-value="onMultiSelectChange(input.id, $event)"
                 multiple
@@ -58,12 +61,14 @@
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 show-password
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
+                    :data-test-id="`input-form-${input.id}`"
                     v-model="inputs[input.id]"
                     @update:model-value="onChange"
                     :min="input.min"
@@ -74,6 +79,7 @@
             </span>
             <span v-if="input.type === 'FLOAT'">
                 <el-input-number
+                    :data-test-id="`input-form-${input.id}`"
                     v-model="inputs[input.id]"
                     @update:model-value="onChange"
                     :min="input.min"
@@ -83,6 +89,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <el-radio-group
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
@@ -129,18 +136,21 @@
             </el-select>
 
             <el-date-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 type="datetime"
             />
             <el-date-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
                 type="date"
             />
             <el-time-picker
+                :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
@@ -149,6 +159,7 @@
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
                 <div class="el-input__wrapper">
                     <input
+                        :data-test-id="`input-form-${input.id}`"
                         :id="input.id+'-file'"
                         class="el-input__inner"
                         type="file"
@@ -167,6 +178,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
+                :data-test-id="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputs[input.id]"
             />
@@ -175,16 +187,18 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
+                :data-test-id="`input-form-${input.id}`"
                 lang="yaml"
                 :model-value="inputs[input.id]"
                 @change="onYamlChange(input, $event)"
             />
             <duration-picker
                 v-if="input.type === 'DURATION'"
+                :data-test-id="`input-form-${input.id}`"
                 v-model="inputs[input.id]"
                 @update:model-value="onChange"
             />
-            <markdown v-if="input.description" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" :data-test-id="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -193,12 +207,16 @@
                 </template>
             </template>
         </el-form-item>
+        <ValidationError :errors="inputErrors" />
     </template>
+
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-
+<script setup>
+    import ValidationError from "../flows/ValidationError.vue";
+</script>
 <script>
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -214,6 +232,11 @@
             YamlUtils() {
                 return YamlUtils
             },
+            inputErrors() {
+                return this.inputsList.filter(it => it.errors && it.errors.length > 0).length > 0 ?
+                    this.inputsList.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
+                    null
+            }
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -246,7 +269,7 @@
                 multiSelectInputs: {},
             };
         },
-        emits: ["update:modelValue", "confirm"],
+        emits: ["update:modelValue", "confirm", "validation"],
         created() {
             this.inputsList.push(...(this.initialInputs ?? []));
             this.validateInputs();
@@ -327,6 +350,7 @@
                 }
 
                 const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
                     this.$store.dispatch("execution/validateExecution", {...options, formData})
@@ -336,17 +360,25 @@
                             });
                             this.updateDefaults();
                         });
-
-                    return;
-                }
-
-                if (this.execution !== undefined) {
+                } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
                     this.$store.dispatch("execution/validateResume", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         });
+                } else {
+                    this.$emit("validation", {
+                        formData: formData,
+                        callback: (response) => {
+                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
+                            this.updateDefaults();
+                        }
+                    });
                 }
             }
         },

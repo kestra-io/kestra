@@ -193,7 +193,7 @@
                 fullscreen: false,
                 followed: false,
                 shownAttemptsUid: [],
-                logs: [],
+                rawLogs: [],
                 timer: undefined,
                 timeout: undefined,
                 selectedAttemptNumberByTaskRunId: {},
@@ -218,7 +218,7 @@
                 this.$emit("opened-taskruns-count", openedTaskrunsCount);
             },
             level: function () {
-                this.logs = [];
+                this.rawLogs = [];
                 this.loadLogs(this.followedExecution.id);
             },
             execution: function () {
@@ -261,7 +261,8 @@
                         this.$nextTick(() => {
                             const parentScroller = this.$refs.taskRunScroller?.$el?.parentNode?.closest(".vue-recycle-scroller");
                             if (parentScroller) {
-                                this.$refs.taskRunScroller.$el.style.maxHeight = `${parentScroller.computedStyleMap().get("max-height").value - parentScroller.clientHeight}px`;
+                                const scrollerStyles = window.getComputedStyle(parentScroller);
+                                this.$refs.taskRunScroller.$el.style.maxHeight = `${scrollerStyles.getPropertyValue("max-height") - parentScroller.clientHeight}px`;
                             }
                         })
                     }
@@ -404,7 +405,7 @@
                 return LogUtils.levelOrLower(this.level);
             },
             filteredLogs() {
-                return this.logs.filter(log => this.levelOrLower.includes(log.level));
+                return this.rawLogs.filter(log => this.levelOrLower.includes(log.level));
             }
         },
         methods: {
@@ -496,7 +497,7 @@
                             clearTimeout(this.timeout);
                             this.timeout = setTimeout(() => {
                                 this.timer = moment()
-                                this.logs = this.logs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }, 100);
@@ -505,7 +506,7 @@
                             if (moment().diff(this.timer, "seconds") > 0.5) {
                                 clearTimeout(this.timeout);
                                 this.timer = moment()
-                                this.logs = this.logs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }
@@ -576,14 +577,14 @@
                 if (!this.showLogs) {
                     return;
                 }
+
                 this.$store.dispatch("execution/loadLogs", {
                     executionId,
                     params: {
                         minLevel: this.level
-                    },
-                    store: false
+                    }
                 }).then(logs => {
-                    this.logs = logs
+                    this.rawLogs = logs
                 });
             },
             attempts(taskRun) {

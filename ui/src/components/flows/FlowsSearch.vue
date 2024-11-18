@@ -24,12 +24,6 @@
                 </template>
 
                 <template #table>
-                    <div v-if="search === undefined || search.length === 0">
-                        <el-alert type="info" class="mb-3" :closable="false">
-                            {{ $t('empty search') }}
-                        </el-alert>
-                    </div>
-
                     <template v-for="(item, i) in search" :key="`card-${i}`">
                         <el-card class="mb-2" shadow="never">
                             <template #header>
@@ -44,6 +38,8 @@
                             </template>
                         </el-card>
                     </template>
+
+                    <NoData v-if="search === undefined || search.length === 0" />
                 </template>
             </data-table>
         </div>
@@ -58,6 +54,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
+    import NoData from "../layout/NoData.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";
     import TopNavBar from "../layout/TopNavBar.vue";
@@ -68,7 +65,8 @@
             NamespaceSelect,
             DataTable,
             SearchField,
-            TopNavBar
+            TopNavBar,
+            NoData
         },
         data() {
             return {

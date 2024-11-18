@@ -18,10 +18,15 @@ icon: {{ icon }}
 </h1>
 
 {% if deprecated %}
+    {%- if replacement -%}
+::alert{type="info"}
+🛈 This feature has been moved to a new location, please use `{{ replacement }}` instead.
+::
+    {%- else -%}
 ::alert{type="warning"}
 ⚠ This feature is deprecated and will be removed in the future. We encourage you to migrate to the new plugin, but you can still use the deprecated version.
-{% if replacement %}Please use `{{ replacement }}` instead. {%- endif %}
 ::
+    {%- endif -%}
 {%- endif %}
 
 {% if beta %}

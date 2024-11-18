@@ -58,6 +58,9 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>About this blueprint</h4>
+                    <div v-if="tagsToString.length" class="tags text-uppercase">
+                        <p> {{ tagsToString }} </p>
+                    </div>
                     <markdown :source="blueprint.description" />
                 </template>
             </el-col>
@@ -165,6 +168,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["icons"]),
+            tagsToString() {
+                return this.blueprint?.tags?.join(" ") ?? "";
+            },
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
@@ -271,4 +277,11 @@
             }
         }
     }
+    
+    .tags {
+        color: #9ca1de;
+        font-family: Source Code Pro, monospace;
+        font-size: 1.375rem;
+        font-weight: 700;
+    } 
 </style>

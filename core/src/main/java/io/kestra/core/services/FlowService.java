@@ -11,7 +11,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -54,7 +54,7 @@ public class FlowService {
     Optional<FlowRepositoryInterface> flowRepository;
 
     @Inject
-    YamlFlowParser yamlFlowParser;
+    YamlParser yamlParser;
 
     @Inject
     PluginDefaultService pluginDefaultService;
@@ -71,7 +71,7 @@ public class FlowService {
             throw noRepositoryException();
         }
 
-        FlowWithSource withTenant = yamlFlowParser.parse(source, Flow.class).toBuilder()
+        FlowWithSource withTenant = yamlParser.parse(source, Flow.class).toBuilder()
             .tenantId(tenantId)
             .build()
             .withSource(source);
@@ -318,6 +318,24 @@ public class FlowService {
         }
 
         return source;
+    }
+
+    // Used in Git plugin
+    public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
+    }
+
+    // Used in Git plugin
+    public FlowWithSource delete(FlowWithSource flow) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().delete(flow);
     }
 
     @SneakyThrows

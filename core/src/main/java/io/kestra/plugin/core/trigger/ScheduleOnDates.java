@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -10,6 +9,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -83,7 +83,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
                 this,
                 conditionContext,
                 triggerContext,
-                generateLabels(runContext, conditionContext),
+                LabelService.fromTrigger(runContext, conditionContext.getFlow(), this),
                 this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
                 nextDate
@@ -102,7 +102,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             .map(throwFunction(context -> nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
                 .orElse(ZonedDateTime.now().plusYears(1) // it's not ideal, but we need a date or the trigger will keep evaluated
             )))
-            .orElse(dates.asList(conditionContext.getRunContext(), ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
+            .orElse(conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
             .truncatedTo(ChronoUnit.SECONDS);
     }
 
@@ -116,7 +116,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException {
         // the previous date is "the previous date of the next date"
         ZonedDateTime now = ZonedDateTime.now();
-        List<ZonedDateTime> previousDates = dates.asList(conditionContext.getRunContext(), ZonedDateTime.class).stream()
+        List<ZonedDateTime> previousDates = conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream()
             .sorted()
             .takeWhile(date -> date.isBefore(now))
             .toList()
@@ -126,29 +126,10 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> filter) throws IllegalVariableEvaluationException {
-        return dates.asList(runContext, ZonedDateTime.class).stream().sorted()
+        return runContext.render(dates).asList(ZonedDateTime.class).stream().sorted()
             .filter(date -> filter.test(date))
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
-    }
-
-    private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext) throws IllegalVariableEvaluationException {
-        List<Label> labels = new ArrayList<>();
-
-        if (conditionContext.getFlow().getLabels() != null) {
-            labels.addAll(conditionContext.getFlow().getLabels()); // no need for rendering
-        }
-
-        if (this.getLabels() != null) {
-            for (Label label : this.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        return labels;
     }
 }

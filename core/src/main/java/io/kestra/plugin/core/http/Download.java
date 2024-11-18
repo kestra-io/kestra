@@ -21,6 +21,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -128,6 +130,9 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                 String contentDisposition = builder.headers.get("Content-Disposition").getFirst();
                 filename = filenameFromHeader(runContext, contentDisposition);
             }
+            if (filename != null) {
+                filename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
+            }
 
             builder.uri(runContext.storage().putFile(tempFile, filename));
 
@@ -145,7 +150,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             String filename = null;
             for (String part : parts) {
                 if (part.startsWith("filename")) {
-                    filename = part.substring(part.lastIndexOf('=') + 2, part.length() - 1);
+                    filename = part.substring(part.lastIndexOf('=') + 1);
                 }
                 if (part.startsWith("filename*")) {
                     // following https://datatracker.ietf.org/doc/html/rfc5987 the filename* should be <ENCODING>'(lang)'<filename>

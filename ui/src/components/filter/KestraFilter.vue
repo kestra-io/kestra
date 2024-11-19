@@ -225,6 +225,14 @@
         },
     ];
 
+    const levelOptions = [
+        {label: "TRACE", value: "TRACE"},
+        {label: "DEBUG", value: "DEBUG"},
+        {label: "INFO", value: "INFO"},
+        {label: "WARN", value: "WARN"},
+        {label: "ERROR", value: "ERROR"},
+    ];
+
     const relativeDateOptions = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
         {label: t("datepicker.last15minutes"), value: "PT15M"},
@@ -260,6 +268,9 @@
 
         case "child":
             return childOptions;
+
+        case "level":
+            return levelOptions;
 
         case "relative_date":
             return relativeDateOptions;

@@ -976,6 +976,8 @@
     "items": "itens",
     "newsTitle": "Novidades no Kestra",
     "warning": "Aviso",
-    "cron": "Cron"
+    "cron": "Cron",
+    "showMore": "Mostrar mais",
+    "showLess": "Mostrar menos"
   }
 }

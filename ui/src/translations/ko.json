@@ -976,6 +976,8 @@
     "items": "항목",
     "newsTitle": "Kestra의 새로운 기능",
     "warning": "경고",
-    "cron": "크론"
+    "cron": "크론",
+    "showMore": "더 보기",
+    "showLess": "덜 보기"
   }
 }

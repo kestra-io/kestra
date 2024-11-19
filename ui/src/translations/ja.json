@@ -976,6 +976,8 @@
     "items": "アイテム",
     "newsTitle": "Kestra の新機能",
     "warning": "警告",
-    "cron": "Cron（クーロン）"
+    "cron": "Cron（クーロン）",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす"
   }
 }

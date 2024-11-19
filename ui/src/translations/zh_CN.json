@@ -976,6 +976,8 @@
     "items": "项目",
     "newsTitle": "Kestra 的新功能是什么",
     "warning": "警告",
-    "cron": "定时任务"
+    "cron": "定时任务",
+    "showMore": "显示更多",
+    "showLess": "显示较少"
   }
 }

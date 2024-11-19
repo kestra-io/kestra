@@ -47,7 +47,7 @@
         watchThrottled(x, () => {
             if(resizing.value){
                 const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
-                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth / 2)
+                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth * .5)
             }
         }, {throttle:20})
 
@@ -90,7 +90,7 @@
         <a href="https://github.com/kestra-io/kestra/issues/new/choose" target="_blank" class="barButton">
             <Github class="buttonIcon" />Open an Issue<OpenInNew class="openIcon" />
         </a>
-        <a href="https://kestra.io/demo" class="barButton">
+        <a href="https://kestra.io/demo" target="_blank" class="barButton">
             <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
         </a>
         <div style="flex:1" />

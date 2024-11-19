@@ -1,8 +1,7 @@
 <script setup>
-    import {computed} from "vue";
+    import {computed, toRef} from "vue";
     import {useStore} from "vuex";
-    import {baseUrl} from "override/utils/route";
-    import {normalizeDocsPath, isRemoteLink, normalizeRemoteHref} from "../content/utils";
+    import {useDocsLink} from "./useDocsLink";
 
     const store = useStore();
 
@@ -10,23 +9,26 @@
         href: {
             type: String,
             default: undefined
+        },
+        useRaw: {
+            type: Boolean,
+            default: false
         }
     });
 
-    const polishedHref = computed(() => {
-        return normalizeDocsPath(props.href);
-    })
+    const {href, isRemote} = useDocsLink(toRef(props.href), computed(() => (store.getters["doc/docPath"] ?? "")));
+    const finalHref = computed(() => props.useRaw ? `/${props.href}` : href.value);
 
     const navigateInVuex = () => {
-        store.commit("doc/setDocPath", polishedHref.value);
+        store.commit("doc/setDocPath", finalHref.value);
     };
 </script>
 
 <template>
-    <a v-if="isRemoteLink(props.href)" :href="normalizeRemoteHref(props.href)" target="_blank" rel="noopener noreferrer">
+    <a v-if="isRemote" :href="finalHref" target="_blank" rel="noopener noreferrer">
         <slot />
     </a>
-    <a v-else :href="`${baseUrl}/docs/${polishedHref}`" @click.prevent="navigateInVuex">
+    <a v-else :href="`/docs${finalHref}`" @click.prevent="navigateInVuex">
         <slot />
     </a>
 </template>

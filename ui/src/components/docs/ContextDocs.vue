@@ -44,7 +44,7 @@
     }, {immediate: true});
 
     async function refreshPage(val) {
-        const response = await store.dispatch("doc/fetchResource", `docs${val === undefined ? "" : `/${val}`}`);
+        const response = await store.dispatch("doc/fetchResource", `docs${val === undefined ? "" : val}`);
         await store.commit("doc/setPageMetadata", response.metadata);
         let content = response.content;
         if (!("canShare" in navigator)) {

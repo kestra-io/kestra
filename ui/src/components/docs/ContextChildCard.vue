@@ -21,7 +21,7 @@
         currentPage = store.getters["doc/docPath"];
     }
 
-    currentPage = `docs${currentPage.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}`;
+    currentPage = `docs/${currentPage.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}`;
 
     const resourcesWithMetadata = await store.dispatch("doc/children", currentPage);
 
@@ -50,6 +50,7 @@
             class="col"
             v-for="item in navigation"
             :key="item.path"
+            use-raw
         >
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center">

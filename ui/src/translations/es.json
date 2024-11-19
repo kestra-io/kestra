@@ -979,6 +979,8 @@
     "cron": "Cron",
     "showMore": "Mostrar más",
     "showLess": "Mostrar menos",
-    "documentationMenu": "Menú de documentación"
+    "documentationMenu": "Menú de documentación",
+    "task run id": "ID de TaskRun",
+    "execution failed": "La ejecución FAILED, haz clic aquí para más detalles."
   }
 }

@@ -4,7 +4,6 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.http.sse.Event;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -35,13 +34,14 @@ public class ExecutionLogService {
 
     public Flux<Event<LogEntry>> streamExecutionLogs(final String tenantId,
                                                      final String executionId,
-                                                     final Level minLevel) {
+                                                     final Level minLevel,
+                                                     final boolean withAccessControl) {
 
         final AtomicReference<Runnable> disposable = new AtomicReference<>();
 
         return Flux.<Event<LogEntry>>create(emitter -> {
                 // fetch repository first
-                getExecutionLogs(tenantId, executionId, minLevel, List.of())
+                getExecutionLogs(tenantId, executionId, minLevel, List.of(), withAccessControl)
                     .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
 
                 final List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(Enum::name).toList();
@@ -73,41 +73,65 @@ public class ExecutionLogService {
             });
     }
 
-    public InputStream getExecutionLogsAsStream(final String tenantId,
-                                                final String executionId,
-                                                final Level minLevel,
-                                                final String taskRunId,
-                                                final List<String> taskIds,
-                                                final Integer attempt) {
-        List<LogEntry> logs = getExecutionLogs(tenantId, executionId, minLevel, taskRunId, taskIds, attempt);
+    public InputStream getExecutionLogsAsStream(String tenantId,
+                                                String executionId,
+                                                Level minLevel,
+                                                String taskRunId,
+                                                List<String> taskIds,
+                                                Integer attempt,
+                                                boolean withAccessControl) {
+        List<LogEntry> logs = getExecutionLogs(tenantId, executionId, minLevel, taskRunId, taskIds, attempt, withAccessControl);
         return new ByteArrayInputStream(logs.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n")).getBytes());
     }
 
-    public List<LogEntry> getExecutionLogs(final String tenantId,
-                                           final String executionId,
-                                           final Level minLevel,
-                                           final String taskRunId,
-                                           final List<String> taskIds,
-                                           final Integer attempt) {
+    public List<LogEntry> getExecutionLogs(String tenantId,
+                                           String executionId,
+                                           Level minLevel,
+                                           String taskRunId,
+                                           List<String> taskIds,
+                                           Integer attempt,
+                                           boolean withAccessControl) {
+        // Get by Execution ID and TaskID.
         if (taskIds != null) {
-            return taskIds.size() == 1 ?
-                logRepository.findByExecutionIdAndTaskId(tenantId, executionId, taskIds.getFirst(), minLevel):
-                getExecutionLogs(tenantId, executionId, minLevel, taskIds).toList();
+            if (taskIds.size() == 1) {
+                return withAccessControl ?
+                    logRepository.findByExecutionIdAndTaskId(tenantId, executionId, taskIds.getFirst(), minLevel) :
+                    logRepository.findByExecutionIdAndTaskIdWithoutAcl(tenantId, executionId, taskIds.getFirst(), minLevel);
+            } else {
+                return getExecutionLogs(tenantId, executionId, minLevel, taskIds, withAccessControl).toList();
+            }
         }
 
+        // Get by Execution ID, TaskRunID, and attempt.
         if (taskRunId != null) {
-            return attempt != null ?
-                logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantId, executionId, taskRunId, minLevel, attempt) :
-                logRepository.findByExecutionIdAndTaskRunId(tenantId, executionId, taskRunId, minLevel);
+            if (attempt != null) {
+                return withAccessControl ?
+                    logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantId, executionId, taskRunId, minLevel, attempt) :
+                    logRepository.findByExecutionIdAndTaskRunIdAndAttemptWithoutAcl(tenantId, executionId, taskRunId, minLevel, attempt);
+            } else {
+                return withAccessControl ?
+                    logRepository.findByExecutionIdAndTaskRunId(tenantId, executionId, taskRunId, minLevel) :
+                    logRepository.findByExecutionIdAndTaskRunIdWithoutAcl(tenantId, executionId, taskRunId, minLevel);
+            }
         }
-        return logRepository.findByExecutionId(tenantId, executionId, minLevel);
+
+        // Get by Execution ID
+        return withAccessControl ?
+             logRepository.findByExecutionId(tenantId, executionId, minLevel) :
+             logRepository.findByExecutionIdWithoutAcl(tenantId, executionId, minLevel);
     }
 
     public Stream<LogEntry> getExecutionLogs(String tenantId,
                                              String executionId,
                                              Level minLevel,
-                                             List<String> taskIds) {
-        return logRepository.findByExecutionId(tenantId, executionId, minLevel)
+                                             List<String> taskIds,
+                                             boolean withAccessControl) {
+
+        List<LogEntry> results = withAccessControl ?
+            logRepository.findByExecutionId(tenantId, executionId, minLevel) :
+            logRepository.findByExecutionIdWithoutAcl(tenantId, executionId, minLevel);
+
+        return results
             .stream()
             .filter(data -> taskIds.isEmpty() || taskIds.contains(data.getTaskId()));
     }

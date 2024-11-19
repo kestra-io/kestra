@@ -152,22 +152,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                Select<Record1<Object>> from = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, allowDeleted))
-                    .and(field("key").eq(id));
-
-                return this.jdbcRepository.fetchOne(from);
-            });
+        return findById(tenantId, id, allowDeleted, true);
     }
 
     @Override
     public Optional<Execution> findByIdWithoutAcl(String tenantId, String id) {
+        return findById(tenantId, id, false, false);
+    }
+
+    public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted, boolean withAccessControl) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -175,16 +168,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.noAclDefaultFilter(tenantId, false))
+                    .where(withAccessControl ? this.defaultFilter(tenantId, allowDeleted) : this.defaultFilterWithNoACL(tenantId, allowDeleted))
                     .and(field("key").eq(id));
-
                 return this.jdbcRepository.fetchOne(from);
             });
-    }
-
-    protected Condition noAclDefaultFilter(String tenantId, boolean deleted) {
-        var tenant = buildTenantCondition(tenantId);
-        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);

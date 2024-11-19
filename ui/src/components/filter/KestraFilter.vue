@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex pb-3 global-filters">
+    <section class="d-inline-flex pb-3 filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -9,8 +9,7 @@
             allow-create
             filterable
             multiple
-            popper-class="global-filters-select"
-            :class="{charts: charts.shown}"
+            popper-class="filters-select"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -58,7 +57,7 @@
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings :charts />
+            <Settings v-if="settings.shown" :settings />
         </el-button-group>
     </section>
 </template>
@@ -96,15 +95,24 @@
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
         },
-        charts: {
+        settings: {
             type: Object,
-            default: () => ({shown: false, value: false, callback: () => {}}),
+            default: () => ({
+                shown: false,
+                charts: {shown: false, value: false, callback: () => {}},
+            }),
         },
     });
 
     import {useFilters, compare} from "./useFilters.js";
-    const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
-        useFilters(props.prefix);
+    const {
+        getRecentItems,
+        setRecentItems,
+        COMPARATORS,
+        OPTIONS,
+        encodeParams,
+        decodeParams,
+    } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const emptyLabel = ref(t("filters.empty"));
@@ -223,6 +231,14 @@
         },
     ];
 
+    const levelOptions = [
+        {label: "TRACE", value: "TRACE"},
+        {label: "DEBUG", value: "DEBUG"},
+        {label: "INFO", value: "INFO"},
+        {label: "WARN", value: "WARN"},
+        {label: "ERROR", value: "ERROR"},
+    ];
+
     const relativeDateOptions = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
         {label: t("datepicker.last15minutes"), value: "PT15M"},
@@ -258,6 +274,9 @@
 
         case "child":
             return childOptions;
+
+        case "level":
+            return levelOptions;
 
         case "relative_date":
             return relativeDateOptions;
@@ -315,7 +334,9 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => compare(i.value, current.value));
+            const r = getRecentItems().filter((i) =>
+                compare(i.value, current.value),
+            );
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -324,25 +345,25 @@
 
     // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
+
+    if (route.name === "flows/update" && route.params.namespace) {
+        current.value.push({
+            label: "namespace",
+            value: [route.params.namespace],
+            comparator: COMPARATORS.STARTS_WITH,
+            persistent: true,
+        });
+    }
 </script>
 
 <style lang="scss">
-.global-filters {
+.filters {
     width: -webkit-fill-available;
 
-    & .el-select {
-        // Combined width of buttons on the sides of select
-        width: calc(100% - 237px);
-
-        &.charts {
-            width: calc(100% - 285px);
-        }
-    }
-
-    & .el-select__placeholder  {
+    & .el-select__placeholder {
         color: var(--bs-gray-700);
     }
-    
+
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
@@ -388,7 +409,7 @@
     border-left-color: transparent;
 }
 
-.global-filters-select {
+.filters-select {
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;

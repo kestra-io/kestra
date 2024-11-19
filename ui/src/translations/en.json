@@ -952,6 +952,7 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "level": "Log level",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
         "text": "text"

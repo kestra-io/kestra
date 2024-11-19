@@ -16,7 +16,7 @@
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
             <template #label="{value}">
-                <span>{{ formatLabel(value) }} </span>
+                <Label :option="value" />
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -80,6 +80,7 @@
     import Refresh from "../layout/RefreshButton.vue";
 
     import History from "./components/history/History.vue";
+    import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
 
@@ -101,7 +102,7 @@
         },
     });
 
-    import {formatLabel, useFilters} from "./useFilters.js";
+    import {useFilters, compare} from "./useFilters.js";
     const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
         useFilters(props.prefix);
 
@@ -314,7 +315,7 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => i.value !== current.value);
+            const r = getRecentItems().filter((i) => compare(i.value, current.value));
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -338,6 +339,10 @@
         }
     }
 
+    & .el-select__placeholder  {
+        color: var(--bs-gray-700);
+    }
+    
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:

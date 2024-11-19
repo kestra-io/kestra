@@ -850,7 +850,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -974,6 +974,8 @@
     "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
     "item": "elemento",
     "items": "elementos",
-    "newsTitle": "Novedades en Kestra"
+    "newsTitle": "Novedades en Kestra",
+    "warning": "Advertencia",
+    "cron": "Cron"
   }
 }

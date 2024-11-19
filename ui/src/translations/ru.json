@@ -850,7 +850,7 @@
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
-    "trigger_check_warning": "Предупреждение: Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения '??', чтобы решить проблему. Например, вместо 'trigger.date' используйте 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(на namespace)",
       "id": "ID",
@@ -974,6 +974,8 @@
     "force run tooltip": "Принудительно запустить выполнение. Это может создать дублирующие выполнения задач, если возможно, используйте другое действие.",
     "item": "элемент",
     "items": "элементы",
-    "newsTitle": "Что нового в Kestra"
+    "newsTitle": "Что нового в Kestra",
+    "warning": "Предупреждение",
+    "cron": "Крон"
   }
 }

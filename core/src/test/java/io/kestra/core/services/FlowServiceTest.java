@@ -218,7 +218,7 @@ class FlowServiceTest {
 
         assertThat(warnings.size(), is(1));
         assertThat(warnings, containsInAnyOrder(
-            "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the conditions property to the Flow trigger."
+            "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'."
         ));
     }
 
@@ -236,8 +236,8 @@ class FlowServiceTest {
                 type: io.kestra.core.runners.test.TaskWithAlias
                 message: Hello, Task
               - id: each
-                type: io.kestra.plugin.core.flow.EachSequential
-                value:\s
+                type: io.kestra.plugin.core.flow.ForEach
+                values:\s
                   - 1
                   - 2
                   - 3

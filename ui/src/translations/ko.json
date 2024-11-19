@@ -850,7 +850,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: trigger 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
+    "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "dashboard": {
       "per_namespace": "(네임스페이스별)",
       "id": "ID",
@@ -974,6 +974,8 @@
     "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오.",
     "item": "항목",
     "items": "항목",
-    "newsTitle": "Kestra의 새로운 기능"
+    "newsTitle": "Kestra의 새로운 기능",
+    "warning": "경고",
+    "cron": "크론"
   }
 }

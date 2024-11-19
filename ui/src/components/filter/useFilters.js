@@ -8,22 +8,9 @@ const setItem = (key, value) => {
     return localStorage.setItem(key, JSON.stringify(value));
 };
 
-const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
+export const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
 const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
-};
-
-export const formatLabel = (option) => {
-    let {label, comparator, value} = option;
-
-    if (comparator?.label) label += `:${comparator.label}`;
-
-    if (value.length) {
-        if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
-        else label += `:${value[0]?.startDate}:and:${value[0]?.endDate}`;
-    }
-
-    return label;
 };
 
 export function useFilters(prefix) {
@@ -182,7 +169,7 @@ export function useFilters(prefix) {
         // Handle the date functionality by grouping startDate and endDate if they exist
         if (query.startDate && query.endDate) {
             params.push({
-                label: "absolute_date:between",
+                label: "absolute_date",
                 value: [{startDate: query.startDate, endDate: query.endDate}],
             });
         }

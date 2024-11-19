@@ -1,5 +1,8 @@
-id: flow-trigger-basic-flow-b
-namespace: io.kestra.tests.trigger.basic
+id: flow-trigger-preconditions-flow-a
+namespace: io.kestra.tests.trigger.preconditions
+
+labels:
+  some: label
 
 tasks:
   - id: only

@@ -51,11 +51,14 @@
 
 
 <script>
+    import {h} from "vue";
+
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
+    import FlowWarningDialog from "./FlowWarningDialog.vue";
 
     export default {
         components: {
@@ -111,12 +114,7 @@
                     return;
                 }
                 else if (this.checkForTrigger) {
-                    this.$toast().confirm(
-                        this.$t("trigger_check_warning"),
-                        () => {
-                            this.isOpen = !this.isOpen;
-                        },
-                        () => {});
+                    this.$toast().confirm(h(FlowWarningDialog), () => (this.isOpen = !this.isOpen), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;

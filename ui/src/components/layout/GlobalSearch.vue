@@ -1,7 +1,6 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
         <el-autocomplete
-            ref="search"
             class="flex-shrink-0"
             v-model="filter"
             @select="goTo"
@@ -31,69 +30,56 @@
     </div>
 </template>
 
-<script>
-    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+<script setup>
+    import {ref, computed, onMounted, onUnmounted} from "vue";
+    import {useRouter} from "vue-router";
+    import {useLeftMenu} from "override/components/useLeftMenu";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
-    import SearchField from "./SearchField.vue";
-    import LeftMenu from "override/components/LeftMenu.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
-    import {mapGetters, mapState} from "vuex";
 
-    export default {
-        components: {
-            GoogleCirclesExtended,
-            SearchField,
-            Magnify,
-            Keyboard,
-            ArrowRight
-        },
-        data() {
-            return {
-                filter: ""
-            }
-        },
-        methods: {
-            keyDown(e) {
-                if((e.ctrlKey || e.metaKey) && e.key === "k") {
-                    e.preventDefault();
-                    this.$refs.search.inputRef.input.click();
-                }
-            },
-            routeStartWith(route) {
-                return this.$router.getRoutes().filter(r => r.name.startsWith(route)).map(r => r.name);
-            },
-            search(query, cb) {
-                cb(this.navItems.filter(item => item.title.toLowerCase().includes(query.toLowerCase())));
-            },
-            goTo(item) {
-                this.$router.push(item.href);
-            }
-        },
-        mounted() {
-            window.addEventListener("keydown", this.keyDown);
+    const router = useRouter();
+    const {generateMenu} = useLeftMenu()
 
-        },
-        unmounted() {
-            window.removeEventListener("keydown", this.keyDown);
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapGetters("misc", ["configs"]),
-            navItems() {
-                return LeftMenu.methods.generateMenu.call(this).flatMap(item => {
-                    if(item.hidden) {
-                        return [];
-                    }
-                    if(item.child) {
-                        return item.child.filter(c => !c.hidden);
-                    }
+    const filter = ref("");
 
-                    return item;
-                });
+    const navItems = computed(() => {
+        return generateMenu().flatMap(item => {
+            if(item.hidden) {
+                return [];
             }
+            if(item.child) {
+                return item.child.filter(c => !c.hidden);
+            }
+
+            return item;
+        }).filter(item => item.href);
+    });
+
+    const keyDown = (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+            e.preventDefault();
+            searchInput.value.click();
         }
     };
+
+    const search = (query, cb) => {
+        cb(navItems.value.filter(item => item.title.toLowerCase().includes(query.toLowerCase())));
+    };
+
+    const goTo = (item) => {
+        router.push(item.href);
+    };
+
+    const searchInput = ref(null);
+
+    onMounted(() => {
+        window.addEventListener("keydown", keyDown);
+    });
+
+    onUnmounted(() => {
+        window.removeEventListener("keydown", keyDown);
+    });
 </script>
 
 <style lang="scss" scoped>

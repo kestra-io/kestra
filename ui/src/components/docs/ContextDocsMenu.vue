@@ -1,6 +1,9 @@
 <script setup>
     import {ref, computed, watch} from "vue";
     import {useStore} from "vuex";
+
+    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+
     import RecursiveToc from "./RecursiveToc.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
 
@@ -41,7 +44,7 @@
     const rawStructure = ref(undefined);
 
     watch(menuOpen, async (val) => {
-        if(!val){
+        if(!val || rawStructure.value !== undefined){
             return;
         }
         rawStructure.value = await store.dispatch("doc/children");
@@ -91,7 +94,7 @@
 <template>
     <div class="docsMenuWrapper">
         <el-button @click="menuOpen = !menuOpen" class="menuOpener">
-            Documentation menu
+            Documentation menu <MenuDown class="expandIcon" />
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
@@ -139,5 +142,9 @@
     .menuOpener{
         flex: 1;
         margin: var(--spacer);
+    }
+
+    .expandIcon{
+        margin-left: var(--spacer);
     }
 </style>

@@ -944,6 +944,8 @@
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
     "newsTitle": "What's new in Kestra",
+    "showLess": "Show less",
+    "showMore": "Show more",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",

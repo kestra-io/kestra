@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-    import {ref, computed, onMounted} from "vue";
+    import {ref, computed, onMounted, reactive} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
     import Markdown from "./Markdown.vue";
     import DateAgo from "./DateAgo.vue";
@@ -26,24 +27,45 @@
     onMounted(() => {
         hasUnread.value = isUnread();
     });
+
+    const expanded = reactive({});
 </script>
 
 <template>
     <div class="allContextNews">
         <h3>{{ t("newsTitle") }}</h3>
-        <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
-            <div v-if="feed.image" class="mt-2">
-                <img class="float-end" :src="feed.image" alt="">
+        <el-divider style="margin: var(--spacer) 0;" />
+        <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
+            <div v-if="feed.image" class="mr-2">
+                <img :src="feed.image" alt="">
             </div>
-            <h5>
-                {{ feed.title }}
-            </h5>
-            <date-ago class-name="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+            <div class="metaBlock">
+                <h5>
+                    {{ feed.title }}
+                </h5>
+                <date-ago class-name="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+            </div>
 
-            <markdown class="markdown-tooltip mt-3" :source="feed.description" />
+            <markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
 
-            <div class="d-flex w-100 justify-content-end">
-                <a class="el-button el-button--primary mt-3 " :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
+            <div class="newsButtonBar">
+                <el-button
+                    style="flex:1"
+                    @click="expanded[feed.id] = !expanded[feed.id]"
+                >
+                    <MenuDown class="expandIcon" />
+                    {{ expanded[feed.id] ? t("showLess") : t("showMore") }}
+                </el-button>
+                <el-button
+                    v-if="feed.href"
+                    :title="feed.link"
+                    tag="a"
+                    type="primary"
+                    target="_blank"
+                    :href="feed.href"
+                >
+                    <OpenInNew :title="feed.link" />
+                </el-button>
             </div>
 
             <el-divider v-if="index !== feeds.length - 1" />
@@ -58,15 +80,27 @@
 
     .post {
         h5 {
-            font-weight: bold;
+            font-weight: medium;
             margin-bottom: 0;
+            font-size: 17px;
+            line-height: 28px;
         }
 
         img {
-            max-height: 120px;
-            max-width: 240px;
-            padding-left: 20px;
-            padding-bottom: 20px;
+            max-height: 90px;
+            max-width: 180px;
+            margin-right: 20px;
+            float: left;
+            border-radius: 10px;
+        }
+
+        .metaBlock {
+            display: flex;
+            flex-direction: column;
+            vertical-align: middle;
+            justify-content: center;
+            gap: 4px;
+            min-height: 90px;
         }
 
         hr {
@@ -83,6 +117,48 @@
         a.el-button {
             font-weight: bold;
         }
+
+        .expandIcon {
+            margin-right:var(--spacer);
+        }
+    }
+
+    .expanded .expandIcon{
+        transform: rotate(180deg);
+    }
+
+    .lastPost{
+        .postParagraph {
+            -webkit-line-clamp: 6;
+            line-clamp: 6;
+        }
+
+        img {
+            display: block;
+            width: 100%;
+            float: none;
+            max-width: none;
+            max-height: none;
+            margin-bottom: var(--spacer)
+        }
+    }
+
+    .postParagraph {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        padding-bottom: 2px;
+        line-height: 24px;
+        .expanded & {
+            -webkit-line-clamp: unset;
+        }
+    }
+
+    .newsButtonBar {
+        display: flex;
+        margin-top: var(--spacer);
     }
 </style>
 

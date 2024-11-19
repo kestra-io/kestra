@@ -34,7 +34,6 @@ export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
     const pageMetadata = computed(() => store.getters["doc/pageMetadata"]);
     const isRemote = computed(() => isRemoteLink(hrefInput.value));
     const href = computed(() => {
-        console.log("isRemote", isRemote.value);
         if(isRemote.value) {
             return normalizeRemoteHref(hrefInput.value)
         }

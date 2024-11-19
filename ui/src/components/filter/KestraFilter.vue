@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex pb-3 global-filters">
+    <section class="d-inline-flex pb-3 filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -9,8 +9,7 @@
             allow-create
             filterable
             multiple
-            popper-class="global-filters-select"
-            :class="{charts: charts.shown}"
+            popper-class="filters-select"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -58,7 +57,7 @@
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings :charts />
+            <Settings v-if="settings.shown" :settings />
         </el-button-group>
     </section>
 </template>
@@ -96,9 +95,12 @@
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
         },
-        charts: {
+        settings: {
             type: Object,
-            default: () => ({shown: false, value: false, callback: () => {}}),
+            default: () => ({
+                shown: false,
+                charts: {shown: false, value: false, callback: () => {}},
+            }),
         },
     });
 
@@ -315,7 +317,9 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => compare(i.value, current.value));
+            const r = getRecentItems().filter((i) =>
+                compare(i.value, current.value),
+            );
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -327,22 +331,13 @@
 </script>
 
 <style lang="scss">
-.global-filters {
+.filters {
     width: -webkit-fill-available;
 
-    & .el-select {
-        // Combined width of buttons on the sides of select
-        width: calc(100% - 237px);
-
-        &.charts {
-            width: calc(100% - 285px);
-        }
-    }
-
-    & .el-select__placeholder  {
+    & .el-select__placeholder {
         color: var(--bs-gray-700);
     }
-    
+
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
@@ -388,7 +383,7 @@
     border-left-color: transparent;
 }
 
-.global-filters-select {
+.filters-select {
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;

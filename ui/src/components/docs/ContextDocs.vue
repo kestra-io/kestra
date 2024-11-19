@@ -9,6 +9,7 @@
     import DocsLayout from "./DocsLayout.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
     import ContextChildCard from "./ContextChildCard.vue";
+    import DocsMenu from "./ContextDocsMenu.vue";
 
     const parse = useMarkdownParser();
     const store = useStore();
@@ -55,17 +56,20 @@
 </script>
 
 <template>
-    <docs-layout>
-        <template #content>
-            <h1>{{ routeInfo.title }}</h1>
-            <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
-        </template>
-    </docs-layout>
+    <div class="docWrapper">
+        <docs-menu />
+        <docs-layout>
+            <template #content>
+                <h1>{{ routeInfo.title }}</h1>
+                <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+            </template>
+        </docs-layout>
+    </div>
 </template>
 
-<style lang="scss" setup>
+<style lang="scss" scoped>
 .docWrapper {
-    padding: 20px;
     overflow-y: auto;
+    height: 100vh;
 }
 </style>

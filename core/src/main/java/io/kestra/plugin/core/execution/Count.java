@@ -51,7 +51,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                         flowId: logs
                     startDate: "{{ now() | dateAdd(-1, 'DAYS') }}"
 
-                  - id: each_parallel
+                  - id: for_each
                     type: io.kestra.plugin.core.flow.ForEach
                     concurrencyLimit: 0
                     values: "{{ jq outputs.counts.results '. | select(. != null) | .[]' }}"

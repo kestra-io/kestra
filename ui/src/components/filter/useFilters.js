@@ -206,6 +206,7 @@ export function useFilters(prefix) {
             return setItem(keys.saved, filtered);
         },
 
+        COMPARATORS,
         OPTIONS,
         encodeParams,
         decodeParams,

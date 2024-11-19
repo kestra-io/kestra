@@ -105,8 +105,14 @@
     });
 
     import {useFilters, compare} from "./useFilters.js";
-    const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
-        useFilters(props.prefix);
+    const {
+        getRecentItems,
+        setRecentItems,
+        COMPARATORS,
+        OPTIONS,
+        encodeParams,
+        decodeParams,
+    } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const emptyLabel = ref(t("filters.empty"));
@@ -339,6 +345,15 @@
 
     // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
+
+    if (route.name === "flows/update" && route.params.namespace) {
+        current.value.push({
+            label: "namespace",
+            value: [route.params.namespace],
+            comparator: COMPARATORS.STARTS_WITH,
+            persistent: true,
+        });
+    }
 </script>
 
 <style lang="scss">

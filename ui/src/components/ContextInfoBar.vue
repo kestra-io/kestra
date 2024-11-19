@@ -97,14 +97,16 @@
         <span class="versionNumber">{{ configs?.version }}</span>
     </div>
     <div ref="panel" class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
-        <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
-            <Close />
-        </button>
-        <ContextDocs v-if="activeTab === 'docs'" @update:doc-path="scrollToTop" />
-        <ContextNews v-else-if="activeTab === 'news'" />
-        <template v-else>
-            {{ activeTab }}
-        </template>
+        <div :style="{overflow: 'hidden', width:`${panelWidth}px`}">
+            <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
+                <Close />
+            </button>
+            <ContextDocs v-if="activeTab === 'docs'" @update:doc-path="scrollToTop" />
+            <ContextNews v-else-if="activeTab === 'news'" />
+            <template v-else>
+                {{ activeTab }}
+            </template>
+        </div>
     </div>
 </template>
 

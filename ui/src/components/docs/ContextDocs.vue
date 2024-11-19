@@ -57,10 +57,13 @@
 
 <template>
     <div class="docWrapper">
+        <h2 class="docTitle">
+            {{ routeInfo.title }}
+        </h2>
+        <el-divider style="margin:0 var(--spacer);" />
         <docs-menu />
         <docs-layout>
             <template #content>
-                <h1>{{ routeInfo.title }}</h1>
                 <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
             </template>
         </docs-layout>
@@ -68,6 +71,11 @@
 </template>
 
 <style lang="scss" scoped>
+h2.docTitle {
+    font-size: 18px;
+    margin: var(--spacer);
+}
+
 .docWrapper {
     overflow-y: auto;
     height: 100vh;

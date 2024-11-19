@@ -19,7 +19,7 @@
                         </router-link>
                     </slot>
                 </template>
-                <recursive-toc :parent="child">
+                <recursive-toc :parent="child" :make-index-navigable="makeIndexNavigable">
                     <template #default="subChild">
                         <slot v-bind="subChild" />
                     </template>

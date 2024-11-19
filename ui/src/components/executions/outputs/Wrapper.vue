@@ -131,9 +131,9 @@
         if(!task) return "";
 
         const path = expandedValue.value;
-        if(!path) return `{{ outputs.${task} }}`
+        if(!path) return `{{ outputs['${task}'] }}`
 
-        return `{{ outputs.${path} }}`
+        return `{{ outputs['${path}'] }}`
     });
     const debugError = ref("");
     const debugStackTrace = ref("");

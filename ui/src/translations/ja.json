@@ -956,7 +956,8 @@
         "state": "状態",
         "child": "子",
         "absolute_date": "絶対日付",
-        "relative_date": "相対日付"
+        "relative_date": "相対日付",
+        "level": "ログレベル"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",

@@ -979,6 +979,8 @@
     "cron": "Cron（クーロン）",
     "showMore": "もっと表示",
     "showLess": "表示を減らす",
-    "documentationMenu": "ドキュメントメニュー"
+    "documentationMenu": "ドキュメントメニュー",
+    "task run id": "タスクランID",
+    "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。"
   }
 }

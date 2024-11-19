@@ -615,6 +615,9 @@
             });
         },
         methods: {
+            stripTags(text) {
+                return text.replace(/<\/?[^>]+(>|$)/g, "");
+            },
             filteredLabels(labels) {
                 const toIgnore = this.configs.hiddenLabelsPrefixes || [];
 
@@ -716,7 +719,7 @@
             },
             genericConfirmAction(toast, queryAction, byIdAction, success) {
                 this.$toast().confirm(
-                    this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.stripTags(this.$t(toast, {"executionCount": this.queryBulkAction ? this.total : this.selection.length})),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success),
                     () => {}
                 );

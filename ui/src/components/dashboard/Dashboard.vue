@@ -1,62 +1,16 @@
 <template>
     <Header v-if="!embed" />
 
-    <div class="filters">
-        <el-row :gutter="10" class="mx-0">
-            <el-col :xs="24" :lg="4">
-                <namespace-select
-                    v-model="filters.namespace"
-                    data-type="flow"
-                    :disabled="props.flow || !!props.namespace"
-                    @update:model-value="updateParams"
-                />
-            </el-col>
-            <el-col :xs="24" :lg="4">
-                <el-select
-                    v-model="filters.state"
-                    clearable
-                    filterable
-                    collapse-tags
-                    multiple
-                    :placeholder="$t('state')"
-                    @update:model-value="updateParams"
-                >
-                    <el-option
-                        v-for="item in State.allStates()"
-                        :key="item.key"
-                        :label="item.key"
-                        :value="item.key"
-                    />
-                </el-select>
-            </el-col>
-            <el-col :xs="24" :lg="8">
-                <DateFilter
-                    @update:is-relative="toggleAutoRefresh"
-                    @update:filter-value="(dates) => updateParams(dates)"
-                    absolute
-                    wrap
-                    class="d-flex flex-row"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="16" :lg="4">
-                <scope-filter-buttons
-                    v-model="filters.scope"
-                    :label="$t('data')"
-                    @update:model-value="updateParams"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="8" :lg="4">
-                <refresh-button
-                    class="float-right"
-                    @refresh="refresh()"
-                    :can-auto-refresh="canAutoRefresh"
-                />
-            </el-col>
-        </el-row>
+    <div class="dashboard-filters">
+        <KestraFilter
+            prefix="dashboard"
+            :include="['namespace', 'state', 'scope', 'relative_date', 'absolute_date']"
+            :refresh="{shown: true, callback: fetchAll}"
+        />
     </div>
 
     <div class="dashboard">
-        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow">
             <el-col :xs="24" :sm="12" :lg="6">
                 <Card
                     :icon="CheckBold"
@@ -72,6 +26,7 @@
                             page: 1,
                         },
                     }"
+                    class="me-2"
                 />
             </el-col>
             <el-col :xs="24" :sm="12" :lg="6">
@@ -89,6 +44,7 @@
                             page: 1,
                         },
                     }"
+                    class="mx-2"
                 />
             </el-col>
             <el-col :xs="24" :sm="12" :lg="6">
@@ -100,6 +56,7 @@
                         name: 'flows/list',
                         query: {scope: 'USER', size: 100, page: 1},
                     }"
+                    class="mx-2"
                 />
             </el-col>
             <el-col :xs="24" :sm="12" :lg="6">
@@ -111,22 +68,23 @@
                         name: 'admin/triggers',
                         query: {size: 100, page: 1},
                     }"
+                    class="ms-2"
                 />
             </el-col>
         </el-row>
 
-        <el-row :gutter="20" class="mx-0">
+        <el-row>
             <el-col :xs="24" :lg="props.flow ? 24 : 16">
-                <ExecutionsBar :data="graphData" :total="stats.total" />
+                <ExecutionsBar :data="graphData" :total="stats.total" :class="{'me-2': !props.flow}" />
             </el-col>
             <el-col v-if="!props.flow" :xs="24" :lg="8">
-                <ExecutionsDoughnut :data="graphData" :total="stats.total" />
+                <ExecutionsDoughnut :data="graphData" :total="stats.total" class="ms-2" />
             </el-col>
         </el-row>
 
-        <el-row :gutter="20" class="mx-0">
+        <el-row>
             <el-col :xs="24" :lg="props.flow ? 7 : 12">
-                <div v-if="props.flow" class="h-100 p-4">
+                <div v-if="props.flow" class="h-100 p-4 me-2">
                     <span class="d-flex justify-content-between">
                         <span class="fs-6 fw-bold">
                             {{ t("dashboard.description") }}
@@ -155,12 +113,14 @@
                     v-else
                     :flow="props.flowID"
                     :namespace="props.namespace"
+                    class="me-2"
                 />
             </el-col>
             <el-col v-if="props.flow" :xs="24" :lg="10">
                 <ExecutionsNextScheduled
                     :flow="props.flowID"
                     :namespace="filters.namespace"
+                    class="mx-2"
                 />
             </el-col>
             <el-col :xs="24" :lg="props.flow ? 7 : 12">
@@ -168,17 +128,19 @@
                     v-if="props.flow"
                     :data="graphData"
                     :total="stats.total"
+                    class="ms-2"
                 />
                 <ExecutionsNextScheduled
                     v-else-if="isAllowedTriggers"
                     :flow="props.flowID"
                     :namespace="filters.namespace"
+                    class="ms-2"
                 />
                 <ExecutionsEmptyNextScheduled v-else />
             </el-col>
         </el-row>
 
-        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow">
             <el-col :xs="24">
                 <ExecutionsNamespace
                     :data="filteredNamespaceExecutions"
@@ -187,7 +149,7 @@
             </el-col>
         </el-row>
 
-        <el-row v-if="!props.flow" :gutter="20" class="mx-0">
+        <el-row v-if="!props.flow">
             <el-col :xs="24">
                 <Logs :data="logs" />
             </el-col>
@@ -196,8 +158,8 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref, computed} from "vue";
-    import {useRouter, useRoute} from "vue-router";
+    import {onBeforeMount, ref, computed, watch} from "vue";
+    import {useRoute} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -209,10 +171,7 @@
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
 
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import DateFilter from "../executions/date-select/DateFilter.vue";
-    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     import ExecutionsBar from "./components/charts/executions/Bar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
@@ -232,15 +191,15 @@
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
     import permission from "../../models/permission.js";
     import action from "../../models/action.js";
-    import {storageKeys} from "../../utils/constants";
+    // import {storageKeys} from "../../utils/constants";
 
-    const router = useRouter();
+    // const router = useRouter();
     const route = useRoute();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
     const user = store.getters["auth/user"];
 
-    const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || null;
+    // const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || null;
     const props = defineProps({
         embed: {
             type: Boolean,
@@ -281,23 +240,11 @@
         scope: ["USER"],
     });
 
-    const refresh = async () => {
-        await updateParams({
-            startDate: filters.value.startDate,
-            endDate: moment().toISOString(true),
-        });
-        fetchAll();
-    };
-    const canAutoRefresh = ref(false);
-    const toggleAutoRefresh = (event) => {
-        canAutoRefresh.value = event;
-    };
-
     const defaultNumbers = {flows: 0, triggers: 0};
     const numbers = ref({...defaultNumbers});
     const fetchNumbers = () => {
         store.$http
-            .post(`${apiUrl(store)}/stats/summary`, filters.value)
+            .post(`${apiUrl(store)}/stats/summary`, route.query)
             .then((response) => {
                 if (!response.data) return;
                 numbers.value = {...defaultNumbers, ...response.data};
@@ -352,7 +299,7 @@
         }, null);
     };
     const fetchExecutions = () => {
-        store.dispatch("stat/daily", filters.value).then((response) => {
+        store.dispatch("stat/daily", route.query).then((response) => {
             const sorted = response.sort(
                 (a, b) => new Date(b.date) - new Date(a.date),
             );
@@ -384,62 +331,67 @@
 
     const logs = ref([]);
     const fetchLogs = () => {
-        store.dispatch("stat/logDaily", filters.value).then((response) => {
+        store.dispatch("stat/logDaily", route.query).then((response) => {
             logs.value = response;
         });
     };
 
-    const handleDatesUpdate = (dates) => {
-        const {startDate, endDate, timeRange} = dates;
+    // const handleDatesUpdate = (dates) => {
+    //     const {startDate, endDate, timeRange} = dates;
 
-        if (startDate && endDate) {
-            filters.value = {...filters.value, startDate, endDate, timeRange};
-        } else if (timeRange) {
-            filters.value = {
-                ...filters.value,
-                startDate: moment()
-                    .subtract(moment.duration(timeRange).as("milliseconds"))
-                    .toISOString(true),
-                endDate: moment().toISOString(true),
-                timeRange,
-            };
-        }
+    //     if (startDate && endDate) {
+    //         filters.value = {...filters.value, startDate, endDate, timeRange};
+    //     } else if (timeRange) {
+    //         filters.value = {
+    //             ...filters.value,
+    //             startDate: moment()
+    //                 .subtract(moment.duration(timeRange).as("milliseconds"))
+    //                 .toISOString(true),
+    //             endDate: moment().toISOString(true),
+    //             timeRange,
+    //         };
+    //     }
 
-        return Promise.resolve(filters.value);
-    };
+    //     return Promise.resolve(filters.value);
+    // };
 
-    const updateParams = async (params) => {
-        const completeParams = await handleDatesUpdate({
-            ...filters.value,
-            ...params,
-        });
+    // const updateParams = async (params) => {
+    //     const completeParams = await handleDatesUpdate({
+    //         ...filters.value,
+    //         ...params,
+    //     });
 
-        filters.value = {
-            namespace: props.namespace ?? completeParams.namespace,
-            flowId: props.flowID ?? null,
-            state: completeParams.state?.filter(Boolean).length
-                ? [].concat(completeParams.state)
-                : undefined,
-            startDate: completeParams.startDate,
-            endDate: completeParams.endDate,
-            scope: completeParams.scope?.filter(Boolean).length
-                ? [].concat(completeParams.scope)
-                : undefined,
-        };
+    //     filters.value = {
+    //         namespace: props.namespace ?? completeParams.namespace,
+    //         flowId: props.flowID ?? null,
+    //         state: completeParams.state?.filter(Boolean).length
+    //             ? [].concat(completeParams.state)
+    //             : undefined,
+    //         startDate: completeParams.startDate,
+    //         endDate: completeParams.endDate,
+    //         scope: completeParams.scope?.filter(Boolean).length
+    //             ? [].concat(completeParams.scope)
+    //             : undefined,
+    //     };
 
-        completeParams.flowId = props.flowID ?? null;
+    //     completeParams.flowId = props.flowID ?? null;
 
-        delete completeParams.timeRange;
-        for (const key in completeParams) {
-            if (completeParams[key] == null) {
-                delete completeParams[key];
-            }
-        }
+    //     delete completeParams.timeRange;
+    //     for (const key in completeParams) {
+    //         if (completeParams[key] == null) {
+    //             delete completeParams[key];
+    //         }
+    //     }
 
-        router.push({query: completeParams}).then(fetchAll());
-    };
+    //     router.push({query: completeParams}).then(fetchAll());
+    // };
 
     const fetchAll = async () => {
+        if(!route.query.startDate || !route.query.endDate){
+            route.query.startDate = moment().subtract(moment.duration("PT720H").as("milliseconds")).toISOString(true);
+            route.query.endDate = moment().toISOString(true);
+        }
+
         try {
             await Promise.any([
                 fetchNumbers(),
@@ -460,25 +412,28 @@
     });
 
     onBeforeMount(() => {
-        if (!route.query.namespace && props.restoreURL) {
-            router.replace({query: {...route.query, namespace: defaultNamespace}});
-            filters.value.namespace = route.query.namespace || defaultNamespace;
-        }
-        else {
-            filters.value.namespace = null
-        }
+        // if (!route.query.namespace && props.restoreURL) {
+        //     router.replace({query: {...route.query, namespace: defaultNamespace}});
+        //     filters.value.namespace = route.query.namespace || defaultNamespace;
+        // }
+        // else {
+        //     filters.value.namespace = null
+        // }
 
-
-        updateParams(route.query);
+        // updateParams(route.query);
     });
-</script>
+
+    watch(route, () => {
+        fetchAll()
+    }, {immediate: true, deep: true})
+  </script>
 
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 $spacing: 20px;
 
-.filters,
+.dashboard-filters,
 .dashboard {
     padding: 0 32px;
 
@@ -514,7 +469,7 @@ $spacing: 20px;
     margin: 24px 0;
 }
 
-.filters {
+.dashboard-filters {
     margin: 24px 0 0 0;
     padding-bottom: 0;
 

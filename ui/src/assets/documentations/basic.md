@@ -121,6 +121,7 @@ The table below lists common Pebble expressions and functions.
 
 | Expression                                                                                         | Description                                                                                                                     |
 |----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| `{{ printContext() }}`                                                                                    | Fetch the entire execution context as a JSON object.                                                                                                     |
 | `{{ flow.id }}`                                                                                    | The identifier of the flow.                                                                                                     |
 | `{{ flow.namespace }}`                                                                             | The name of the flow namespace.                                                                                                 |
 | `{{ flow.tenantId }}`                                                                              | The identifier of the tenant (EE only).                                                                                         |

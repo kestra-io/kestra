@@ -850,7 +850,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैन्युअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
+    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -976,6 +976,9 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "warning": "चेतावनी",
-    "cron": "क्रॉन"
+    "cron": "क्रॉन",
+    "showMore": "और दिखाएं",
+    "showLess": "कम दिखाएं",
+    "documentationMenu": "डॉक्यूमेंटेशन मेनू"
   }
 }

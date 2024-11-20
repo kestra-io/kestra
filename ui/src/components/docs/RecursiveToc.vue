@@ -10,19 +10,27 @@
                 v-if="child.children"
             >
                 <template #title>
-                    <span v-if="disabledPages.includes(child.path)">
+                    <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable">
                         {{ child.title.capitalize() }}
                     </span>
-                    <router-link v-else :to="{path: '/' + child.path}">
-                        {{ child.title.capitalize() }}
-                    </router-link>
+                    <slot v-else v-bind="child">
+                        <router-link :to="{path: '/' + child.path}">
+                            {{ child.title.capitalize() }}
+                        </router-link>
+                    </slot>
                 </template>
-                <recursive-toc :parent="child" />
+                <recursive-toc :parent="child" :make-index-navigable="makeIndexNavigable">
+                    <template #default="subChild">
+                        <slot v-bind="subChild" />
+                    </template>
+                </recursive-toc>
             </el-collapse-item>
             <div v-else>
-                <router-link :to="{path: '/' + child.path}">
-                    {{ child.title.capitalize() }}
-                </router-link>
+                <slot v-bind="child">
+                    <router-link :to="{path: '/' + child.path}">
+                        {{ child.title.capitalize() }}
+                    </router-link>
+                </slot>
             </div>
         </template>
     </el-collapse>
@@ -37,6 +45,10 @@
             parent: {
                 type: Object,
                 required: true
+            },
+            makeIndexNavigable: {
+                type: Boolean,
+                default: true
             }
         },
         watch: {

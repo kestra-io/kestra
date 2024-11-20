@@ -93,7 +93,7 @@
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
-                <news />
+
                 <impersonating />
                 <auth />
             </div>
@@ -105,7 +105,6 @@
     import {mapState, mapGetters} from "vuex";
     import Auth from "override/components/auth/Auth.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
-    import News from "./News.vue";
     import HelpBox from "vue-material-design-icons/HelpBox.vue";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Github from "vue-material-design-icons/Github.vue";
@@ -122,7 +121,6 @@
     export default {
         components: {
             Auth,
-            News,
             HelpBox,
             BookMultipleOutline,
             Github,

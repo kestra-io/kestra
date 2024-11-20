@@ -20,7 +20,6 @@ import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
 import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
-import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n()
@@ -120,15 +119,6 @@ export function useLeftMenu() {
                     element: shallowRef(Connection),
                     class: "menu-icon"
                 },
-            },
-            {
-                href: {name: "docs/view"},
-                routes: routeStartWith("docs/view"),
-                title: t("docs"),
-                icon: {
-                    element: shallowRef(FileTableOutline),
-                    class: "menu-icon"
-                }
             },
             {
                 title: t("administration"),

@@ -976,6 +976,9 @@
     "item": "Element",
     "items": "Elemente",
     "warning": "Warnung",
-    "cron": "Cron"
+    "cron": "Cron",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Zeige weniger",
+    "documentationMenu": "Dokumentationsmenü"
   }
 }

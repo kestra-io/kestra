@@ -35,7 +35,6 @@ html {
 
     &.menu-collapsed {
         #{--offset-from-menu}: var(--spacer);
-        padding-left: var(--menu-collapsed-width);
     }
 
     &.menu-not-collapsed {
@@ -43,8 +42,6 @@ html {
         @include mixin.res(lg) {
             #{--offset-from-menu}: calc(var(--spacer) * 4);
         }
-
-        padding-left: var(--menu-width);
     }
 }
 

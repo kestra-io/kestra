@@ -29,7 +29,7 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item>
-                        <refresh-button class="float-right" @refresh="load(onDataLoaded)" />
+                        <refresh-button @refresh="load(onDataLoaded)" />
                     </el-form-item>
                 </template>
                 <template #table>

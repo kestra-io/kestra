@@ -850,7 +850,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Używanie zmiennych trigger nie będzie działać z ręcznym wykonaniem flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
+    "trigger_check_warning": "Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -976,6 +976,9 @@
     "item": "element",
     "items": "elementy",
     "warning": "Ostrzeżenie",
-    "cron": "Kron"
+    "cron": "Kron",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "documentationMenu": "Menu dokumentacji"
   }
 }

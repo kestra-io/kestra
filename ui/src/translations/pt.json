@@ -850,7 +850,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "O uso de variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
+    "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -976,6 +976,9 @@
     "item": "item",
     "items": "itens",
     "warning": "Aviso",
-    "cron": "Cron"
+    "cron": "Cron",
+    "showMore": "Mostrar mais",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menu de documentação"
   }
 }

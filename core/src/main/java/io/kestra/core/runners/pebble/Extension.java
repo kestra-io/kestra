@@ -47,6 +47,9 @@ public class Extension extends AbstractExtension {
     @Inject
     private FileSizeFunction fileSizeFunction;
 
+    @Inject
+    private ErrorLogsFunction errorLogsFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -139,6 +142,7 @@ public class Extension extends AbstractExtension {
         functions.put("printContext", new PrintContextFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
+        functions.put("errorLogs", errorLogsFunction);
         return functions;
     }
 

@@ -946,6 +946,7 @@
     "newsTitle": "What's new in Kestra",
     "showLess": "Show less",
     "showMore": "Show more",
+    "documentationMenu": "Documentation menu",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",

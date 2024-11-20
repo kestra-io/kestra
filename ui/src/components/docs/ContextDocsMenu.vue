@@ -94,7 +94,7 @@
 <template>
     <div class="docsMenuWrapper">
         <el-button @click="menuOpen = !menuOpen" class="menuOpener">
-            Documentation menu <MenuDown class="expandIcon" />
+            {{ t("documentationMenu") }} <MenuDown class="expandIcon" />
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">

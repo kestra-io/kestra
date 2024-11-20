@@ -94,6 +94,7 @@
             <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
         </a>
         <div style="flex:1" />
+        <span v-if="configs?.commitId" class="versionNumber">{{ configs?.commitId }}</span>
         <span class="versionNumber">{{ configs?.version }}</span>
     </div>
     <div ref="panel" class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
@@ -180,6 +181,7 @@
 .versionNumber{
     font-size: 12px;
     color: var(--bs-tertiary-color);
+    margin-top: var(--spacer);
 }
 
 .panelWrapper{

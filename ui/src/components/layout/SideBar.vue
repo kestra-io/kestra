@@ -27,20 +27,6 @@
                 <chevron-double-right v-if="collapsed" />
                 <chevron-double-left v-else />
             </el-button>
-            <span class="version">
-                <el-tooltip
-                    effect="light"
-                    :persistent="false"
-                    transition=""
-                    :hide-after="0"
-                    :disabled="!configs.commitId"
-                >
-                    <template #content>
-                        <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
-                    </template>
-                    {{ configs.version }}
-                </el-tooltip>
-            </span>
         </template>
     </sidebar-menu>
 </template>
@@ -64,7 +50,6 @@
     import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
-    import DateAgo from "./DateAgo.vue"
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
 
@@ -81,8 +66,6 @@
     const $route = useRoute()
     const {locale, t} = useI18n()
     const store = useStore()
-
-    const configs = computed(() => store.state.misc.configs);
 
     function flattenMenu(menu) {
         return menu.reduce((acc, item) => {

@@ -6,7 +6,7 @@
             Error: <errors :code="error" />
         </template>
     </main>
-    <context-info-bar />
+    <context-info-bar v-if="configs" />
 </template>
 
 <script setup>

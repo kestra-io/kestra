@@ -118,7 +118,6 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(5));
     }
 
-    @Disabled //FIXME enable it when we have the new errorLogs() Pebble function
     @Test
     void errors() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -129,15 +128,9 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(7));
 
         receive.blockLast();
-        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("It's the fault of "));
+        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("- task: failed, message: Task failure"));
         assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("It's the fault of 'failed'"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the message: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("See the message: Task failure"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the stackTrace: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), startsWith("See the stackTrace: java.lang.Exception: Task failure"));
+        assertThat(logEntry.getMessage(), is("- task: failed, message: Task failure"));
     }
 
     @Test

@@ -975,7 +975,7 @@
     "force run tooltip": "强制执行运行。这可能会创建重复的task执行，如果可能，请使用其他操作。",
     "item": "项目",
     "items": "项目",
-    "newsTitle": "Kestra 的新功能是什么",
+    "newsTitle": "Kestra 的新功能有哪些",
     "warning": "警告",
     "cron": "定时任务",
     "showMore": "显示更多",

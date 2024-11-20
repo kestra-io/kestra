@@ -979,6 +979,7 @@
     "warning": "경고",
     "cron": "크론",
     "showMore": "더 보기",
-    "showLess": "적게 보기"
+    "showLess": "적게 보기",
+    "documentationMenu": "문서 메뉴"
   }
 }

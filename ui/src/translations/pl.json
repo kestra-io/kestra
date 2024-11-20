@@ -979,6 +979,7 @@
     "warning": "Ostrzeżenie",
     "cron": "Kron",
     "showMore": "Pokaż więcej",
-    "showLess": "Pokaż mniej"
+    "showLess": "Pokaż mniej",
+    "documentationMenu": "Menu dokumentacji"
   }
 }

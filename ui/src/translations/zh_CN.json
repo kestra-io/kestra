@@ -979,6 +979,7 @@
     "warning": "警告",
     "cron": "定时任务",
     "showMore": "显示更多",
-    "showLess": "显示较少"
+    "showLess": "显示较少",
+    "documentationMenu": "文档菜单"
   }
 }

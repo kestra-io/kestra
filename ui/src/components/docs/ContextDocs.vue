@@ -4,6 +4,8 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+
     import useMarkdownParser from "@kestra-io/ui-libs/src/composables/useMarkdownParser";
     import MDCRenderer from "@kestra-io/ui-libs/src/components/content/MDCRenderer.vue";
     import DocsLayout from "./DocsLayout.vue";
@@ -58,6 +60,7 @@
 <template>
     <div class="docWrapper">
         <h2 class="docTitle">
+            <a :href="`/docs${docPath ?? ''}`" target="_blank"><OpenInNew class="openInNew" /></a>
             {{ routeInfo.title }}
         </h2>
         <el-divider style="margin:0 var(--spacer);" />
@@ -74,6 +77,13 @@
 h2.docTitle {
     font-size: 18px;
     margin: var(--spacer);
+    margin-right: calc(var(--spacer) * 3);
+
+    .openInNew {
+        float: right;
+        margin: 2px;
+        color: var(--bs-tertiary-color);
+    }
 }
 
 .docWrapper {

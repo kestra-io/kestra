@@ -1,18 +1,20 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
-    <template v-if="!pluginIsSelected">
-        <plugin-home v-if="plugins" :plugins="plugins" />
-    </template>
-    <docs-layout v-else>
-        <template #menu>
-            <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
+    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
+    <gradient-dotted-layout :embed="embed">
+        <template v-if="!pluginIsSelected">
+            <plugin-home v-if="plugins" :plugins="plugins" />
         </template>
-        <template #content>
-            <div class="markdown" v-loading="isLoading">
-                <markdown :source="plugin.markdown" :permalink="true" />
-            </div>
-        </template>
-    </docs-layout>
+        <docs-layout v-else>
+            <template #menu>
+                <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
+            </template>
+            <template #content>
+                <div class="markdown" v-loading="isLoading">
+                    <markdown :source="plugin.markdown" :permalink="true" />
+                </div>
+            </template>
+        </docs-layout>
+    </gradient-dotted-layout>
 </template>
 
 <script>
@@ -23,11 +25,13 @@
     import {mapState} from "vuex";
     import PluginHome from "./PluginHome.vue";
     import DocsLayout from "../docs/DocsLayout.vue";
+    import GradientDottedLayout from "../layout/GradientDottedLayout.vue";
 
     export default {
         mixins: [RouteContext],
         components: {
             DocsLayout,
+            GradientDottedLayout,
             PluginHome,
             Markdown,
             Toc,

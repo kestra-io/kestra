@@ -8,7 +8,7 @@
             </p>
         </el-col>
     </el-row>
-    <el-row justify="center" class="my-4">
+    <el-row justify="center" class="m-4">
         <el-input
             class="search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
@@ -16,7 +16,7 @@
             clearable
         />
     </el-row>
-    <section class="container plugins-container">
+    <section class="plugins-container">
         <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
             <template #content>
                 <div class="tasks-tooltips">
@@ -176,8 +176,6 @@
 <style scoped lang="scss">
     .headband-row {
         width: 100%;
-        background: url("../../assets/plugins/headband.webp") no-repeat center;
-        background-size: cover;
         height: 9em;
     }
 
@@ -188,6 +186,7 @@
         justify-content: center;
         align-items: center;
         gap: 0.25rem;
+        width: 100%;
     }
 
     .plugins-container {

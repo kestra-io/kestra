@@ -1,11 +1,11 @@
 <template>
     <nav class="header">
         <div class="image-box">
-            <img src="../../../../assets/icons/blueprint.svg" :alt="$t('blueprints.header.alt')">
-            <img src="../../../../assets/icons/blueprint-dark.svg" :alt="$t('blueprints.header.alt')" class="blueprint-dark">
+            <img :src="icon" :alt="alt">
+            <img :src="iconDark" :alt="alt" class="blueprint-dark">
         </div>
         <h4 class="catch-phrase">
-            {{ $t(phrase) }}
+            {{ phrase }}
         </h4>
     </nav>
 </template>
@@ -15,9 +15,20 @@
         props: {
             phrase: {
                 type: String,
-                required: false,
-                default: "blueprints.header.catch phrase.2"
+                required: true
             },
+            alt: {
+                type: String,
+                required: true
+            },
+            icon: {
+                type: String,
+                required: true
+            },
+            iconDark: {
+                type: String,
+                required: true
+            }
         },
     }
 </script>

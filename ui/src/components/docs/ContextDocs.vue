@@ -60,7 +60,17 @@
 <template>
     <div class="docWrapper">
         <h2 class="docTitle">
-            <a :href="`/docs${docPath ?? ''}`" target="_blank"><OpenInNew class="openInNew" /></a>
+            <router-link
+                :to="{
+                    name: 'docs/view',
+                    params:{
+                        path:docPath
+                    }
+                }"
+                target="_blank"
+            >
+                <OpenInNew class="openInNew" />
+            </router-link>
             {{ routeInfo.title }}
         </h2>
         <el-divider style="margin:0 var(--spacer);" />

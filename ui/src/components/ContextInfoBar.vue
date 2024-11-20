@@ -3,6 +3,7 @@
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
+    import DateAgo from "./layout/DateAgo.vue"
 
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -104,8 +105,20 @@
             <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
         </a>
         <div style="flex:1" />
-        <span v-if="configs?.commitId" class="versionNumber">{{ configs?.commitId }}</span>
         <span class="versionNumber">{{ configs?.version }}</span>
+        <el-tooltip
+            v-if="configs?.commitId"
+            effect="light"
+            :persistent="false"
+            transition=""
+            :hide-after="0"
+            placement="left"
+        >
+            <template #content>
+                <DateAgo :inverted="true" :date="configs.commitDate" />
+            </template>
+            <span class="commitNumber">{{ configs?.commitId }}</span>
+        </el-tooltip>
     </div>
     <div ref="panel" class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <div :style="{overflow: 'hidden', width:`${panelWidth}px`}">
@@ -173,20 +186,26 @@
 
 .barWrapper .barButtonActive{
     background: var(--bs-primary);
-    color: var(--bs-primary-color);
     border-color: var(--bs-primary);
+    color: white;
+    html.dark & {
+        color: var(--bs-primary-color);
+    }
 }
 
 .newsDot{
     width: 10px;
     height: 10px;
     background: #FD7278;
-    border: 2px solid #2F3342;
+    border: 2px solid white;
     border-radius: 50%;
     display: block;
     position: absolute;
     bottom: -4px;
     right: -4px;
+    html.dark & {
+        border-color: #2F3342;
+    }
 }
 
 .buttonIcon{
@@ -205,6 +224,12 @@
     font-size: 12px;
     color: var(--bs-tertiary-color);
     margin-top: var(--spacer);
+}
+
+.commitNumber{
+    font-size: 12px;
+    color: var(--bs-primary);
+    margin-top: calc(.5 * var(--spacer));
 }
 
 .panelWrapper{

@@ -85,7 +85,7 @@ public class InternalNamespace implements Namespace {
     @Override
     public List<NamespaceFile> all(final String prefix, final boolean includeDirectories) throws IOException {
         URI namespacePrefix = URI.create(NamespaceFile.of(namespace, Optional.ofNullable(prefix).map(Path::of).orElse(null)).storagePath().toString().replace("\\","/") + "/");
-        return storage.allByPrefix(tenant, namespacePrefix, includeDirectories)
+        return storage.allByPrefix(tenant, namespace, namespacePrefix, includeDirectories)
             .stream()
             .map(uri -> new NamespaceFile(relativize(uri), uri, namespace))
             .toList();
@@ -119,7 +119,7 @@ public class InternalNamespace implements Namespace {
     @Override
     public InputStream getFileContent(final Path path) throws IOException {
         Path namespaceFilePath = NamespaceFile.of(namespace, path).storagePath();
-        return storage.get(tenant, namespaceFilePath.toUri());
+        return storage.get(tenant, namespace, namespaceFilePath.toUri());
     }
 
     /**
@@ -130,11 +130,11 @@ public class InternalNamespace implements Namespace {
         Path namespaceFilesPrefix = NamespaceFile.of(namespace, path).storagePath();
         // Remove Windows letter
         URI cleanUri = new URI(namespaceFilesPrefix.toUri().toString().replaceFirst("^file:///[a-zA-Z]:", ""));
-        final boolean exists = storage.exists(tenant, cleanUri);
+        final boolean exists = storage.exists(tenant, namespace, cleanUri);
 
         return switch (onAlreadyExist) {
             case OVERWRITE -> {
-                URI uri = storage.put(tenant, cleanUri, content);
+                URI uri = storage.put(tenant, namespace, cleanUri, content);
                 NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
                 if (exists) {
                     logger.debug(String.format(
@@ -153,7 +153,7 @@ public class InternalNamespace implements Namespace {
             }
             case ERROR -> {
                 if (!exists) {
-                    URI uri = storage.put(tenant, namespaceFilesPrefix.toUri(), content);
+                    URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     yield new NamespaceFile(relativize(uri), uri, namespace);
                 } else {
                     throw new IOException(String.format(
@@ -166,7 +166,7 @@ public class InternalNamespace implements Namespace {
             }
             case SKIP -> {
                 if (!exists) {
-                    URI uri = storage.put(tenant, namespaceFilesPrefix.toUri(), content);
+                    URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
                     logger.debug(String.format(
                         "File '%s' added to namespace '%s'.",
@@ -193,7 +193,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public URI createDirectory(Path path) throws IOException {
-        return storage.createDirectory(tenant, NamespaceFile.of(namespace, path).storagePath().toUri());
+        return storage.createDirectory(tenant, namespace, NamespaceFile.of(namespace, path).storagePath().toUri());
     }
 
     /**
@@ -201,6 +201,6 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public boolean delete(Path path) throws IOException {
-        return storage.delete(tenant, URI.create(path.toString().replace("\\","/")));
+        return storage.delete(tenant, namespace, URI.create(path.toString().replace("\\","/")));
     }
 }

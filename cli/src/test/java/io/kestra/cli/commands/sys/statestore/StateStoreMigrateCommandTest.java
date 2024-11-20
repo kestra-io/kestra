@@ -52,11 +52,12 @@ class StateStoreMigrateCommandTest {
             URI oldStateStoreUri = URI.create("/" + flow.getNamespace().replace(".", "/") + "/" + Slugify.of("a-flow") + "/states/my-state/" + Hashing.hashToString("my-taskrun-value") + "/sub-name");
             storage.put(
                 tenantId,
+                flow.getNamespace(),
                 oldStateStoreUri,
                 new ByteArrayInputStream("my-value".getBytes())
             );
             assertThat(
-                storage.exists(tenantId, oldStateStoreUri),
+                storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri),
                 is(true)
             );
 
@@ -73,7 +74,7 @@ class StateStoreMigrateCommandTest {
 
             assertThat(new String(stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value").readAllBytes()), is("my-value"));
             assertThat(
-                storage.exists(tenantId, oldStateStoreUri),
+                storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri),
                 is(false)
             );
 

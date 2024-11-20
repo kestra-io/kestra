@@ -676,14 +676,9 @@ public class ExecutionController {
         return parsedLabels;
     }
 
-    protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
-        }
-
+    protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
         String prefix = StorageContext
-            .forExecution(execution.get())
+            .forExecution(execution)
             .getExecutionStorageURI().getPath();
 
         if (path.getPath().startsWith(prefix)) {
@@ -692,8 +687,8 @@ public class ExecutionController {
 
         // IMPORTANT NOTE: we load the flow here, this will trigger RBAC checks for FLOW permission!
         // This MUST NOT be done before as a user with only execution permission should be able to access flow files.
-        String flowId = execution.get().getFlowId();
-        Optional<Flow> flow = flowRepository.findById(execution.get().getTenantId(), execution.get().getNamespace(), flowId);
+        String flowId = execution.getFlowId();
+        Optional<Flow> flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), flowId);
         if (flow.isEmpty()) {
             throw new NoSuchElementException("Unable to find flow id '" + flowId + "'");
         }
@@ -729,12 +724,17 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path
     ) throws IOException, URISyntaxException {
-        HttpResponse<StreamedFile> httpResponse = this.validateFile(executionId, path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file?path=" + path);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
+        }
+
+        HttpResponse<StreamedFile> httpResponse = this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file?path=" + path);
         if (httpResponse != null) {
             return httpResponse;
         }
 
-        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), path);
+        InputStream fileHandler = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path);
         return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .attach(FilenameUtils.getName(path.toString()))
         );
@@ -747,13 +747,18 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue URI path
     ) throws IOException {
-        HttpResponse<FileMetas> httpResponse = this.validateFile(executionId, path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file/metas?path=" + path);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
+        }
+
+        HttpResponse<FileMetas> httpResponse = this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
             return httpResponse;
         }
 
         return HttpResponse.ok(FileMetas.builder()
-            .size(storageInterface.getAttributes(tenantService.resolveTenant(), path).getSize())
+            .size(storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize())
             .build()
         );
     }
@@ -1526,7 +1531,12 @@ public class ExecutionController {
         @Parameter(description = "The max row returns") @QueryValue @Nullable Integer maxRows,
         @Parameter(description = "The file encoding as Java charset name. Defaults to UTF-8", example = "ISO-8859-1") @QueryValue(defaultValue = "UTF-8") String encoding
     ) throws IOException {
-        this.validateFile(executionId, path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file?path=" + path);
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
+        }
+
+        this.validateFile(execution.get(), path, "/api/v1/" + this.getTenant() + "executions/{executionId}/file?path=" + path);
 
         String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;
@@ -1537,7 +1547,7 @@ public class ExecutionController {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
 
-        try (InputStream fileStream = storageInterface.get(tenantService.resolveTenant(), path)) {
+        try (InputStream fileStream = storageInterface.get(execution.get().getTenantId(), execution.get().getNamespace(), path)) {
             FileRender fileRender = FileRenderBuilder.of(
                 extension,
                 fileStream,

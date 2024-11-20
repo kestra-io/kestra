@@ -1,6 +1,9 @@
 <script setup>
     import {ref, computed, watch} from "vue";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+
+    const {t} = useI18n();
 
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 

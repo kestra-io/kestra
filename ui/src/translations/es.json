@@ -975,7 +975,6 @@
     "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
     "item": "elemento",
     "items": "elementos",
-    "newsTitle": "Novedades en Kestra",
     "warning": "Advertencia",
     "cron": "Cron",
     "showMore": "Mostrar más",

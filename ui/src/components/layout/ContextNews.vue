@@ -33,7 +33,7 @@
 
 <template>
     <div class="allContextNews">
-        <h3>{{ t("newsTitle") }}</h3>
+        <h3>{{ t("feeds.title") }}</h3>
         <el-divider style="margin: var(--spacer) 0;" />
         <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mr-2">
@@ -58,7 +58,7 @@
                 </el-button>
                 <el-button
                     v-if="feed.href"
-                    :title="feed.link"
+                    :title="t('open in new tab')"
                     tag="a"
                     type="primary"
                     target="_blank"

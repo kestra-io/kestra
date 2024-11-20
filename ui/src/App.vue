@@ -1,16 +1,16 @@
 <template>
     <el-config-provider>
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <DefaultLayout v-if="loaded">
+        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
             <router-view />
-        </DefaultLayout>
+        </component>
         <VueTour />
     </el-config-provider>
 </template>
 
 <script>
     import {ElMessageBox, ElSwitch} from "element-plus";
-    import {h, ref} from "vue";
+    import {h, ref, shallowRef} from "vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
     import Utils from "./utils/utils";
@@ -23,10 +23,10 @@
         components: {
             ErrorToast,
             VueTour,
-            DefaultLayout
         },
         data() {
             return {
+                DefaultLayout: shallowRef(DefaultLayout),
                 fullPage: false,
                 created: false,
                 loaded: false,

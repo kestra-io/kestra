@@ -21,13 +21,13 @@ dependencies {
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.17.0"
     def opensearchRestVersion = "2.18.0"
-    def flyingSaucerVersion = "9.10.2"
+    def flyingSaucerVersion = "9.11.0"
 
     // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.1")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
-    api platform("io.micronaut.platform:micronaut-platform:4.6.3")
+    api platform("io.micronaut.platform:micronaut-platform:4.7.0")
     api platform("io.qameta.allure:allure-bom:2.29.0")
 
     constraints {
@@ -61,14 +61,14 @@ dependencies {
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
 
         // Other libs
-        api("org.projectlombok:lombok:1.18.34")
+        api("org.projectlombok:lombok:1.18.36")
         api("org.codehaus.janino:janino:3.1.12")
         api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.1'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        api group: 'net.thisptr', name: 'jackson-jq', version: '1.0.1'
+        api group: 'net.thisptr', name: 'jackson-jq', version: '1.1.0'
         api group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.17.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'

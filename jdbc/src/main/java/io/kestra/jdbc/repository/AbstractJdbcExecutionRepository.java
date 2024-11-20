@@ -32,6 +32,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
@@ -128,9 +129,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             FluxSink.OverflowStrategy.BUFFER
         );
     }
-
+    /**
+     * {@inheritDoc}
+     **/
     @Override
-    public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
+    public Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -138,9 +141,35 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .using(configuration)
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, allowDeleted))
-                    .and(field("key").eq(id));
+                    .where(this.defaultFilter(tenantId, false))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId))
+                    .and(statesFilter(states))
+                    .orderBy(field("start_date").desc());
+                return this.jdbcRepository.fetchOne(from);
+            });
+    }
 
+    @Override
+    public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
+        return findById(tenantId, id, allowDeleted, true);
+    }
+
+    @Override
+    public Optional<Execution> findByIdWithoutAcl(String tenantId, String id) {
+        return findById(tenantId, id, false, false);
+    }
+
+    public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted, boolean withAccessControl) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(withAccessControl ? this.defaultFilter(tenantId, allowDeleted) : this.defaultFilterWithNoACL(tenantId, allowDeleted))
+                    .and(field("key").eq(id));
                 return this.jdbcRepository.fetchOne(from);
             });
     }

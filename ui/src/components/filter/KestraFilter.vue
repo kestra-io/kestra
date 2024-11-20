@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex pb-3 global-filters">
+    <section class="d-inline-flex pb-3 filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -9,13 +9,20 @@
             allow-create
             filterable
             multiple
-            :no-data-text="emptyLabel"
+            popper-class="filters-select"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
             <template #label="{value}">
-                <span>{{ formatLabel(value) }} </span>
+                <Label :option="value" />
+            </template>
+            <template #empty>
+                <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
+                <DateRange
+                    v-else
+                    @update:model-value="(v) => valueCallback(v, true)"
+                />
             </template>
             <template v-if="dropdowns.first.shown">
                 <el-option
@@ -50,19 +57,12 @@
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
+            <Settings v-if="settings.shown" :settings />
         </el-button-group>
     </section>
 </template>
 
 <script setup lang="ts">
-// TODO: Allow selection of values in dropdown on Enter key press
-// TODO: Submit filter query on Enter key press
-// TODO: Improve highlighting of already selected items in second and third dropdowns
-// TODO: Add button to handle the table options (show charts, selection of visible columns)
-
-// TODO: Add remaining filter options for Executions context (Relative date, Absolute date)
-// TODO: Replace usage of filters throughout the application & add missing filters
-
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
@@ -79,10 +79,14 @@
     import Refresh from "../layout/RefreshButton.vue";
 
     import History from "./components/history/History.vue";
+    import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
+    import Settings from "./components/Settings.vue";
+
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
+    import DateRange from "../layout/DateRange.vue";
 
     const props = defineProps({
         prefix: {type: String, required: true},
@@ -91,11 +95,24 @@
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
         },
+        settings: {
+            type: Object,
+            default: () => ({
+                shown: false,
+                charts: {shown: false, value: false, callback: () => {}},
+            }),
+        },
     });
 
-    import {formatLabel, useFilters} from "./filters.js";
-    const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
-        useFilters(props.prefix);
+    import {useFilters, compare} from "./useFilters.js";
+    const {
+        getRecentItems,
+        setRecentItems,
+        COMPARATORS,
+        OPTIONS,
+        encodeParams,
+        decodeParams,
+    } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const emptyLabel = ref(t("filters.empty"));
@@ -136,14 +153,17 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         }
     };
-    const valueCallback = (filter) => {
-        // TODO: If there already is property with same label and comparator, add value to it
+    const valueCallback = (filter, isDate = false) => {
+        if (!isDate) {
+            const values = current.value[dropdowns.value.third.index].value;
+            const index = values.indexOf(filter.value);
 
-        const values = current.value[dropdowns.value.third.index].value;
-        const index = values.indexOf(filter.value);
-
-        if (index === -1) values.push(filter.value);
-        else values.splice(index, 1);
+            if (index === -1) values.push(filter.value);
+            else values.splice(index, 1);
+        } else {
+            const match = current.value.find((v) => v.label === "absolute_date");
+            if (match) match.value = [filter];
+        }
 
         if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
             // If selection is not multiple, close the dropdown
@@ -151,8 +171,8 @@
         }
     };
 
-    import action from "../../models/action";
-    import permission from "../../models/permission";
+    import action from "../../models/action.js";
+    import permission from "../../models/permission.js";
 
     const user = computed(() => store.state.auth.user);
 
@@ -211,6 +231,31 @@
         },
     ];
 
+    const levelOptions = [
+        {label: "TRACE", value: "TRACE"},
+        {label: "DEBUG", value: "DEBUG"},
+        {label: "INFO", value: "INFO"},
+        {label: "WARN", value: "WARN"},
+        {label: "ERROR", value: "ERROR"},
+    ];
+
+    const relativeDateOptions = [
+        {label: t("datepicker.last5minutes"), value: "PT5M"},
+        {label: t("datepicker.last15minutes"), value: "PT15M"},
+        {label: t("datepicker.last1hour"), value: "PT1H"},
+        {label: t("datepicker.last12hours"), value: "PT12H"},
+        {label: t("datepicker.last24hours"), value: "PT24H"},
+        {label: t("datepicker.last48hours"), value: "PT48H"},
+        {label: t("datepicker.last7days"), value: "PT168H"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
+        {label: t("datepicker.last365days"), value: "PT8760H"},
+    ];
+
+    const isDatePickerShown = computed(() => {
+        const c = current?.value?.at(-1);
+        return c?.label === "absolute_date" && c.comparator;
+    });
+
     const valueOptions = computed(() => {
         const type = current.value.at(-1)?.label;
 
@@ -229,6 +274,15 @@
 
         case "child":
             return childOptions;
+
+        case "level":
+            return levelOptions;
+
+        case "relative_date":
+            return relativeDateOptions;
+
+        case "absolute_date":
+            return [];
 
         default:
             return [];
@@ -280,7 +334,9 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => i.value !== current.value);
+            const r = getRecentItems().filter((i) =>
+                compare(i.value, current.value),
+            );
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -289,15 +345,23 @@
 
     // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
+
+    if (route.name === "flows/update" && route.params.namespace) {
+        current.value.push({
+            label: "namespace",
+            value: [route.params.namespace],
+            comparator: COMPARATORS.STARTS_WITH,
+            persistent: true,
+        });
+    }
 </script>
 
 <style lang="scss">
-.global-filters {
+.filters {
     width: -webkit-fill-available;
 
-    & .el-select {
-        // Combined width of buttons on the sides of select
-        width: calc(100% - 237px);
+    & .el-select__placeholder {
+        color: var(--bs-gray-700);
     }
 
     & .el-select__wrapper {
@@ -339,5 +403,16 @@
 
 .el-button-group .el-button--primary:last-child {
     border-left: none;
+}
+
+.el-button-group > .el-dropdown > .el-button {
+    border-left-color: transparent;
+}
+
+.filters-select {
+    & .el-date-editor.el-input__wrapper {
+        background-color: initial;
+        box-shadow: none;
+    }
 }
 </style>

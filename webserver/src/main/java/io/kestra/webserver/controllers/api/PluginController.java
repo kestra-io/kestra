@@ -41,7 +41,7 @@ public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
 
     @Inject
-    private JsonSchemaGenerator jsonSchemaGenerator;
+    protected JsonSchemaGenerator jsonSchemaGenerator;
 
     @Inject
     private PluginRegistry pluginRegistry;

@@ -1,5 +1,7 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.app.AppBlockInterface;
+import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -97,6 +99,9 @@ public class PluginScanner {
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
+        List<Class<? extends AppPluginInterface>> apps = new ArrayList<>();
+        List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
+
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -135,6 +140,14 @@ public class PluginScanner {
                     case TaskRunner runner -> {
                         log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
                         taskRunners.add(runner.getClass());
+                    }
+                    case AppPluginInterface app -> {
+                        log.debug("Loading AppPlugin plugin: '{}'", plugin.getClass());
+                        apps.add(app.getClass());
+                    }
+                    case AppBlockInterface appBlock -> {
+                        log.debug("Loading AppBlocking plugin: '{}'", plugin.getClass());
+                        appBlocks.add(appBlock.getClass());
                     }
                     default -> {
                     }
@@ -179,6 +192,8 @@ public class PluginScanner {
             .conditions(conditions)
             .storages(storages)
             .secrets(secrets)
+            .apps(apps)
+            .appBlocks(appBlocks)
             .taskRunners(taskRunners)
             .guides(guides)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(

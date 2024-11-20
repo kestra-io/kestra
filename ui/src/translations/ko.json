@@ -809,6 +809,12 @@
       "empty": {
         "title": "현재 열린 탭이 없습니다",
         "message": "사이드바에서 namespace 파일을 생성하거나 가져올 수 있으며, Editor에 대한 소개 영상을 확인할 수 있습니다."
+      },
+      "close": {
+        "other": "다른 탭 닫기",
+        "tab": "탭 닫기",
+        "right": "오른쪽 닫기",
+        "all": "모든 탭 닫기"
       }
     },
     "curl": {
@@ -844,7 +850,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: trigger 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
+    "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "dashboard": {
       "per_namespace": "(네임스페이스별)",
       "id": "ID",
@@ -890,7 +896,7 @@
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
-    "no_data": "여기에는 아직 아무것도 없는 것 같아요… 필터를 조정하거나 다시 시도해 보세요!",
+    "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "informative notice": "노트(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>에 대한 자세한 내용은 문서를 참조하세요.",
@@ -915,12 +921,15 @@
     "worker group fallback": "작업자 그룹 대체",
     "filters": {
       "comparators": {
-        "contains": "포함합니다",
         "is": "입니다",
         "is_one_of": "중 하나입니다.",
-        "not_contains": "포함되지 않음",
         "is_not_one_off": "중 하나가 아닙니다.",
-        "is_not": "아님"
+        "is_not": "아님",
+        "between": "사이에",
+        "in": "안에",
+        "not_contains": "포함하지 않음",
+        "starts_with": "시작:",
+        "contains": "포함합니다"
       },
       "recent": {
         "label": "최근 검색",
@@ -936,7 +945,8 @@
           "confirmation": "검색 기준 <code>{name}</code>",
           "placeholder": "레이블"
         },
-        "label": "저장된 검색"
+        "label": "저장된 검색",
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다."
       },
       "options": {
         "namespace": "네임스페이스",
@@ -944,10 +954,16 @@
         "text": "텍스트",
         "labels": "레이블",
         "state": "상태",
-        "child": "자식"
+        "child": "자식",
+        "absolute_date": "절대 날짜",
+        "relative_date": "상대 날짜",
+        "level": "로그 레벨"
       },
       "empty": "데이터 없음.",
-      "label": "필터 선택"
+      "label": "필터 선택",
+      "settings": {
+        "show_chart": "주요 차트 표시"
+      }
     },
     "force run title": "실행 <code>{id}</code> 강제 실행.",
     "executions force run": "<code>{executionCount}</code> 실행 강제 실행",
@@ -956,6 +972,10 @@
     "force run": "강제 실행",
     "invalid bulk force run": "실행을 강제로 실행할 수 없습니다.",
     "bulk force run": "<code>{executionCount}</code> 실행을 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동됩니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
-    "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오."
+    "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오.",
+    "item": "항목",
+    "items": "항목",
+    "warning": "경고",
+    "cron": "크론"
   }
 }

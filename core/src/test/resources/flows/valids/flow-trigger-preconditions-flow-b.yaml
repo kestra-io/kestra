@@ -1,5 +1,5 @@
-id: flow-trigger-advanced-flow-a
-namespace: io.kestra.tests.trigger.advanced
+id: flow-trigger-preconditions-flow-b
+namespace: io.kestra.tests.trigger.preconditions
 
 tasks:
   - id: only

@@ -4,44 +4,12 @@
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
-                    <el-form-item>
-                        <search-field />
-                    </el-form-item>
-                    <el-form-item>
-                        <namespace-select
-                            data-test-id="logs-namespace-selector"
-                            data-type="flow"
-                            v-if="$route.name !== 'flows/update'"
-                            :value="$route.query.namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <log-level-selector
-                            data-test-id="logs-log-level-selector"
-                            :value="selectedLogLevel"
-                            @update:model-value="onDataTableValue('level', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <date-filter
-                            @update:is-relative="onDateFilterTypeChange"
-                            @update:filter-value="onDataTableValue"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-switch
-                            :model-value="showChart"
-                            @update:model-value="onShowChartChange"
-                            :active-text="$t('show chart')"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <filters :storage-key="storageKeys.LOGS_FILTERS" />
-                    </el-form-item>
-                    <el-form-item>
-                        <refresh-button class="float-right" @refresh="refresh" />
-                    </el-form-item>
+                    <KestraFilter
+                        prefix="logs"
+                        :include="['namespace', 'level', 'absolute_date', 'relative_date']"
+                        :refresh="{shown: true, callback: refresh}"
+                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                    />
                 </template>
 
                 <template v-if="showStatChart()" #top>
@@ -81,24 +49,18 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import SearchField from "../layout/SearchField.vue";
-    import DateFilter from "../executions/date-select/DateFilter.vue";
-    import LogLevelSelector from "./LogLevelSelector.vue";
     import DataTable from "../../components/layout/DataTable.vue";
     import NoData from "../layout/NoData.vue";
-    import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
-    import Filters from "../saved-filters/Filters.vue";
     import {storageKeys} from "../../utils/constants";
-    
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
-            Filters,
-            DataTable, LogLine, NamespaceSelect, DateFilter, SearchField, LogLevelSelector, RefreshButton, TopNavBar, Logs, NoData},
+            KestraFilter,
+            DataTable, LogLine, TopNavBar, Logs, NoData},
         props: {
             logLevel: {
                 type: String,

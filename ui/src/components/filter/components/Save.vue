@@ -10,6 +10,7 @@
         :title="t('filters.save.dialog.heading')"
         :width="400"
         align-center
+        append-to-body
         @opened="input?.focus"
     >
         <section class="pb-3">

@@ -98,6 +98,12 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "level",
+            label: t("filters.options.level"),
+            value: {label: "level", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "timeRange",
             label: t("filters.options.relative_date"),
             value: {label: "relative_date", comparator: undefined, value: []},
@@ -200,6 +206,7 @@ export function useFilters(prefix) {
             return setItem(keys.saved, filtered);
         },
 
+        COMPARATORS,
         OPTIONS,
         encodeParams,
         decodeParams,

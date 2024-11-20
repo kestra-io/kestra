@@ -956,7 +956,8 @@
         "state": "Stan",
         "child": "Dziecko",
         "absolute_date": "Data bezwzględna",
-        "relative_date": "Data względna"
+        "relative_date": "Data względna",
+        "level": "Poziom logowania"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry",

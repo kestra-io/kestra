@@ -27,7 +27,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.1")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
-    api platform("io.micronaut.platform:micronaut-platform:4.6.3")
+    api platform("io.micronaut.platform:micronaut-platform:4.7.0")
     api platform("io.qameta.allure:allure-bom:2.29.0")
 
     constraints {
@@ -61,7 +61,7 @@ dependencies {
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
 
         // Other libs
-        api("org.projectlombok:lombok:1.18.34")
+        api("org.projectlombok:lombok:1.18.36")
         api("org.codehaus.janino:janino:3.1.12")
         api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.1'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion

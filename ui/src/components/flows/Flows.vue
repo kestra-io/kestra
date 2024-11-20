@@ -44,40 +44,11 @@
                 :total="total"
             >
                 <template #navbar>
-                    <el-form-item>
-                        <search-field />
-                    </el-form-item>
-                    <el-form-item>
-                        <namespace-select
-                            :value="selectedNamespace"
-                            data-type="flow"
-                            :disabled="!!namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <scope-filter-buttons
-                            :label="$t('flows')"
-                            :value="$route.query.scope"
-                            @update:model-value="onDataTableValue('scope', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <label-filter
-                            :model-value="$route.query.labels"
-                            @update:model-value="onDataTableValue('labels', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-switch
-                            :model-value="showChart"
-                            @update:model-value="onShowChartChange"
-                            :active-text="$t('show chart')"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <filters :storage-key="storageKeys.FLOWS_FILTERS" />
-                    </el-form-item>
+                    <KestraFilter
+                        prefix="flows"
+                        :include="['namespace', 'scope', 'labels']"
+                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                    />
                 </template>
 
                 <template #top>
@@ -234,8 +205,9 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
-    import Filters from "../saved-filters/Filters.vue";
     import NoData from "../layout/NoData.vue";
+
+    import KestraFilter from "../filter/KestraFilter.vue"
 </script>
 
 <script>
@@ -243,7 +215,6 @@
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RouteContext from "../../mixins/routeContext";
@@ -252,7 +223,6 @@
     import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
-    import SearchField from "../layout/SearchField.vue";
     import StateChart from "../stats/StateChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
@@ -260,19 +230,15 @@
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import Upload from "vue-material-design-icons/Upload.vue";
-    import LabelFilter from "../labels/LabelFilter.vue";
-    import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue"
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
     import {storageKeys} from "../../utils/constants";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            NamespaceSelect,
             TextSearch,
             DataTable,
             DateAgo,
-            SearchField,
             StateChart,
             Status,
             TriggerAvatar,
@@ -280,8 +246,6 @@
             Kicon,
             Labels,
             Upload,
-            LabelFilter,
-            ScopeFilterButtons,
             TopNavBar,
             ExecutionsBar
         },
@@ -344,9 +308,6 @@
                 return [...this.daily].reduce((a, b) => {
                     return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
                 }, 0);
-            },
-            selectedNamespace(){
-                return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             }
         },
         beforeRouteEnter(to, from, next) {
@@ -608,18 +569,4 @@
     .flow-id {
         min-width: 200px;
     }
-    :deep(.el-select),
-    :deep(.el-select-dropdown),
-    :deep(.label-filter),
-    :deep(.namespace-select),
-    :deep(.search-field) {
-        .el-input__inner,
-        .el-input__wrapper,
-        .el-select-dropdown__item,
-        .el-tag,
-        input {
-            font-size: 16px; 
-        }
-    }
-
 </style>

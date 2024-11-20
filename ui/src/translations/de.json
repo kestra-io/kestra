@@ -956,7 +956,8 @@
         "state": "Zustand",
         "child": "Kind",
         "absolute_date": "Absolutes Datum",
-        "relative_date": "Relatives Datum"
+        "relative_date": "Relatives Datum",
+        "level": "Log-Ebene"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen",

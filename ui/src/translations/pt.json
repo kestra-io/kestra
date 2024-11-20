@@ -956,7 +956,8 @@
         "state": "Estado",
         "child": "Filho",
         "absolute_date": "Data absoluta",
-        "relative_date": "Data relativa"
+        "relative_date": "Data relativa",
+        "level": "Nível de Log"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",

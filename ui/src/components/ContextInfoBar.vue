@@ -228,7 +228,7 @@
 
 .commitNumber{
     font-size: 12px;
-    color: var(--bs-primary-color);
+    color: var(--bs-primary);
     margin-top: calc(.5 * var(--spacer));
 }
 

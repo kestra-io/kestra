@@ -105,7 +105,7 @@
                     <span class="text-secondary">
                         {{ sectionName.toUpperCase() }}
                     </span>
-                    <recursive-toc :parent="{children}" :make-index-navigable="false">
+                    <recursive-toc :parent="{children}">
                         <template #default="{path, title}">
                             <context-docs-link @click="menuOpen = false" :href="path.slice(5)" use-raw>
                                 {{ title.capitalize() }}

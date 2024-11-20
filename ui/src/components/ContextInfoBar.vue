@@ -173,20 +173,26 @@
 
 .barWrapper .barButtonActive{
     background: var(--bs-primary);
-    color: var(--bs-primary-color);
     border-color: var(--bs-primary);
+    color: white;
+    html.dark & {
+        color: var(--bs-primary-color);
+    }
 }
 
 .newsDot{
     width: 10px;
     height: 10px;
     background: #FD7278;
-    border: 2px solid #2F3342;
+    border: 2px solid white;
     border-radius: 50%;
     display: block;
     position: absolute;
     bottom: -4px;
     right: -4px;
+    html.dark & {
+        border-color: #2F3342;
+    }
 }
 
 .buttonIcon{

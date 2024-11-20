@@ -809,6 +809,12 @@
       "empty": {
         "title": "現在開いているタブはありません",
         "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。"
+      },
+      "close": {
+        "other": "他のタブを閉じる",
+        "tab": "タブを閉じる",
+        "right": "右側に閉じる",
+        "all": "すべてのタブを閉じる"
       }
     },
     "curl": {
@@ -844,7 +850,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために、`??` コアレス演算子を追加してください。例えば、`trigger.date` の代わりに `trigger.date ?? execution.startDate` を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -890,7 +896,7 @@
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
-    "no_data": "ここにはまだ何もないようです…！フィルターを調整するか、もう一度試してみてください！",
+    "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "informative notice": "注記",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
@@ -915,12 +921,15 @@
     "worker group fallback": "ワーカーグループフォールバック",
     "filters": {
       "comparators": {
-        "contains": "含む",
         "is": "です",
         "is_one_of": "のいずれかです",
-        "not_contains": "含まれていない",
         "is_not_one_off": "のいずれでもありません",
-        "is_not": "ではありません"
+        "is_not": "ではありません",
+        "between": "間",
+        "in": "内",
+        "not_contains": "含まれていない",
+        "starts_with": "で始まる",
+        "contains": "含む"
       },
       "recent": {
         "label": "最近の検索",
@@ -936,7 +945,8 @@
           "confirmation": "検索条件 <code>{name}</code>",
           "placeholder": "ラベル"
         },
-        "label": "保存された検索"
+        "label": "保存された検索",
+        "tooltip": "空の検索条件を保存することはできません。"
       },
       "options": {
         "namespace": "Namespace（ネームスペース）",
@@ -944,10 +954,16 @@
         "text": "テキスト",
         "labels": "ラベル",
         "state": "状態",
-        "child": "子"
+        "child": "子",
+        "absolute_date": "絶対日付",
+        "relative_date": "相対日付",
+        "level": "ログレベル"
       },
       "empty": "データがありません。",
-      "label": "フィルターを選択"
+      "label": "フィルターを選択",
+      "settings": {
+        "show_chart": "メインチャートを表示"
+      }
     },
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
     "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
@@ -956,6 +972,10 @@
     "force run": "強制実行",
     "invalid bulk force run": "実行を強制的に開始できませんでした",
     "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
-    "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。"
+    "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。",
+    "item": "アイテム",
+    "items": "アイテム",
+    "warning": "警告",
+    "cron": "Cron"
   }
 }

@@ -41,8 +41,9 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child']"
+                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
                     :refresh="{shown: true, callback: refresh}"
+                    :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
                 />
             </template>
 
@@ -352,7 +353,7 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import KestraFilter from "../filter/Wrapper.vue"
+    import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>

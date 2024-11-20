@@ -215,7 +215,7 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertNull(values.getFirst().exception());
-        Assertions.assertFalse(storageInterface.exists(null, URI.create(values.getFirst().value().toString())));
+        Assertions.assertFalse(storageInterface.exists(null, null, URI.create(values.getFirst().value().toString())));
     }
 
     @Test

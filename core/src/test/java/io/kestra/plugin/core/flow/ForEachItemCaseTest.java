@@ -261,7 +261,7 @@ public class ForEachItemCaseTest {
         // asserts for subflow merged outputs
         Map<String, Object> mergeTaskOutputs = execution.getTaskRunList().get(3).getOutputs();
         assertThat(mergeTaskOutputs.get("subflowOutputs"), notNullValue());
-        InputStream stream = storageInterface.get(null, URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
+        InputStream stream = storageInterface.get(null, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
 
         try (var br = new BufferedReader(new InputStreamReader(stream))) {
             // one line per sub-flows
@@ -276,6 +276,7 @@ public class ForEachItemCaseTest {
 
         return storageInterface.put(
             null,
+            null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)
         );
@@ -285,6 +286,7 @@ public class ForEachItemCaseTest {
         File tempFile = File.createTempFile("file", ".txt");
 
         return storageInterface.put(
+            null,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)

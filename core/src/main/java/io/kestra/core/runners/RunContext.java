@@ -139,6 +139,10 @@ public abstract class RunContext {
      */
     public abstract void cleanup();
 
+    /**
+     * @deprecated use flowInfo().tenantId() instead
+     */
+    @Deprecated(forRemoval = true)
     public abstract String tenantId();
 
     public abstract FlowInfo flowInfo();

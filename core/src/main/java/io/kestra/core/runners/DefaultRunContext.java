@@ -495,7 +495,7 @@ public class DefaultRunContext extends RunContext {
     public FlowInfo flowInfo() {
         Map<String, Object> flow = (Map<String, Object>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
-        return flow == null ? null : new FlowInfo(
+        return flow == null ? new FlowInfo(null, null, null, null) : new FlowInfo(
             (String) flow.get("tenantId"),
             (String) flow.get("namespace"),
             (String) flow.get("id"),
@@ -531,7 +531,7 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public KVStore namespaceKv(String namespace) {
-        return kvStoreService.get(tenantId(), namespace, this.flowInfo().namespace());
+        return kvStoreService.get(this.flowInfo().tenantId(), namespace, this.flowInfo().namespace());
     }
 
     /**

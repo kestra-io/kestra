@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
@@ -60,7 +61,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public InputStream get(String tenantId, URI uri) throws IOException {
+    public InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         return new BufferedInputStream(new FileInputStream(getPath(tenantId, uri)
             .toAbsolutePath()
             .toString())
@@ -68,12 +69,12 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public StorageObject getWithMetadata(String tenantId, URI uri) throws IOException {
-        return new StorageObject(LocalFileAttributes.getMetadata(this.getPath(tenantId, uri)), this.get(tenantId, uri));
+    public StorageObject getWithMetadata(String tenantId, @Nullable String namespace, URI uri) throws IOException {
+        return new StorageObject(LocalFileAttributes.getMetadata(this.getPath(tenantId, uri)), this.get(tenantId, namespace, uri));
     }
 
     @Override
-    public List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException {
+    public List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getPath(tenantId, prefix);
         List<URI> uris = new ArrayList<>();
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
@@ -115,12 +116,12 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public boolean exists(String tenantId, URI uri) {
+    public boolean exists(String tenantId, @Nullable String namespace, URI uri) {
         return Files.exists(getPath(tenantId, uri));
     }
 
     @Override
-    public List<FileAttributes> list(String tenantId, URI uri) throws IOException {
+    public List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getPath(tenantId, uri))) {
             return stream
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
@@ -130,7 +131,7 @@ public class LocalStorage implements StorageInterface {
                             Path.of(file.toUri())
                         ).toString().replace("\\", "/")
                     );
-                    return getAttributes(tenantId, relative);
+                    return getAttributes(tenantId, namespace, relative);
                 }))
                 .toList();
         } catch (NoSuchFileException e) {
@@ -139,7 +140,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public URI put(String tenantId, URI uri, StorageObject storageObject) throws IOException {
+    public URI put(String tenantId, @Nullable String namespace, URI uri, StorageObject storageObject) throws IOException {
         File file = getPath(tenantId, uri).toFile();
         File parent = file.getParentFile();
         if (!parent.exists()) {
@@ -165,7 +166,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public FileAttributes getAttributes(String tenantId, URI uri) throws IOException {
+    public FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         Path path = getPath(tenantId, uri);
         try {
             return LocalFileAttributes.builder()
@@ -178,7 +179,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public URI createDirectory(String tenantId, URI uri) {
+    public URI createDirectory(String tenantId, @Nullable String namespace, URI uri) {
         if (uri == null || uri.getPath().isEmpty()) {
             throw new IllegalArgumentException("Unable to create a directory with empty url.");
         }
@@ -190,7 +191,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public URI move(String tenantId, URI from, URI to) throws IOException {
+    public URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException {
         try {
             Files.move(
                 getPath(tenantId, from),
@@ -203,7 +204,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public boolean delete(String tenantId, URI uri) throws IOException {
+    public boolean delete(String tenantId, @Nullable String namespace, URI uri) throws IOException {
         Path path = getPath(tenantId, uri);
         File file = path.toFile();
 
@@ -217,7 +218,7 @@ public class LocalStorage implements StorageInterface {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    public List<URI> deleteByPrefix(String tenantId, URI storagePrefix) throws IOException {
+    public List<URI> deleteByPrefix(String tenantId, @Nullable String namespace, URI storagePrefix) throws IOException {
         Path path = this.getPath(tenantId, storagePrefix);
 
         if (!path.toFile().exists()) {

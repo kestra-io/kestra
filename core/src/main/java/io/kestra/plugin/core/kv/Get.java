@@ -76,7 +76,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         String renderedNamespace = runContext.render(this.namespace);
 
         FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.tenantId(), renderedNamespace, runContext.tenantId(), runContext.flowInfo().namespace());
+        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
 
         String renderedKey = runContext.render(this.key);
 

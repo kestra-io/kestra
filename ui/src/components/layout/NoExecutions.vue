@@ -1,15 +1,12 @@
 <template>
-    <el-card>
+    <el-card class="overall-container">
         <el-container class="header-image-container">
             <el-image :src="noExecutionsInFlowImage" alt="No Executions" fit="contain" />
         </el-container>
         <el-container :class="['container', themeClass]">
             <el-main>
-                <el-title level="1" style="font-weight: 900;">
+                <el-title level="1" style="font-weight: 900; font-size: 24px">
                     {{ $t('no-executions-view.title') }}
-                </el-title>
-                <el-title level="1">
-                    {{ $t('no-executions-view.Kestra') }}
                 </el-title>
                 <el-row>
                     <el-col :span="24">
@@ -18,11 +15,9 @@
                         </el-title>
                     </el-col>
                     <el-col :span="24" style="margin-top: 30px;">
-                        <router-link :to="{name: 'flows/list'}">
-                            <el-button size="large" type="primary">
-                                {{ $t('execute') }}
-                            </el-button>
-                        </router-link>
+                        <el-button id="execute-button" :icon="icon.Flash" :type="primary" @click="onClick()" class="execute">
+                            {{ $t("execute") }}
+                        </el-button>
                     </el-col>
                     <el-col :span="24" style="margin-top: 30px; font-weight: 900;">
                         <el-title level="2">
@@ -54,7 +49,7 @@
                         </div>
                         <div class="card__footer">
                             <el-title level="3">
-                                <el-link href="https://kestra.io/docs/installation" target="__blank" type="primary">
+                                <el-link href="https://kestra.io/docs/installation" target="__blank" type="primary" style="padding-top: 35px;">
                                     Learn more →
                                 </el-link>
                             </el-title>
@@ -63,7 +58,7 @@
                 </el-col>
 
                 <el-col :span="8" class="card__wrap--inner">
-                    <el-card shadow="hover" class="card" style="width: 12vw;">
+                    <el-card shadow="hover" class="card">
                         <div class="card__item">
                             <el-title level="3" style="margin-bottom: 10px;">
                                 {{ $t('no-executions-view.workflow_components_title') }}
@@ -96,7 +91,7 @@
                             </el-title>
                         </div>
                         <div class="card__footer">
-                            <el-link href="https://kestra.io/docs/tutorial" target="__blank" type="primary" style="padding-top: 53px;">
+                            <el-link href="https://kestra.io/docs/tutorial" target="__blank" type="primary" style="padding-top: 70px;">
                                 Watch →
                             </el-link>
                         </div>
@@ -110,8 +105,17 @@
 
 <script>
     import noExecutionsImage from "../../assets/onboarding/onboarding-ready-to-flow.svg"
+    import Flash from "vue-material-design-icons/Flash.vue";
+    import {shallowRef} from "vue";
     export default {
         name: "NoExecutions",
+        data() {
+            return {
+                icon: {
+                    Flash: shallowRef(Flash)
+                }
+            };
+        },
         computed: {
             noExecutionsInFlowImage() {
                 return noExecutionsImage
@@ -121,6 +125,11 @@
                     ? "theme-light"
                     : "theme-dark";
             },
+        },
+        methods: {
+            triggerExecute() {
+                this.$store.dispatch("executeFlow");
+            }
         }
     };
 </script>
@@ -137,11 +146,34 @@
   font-size: var(--el-font-size-small);
   justify-content: center;
 }
+:root {
+  --theme-background: #fff; 
+}
 .theme-light {
-    color: #000;
+  --theme-background: #000; 
 }
 .theme-dark {
-    color: #fff;
+  --theme-background: #fff; 
+}
+.overall-container {
+  position: relative;
+  padding-top: 35px;
+}
+.overall-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 25%;
+  background: linear-gradient(to bottom, 
+    rgba(122, 0, 255, 0.5) 0%, 
+    rgba(122, 0, 255, 0.5) 40%, 
+    rgba(0, 0, 255, 0) 80%,
+    rgba(0, 0, 255, 0) 100%
+  );
+  pointer-events: none;
 }
 .card {
   flex-grow: 1;
@@ -177,5 +209,9 @@
 .card__footer {
   overflow: hidden;
   padding-top: 10px;
+}
+.execute {
+    background-color: var(--el-text-color-primary);
+    padding: 20px 60px 20px 60px;
 }
 </style>

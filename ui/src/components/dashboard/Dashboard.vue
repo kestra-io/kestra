@@ -117,7 +117,7 @@
 
         <el-row :gutter="20" class="mx-0">
             <el-col :xs="24" :lg="props.flow ? 24 : 16">
-                <ExecutionsBar :data="graphData" :total="stats.total" />
+                <NoExecutionsBar :data="graphData" :total="stats.total" />
             </el-col>
             <el-col v-if="!props.flow" :xs="24" :lg="8">
                 <ExecutionsDoughnut :data="graphData" :total="stats.total" />
@@ -214,7 +214,7 @@
     import ScopeFilterButtons from "../layout/ScopeFilterButtons.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
 
-    import ExecutionsBar from "./components/charts/executions/Bar.vue";
+    import NoExecutionsBar from "./components/charts/executions/NoExecutionsBar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
     import ExecutionsNamespace from "./components/charts/executions/Namespace.vue";
     import Logs from "./components/charts/logs/Bar.vue";

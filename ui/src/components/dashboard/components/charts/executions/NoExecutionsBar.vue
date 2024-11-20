@@ -34,7 +34,7 @@
             class="tall"
         />
         
-        <NoData v-else />
+        <NoExecutions v-else />
     </div>
 </template>
 
@@ -51,7 +51,7 @@
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import NoExecutions from "../../../../layout/NoExecutions.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 

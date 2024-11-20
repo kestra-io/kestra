@@ -919,8 +919,7 @@
     "behavior": "Behavior",
     "concurrency": "Concurrency",
     "no-executions-view": {
-        "title": "Start automating with ",
-        "Kestra": "Kestra",
+        "title": "Start automating with Kestra",
         "sub_title": "Click on the Execute button to start your first workflow execution",
         "guidance_desc": "Need guidance to execute your flow?",
         "guidance_sub_desc": "Follow the documentation for all the info you need",

@@ -1,5 +1,5 @@
 <script setup>
-    import {computed} from "vue";
+    import {computed, ref, onMounted} from "vue";
     import {useStore} from "vuex";
 
     import ContextDocsLink from "./ContextDocsLink.vue";
@@ -13,33 +13,38 @@
         }
     });
 
-    let currentPage = null;
+    const currentPage = computed(() => {
+        if (props.pageUrl) {
+            return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
+        } else {
+            const p = store.getters["doc/docPath"];
+            return p ? `docs/${p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}` : p;
+        }
+    })
 
-    if (props.pageUrl) {
-        currentPage = props.pageUrl;
-    } else {
-        currentPage = store.getters["doc/docPath"];
-    }
 
-    currentPage = `docs/${currentPage.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/")}`;
+    const resourcesWithMetadata = ref({});
+    onMounted(async () => {
+        resourcesWithMetadata.value = await store.dispatch("doc/children", currentPage.value);
+    })
 
-    const resourcesWithMetadata = await store.dispatch("doc/children", currentPage);
+    const navigation = computed(() => {
+        let parentMetadata;
+        if (props.pageUrl) {
+            parentMetadata = {...resourcesWithMetadata.value[currentPage.value]};
+            delete parentMetadata.description;
+        }
 
-    let parentMetadata;
-    if (props.pageUrl) {
-        parentMetadata = {...resourcesWithMetadata[currentPage]};
-        delete parentMetadata.description;
-    }
-
-    const parentLevel = currentPage.split("/").length;
-    const navigation = computed(() => Object.entries(resourcesWithMetadata)
-        .filter(([path]) => path.split("/").length === parentLevel + 1)
-        .filter(([path]) => path !== currentPage)
-        .map(([path, metadata]) => ({
-            path: path.replace(/^docs\//, ""),
-            ...parentMetadata,
-            ...metadata
-        })));
+        const parentLevel = currentPage.value.split("/").length;
+        return Object.entries(resourcesWithMetadata.value)
+            .filter(([path]) => path.split("/").length === parentLevel + 1)
+            .filter(([path]) => path !== currentPage.value)
+            .map(([path, metadata]) => ({
+                path: path.replace(/^docs\//, ""),
+                ...parentMetadata,
+                ...metadata
+            }))
+    });
 
 </script>
 

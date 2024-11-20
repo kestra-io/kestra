@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-    import {ref, computed, onMounted, reactive} from "vue";
+    import {computed, onMounted, reactive} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {useStorage} from "@vueuse/core"
+
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
@@ -13,22 +15,12 @@
 
     const feeds = computed(() => store.state.api.feeds);
 
-    const hasUnread = ref(false);
-
-    const isUnread = () => {
-        let storage = new Date(localStorage.getItem("feeds") ?? "");
-
-        return (
-            storage === null ||
-            (feeds.value && feeds.value[0] && storage <= new Date(feeds.value[0].publicationDate))
-        );
-    };
-
-    onMounted(() => {
-        hasUnread.value = isUnread();
-    });
-
     const expanded = reactive({});
+
+    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    onMounted(() => {
+        lastNewsReadDate.value = feeds.value[0].publicationDate;
+    });
 </script>
 
 <template>

@@ -12,13 +12,22 @@
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-
+    import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
 
     const store = useStore();
 
     const configs = computed(() => store.state.misc.configs);
 
+    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+
+    const hasUnread = computed(() => {
+        const feeds = store.state.misc.feeds
+        return (
+            lastNewsReadDate.value === null ||
+            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
+        )
+    })
 
     const panelWidth = ref(640)
 
@@ -80,6 +89,7 @@
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
         <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => setActiveTab('news')">
             <MessageOutline class="buttonIcon" />News
+            <div v-if="hasUnread" class="newsDot" />
         </button>
         <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => setActiveTab('docs')">
             <FileDocument class="buttonIcon" />Docs
@@ -154,6 +164,7 @@
     display: block;
     line-height: normal;
     white-space: nowrap;
+    position: relative;
 }
 
 .barWrapper .barButton:hover{
@@ -164,6 +175,18 @@
     background: var(--bs-primary);
     color: var(--bs-primary-color);
     border-color: var(--bs-primary);
+}
+
+.newsDot{
+    width: 10px;
+    height: 10px;
+    background: #FD7278;
+    border: 2px solid #2F3342;
+    border-radius: 50%;
+    display: block;
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
 }
 
 .buttonIcon{

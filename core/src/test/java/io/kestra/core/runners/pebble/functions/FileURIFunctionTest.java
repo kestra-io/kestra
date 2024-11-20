@@ -18,8 +18,17 @@ public class FileURIFunctionTest {
 
     @Test
     void fileURIFunction() throws IllegalVariableEvaluationException{
-        String render = variableRenderer.render("{{ fileURI(fileA) }}", Map.of("fileA", "test"));
-        assertThat(render, is("test"));
+        String namespace = "my.namespace";
+        String flowId = "flow";
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", flowId,
+                "namespace", namespace),
+            "fileA", "test"
+        );
+        String render = variableRenderer.render("{{ fileURI(fileA) }}", variables);
+        assertThat(render, is("kestra:///my/namespace/_files/test"));
     }
 
 }

@@ -8,8 +8,13 @@
         width="268px"
         :collapsed="collapsed"
         link-component-name="LeftMenuLink"
+        hide-toggle
     >
         <template #header>
+            <el-button @click="collapsed = !collapsed" class="collapseButton" :size="collapsed ? 'small':undefined">
+                <chevron-right v-if="collapsed" />
+                <chevron-left v-else />
+            </el-button>
             <div class="logo">
                 <router-link :to="{name: 'home'}">
                     <span class="img" />
@@ -20,13 +25,6 @@
 
         <template #footer>
             <slot name="footer" />
-        </template>
-
-        <template #toggle-icon>
-            <el-button>
-                <chevron-double-right v-if="collapsed" />
-                <chevron-double-left v-else />
-            </el-button>
         </template>
     </sidebar-menu>
 </template>
@@ -46,8 +44,8 @@
 
     import {SidebarMenu} from "vue-sidebar-menu";
 
-    import ChevronDoubleLeft from "vue-material-design-icons/ChevronDoubleLeft.vue";
-    import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
     import Environment from "./Environment.vue";
@@ -170,6 +168,20 @@
 </script>
 
 <style lang="scss">
+    .collapseButton{
+        position: absolute;
+        top: var(--spacer);
+        right: var(--spacer);
+        z-index: 1;
+        #side-menu & {
+            border: none;
+        }
+
+        .vsm_collapsed & {
+            top: calc(var(--spacer) * .5);
+        }
+    }
+
     #side-menu {
         position: static;
         z-index: 1039;
@@ -178,7 +190,7 @@
         .logo {
             overflow: hidden;
             padding: 35px 0;
-            height: 113px;
+            height: 112px;
             position: relative;
 
             a {
@@ -204,6 +216,8 @@
                 }
             }
         }
+
+
 
 
         span.version {

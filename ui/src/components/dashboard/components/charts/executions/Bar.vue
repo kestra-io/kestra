@@ -166,13 +166,26 @@
                         maxTicksLimit: isSmallScreen.value ? 5 : 8,
                         callback: function (value) {
                             const label = this.getLabelForValue(value);
-                            const date = moment(new Date(label));
 
-                            const isCurrentYear = date.year() === moment().year();
+                            if (
+                                moment(label, ["h:mm A", "HH:mm"], true).isValid()
+                            ) {
+                                // Handle time strings like "1:15 PM" or "13:15"
+                                return moment(label, ["h:mm A", "HH:mm"]).format(
+                                    "h:mm A",
+                                );
+                            } else if (moment(new Date(label)).isValid()) {
+                                // Handle date strings
+                                const date = moment(new Date(label));
+                                const isCurrentYear =
+                                    date.year() === moment().year();
+                                return date.format(
+                                    isCurrentYear ? "MM/DD" : "MM/DD/YY",
+                                );
+                            }
 
-                            return date.format(
-                                isCurrentYear ? "MM/DD" : "MM/DD/YY",
-                            );
+                            // Return the label as-is if it's neither a valid date nor time
+                            return label;
                         },
                     },
                 },

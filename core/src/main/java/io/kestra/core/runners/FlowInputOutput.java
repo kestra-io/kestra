@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +33,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
+
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +50,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -353,13 +358,26 @@ public class FlowInputOutput {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
+        final ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> results = flow
             .getOutputs()
             .stream()
             .map(output -> {
-                Object current = in == null ? null : in.get(output.getId());
+                final HashMap<String, Object> current;
+                final Object currentValue;
                 try {
-                    return parseData(execution, output, current)
+                    current = in == null ? null : mapper.readValue(
+                        mapper.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                if (current == null) {
+                    currentValue = null;
+                } else {
+                    currentValue = current.get("value");
+                }
+                try {
+                    return parseData(execution, output, currentValue)
                         .map(entry -> {
                             if (output.getType().equals(Type.SECRET)) {
                                 return new AbstractMap.SimpleEntry<>(
@@ -370,12 +388,26 @@ public class FlowInputOutput {
                             return entry;
                         });
                 } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), current);
+                    throw output.toConstraintViolationException(e.getMessage(), currentValue);
                 }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
+            .collect(HashMap::new,
+                     (map, entry) -> {
+                         map.compute(entry.getKey(), (key, existingValue) -> {
+                             if (existingValue == null) {
+                                 return entry.getValue();
+                             }
+                             if (existingValue instanceof List) {
+                                 ((List<Object>) existingValue).add(entry.getValue());
+                                 return existingValue;
+                             }
+                             return new ArrayList<>(Arrays.asList(existingValue, entry.getValue()));
+                         });
+                     },
+                     Map::putAll
+            );
 
         // Ensure outputs are compliant with tasks outputs.
         return JacksonMapper.toMap(results);
@@ -393,7 +425,7 @@ public class FlowInputOutput {
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
-            data.getId(),
+            Optional.ofNullable(data.getDisplayName()).orElse(data.getId()),
             parseType(execution, data.getType(), data.getId(), elementType, current)
         ));
     }

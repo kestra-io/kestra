@@ -33,67 +33,6 @@
             </div>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
-                <el-dropdown popper-class="">
-                    <el-button class="no-focus dropdown-button">
-                        <HelpBox />
-                    </el-button>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <a
-                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
-                                target="_blank"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <HelpBox class="align-middle" /> {{ $t("live help") }}
-                            </a>
-                            <a
-                                v-if="tourEnabled"
-                                @click="restartGuidedTour"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <ProgressQuestion class="align-middle" /> {{ $t('Reset guided tour') }}
-                            </a>
-
-                            <router-link
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                                :to="{name: 'docs/view'}"
-                            >
-                                <BookMultipleOutline class="align-middle" /> {{ $t("documentation.documentation") }}
-                            </router-link>
-
-                            <a
-                                href="https://github.com/kestra-io/kestra/issues"
-                                target="_blank"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <Github class="align-middle" /> {{ $t("documentation.github") }}
-                            </a>
-                            <a
-                                href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=top-nav-bar"
-                                target="_blank"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <Slack class="align-middle" /> {{ $t("join community") }}
-                            </a>
-                            <a
-                                href="https://kestra.io/demo?utm_source=app&utm_campaign=sales&utm_content=top-nav-bar"
-                                target="_blank"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <EmailHeartOutline class="align-middle" /> {{ $t("reach us") }}
-                            </a>
-                            <a
-                                v-if="version"
-                                :href="version.url"
-                                target="_blank"
-                                class="d-flex gap-2 el-dropdown-menu__item"
-                            >
-                                <Update class="align-middle text-danger" /> <span class="text-danger">{{ $t("new version", {"version": version.latest}) }}</span>
-                            </a>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
-
                 <impersonating />
                 <auth />
             </div>
@@ -105,13 +44,6 @@
     import {mapState, mapGetters} from "vuex";
     import Auth from "override/components/auth/Auth.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
-    import HelpBox from "vue-material-design-icons/HelpBox.vue";
-    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
-    import Github from "vue-material-design-icons/Github.vue";
-    import Slack from "vue-material-design-icons/Slack.vue";
-    import EmailHeartOutline from "vue-material-design-icons/EmailHeartOutline.vue";
-    import Update from "vue-material-design-icons/Update.vue";
-    import ProgressQuestion from "vue-material-design-icons/ProgressQuestion.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
@@ -121,13 +53,6 @@
     export default {
         components: {
             Auth,
-            HelpBox,
-            BookMultipleOutline,
-            Github,
-            Slack,
-            EmailHeartOutline,
-            Update,
-            ProgressQuestion,
             GlobalSearch,
             TrashCan,
             Impersonating

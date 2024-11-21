@@ -32,8 +32,6 @@
 
     const panelWidth = ref(640)
 
-    const panel = ref<HTMLElement | null>(null)
-
     const activeTab = ref("")
 
     const {startResizing, resizing} = useResizablePanel(activeTab)
@@ -68,12 +66,6 @@
         })
 
         return {startResizing, resizing}
-    }
-
-    function scrollToTop(){
-        if(panel.value) {
-            panel.value.scrollTop = 0
-        }
     }
 
     function setActiveTab(tab: string){
@@ -120,12 +112,12 @@
             <span class="commitNumber">{{ configs?.commitId }}</span>
         </el-tooltip>
     </div>
-    <div ref="panel" class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+    <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <div :style="{overflow: 'hidden', width:`${panelWidth}px`}">
             <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
                 <Close />
             </button>
-            <ContextDocs v-if="activeTab === 'docs'" @update:doc-path="scrollToTop" />
+            <ContextDocs v-if="activeTab === 'docs'" />
             <ContextNews v-else-if="activeTab === 'news'" />
             <template v-else>
                 {{ activeTab }}

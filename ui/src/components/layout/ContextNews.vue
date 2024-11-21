@@ -25,7 +25,9 @@
 
 <template>
     <div class="allContextNews">
-        <h3>{{ t("feeds.title") }}</h3>
+        <h2 class="newsTitle">
+            {{ t("feeds.title") }}
+        </h2>
         <el-divider style="margin: var(--spacer) 0;" />
         <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mr-2">
@@ -68,6 +70,10 @@
 <style lang="scss" scoped>
     .allContextNews{
         padding: var(--spacer);
+    }
+
+    .newsTitle{
+        font-size: 18px;
     }
 
     .post {

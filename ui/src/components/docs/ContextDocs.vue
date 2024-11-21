@@ -17,13 +17,13 @@
     const store = useStore();
     const {t} = useI18n();
 
+    const docWrapper = ref<HTMLDivElement | null>(null);
+
     const pageMetadata = computed(() => store.getters["doc/pageMetadata"]);
     const docPath = computed(() => store.getters["doc/docPath"]);
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
     }))
-
-    const emit = defineEmits(["update:docPath"]);
 
     onUnmounted(() => {
         ast.value = undefined
@@ -42,7 +42,7 @@
     watch(docPath, async (val) => {
         refreshPage(val);
         nextTick(() => {
-            emit("update:docPath", val);
+            docWrapper.value?.scrollTo(0, 0);
         });
     }, {immediate: true});
 
@@ -58,7 +58,7 @@
 </script>
 
 <template>
-    <div class="docWrapper">
+    <div class="docWrapper" ref="docWrapper">
         <h2 class="docTitle">
             <router-link
                 :to="{

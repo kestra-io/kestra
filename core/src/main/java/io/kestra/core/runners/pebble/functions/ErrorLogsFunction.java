@@ -1,6 +1,8 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.services.LogService;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
+@Requires(property = "kestra.repository.type")
 public class ErrorLogsFunction  implements Function {
     @Inject
     private LogService logService;

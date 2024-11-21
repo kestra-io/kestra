@@ -48,6 +48,7 @@ public class Extension extends AbstractExtension {
     private FileSizeFunction fileSizeFunction;
 
     @Inject
+    @Nullable
     private ErrorLogsFunction errorLogsFunction;
 
     @Override
@@ -142,7 +143,9 @@ public class Extension extends AbstractExtension {
         functions.put("printContext", new PrintContextFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
-        functions.put("errorLogs", errorLogsFunction);
+        if (this.errorLogsFunction != null) {
+            functions.put("errorLogs", errorLogsFunction);
+        }
         return functions;
     }
 

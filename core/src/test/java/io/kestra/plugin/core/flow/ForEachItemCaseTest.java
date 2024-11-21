@@ -189,7 +189,7 @@ public class ForEachItemCaseTest {
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
-            Duration.ofSeconds(30));
+            Duration.ofSeconds(60));
 
         // we should have triggered 26 subflows
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));

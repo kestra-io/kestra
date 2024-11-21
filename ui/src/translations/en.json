@@ -997,6 +997,7 @@
     "items": "items",
     "cron": "Cron",
     "execution failed": "The execution failed, click here for more details.",
-    "task run id": "TaskRun ID"
+    "task run id": "TaskRun ID",
+    "active": "Active"
   }
 }

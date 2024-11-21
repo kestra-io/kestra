@@ -151,8 +151,7 @@
 
 .barWrapper {
     position: relative;
-    width: 65px;
-    padding: 16px;
+    padding: 12px 8px;
     writing-mode: vertical-rl;
     text-orientation: mixed;
     border-left: 1px solid var(--el-border-color);
@@ -160,6 +159,7 @@
     align-items: center;
     gap: 8px;
     background: var(--card-bg);
+    font-size:12px;
 }
 
 .barWrapper .barButton{
@@ -167,8 +167,7 @@
     color: var(--bs-body-color);
     border-radius: 5px;
     border: 1px solid var(--el-border-color);
-    padding: 10px 5px;
-    width: 32px;
+    padding: 8px 5px;
     display: block;
     line-height: normal;
     white-space: nowrap;
@@ -205,12 +204,12 @@
 
 .buttonIcon{
     transform: rotate(90deg);
-    margin-bottom: 8px;
+    margin-bottom: .5em;
 }
 
 .openIcon{
     transform: rotate(90deg);
-    margin-top: 8px;
+    margin-top: .5em;
     color: var(--bs-tertiary-color);
     font-size: 12px;
 }

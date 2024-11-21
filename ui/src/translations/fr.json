@@ -982,6 +982,7 @@
     "documentationMenu": "Menu de documentation",
     "task run id": "ID d'exécution de tâche",
     "execution failed": "L'exécution a échoué, cliquez ici pour plus de détails.",
-    "optional": "Optionnel"
+    "optional": "Optionnel",
+    "active": "Actif"
   }
 }

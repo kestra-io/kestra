@@ -982,6 +982,7 @@
     "documentationMenu": "ドキュメントメニュー",
     "task run id": "タスクランID",
     "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
-    "optional": "オプション"
+    "optional": "オプション",
+    "active": "アクティブ"
   }
 }

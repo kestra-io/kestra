@@ -982,6 +982,7 @@
     "documentationMenu": "Dokumentationsmenü",
     "task run id": "TaskRun-ID",
     "execution failed": "Die Ausführung ist fehlgeschlagen, klicken Sie hier für weitere Details.",
-    "optional": "Optional"
+    "optional": "Optional",
+    "active": "Aktiv"
   }
 }

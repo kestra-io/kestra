@@ -983,6 +983,13 @@
     "task run id": "TaskRun ID",
     "execution failed": "실행이 FAILED되었습니다. 자세한 내용을 보려면 여기를 클릭하세요.",
     "optional": "선택 사항",
-    "active": "활성화됨"
+    "active": "활성화됨",
+    "contextBar": {
+      "news": "뉴스",
+      "issue": "이슈 열기",
+      "docs": "문서",
+      "demo": "데모 받기",
+      "help": "도움말"
+    }
   }
 }

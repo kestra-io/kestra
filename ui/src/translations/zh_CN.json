@@ -981,6 +981,7 @@
     "showLess": "显示较少",
     "documentationMenu": "文档菜单",
     "task run id": "任务运行 ID",
-    "execution failed": "执行FAILED，点击此处查看详细信息。"
+    "execution failed": "执行FAILED，点击此处查看详细信息。",
+    "optional": "可选"
   }
 }

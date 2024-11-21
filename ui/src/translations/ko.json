@@ -981,6 +981,7 @@
     "showLess": "덜 보기",
     "documentationMenu": "문서 메뉴",
     "task run id": "TaskRun ID",
-    "execution failed": "실행이 FAILED되었습니다. 자세한 내용을 보려면 여기를 클릭하세요."
+    "execution failed": "실행이 FAILED되었습니다. 자세한 내용을 보려면 여기를 클릭하세요.",
+    "optional": "선택 사항"
   }
 }

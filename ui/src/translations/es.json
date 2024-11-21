@@ -983,6 +983,13 @@
     "task run id": "ID de TaskRun",
     "execution failed": "La ejecución FAILED, haz clic aquí para más detalles.",
     "optional": "Opcional",
-    "active": "Activo"
+    "active": "Activo",
+    "contextBar": {
+      "news": "Noticias",
+      "issue": "Abrir un Issue",
+      "docs": "Documentos",
+      "demo": "Obtener una demostración",
+      "help": "Ayuda"
+    }
   }
 }

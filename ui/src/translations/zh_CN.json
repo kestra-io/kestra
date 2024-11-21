@@ -983,6 +983,13 @@
     "task run id": "任务运行 ID",
     "execution failed": "执行FAILED，点击此处查看详细信息。",
     "optional": "可选",
-    "active": "活动"
+    "active": "活动",
+    "contextBar": {
+      "news": "新闻",
+      "issue": "打开问题",
+      "docs": "文档",
+      "demo": "获取演示",
+      "help": "帮助"
+    }
   }
 }

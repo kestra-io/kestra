@@ -983,6 +983,13 @@
     "task run id": "タスクランID",
     "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
     "optional": "オプション",
-    "active": "アクティブ"
+    "active": "アクティブ",
+    "contextBar": {
+      "news": "ニュース",
+      "issue": "問題を開く",
+      "docs": "ドキュメント",
+      "demo": "デモを取得",
+      "help": "ヘルプ"
+    }
   }
 }

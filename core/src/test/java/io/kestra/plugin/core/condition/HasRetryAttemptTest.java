@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class HasRetryAttemptConditionTest {
+class HasRetryAttemptTest {
     @Inject
     ConditionService conditionService;
 
@@ -40,7 +40,7 @@ class HasRetryAttemptConditionTest {
             .build()
         ));
 
-        HasRetryAttemptCondition build = HasRetryAttemptCondition.builder()
+        HasRetryAttempt build = HasRetryAttempt.builder()
             .in(Collections.singletonList(State.Type.KILLED))
             .build();
 
@@ -48,7 +48,7 @@ class HasRetryAttemptConditionTest {
 
         assertThat(test, is(true));
 
-        build = HasRetryAttemptCondition.builder()
+        build = HasRetryAttempt.builder()
             .in(Collections.singletonList(State.Type.FAILED))
             .build();
 
@@ -71,7 +71,7 @@ class HasRetryAttemptConditionTest {
             .build()
         ));
 
-        HasRetryAttemptCondition build = HasRetryAttemptCondition.builder()
+        HasRetryAttempt build = HasRetryAttempt.builder()
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class PublicHolidayConditionTest {
+class PublicHolidayTest {
     @Inject
     ConditionService conditionService;
 
@@ -22,18 +22,18 @@ class PublicHolidayConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        PublicHolidayCondition publicHoliday = PublicHolidayCondition.builder()
+        PublicHoliday publicHoliday = PublicHoliday.builder()
             .date("2023-01-01")
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution), is(true));
 
-        publicHoliday = PublicHolidayCondition.builder()
+        publicHoliday = PublicHoliday.builder()
             .date("2023-07-14")
             .country("FR")
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution), is(true));
 
-        publicHoliday = PublicHolidayCondition.builder()
+        publicHoliday = PublicHoliday.builder()
             .date("2023-03-08")
             .country("DE")
             .subDivision("BE")
@@ -46,13 +46,13 @@ class PublicHolidayConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        PublicHolidayCondition publicHoliday = PublicHolidayCondition.builder()
+        PublicHoliday publicHoliday = PublicHoliday.builder()
             .date("2023-01-02")
             .country("FR")
             .build();
         assertThat(conditionService.isValid(publicHoliday, flow, execution), is(false));
 
-        publicHoliday = PublicHolidayCondition.builder()
+        publicHoliday = PublicHoliday.builder()
             .date("2023-03-08")
             .country("DE")
             .build();

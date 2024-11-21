@@ -37,14 +37,14 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionOutputsCondition",
+                "    - type: io.kestra.plugin.core.condition.ExecutionOutputs",
                 "      expression: {{ trigger.outputs.status_code == '200' }}",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.ExecutionOutputsCondition"
+    aliases = {"io.kestra.core.models.conditions.types.ExecutionOutputsCondition", "io.kestra.plugin.core.condition.ExecutionOutputsCondition"}
 )
-public class ExecutionOutputsCondition extends Condition implements ScheduleCondition {
+public class ExecutionOutputs extends Condition implements ScheduleCondition {
 
     private static final String TRIGGER_VAR = "trigger";
     private static final String OUTPUTS_VAR = "outputs";

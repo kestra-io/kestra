@@ -18,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class WeekendConditionTest {
+class WeekendTest {
     @Inject
     ConditionService conditionService;
 
@@ -37,7 +37,7 @@ class WeekendConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        WeekendCondition build = WeekendCondition.builder()
+        Weekend build = Weekend.builder()
             .date(date)
             .build();
 

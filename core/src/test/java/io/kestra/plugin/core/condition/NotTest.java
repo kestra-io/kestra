@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class OrConditionTest {
+class NotTest {
     @Inject
     ConditionService conditionService;
 
@@ -30,38 +30,38 @@ class OrConditionTest {
         return Stream.of(
             Arguments.of(
                 Collections.singletonList(
-                    DayWeekCondition.builder()
+                    DayWeek.builder()
                         .date("2013-09-08")
                         .dayOfWeek(DayOfWeek.SUNDAY)
-                        .build()
-                ),
-                true
-            ),
-            Arguments.of(
-                Arrays.asList(
-                    DayWeekCondition.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.SATURDAY)
-                        .build(),
-                    DayWeekCondition.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.MONDAY)
                         .build()
                 ),
                 false
             ),
             Arguments.of(
                 Arrays.asList(
-                    DayWeekCondition.builder()
+                    DayWeek.builder()
                         .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.SUNDAY)
+                        .dayOfWeek(DayOfWeek.SATURDAY)
                         .build(),
-                    DayWeekCondition.builder()
+                    DayWeek.builder()
                         .date("2013-09-08")
                         .dayOfWeek(DayOfWeek.MONDAY)
                         .build()
                 ),
                 true
+            ),
+            Arguments.of(
+                Arrays.asList(
+                    DayWeek.builder()
+                        .date("2013-09-08")
+                        .dayOfWeek(DayOfWeek.SUNDAY)
+                        .build(),
+                    DayWeek.builder()
+                        .date("2013-09-08")
+                        .dayOfWeek(DayOfWeek.MONDAY)
+                        .build()
+                ),
+                false
             )
         );
     }
@@ -72,7 +72,7 @@ class OrConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        OrCondition build = OrCondition.builder()
+        Not build = Not.builder()
             .conditions(conditions)
             .build();
 

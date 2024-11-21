@@ -31,15 +31,15 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DayWeekInMonthCondition",
+                "    - type: io.kestra.plugin.core.condition.DayWeekInMonth",
                 "      dayOfWeek: MONDAY",
                 "      dayInMonth: FIRST",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.DayWeekInMonthCondition"
+    aliases = {"io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition"}
 )
-public class DayWeekInMonthCondition extends Condition implements ScheduleCondition {
+public class DayWeekInMonth extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test.",
@@ -57,7 +57,7 @@ public class DayWeekInMonthCondition extends Condition implements ScheduleCondit
     @NotNull
     @Schema(title = "Are you looking for the first or the last day in the month?")
     @PluginProperty
-    private DayWeekInMonthCondition.DayInMonth dayInMonth;
+    private DayWeekInMonth.DayInMonth dayInMonth;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

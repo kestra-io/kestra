@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class ExecutionNamespaceConditionTest {
+class ExecutionNamespaceTest {
     @Inject
     ConditionService conditionService;
 
@@ -26,7 +26,7 @@ class ExecutionNamespaceConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+        ExecutionNamespace build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace())
             .build();
 
@@ -35,9 +35,9 @@ class ExecutionNamespaceConditionTest {
         assertThat(test, is(true));
 
         // Explicit
-        build = ExecutionNamespaceCondition.builder()
+        build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace())
-            .comparison(ExecutionNamespaceCondition.Comparison.EQUALS)
+            .comparison(ExecutionNamespace.Comparison.EQUALS)
             .build();
 
         test = conditionService.isValid(build, flow, execution);
@@ -49,7 +49,7 @@ class ExecutionNamespaceConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+        ExecutionNamespace build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace() + "a")
             .build();
 
@@ -63,24 +63,24 @@ class ExecutionNamespaceConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionNamespaceCondition build = JacksonMapper.toMap(Map.of(
-            "type", ExecutionNamespaceCondition.class.getName(),
+        ExecutionNamespace build = JacksonMapper.toMap(Map.of(
+            "type", ExecutionNamespace.class.getName(),
             "namespace", flow.getNamespace().substring(0, 3),
             "prefix", true
-        ), ExecutionNamespaceCondition.class);
+        ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));
 
-        build = ExecutionNamespaceCondition.builder()
+        build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace().substring(0, 3))
-            .comparison(ExecutionNamespaceCondition.Comparison.PREFIX)
+            .comparison(ExecutionNamespace.Comparison.PREFIX)
             .build();
 
         test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));
 
-        build = ExecutionNamespaceCondition.builder()
+        build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace().substring(0, 3))
             .prefix(true)
             .build();
@@ -95,7 +95,7 @@ class ExecutionNamespaceConditionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         // Should use EQUALS if prefix is not set
-        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+        ExecutionNamespace build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace().substring(0, 3))
             .build();
 
@@ -108,9 +108,9 @@ class ExecutionNamespaceConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionNamespaceCondition build = ExecutionNamespaceCondition.builder()
+        ExecutionNamespace build = ExecutionNamespace.builder()
             .namespace(flow.getNamespace().substring(flow.getNamespace().length() - 4))
-            .comparison(ExecutionNamespaceCondition.Comparison.SUFFIX)
+            .comparison(ExecutionNamespace.Comparison.SUFFIX)
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -122,12 +122,12 @@ class ExecutionNamespaceConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionNamespaceCondition build = JacksonMapper.toMap(Map.of(
-            "type", ExecutionNamespaceCondition.class.getName(),
+        ExecutionNamespace build = JacksonMapper.toMap(Map.of(
+            "type", ExecutionNamespace.class.getName(),
             "namespace", flow.getNamespace().substring(flow.getNamespace().length() - 4),
             "prefix", true,
-            "comparison", ExecutionNamespaceCondition.Comparison.SUFFIX.name()
-        ), ExecutionNamespaceCondition.class);
+            "comparison", ExecutionNamespace.Comparison.SUFFIX.name()
+        ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));

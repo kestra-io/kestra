@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class ExpressionConditionTest {
+class ExpressionTest {
     @Inject
     ConditionService conditionService;
 
@@ -23,7 +23,7 @@ class ExpressionConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
-        ExpressionCondition build = ExpressionCondition.builder()
+        Expression build = Expression.builder()
             .expression("{{ flow.id }}")
             .build();
 
@@ -37,7 +37,7 @@ class ExpressionConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
-        ExpressionCondition build = ExpressionCondition.builder()
+        Expression build = Expression.builder()
             .expression("{{ unknown is defined }}")
             .build();
 

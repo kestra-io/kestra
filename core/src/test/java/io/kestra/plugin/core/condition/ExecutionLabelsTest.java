@@ -16,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-public class ExecutionLabelsConditionTest {
+public class ExecutionLabelsTest {
     @Inject
     ConditionService conditionService;
 
@@ -29,7 +29,7 @@ public class ExecutionLabelsConditionTest {
             .labels(List.of(new Label("key", "value")))
             .build();
 
-        ExecutionLabelsCondition build = ExecutionLabelsCondition.builder()
+        ExecutionLabels build = ExecutionLabels.builder()
             .labels(List.of(new Label("key", "value")))
             .build();
 
@@ -47,7 +47,7 @@ public class ExecutionLabelsConditionTest {
             .labels(List.of(new Label("key", "value"), new Label("key2", "value2")))
             .build();
 
-        ExecutionLabelsCondition build = ExecutionLabelsCondition.builder()
+        ExecutionLabels build = ExecutionLabels.builder()
             .labels(List.of(new Label("key", "value"), new Label("key2", "value2")))
             .build();
 
@@ -62,7 +62,7 @@ public class ExecutionLabelsConditionTest {
         Execution execution = TestsUtils
             .mockExecution(flow, ImmutableMap.of());
 
-        ExecutionLabelsCondition build = ExecutionLabelsCondition.builder()
+        ExecutionLabels build = ExecutionLabels.builder()
             .labels(List.of(new Label("key", "value")))
             .build();
 
@@ -80,7 +80,7 @@ public class ExecutionLabelsConditionTest {
             .labels(List.of(new Label("key", "value")))
             .build();
 
-        ExecutionLabelsCondition build = ExecutionLabelsCondition.builder()
+        ExecutionLabels build = ExecutionLabels.builder()
             .labels(List.of(new Label("key", "value"), new Label("key2", "value2")))
             .build();
 

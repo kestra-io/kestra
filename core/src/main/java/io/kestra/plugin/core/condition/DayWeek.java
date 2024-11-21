@@ -22,7 +22,7 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekend."
+    title = "Condition to allow events on weekdays."
 )
 @Plugin(
     examples = {
@@ -30,13 +30,14 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.WeekendCondition",
+                "    - type: io.kestra.plugin.core.condition.DayWeek",
+                "      dayOfWeek: \"MONDAY\"",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.WeekendCondition"
+    aliases = {"io.kestra.core.models.conditions.types.DayWeekCondition", "io.kestra.plugin.core.condition.DayWeekCondition"}
 )
-public class WeekendCondition extends Condition implements ScheduleCondition {
+public class DayWeek extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test.",
@@ -46,12 +47,16 @@ public class WeekendCondition extends Condition implements ScheduleCondition {
     @PluginProperty(dynamic = true)
     private final String date = "{{ trigger.date }}";
 
+    @NotNull
+    @Schema(title = "The day of week.")
+    @PluginProperty
+    private DayOfWeek dayOfWeek;
+
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
         LocalDate currentDate = DateUtils.parseLocalDate(render);
 
-        return currentDate.getDayOfWeek().equals(DayOfWeek.SATURDAY) ||
-            currentDate.getDayOfWeek().equals(DayOfWeek.SUNDAY);
+        return currentDate.getDayOfWeek().equals(this.dayOfWeek);
     }
 }

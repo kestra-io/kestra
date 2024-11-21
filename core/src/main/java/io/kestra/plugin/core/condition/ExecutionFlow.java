@@ -13,43 +13,41 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.State;
 
-import java.util.List;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Condition based on execution status.")
+@Schema(
+    title = "Condition for a specific flow of an execution."
+)
 @Plugin(
     examples = {
         @Example(
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionStatusCondition",
-                "      in:",
-                "        - SUCCESS",
-                "      notIn: ",
-                "        - FAILED"
+                "    - type: io.kestra.plugin.core.condition.ExecutionFlow",
+                "      namespace: company.team",
+                "      flowId: my-current-flow"
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.ExecutionStatusCondition"
+    aliases = {"io.kestra.core.models.conditions.types.ExecutionFlowCondition", "io.kestra.plugin.core.condition.ExecutionFlowCondition"}
 )
-public class ExecutionStatusCondition extends Condition {
-    @Valid
-    @Schema(title = "List of states that are authorized.")
+public class ExecutionFlow extends Condition {
+    @NotNull
+    @Schema(title = "The namespace of the flow.")
     @PluginProperty
-    private List<State.Type> in;
+    private String namespace;
 
-    @Valid
-    @Schema(title = "List of states that aren't authorized.")
+    @NotNull
+    @Schema(title = "The flow id.")
     @PluginProperty
-    private List<State.Type> notIn;
+    private String flowId;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -57,16 +55,6 @@ public class ExecutionStatusCondition extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        boolean result = true;
-
-        if (this.in != null && !this.in.contains(conditionContext.getExecution().getState().getCurrent())) {
-            result = false;
-        }
-
-        if (this.notIn != null && this.notIn.contains(conditionContext.getExecution().getState().getCurrent())) {
-            result = false;
-        }
-
-        return result;
+        return conditionContext.getExecution().getNamespace().equals(this.namespace) && conditionContext.getExecution().getFlowId().equals(this.flowId);
     }
 }

@@ -3,10 +3,9 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.ExpressionCondition;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.Trigger;
@@ -466,8 +465,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "failedEvaluation", false)
             .conditions(
                 List.of(
-                    ExpressionCondition.builder()
-                        .type(ExpressionCondition.class.getName())
+                    Expression.builder()
+                        .type(Expression.class.getName())
                         .expression("{{ trigger.date | date() < now() }}")
                         .build()
                 )

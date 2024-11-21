@@ -32,15 +32,15 @@ import jakarta.validation.Valid;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.HasRetryAttemptCondition",
+                "    - type: io.kestra.plugin.core.condition.HasRetryAttempt",
                 "      in:",
                 "        - KILLED",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.HasRetryAttemptCondition"
+    aliases = {"io.kestra.core.models.conditions.types.HasRetryAttemptCondition", "io.kestra.plugin.core.condition.HasRetryAttemptCondition"}
 )
-public class HasRetryAttemptCondition extends Condition {
+public class HasRetryAttempt extends Condition {
     @Valid
     @Schema(title = "List of states that are authorized.")
     @PluginProperty

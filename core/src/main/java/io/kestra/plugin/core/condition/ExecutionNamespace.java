@@ -29,15 +29,15 @@ import java.util.function.BiPredicate;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition",
+                "    - type: io.kestra.plugin.core.condition.ExecutionNamespace",
                 "      namespace: company.team",
                 "      comparison: PREFIX"
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.ExecutionNamespaceCondition"
+    aliases = {"io.kestra.core.models.conditions.types.ExecutionNamespaceCondition", "io.kestra.plugin.core.condition.ExecutionNamespaceCondition"}
 )
-public class ExecutionNamespaceCondition extends Condition {
+public class ExecutionNamespace extends Condition {
     @NotNull
     @Schema(
         title = "String against which to match the execution namespace depending on the provided comparison."

@@ -36,15 +36,15 @@ import java.util.Map;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionLabelsCondition",
+                "    - type: io.kestra.plugin.core.condition.ExecutionLabels",
                 "      labels:",
                 "         owner: john.doe"
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.ExecutionLabelsCondition"
+    aliases = {"io.kestra.core.models.conditions.types.ExecutionLabelsCondition", "io.kestra.plugin.core.condition.ExecutionLabelsCondition"}
 )
-public class ExecutionLabelsCondition extends Condition {
+public class ExecutionLabels extends Condition {
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)

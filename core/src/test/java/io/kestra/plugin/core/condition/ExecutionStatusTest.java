@@ -5,8 +5,11 @@ import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
+
+import java.util.Collections;
 
 import jakarta.inject.Inject;
 
@@ -14,18 +17,31 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class ExecutionFlowConditionTest {
+class ExecutionStatusTest {
     @Inject
     ConditionService conditionService;
 
     @Test
-    void valid() {
+    void in() {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionFlowCondition build = ExecutionFlowCondition.builder()
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
+        ExecutionStatus build = ExecutionStatus.builder()
+            .in(Collections.singletonList(State.Type.SUCCESS))
+            .build();
+
+        boolean test = conditionService.isValid(build, flow, execution);
+
+        assertThat(test, is(false));
+    }
+
+    @Test
+    void notIn() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
+        ExecutionStatus build = ExecutionStatus.builder()
+            .notIn(Collections.singletonList(State.Type.SUCCESS))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -34,13 +50,13 @@ class ExecutionFlowConditionTest {
     }
 
     @Test
-    void notValid() {
+    void both() {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        ExecutionFlowCondition build = ExecutionFlowCondition.builder()
-            .namespace(flow.getNamespace() + "a")
-            .flowId(flow.getId())
+        ExecutionStatus build = ExecutionStatus.builder()
+            .in(Collections.singletonList(State.Type.CREATED))
+            .notIn(Collections.singletonList(State.Type.SUCCESS))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

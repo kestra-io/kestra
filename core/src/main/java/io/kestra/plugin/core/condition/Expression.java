@@ -33,14 +33,14 @@ import jakarta.validation.constraints.NotNull;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExpressionCondition",
+                "    - type: io.kestra.plugin.core.condition.Expression",
                 "      expression: {{ unknown is defined }}",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.VariableCondition"
+    aliases = {"io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition"}
 )
-public class ExpressionCondition extends Condition implements ScheduleCondition {
+public class Expression extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     @PluginProperty

@@ -35,16 +35,16 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.NotCondition",
+                "    - type: io.kestra.plugin.core.condition.Not",
                 "      conditions:",
-                "      -  type: io.kestra.plugin.core.condition.DateBetweenCondition",
+                "      -  type: io.kestra.plugin.core.condition.DateBetween",
                 "         after: \"2013-09-08T16:19:12\"",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.NotCondition"
+    aliases = {"io.kestra.core.models.conditions.types.NotCondition", "io.kestra.plugin.core.condition.NotCondition"}
 )
-public class NotCondition extends Condition implements ScheduleCondition {
+public class Not extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     @Schema(

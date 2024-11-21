@@ -31,22 +31,22 @@ import jakarta.validation.constraints.NotNull;
             code = {
                 "# This will evaluate to true when the trigger date falls after the `after` date.",
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DateTimeBetweenCondition",
+                "    - type: io.kestra.plugin.core.condition.DateTimeBetween",
                 "      date: \"{{ trigger.date }}\"",
                 "      after: \"2024-01-01T08:30:00Z\"",
                 "",
                 "# This will evaluate to true when the trigger date falls between the `before` and `after` dates.",
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DateTimeBetweenCondition",
+                "    - type: io.kestra.plugin.core.condition.DateTimeBetween",
                 "      date: \"{{ trigger.date }}\"",
                 "      before: \"2024-01-01T08:30:00Z\"",
                 "      after: \"2024-12-31T23:30:00Z\"",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.DateTimeBetweenCondition"
+    aliases = {"io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition"}
 )
-public class DateTimeBetweenCondition extends Condition implements ScheduleCondition {
+public class DateTimeBetween extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test.",

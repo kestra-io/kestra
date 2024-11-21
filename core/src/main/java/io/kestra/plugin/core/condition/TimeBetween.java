@@ -30,14 +30,14 @@ import java.time.OffsetTime;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.TimeBetweenCondition",
+                "    - type: io.kestra.plugin.core.condition.TimeBetween",
                 "      after: \"16:19:12+02:00\"",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.TimeBetweenCondition"
+    aliases = {"io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition"}
 )
-public class TimeBetweenCondition extends Condition implements ScheduleCondition {
+public class TimeBetween extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The time to test.",

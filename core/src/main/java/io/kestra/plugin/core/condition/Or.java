@@ -34,18 +34,18 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             full = true,
             code = {
                 "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.OrCondition",
+                "    - type: io.kestra.plugin.core.condition.Or",
                 "      conditions:",
-                "      -  type: io.kestra.plugin.core.condition.DayWeekCondition",
+                "      -  type: io.kestra.plugin.core.condition.DayWeek",
                 "         dayOfWeek: \"MONDAY\"",
-                "      -  type: io.kestra.plugin.core.condition.DayWeekCondition",
+                "      -  type: io.kestra.plugin.core.condition.DayWeek",
                 "         dayOfWeek: \"SUNDAY\"",
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.OrCondition"
+    aliases = {"io.kestra.core.models.conditions.types.OrCondition", "io.kestra.plugin.core.condition.OrCondition"}
 )
-public class OrCondition extends Condition implements ScheduleCondition {
+public class Or extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     @Schema(

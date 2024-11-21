@@ -16,7 +16,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
-import java.util.Locale;
 
 @SuperBuilder
 @ToString
@@ -34,7 +33,7 @@ import java.util.Locale;
             code = {
                 """
                 - conditions:
-                    - type: io.kestra.plugin.core.condition.PublicHolidayCondition
+                    - type: io.kestra.plugin.core.condition.PublicHoliday
                       country: FR
                 """
             }
@@ -45,18 +44,18 @@ import java.util.Locale;
             code = {
                 """
                 - conditions:
-                    - type: io.kestra.plugin.core.condition.NotCondition
+                    - type: io.kestra.plugin.core.condition.Not
                       conditions:
-                        - type: io.kestra.plugin.core.condition.PublicHolidayCondition
+                        - type: io.kestra.plugin.core.condition.PublicHoliday
                           country: FR
-                        - type: io.kestra.plugin.core.condition.WeekendCondition
+                        - type: io.kestra.plugin.core.condition.Weekend
                 """
             }
         )
     },
-    aliases = "io.kestra.core.models.conditions.types.PublicHolidayCondition"
+    aliases = {"io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition"}
 )
-public class PublicHolidayCondition extends Condition implements ScheduleCondition {
+public class PublicHoliday extends Condition implements ScheduleCondition {
     @NotEmpty
     @Schema(
         title = "The date to test.",

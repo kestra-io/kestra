@@ -7,7 +7,7 @@ inputs:
 
 listeners:
   - conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
         in:
           - FAILED
     tasks:
@@ -16,7 +16,7 @@ listeners:
         message: "{{ task.id }}"
 
   - conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
         in:
           - SUCCESS
     tasks:

@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-class ExecutionOutputsConditionTest {
+class ExecutionOutputsTest {
     @Inject
     ConditionService conditionService;
 
@@ -26,7 +26,7 @@ class ExecutionOutputsConditionTest {
             Map.of(),
             Map.of("test", "value"));
 
-        ExecutionOutputsCondition build = ExecutionOutputsCondition.builder()
+        ExecutionOutputs build = ExecutionOutputs.builder()
             .expression("{{ trigger.outputs.test == 'value' }}")
             .build();
 
@@ -43,7 +43,7 @@ class ExecutionOutputsConditionTest {
             Map.of(),
             Map.of("test", "value"));
 
-        ExecutionOutputsCondition build = ExecutionOutputsCondition.builder()
+        ExecutionOutputs build = ExecutionOutputs.builder()
             .expression("{{ unknown is defined }}")
             .build();
 
@@ -57,7 +57,7 @@ class ExecutionOutputsConditionTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
-        ExecutionOutputsCondition build = ExecutionOutputsCondition.builder()
+        ExecutionOutputs build = ExecutionOutputs.builder()
             .expression("{{ not evaluated }}")
             .build();
 

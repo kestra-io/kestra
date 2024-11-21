@@ -42,7 +42,7 @@
             </el-col>
         </el-row>
 
-        <el-table stripe table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
+        <el-table table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
             <el-table-column prop="key" :label="$t('key')" />
 
             <el-table-column prop="value" :label="$t('value')">

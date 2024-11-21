@@ -37,7 +37,6 @@
                         :data="triggersMerged"
                         ref="selectTable"
                         :default-sort="{prop: 'flowId', order: 'ascending'}"
-                        stripe
                         table-layout="auto"
                         fixed
                         @sort-change="onSort"

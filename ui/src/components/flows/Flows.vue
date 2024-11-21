@@ -63,7 +63,6 @@
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
-                        stripe
                         table-layout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"

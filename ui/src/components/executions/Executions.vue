@@ -58,7 +58,6 @@
                     ref="selectTable"
                     :data="executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    stripe
                     table-layout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"

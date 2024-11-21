@@ -77,7 +77,6 @@
                     :data="taskruns"
                     ref="table"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    stripe
                     table-layout="auto"
                     fixed
                     @row-dblclick="onRowDoubleClick"

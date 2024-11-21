@@ -118,6 +118,13 @@
     "next execution date": "Next execution date",
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
+    "contextBar": {
+      "news": "News",
+      "docs": "Docs",
+      "help": "Help",
+      "issue": "Open an Issue",
+      "demo": "Get a demo"
+    },
     "source": "Source",
     "home": "Home",
     "create": "Create",

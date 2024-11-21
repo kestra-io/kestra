@@ -15,6 +15,9 @@
 
     import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+
+    const {t} = useI18n();
 
     const store = useStore();
 
@@ -81,20 +84,20 @@
     <div class="barWrapper">
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
         <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => setActiveTab('news')">
-            <MessageOutline class="buttonIcon" />News
+            <MessageOutline class="buttonIcon" />{{ t('contextBar.news') }}
             <div v-if="hasUnread" class="newsDot" />
         </button>
         <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => setActiveTab('docs')">
-            <FileDocument class="buttonIcon" />Docs
+            <FileDocument class="buttonIcon" />{{ t('contextBar.docs') }}
         </button>
         <a href="https://kestra.io/slack" target="_blank" class="barButton">
-            <Slack class="buttonIcon" />Help<OpenInNew class="openIcon" />
+            <Slack class="buttonIcon" />{{ t('contextBar.help') }}<OpenInNew class="openIcon" />
         </a>
         <a href="https://github.com/kestra-io/kestra/issues/new/choose" target="_blank" class="barButton">
-            <Github class="buttonIcon" />Open an Issue<OpenInNew class="openIcon" />
+            <Github class="buttonIcon" />{{ t('contextBar.issue') }}<OpenInNew class="openIcon" />
         </a>
         <a href="https://kestra.io/demo" target="_blank" class="barButton">
-            <Calendar class="buttonIcon" />Get a demo<OpenInNew class="openIcon" />
+            <Calendar class="buttonIcon" />{{ t('contextBar.demo') }}<OpenInNew class="openIcon" />
         </a>
         <div style="flex:1" />
         <span class="versionNumber">{{ configs?.version }}</span>

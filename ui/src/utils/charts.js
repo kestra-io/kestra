@@ -162,6 +162,10 @@ export function backgroundFromState(state, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
+export function getRandomHEXColor() {
+    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+}
+
 export function getStateColor(state) {
     return State.getStateColor(state);
 }

@@ -23,6 +23,7 @@ import Namespace from "../components/namespace/Namespace.vue";
 import Docs from "../components/docs/Docs.vue";
 import DashboardCreate from "../components/dashboard/components/DashboardCreate.vue";
 import DashboardEdit from "../components/dashboard/components/DashboardEdit.vue";
+import CustomDashboard from "../components/dashboard/CustomDashboard.vue";
 
 export default [
     //Home
@@ -31,6 +32,8 @@ export default [
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
 
     //Dashboards
+    {name: "custom_dashboard", path: "/:tenant?/dashboards/custom", component: CustomDashboard},
+
     {name: "dashboards/list", path: "/:tenant?/dashboards", component: Dashboards},
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DashboardCreate},
     {name: "dashboards/update", path: "/:tenant?/dashboards/edit/:id", component: DashboardEdit, props: true},

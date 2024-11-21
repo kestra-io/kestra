@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb">
         <template #additional-right v-if="canCreate">
             <ul>
                 <li>
@@ -33,10 +33,17 @@
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
+    const props = defineProps({
+        title: {type: String, default: undefined},
+        breadcrumb: {type: Array, default: () => []},
+    });
+
     const user = computed(() => store.state.auth.user);
     const canCreate = computed(() =>
         user.value.isAllowedGlobal(permission.FLOW, action.CREATE),
     );
 
-    const routeInfo = computed(() => ({title: t("homeDashboard.title")}));
+    const routeInfo = computed(() => ({
+        title: props.title ?? t("homeDashboard.title"),
+    }));
 </script>

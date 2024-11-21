@@ -82,7 +82,9 @@ export const barLegend = {
                 : "";
             textContainer.style.textTransform = "capitalize";
 
-            const text = document.createTextNode(item.text.toLowerCase());
+            if(!options.uppercase) item.text = item.text.toLowerCase();
+            
+            const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
 
             li.appendChild(boxSpan);

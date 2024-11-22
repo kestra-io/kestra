@@ -122,11 +122,11 @@ public class DashboardController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{id}/graph/{graphId}")
-    @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard graph")
-    public List<Map<String, Object>> dashboardGraph(
+    @Post(uri = "{id}/charts/{chartId}")
+    @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard chart data")
+    public List<Map<String, Object>> dashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
-        @Parameter(description = "The graph id") @PathVariable String graphId,
+        @Parameter(description = "The chart id") @PathVariable String chartId,
         @Parameter(description = "The filters to apply") @Body Map<String, Object> filters
     ) throws IOException {
         ZonedDateTime startDate = Optional.ofNullable(filters.get("startDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
@@ -141,7 +141,7 @@ public class DashboardController {
             return null;
         }
 
-        Chart<?> chart = dashboardWithSource.getCharts().stream().filter(g -> g.getId().equals(graphId)).findFirst().orElse(null);
+        Chart<?> chart = dashboardWithSource.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
         if (chart == null) {
             return null;
         }

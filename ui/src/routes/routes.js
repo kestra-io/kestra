@@ -32,7 +32,7 @@ export default [
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
 
     //Dashboards
-    {name: "custom_dashboard", path: "/:tenant?/dashboards/custom", component: CustomDashboard},
+    {name: "custom_dashboard", path: "/:tenant?/dashboards/:id", component: CustomDashboard, props: true},
 
     {name: "dashboards/list", path: "/:tenant?/dashboards", component: Dashboards},
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DashboardCreate},

@@ -24,4 +24,9 @@ public class TimeSeries<F extends Enum<F>, D extends DataFilter<F, ? extends Tim
     public Integer minNumberOfAggregations() {
         return 1;
     }
+
+    @Override
+    public Integer maxNumberOfAggregations() {
+        return 2;
+    }
 }

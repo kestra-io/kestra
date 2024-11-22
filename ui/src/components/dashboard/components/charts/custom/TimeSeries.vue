@@ -9,16 +9,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, ref, computed} from "vue";
+    import {computed, onMounted, ref} from "vue";
 
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
     import {barLegend} from "../legend.js";
-    import {
-        defaultConfig,
-        getRandomHEXColor,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getRandomHEXColor,} from "../../../../../utils/charts.js";
+    import {useStore} from "vuex";
+
+    const store = useStore();
+
+    const dashboard = computed(() => store.state.dashboard.dashboard);
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
@@ -174,157 +176,13 @@
     });
 
     const generated = ref([]);
-    onMounted(() => {
-        // TODO: Fetch proper data from server and assign it to the variable below
-        generated.value = [
-            {
-                date: "2024-11-20T10:27:00.000+01:00",
-                duration: 0.488853444,
-                country: "FR",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T10:25:00.000+01:00",
-                duration: 121.421243956,
-                country: "IT",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T10:24:00.000+01:00",
-                duration: 0.88864897,
-                country: "FR",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T10:33:00.000+01:00",
-                duration: 3.34020634,
-                country: "FR",
-                total: 4,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T10:31:00.000+01:00",
-                duration: 0.486147859,
-                country: "FR",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-19T15:15:00.000+01:00",
-                duration: 15.765342,
-                country: "US",
-                total: 3,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-18T08:45:00.000+01:00",
-                duration: 2.456345,
-                country: "JP",
-                total: 2,
-                state: "FAILURE",
-            },
-            {
-                date: "2024-11-20T12:00:00.000+01:00",
-                duration: 0.123456,
-                country: "IT",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T09:15:00.000+01:00",
-                duration: 12.0345,
-                country: "DE",
-                total: 5,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-19T14:00:00.000+01:00",
-                duration: 50.5,
-                country: "US",
-                total: 6,
-                state: "FAILURE",
-            },
-            {
-                date: "2024-11-17T17:30:00.000+01:00",
-                duration: 0.987654,
-                country: "JP",
-                total: 2,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-15T10:05:00.000+01:00",
-                duration: 75.345123,
-                country: "JP",
-                total: 3,
-                state: "FAILURE",
-            },
-            {
-                date: "2024-11-15T11:05:00.000+01:00",
-                duration: 75.345123,
-                country: "US",
-                total: 3,
-                state: "CREATED",
-            },
-            {
-                date: "2024-11-16T19:40:00.000+01:00",
-                duration: 3.141592,
-                country: "JP",
-                total: 1,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T14:20:00.000+01:00",
-                duration: 1.2345,
-                country: "JP",
-                total: 4,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-18T21:50:00.000+01:00",
-                duration: 22.222,
-                country: "FR",
-                total: 2,
-                state: "FAILURE",
-            },
-            {
-                date: "2024-11-14T11:25:00.000+01:00",
-                duration: 8.765432,
-                country: "FR",
-                total: 5,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-19T16:35:00.000+01:00",
-                duration: 10.54321,
-                country: "US",
-                total: 3,
-                state: "FAILURE",
-            },
-            {
-                date: "2024-11-18T05:45:00.000+01:00",
-                duration: 0.654321,
-                country: "IT",
-                total: 2,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-20T13:00:00.000+01:00",
-                duration: 4.56789,
-                country: "FR",
-                total: 7,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-16T18:45:00.000+01:00",
-                duration: 33.3,
-                country: "US",
-                total: 4,
-                state: "FAILURE",
-            },
-        ];
+    onMounted(async () => {
+        generated.value = await store.dispatch("dashboard/generate", {
+            id: dashboard.value.id,
+            chartId: props.chart.id,
+            startDate: "2024-11-21T09:00:00Z",
+            endDate: "2024-11-21T16:00:00Z"
+        });
     });
 </script>
 

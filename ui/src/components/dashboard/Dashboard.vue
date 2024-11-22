@@ -466,7 +466,7 @@ $spacing: 20px;
 }
 
 .dashboard {
-    margin: 24px 0;
+    margin: 0;
 }
 
 .dashboard-filters {

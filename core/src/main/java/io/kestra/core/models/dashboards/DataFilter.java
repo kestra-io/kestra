@@ -31,7 +31,7 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
 
     private List<AbstractFilter<F>> where;
 
-    private Map<String, Order> orderBy;
+    private List<OrderBy> orderBy;
 
     public Set<F> aggregationForbiddenFields() {
         return Collections.emptySet();

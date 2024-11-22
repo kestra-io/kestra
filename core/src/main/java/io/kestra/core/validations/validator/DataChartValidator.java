@@ -2,7 +2,7 @@ package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
-import io.kestra.core.models.dashboards.Order;
+import io.kestra.core.models.dashboards.OrderBy;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.validations.DataChartValidation;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -13,7 +13,10 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -40,9 +43,9 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             });
         }
 
-        Map<String, Order> orderBy = dataChart.getData().getOrderBy();
+        List<OrderBy> orderBy = dataChart.getData().getOrderBy();
         if (orderBy != null) {
-            orderBy.keySet().forEach(column -> {
+            orderBy.stream().map(OrderBy::getColumn).forEach(column -> {
                 if (!dataColumns.contains(column)) {
                     violations.add("Column '" + column + "' is used in `orderBy` but not present in `data.columns` keys.");
                 }

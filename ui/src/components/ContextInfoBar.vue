@@ -2,25 +2,18 @@
     <div class="barWrapper" :class="{opened: activeTab?.length > 0}">
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
-        <el-button :type="activeTab === 'news' ? 'primary' : 'default'" @click="() => setActiveTab('news')">
-            <MessageOutline />{{ t('contextBar.news') }}
-            <div v-if="hasUnread" class="newsDot" />
-        </el-button>
-
-        <el-button :type="activeTab === 'docs' ? 'primary' : 'default'" @click="() => setActiveTab('docs')">
-            <FileDocument />{{ t('contextBar.docs') }}
-        </el-button>
-
-        <el-button tag="a" href="https://kestra.io/slack" target="_blank">
-            <Slack />{{ t('contextBar.help') }}<OpenInNew class="opacity-25" />
-        </el-button>
-
-        <el-button tag="a" href="https://github.com/kestra-io/kestra/issues/new/choose" target="_blank">
-            <Github />{{ t('contextBar.issue') }}<OpenInNew class="opacity-25" />
-        </el-button>
-
-        <el-button tag="a" href="https://kestra.io/demo" target="_blank">
-            <Calendar />{{ t('contextBar.demo') }}<OpenInNew class="opacity-25" />
+        <el-button
+            v-for="(button, key) of buttonsList"
+            :key="key"
+            :type="activeTab === key ? 'primary' : 'default'"
+            :tag="button.url ? 'a' : 'button'"
+            :href="button.url"
+            @click="() => {if(!button.url){ setActiveTab(key)}}"
+            :target="button.url ? '_blank' : undefined"
+        >
+            <component :is="button.icon" class="context-button-icon" />{{ button.title }}
+            <OpenInNew v-if="button.url" class="open-in-new" />
+            <div v-if="button.hasUnread" class="newsDot" />
         </el-button>
 
         <div style="flex:1" />
@@ -53,7 +46,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch, type Ref} from "vue";
+    import {computed, ref, watch, reactive, type Ref, type Component} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -85,6 +78,41 @@
             lastNewsReadDate.value === null ||
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
         )
+    })
+
+    const buttonsList: Record<string, {
+        title:string,
+        icon: Component,
+        component?: Component,
+        url?: string,
+        hasUnread?: Ref<boolean>
+    }> = reactive({
+        news: {
+            title: t("contextBar.news"),
+            icon: MessageOutline,
+            component: ContextNews,
+            hasUnread
+        },
+        docs: {
+            title: t("contextBar.docs"),
+            icon: FileDocument,
+            component: ContextDocs
+        },
+        help: {
+            title: t("contextBar.help"),
+            icon: Slack,
+            url: "https://kestra.io/slack"
+        },
+        issue: {
+            title: t("contextBar.issue"),
+            icon: Github,
+            url: "https://github.com/kestra-io/kestra/issues/new/choose"
+        },
+        demo: {
+            title: t("contextBar.demo"),
+            icon: Calendar,
+            url: "https://kestra.io/demo"
+        }
     })
 
     const panelWidth = ref(640)
@@ -176,6 +204,7 @@
             height: auto;
             padding: 10px 5px;
             width: 32px;
+            position: relative;
         }
 
         .el-button + .el-button {
@@ -190,20 +219,33 @@
             margin-top: var(--spacer);
         }
 
-        &:deep(.el-button .material-design-icon:not(.open-in-new-icon)) {
+        .context-button-icon {
             transform: rotate(90deg);
             margin-bottom: 0.75rem;
         }
 
-        &:deep(.open-in-new-icon) {
+        .open-in-new {
             transform: rotate(90deg);
             margin-top: 0.75rem;
             margin-bottom: 0;
             color: var(--bs-text-opacity-5);
+            opacity: .25;
         }
 
         @include res(xs) {
             display: none;
+        }
+
+        .newsDot{
+            width: 10px;
+            height: 10px;
+            background-color: var(--content-alert);
+            border: 2px solid var(--el-button-bg-color);
+            border-radius: 50%;
+            display: block;
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
         }
     }
 

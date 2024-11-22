@@ -1,8 +1,6 @@
 <template>
     <div class="position-relative">
-        <code>
-            {{ curlCommand }}
-        </code>
+        <pre><code>{{ curlCommand }}</code></pre>
 
         <copy-to-clipboard class="position-absolute" :text="curlCommand" />
 
@@ -147,6 +145,10 @@
 </script>
 
 <style lang="scss" scoped>
+    pre {
+        border-radius: var(--bs-border-radius);
+    }
+
     /* Allow line-wraps */
     code {
         display: block;

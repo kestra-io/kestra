@@ -182,13 +182,14 @@
     import ValidationError from "../flows/ValidationError.vue";
 </script>
 <script>
+    import {mapState} from "vuex";
+    import {throttle} from "lodash";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
-    import {mapState} from "vuex";
 
     export default {
         computed: {
@@ -313,37 +314,39 @@
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+                throttle(() => {
+                    const formData = inputsToFormDate(this, this.inputsList, this.inputs);
 
-                if (this.flow !== undefined) {
-                    const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    this.$store.dispatch("execution/validateExecution", {...options, formData})
-                        .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
+                    if (this.flow !== undefined) {
+                        const options = {namespace: this.flow.namespace, id: this.flow.id};
+                        this.$store.dispatch("execution/validateExecution", {...options, formData})
+                            .then(response => {
+                                this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                    return {...it.input, errors: it.errors}
+                                });
+                                this.updateDefaults();
                             });
-                            this.updateDefaults();
+                    } else if (this.execution !== undefined) {
+                        const options = {id: this.execution.id};
+                        this.$store.dispatch("execution/validateResume", {...options, formData})
+                            .then(response => {
+                                this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                    return {...it.input, errors: it.errors}
+                                });
+                                this.updateDefaults();
+                            });
+                    } else {
+                        this.$emit("validation", {
+                            formData: formData,
+                            callback: (response) => {
+                                this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
+                                    return {...it.input, errors: it.errors}
+                                });
+                                this.updateDefaults();
+                            }
                         });
-                } else if (this.execution !== undefined) {
-                    const options = {id: this.execution.id};
-                    this.$store.dispatch("execution/validateResume", {...options, formData})
-                        .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
-                            });
-                            this.updateDefaults();
-                        });
-                } else {
-                    this.$emit("validation", {
-                        formData: formData,
-                        callback: (response) => {
-                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
-                            });
-                            this.updateDefaults();
-                        }
-                    });
-                }
+                    }
+                }, 200)
             }
         },
         watch: {

@@ -968,6 +968,17 @@ form.ks-horizontal {
         margin: calc(var(--spacer) * -1) calc(var(--spacer) * -1) var(--spacer);
         border-top-right-radius: var(--bs-border-radius-lg);
         border-top-left-radius: var(--bs-border-radius-lg);
+        background: var(--bs-gray-300);
+        font-size: var(--font-size-lg);
+
+        html.dark & {
+            background: var(--bs-gray-200);
+        }
+
+        .el-dialog__headerbtn {
+            height: 62px;
+            width: 62px;
+        }
     }
 
     .el-dialog__title {

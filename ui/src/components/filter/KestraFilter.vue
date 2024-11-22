@@ -69,6 +69,11 @@
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
         </el-button-group>
+
+        <Dashboards
+            v-if="dashboards.shown"
+            @dashboard="(value) => emits('dashboard', value)"
+        />
     </section>
 </template>
 
@@ -92,12 +97,14 @@
     import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
+    import Dashboards from "./components/Dashboards.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
+    const emits = defineEmits(["dashboard"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -111,6 +118,10 @@
                 shown: false,
                 charts: {shown: false, value: false, callback: () => {}},
             }),
+        },
+        dashboards: {
+            type: Object,
+            default: () => ({shown: false}),
         },
     });
 

@@ -236,6 +236,17 @@
     }
 }
 
+// form item error
+.el-form-item {
+    .el-form-item__error {
+        &.el-form-item__error--inline {
+            margin-top: 3px;
+            width: 100%;
+            margin-left: 6px;
+        }
+    }
+}
+
 // form horizontal
 form.ks-horizontal {
     .el-form-item {

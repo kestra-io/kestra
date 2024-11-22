@@ -6,6 +6,8 @@
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :prop="input.id"
+            :error="inputError(input.id)"
+            :inline-message="true"
         >
             <editor
                 :full-height="false"
@@ -171,7 +173,9 @@
                 </template>
             </template>
         </el-form-item>
-        <ValidationError v-if="inputErrors" :errors="inputErrors" />
+        <div class="d-flex justify-content-end">
+            <ValidationError v-if="inputErrors" :errors="inputErrors" />
+        </div>
     </template>
 
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
@@ -197,8 +201,11 @@
                 return YamlUtils
             },
             inputErrors() {
-                return this.inputsList.filter(it => it.errors && it.errors.length > 0).length > 0 ?
-                    this.inputsList.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
+                // we keep only error that don't target directly an inputs
+                const keepErrors = this.inputsList.filter(it => it.id === undefined);
+
+                return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
+                    keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
                     null
             }
         },
@@ -260,6 +267,14 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            inputError(id) {
+                const errors = this.inputsList
+                    .filter(it => it.id === id)
+                    .filter(it => it.errors && it.errors.length > 0)
+                    .map(it => it.errors.map(err => err.message).join("\n"))
+
+                return errors.length > 0 ? errors[0] : null;
+            },
             updateDefaults() {
                 for (const input of this.inputsList || []) {
                     if (this.inputs[input.id] === undefined || this.inputs[input.id] === null) {
@@ -375,6 +390,7 @@
 }
 
 .text-description {
+    width: 100%;
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }

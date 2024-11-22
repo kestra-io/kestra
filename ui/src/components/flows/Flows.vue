@@ -493,6 +493,8 @@
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
+                this.namespace && (queryFilter.namespace = this.namespace);
+                
                 return _merge(base, queryFilter)
             },
             loadStats() {

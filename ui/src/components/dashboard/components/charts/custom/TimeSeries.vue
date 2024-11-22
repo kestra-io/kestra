@@ -25,8 +25,9 @@
 
     const {data, chartOptions} = props.chart;
 
-    const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
-    console.log(props.chart.id, aggregator);
+    const aggregator = Object.entries(data.columns)
+        .filter(([_, v]) => v.agg)
+        .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
     const yBShown = aggregator.length === 2;
 
     const DEFAULTS = {
@@ -108,10 +109,11 @@
 
                 if (!acc[label]) {
                     acc[label] = {
+                        type: "bar",
                         yAxisID,
-                        label,
-                        tooltip: label,
                         data: [],
+                        tooltip: label,
+                        label,
                         unique: new Set(),
                         backgroundColor: getRandomHEXColor(),
                         ...params,
@@ -156,14 +158,14 @@
             datasets: yBShown
                 ? [
                     {
+                        yAxisID: "yB",
                         type: "line",
+                        data: generated.value.map((v) => v[aggregator[1][0]]),
+                        tooltip: `${aggregator[1][1].displayName}`,
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
                         borderColor: getRandomHEXColor(),
-                        yAxisID: "yB",
-                        tooltip: `${aggregator[1][1].displayName}`,
-                        data: generated.value.map((v) => v[aggregator[1][0]]),
                     },
                     ...yDatasetData,
                 ]

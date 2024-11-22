@@ -141,6 +141,12 @@
                                 field: "START_DATE",
                                 displayName: "Execution Date",
                             },
+                            duration: {
+                                displayName: "Duration",
+                                field: "DURATION",
+                                agg: "SUM",
+                                graphStyle: "LINES", // LINES, BARS, POINTS
+                            },
                             total: {
                                 displayName: "Total Executions",
                                 agg: "COUNT",
@@ -152,12 +158,6 @@
                             },
                             state: {
                                 field: "STATE",
-                            },
-                            duration: {
-                                displayName: "Duration",
-                                field: "DURATION",
-                                agg: "SUM",
-                                graphStyle: "LINES", // LINES, BARS, POINTS
                             },
                         },
                         where: [

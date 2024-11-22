@@ -272,10 +272,10 @@ public class JsonSchemaGenerator {
 
             if (member.getDeclaredType().isInstanceOf(Property.class)) {
                 memberAttributes.put("$dynamic", true);
-                // if we are in the String definition of a Property but the target type is not String: we configure the format
+                // if we are in the String definition of a Property but the target type is not String: we configure the pattern
                 Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
                 if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
-                    memberAttributes.put("format", ".*{{.*}}.*");
+                    memberAttributes.put("pattern", ".*{{.*}}.*");
                 }
             }
         });

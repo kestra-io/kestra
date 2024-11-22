@@ -22,9 +22,10 @@ dependencies {
     def opensearchVersion = "2.17.0"
     def opensearchRestVersion = "2.18.0"
     def flyingSaucerVersion = "9.11.0"
+    def jacksonVersion = "2.18.1"
 
-    // as Jackson is in the Micronaut BOM, to force it's version we need to use enforcedPlatform
-    api enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.18.1")
+    // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
+    api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
     api platform("io.micronaut.platform:micronaut-platform:4.7.0")
@@ -33,27 +34,27 @@ dependencies {
     constraints {
         // Forced dependencies
         api("org.slf4j:slf4j-api:$slf4jVersion")
-        // ugly bug on google cloud plugins
+        // ugly hack on google cloud plugins
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")
-        // ugly bug for elastic plugins
+        // ugly hack for elastic plugins
         api("org.apache.httpcomponents:httpclient:4.5.14")
-        // ugly bug on crypto plugin
+        // ugly hack on crypto plugin
         api("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
         api("org.bouncycastle:bcpg-jdk18on:$bouncycastleVersion")
-        // ugly bug for jackson
-        api("com.fasterxml.jackson.core:jackson-core")
-        api("com.fasterxml.jackson.core:jackson-databind")
-        api("com.fasterxml.jackson.core:jackson-annotations")
-        api("com.fasterxml.jackson.module:jackson-module-parameter-names")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-smile")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-ion")
-        api("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-        api("com.fasterxml.jackson.datatype:jackson-datatype-guava")
-        api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-        api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+        // ugly hack for jackson: as enforcing platform didn't work (it didn't enforce everywhere, not in plugins), we had to force all jackson libs individually.
+        api("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+        api("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+        api("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
+        api("com.fasterxml.jackson.module:jackson-module-parameter-names:$jacksonVersion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-smile:$jacksonVersion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-ion:$jacksonVersion")
+        api("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+        api("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
+        api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
+        api("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
         // issue with the Docker lib having a too old version for the k8s extension
         api("org.apache.commons:commons-compress:1.27.1")
         // Kafka

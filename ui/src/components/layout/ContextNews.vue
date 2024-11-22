@@ -1,34 +1,5 @@
-<script lang="ts" setup>
-    import {computed, onMounted, reactive} from "vue";
-    import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
-    import {useStorage} from "@vueuse/core"
-
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
-
-    import Markdown from "./Markdown.vue";
-    import DateAgo from "./DateAgo.vue";
-
-    const store = useStore();
-    const {t} = useI18n();
-
-    const feeds = computed(() => store.state.api.feeds);
-
-    const expanded = reactive({});
-
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
-    onMounted(() => {
-        lastNewsReadDate.value = feeds.value[0].publicationDate;
-    });
-</script>
-
 <template>
-    <div class="allContextNews">
-        <h2 class="newsTitle">
-            {{ t("feeds.title") }}
-        </h2>
-        <el-divider style="margin: var(--spacer) 0;" />
+    <context-info-content :title="t('feeds.title')">
         <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mr-2">
                 <img :src="feed.image" alt="">
@@ -64,32 +35,50 @@
 
             <el-divider v-if="index !== feeds.length - 1" />
         </div>
-    </div>
+    </context-info-content>
 </template>
 
+<script lang="ts" setup>
+    import {computed, onMounted, reactive} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+    import {useStorage} from "@vueuse/core"
+
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+
+    import Markdown from "./Markdown.vue";
+    import DateAgo from "./DateAgo.vue";
+    import ContextInfoContent from "../ContextInfoContent.vue";
+
+    const store = useStore();
+    const {t} = useI18n();
+
+    const feeds = computed(() => store.state.api.feeds);
+
+    const expanded = reactive({});
+
+    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    onMounted(() => {
+        lastNewsReadDate.value = feeds.value[0].publicationDate;
+    });
+</script>
+
 <style lang="scss" scoped>
-    .allContextNews{
-        padding: var(--spacer);
-    }
-
-    .newsTitle{
-        font-size: 18px;
-    }
-
     .post {
+        padding: var(--spacer);
+
         h5 {
-            font-weight: medium;
             margin-bottom: 0;
-            font-size: 17px;
-            line-height: 28px;
+            font-size: var(--font-size-lg);
         }
 
         img {
-            max-height: 90px;
-            max-width: 180px;
-            margin-right: 20px;
+            max-height: 6rem;
+            max-width: 10rem;
+            margin-right: 1rem;
             float: left;
-            border-radius: 10px;
+            border-radius: var(--border-radius-lg);
         }
 
         .metaBlock {
@@ -97,8 +86,8 @@
             flex-direction: column;
             vertical-align: middle;
             justify-content: center;
-            gap: 4px;
-            min-height: 90px;
+            gap: 0.25rem;
+            min-height: 6rem;
         }
 
         hr {
@@ -147,8 +136,7 @@
         -webkit-line-clamp: 2;
         line-clamp: 2;
         overflow: hidden;
-        padding-bottom: 2px;
-        line-height: 24px;
+        line-height: 1.6;
         .expanded & {
             -webkit-line-clamp: unset;
         }
@@ -158,10 +146,8 @@
         display: flex;
         margin-top: var(--spacer);
     }
-</style>
 
-<style style="scss">
-.news-date {
-    color: var(--bs-gray-700);
-}
+    :deep(.news-date) {
+        color: var(--bs-gray-700);
+    }
 </style>

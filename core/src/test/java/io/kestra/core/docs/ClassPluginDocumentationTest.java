@@ -149,7 +149,7 @@ class ClassPluginDocumentationTest {
             assertThat(oneOf.getFirst().get("type"), is("integer"));
             assertThat(oneOf.getFirst().get("$dynamic"), is(true));
             assertThat(oneOf.get(1).get("type"), is("string"));
-            assertThat(oneOf.get(1).get("format"), is(".*{{.*}}.*"));
+            assertThat(oneOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type"), is("string"));

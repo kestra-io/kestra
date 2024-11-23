@@ -43,10 +43,16 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import {useStore} from "vuex";
+    const store = useStore();
+
     const emits = defineEmits(["dashboard"]);
 
     const dashboards = ref([]);
     onBeforeMount(() => {
+        store.dispatch("dashboard/list", {sort: "title:asc"}).then((response) => {
+            console.log(response);
+        });
         // TODO: Fetch proper listing of dashboards
         dashboards.value = [
             {

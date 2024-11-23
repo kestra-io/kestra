@@ -1,9 +1,15 @@
 <template>
-    <Header v-if="!embed" />
+    <Header
+        v-if="!embed"
+        :title="custom.shown ? custom.dashboard.title : t('overview')"
+        :breadcrumb="
+            custom.shown ? breadcrumb : [{label: t('dashboard_label')}]
+        "
+    />
 
     <div class="dashboard-filters">
         <KestraFilter
-            prefix="dashboard"
+            :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
             :include="[
                 'namespace',
                 'state',
@@ -12,10 +18,40 @@
                 'absolute_date',
             ]"
             :refresh="{shown: true, callback: fetchAll}"
+            :dashboards="{shown: true}"
+            @dashboard="(v) => handleCustomUpdate(v)"
         />
     </div>
 
-    <div class="dashboard">
+    <div v-if="custom.shown">
+        <el-row class="custom">
+            <el-col
+                v-for="(chart, index) in custom.dashboard.charts"
+                :key="index"
+                :xs="24"
+                :sm="12"
+            >
+                <div class="p-4">
+                    <p class="m-0 fs-6 fw-bold">
+                        {{ chart.chartOptions?.displayName ?? chart.id }}
+                    </p>
+                    <p
+                        v-if="chart.chartOptions?.description"
+                        class="m-0 fw-light small"
+                    >
+                        {{ chart.chartOptions.description }}
+                    </p>
+
+                    <component
+                        :is="types[chart.type]"
+                        :source="chart.content"
+                        :chart
+                    />
+                </div>
+            </el-col>
+        </el-row>
+    </div>
+    <div v-else class="dashboard">
         <el-row v-if="!props.flow">
             <el-col :xs="24" :sm="12" :lg="6">
                 <Card
@@ -197,6 +233,7 @@
     import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
 
     import Markdown from "../layout/Markdown.vue";
+    import TimeSeries from "./components/charts/custom/TimeSeries.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -238,6 +275,23 @@
             default: true,
         },
     });
+
+    // Custom Dashboards
+    const custom = ref({shown: false, dashboard: {}});
+    const handleCustomUpdate = async (v) => {
+        let dashboard = {};
+
+        if (v) dashboard = await store.dispatch("dashboard/load", props.id);
+
+        custom.value = {shown: !!v, dashboard};
+    };
+    const types = {
+        "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
+        "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
+    };
+    const breadcrumb = [
+        {label: t("custom_dashboards"), link: {name: "dashboards/list"}},
+    ];
 
     const descriptionDialog = ref(false);
     const description = props.flow
@@ -439,7 +493,6 @@
         // else {
         //     filters.value.namespace = null
         // }
-
         // updateParams(route.query);
     });
 
@@ -503,6 +556,34 @@
 
         & .el-col {
             padding-bottom: 0 !important;
+        }
+    }
+
+    .custom {
+        padding: 24px 32px;
+        // margin: 24px 0;
+
+        &.el-row {
+            width: 100%;
+
+            & .el-col {
+                padding-bottom: $spacing;
+
+                &:nth-of-type(even) div {
+                    margin-left: 1rem;
+                }
+
+                & > div {
+                    height: 100%;
+                    background: var(--card-bg);
+                    border: 1px solid var(--bs-gray-300);
+                    border-radius: $border-radius;
+
+                    html.dark & {
+                        border-color: var(--bs-gray-600);
+                    }
+                }
+            }
         }
     }
 </style>

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -51,7 +52,7 @@ class DownloadTest {
         Download.Output output = task.run(runContext);
 
         assertThat(
-            IOUtils.toString(this.storageInterface.get(null, output.getUri()), StandardCharsets.UTF_8),
+            IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8),
             is(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8))
         );
         assertThat(output.getUri().toString(), endsWith(".csv"));
@@ -94,7 +95,7 @@ class DownloadTest {
         Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
 
         assertThat(output.getLength(), is(0L));
-        assertThat(IOUtils.toString(this.storageInterface.get(null, output.getUri()), StandardCharsets.UTF_8), is(""));
+        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8), is(""));
     }
 
     @Test
@@ -134,6 +135,29 @@ class DownloadTest {
         Download.Output output = task.run(runContext);
 
         assertThat(output.getUri().toString(), containsString("filename.jpg"));
+    }
+
+    @Test
+    void failed() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Download task = Download.builder()
+                .id(Download.class.getSimpleName())
+                .type(Download.class.getName())
+                .uri(server.getURL().toString() + "/hello417")
+                .allowFailed(true)
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Download.Output output = task.run(runContext);
+
+            assertThat(output.getHeaders().get("content-type"), is(List.of("application/json")));
+            assertThat(output.getCode(), is(417));
+        }
     }
 
     @Controller()

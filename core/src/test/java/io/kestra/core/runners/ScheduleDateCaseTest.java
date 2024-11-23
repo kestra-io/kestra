@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class ScheduleDateCaseTest {
@@ -49,8 +50,7 @@ public class ScheduleDateCaseTest {
             }
         });
 
-        latch1.await(1, TimeUnit.MINUTES);
-
-        assertThat(receive.blockLast().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertTrue(latch1.await(1, TimeUnit.MINUTES));
+        receive.blockLast();
     }
 }

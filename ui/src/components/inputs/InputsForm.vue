@@ -6,6 +6,8 @@
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :prop="input.id"
+            :error="inputError(input.id)"
+            :inline-message="true"
         >
             <editor
                 :full-height="false"
@@ -171,12 +173,18 @@
                 </template>
             </template>
         </el-form-item>
+        <div class="d-flex justify-content-end">
+            <ValidationError v-if="inputErrors" :errors="inputErrors" />
+        </div>
     </template>
+
     <el-alert type="info" :show-icon="true" :closable="false" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-
+<script setup>
+    import ValidationError from "../flows/ValidationError.vue";
+</script>
 <script>
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -192,6 +200,14 @@
             YamlUtils() {
                 return YamlUtils
             },
+            inputErrors() {
+                // we keep only error that don't target directly an inputs
+                const keepErrors = this.inputsList.filter(it => it.id === undefined);
+
+                return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
+                    keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
+                    null
+            }
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -224,7 +240,7 @@
                 multiSelectInputs: {},
             };
         },
-        emits: ["update:modelValue", "confirm"],
+        emits: ["update:modelValue", "confirm", "validation"],
         created() {
             this.inputsList.push(...(this.initialInputs ?? []));
             this.validateInputs();
@@ -251,6 +267,14 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            inputError(id) {
+                const errors = this.inputsList
+                    .filter(it => it.id === id)
+                    .filter(it => it.errors && it.errors.length > 0)
+                    .map(it => it.errors.map(err => err.message).join("\n"))
+
+                return errors.length > 0 ? errors[0] : null;
+            },
             updateDefaults() {
                 for (const input of this.inputsList || []) {
                     if (this.inputs[input.id] === undefined || this.inputs[input.id] === null) {
@@ -305,6 +329,7 @@
                 }
 
                 const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
                     this.$store.dispatch("execution/validateExecution", {...options, formData})
@@ -314,17 +339,25 @@
                             });
                             this.updateDefaults();
                         });
-
-                    return;
-                }
-
-                if (this.execution !== undefined) {
+                } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
                     this.$store.dispatch("execution/validateResume", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => it.input);
+                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
                             this.updateDefaults();
                         });
+                } else {
+                    this.$emit("validation", {
+                        formData: formData,
+                        callback: (response) => {
+                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
+                                return {...it.input, errors: it.errors}
+                            });
+                            this.updateDefaults();
+                        }
+                    });
                 }
             }
         },
@@ -357,6 +390,7 @@
 }
 
 .text-description {
+    width: 100%;
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }

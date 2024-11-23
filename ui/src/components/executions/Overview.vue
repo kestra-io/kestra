@@ -1,13 +1,13 @@
 <template>
     <div v-if="execution" class="execution-overview">
-        <div v-if="execution.state.current === 'FAILED'" class="error-container">
-            <div class="error-header" @click="isExpanded = !isExpanded">
+        <div v-if="isFailed()" class="error-container">
+            <div class="error-header" @click="fetchErrorLogs()">
                 <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
-                <span class="error-message">{{ errorMessage }}</span>
+                <span class="error-message">{{ $t('execution failed') }}</span>
                 <span class="toggle-icon">
                     <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
                         <path d="M18 15l-6-6-6 6" />
@@ -18,8 +18,8 @@
                 </span>
             </div>
             <div v-if="isExpanded" class="error-stack">
-                <div v-for="(line, index) in stackTrace.split('\n')" :key="index" class="stack-line">
-                    {{ line }}
+                <div v-for="log in logs" :key="log" class="stack-line">
+                    <span v-if="log.taskId"><span class="fw-bold">{{ $t("task id") }}</span>: {{ log.taskId }} - </span> <span v-if="log.taskRunId"><span class="fw-bold">{{ $t("task run id") }}</span>: {{ log.taskRunId }} - </span> {{ log.message }}
                 </div>
             </div>
         </div>
@@ -36,11 +36,13 @@
                 <resume :execution="execution" />
                 <pause :execution="execution" />
                 <kill :execution="execution" class="ms-0" />
+                <unqueue :execution="execution" />
+                <force-run :execution="execution" />
                 <status :status="execution.state.current" class="ms-0" />
             </el-col>
         </el-row>
 
-        <el-table stripe table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
+        <el-table table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
             <el-table-column prop="key" :label="$t('key')" />
 
             <el-table-column prop="value" :label="$t('value')">
@@ -74,22 +76,38 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})" class="overflow-auto" />
+            <KestraCascader
+                :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})"
+                :execution
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
-            <KestraCascader :options="transform(execution.inputs)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.inputs)"
+                :execution
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
-            <KestraCascader :options="transform(execution.variables)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.variables)"
+                :execution
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
-            <KestraCascader :options="transform(execution.outputs)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.outputs)"
+                :execution
+                class="overflow-auto"
+            />
         </div>
     </div>
 </template>
@@ -100,6 +118,8 @@
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";
     import Pause from "./Pause.vue";
+    import Unqueue from "./Unqueue.vue";
+    import ForceRun from "./ForceRun.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -119,6 +139,8 @@
             Restart,
             Resume,
             Pause,
+            Unqueue,
+            ForceRun,
             Kill,
             DateAgo,
             Labels,
@@ -162,6 +184,18 @@
                 } else {
                     return this.execution.state.histories[this.execution.state.histories.length - 1].date;
                 }
+            },
+            isFailed() {
+                return State.isFailed(this.execution.state.current);
+            },
+            fetchErrorLogs() {
+                this.isExpanded = !this.isExpanded;
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId: this.execution.id,
+                    params: {
+                        minLevel: "ERROR"
+                    }
+                })
             }
         },
         watch: {
@@ -172,19 +206,6 @@
                         this.$route.params
                     );
                 }
-            },
-            execution: {
-                handler(newExecution) {
-                    if (newExecution?.error) {
-                        this.errorMessage = newExecution.error.message || "";
-                        this.stackTrace = newExecution.error.stacktrace || [];
-                    }
-                    else {
-                        this.errorMessage = "";
-                        this.stackTrace = [];
-                    }
-                },
-                immediate: true
             }
         },
         data() {
@@ -193,7 +214,7 @@
             };
         },
         computed: {
-            ...mapState("execution", ["flow", "execution"]),
+            ...mapState("execution", ["flow", "execution", "logs"]),
             items() {
                 if (!this.execution) {
                     return []
@@ -315,7 +336,7 @@
     background-color: var(--bs-body-bg);
     border-radius: 4px;
     padding: 10px;
-    overflow-x: auto; 
+    overflow-x: auto;
 }
 
 .stack-line {

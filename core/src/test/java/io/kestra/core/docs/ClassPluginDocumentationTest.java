@@ -105,7 +105,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getDocLicense(), nullValue());
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type"), is("object"));
-            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(1));
+            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size(), is(2));
         }));
     }
 
@@ -149,7 +149,7 @@ class ClassPluginDocumentationTest {
             assertThat(oneOf.getFirst().get("type"), is("integer"));
             assertThat(oneOf.getFirst().get("$dynamic"), is(true));
             assertThat(oneOf.get(1).get("type"), is("string"));
-            assertThat(oneOf.get(1).get("format"), is(".*{{.*}}.*"));
+            assertThat(oneOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type"), is("string"));

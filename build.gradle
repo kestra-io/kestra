@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.3"
+    id "com.gradleup.shadow" version "8.3.5"
     id "application"
 
     // test
@@ -28,7 +28,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
 
     // front
-    id 'org.siouan.frontend-jdk21' version '9.0.0' apply false
+    id 'org.siouan.frontend-jdk21' version '9.1.0' apply false
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
@@ -39,7 +39,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "11.0.0" apply false
+    id "org.owasp.dependencycheck" version "11.1.0" apply false
 }
 
 idea {
@@ -507,8 +507,13 @@ subprojects {
     }
 
     tasks.register('testsJar', Jar) {
+        group = 'build'
+        description = 'Build the tests jar'
+
         archiveClassifier.set('tests')
-        from sourceSets.test.output
+        if (sourceSets.matching { it.name == 'test'}) {
+            from sourceSets.named('test').get().output
+        }
     }
 
     github {

@@ -1,0 +1,13 @@
+id: flow-with-outputs-display-name
+namespace: io.kestra.tests
+
+tasks:
+- id: return
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{ flow.id }}"
+
+outputs:
+- id: "key"
+  value: "{{ outputs.return }}"
+  type: STRING
+  displayName: Sample Output

@@ -100,8 +100,6 @@ public class Executor {
     public Executor withException(Exception exception, String from) {
         this.exception = exception;
         this.from.add(from);
-        this.executionUpdated = true;
-        this.execution = this.execution.withError(ExecutionError.from(exception));
 
         return this;
     }

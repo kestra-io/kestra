@@ -2,7 +2,7 @@ package io.kestra.core.schedulers;
 
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
+import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -43,11 +43,11 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                 "testInputs", "test-inputs"
             ))
             .conditions(List.of(
-                DayWeekInMonthCondition.builder()
-                    .type(DayWeekInMonthCondition.class.getName())
+                DayWeekInMonth.builder()
+                    .type(DayWeekInMonth.class.getName())
                     .date("{{ trigger.date }}")
                     .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonthCondition.DayInMonth.FIRST)
+                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
                     .build()
             ))
             .build();

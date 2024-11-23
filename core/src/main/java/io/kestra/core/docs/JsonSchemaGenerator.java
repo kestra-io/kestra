@@ -16,6 +16,7 @@ import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidatio
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -23,6 +24,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -211,7 +213,7 @@ public class JsonSchemaGenerator {
                 }
             });
 
-        // resolve dynamic types from Property
+        // resolve dynamic types from Property and make EncryptedString looks like a string
         builder.forFields().withTargetTypeOverridesResolver(target -> {
             ResolvedType javaType = target.getType();
             if (javaType.isInstanceOf(Property.class)) {
@@ -239,6 +241,11 @@ public class JsonSchemaGenerator {
                         context.resolve(String.class)
                     );
                 }
+            } else if (javaType.isInstanceOf(EncryptedString.class)) {
+                TypeContext context = target.getContext();
+                return List.of(
+                    context.resolve(String.class)
+                );
             }
 
             return null;
@@ -266,11 +273,13 @@ public class JsonSchemaGenerator {
 
             if (member.getDeclaredType().isInstanceOf(Property.class)) {
                 memberAttributes.put("$dynamic", true);
-                // if we are in the String definition of a Property but the target type is not String: we configure the format
+                // if we are in the String definition of a Property but the target type is not String: we configure the pattern
                 Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
                 if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
-                    memberAttributes.put("format", ".*{{.*}}.*");
+                    memberAttributes.put("pattern", ".*{{.*}}.*");
                 }
+            } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
+                memberAttributes.put("$dynamic", false);
             }
         });
 
@@ -335,44 +344,8 @@ public class JsonSchemaGenerator {
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
-                    if (declaredType.getErasedType() == Task.class) {
-                        return getRegisteredPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
-                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                            .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                            .toList();
-                    } else if (declaredType.getErasedType() == AbstractTrigger.class) {
-                        return getRegisteredPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
-                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                            .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                            .toList();
-                    } else if (declaredType.getErasedType() == Condition.class) {
-                        return getRegisteredPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
-                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                            .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                            .toList();
-                    } else if (declaredType.getErasedType() == ScheduleCondition.class) {
-                        return getRegisteredPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
-                            .filter(ScheduleCondition.class::isAssignableFrom)
-                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                            .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                            .toList();
-                    } else if (declaredType.getErasedType() == TaskRunner.class) {
-                        return getRegisteredPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
-                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                            .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                            .toList();
-                    }
-                    return null;
+
+                    return this.subtypeResolver(declaredType, typeContext);
                 });
 
             // description as Markdown
@@ -457,7 +430,49 @@ public class JsonSchemaGenerator {
         }
     }
 
-    private static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {
+    protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext) {
+        if (declaredType.getErasedType() == Task.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .toList();
+        } else if (declaredType.getErasedType() == AbstractTrigger.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .toList();
+        } else if (declaredType.getErasedType() == Condition.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .toList();
+        } else if (declaredType.getErasedType() == ScheduleCondition.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                .filter(ScheduleCondition.class::isAssignableFrom)
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .toList();
+        } else if (declaredType.getErasedType() == TaskRunner.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .toList();
+        }
+
+        return null;
+    }
+
+    protected static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {
         try {
             return Optional.ofNullable(typeContext.resolveSubtype(declaredType, clz));
         } catch (Exception e) {

@@ -47,10 +47,10 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @Schema(
     title = "Schedule a flow based on a CRON expression.",
-    description = "You can add multiple schedule(s) to a flow.\n" +
-        "The scheduler keeps track of the last scheduled date, allowing you to easily backfill missed executions.\n" +
+    description = "You can add multiple Schedule triggers to a flow.\n" +
+        "The scheduler keeps track of the last scheduled date, allowing you to easily [backfill](https://kestra.io/docs/concepts/backfill) missed executions.\n" +
         "Keep in mind that if you change the trigger ID, the scheduler will consider this as a new schedule, and will start creating new scheduled executions from the current date.\n" +
-        "By default, Schedules will use UTC. If you need a different timezone, use the `timezone` property to update it."
+        "By default, all schedules will use UTC. If you need a different timezone, add the `timezone` property to your trigger definition."
 )
 @Plugin(
     examples = {
@@ -66,13 +66,13 @@ import java.util.stream.Stream;
                 type: io.kestra.plugin.scripts.shell.Commands
                 runner: PROCESS
                 commands:
-                  - echo "{{ execution.startDate ?? trigger.date }}"
+                  - echo "{{ trigger.date ?? execution.startDate }}"
                   - sleep $((RANDOM % 60 + 1))
 
             triggers:
               - id: every_15_minutes
                 type: io.kestra.plugin.core.trigger.Schedule
-                cron: '*/15 * * * *'
+                cron: "*/15 * * * *"
             """
         ),
         @Example(
@@ -108,7 +108,7 @@ import java.util.stream.Stream;
                   - id: schedule
                     cron: "0 11 * * 1"
                     conditions:
-                      - type: io.kestra.plugin.core.condition.DayWeekInMonthCondition
+                      - type: io.kestra.plugin.core.condition.DayWeekInMonth
                         date: "{{ trigger.date }}"
                         dayOfWeek: "MONDAY"
                         dayInMonth: "FIRST"

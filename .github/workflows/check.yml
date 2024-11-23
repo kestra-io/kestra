@@ -65,7 +65,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}'
 
-      - uses: rlespinasse/github-slug-action@v4
+      - uses: rlespinasse/github-slug-action@v5
 
       - name: Publish allure report
         uses: andrcuns/allure-publish-action@v2.8.0
@@ -97,13 +97,13 @@ jobs:
 
       # report test
       - name: Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         if: success() || failure()
         with:
           report_paths: '**/build/test-results/**/TEST-*.xml'
 
       # Codecov
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

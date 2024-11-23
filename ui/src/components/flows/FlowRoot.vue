@@ -227,7 +227,7 @@
                             showFilters: true,
                             restoreurl: false,
                         },
-                        containerClass: "full-container p-4"
+                        containerClass: "container"
                     });
                 }
 
@@ -314,7 +314,7 @@
                 return this.getTabs();
             },
             ready() {
-                return this.user !== undefined && this.flow !== undefined;
+                return this.user && this.flow;
             },
             isAllowedEdit() {
                 if (!this.flow || !this.user) {
@@ -332,7 +332,7 @@
                     return false;
                 }
 
-                return this.flow.labels?.["system.readOnly"] === "true" ?? false;
+                return (this.flow.labels?.["system.readOnly"] === "true" ?? false) || (this.flow.labels?.["system.readOnly"] === true ?? false);
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

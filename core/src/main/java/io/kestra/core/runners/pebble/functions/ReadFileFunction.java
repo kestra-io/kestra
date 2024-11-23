@@ -82,7 +82,7 @@ public class ReadFileFunction implements Function {
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         URI namespaceFile = URI.create(StorageContext.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), namespaceFile)) {
+        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), namespaceFile)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
@@ -107,7 +107,7 @@ public class ReadFileFunction implements Function {
             }
         }
 
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), path)) {
+        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), path)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }

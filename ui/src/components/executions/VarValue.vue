@@ -54,7 +54,7 @@
                 }
             },
             itemUrl(value) {
-                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${value}`;
+                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
             },
             getFileSize(){
                 if (this.isFile(this.value)) {

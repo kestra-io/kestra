@@ -11,18 +11,18 @@ triggers:
   - id: listen-flow
     type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
         in:
           - SUCCESS
-      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
         namespace: io.kestra.tests.trigger
         flowId: trigger-flow
   - id: listen-flow-failed
     type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
         in:
           - FAILED
-      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
         namespace: io.kestra.tests.trigger
         flowId: other-flow

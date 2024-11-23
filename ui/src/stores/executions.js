@@ -215,10 +215,10 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/executions/by-query`, {params: options})
         },
         followExecution(_, options) {
-            return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/executions/${options.id}/follow`, {withCredentials: true});
         },
         followLogs(_, options) {
-            return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`);
+            return new EventSource(`${apiUrl(this)}/logs/${options.id}/follow`, {withCredentials: true});
         },
         loadLogs({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/logs/${options.executionId}`, {
@@ -275,7 +275,8 @@ export default {
                     }
                 }
 
-                commit("setFilePreview", data)
+                commit("setFilePreview", data);
+                return data;
             })
         },
         setLabels(_, options) {
@@ -294,6 +295,38 @@ export default {
         },
         bulkSetLabels({_commit}, options) {
             return this.$http.post(`${apiUrl(this)}/executions/labels/by-ids`,  options)
+        },
+        unqueue(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/unqueue`);
+        },
+        bulkUnqueueExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/unqueue/by-ids`,
+                options.executionsId
+            )
+        },
+        queryUnqueueExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/unqueue/by-query`,
+                {},
+                {params: options}
+            )
+        },
+        forceRun(_, options) {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/force-run`);
+        },
+        bulkForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-ids`,
+                options.executionsId
+            )
+        },
+        queryForceRunExecution(_, options) {
+            return this.$http.post(
+                `${apiUrl(this)}/executions/force-run/by-query`,
+                {},
+                {params: options}
+            )
         },
         loadFlowForExecution({commit}, options) {
             return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})

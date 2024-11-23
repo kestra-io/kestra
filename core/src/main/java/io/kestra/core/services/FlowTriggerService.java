@@ -1,14 +1,15 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.ListUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,7 @@ public class FlowTriggerService {
     @Inject
     private FlowService flowService;
 
+    // used in EE only
     public Stream<FlowWithFlowTrigger> withFlowTriggersOnly(Stream<FlowWithSource> allFlows) {
         return allFlows
             .filter(flow -> !flow.isDisabled())
@@ -69,13 +71,15 @@ public class FlowTriggerService {
                 )
             )).toList();
 
+        // short-circuit empty triggers to evaluate
+        if (validTriggersBeforeMultipleConditionEval.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         Map<FlowWithFlowTriggerAndMultipleCondition, MultipleConditionWindow> multipleConditionWindowsByFlow = null;
         if (multipleConditionStorage.isPresent()) {
             List<FlowWithFlowTriggerAndMultipleCondition> flowWithMultipleConditionsToEvaluate = validTriggersBeforeMultipleConditionEval.stream()
-                .flatMap(flowWithFlowTrigger ->
-                    Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)
-                        .filter(MultipleCondition.class::isInstance)
-                        .map(MultipleCondition.class::cast)
+                .flatMap(flowWithFlowTrigger -> flowTriggerMultipleConditions(flowWithFlowTrigger)
                         .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                                 flowWithFlowTrigger.getFlow(),
                                 multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition),
@@ -107,14 +111,26 @@ public class FlowTriggerService {
         }
 
         // compute all executions to create from flow triggers now that multiple conditions storage is populated
-        List<Execution> executions = validTriggersBeforeMultipleConditionEval.stream().filter(flowWithFlowTrigger ->
+        List<Execution> executions = validTriggersBeforeMultipleConditionEval.stream()
+            // will evaluate conditions
+            .filter(flowWithFlowTrigger ->
                 conditionService.isValid(
                     flowWithFlowTrigger.getTrigger(),
                     flowWithFlowTrigger.getFlow(),
                     execution,
                     multipleConditionStorage.orElse(null)
                 )
-            ).map(f -> f.getTrigger().evaluate(
+            )
+            // will evaluate preconditions
+            .filter(flowWithFlowTrigger ->
+                conditionService.isValid(
+                    flowWithFlowTrigger.getTrigger().getPreconditions(),
+                    flowWithFlowTrigger.getFlow(),
+                    execution,
+                    multipleConditionStorage.orElse(null)
+                )
+            )
+            .map(f -> f.getTrigger().evaluate(
                 runContextFactory.of(f.getFlow(), execution),
                 f.getFlow(),
                 execution
@@ -123,23 +139,31 @@ public class FlowTriggerService {
             .map(Optional::get)
             .toList();
 
-        if(multipleConditionStorage.isPresent() && multipleConditionWindowsByFlow != null) {
+        if (multipleConditionStorage.isPresent()) {
             // purge fulfilled or expired multiple condition windows
             Stream.concat(
-                multipleConditionWindowsByFlow.keySet().stream()
-                    .map(f -> Map.entry(
-                        f.getMultipleCondition().getConditions(),
-                        multipleConditionStorage.get().getOrCreate(f.getFlow(), f.getMultipleCondition())
+                multipleConditionWindowsByFlow.entrySet().stream()
+                    .map(e -> Map.entry(
+                        e.getKey().getMultipleCondition(),
+                        e.getValue()
                     ))
-                    .filter(e -> e.getKey().size() == Optional.ofNullable(e.getValue().getResults())
-                        .map(Map::size)
-                        .orElse(0))
+                    .filter(e -> !Boolean.FALSE.equals(e.getKey().getResetOnSuccess()) &&
+                        e.getKey().getConditions().size() == Optional.ofNullable(e.getValue().getResults()).map(Map::size).orElse(0)
+                    )
                     .map(Map.Entry::getValue),
                 multipleConditionStorage.get().expired(execution.getTenantId()).stream()
             ).forEach(multipleConditionStorage.get()::delete);
         }
 
         return executions;
+    }
+
+    private Stream<MultipleCondition> flowTriggerMultipleConditions(FlowWithFlowTrigger flowWithFlowTrigger) {
+        Stream<MultipleCondition> legacyMultipleConditions = ListUtils.emptyOnNull(flowWithFlowTrigger.getTrigger().getConditions()).stream()
+            .filter(MultipleCondition.class::isInstance)
+            .map(MultipleCondition.class::cast);
+        Stream<io.kestra.plugin.core.trigger.Flow.Preconditions> preconditions = Optional.ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream();
+        return Stream.concat(legacyMultipleConditions, preconditions);
     }
 
     @AllArgsConstructor

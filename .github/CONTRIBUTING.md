@@ -59,7 +59,7 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
-  - See the screenshot bellow for an example: ![Intellij IDEA Configuration ](run-app.png)
+  - See the screenshot below for an example: ![Intellij IDEA Configuration ](run-app.png)
   - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
       - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`

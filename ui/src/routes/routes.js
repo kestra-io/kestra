@@ -23,9 +23,6 @@ import Namespaces from "../components/namespace/Namespaces.vue";
 import Namespace from "../components/namespace/Namespace.vue";
 import Docs from "../components/docs/Docs.vue";
 
-import CustomDashboard from "../components/dashboard/CustomDashboard.vue";
-import Dashboards from "../components/dashboard/Dashboards.vue";
-
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}},
@@ -34,10 +31,7 @@ export default [
     //Dashboards
     {name: "home", path: "/:tenant?/dashboards/:id?", component: Dashboard},
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DashboardCreate},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: DashboardEdit, props: true},
-    
-    {name: "custom_dashboard", path: "/:tenant?/dashboards/:id", component: CustomDashboard, props: true},
-    {name: "dashboards/list", path: "/:tenant?/dashboards/list", component: Dashboards},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: DashboardEdit},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},

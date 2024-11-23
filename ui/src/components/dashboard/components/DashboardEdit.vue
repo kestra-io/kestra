@@ -1,7 +1,11 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section class="full-container">
-        <dashboard-editor @save="save" v-if="dashboardSource" :initial-source="dashboardSource" />
+        <dashboard-editor
+            @save="save"
+            v-if="dashboardSource"
+            :initial-source="dashboardSource"
+        />
     </section>
 </template>
 
@@ -14,47 +18,41 @@
         mixins: [RouteContext],
         components: {
             DashboardEditor,
-            TopNavBar
-        },
-        props: {
-            id: {
-                type: String,
-                required: true
-            }
+            TopNavBar,
         },
         methods: {
             async save(input) {
                 await this.$store.dispatch("dashboard/update", {
-                    id: this.id,
-                    source: input
+                    id: this.$route.params.id,
+                    source: input,
                 });
                 this.$store.dispatch("core/isUnsaved", false);
-            }
+            },
         },
         data() {
             return {
-                dashboardSource: undefined
-            }
+                dashboardSource: undefined,
+            };
         },
         beforeMount() {
-            this.$store.dispatch("dashboard/load", this.id).then(dashboard => {
-                this.dashboardSource = dashboard.sourceCode;
-            });
+            this.$store
+                .dispatch("dashboard/load", this.$route.params.id)
+                .then((dashboard) => {
+                    this.dashboardSource = dashboard.sourceCode;
+                });
         },
         computed: {
             routeInfo() {
                 return {
-                    title: this.id,
+                    title: this.$route.params.id,
                     breadcrumb: [
                         {
-                            label: this.$t(`${this.dataType}s`),
-                            link: {
-                                name: `${this.dataType}s/list`,
-                            }
-                        }
-                    ]
+                            label: this.$t("custom_dashboard"),
+                            link: {},
+                        },
+                    ],
                 };
-            }
-        }
+            },
+        },
     };
 </script>

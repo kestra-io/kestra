@@ -2,6 +2,18 @@
     <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb">
         <template #additional-right v-if="canCreate">
             <ul>
+                <li v-if="props.id">
+                    <router-link
+                        :to="{
+                            name: 'dashboards/update',
+                            params: {id: props.id},
+                        }"
+                    >
+                        <el-button :icon="Pencil">
+                            {{ $t("edit_custom_dashboard") }}
+                        </el-button>
+                    </router-link>
+                </li>
                 <li>
                     <router-link
                         :to="{name: 'flows/create'}"
@@ -28,6 +40,7 @@
 
     import TopNavBar from "../../layout/TopNavBar.vue";
 
+    import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 
     const store = useStore();
@@ -36,6 +49,7 @@
     const props = defineProps({
         title: {type: String, default: undefined},
         breadcrumb: {type: Array, default: () => []},
+        id: {type: String, default: undefined},
     });
 
     const user = computed(() => store.state.auth.user);

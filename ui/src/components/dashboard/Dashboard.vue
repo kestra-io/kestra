@@ -2,21 +2,28 @@
     <Header
         v-if="!embed"
         :title="custom.shown ? custom.dashboard.title : t('overview')"
-        :breadcrumb="
-            custom.shown ? breadcrumb : [{label: t('dashboard_label')}]
-        "
+        :breadcrumb="[
+            {
+                label: t(custom ? 'custom_dashboard' : 'dashboard_label'),
+                link: {},
+            },
+        ]"
+        :id="custom.dashboard.id ?? undefined"
     />
 
     <div class="dashboard-filters">
         <KestraFilter
             :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
-            :include="[
-                'namespace',
-                'state',
-                'scope',
-                'relative_date',
-                'absolute_date',
-            ]"
+            :include="
+                custom.shown
+                    ? ['relative_date', 'absolute_date']
+                    : [
+                        'namespace',
+                        'state',
+                        'scope',
+                        'relative_date',
+                        'absolute_date',
+                    ]"
             :refresh="{shown: true, callback: fetchAll}"
             :dashboards="{shown: true}"
             @dashboard="(v) => handleCustomUpdate(v)"
@@ -281,17 +288,22 @@
     const handleCustomUpdate = async (v) => {
         let dashboard = {};
 
-        if (v) dashboard = await store.dispatch("dashboard/load", props.id);
+        if (route.name === "home") {
+            router.replace({params: {...route.params, id: v?.id ?? "default"}});
+            if (v && v.id !== "default") {
+                dashboard = await store.dispatch("dashboard/load", v.id);
+            }
 
-        custom.value = {shown: !!v, dashboard};
+            custom.value = {
+                shown: !v || v.id === "default" ? false : true,
+                dashboard,
+            };
+        }
     };
     const types = {
         "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
         "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
     };
-    const breadcrumb = [
-        {label: t("custom_dashboards"), link: {name: "dashboards/list"}},
-    ];
 
     const descriptionDialog = ref(false);
     const description = props.flow
@@ -485,6 +497,8 @@
         if (props.flowID) {
             router.replace({query: {...route.query, flowId: props.flowID}});
         }
+
+        handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
 
         // if (!route.query.namespace && props.restoreURL) {
         //     router.replace({query: {...route.query, namespace: defaultNamespace}});

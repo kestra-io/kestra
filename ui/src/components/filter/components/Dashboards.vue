@@ -50,44 +50,9 @@
 
     const dashboards = ref([]);
     onBeforeMount(() => {
-        store.dispatch("dashboard/list", {sort: "title:asc"}).then((response) => {
-            console.log(response);
+        store.dispatch("dashboard/list", {}).then((response) => {
+            dashboards.value = response.results;
         });
-        // TODO: Fetch proper listing of dashboards
-        dashboards.value = [
-            {
-                title: "Sales Overview",
-                id: "3b80afe1-5bac-49b2-9e6d-8e25050f7d11",
-            },
-            {
-                title: "Customer Insights",
-                id: "c103ef09-46c2-4ef0-bbec-d4e2c1ae2cc0",
-            },
-            {
-                title: "Team Performance",
-                id: "725bd7b5-1136-4889-9494-c22a9a9e3407",
-            },
-            {
-                title: "Revenue Tracker",
-                id: "fdc03818-285b-4bed-baa5-ae7590629723",
-            },
-            {
-                title: "Project Summary",
-                id: "fbd080ca-d15c-45cf-90d4-de6c9dc95d5f",
-            },
-            {
-                title: "Marketing Analytics",
-                id: "c03d1487-ab2d-4081-9380-de80fd5d4d2c",
-            },
-            {
-                title: "Task Management",
-                id: "365b35b6-6e82-4fc7-b1ce-53caf12c2868",
-            },
-            {
-                title: "Support Metrics",
-                id: "4ebbd60b-5d97-4751-a4e0-5fe2a75a59c5",
-            },
-        ];
     });
 </script>
 

@@ -15,9 +15,12 @@
     import {Bar} from "vue-chartjs";
 
     import {barLegend} from "../legend.js";
-    import {defaultConfig, getRandomHEXColor,} from "../../../../../utils/charts.js";
-    import {useStore} from "vuex";
+    import {
+        defaultConfig,
+        getRandomHEXColor,
+    } from "../../../../../utils/charts.js";
 
+    import {useStore} from "vuex";
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
@@ -181,7 +184,7 @@
             id: dashboard.value.id,
             chartId: props.chart.id,
             startDate: "2024-11-21T09:00:00Z",
-            endDate: "2024-11-21T16:00:00Z"
+            endDate: "2024-11-21T16:00:00Z",
         });
     });
 </script>

@@ -11,7 +11,7 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.core.utils.IdUtils;
@@ -77,7 +77,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     @Test
     void id() {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
-        Flow flow = new YamlFlowParser().parse(result, Flow.class);
+        Flow flow = new YamlParser().parse(result, Flow.class);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
     }
@@ -144,7 +144,6 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void getFlowsByNamespace() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
@@ -315,7 +314,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
 
         String deletedResult = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "?allowDeleted=true"), String.class);
-        Flow deletedFlow = new YamlFlowParser().parse(deletedResult, Flow.class);
+        Flow deletedFlow = new YamlParser().parse(deletedResult, Flow.class);
 
         assertThat(deletedFlow.isDeleted(), is(true));
     }
@@ -433,7 +432,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(6));
+        assertThat(namespaces.size(), is(7));
     }
 
     @Test
@@ -722,6 +721,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.getFirst().getDeprecationPaths(), hasSize(3));
         assertThat(body.getFirst().getDeprecationPaths(), containsInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners"));
         assertThat(body.getFirst().getWarnings().size(), is(0));
+        assertThat(body.getFirst().getInfos().size(), is(0));
         assertThat(body.get(1).isOutdated(), is(false));
         assertThat(body.get(1).getDeprecationPaths(), containsInAnyOrder("tasks[0]", "tasks[1]"));
         assertThat(body, everyItem(
@@ -737,6 +737,24 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         assertThat(body.size(), is(2));
         assertThat(body.getFirst().getConstraints(), containsString("Unrecognized field \"unknownProp\""));
         assertThat(body.get(1).getConstraints(), containsString("Invalid type: io.kestra.plugin.core.debug.UnknownTask"));
+    }
+
+    @Test
+    void shouldValidateFlowWithWarningsAndInfos() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/warningsAndInfos.yaml");
+        String source = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
+
+        Flow flow = parseFlow(source);
+        jdbcFlowRepository.create(flow, source, flow);
+
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", source).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
+
+        List<ValidateConstraintViolation> body = response.body();
+        assertThat(body.size(), is(1));
+        assertThat(body.getFirst().getDeprecationPaths(), hasSize(1));
+        assertThat(body.getFirst().getDeprecationPaths().getFirst(), is("tasks[0]"));
+        assertThat(body.getFirst().getInfos().size(), is(1));
+        assertThat(body.getFirst().getInfos().getFirst(), is("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log"));
     }
 
     @Test
@@ -907,7 +925,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     }
 
     private Flow parseFlow(String flow) {
-        return new YamlFlowParser().parse(flow, Flow.class);
+        return new YamlParser().parse(flow, Flow.class);
     }
 
     private String generateFlowAsString(String friendlyId, String namespace, String format) {

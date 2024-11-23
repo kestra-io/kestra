@@ -209,8 +209,7 @@ public class SetTest {
         assertThat(kv.getValue(TEST_KEY).get().value(), is(Instant.parse("2023-05-02T01:02:03Z")));
 
         set.toBuilder().value("P1DT5S").kvType(KVType.DURATION).build().run(runContext);
-        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
-        assertThat((long) Double.parseDouble(kv.getValue(TEST_KEY).get().value().toString()), is(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds()));
+        assertThat(kv.getValue(TEST_KEY).get().value(), is(Duration.ofDays(1).plus(Duration.ofSeconds(5))));
 
         set.toBuilder().value("[{\"some\":\"value\"},{\"another\":\"value\"}]").kvType(KVType.JSON).build().run(runContext);
         assertThat(kv.getValue(TEST_KEY).get().value(), is(List.of(Map.of("some", "value"), Map.of("another", "value"))));

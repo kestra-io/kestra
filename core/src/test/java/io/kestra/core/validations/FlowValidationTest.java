@@ -2,7 +2,7 @@ package io.kestra.core.validations;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -22,7 +22,7 @@ class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
     @Inject
-    private YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    private YamlParser yamlParser = new YamlParser();
 
     @Test
     void invalidRecursiveFlow() {
@@ -39,8 +39,16 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_label=system_key"));
-        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system_id=id"));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system.label=system_key"));
+        assertThat(validate.get().getMessage(), containsString("System labels can only be set by Kestra itself, offending label: system.id=id"));
+    }
+
+    @Test
+    void validFlowShouldSucceed() {
+        Flow flow = this.parse("flows/valids/minimal.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent(), is(false));
     }
 
     private Flow parse(String path) {
@@ -49,6 +57,6 @@ class FlowValidationTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file, Flow.class);
+        return yamlParser.parse(file, Flow.class);
     }
 }

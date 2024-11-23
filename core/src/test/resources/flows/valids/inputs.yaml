@@ -133,8 +133,8 @@ tasks:
   type: io.kestra.plugin.core.debug.Return
   format: "{{inputs.secret}}"
 - id: array
-  type: io.kestra.plugin.core.flow.EachSequential
-  value: "{{inputs.array}}"
+  type: io.kestra.plugin.core.flow.ForEach
+  values: "{{inputs.array}}"
   tasks:
     - id: log
       type: io.kestra.plugin.core.debug.Return

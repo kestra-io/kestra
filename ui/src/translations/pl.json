@@ -192,7 +192,7 @@
     "resumed done": "Wykonanie zostało wznowione",
     "toggle output": "Przełącz wyjścia",
     "metrics": "Metryki",
-    "no data current task": "Brak danych dla bieżącego task",
+    "no data current task": "Brak dostępnych danych dla bieżącego taska",
     "outputs": "Wyjścia",
     "output": "Wyjście",
     "eval": {
@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Pierwszy krok jest zawsze najtrudniejszy.",
           "2": "Odkryj blueprints, aby rozpocząć swój następny flow."
-        }
+        },
+        "alt": "Ikona Blueprintów"
       },
       "empty": "Brak blueprintów do wyświetlenia."
     },
@@ -639,7 +640,7 @@
     "false": "Fałsz",
     "undefined": "Niezdefiniowane",
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
-    "execution-warn-deleting-still-running": "Ważne Ostrzeżenie: Zdecydowanie zalecamy anulowanie tej akcji i zakończenie wszystkich trwających wykonania najpierw. Usunięcie nieukończonych wykonań może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
+    "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
       "started": {
@@ -671,7 +672,8 @@
             "default_namespace": "Domyślny Namespace",
             "log_level": "Domyślna Poziom Logs",
             "log_display": "Domyślne Wyświetlanie Log",
-            "execute_flow": "Wykonaj Flow"
+            "execute_flow": "Wykonaj Flow",
+            "execute_default_tab": "Domyślna karta Execution"
           }
         },
         "theme": {
@@ -704,6 +706,12 @@
           "fields": {
             "flows": "Eksportuj Wszystkie Flows",
             "templates": "Eksportuj Wszystkie Szablony"
+          }
+        },
+        "save": {
+          "label": "Zapisz preferencje",
+          "fields": {
+            "name": "Zapisz zmiany"
           }
         }
       }
@@ -801,6 +809,12 @@
       "empty": {
         "title": "Obecnie brak otwartych zakładek",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora."
+      },
+      "close": {
+        "other": "Zamknij inne karty",
+        "tab": "Zamknij kartę",
+        "right": "Zamknij po prawej",
+        "all": "Zamknij wszystkie karty"
       }
     },
     "curl": {
@@ -836,7 +850,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Wykryto użycie zmiennej `trigger`, ręczne wykonanie twojego flow nie spełni zmiennej trigger.",
+    "trigger_check_warning": "Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -882,6 +896,100 @@
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "no_data": "Brak dostępnych danych"
+    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
+    "informative notice": "Notatka(i)",
+    "triggers-view": {
+      "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
+      "title_no_triggers": "Twój flow nie ma żadnych triggerów."
+    },
+    "dependency-view": {
+      "title_no_deps": "Brak zależności ustawionych dla tego Flow.",
+      "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
+    },
+    "create_flow": "Utwórz Flow",
+    "starred": "Oznaczone gwiazdką",
+    "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
+    "unqueue done": "Wykonanie jest odkolejkowane",
+    "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
+    "unqueue title": "Usuń z kolejki wykonanie <code>{id}</code>.<br/>Zwróć uwagę, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
+    "unqueue": "Usuń z kolejki",
+    "executions paused": "<code>{executionCount}</code> wykonanie(a) wstrzymane",
+    "executions unqueue": "<code>{executionCount}</code> wykonanie(a) w kolejce",
+    "unqueue confirm": "Czy na pewno chcesz usunąć z kolejki wykonanie <code>{id}</code>?",
+    "execution-warn-title": "Ważne Ostrzeżenie!",
+    "worker group key": "Klucz grupy Worker",
+    "worker group fallback": "Grupa Workerów awaryjna",
+    "filters": {
+      "comparators": {
+        "is": "jest",
+        "is_one_of": "jest jednym z",
+        "is_not_one_off": "nie jest jednym z",
+        "is_not": "nie jest",
+        "between": "pomiędzy",
+        "in": "w",
+        "not_contains": "nie zawiera",
+        "starts_with": "zaczyna się od",
+        "contains": "zawiera"
+      },
+      "recent": {
+        "label": "Ostatnie wyszukiwania",
+        "empty": "Nie wyszukałeś jeszcze niczego."
+      },
+      "labels": {
+        "placeholder": "Wpisz label jako 'key:value'"
+      },
+      "save": {
+        "dialog": {
+          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?",
+          "heading": "Zapisz bieżące wyszukiwanie",
+          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
+          "placeholder": "Etykieta"
+        },
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Zakres",
+        "text": "tekst",
+        "labels": "Etykiety",
+        "state": "Stan",
+        "child": "Dziecko",
+        "absolute_date": "Data bezwzględna",
+        "relative_date": "Data względna",
+        "level": "Poziom logowania"
+      },
+      "empty": "Brak danych.",
+      "label": "Wybierz filtry",
+      "settings": {
+        "show_chart": "Pokaż główny wykres"
+      }
+    },
+    "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
+    "force run done": "Wymuszone uruchomienie Execution",
+    "force run confirm": "Czy na pewno chcesz wymusić uruchomienie wykonania <code>{id}</code>?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Następujące przejścia zostaną wykonane:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
+    "force run": "Wymuś uruchomienie",
+    "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
+    "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> wykonania/ń?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
+    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji.",
+    "item": "element",
+    "items": "elementy",
+    "warning": "Ostrzeżenie",
+    "cron": "Kron",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "documentationMenu": "Menu dokumentacji",
+    "task run id": "ID TaskRun",
+    "execution failed": "Wykonanie FAILED, kliknij tutaj, aby uzyskać więcej szczegółów.",
+    "optional": "Opcjonalne",
+    "active": "Aktywny",
+    "contextBar": {
+      "news": "Wiadomości",
+      "issue": "Otwórz Issue",
+      "docs": "Dokumentacja",
+      "demo": "Uzyskaj demo",
+      "help": "Pomoc"
+    }
   }
 }

@@ -20,6 +20,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -38,8 +39,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
-
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Builder(toBuilder = true)
 @Slf4j
@@ -106,10 +105,6 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     Instant scheduleDate;
 
-    @With
-    @Nullable
-    ExecutionError error;
-
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -143,17 +138,15 @@ public class Execution implements DeletedInterface, TenantInterface {
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        List<Label> executionLabels = new ArrayList<>();
-        if (flow.getLabels() != null) {
-            executionLabels.addAll(flow.getLabels());
-        }
-
+        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
         if (labels != null) {
             executionLabels.addAll(labels);
         }
-        if (!executionLabels.isEmpty()) {
-            execution = execution.withLabels(executionLabels);
+        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            // add a correlation ID if none exist
+            executionLabels.add(new Label(Label.CORRELATION_ID, execution.getId()));
         }
+        execution = execution.withLabels(executionLabels);
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
@@ -161,6 +154,8 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return execution;
     }
+
+
 
     public static class ExecutionBuilder {
         void prebuild() {
@@ -180,12 +175,6 @@ public class Execution implements DeletedInterface, TenantInterface {
         public Execution build() {
             this.prebuild();
             return super.build();
-        }
-
-        @Override
-        public ExecutionBuilder labels(List<Label> labels) {
-            checkForSystemLabels(labels);
-            return super.labels(labels);
         }
     }
 
@@ -207,17 +196,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
-    /**
-     * This method replaces labels with new ones.
-     * It refuses system labels as they must be passed via the withSystemLabels method.
-     */
     public Execution withLabels(List<Label> labels) {
-        checkForSystemLabels(labels);
+
 
         return new Execution(
             this.tenantId,
@@ -236,48 +220,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
-        );
-    }
-
-    private static void checkForSystemLabels(List<Label> labels) {
-        if (labels != null) {
-            Optional<Label> first = labels.stream().filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
-            if (first.isPresent()) {
-                throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
-            }
-        }
-    }
-
-    /**
-     * This method in <b>only to be used</b> to add system labels to an execution.
-     * It will not replace exisiting labels but add new one (possibly duplicating).
-     */
-    public Execution withSystemLabels(List<Label> labels) {
-        List<Label> newLabels = this.labels == null ? new ArrayList<>() : this.labels;
-        if (labels != null) {
-            newLabels.addAll(labels);
-        }
-        return new Execution(
-            this.tenantId,
-            this.id,
-            this.namespace,
-            this.flowId,
-            this.flowRevision,
-            this.taskRunList,
-            this.inputs,
-            this.outputs,
-            newLabels,
-            this.variables,
-            this.state,
-            this.parentId,
-            this.originalId,
-            this.trigger,
-            this.deleted,
-            this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
@@ -311,8 +254,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            taskRun.getError() != null ? taskRun.getError() : this.error
+            this.scheduleDate
         );
     }
 
@@ -334,8 +276,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate,
-            this.error
+            this.scheduleDate
         );
     }
 
@@ -714,7 +655,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()).withError(ExecutionError.from(e)),
+                        this.withTaskRun(t.getTaskRun()),
                         t.getLogs()
                     );
                 } catch (InternalException ex) {
@@ -722,7 +663,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 }
             })
             .orElseGet(() -> new FailedExecutionWithLog(
-                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED).withError(ExecutionError.from(e)) : this.withError(ExecutionError.from(e)),
+                    this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
                     RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
                 )
             );

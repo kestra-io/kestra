@@ -1,30 +1,37 @@
-// Required to have "undefined" value for boolean
-const cleanInputs = (inputsList, values) => {
-    var inputs = values
-    for (const input of inputsList || []) {
-        if (input.type === "BOOLEAN" && inputs[input.id] === "undefined") {
-            inputs[input.id] = undefined;
-        }
-    }
-    return inputs;
-}
+import _cloneDeep from "lodash/cloneDeep"
 
 export const inputsToFormDate = (submitor, inputsList, values) => {
-    values = cleanInputs(inputsList, values);
+    let inputValuesCloned = _cloneDeep(values)
+
+    for (const input of inputsList || []) {
+        if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === "") {
+            delete inputValuesCloned[input.id];
+        }
+
+        // Required to have "undefined" value for boolean
+        if (input.type === "BOOLEAN" && inputValuesCloned[input.id] === "undefined") {
+            inputValuesCloned[input.id] = undefined;
+        }
+    }
+
+    if (Object.keys(inputValuesCloned).length === 0) {
+        return;
+    }
 
     const formData = new FormData();
+
     for (let input of inputsList || []) {
         const inputName = input.id;
-        const inputValue = values[inputName];
+        const inputValue = inputValuesCloned[inputName];
         if (inputValue !== undefined) {
-            if (input.type === "DATETIME") {
-                if(inputValue) formData.append(inputName, submitor.$moment(inputValue).toISOString());
-            } else if (input.type === "DATE") {
-                if(inputValue) formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
+            if (input.type === "DATETIME" && inputValue) {
+                formData.append(inputName, submitor.$moment(inputValue).toISOString());
+            } else if (input.type === "DATE" && inputValue) {
+                formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
                 formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"));
             } else if (input.type === "FILE") {
-                if(typeof(inputValue) === "string"){
+                if (typeof (inputValue) === "string") {
                     formData.append(inputName, inputValue);
                 } else if (inputValue !== null) {
                     formData.append("files", inputValue, inputName);
@@ -32,15 +39,9 @@ export const inputsToFormDate = (submitor, inputsList, values) => {
             } else {
                 formData.append(inputName, inputValue);
             }
-        } else if (input.required) {
-            submitor.$toast().error(
-                submitor.$t("invalid field", {name: inputName}),
-                submitor.$t("form error")
-            )
-
-            return;
         }
     }
+
     return formData;
 }
 
@@ -62,7 +63,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })
@@ -74,7 +75,7 @@ export const executeTask = (submitor, flow, values, options) => {
                             namespace: response.data.namespace,
                             flowId: response.data.flowId,
                             id: response.data.id,
-                            tab: "gantt",
+                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant
                         }
                     })

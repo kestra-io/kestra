@@ -258,19 +258,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     flow = either.getLeft();
                 }
 
-                flowTopologyRepository.save(
-                    flow,
-                    (flow.isDeleted() ?
-                        Stream.<FlowTopology>empty() :
-                        flowTopologyService
-                            .topology(
-                                flow,
-                                this.allFlows
-                            )
-                    )
-                        .distinct()
-                        .toList()
-                );
+                try {
+                    flowTopologyRepository.save(
+                        flow,
+                        (flow.isDeleted() ?
+                            Stream.<FlowTopology>empty() :
+                            flowTopologyService
+                                .topology(
+                                    flow,
+                                    this.allFlows
+                                )
+                        )
+                            .distinct()
+                            .toList()
+                    );
+                } catch (Exception e) {
+                    log.error("Unable to save flow topology", e);
+                }
+
             }
         ));
         setState(ServiceState.RUNNING);
@@ -431,14 +436,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                 }
                                 else {
                                     if (workerTask.getTask().isSendToWorkerTask()) {
-                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask), workerTask);
+                                        workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(group -> group.getKey()).orElse(null), workerTask);
                                     }
                                     if (workerTask.getTask().isFlowable()) {
                                         workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
                                     }
                                 }
                             } catch (IllegalVariableEvaluationException e) {
-                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED).withError(ExecutionError.from(e))));
+                                workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
                                 workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
                             }
                         }));

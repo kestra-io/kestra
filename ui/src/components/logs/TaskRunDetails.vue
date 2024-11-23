@@ -27,7 +27,11 @@
                         :shown-attempts-uid="shownAttemptsUid"
                         :logs="filteredLogs"
                         @update-logs="loadLogs"
-                    />
+                    >
+                        <template #buttons>
+                            <div id="buttons" />
+                        </template>
+                    </task-run-line>
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun)"
                         :execution-id="currentTaskRun.executionId"
@@ -37,7 +41,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :min-item-size="50"
+                        :min-item-size="0.1"
                         key-field="index"
                         class="log-lines"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -50,16 +54,18 @@
                                 :size-dependencies="[item.message, item.image]"
                                 :data-index="index"
                             >
-                                <el-button-group class="line" v-if="item.logFile">
-                                    <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
-                                        <Download />
-                                        {{ $t('download') }}
-                                    </a>
-                                    <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
-                                    <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
-                                        ({{ logFileSizeByPath[item.logFile] }})
-                                    </el-button>
-                                </el-button-group>
+                                <Teleport v-if="item.logFile" to="#buttons">
+                                    <el-button-group class="line">
+                                        <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
+                                            <Download />
+                                            {{ $t('download') }}
+                                        </a>
+                                        <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
+                                        <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
+                                            ({{ logFileSizeByPath[item.logFile] }})
+                                        </el-button>
+                                    </el-button-group>
+                                </Teleport>
                                 <log-line
                                     @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
@@ -193,7 +199,7 @@
                 fullscreen: false,
                 followed: false,
                 shownAttemptsUid: [],
-                logs: [],
+                rawLogs: [],
                 timer: undefined,
                 timeout: undefined,
                 selectedAttemptNumberByTaskRunId: {},
@@ -218,7 +224,7 @@
                 this.$emit("opened-taskruns-count", openedTaskrunsCount);
             },
             level: function () {
-                this.logs = [];
+                this.rawLogs = [];
                 this.loadLogs(this.followedExecution.id);
             },
             execution: function () {
@@ -261,7 +267,8 @@
                         this.$nextTick(() => {
                             const parentScroller = this.$refs.taskRunScroller?.$el?.parentNode?.closest(".vue-recycle-scroller");
                             if (parentScroller) {
-                                this.$refs.taskRunScroller.$el.style.maxHeight = `${parentScroller.computedStyleMap().get("max-height").value - parentScroller.clientHeight}px`;
+                                const scrollerStyles = window.getComputedStyle(parentScroller);
+                                this.$refs.taskRunScroller.$el.style.maxHeight = `${scrollerStyles.getPropertyValue("max-height") - parentScroller.clientHeight}px`;
                             }
                         })
                     }
@@ -404,7 +411,7 @@
                 return LogUtils.levelOrLower(this.level);
             },
             filteredLogs() {
-                return this.logs.filter(log => this.levelOrLower.includes(log.level));
+                return this.rawLogs.filter(log => this.levelOrLower.includes(log.level));
             }
         },
         methods: {
@@ -496,7 +503,7 @@
                             clearTimeout(this.timeout);
                             this.timeout = setTimeout(() => {
                                 this.timer = moment()
-                                this.logs = this.logs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }, 100);
@@ -505,7 +512,7 @@
                             if (moment().diff(this.timer, "seconds") > 0.5) {
                                 clearTimeout(this.timeout);
                                 this.timer = moment()
-                                this.logs = this.logs.concat(this.logsBuffer);
+                                this.rawLogs = this.rawLogs.concat(this.logsBuffer);
                                 this.logsBuffer = [];
                                 this.scrollToBottomFailedTask();
                             }
@@ -576,14 +583,14 @@
                 if (!this.showLogs) {
                     return;
                 }
+
                 this.$store.dispatch("execution/loadLogs", {
                     executionId,
                     params: {
                         minLevel: this.level
-                    },
-                    store: false
+                    }
                 }).then(logs => {
-                    this.logs = logs
+                    this.rawLogs = logs
                 });
             },
             attempts(taskRun) {

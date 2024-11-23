@@ -23,12 +23,12 @@ public class LocalFlowFileWatcher implements FlowFilesManager {
 
     public void deleteFlow(FlowWithSource toDelete) {
         flowRepositoryInterface.findByIdWithSource(toDelete.getTenantId(), toDelete.getNamespace(), toDelete.getId()).ifPresent(flowRepositoryInterface::delete);
-        log.debug("Flow {} has been deleted", toDelete.getId());
+        log.error("Flow {} has been deleted", toDelete.getId());
     }
 
     @Override
     public void deleteFlow(String tenantId, String namespace, String id) {
         flowRepositoryInterface.findByIdWithSource(tenantId, namespace, id).ifPresent(flowRepositoryInterface::delete);
-        log.debug("Flow {} has been deleted", id);
+        log.error("Flow {} has been deleted", id);
     }
 }

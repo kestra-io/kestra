@@ -1,0 +1,9 @@
+id: sleep-task-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT2S
+
+

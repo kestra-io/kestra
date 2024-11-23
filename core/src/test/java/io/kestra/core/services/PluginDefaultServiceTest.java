@@ -16,14 +16,12 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.YamlFlowParser;
-import io.kestra.plugin.core.condition.ExpressionCondition;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 import jakarta.inject.Inject;
 import lombok.EqualsAndHashCode;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.junit.annotations.KestraTest;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Assertions;
@@ -58,7 +56,7 @@ class PluginDefaultServiceTest {
     private PluginDefaultService pluginDefaultService;
 
     @Inject
-    private YamlFlowParser yamlFlowParser;
+    private YamlParser yamlParser;
 
     @Test
     void shouldInjectGivenDefaultsIncludingType() {
@@ -174,7 +172,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(
@@ -186,7 +184,7 @@ class PluginDefaultServiceTest {
                 new PluginDefault(DefaultTriggerTester.class.getName(), false, ImmutableMap.of(
                     "set", 123
                 )),
-                new PluginDefault(ExpressionCondition.class.getName(), false, ImmutableMap.of(
+                new PluginDefault(Expression.class.getName(), false, ImmutableMap.of(
                     "expression", "{{ test }}"
                 ))
             ))
@@ -204,7 +202,7 @@ class PluginDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().get("key"), is("test"));
         assertThat(((DefaultTriggerTester) injected.getTriggers().getFirst()).getSet(), is(123));
-        assertThat(((ExpressionCondition) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression(), is("{{ test }}"));
+        assertThat(((Expression) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression(), is("{{ test }}"));
     }
 
     @Test
@@ -218,7 +216,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(
@@ -258,7 +256,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(
@@ -293,7 +291,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(
@@ -319,7 +317,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(
@@ -346,7 +344,7 @@ class PluginDefaultServiceTest {
               message: testing
               level: INFO""";
 
-        FlowWithSource flow = yamlFlowParser.parse(source, Flow.class)
+        FlowWithSource flow = yamlParser.parse(source, Flow.class)
             .withSource(source)
             .toBuilder()
             .pluginDefaults(List.of(

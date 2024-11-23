@@ -192,7 +192,7 @@
     "resumed done": "実行が再開されました",
     "toggle output": "出力を切り替え",
     "metrics": "メトリクス",
-    "no data current task": "現在のTaskにデータがありません",
+    "no data current task": "現在のタスクに利用可能なデータがありません。",
     "outputs": "出力",
     "output": "Output",
     "eval": {
@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "最初の一歩が一番難しい。",
           "2": "次のFlowを始めるためにBlueprintsを探索してください。"
-        }
+        },
+        "alt": "ブループリントアイコン"
       },
       "empty": "設計図が表示されていません。"
     },
@@ -639,7 +640,7 @@
     "false": "False",
     "undefined": "未定義",
     "execution-include-non-terminated": "終了していない実行を含めますか？",
-    "execution-warn-deleting-still-running": "重要な警告: このアクションをキャンセルし、進行中の実行をまず停止することを強くお勧めします。未終了の実行を削除すると、concurrencyの問題、flow依存関係管理の不整合、およびインスタンス上のゾンビプロセスが発生し、システムパフォーマンスが低下する可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
+    "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
       "started": {
@@ -671,7 +672,8 @@
             "default_namespace": "デフォルトNamespace",
             "log_level": "デフォルトLogレベル",
             "log_display": "デフォルトLog表示",
-            "execute_flow": "Flowを実行"
+            "execute_flow": "Flowを実行",
+            "execute_default_tab": "デフォルト実行タブ"
           }
         },
         "theme": {
@@ -704,6 +706,12 @@
           "fields": {
             "flows": "すべてのflowをエクスポート",
             "templates": "すべてのテンプレートをエクスポート"
+          }
+        },
+        "save": {
+          "label": "設定を保存",
+          "fields": {
+            "name": "変更を保存"
           }
         }
       }
@@ -801,6 +809,12 @@
       "empty": {
         "title": "現在開いているタブはありません",
         "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。"
+      },
+      "close": {
+        "other": "他のタブを閉じる",
+        "tab": "タブを閉じる",
+        "right": "右側に閉じる",
+        "all": "すべてのタブを閉じる"
       }
     },
     "curl": {
@@ -836,7 +850,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: `trigger`変数の使用が検出されました。フローを手動で実行しても、trigger変数は満たされません。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -882,6 +896,100 @@
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
-    "no_data": "データがありません"
+    "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
+    "informative notice": "注記",
+    "triggers-view": {
+      "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
+      "title_no_triggers": "あなたのflowにはトリガーがありません。"
+    },
+    "dependency-view": {
+      "title_no_deps": "このFlowには依存関係が設定されていません。",
+      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
+    },
+    "create_flow": "フローを作成",
+    "starred": "スター付き",
+    "invalid bulk unqueue": "実行をキューから外すことができませんでした",
+    "unqueue done": "実行はキューから外されました",
+    "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
+    "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue": "キューから削除",
+    "executions paused": "<code>{executionCount}</code> 回の実行がPAUSEDされました",
+    "executions unqueue": "<code>{executionCount}</code> 回の実行がキューから外されました",
+    "unqueue confirm": "実行 <code>{id}</code> をキューから外してもよろしいですか？",
+    "execution-warn-title": "重要なWarning!",
+    "worker group key": "ワーカーグループキー",
+    "worker group fallback": "ワーカーグループフォールバック",
+    "filters": {
+      "comparators": {
+        "is": "です",
+        "is_one_of": "のいずれかです",
+        "is_not_one_off": "のいずれでもありません",
+        "is_not": "ではありません",
+        "between": "間",
+        "in": "内",
+        "not_contains": "含まれていない",
+        "starts_with": "で始まる",
+        "contains": "含む"
+      },
+      "recent": {
+        "label": "最近の検索",
+        "empty": "まだ何も検索していません。"
+      },
+      "labels": {
+        "placeholder": "'label' を 'key:value' と入力してください"
+      },
+      "save": {
+        "dialog": {
+          "hint": "この検索条件にどのようなラベルを付けますか？",
+          "heading": "現在の検索を保存",
+          "confirmation": "検索条件 <code>{name}</code>",
+          "placeholder": "ラベル"
+        },
+        "label": "保存された検索",
+        "tooltip": "空の検索条件を保存することはできません。"
+      },
+      "options": {
+        "namespace": "Namespace（ネームスペース）",
+        "scope": "スコープ",
+        "text": "テキスト",
+        "labels": "ラベル",
+        "state": "状態",
+        "child": "子",
+        "absolute_date": "絶対日付",
+        "relative_date": "相対日付",
+        "level": "ログレベル"
+      },
+      "empty": "データがありません。",
+      "label": "フィルターを選択",
+      "settings": {
+        "show_chart": "メインチャートを表示"
+      }
+    },
+    "force run title": "実行 <code>{id}</code> を強制的に実行します。",
+    "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
+    "force run done": "実行は強制的にRUNNINGです。",
+    "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run": "強制実行",
+    "invalid bulk force run": "実行を強制的に開始できませんでした",
+    "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。",
+    "item": "アイテム",
+    "items": "アイテム",
+    "warning": "警告",
+    "cron": "Cron（クーロン）",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす",
+    "documentationMenu": "ドキュメントメニュー",
+    "task run id": "タスクランID",
+    "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
+    "optional": "オプション",
+    "active": "アクティブ",
+    "contextBar": {
+      "news": "ニュース",
+      "issue": "問題を開く",
+      "docs": "ドキュメント",
+      "demo": "デモを取得",
+      "help": "ヘルプ"
+    }
   }
 }

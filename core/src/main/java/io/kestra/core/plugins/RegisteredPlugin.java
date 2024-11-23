@@ -1,5 +1,7 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.app.AppBlockInterface;
+import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -36,12 +38,22 @@ public class RegisteredPlugin {
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner>> taskRunners;
+    private final List<Class<? extends AppPluginInterface>> apps;
+    private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
     public boolean isValid() {
-        return !tasks.isEmpty() || !triggers.isEmpty() || !conditions.isEmpty() || !storages.isEmpty() || !secrets.isEmpty() || !taskRunners.isEmpty();
+        return !tasks.isEmpty() ||
+            !triggers.isEmpty() ||
+            !conditions.isEmpty() ||
+            !storages.isEmpty() ||
+            !secrets.isEmpty() ||
+            !taskRunners.isEmpty() ||
+            !apps.isEmpty()  ||
+            !appBlocks.isEmpty()
+        ;
     }
 
     public boolean hasClass(String cls) {
@@ -112,6 +124,8 @@ public class RegisteredPlugin {
         result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put("secrets", Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put("task-runners", Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
+        result.put("apps", Arrays.asList(this.getApps().toArray(Class[]::new)));
+        result.put("appBlocks", Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
 
         return result;
     }

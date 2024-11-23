@@ -3,8 +3,8 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: io.kestra.plugin.core.flow.EachSequential
-    value: '[]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '[]'
     tasks:
       - id: 1-1
         type: io.kestra.plugin.core.debug.Return

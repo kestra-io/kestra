@@ -167,7 +167,7 @@
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
-                            isReadOnly: this.deleted || !this.isAllowedEdit,
+                            isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
                         },
                     });
                 }
@@ -227,7 +227,7 @@
                             showFilters: true,
                             restoreurl: false,
                         },
-                        containerClass: "full-container p-4"
+                        containerClass: "container"
                     });
                 }
 
@@ -314,7 +314,7 @@
                 return this.getTabs();
             },
             ready() {
-                return this.user !== undefined && this.flow !== undefined;
+                return this.user && this.flow;
             },
             isAllowedEdit() {
                 if (!this.flow || !this.user) {
@@ -326,6 +326,13 @@
                     action.UPDATE,
                     this.flow.namespace,
                 );
+            },
+            readOnlySystemLabel() {
+                if (!this.flow) {
+                    return false;
+                }
+
+                return (this.flow.labels?.["system.readOnly"] === "true" ?? false) || (this.flow.labels?.["system.readOnly"] === true ?? false);
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

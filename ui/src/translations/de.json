@@ -192,7 +192,7 @@
     "resumed done": "Ausführung ist fortgesetzt",
     "toggle output": "Outputs umschalten",
     "metrics": "Metriken",
-    "no data current task": "Keine Daten für aktuellen Task verfügbar",
+    "no data current task": "Für die aktuelle Task sind keine Daten verfügbar.",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -263,7 +263,8 @@
         "catch phrase": {
           "1": "Der erste Schritt ist immer der schwerste.",
           "2": "Erkunden Sie Blueprints, um Ihren nächsten Flow zu starten."
-        }
+        },
+        "alt": "Blueprints-Symbol"
       },
       "empty": "Keine Blueprints zum Anzeigen."
     },
@@ -639,7 +640,7 @@
     "false": "Falsch",
     "undefined": "Nicht definiert",
     "execution-include-non-terminated": "Nicht beendete Ausführungen einbeziehen?",
-    "execution-warn-deleting-still-running": "Wichtige Warnung: Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Problemen mit der Nebenläufigkeit, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit der Löschung fortfahren.",
+    "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Nebenläufigkeitsproblemen, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit dem Löschen fortfahren.",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
     "welcome": {
       "started": {
@@ -671,7 +672,8 @@
             "default_namespace": "Standard-Namespace",
             "log_level": "Standard-Log-Ebene",
             "log_display": "Standard-Log-Anzeige",
-            "execute_flow": "Flow ausführen"
+            "execute_flow": "Flow ausführen",
+            "execute_default_tab": "Standard-Ausführungs-Registerkarte"
           }
         },
         "theme": {
@@ -704,6 +706,12 @@
           "fields": {
             "flows": "Alle Flows exportieren",
             "templates": "Alle Vorlagen exportieren"
+          }
+        },
+        "save": {
+          "label": "Präferenzen speichern",
+          "fields": {
+            "name": "Änderungen speichern"
           }
         }
       }
@@ -801,6 +809,12 @@
       "empty": {
         "title": "Derzeit keine Registerkarten geöffnet",
         "message": "Sie können Namespace-Dateien aus der Seitenleiste erstellen oder importieren und sich das Einführungsvideo für unseren Editor ansehen."
+      },
+      "close": {
+        "other": "Andere Registerkarten schließen",
+        "tab": "Registerkarte schließen",
+        "right": "Rechts schließen",
+        "all": "Alle Registerkarten schließen"
       }
     },
     "curl": {
@@ -836,7 +850,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
-    "trigger_check_warning": "Warnung: Verwendung der `trigger`-Variable erkannt, das manuelle Ausführen Ihres Flows wird die trigger-Variable nicht erfüllen.",
+    "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(pro Namespace)",
       "id": "ID",
@@ -882,6 +896,100 @@
     "invalid bulk pause": "Konnte Ausführungen nicht pausieren",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "no_data": "Keine Daten verfügbar"
+    "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
+    "informative notice": "Hinweis(e)",
+    "triggers-view": {
+      "desc_no_triggers": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in unserer Dokumentation.",
+      "title_no_triggers": "Ihr Flow hat keine Trigger."
+    },
+    "dependency-view": {
+      "title_no_deps": "Keine Abhängigkeiten sind für diesen Flow festgelegt.",
+      "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
+    },
+    "create_flow": "Flow erstellen",
+    "starred": "Markiert",
+    "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
+    "unqueue done": "Ausführung ist nicht in der Warteschlange",
+    "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
+    "unqueue title": "Ausführung <code>{id}</code> aus der Warteschlange entfernen.<br/>Bitte beachten Sie, dass dies das Nebenläufigkeitslimit des Flows nicht berücksichtigt, sodass mehr Ausführungen laufen könnten als das erlaubte Limit.",
+    "unqueue": "Aus Warteschlange entfernen",
+    "executions paused": "<code>{executionCount}</code> Ausführung(en) PAUSED",
+    "executions unqueue": "<code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen",
+    "unqueue confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> aus der Warteschlange entfernen möchten?",
+    "execution-warn-title": "Wichtige Warnung!",
+    "worker group key": "Worker-Gruppe Schlüssel",
+    "worker group fallback": "Arbeitsgruppe Fallback",
+    "filters": {
+      "comparators": {
+        "is": "ist",
+        "is_one_of": "ist einer von",
+        "is_not_one_off": "ist nicht einer von",
+        "is_not": "ist nicht",
+        "between": "zwischen",
+        "in": "im",
+        "not_contains": "nicht enthält",
+        "starts_with": "beginnt mit",
+        "contains": "enthält"
+      },
+      "recent": {
+        "label": "Letzte Suchanfragen",
+        "empty": "Sie haben noch nichts gesucht."
+      },
+      "labels": {
+        "placeholder": "Geben Sie das Label als 'key:value' ein."
+      },
+      "save": {
+        "dialog": {
+          "hint": "Wie möchten Sie dieses Suchkriterium labeln?",
+          "heading": "Aktuelle Suche speichern",
+          "confirmation": "Suchkriterien <code>{name}</code>",
+          "placeholder": "Label"
+        },
+        "label": "Gespeicherte Suchen",
+        "tooltip": "Sie können keine leeren Suchkriterien speichern."
+      },
+      "options": {
+        "namespace": "Namespace",
+        "scope": "Umfang",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+        "labels": "Labels",
+        "state": "Zustand",
+        "child": "Kind",
+        "absolute_date": "Absolutes Datum",
+        "relative_date": "Relatives Datum",
+        "level": "Log-Ebene"
+      },
+      "empty": "Keine Daten.",
+      "label": "Filter auswählen",
+      "settings": {
+        "show_chart": "Hauptdiagramm anzeigen"
+      }
+    },
+    "force run title": "Erzwinge die Ausführung <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> Ausführung(en) erzwungener Lauf",
+    "force run done": "Ausführung ist erzwungener Lauf",
+    "force run confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> erzwingen möchten?<br/><br/>WARNING: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
+    "force run": "Erzwungene Ausführung",
+    "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
+    "bulk force run": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) erzwingen möchten?<br/><br/>WARNUNG: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
+    "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion.",
+    "item": "Element",
+    "items": "Elemente",
+    "warning": "Warnung",
+    "cron": "Cron",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
+    "documentationMenu": "Dokumentationsmenü",
+    "task run id": "TaskRun-ID",
+    "execution failed": "Die Ausführung ist fehlgeschlagen, klicken Sie hier für weitere Details.",
+    "optional": "Optional",
+    "active": "Aktiv",
+    "contextBar": {
+      "news": "Nachrichten",
+      "issue": "Ein Issue öffnen",
+      "docs": "Dokumentation",
+      "demo": "Demo anfordern",
+      "help": "Hilfe"
+    }
   }
 }

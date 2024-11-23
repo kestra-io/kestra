@@ -1,8 +1,6 @@
 <template>
     <div class="position-relative">
-        <code>
-            {{ curlCommand }}
-        </code>
+        <pre><code>{{ curlCommand }}</code></pre>
 
         <copy-to-clipboard class="position-absolute" :text="curlCommand" />
 
@@ -109,7 +107,7 @@
                     .filter((label) => label.key !== null && label.value !== null && label.key !== "" && label.value !== "")
                     .map((label) => this.generateExecutionLabel(label.key, label.value));
 
-                const origin = baseUrl ? apiUrl(this.$store) : `${location.origin}${basePath()}`;
+                const origin = baseUrl ? apiUrl(this.$store) : `${location.origin}${basePath(this.$store)}`;
 
                 var url = `${origin}/executions/${this.flow.namespace}/${this.flow.id}`;
 
@@ -147,6 +145,10 @@
 </script>
 
 <style lang="scss" scoped>
+    pre {
+        border-radius: var(--bs-border-radius);
+    }
+
     /* Allow line-wraps */
     code {
         display: block;

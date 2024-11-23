@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -31,11 +33,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
+
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,6 +50,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -132,19 +138,20 @@ public class FlowInputOutput {
 
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
+            .publishOn(Schedulers.boundedElastic())
             .<AbstractMap.SimpleEntry<String, String>>handle((input, sink) -> {
-                try {
-                    if (input instanceof CompletedFileUpload fileUpload) {
-                        if (!uploadFiles) {
-                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
-                            URI from = URI.create("kestra://" + StorageContext
-                                .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
-                                .getContextStorageURI()
-                            );
-                            sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
-                            return;
-                        }
+                if (input instanceof CompletedFileUpload fileUpload) {
+                    if (!uploadFiles) {
                         final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
+                        URI from = URI.create("kestra://" + StorageContext
+                            .forInput(execution, fileUpload.getFilename(), fileUpload.getFilename() + fileExtension)
+                            .getContextStorageURI()
+                        );
+                        fileUpload.discard();
+                        sink.next(new AbstractMap.SimpleEntry<>(fileUpload.getFilename(), from.toString()));
+                    } else {
+                        try {
+                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
 
                             File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
@@ -161,11 +168,17 @@ public class FlowInputOutput {
                                     tempFile.deleteOnExit();
                                 }
                             }
-                    } else {
-                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
+                        } catch (IOException e) {
+                            fileUpload.discard();
+                            sink.error(e);
+                        }
                     }
-                } catch (IOException e) {
-                    sink.error(e);
+                } else {
+                    try {
+                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
+                    } catch (IOException e) {
+                        sink.error(e);
+                    }
                 }
             })
             .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
@@ -345,13 +358,26 @@ public class FlowInputOutput {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
+        final ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> results = flow
             .getOutputs()
             .stream()
             .map(output -> {
-                Object current = in == null ? null : in.get(output.getId());
+                final HashMap<String, Object> current;
+                final Object currentValue;
                 try {
-                    return parseData(execution, output, current)
+                    current = in == null ? null : mapper.readValue(
+                        mapper.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                if (current == null) {
+                    currentValue = null;
+                } else {
+                    currentValue = current.get("value");
+                }
+                try {
+                    return parseData(execution, output, currentValue)
                         .map(entry -> {
                             if (output.getType().equals(Type.SECRET)) {
                                 return new AbstractMap.SimpleEntry<>(
@@ -362,12 +388,26 @@ public class FlowInputOutput {
                             return entry;
                         });
                 } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), current);
+                    throw output.toConstraintViolationException(e.getMessage(), currentValue);
                 }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
+            .collect(HashMap::new,
+                     (map, entry) -> {
+                         map.compute(entry.getKey(), (key, existingValue) -> {
+                             if (existingValue == null) {
+                                 return entry.getValue();
+                             }
+                             if (existingValue instanceof List) {
+                                 ((List<Object>) existingValue).add(entry.getValue());
+                                 return existingValue;
+                             }
+                             return new ArrayList<>(Arrays.asList(existingValue, entry.getValue()));
+                         });
+                     },
+                     Map::putAll
+            );
 
         // Ensure outputs are compliant with tasks outputs.
         return JacksonMapper.toMap(results);
@@ -385,7 +425,7 @@ public class FlowInputOutput {
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
-            data.getId(),
+            Optional.ofNullable(data.getDisplayName()).orElse(data.getId()),
             parseType(execution, data.getType(), data.getId(), elementType, current)
         ));
     }
@@ -404,10 +444,10 @@ public class FlowInputOutput {
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
                 case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
-                case DATETIME -> Instant.parse(((String) current));
-                case DATE -> LocalDate.parse(((String) current));
-                case TIME -> LocalTime.parse(((String) current));
-                case DURATION -> Duration.parse(((String) current));
+                case DATETIME -> current instanceof Instant ? current : Instant.parse(((String) current));
+                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(((String) current));
+                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(((String) current));
+                case DURATION -> current instanceof Duration ? current : Duration.parse(((String) current));
                 case FILE -> {
                     URI uri = URI.create(((String) current).replace(File.separator, "/"));
 

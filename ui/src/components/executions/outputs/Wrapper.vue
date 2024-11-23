@@ -52,8 +52,8 @@
                     </code>
                 </div>
 
-                <el-collapse class="mb-3 debug bordered">
-                    <el-collapse-item>
+                <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
+                    <el-collapse-item name="debug">
                         <template #title>
                             <span>{{ t('eval.title') }}</span>
                         </template>
@@ -101,7 +101,7 @@
                     <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
                 </el-alert>
 
-                <VarValue :value="selectedValue" :execution="execution" />
+                <VarValue v-if="displayVarValue()" :value="selectedValue" :execution="execution" />
                 <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
             </div>
         </el-col>
@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef} from "vue";
+    import {ref, computed, shallowRef, onMounted} from "vue";
     import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
@@ -123,6 +123,7 @@
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
 
     import Editor from "../../inputs/Editor.vue";
+    const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
@@ -152,10 +153,18 @@
             .post(URL, expression, {headers: {"Content-type": "text/plain",}})
             .then(response => {
                 try {
-                    debugExpression.value = JSON.stringify(JSON.parse(response.data.result), "  ", 2);
+                    const parsedResult = JSON.parse(response.data.result);
+                    const debugOutput = JSON.stringify(parsedResult, "  ", 2);
+                    debugExpression.value = debugOutput;
+
+                    selected.value.push(debugOutput);
+
                     isJSON.value = true;
                 } catch (e) {
                     debugExpression.value = response.data.result;
+
+                    // Parsing failed, therefore, copy raw result
+                    if (response.status === 200) selected.value.push(response.data.result);
                 }
 
                 debugError.value = response.data.error;
@@ -209,7 +218,23 @@
     };
 
     const expandedValue = ref([])
-    const selected = ref([]);
+    const selected = ref<string[]>([]);
+
+    onMounted(() => {
+        const task = outputs.value?.[1];
+        if (!task) return;
+
+        selected.value = [task.value];
+        
+        const child = task.children?.[1];
+        if (child) {
+            selected.value.push(child.value);
+            expandedValue.value = child.path
+        }
+
+        debugCollapse.value = "debug";
+    });
+
     const selectedValue = computed(() => {
         if (selected.value?.length) return selected.value[selected.value.length - 1];
         return undefined;
@@ -258,12 +283,12 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = store.state.execution.execution.taskRunList.map((task) => {
+        const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
             return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs, true, task.taskId) : []};
         });
 
         const HEADING = {label: t("tasks"), heading: true, component: shallowRef(TimelineTextOutline)};
-        tasks.unshift(HEADING);
+        tasks?.unshift(HEADING);
 
         return tasks;
     });
@@ -287,6 +312,8 @@
     });
 
     const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
+    const isFile = (value) => typeof(value) === "string" && value.startsWith("kestra:///");
+    const displayVarValue = () => isFile(selectedValue.value) || (selectedValue.value !== debugExpression.value)
 </script>
 
 <style lang="scss">

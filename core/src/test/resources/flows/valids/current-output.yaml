@@ -2,16 +2,16 @@ id: test-current-output
 namespace: io.kestra.tests
 tasks:
   - id: 1_each
-    type: io.kestra.plugin.core.flow.EachSequential
-    value: '["v11", "v12"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["v11", "v12"]'
     tasks:
       - id: 1-1_each
-        type: io.kestra.plugin.core.flow.EachSequential
-        value: '["v21", "v22"]'
+        type: io.kestra.plugin.core.flow.ForEach
+        values: '["v21", "v22"]'
         tasks:
           - id: 1-1-1_each
-            type: io.kestra.plugin.core.flow.EachSequential
-            value: '["v31", "v32"]'
+            type: io.kestra.plugin.core.flow.ForEach
+            values: '["v31", "v32"]'
             tasks:
             - id: 1-1-1_output
               type: io.kestra.plugin.core.debug.Return
@@ -21,8 +21,8 @@ tasks:
               #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
               format: "return-{{ currentEachOutput(outputs['1-1-1_output']).value }}"
   - id: 2_each
-    type: io.kestra.plugin.core.flow.EachSequential
-    value: '["v41", "v42"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["v41", "v42"]'
     tasks:
       - id: 2-1_output
         type: io.kestra.plugin.core.debug.Return

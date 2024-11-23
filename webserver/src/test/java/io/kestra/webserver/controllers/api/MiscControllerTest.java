@@ -1,10 +1,8 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.context.annotation.PropertySource;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;

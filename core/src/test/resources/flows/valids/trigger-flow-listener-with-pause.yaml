@@ -16,6 +16,6 @@ triggers:
     type: io.kestra.plugin.core.trigger.Flow
     states: [RUNNING, PAUSED, SUCCESS, WARNING, FAILED]
     conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
         namespace: io.kestra.tests.trigger.pause
         flowId: trigger-flow-with-pause

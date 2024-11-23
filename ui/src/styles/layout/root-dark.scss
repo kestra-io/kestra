@@ -23,7 +23,8 @@ html.dark {
     #{--bs-card-bg}: #2F3342;
     #{--bs-heading-color}: var(--bs-white);
     #{--bs-body-color}: white;
-    #{--bs-body-bg}: $body-bg;
+    #{--bs-body-bg}: #1C1E27;
+    #{--bs-body-background}: #1C1E27;
     #{--bs-border-color}: #404559;
     #{--bs-border-secondary-color}: #2F3342;
     #{--bs-secondary}: #E3DBFF;
@@ -42,7 +43,8 @@ html.dark {
     --bs-link-hover-color: #D0CDF9;
 
     #{--card-bg}: $card-bg;
-    #{--input-bg}: $input-bg;
+    #{--card-bg-hover}: darken($card-bg, 3);
+    #{--input-bg}: #262A36;;
 
     --el-bg-color: var(--bs-body-bg);
     --el-bg-color-page: var(--bs-body-bg);
@@ -145,6 +147,7 @@ html.dark {
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
+    #{--token-content-link}: #BBBBFF;
 
     .shiki, .shiki span {
         font-style: var(--shiki-dark-font-style) !important;

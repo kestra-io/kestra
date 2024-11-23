@@ -42,6 +42,8 @@ public class KvFunction implements Function {
 
         if (namespace == null) {
             namespace = flowNamespace;
+        } else {
+            flowService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
         }
 
         Optional<KVValue> value;

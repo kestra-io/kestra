@@ -35,6 +35,8 @@ jobs:
 
       # Run OWASP dependency check plugin
       - name: Gradle Dependency Check
+        env:
+          NVD_API_KEY: ${{ secrets.NIST_APIKEY }}
         run: |
           ./gradlew dependencyCheckAggregate
 

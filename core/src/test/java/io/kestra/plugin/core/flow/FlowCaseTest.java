@@ -99,6 +99,7 @@ public class FlowCaseTest {
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
 
         if (testInherited) {
+            assertThat(triggered.get().getLabels().size(), is(5));
             assertThat(triggered.get().getLabels(), hasItems(
                 new Label(Label.CORRELATION_ID, execution.getId()),
                 new Label("mainFlowExecutionLabel", "execFoo"),

@@ -127,13 +127,28 @@
     const debugEditor = ref(null);
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
-        const task = selectedTask()?.taskId;
-        if(!task) return "";
+        const formatTask = (task) => {
+            if (!task) return "";
+            return task.includes("-") ? `["${task}"]` : `.${task}`;
+        };
 
-        const path = expandedValue.value;
-        if(!path) return `{{ outputs.${task} }}`
+        const formatPath = (path) => {
+            if (!path.includes("-")) return `.${path}`;
 
-        return `{{ outputs.${path} }}`
+            const bracketIndex = path.indexOf("[");
+            const task = path.substring(0, bracketIndex);
+            const rest = path.substring(bracketIndex);
+
+            return `["${task}"]${rest}`;
+        }
+
+        let task = selectedTask()?.taskId;
+        if (!task) return "";
+
+        let path = expandedValue.value;
+        if (!path) return `{{ outputs${formatTask(task)} }}`;
+
+        return `{{ outputs${formatPath(path)} }}`;
     });
     const debugError = ref("");
     const debugStackTrace = ref("");

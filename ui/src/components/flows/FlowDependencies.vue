@@ -140,7 +140,11 @@
                     id: "marker-custom",
                     type: MarkerType.ArrowClosed,
                 },
-                type: "bezier"
+                type: "bezier",
+                pathOptions: {
+                    curvature: 0.7,  // Mid-range curve
+                    offset: 40,      // Moves the curve away from the nodes
+                }
             }]);
         }
 

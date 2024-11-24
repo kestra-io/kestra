@@ -13,7 +13,7 @@
         >
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
             <OpenInNew v-if="button.url" class="open-in-new" />
-            <div v-if="button.hasUnread" class="newsDot" />
+            <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
         </el-button>
 
         <div style="flex:1" />
@@ -46,7 +46,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch, reactive, type Ref, type Component} from "vue";
+    import {computed, ref, watch, type Ref, type Component} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -85,13 +85,13 @@
         icon: Component,
         component?: Component,
         url?: string,
-        hasUnread?: Ref<boolean>
-    }> = reactive({
+        hasUnreadMarker?: boolean
+    }> = {
         news: {
             title: t("contextBar.news"),
             icon: MessageOutline,
             component: ContextNews,
-            hasUnread
+            hasUnreadMarker: true
         },
         docs: {
             title: t("contextBar.docs"),
@@ -113,7 +113,7 @@
             icon: Calendar,
             url: "https://kestra.io/demo"
         }
-    })
+    }
 
     const panelWidth = ref(640)
 

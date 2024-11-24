@@ -360,10 +360,6 @@
 .filters {
     width: -webkit-fill-available;
 
-    & .el-select {
-        width: 300px;
-    }
-
     & .el-select__placeholder {
         color: var(--bs-gray-700);
     }

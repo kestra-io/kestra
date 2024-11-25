@@ -5,6 +5,7 @@
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
+            :rules="input.type === 'BOOLEAN' ? [{validator: (val) => input.required === false || val !== 'undefined', message: $t('required')}] : undefined"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"

@@ -39,13 +39,13 @@ public class LogController {
     private LogRepositoryInterface logRepository;
 
     @Inject
-    private ExecutionLogService executionLogService;
+    private ExecutionLogService logService;
 
     @Inject
     private TenantService tenantService;
 
     @Inject
-    private LogService logService;
+    private LogService a;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
@@ -79,7 +79,7 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        return executionLogService.getExecutionLogs(
+        return logService.getExecutionLogs(
             tenantService.resolveTenant(),
             executionId,
             minLevel,
@@ -99,7 +99,7 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        InputStream inputStream = executionLogService.getExecutionLogsAsStream(
+        InputStream inputStream = logService.getExecutionLogsAsStream(
             tenantService.resolveTenant(),
             executionId,
             minLevel,
@@ -117,7 +117,7 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
-        return executionLogService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
+        return logService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -156,7 +156,7 @@ public class LogController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
         validateTimeline(startDate, endDate);
-        return logService.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
+        return a.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
     }
 
 }

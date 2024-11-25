@@ -1,28 +1,41 @@
 <template>
-    <nav class="header">
-        <div class="image-box">
-            <img src="../../../../assets/icons/blueprint.svg" :alt="$t('blueprints.header.alt')">
-            <img src="../../../../assets/icons/blueprint-dark.svg" :alt="$t('blueprints.header.alt')" class="blueprint-dark">
-        </div>
-        <h4 class="catch-phrase">
-            {{ $t(phrase) }}
-        </h4>
-    </nav>
+    <slot v-if="embed" />
+    <div class="blueprints" v-else>
+        <nav class="header">
+            <div class="image-box">
+                <img :src="image" :alt="alt">
+                <img :src="imageDark" :alt="alt" class="blueprint-dark">
+            </div>
+            <h4 class="catch-phrase">
+                {{ phrase }}
+            </h4>
+        </nav>
+        <slot />
+    </div>
 </template>
 
-<script>
-    export default {
-        props: {
-            phrase: {
-                type: String,
-                required: false,
-                default: "blueprints.header.catch phrase.2"
-            },
-        },
-    }
+<script setup lang="ts">
+    defineProps<{
+        embed: boolean;
+        phrase:string;
+        alt:string;
+        image:string;
+        imageDark:string;
+    }>();
 </script>
+
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
+
+    .blueprints {
+        background: url('../../assets/dots-bg.jpg') no-repeat top left;
+        background-color: #F6F6FA;
+        flex: 1;
+        .dark & {
+            background:  url('../../assets/dots-bg-dark.jpg') no-repeat top left;
+            background-color: #1B1E27;
+        }
+    }
 
     .header {
         display: flex;

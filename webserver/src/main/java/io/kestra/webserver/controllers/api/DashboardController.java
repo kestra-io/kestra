@@ -14,6 +14,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -38,6 +39,7 @@ import java.util.Optional;
 @Validated
 @Controller("/api/v1/dashboards")
 @Slf4j
+@Requires(property = "kestra.repository.type", value = "elasticsearch")
 public class DashboardController {
     protected static final YamlParser YAML_PARSER = new YamlParser();
 

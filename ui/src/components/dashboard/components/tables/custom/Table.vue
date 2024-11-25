@@ -25,6 +25,11 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    import moment from "moment";
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
 
@@ -35,8 +40,9 @@
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
-            startDate: "2024-08-21T09:00:00Z",
-            endDate: "2024-11-26T16:00:00Z",
+            startDate:
+                route.query.startDate ?? moment().subtract(moment.duration("PT720H").as("milliseconds")).toISOString(true),
+            endDate: route.query.endDate ?? moment().toISOString(true),
         });
     });
 </script>

@@ -162,8 +162,29 @@ export function backgroundFromState(state, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function getRandomHEXColor() {
-    return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")}`;
+export function getConsistentHEXColor(value) {
+    const hex = State.color()[value];
+
+    if (hex) return hex;
+
+    // FNV-1a Hash Algorithm
+    let hash = 0x811c9dc5; // FNV offset basis (32-bit)
+    const fnvPrime = 0x01000193; // FNV prime (32-bit)
+
+    for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i); // XOR with character code
+        hash = (hash * fnvPrime) >>> 0; // Multiply by FNV prime and ensure 32-bit
+    }
+
+    // Bit-mixing step (to ensure greater differentiation)
+    hash ^= hash >>> 16; // XOR with a shifted version
+    hash *= 0x85ebca6b; // Multiply with a large prime
+    hash ^= hash >>> 13; // XOR again with another shift
+    hash *= 0xc2b2ae35; // Multiply with another large prime
+    hash ^= hash >>> 16; // Final XOR with a shift
+
+    // Generate a HEX color from the hash
+    return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`;
 }
 
 export function getStateColor(state) {

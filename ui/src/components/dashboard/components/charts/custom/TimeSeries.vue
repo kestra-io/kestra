@@ -1,29 +1,37 @@
 <template>
     <div :id="chart.id" class="float-end" />
     <Bar
+        v-if="generated.length"
         :data="parsedData"
         :options="options"
         :plugins="[barLegend]"
         class="chart"
     />
+    <NoData v-else />
 </template>
 
 <script lang="ts" setup>
     import {computed, onMounted, ref} from "vue";
 
-    import moment from "moment";
+    import NoData from "../../../../layout/NoData.vue";
+
     import {Bar} from "vue-chartjs";
 
     import {barLegend} from "../legend.js";
     import {
         defaultConfig,
-        getRandomHEXColor,
+        getConsistentHEXColor,
     } from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
+
+    import moment from "moment";
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
@@ -120,7 +128,7 @@
                         tooltip: label,
                         label,
                         unique: new Set(),
-                        backgroundColor: getRandomHEXColor(),
+                        backgroundColor: getConsistentHEXColor(label),
                         ...params,
                     };
                 }
@@ -170,7 +178,9 @@
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
-                        borderColor: getRandomHEXColor(),
+                        borderColor: getConsistentHEXColor(
+                            `${aggregator[1][1].displayName}`,
+                        ),
                     },
                     ...yDatasetData,
                 ]
@@ -183,8 +193,12 @@
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
-            startDate: "2024-11-21T09:00:00Z",
-            endDate: "2024-11-21T16:00:00Z",
+            startDate:
+                route.query.startDate ??
+                moment()
+                    .subtract(moment.duration("PT720H").as("milliseconds"))
+                    .toISOString(true),
+            endDate: route.query.endDate ?? moment().toISOString(true),
         });
     });
 </script>

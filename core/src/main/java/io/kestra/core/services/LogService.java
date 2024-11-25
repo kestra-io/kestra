@@ -78,12 +78,4 @@ public class LogService {
     public int purge(String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
         return logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
     }
-
-    public int bulkDelete(List<String> executionIds, String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        int totalDeleted = 0;
-        for (String executionId : executionIds) {
-            totalDeleted += logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
-        }
-        return totalDeleted;
-    }
 }

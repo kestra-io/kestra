@@ -14,6 +14,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -253,14 +254,27 @@ public class TriggerController {
             Trigger updated;
             ZonedDateTime nextExecutionDate = null;
             try {
+                Trigger lastUpdate = newTrigger;
                 RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
                 ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
-                // We must set up the backfill before the update to calculate the next execution date
-                updated = current.initBackfill(newTrigger);
-                if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-                    nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
+
+                // If we are enabling back a schedule trigger,
+                // then we need to handle its recoverMissedSchedules
+                if (current.getDisabled() && !newTrigger.getDisabled() && abstractTrigger instanceof Schedule schedule) {
+                    RecoverMissedSchedules recoverMissedSchedules = schedule.getRecoverMissedSchedules();
+                    if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
+                        nextExecutionDate = schedule.previousEvaluationDate(conditionContext);
+                    } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
+                        nextExecutionDate = schedule.nextEvaluationDate();
+                    }
+                } else {
+                    // We must set up the backfill before the update to calculate the next execution date
+                    updated = current.initBackfill(lastUpdate);
+                    if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
+                        nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
+                    }
                 }
-                updated = Trigger.update(current, newTrigger, nextExecutionDate);
+                updated = Trigger.update(current, lastUpdate, nextExecutionDate);
             } catch (Exception e) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
             }

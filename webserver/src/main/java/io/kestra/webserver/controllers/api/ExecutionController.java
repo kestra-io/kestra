@@ -33,6 +33,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -1585,7 +1586,10 @@ public class ExecutionController {
 
     private Execution setLabels(Execution execution, List<Label> labels) {
         // check for system labels: none can be passed at runtime
-        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
+
+        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).toList();
+        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).filter(label -> !existingSystemLabels.contains(label)).findAny();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }

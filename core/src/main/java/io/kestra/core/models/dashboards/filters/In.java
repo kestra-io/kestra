@@ -2,6 +2,7 @@ package io.kestra.core.models.dashboards.filters;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -23,6 +24,7 @@ public class In <F extends Enum<F>> extends AbstractFilter<F> {
     protected String type = "IN";
 
     @NotNull
+    @NotEmpty
     @Schema(anyOf = {Number[].class, String[].class, ZonedDateTime[].class})
     private List<Object> values;
 }

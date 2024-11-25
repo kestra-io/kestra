@@ -89,7 +89,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Invalid Chart: " + String.join(", ", violations))
+            context.buildConstraintViolationWithTemplate("Invalid data chart: " + String.join(", ", violations))
                 .addConstraintViolation();
             return false;
         } else {

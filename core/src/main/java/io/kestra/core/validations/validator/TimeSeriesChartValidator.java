@@ -47,7 +47,7 @@ public class TimeSeriesChartValidator implements ConstraintValidator<TimeSeriesC
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Invalid Chart: " + String.join(", ", violations))
+            context.buildConstraintViolationWithTemplate("Invalid TimeSeries chart: " + String.join(", ", violations))
                 .addConstraintViolation();
             return false;
         } else {

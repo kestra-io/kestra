@@ -886,7 +886,7 @@
     },
     "curl": {
       "command": "cURL command",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "For SECRET and FILE-type inputs, adjust the command to match the actual value."
     },
     "logs_view": {
       "raw": "Temporal view",

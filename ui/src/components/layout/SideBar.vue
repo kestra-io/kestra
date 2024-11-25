@@ -11,7 +11,7 @@
         hide-toggle
     >
         <template #header>
-            <el-button @click="collapsed = !collapsed" class="collapseButton" :size="collapsed ? 'small':undefined">
+            <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
                 <chevron-right v-if="collapsed" />
                 <chevron-left v-else />
             </el-button>
@@ -80,6 +80,8 @@
         collapsed.value = folded;
         localStorage.setItem("menuCollapsed", folded ? "true" : "false");
         $emit("menu-collapse", folded);
+
+        return folded;
     }
 
     function disabledCurrentRoute(items) {
@@ -168,13 +170,20 @@
 </script>
 
 <style lang="scss">
-    .collapseButton{
+    .collapseButton {
         position: absolute;
-        top: var(--spacer);
-        right: var(--spacer);
+        top: calc(var(--spacer) * .5);
+        right: 0;
         z-index: 1;
+
         #side-menu & {
             border: none;
+            background: none;
+
+            &:hover {
+                background: none !important;
+                color: var(--bs-primary) !important;
+            }
         }
 
         .vsm_collapsed & {

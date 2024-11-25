@@ -133,6 +133,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
+    @Getter
     private final Integer numThreads;
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);

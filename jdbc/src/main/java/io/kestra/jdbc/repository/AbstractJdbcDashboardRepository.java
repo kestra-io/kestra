@@ -135,4 +135,9 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public <F extends Enum<F>> List<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
         throw new NotImplementedException();
     }
+
+    @Override
+    public Boolean isEnabled() {
+        return false;
+    }
 }

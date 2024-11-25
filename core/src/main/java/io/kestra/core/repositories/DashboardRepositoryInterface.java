@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface DashboardRepositoryInterface {
+    Boolean isEnabled();
+
     Optional<DashboardWithSource> get(String tenantId, String id);
 
     ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query);

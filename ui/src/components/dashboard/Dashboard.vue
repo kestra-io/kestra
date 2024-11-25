@@ -25,7 +25,7 @@
                         'absolute_date',
                     ]"
             :refresh="{shown: true, callback: fetchAll}"
-            :dashboards="{shown: true}"
+            :dashboards="{shown: customDashboardsEnabled}"
             @dashboard="(v) => handleCustomUpdate(v)"
         />
     </div>
@@ -217,7 +217,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref, computed, watch} from "vue";
+    import {computed, onBeforeMount, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
@@ -285,6 +285,8 @@
             default: true,
         },
     });
+
+    const customDashboardsEnabled = computed(() => store.state.misc.configs.isCustomDashboardsEnabled);
 
     // Custom Dashboards
     const custom = ref({shown: false, dashboard: {}});

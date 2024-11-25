@@ -99,7 +99,7 @@
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
-                <el-radio-button :label="$t('undefined')" :value="undefined" />
+                <el-radio-button :label="$t('undefined')" :value="'undefined'" />
             </el-radio-group>
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"

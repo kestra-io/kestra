@@ -69,6 +69,8 @@
     #{--bs-secondary-rgb}: to-rgb(#564A75);
     #{--bs-tertiary-color}: #7E719F;
     #{--bs-tertiary}: $tertiary;
+    #{--bs-link-color-rgb}: to-rgb(#8405FF);
+    #{--bs-link-hover-color-rgb}: to-rgb(#9470FF);
 
     #{--bs-gray}: #{map.get($grays, "600")};
     @each $key, $value in $grays {

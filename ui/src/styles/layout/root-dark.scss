@@ -30,7 +30,7 @@ html.dark {
     #{--bs-secondary}: #E3DBFF;
     #{--bs-secondary-rgb}: to-rgb(#E3DBFF);
     #{--bs-link-color}: $secondary;
-    #{--bs-link-color-rgb}: to-rgb($secondary);
+    #{--bs-link-color-rgb}: to-rgb(#BBBBFF);
     #{--bs-tertiary-color}: #C3BBE3;
     #{--bs-code-color}: #BBBBFF;
 
@@ -41,7 +41,7 @@ html.dark {
         }
     }
 
-    --bs-link-hover-color: #D0CDF9;
+    #{--bs-link-hover-color-rgb}: to-rgb(#E0E0FF);
 
     #{--card-bg}: $card-bg;
     #{--card-bg-hover}: darken($card-bg, 3);

@@ -3,10 +3,7 @@ package io.kestra.core.models.property;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -36,7 +33,12 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Property<T> {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    // By default, durations are stored as numbers.
+    // We cannot change that globally, as in JDBC/Elastic 'execution.state.duration' must be a number to be able to aggregate them.
+    // So we only change it here.
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson()
+        .copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
     private String expression;
     private T value;

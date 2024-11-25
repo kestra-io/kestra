@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -17,17 +19,19 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.LogService;
-import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.*;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WaitFor;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -76,6 +80,13 @@ public class ExecutorService {
 
     @Inject
     private WorkerGroupService workerGroupService;
+
+    @Inject
+    private SLAService slaService;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     protected FlowExecutorInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
@@ -1043,5 +1054,80 @@ public class ExecutorService {
             value.getExecutionId(),
             value
         );
+    }
+
+    /**
+     * Handle flow ExecutionChangedSLA on an executor.
+     * If there are SLA violations, it will take care of updating the execution based on the SLA behavior.
+     * @see #processViolation(RunContext, Executor, Violation)
+     * <p>
+     * WARNING: ATM, only the first violation will update the execution.
+     */
+    public Executor handleExecutionChangedSLA(Executor executor) throws QueueException {
+        if (ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
+            return executor;
+        }
+
+        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+        List<Violation> violations = slaService.evaluateExecutionChangedSLA(runContext, executor.getFlow(), executor.getExecution());
+        if (!violations.isEmpty()) {
+            // For now, we only consider the first violation to be capable of updating the execution.
+            // Other violations would only be logged.
+            Violation violation = violations.getFirst();
+            return processViolation(runContext, executor, violation);
+        }
+
+        return executor;
+    }
+
+    /**
+     * Process an SLA violation on an executor:
+     * - If behavior is FAIL or CANCEL: kill the execution, then return it with the new state.
+     * - If behavior is NONE: do nothing and return an unmodified executor.
+     * <p>
+     * Then, if there are labels, they are added to the SLA (modifying the executor)
+     */
+    public Executor processViolation(RunContext runContext, Executor executor, Violation violation) throws QueueException {
+        Execution newExecution = switch (violation.behavior()) {
+            case FAIL -> {
+                runContext.logger().error("Flow fail due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                yield markAs(executor.getExecution(), State.Type.FAILED);
+            }
+            case CANCEL -> markAs(executor.getExecution(), State.Type.CANCELLED);
+            case NONE -> executor.getExecution();
+        };
+
+        if (!MapUtils.isEmpty(violation.labels())) {
+            List<Label> labels = new ArrayList<>(newExecution.getLabels());
+            violation.labels().forEach((key, value) -> labels.add(new Label(key, String.valueOf(value))));
+            newExecution = newExecution.withLabels(labels);
+        }
+
+        return executor.withExecution(newExecution, "SLAViolation");
+    }
+
+    private Execution markAs(Execution execution, State.Type state) throws QueueException {
+        Execution newExecution = execution.findLastNotTerminated()
+            .map(taskRun -> {
+                try {
+                    return execution.withTaskRun(taskRun.withState(state));
+                } catch (InternalException e) {
+                    // in case we cannot update the last not terminated task run, we ignore it
+                    return execution;
+                }
+            })
+            .orElse(execution)
+            .withState(state);
+
+        killQueue.emit(ExecutionKilledExecution
+            .builder()
+            .state(ExecutionKilled.State.REQUESTED)
+            .executionId(execution.getId())
+            .isOnKillCascade(false) // TODO we may offer the choice to the user here
+            .tenantId(execution.getTenantId())
+            .build()
+        );
+
+        return newExecution;
     }
 }

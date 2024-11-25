@@ -121,7 +121,6 @@ public final class JacksonMapper {
     private static ObjectMapper configure(ObjectMapper mapper) {
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .registerModule(new JavaTimeModule())
             .registerModule(new Jdk8Module())

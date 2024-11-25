@@ -1,0 +1,13 @@
+id: sla-max-duration-ok
+namespace: io.kestra.tests
+
+sla:
+  - id: maxDuration
+    type: MAX_DURATION
+    behavior: FAIL
+    duration: PT10S
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT0.5S

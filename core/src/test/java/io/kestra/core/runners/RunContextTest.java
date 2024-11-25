@@ -183,7 +183,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         p.destroy();
 
         URI uri = runContext.storage().putFile(path.toFile());
-        assertThat(storageInterface.getAttributes(null, uri).getSize(), is(size + 1));
+        assertThat(storageInterface.getAttributes(null, null, uri).getSize(), is(size + 1));
     }
 
     @Test

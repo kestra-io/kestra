@@ -850,7 +850,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "O uso de variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
+    "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -956,7 +956,8 @@
         "state": "Estado",
         "child": "Filho",
         "absolute_date": "Data absoluta",
-        "relative_date": "Data relativa"
+        "relative_date": "Data relativa",
+        "level": "Nível de Log"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",
@@ -974,6 +975,21 @@
     "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
     "item": "item",
     "items": "itens",
-    "warning": "Aviso"
+    "warning": "Aviso",
+    "cron": "Cron",
+    "showMore": "Mostrar mais",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menu de documentação",
+    "task run id": "ID do TaskRun",
+    "execution failed": "A execução FAILED, clique aqui para mais detalhes.",
+    "optional": "Opcional",
+    "active": "Ativo",
+    "contextBar": {
+      "news": "Notícias",
+      "issue": "Abrir um Issue",
+      "docs": "Documentos",
+      "demo": "Obter uma demonstração",
+      "help": "Ajuda"
+    }
   }
 }

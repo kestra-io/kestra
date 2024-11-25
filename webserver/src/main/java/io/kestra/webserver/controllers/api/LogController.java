@@ -39,13 +39,13 @@ public class LogController {
     private LogRepositoryInterface logRepository;
 
     @Inject
-    private ExecutionLogService logService;
+    private ExecutionLogService executionLogService;
 
     @Inject
     private TenantService tenantService;
 
     @Inject
-    private LogService a;
+    private LogService logService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
@@ -79,7 +79,7 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        return logService.getExecutionLogs(
+        return executionLogService.getExecutionLogs(
             tenantService.resolveTenant(),
             executionId,
             minLevel,
@@ -99,7 +99,7 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        InputStream inputStream = logService.getExecutionLogsAsStream(
+        InputStream inputStream = executionLogService.getExecutionLogsAsStream(
             tenantService.resolveTenant(),
             executionId,
             minLevel,
@@ -117,9 +117,8 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
-        return logService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
+        return executionLogService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
     }
-
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
@@ -156,7 +155,7 @@ public class LogController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
         validateTimeline(startDate, endDate);
-        return a.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
+        return logService.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
     }
 
 }

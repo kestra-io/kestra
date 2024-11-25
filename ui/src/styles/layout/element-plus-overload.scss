@@ -85,6 +85,8 @@
 }
 
 .el-input, .el-input-number, .el-select, .el-date-editor.el-input {
+
+    background-color: var(--bs-body-bg);
     width: 100%;
 }
 
@@ -216,10 +218,6 @@
 
 .el-input-number__increase, .el-input-number__decrease {
     background: var(--bs-white);
-
-    html.dark & {
-        background: var(--bs-gray-600);
-    }
 }
 
 .el-input-number__increase:hover, .el-input-number__decrease:hover {
@@ -229,11 +227,23 @@
 }
 
 .el-input-file {
+
     .el-input__inner::file-selector-button {
         background: var(--bs-primary);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--el-border-radius-base);
+    }
+}
+
+// form item error
+.el-form-item {
+    .el-form-item__error {
+        &.el-form-item__error--inline {
+            margin-top: 3px;
+            width: 100%;
+            margin-left: 6px;
+        }
     }
 }
 
@@ -288,6 +298,7 @@ form.ks-horizontal {
 
     html.dark & {
         --el-table-tr-bg-color: var(--card-bg);
+        --el-table-header-bg-color: var(--bs-card-bg);
     }
 
     outline: 1px solid var(--bs-border-color);
@@ -308,6 +319,7 @@ form.ks-horizontal {
     .cell {
         padding: 0 8px;
         word-break: break-word;
+        font-weight: 400;
     }
 
     .el-table__cell {
@@ -708,7 +720,7 @@ form.ks-horizontal {
     }
 
     .el-input__prefix, .el-input__inner, .el-input__inner::placeholder {
-        color: var(--bs-body-color);
+        background-color: var(--bs-body-bg);
     }
 
     .el-input__suffix-inner {
@@ -949,16 +961,23 @@ form.ks-horizontal {
 // dialog
 .el-dialog {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
+    background-color: var(--bs-card-bg);
 
     .el-dialog__header {
         padding: var(--spacer);
-        background-color: var(--bs-gray-300);
         margin: calc(var(--spacer) * -1) calc(var(--spacer) * -1) var(--spacer);
         border-top-right-radius: var(--bs-border-radius-lg);
         border-top-left-radius: var(--bs-border-radius-lg);
+        background: var(--bs-gray-300);
+        font-size: var(--font-size-lg);
 
         html.dark & {
-            background-color: var(--bs-gray-100);
+            background: var(--bs-gray-200);
+        }
+
+        .el-dialog__headerbtn {
+            height: 62px;
+            width: 62px;
         }
     }
 
@@ -970,6 +989,10 @@ form.ks-horizontal {
 
     .el-dialog__headerbtn .el-dialog__close {
         color: var(--bs-primary);
+
+        html.dark & {
+            color: var(--bs-white)
+        }
     }
 
     .bottom-buttons {

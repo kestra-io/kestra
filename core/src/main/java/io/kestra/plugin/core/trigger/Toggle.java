@@ -111,11 +111,11 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
         final ApplicationContext applicationContext = ((DefaultRunContext) runContext).getApplicationContext();
         FlowExecutorInterface flowExecutor = applicationContext.getBean(FlowExecutorInterface.class);
         flowExecutor.findByIdFromTask(
-            runContext.tenantId(),
+            runContext.flowInfo().tenantId(),
             realNamespace,
             realFlowId,
             Optional.empty(),
-            runContext.tenantId(),
+            runContext.flowInfo().tenantId(),
             flowVariables.get("namespace"),
             flowVariables.get("id")
         )
@@ -124,7 +124,7 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
 
         // load the trigger from the database
         TriggerContext triggerContext = TriggerContext.builder()
-            .tenantId(runContext.tenantId())
+            .tenantId(runContext.flowInfo().tenantId())
             .namespace(realNamespace)
             .flowId(realFlowId)
             .triggerId(realTrigger)

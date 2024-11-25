@@ -230,7 +230,7 @@ public class PauseTest extends AbstractMemoryRunnerTest {
             assertThat(outputs.get("asked"), is("restarted"));
             assertThat((String) outputs.get("data"), startsWith("kestra://"));
             assertThat(
-                CharStreams.toString(new InputStreamReader(storageInterface.get(null, URI.create((String) outputs.get("data"))))),
+                CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, URI.create((String) outputs.get("data"))))),
                 is(executionId)
             );
         }

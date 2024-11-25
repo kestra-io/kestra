@@ -1,5 +1,5 @@
 <template>
-    <el-table stripe table-layout="auto" fixed :data="variables">
+    <el-table table-layout="auto" fixed :data="variables">
         <el-table-column prop="key" min-width="500" :label="$t(keyLabelTranslationKey)">
             <template #default="scope">
                 <code class="key-col">{{ scope.row.key }}</code>

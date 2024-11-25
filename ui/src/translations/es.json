@@ -956,7 +956,8 @@
         "state": "Estado",
         "child": "Niño",
         "absolute_date": "Fecha absoluta",
-        "relative_date": "Fecha relativa"
+        "relative_date": "Fecha relativa",
+        "level": "Nivel de log"
       },
       "empty": "Sin datos.",
       "label": "Elegir filtros",
@@ -974,6 +975,21 @@
     "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
     "item": "elemento",
     "items": "elementos",
-    "warning": "Advertencia"
+    "warning": "Advertencia",
+    "cron": "Cron",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menú de documentación",
+    "task run id": "ID de TaskRun",
+    "execution failed": "La ejecución FAILED, haz clic aquí para más detalles.",
+    "optional": "Opcional",
+    "active": "Activo",
+    "contextBar": {
+      "news": "Noticias",
+      "issue": "Abrir un Issue",
+      "docs": "Documentos",
+      "demo": "Obtener una demostración",
+      "help": "Ayuda"
+    }
   }
 }

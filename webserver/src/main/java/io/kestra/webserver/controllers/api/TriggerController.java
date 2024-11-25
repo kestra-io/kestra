@@ -257,8 +257,8 @@ public class TriggerController {
                 ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
                 // We must set up the backfill before the update to calculate the next execution date
                 updated = current.initBackfill(newTrigger);
-                if (abstractTrigger instanceof PollingTriggerInterface) {
-                    nextExecutionDate = ((PollingTriggerInterface) abstractTrigger).nextEvaluationDate(conditionContext, Optional.of(updated));
+                if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
+                    nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
                 }
                 updated = Trigger.update(current, newTrigger, nextExecutionDate);
             } catch (Exception e) {

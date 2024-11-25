@@ -104,11 +104,11 @@ abstract public class PluginUtilsService {
                 }
             });
             return runContext.renderMap(nullFilteredInputFiles, additionalVars);
-        } else if (inputFiles instanceof String) {
+        } else if (inputFiles instanceof String inputFileString) {
 
 
             return JacksonMapper.ofJson(false).readValue(
-                runContext.render((String) inputFiles, additionalVars),
+                runContext.render(inputFileString, additionalVars),
                 MAP_TYPE_REFERENCE
             );
         } else {

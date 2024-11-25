@@ -76,11 +76,11 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        if(this.message instanceof String) {
-            String render = runContext.render((String) this.message);
+        if(this.message instanceof String stringValue) {
+            String render = runContext.render(stringValue);
             this.log(logger, this.level, render);
-        } else if (this.message instanceof Collection) {
-            Collection<String> messages = (Collection<String>) this.message;
+        } else if (this.message instanceof Collection<?> collectionValue) {
+            Collection<String> messages = (Collection<String>) collectionValue;
             messages.forEach(throwConsumer(message -> {
                 String render;
                 render = runContext.render(message);

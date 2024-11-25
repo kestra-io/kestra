@@ -46,8 +46,8 @@ public class EscapeCharFilter implements Filter {
         Map<String, Object> resultMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof String) {
-                resultMap.put(entry.getKey(), escapeString((String) value, args, self, lineNumber));
+            if (value instanceof String stringValue) {
+                resultMap.put(entry.getKey(), escapeString(stringValue, args, self, lineNumber));
             } else if (value instanceof Map) {
                 resultMap.put(entry.getKey(), processMap((Map<String, Object>) value, args, self, lineNumber));
             } else if (value instanceof List<?>) {
@@ -63,8 +63,8 @@ public class EscapeCharFilter implements Filter {
     private Object processList(List<Object> inputList, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         List<Object> resultList = new ArrayList<>();
         for (Object item : inputList) {
-            if (item instanceof String) {
-                resultList.add(escapeString((String) item, args, self, lineNumber));
+            if (item instanceof String stringValue) {
+                resultList.add(escapeString(stringValue, args, self, lineNumber));
             } else if (item instanceof Map) {
                 resultList.add(processMap((Map<String, Object>) item, args, self, lineNumber));
             } else if (item instanceof List<?>) {

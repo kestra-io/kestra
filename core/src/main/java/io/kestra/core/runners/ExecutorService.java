@@ -1090,7 +1090,7 @@ public class ExecutorService {
     public Executor processViolation(RunContext runContext, Executor executor, Violation violation) throws QueueException {
         Execution newExecution = switch (violation.behavior()) {
             case FAIL -> {
-                runContext.logger().error("Flow fail due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                runContext.logger().error("Execution failed due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
                 yield markAs(executor.getExecution(), State.Type.FAILED);
             }
             case CANCEL -> markAs(executor.getExecution(), State.Type.CANCELLED);

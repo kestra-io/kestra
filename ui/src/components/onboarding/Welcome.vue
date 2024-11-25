@@ -1,79 +1,84 @@
 <template>
-    <el-col class="main">
-        <el-row :gutter="20">
-            <el-col :xs="24" :sm="24" :md="24" :lg="14" :xl="14" class="mb-4">
-                <el-card class="px-3 pt-4">
-                    <el-row justify="space-around" class="p-5">
-                        <el-col :xs="24" :sm="24" :md="24" :lg="12" :xl="12" justify="space-between">
-                            <el-row class="mb-5" justify="center">
-                                <img class="img-fluid" :src="logo" alt="Kestra Logo">
-                            </el-row>
-                            <el-row justify="center">
-                                <router-link :to="{name: 'flows/create'}">
-                                    <el-button size="large" type="primary">
-                                        <Plus />
-                                        {{ $t("welcome button create") }}
-                                    </el-button>
-                                </router-link>
-                            </el-row>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="24" :lg="12" :xl="12" justify="center" class="mt-4">
-                            <img :src="codeImage" class="img-fluid" alt="code example">
-                        </el-col>
-                    </el-row>
-                </el-card>
-            </el-col>
-            <el-col :xs="24" :sm="24" :md="24" :lg="10" :xl="10" class="mb-4">
-                <iframe
-                    width="100%"
-                    height="100%"
-                    src="https://www.youtube.com/embed/a2BZ7vOihjg?si=gHZuap7frp5c8HVx"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
-                />
-            </el-col>
-        </el-row>
-        <onboarding-bottom />
-    </el-col>
+    <div class="main d-flex w-auto">
+        <div class="section-1">
+            <div class="section-1-main">
+                <div class="section-content">
+                    <img
+                        :src="logo"
+                        alt="Kestra"
+                        class="section-1-img img-fluid"
+                        width="180px"
+                    >
+                    <h2 class="section-1-title">
+                        {{ $t("homeDashboard.wel_text") }}
+                    </h2>
+                    <p class="section-1-desc">
+                        {{ $t("homeDashboard.start") }}
+                    </p>
+                    <router-link :to="{name: 'flows/create'}">
+                        <el-button
+                            :icon="Plus"
+                            size="large"
+                            type="primary"
+                            class="px-3 p-4 section-1-link product-link"
+                        >
+                            {{ $t("welcome button create") }}
+                        </el-button>
+                    </router-link>
+                    <el-button
+                        :icon="Play"
+                        tag="a"
+                        href="https://www.youtube.com/watch?v=a2BZ7vOihjg"
+                        target="_blank"
+                        class="p-3 px-4 mt-0 mb-lg-5 watch"
+                    >
+                        Watch Video
+                    </el-button>
+                </div>
+                <div class="container mb-3">
+                    <div class="title title--center-line">
+                        {{ $t("homeDashboard.guide") }}
+                    </div>
+                </div>
+                <onboarding-bottom />    
+            </div>
+        </div>
+    </div>
 </template>
 
-<script>
-    import {mapGetters} from "vuex";
+
+<script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
+    import Play from "vue-material-design-icons/Play.vue";
+</script>
+
+<script>
+    import {mapGetters} from "vuex"; 
     import OnboardingBottom from "./OnboardingBottom.vue";
-    import onboardingImage from "../../assets/onboarding/onboarding-dark.svg"
-    import onboardingImageLight from "../../assets/onboarding/onboarding-light.svg"
-    import codeImageDark from "../../assets/onboarding/onboarding-code-dark.svg"
-    import codeImageLight from "../../assets/onboarding/onboarding-code-light.svg"
+    import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
 
     export default {
         name: "CreateFlow",
         components: {
-            OnboardingBottom,
-            Plus
-        },
-        data() {
-            return {
-                onboardingImage,
-            }
+            OnboardingBottom
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"]),
             logo() {
                 // get theme
-                return (localStorage.getItem("theme") || "light") === "light" ? onboardingImageLight : onboardingImage;
-            },
-            codeImage() {
-                return (localStorage.getItem("theme") || "light") === "light" ? codeImageLight : codeImageDark;
+                return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
             }
         }
     }
+
 </script>
 
 <style scoped lang="scss">
+
     .main {
         margin: 3rem 1rem 1rem;
+        padding: 10px 0;
+
 
         @media (min-width: 768px) {
             margin: 3rem 2rem 1rem;
@@ -92,9 +97,126 @@
         max-width: 100%;
         height: auto;
     }
+</style>
 
-    .el-button {
-        font-size: var(--font-size-lg);
-        margin-bottom: calc(var(--spacer) * 2);
+<style lang="scss">
+
+.el-button {
+    background: var(--el-button-bg-color);
+    color: var(--el-button-text-color);
+    font-weight: 700;
+    border-radius: 5px;
+    border: 1px solid var(--el-button-border-color);
+    text-decoration: none;
+    font-size: var(--el-font-size-small);
+    width: 200px;
+    margin-bottom: calc(var(--spacer));
+
+    &.watch {
+        font-weight: 500;
+        background-color: var(--el-bg-color);
+        color: var(--el-text-color-regular);
+        font-size: var(--el-font-size-small);
     }
+}
+
+.main .section-1 {
+    display: flex;
+    flex: auto;
+    background: var(--el-text-color-primary);
+    background: linear-gradient(180deg, rgba(102,51,255,0.6) 0%, rgba(253, 253, 253, 0) 47%);
+    flex-wrap: wrap;
+    background-size: cover;
+    background-position: center;
+    justify-content: center;
+    background-repeat: no-repeat;
+    border-radius: var(--bs-border-radius);
+}
+        .section-1-main {
+            .section-content {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                .section-1-title {
+                    line-height: var(--el-font-line-height-primary);
+                    text-align: center;
+                    font-size: var(--el-font-size-extra-large);
+                    font-weight: 600;
+                    color: var(--el-text-color-regular);
+                }
+
+                .section-1-desc {
+                    line-height: var(--el-font-line-height-primary);
+                    font-weight: 500;
+                    font-size: 1rem;
+                    text-align: center;
+                    color: var(--el-text-color-regular);
+                }
+
+                .section-1-img {
+                    margin-top: 70px;
+                }
+            }
+
+            .container {
+                margin-top: 50px;
+                width: 76%;
+
+                .title {
+                    font-weight: 500;
+                    color: var(--bs-gray-900-lighten-5);
+                    display: flex;
+                    align-items: center;
+                    white-space: nowrap;
+                    font-size: var(--el-font-size-extra-small);
+
+                    &--center-line {
+                        text-align: center;
+                        padding: 0;
+
+                        &::before,
+                        &::after {
+                            content: "";
+                            background-color: var(--bs-gray-600-lighten-10);
+                            height: 2px;
+                            width: 50%;
+                        }
+
+                        &::before {
+                            margin-right: 1rem;
+                        }
+
+                        &::after {
+                            margin-left: 1rem;
+                        }
+                    }
+                }
+            }
+        }
+
+@media only screen and (max-width: 1024px) {
+    .main .section-1 .section-1-main {
+        width: 90%;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .main .section-1 .section-1-main {
+        padding-top: 30px;
+    }
+
+    .section-1 .section-1-main .container {
+        width: 76%;
+    }
+
+    .title--center-line {
+        &::before,
+        &::after {
+            width: 50%;
+        }
+    }
+}
+
 </style>

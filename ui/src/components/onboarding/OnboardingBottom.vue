@@ -1,5 +1,5 @@
 <template>
-    <el-row justify="space-between" :gutter="20">
+    <el-row justify="center" :gutter="20">
         <el-col
             v-for="card in cards"
             :key="card.title"
@@ -31,16 +31,12 @@
             return {
                 cards: [
                     {
-                        title: this.$t("welcome.started.title"),
-                        category: "started",
-                    },
-                    {
                         title: this.$t("welcome.product-tour.title"),
                         category: "product",
 
                     },
                     {
-                        title: this.$t("welcome.doc.title"),
+                        title: this.$t("welcome.tutorial.title"),
                         category: "docs",
                     },
                     {

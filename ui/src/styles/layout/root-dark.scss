@@ -32,6 +32,7 @@ html.dark {
     #{--bs-link-color}: $secondary;
     #{--bs-link-color-rgb}: to-rgb($secondary);
     #{--bs-tertiary-color}: #C3BBE3;
+    #{--bs-code-color}: #BBBBFF;
 
     $levels: info, running, danger, warning;
     @each $level in $levels {

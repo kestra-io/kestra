@@ -15,4 +15,12 @@ import lombok.experimental.SuperBuilder;
 @Schema
 public class TimeSeriesColumnDescriptor<F extends Enum<F>> extends ColumnDescriptor<F> {
     private GraphStyle graphStyle;
+
+    public GraphStyle getGraphStyle() {
+        if (graphStyle == null && this.getAgg() != null) {
+            return GraphStyle.LINES;
+        }
+
+        return graphStyle;
+    }
 }

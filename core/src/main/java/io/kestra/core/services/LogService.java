@@ -86,4 +86,5 @@ public class LogService {
         }
         return totalDeleted;
     }
+
 }

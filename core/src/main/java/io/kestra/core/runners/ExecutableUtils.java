@@ -59,7 +59,7 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        Map<String, String> labels,
+        List<Label> labels,
         boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate
     ) throws IllegalVariableEvaluationException {
@@ -88,9 +88,7 @@ public final class ExecutableUtils {
 
         List<Label> newLabels = inheritLabels ? new ArrayList<>(currentExecution.getLabels()) : new ArrayList<>(systemLabels(currentExecution));
         if (labels != null) {
-            for (Map.Entry<String, String> entry : labels.entrySet()) {
-                newLabels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-            }
+            newLabels.addAll(labels);
         }
 
         Map<String, Object> variables = ImmutableMap.of(

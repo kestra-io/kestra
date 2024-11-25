@@ -119,6 +119,7 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     AbstractRetry retry;
 
+    @Valid
     List<SLA> sla;
 
 

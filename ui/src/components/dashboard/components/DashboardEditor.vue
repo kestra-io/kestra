@@ -10,7 +10,7 @@
         </el-button>
     </div>
     <el-row>
-        <el-col :span="$route.params?.id ? 12 : 24">
+        <el-col :span="24">
             <editor
                 @save="$emit('save', $event)"
                 v-model="source"
@@ -22,9 +22,6 @@
                 :read-only="false"
                 :navbar="false"
             />
-        </el-col>
-        <el-col :span="12" v-if="$route.params?.id">
-            <iframe class="w-100 h-100" :src="`http://localhost:5173/ui/dashboards/edit/${$route.params.id}`" />
         </el-col>
     </el-row>
 </template>

@@ -15,7 +15,7 @@
                 </el-button>
 
                 <el-dropdown-item @click="emits('dashboard')" class="mt-3">
-                    {{ t("default_dashboard") }}
+                    <small>{{ t("default_dashboard") }}</small>
                 </el-dropdown-item>
 
                 <hr class="my-2">
@@ -26,7 +26,17 @@
                         :key="index"
                         @click="emits('dashboard', dashboard)"
                     >
-                        {{ dashboard.title }}
+                        <div class="d-flex align-items-center w-100">
+                            <div class="col text-truncate">
+                                <small>{{ dashboard.title }}</small>
+                            </div>
+
+                            <div class="col-auto">
+                                <DeleteOutline
+                                    @click.stop="remove(dashboard.id)"
+                                />
+                            </div>
+                        </div>
                     </el-dropdown-item>
                 </div>
             </el-dropdown-menu>
@@ -39,6 +49,7 @@
 
     import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -47,6 +58,12 @@
     const store = useStore();
 
     const emits = defineEmits(["dashboard"]);
+
+    const remove = (id) => {
+        store.dispatch("dashboard/delete", id).then(() => {
+            dashboards.value = dashboards.value.filter((d) => d.id !== id);
+        });
+    };
 
     const dashboards = ref([]);
     onBeforeMount(() => {

@@ -131,6 +131,7 @@ public class LogController {
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), executionId, taskId, taskRunId, minLevel, attempt);
     }
+
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/{namespace}/{flowId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
@@ -141,6 +142,7 @@ public class LogController {
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
     }
+
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/bulk-delete")
     @Operation(tags = {"Logs"}, summary = "Bulk delete logs for selected executions")

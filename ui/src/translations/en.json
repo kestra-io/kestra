@@ -403,6 +403,10 @@
     "cancel": "Cancel",
     "homeDashboard": {
       "title": "Dashboard",
+      "welcome": "Welcome to Kestra",
+      "wel_text": "Welcome!",
+      "start": "Let's get your first workflow up and running.",
+      "guide": "Need guidance to execute your first flow?",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -469,6 +473,7 @@
     "Reset guided tour": "Restart Guided Tour",
     "Skip tour": "Skip tour",
     "Skip tutorial": "Skip Tutorial",
+    "Tutorial": "Tutorial",
     "Next step": "Next step",
     "Previous step": "Previous step",
     "Finish": "Finish",
@@ -709,6 +714,9 @@
       },
       "doc": {
         "title": "Docs"
+      },
+      "tutorial": {
+        "title": "Tutorial"
       },
       "need-help": {
         "title": "Need help?"

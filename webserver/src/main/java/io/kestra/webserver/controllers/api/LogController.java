@@ -45,7 +45,7 @@ public class LogController {
     private TenantService tenantService;
 
     @Inject
-    private LogService logServices;
+    private LogService logService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
@@ -156,7 +156,7 @@ public class LogController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
         validateTimeline(startDate, endDate);
-        return logServices.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
+        return logService.bulkDelete(executionIds, tenantService.resolveTenant(), namespace, flowId, logLevels, startDate, endDate);
     }
 
 }

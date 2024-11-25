@@ -27,7 +27,11 @@
                         :shown-attempts-uid="shownAttemptsUid"
                         :logs="filteredLogs"
                         @update-logs="loadLogs"
-                    />
+                    >
+                        <template #buttons>
+                            <div id="buttons" />
+                        </template>
+                    </task-run-line>
                     <for-each-status
                         v-if="shouldDisplayProgressBar(currentTaskRun)"
                         :execution-id="currentTaskRun.executionId"
@@ -37,7 +41,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :min-item-size="50"
+                        :min-item-size="0.1"
                         key-field="index"
                         class="log-lines"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -50,16 +54,18 @@
                                 :size-dependencies="[item.message, item.image]"
                                 :data-index="index"
                             >
-                                <el-button-group class="line" v-if="item.logFile">
-                                    <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
-                                        <Download />
-                                        {{ $t('download') }}
-                                    </a>
-                                    <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
-                                    <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
-                                        ({{ logFileSizeByPath[item.logFile] }})
-                                    </el-button>
-                                </el-button-group>
+                                <Teleport v-if="item.logFile" to="#buttons">
+                                    <el-button-group class="line">
+                                        <a class="el-button el-button--small el-button--primary" :href="fileUrl(item.logFile)" target="_blank">
+                                            <Download />
+                                            {{ $t('download') }}
+                                        </a>
+                                        <FilePreview :value="item.logFile" :execution-id="followedExecution.id" />
+                                        <el-button disabled size="small" type="primary" v-if="logFileSizeByPath[item.logFile]">
+                                            ({{ logFileSizeByPath[item.logFile] }})
+                                        </el-button>
+                                    </el-button-group>
+                                </Teleport>
                                 <log-line
                                     @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"

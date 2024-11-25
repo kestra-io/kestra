@@ -56,7 +56,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
 
     @BeforeEach
     public void init() throws IOException {
-        storageInterface.delete(null, toKVUri(NAMESPACE, null));
+        storageInterface.delete(null, null, toKVUri(NAMESPACE, null));
 
         super.setup();
     }
@@ -67,8 +67,8 @@ class KVControllerTest extends JdbcH2ControllerTest {
         Instant before = Instant.now().minusMillis(100);
         Instant myKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(5)).truncatedTo(ChronoUnit.MILLIS);
         Instant mySecondKeyExpirationDate = Instant.now().plus(Duration.ofMinutes(10)).truncatedTo(ChronoUnit.MILLIS);
-        storageInterface.put(null, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
-        storageInterface.put(null, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString()), new ByteArrayInputStream("my-second-value".getBytes())));
+        storageInterface.put(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"), new StorageObject(Map.of("expirationDate", myKeyExpirationDate.toString()), new ByteArrayInputStream("my-value".getBytes())));
+        storageInterface.put(null, NAMESPACE, toKVUri(NAMESPACE, "my-second-key"), new StorageObject(Map.of("expirationDate", mySecondKeyExpirationDate.toString()), new ByteArrayInputStream("my-second-value".getBytes())));
         Instant after = Instant.now().plusMillis(100);
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
@@ -101,6 +101,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
     void get(String storedIonValue, KVType expectedType, String expectedValue) throws IOException {
         storageInterface.put(
             null,
+            NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
                 Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(5)).toString()),
@@ -124,6 +125,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
     void getExpired() throws IOException {
         storageInterface.put(
             null,
+            NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
                 Map.of("expirationDate", Instant.now().minus(Duration.ofMinutes(5)).toString()),
@@ -171,6 +173,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
     void delete() throws IOException {
         storageInterface.put(
             null,
+            NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
                 Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(5)).toString()),
@@ -178,10 +181,10 @@ class KVControllerTest extends JdbcH2ControllerTest {
             )
         );
 
-        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(true));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
 
-        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(false));
     }
 
     @Test
@@ -189,13 +192,14 @@ class KVControllerTest extends JdbcH2ControllerTest {
         // Given
         storageInterface.put(
             null,
+            NAMESPACE,
             toKVUri(NAMESPACE, "my-key"),
             new StorageObject(
                 Map.of("expirationDate", Instant.now().plus(Duration.ofMinutes(5)).toString()),
                 new ByteArrayInputStream("\"content\"".getBytes())
             )
         );
-        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(true));
 
         // When
         HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()
@@ -216,7 +220,7 @@ class KVControllerTest extends JdbcH2ControllerTest {
         // Then
         Assertions.assertEquals(HttpStatus.OK, response.getStatus());
         Assertions.assertEquals(new ApiDeleteBulkResponse(List.of()), response.body());
-        assertThat(storageInterface.exists(null, toKVUri(NAMESPACE, "my-key")), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(false));
     }
 
     @Test

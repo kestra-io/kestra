@@ -2,7 +2,6 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -34,12 +33,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.stream.Streams;
 
 import java.io.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -81,7 +77,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 tasks:
                   - id: read_file
                     type: io.kestra.plugin.scripts.shell.Commands
-                    taskRunner: 
+                    taskRunner:
                       type: io.kestra.plugin.core.runner.Process
                     commands:
                       - cat "{{ inputs.order }}"
@@ -579,8 +575,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             URI subflowOutputsBaseUri = URI.create(StorageContext.KESTRA_PROTOCOL + subflowOutputsBase + "/");
 
             StorageInterface storage = ((DefaultRunContext) runContext).getApplicationContext().getBean(StorageInterface.class);
-            if (storage.exists(runContext.tenantId(), subflowOutputsBaseUri)) {
-                List<FileAttributes> list = storage.list(runContext.tenantId(), subflowOutputsBaseUri);
+            if (storage.exists(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri)) {
+                List<FileAttributes> list = storage.list(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri);
 
                 if (!list.isEmpty()) {
                     // Merge outputs from each sub-flow into a single stored in the internal storage.

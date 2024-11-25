@@ -1,23 +1,10 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
+        <KestraFilter
+            prefix="execution_logs"
+            :include="['level']"
+        />
         <collapse>
-            <el-form-item>
-                <el-input
-                    v-model="filter"
-                    @update:model-value="onChange"
-                    :placeholder="$t('search')"
-                >
-                    <template #suffix>
-                        <magnify />
-                    </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item>
-                <log-level-selector
-                    v-model="level"
-                    @update:model-value="onChange"
-                />
-            </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <log-level-navigator
                     v-if="countByLogLevel[logLevel] > 0"
@@ -109,9 +96,7 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
     import Kicon from "../Kicon.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -121,20 +106,20 @@
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
     import LogUtils from "../../utils/logs";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
-            LogLevelSelector,
             LogLevelNavigator,
             Kicon,
             Download,
-            Magnify,
             Collapse,
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
+            KestraFilter
         },
         data() {
             return {

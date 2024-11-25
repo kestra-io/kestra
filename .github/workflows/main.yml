@@ -271,7 +271,7 @@ jobs:
           report_paths: '**/build/test-results/**/TEST-*.xml'
 
       # Codecov
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

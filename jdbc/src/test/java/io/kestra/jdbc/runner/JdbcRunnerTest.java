@@ -16,6 +16,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -127,15 +128,9 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(7));
 
         receive.blockLast();
-        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("It's the fault of "));
+        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("- task: failed, message: Task failure"));
         assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("It's the fault of 'failed'"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the message: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("See the message: Task failure"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the stackTrace: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), startsWith("See the stackTrace: java.lang.Exception: Task failure"));
+        assertThat(logEntry.getMessage(), is("- task: failed, message: Task failure"));
     }
 
     @Test
@@ -228,13 +223,8 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
-    void multipleConditionTriggerBasicExecutionsCondition() throws Exception {
-        multipleConditionTriggerCaseTest.basicExecutionsCondition();
-    }
-
-    @Test
-    void multipleConditionTriggerAdvancedExecutionsConditions() throws Exception {
-        multipleConditionTriggerCaseTest.advancedExecutionsConditions();
+    void flowTriggerPreconditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
     @RetryingTest(5)

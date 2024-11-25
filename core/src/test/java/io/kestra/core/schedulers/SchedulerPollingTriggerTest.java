@@ -2,7 +2,7 @@ package io.kestra.core.schedulers;
 
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.ExpressionCondition;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -135,8 +135,8 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         PollingTrigger pollingTrigger = createPollingTrigger(null)
             .conditions(
                 List.of(
-                    ExpressionCondition.builder()
-                        .type(ExpressionCondition.class.getName())
+                    Expression.builder()
+                        .type(Expression.class.getName())
                         .expression("{{ trigger.date | date() < now() }}")
                         .build()
                 ))

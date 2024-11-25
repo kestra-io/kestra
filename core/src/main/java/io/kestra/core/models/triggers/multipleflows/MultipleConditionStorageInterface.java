@@ -1,7 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.TimeSLA;
+import io.kestra.core.models.triggers.TimeWindow;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Duration;
@@ -18,11 +18,11 @@ public interface MultipleConditionStorageInterface {
 
     default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
-        TimeSLA sla = multipleCondition.getTimeSLA();
+        TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
-        var startAndEnd = switch (sla.getType()) {
+        var startAndEnd = switch (timeWindow.getType()) {
             case DURATION_WINDOW -> {
-                Duration window = sla.getWindow() == null ? Duration.ofDays(1) : sla.getWindow();
+                Duration window = timeWindow.getWindow() == null ? Duration.ofDays(1) : timeWindow.getWindow();
                 if (window.toDays() > 0) {
                     now = now.withHour(0);
                 }
@@ -37,7 +37,7 @@ public interface MultipleConditionStorageInterface {
                         .plusMinutes(window.toMinutes() * (now.getMinute() / window.toMinutes()));
                 }
 
-                ZonedDateTime startWindow = sla.getWindowAdvance() == null ? now : now.plus(sla.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
+                ZonedDateTime startWindow = timeWindow.getWindowAdvance() == null ? now : now.plus(timeWindow.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
                 yield Pair.of(
                     startWindow,
                     startWindow.plus(window).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS)
@@ -45,15 +45,15 @@ public interface MultipleConditionStorageInterface {
             }
             case SLIDING_WINDOW -> Pair.of(
                 now.truncatedTo(ChronoUnit.MILLIS),
-                now.truncatedTo(ChronoUnit.MILLIS).plus(sla.getWindow() == null ? Duration.ofDays(1) : sla.getWindow())
+                now.truncatedTo(ChronoUnit.MILLIS).plus(timeWindow.getWindow() == null ? Duration.ofDays(1) : timeWindow.getWindow())
             );
             case DAILY_TIME_WINDOW -> Pair.of(
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(sla.getStartTime().toSecondOfDay()),
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(sla.getEndTime().toSecondOfDay())
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getStartTime().toSecondOfDay()),
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getEndTime().toSecondOfDay())
             );
             case DAILY_TIME_DEADLINE -> Pair.of(
                 now.truncatedTo(ChronoUnit.DAYS),
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(sla.getDeadline().toSecondOfDay())
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getDeadline().toSecondOfDay())
             );
         };
 

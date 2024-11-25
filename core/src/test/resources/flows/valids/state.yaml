@@ -15,8 +15,8 @@ tasks:
         name: "{{ inputs.state }}"
 
       - id: each1
-        type: io.kestra.plugin.core.flow.EachSequential
-        value: '["a", "b"]'
+        type: io.kestra.plugin.core.flow.ForEach
+        values: '["a", "b"]'
         tasks:
           - id: getEach1
             type: io.kestra.plugin.core.state.Get
@@ -36,8 +36,8 @@ tasks:
         name: "{{ inputs.state }}"
 
       - id: each2
-        type: io.kestra.plugin.core.flow.EachSequential
-        value: '["a", "b"]'
+        type: io.kestra.plugin.core.flow.ForEach
+        values: '["a", "b"]'
         tasks:
           - id: getEach2
             type: io.kestra.plugin.core.state.Get

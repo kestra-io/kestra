@@ -37,7 +37,8 @@ public class Dashboard implements HasUID, DeletedInterface {
     protected String description;
 
     @Valid
-    protected TimeWindow timeWindow;
+    @Builder.Default
+    protected TimeWindow timeWindow = TimeWindow.builder().build();
 
     @Valid
     protected List<Chart<?>> charts;

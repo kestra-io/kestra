@@ -31,6 +31,7 @@ import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -134,13 +135,22 @@ public class DashboardController {
         ZonedDateTime startDate = Optional.ofNullable(filters.get("startDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
         ZonedDateTime endDate = Optional.ofNullable(filters.get("endDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
         if (startDate == null || endDate == null) {
-            throw new IllegalArgumentException("startDate and endDate filters are required");
+            throw new IllegalArgumentException("`startDate` and `endDate` filters are required.");
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 
         String tenantId = tenantService.resolveTenant();
         DashboardWithSource dashboardWithSource = dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboardWithSource == null) {
             return null;
+        }
+
+        Duration windowDuration = Duration.ofSeconds(endDate.minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
+        if (windowDuration.compareTo(dashboardWithSource.getTimeWindow().getMax()) > 0) {
+            throw new IllegalArgumentException("The queried window is larger than the max allowed one.");
         }
 
         Chart<?> chart = dashboardWithSource.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);

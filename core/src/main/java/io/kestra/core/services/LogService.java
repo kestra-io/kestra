@@ -6,6 +6,15 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.format.Format;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.ArrayUtils;
@@ -14,6 +23,8 @@ import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+
+import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Singleton
 public class LogService {

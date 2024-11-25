@@ -4,7 +4,7 @@
 
         <copy-to-clipboard class="position-absolute" :text="curlCommand" />
 
-        <el-alert class="mt-3" type="warning" show-icon :closable="false">
+        <el-alert class="mt-3" type="info" show-icon :closable="false">
             {{ $t('curl.note') }}
         </el-alert>
     </div>

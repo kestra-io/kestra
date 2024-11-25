@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.DashboardWithSource;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
@@ -90,6 +91,32 @@ public class DashboardController {
         return HttpResponse.ok(this.save(null, dashboardParsed.toBuilder().id(IdUtils.create()).build(), dashboard));
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Dashboards"}, summary = "Validate dashboard from yaml source")
+    public ValidateConstraintViolation validate(
+        @Parameter(description = "The dashboard") @Body String dashboard
+    ) throws ConstraintViolationException, JsonProcessingException {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+        validateConstraintViolationBuilder.index(0);
+
+        try {
+            Dashboard parsed = YAML_PARSER.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+
+            modelValidator.validate(parsed);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the dashboard", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the dashboard: " + re.getMessage());
+        }
+
+        return validateConstraintViolationBuilder.build();
+    }
+
     @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Dashboards"}, summary = "Update a dashboard")
@@ -116,7 +143,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Delete a dashboard")
     public HttpResponse<Void> delete(
         @Parameter(description = "The dashboard id") @PathVariable String id
-    ) throws ConstraintViolationException, JsonProcessingException {;
+    ) throws ConstraintViolationException, JsonProcessingException {
         if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {

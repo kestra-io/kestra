@@ -70,7 +70,7 @@ public class FileSizeFunction implements Function {
             checkIfFileFromParentExecution(context, path);
         }
 
-        FileAttributes fileAttributes = storageInterface.getAttributes(flow.get("tenantId"), path);
+        FileAttributes fileAttributes = storageInterface.getAttributes(flow.get("tenantId"), flow.get("namespace"), path);
         return fileAttributes.getSize();
     }
 

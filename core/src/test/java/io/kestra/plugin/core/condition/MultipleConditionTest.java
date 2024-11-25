@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
@@ -31,16 +32,16 @@ class MultipleConditionTest {
         MultipleCondition build = MultipleCondition.builder()
             .conditions(
                 ImmutableMap.of(
-                "first", ExecutionStatusCondition.builder()
+                "first", ExecutionStatus.builder()
                     .in(Collections.singletonList(State.Type.SUCCESS))
                     .build(),
-                "second", ExpressionCondition.builder()
+                "second", Expression.builder()
                     .expression("{{ flow.id }}")
                     .build()
             ))
             .build();
 
-        boolean test = conditionService.isValid(build, flow, execution, multipleConditionStorage);
+        boolean test = conditionService.isValid((Condition) build, flow, execution, multipleConditionStorage);
 
 
         assertThat(test, is(false));

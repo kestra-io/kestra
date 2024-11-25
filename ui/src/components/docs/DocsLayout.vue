@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex full-height">
-        <div :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="{collapsed}" class="sidebar d-flex flex-column gap-3">
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="{collapsed}" class="sidebar d-flex flex-column gap-3">
             <!--
             <div class="d-flex gap-2 align-items-center">
                 <el-button @click="collapsed = !collapsed">

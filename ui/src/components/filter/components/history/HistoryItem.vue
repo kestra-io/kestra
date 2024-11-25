@@ -7,7 +7,9 @@
         <div class="col flex-grow-1 overflow-auto text-nowrap">
             <div class="me-3 overflow-x-auto scroller">
                 <el-tag v-for="value in item.value" :key="value" class="me-2">
-                    <span class="small">{{ formatLabel(value) }}</span>
+                    <span class="small">
+                        <Label :option="value" />
+                    </span>
                 </el-tag>
             </div>
         </div>
@@ -19,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-    import {formatLabel} from "../../useFilters.js";
+    import Label from "../Label.vue";
 
     defineProps({item: {type: Object, required: true}});
 </script>

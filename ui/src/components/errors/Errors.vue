@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen()" />
     <section data-component="FILENAME_PLACEHOLDER" class="container errors">
         <div class="img" />
         <h2>{{ $t("errors." + code + ".title") }}</h2>
@@ -8,7 +8,7 @@
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
 
-        <el-button tag="router-link" :to="{name: 'home'}" type="primary">
+        <el-button v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary">
             {{ $t("back_to_dashboard") }}
         </el-button>
     </section>
@@ -33,6 +33,11 @@
                     title: this.$t("errors." + this.code + ".title"),
                 };
             },
+        },
+        methods: {
+            isFullScreen() {
+                return document.getElementsByTagName("html")[0].classList.contains("full-screen");
+            }
         },
         watch: {
             $route() {

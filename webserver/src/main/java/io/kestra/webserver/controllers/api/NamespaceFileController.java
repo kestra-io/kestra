@@ -61,7 +61,7 @@ public class NamespaceFileController {
         @Parameter(description = "The string the file path should contain") @QueryValue String q
     ) throws IOException, URISyntaxException {
         URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
-        return storageInterface.allByPrefix(tenantService.resolveTenant(), baseNamespaceFilesUri, false).stream()
+        return storageInterface.allByPrefix(tenantService.resolveTenant(), namespace, baseNamespaceFilesUri, false).stream()
             .map(storageUri -> "/" + baseNamespaceFilesUri.relativize(storageUri).getPath())
             .filter(path -> path.contains(q)).toList();
     }
@@ -79,7 +79,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
+        InputStream fileHandler = storageInterface.get(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, encodedPath).uri());
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
@@ -98,13 +98,13 @@ public class NamespaceFileController {
 
         // if stats is performed upon namespace root, and it doesn't exist yet, we create it
         if (path == null || path.isEmpty()) {
-            if(!storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
-                storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
+            if(!storageInterface.exists(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri())) {
+                storageInterface.createDirectory(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri());
             }
-            return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
+            return storageInterface.getAttributes(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri());
         }
 
-        return storageInterface.getAttributes(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
+        return storageInterface.getAttributes(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, encodedPath).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -122,12 +122,12 @@ public class NamespaceFileController {
 
         NamespaceFile namespaceFile = NamespaceFile.of(namespace, encodedPath);
 
-        if (namespaceFile.isRootDirectory() && !storageInterface.exists(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri())) {
-            storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace).uri());
+        if (namespaceFile.isRootDirectory() && !storageInterface.exists(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri())) {
+            storageInterface.createDirectory(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).uri());
             return Collections.emptyList();
         }
 
-        return storageInterface.list(tenantService.resolveTenant(), namespaceFile.uri());
+        return storageInterface.list(tenantService.resolveTenant(), namespace, namespaceFile.uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -143,7 +143,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        storageInterface.createDirectory(tenantService.resolveTenant(), NamespaceFile.of(namespace, encodedPath).uri());
+        storageInterface.createDirectory(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, encodedPath).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -194,7 +194,7 @@ public class NamespaceFileController {
             return;
         }
 
-        storageInterface.put(tenantId, NamespaceFile.of(namespace, path).uri(), inputStream);
+        storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
     protected void importFlow(String tenantId, String source) {
@@ -212,8 +212,8 @@ public class NamespaceFileController {
 
             URI baseNamespaceFilesUri = NamespaceFile.of(namespace).uri();
             String tenantId = tenantService.resolveTenant();
-            storageInterface.allByPrefix(tenantId, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
-                try (InputStream inputStream = storageInterface.get(tenantId, uri)) {
+            storageInterface.allByPrefix(tenantId, namespace, baseNamespaceFilesUri, false).forEach(Rethrow.throwConsumer(uri -> {
+                try (InputStream inputStream = storageInterface.get(tenantId, namespace, uri)) {
                     archive.putNextEntry(new ZipEntry(baseNamespaceFilesUri.relativize(uri).getPath()));
                     archive.write(inputStream.readAllBytes());
                     archive.closeEntry();
@@ -247,7 +247,7 @@ public class NamespaceFileController {
         ensureWritableNamespaceFile(from);
         ensureWritableNamespaceFile(to);
 
-        storageInterface.move(tenantService.resolveTenant(), NamespaceFile.of(namespace, from).uri(),NamespaceFile.of(namespace, to).uri());
+        storageInterface.move(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, from).uri(),NamespaceFile.of(namespace, to).uri());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -265,7 +265,7 @@ public class NamespaceFileController {
 
         String pathWithoutScheme = encodedPath.getPath();
 
-        List<String> allNamespaceFilesPaths = storageInterface.allByPrefix(tenantService.resolveTenant(), NamespaceFile.of(namespace).storagePath().toUri(), true)
+        List<String> allNamespaceFilesPaths = storageInterface.allByPrefix(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace).storagePath().toUri(), true)
             .stream()
             .map(uri -> NamespaceFile.of(namespace, uri).path(true).toString())
             .collect(Collectors.toCollection(ArrayList::new));
@@ -288,7 +288,7 @@ public class NamespaceFileController {
             allNamespaceFilesPaths.removeIf(filesInParentFolder::contains);
             pathWithoutScheme = parentFolder.endsWith("/") ? parentFolder.substring(0, parentFolder.length() - 1) : parentFolder;
         }
-        storageInterface.delete(tenantService.resolveTenant(), NamespaceFile.of(namespace, Path.of(pathWithoutScheme)).uri());
+        storageInterface.delete(tenantService.resolveTenant(), namespace, NamespaceFile.of(namespace, Path.of(pathWithoutScheme)).uri());
     }
 
     private void forbiddenPathsGuard(URI path) {

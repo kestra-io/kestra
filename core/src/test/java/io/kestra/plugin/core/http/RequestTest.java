@@ -169,6 +169,7 @@ class RequestTest {
 
         URI fileStorage = storageInterface.put(
             null,
+            null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)
         );
@@ -201,6 +202,7 @@ class RequestTest {
         File file = new File(Objects.requireNonNull(RequestTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
         URI fileStorage = storageInterface.put(
+            null,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)

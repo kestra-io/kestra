@@ -25,7 +25,7 @@
                 currentPage = route.params.path;
             }
 
-            currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
+            currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
             let childrenWithMetadata = await store.dispatch("doc/children", currentPage);
             childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata).map(([url, metadata]) => [url, {...metadata, path: url}]));

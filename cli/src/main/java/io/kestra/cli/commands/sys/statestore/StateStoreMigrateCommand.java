@@ -44,7 +44,7 @@ public class StateStoreMigrateCommand extends AbstractCommand {
             URI.create("/" + flow.getNamespace().replace(".", "/") + "/states")
         ))).map(potentialStateStoreUrisForAFlow -> Map.entry(potentialStateStoreUrisForAFlow.getKey(), potentialStateStoreUrisForAFlow.getValue().stream().flatMap(uri -> {
             try {
-                return storageInterface.allByPrefix(potentialStateStoreUrisForAFlow.getKey().getTenantId(), uri, false).stream();
+                return storageInterface.allByPrefix(potentialStateStoreUrisForAFlow.getKey().getTenantId(), potentialStateStoreUrisForAFlow.getKey().getNamespace(), uri, false).stream();
             } catch (IOException e) {
                 return Stream.empty();
             }
@@ -59,9 +59,9 @@ public class StateStoreMigrateCommand extends AbstractCommand {
             boolean flowScoped = flowQualifierWithStateQualifiers[0].endsWith("/" + flow.getId());
             StateStore stateStore = new StateStore(runContext(runContextFactory, flow), false);
 
-            try (InputStream is = storageInterface.get(flow.getTenantId(), stateStoreFileUri)) {
+            try (InputStream is = storageInterface.get(flow.getTenantId(), flow.getNamespace(), stateStoreFileUri)) {
                 stateStore.putState(flowScoped, stateName, stateSubName, taskRunValue, is.readAllBytes());
-                storageInterface.delete(flow.getTenantId(), stateStoreFileUri);
+                storageInterface.delete(flow.getTenantId(), flow.getNamespace(), stateStoreFileUri);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

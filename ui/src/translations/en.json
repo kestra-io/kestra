@@ -118,6 +118,13 @@
     "next execution date": "Next execution date",
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
+    "contextBar": {
+      "news": "News",
+      "docs": "Docs",
+      "help": "Help",
+      "issue": "Open an Issue",
+      "demo": "Get a demo"
+    },
     "source": "Source",
     "home": "Home",
     "create": "Create",
@@ -887,7 +894,7 @@
     },
     "curl": {
       "command": "cURL command",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "For SECRET and FILE-type inputs, adjust the command to match the actual value."
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -949,8 +956,12 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
+    "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "starred": "Starred",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "documentationMenu": "Documentation menu",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -960,6 +971,7 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "level": "Log level",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
         "text": "text"
@@ -997,6 +1009,10 @@
       }
     },
     "item": "item",
-    "items": "items"
+    "items": "items",
+    "cron": "Cron",
+    "execution failed": "The execution failed, click here for more details.",
+    "task run id": "TaskRun ID",
+    "active": "Active"
   }
 }

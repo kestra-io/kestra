@@ -956,7 +956,8 @@
         "state": "État",
         "child": "Enfant",
         "absolute_date": "Date absolue",
-        "relative_date": "Date relative"
+        "relative_date": "Date relative",
+        "level": "Niveau de log"
       },
       "empty": "Aucune donnée.",
       "label": "Choisir des filtres",
@@ -974,6 +975,21 @@
     "force run tooltip": "Forcer l'exécution à s'exécuter. Cela peut créer des exécutions de tâche en double, si possible utilisez une autre action.",
     "item": "élément",
     "items": "éléments",
-    "warning": "Avertissement"
+    "warning": "Avertissement",
+    "cron": "Cron",
+    "showMore": "Afficher plus",
+    "showLess": "Afficher moins",
+    "documentationMenu": "Menu de documentation",
+    "task run id": "ID d'exécution de tâche",
+    "execution failed": "L'exécution a échoué, cliquez ici pour plus de détails.",
+    "optional": "Optionnel",
+    "active": "Actif",
+    "contextBar": {
+      "news": "Nouvelles",
+      "issue": "Ouvrir un Issue",
+      "docs": "Docs",
+      "demo": "Obtenez une démo",
+      "help": "Aide"
+    }
   }
 }

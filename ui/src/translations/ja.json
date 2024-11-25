@@ -850,7 +850,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために、`??` コアレス演算子を追加してください。例えば、`trigger.date` の代わりに `trigger.date ?? execution.startDate` を使用してください。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -956,7 +956,8 @@
         "state": "状態",
         "child": "子",
         "absolute_date": "絶対日付",
-        "relative_date": "相対日付"
+        "relative_date": "相対日付",
+        "level": "ログレベル"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",
@@ -974,6 +975,21 @@
     "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。",
     "item": "アイテム",
     "items": "アイテム",
-    "warning": "警告"
+    "warning": "警告",
+    "cron": "Cron（クーロン）",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす",
+    "documentationMenu": "ドキュメントメニュー",
+    "task run id": "タスクランID",
+    "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
+    "optional": "オプション",
+    "active": "アクティブ",
+    "contextBar": {
+      "news": "ニュース",
+      "issue": "問題を開く",
+      "docs": "ドキュメント",
+      "demo": "デモを取得",
+      "help": "ヘルプ"
+    }
   }
 }

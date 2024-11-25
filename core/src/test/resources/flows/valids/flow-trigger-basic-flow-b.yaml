@@ -1,7 +1,0 @@
-id: flow-trigger-basic-flow-b
-namespace: io.kestra.tests.trigger.basic
-
-tasks:
-  - id: only
-    type: io.kestra.plugin.core.debug.Return
-    format: "from parents: {{execution.id}}"

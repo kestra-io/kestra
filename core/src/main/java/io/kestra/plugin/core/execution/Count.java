@@ -38,37 +38,39 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             title = "Send a slack notification if there is no execution for a flow for the last 24 hours.",
             full = true,
-            code = {
-                "id: executions_count",
-                "namespace: company.team",
-                "",
-                "tasks:",
-                "  - id: counts",
-                "    type: io.kestra.plugin.core.execution.Counts",
-                "    expression: \"{{ count == 0 }}\"",
-                "    flows:",
-                "      - namespace: company.team",
-                "        flowId: logs",
-                "    startDate: \"{{ now() | dateAdd(-1, 'DAYS') }}\"",
-                "  - id: each_parallel",
-                "    type: io.kestra.plugin.core.flow.EachParallel",
-                "    tasks:",
-                "      - id: slack_incoming_webhook",
-                "        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook",
-                "        payload: |",
-                "          {",
-                "            \"channel\": \"#run-channel\",",
-                "            \"text\": \":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution for last 24h!\"",
-                "          }",
-                "        url: \"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX\"",
-                "    value: \"{{ jq outputs.counts.results '. | select(. != null) | .[]' }}\"",
-                "",
-                "triggers:",
-                "  - id: schedule",
-                "    type: io.kestra.plugin.core.trigger.Schedule",
-                "    backfill: {}",
-                "    cron: \"0 4 * * * \""
-            }
+            code = """
+                id: executions_count
+                namespace: company.team
+                
+                tasks:
+                  - id: counts
+                    type: io.kestra.plugin.core.execution.Counts
+                    expression: "{{ count == 0 }}"
+                    flows:
+                      - namespace: company.team
+                        flowId: logs
+                    startDate: "{{ now() | dateAdd(-1, 'DAYS') }}"
+
+                  - id: for_each
+                    type: io.kestra.plugin.core.flow.ForEach
+                    concurrencyLimit: 0
+                    values: "{{ jq outputs.counts.results '. | select(. != null) | .[]' }}"
+                    tasks:
+                      - id: slack_incoming_webhook
+                        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                        payload: |
+                          {
+                            "channel": "#run-channel",
+                            "text": ":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution for last 24h!"
+                          }
+                        url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+                
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    backfill: {}
+                    cron: "0 4 * * * "
+                """
         )
     },
     aliases = "io.kestra.core.tasks.executions.Counts"

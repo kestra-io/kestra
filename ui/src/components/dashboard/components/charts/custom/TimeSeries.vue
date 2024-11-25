@@ -166,6 +166,8 @@
         const yDataset = reducer(generated.value, aggregator[0][0], "y");
         const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
+        const label = aggregator[1][1].displayName ?? aggregator[1][1].field;
+
         return {
             labels: xAxis,
             datasets: yBShown
@@ -174,13 +176,11 @@
                         yAxisID: "yB",
                         type: "line",
                         data: generated.value.map((v) => v[aggregator[1][0]]),
-                        tooltip: `${aggregator[1][1].displayName}`,
+                        tooltip: label,
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
-                        borderColor: getConsistentHEXColor(
-                            `${aggregator[1][1].displayName}`,
-                        ),
+                        borderColor: getConsistentHEXColor(label),
                     },
                     ...yDatasetData,
                 ]

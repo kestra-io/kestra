@@ -36,6 +36,7 @@ public class Dashboard implements HasUID, DeletedInterface {
 
     protected String description;
 
+    @Valid
     protected TimeWindow timeWindow;
 
     @Valid

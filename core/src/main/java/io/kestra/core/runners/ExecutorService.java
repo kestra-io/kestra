@@ -1097,9 +1097,9 @@ public class ExecutorService {
             case NONE -> executor.getExecution();
         };
 
-        if (!MapUtils.isEmpty(violation.labels())) {
+        if (!ListUtils.isEmpty(violation.labels())) {
             List<Label> labels = new ArrayList<>(newExecution.getLabels());
-            violation.labels().forEach((key, value) -> labels.add(new Label(key, String.valueOf(value))));
+            labels.addAll(violation.labels());
             newExecution = newExecution.withLabels(labels);
         }
 

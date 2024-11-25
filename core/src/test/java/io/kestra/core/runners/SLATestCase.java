@@ -47,6 +47,6 @@ public class SLATestCase {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "LABEL"));
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getLabels(), hasItem(new Label("system.sla", "violated")));
+        assertThat(execution.getLabels(), hasItem(new Label("sla", "violated")));
     }
 }

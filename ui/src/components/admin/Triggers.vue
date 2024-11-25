@@ -162,9 +162,9 @@
                         </el-table-column>
                         <el-table-column :label="$t('cron')">
                             <template #default="scope">
-                                <Cron :cron-expression="scope.row.cron" />
+                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
                             </template>
-                        </el-table-column>  
+                        </el-table-column>
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar

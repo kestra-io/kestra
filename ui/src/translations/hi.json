@@ -850,7 +850,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैन्युअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
+    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -956,7 +956,8 @@
         "state": "स्थिति",
         "child": "बच्चा",
         "absolute_date": "सटीक तिथि",
-        "relative_date": "सापेक्ष तिथि"
+        "relative_date": "सापेक्ष तिथि",
+        "level": "Log स्तर"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें",
@@ -974,6 +975,21 @@
     "force run tooltip": "प्रवर्तन को चलाने के लिए मजबूर करें। यह डुप्लिकेट task executions बना सकता है, यदि संभव हो तो कोई अन्य क्रिया का उपयोग करें।",
     "item": "आइटम",
     "items": "आइटम्स",
-    "warning": "चेतावनी"
+    "warning": "चेतावनी",
+    "cron": "क्रॉन",
+    "showMore": "और दिखाएँ",
+    "showLess": "कम दिखाएं",
+    "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "task run id": "टास्करन ID",
+    "execution failed": "निष्पादन FAILED हो गया, अधिक विवरण के लिए यहां क्लिक करें।",
+    "optional": "वैकल्पिक",
+    "active": "सक्रिय",
+    "contextBar": {
+      "news": "समाचार",
+      "issue": "समस्या खोलें",
+      "docs": "डॉक्स",
+      "demo": "डेमो प्राप्त करें",
+      "help": "मदद"
+    }
   }
 }

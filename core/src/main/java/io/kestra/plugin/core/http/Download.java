@@ -45,11 +45,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             code = """
                 id: download
                 namespace: company.team
-                
+
                 tasks:
                   - id: extract
                     type: io.kestra.plugin.core.http.Download
-                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv"""            
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv"""
         )
     },
     metrics = {
@@ -62,6 +62,12 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     @Builder.Default
     @PluginProperty
     private final Boolean failOnEmptyResponse = true;
+
+    @Builder.Default
+    @Schema(
+        title = "If true, allow a failed response code (response code >= 400)"
+    )
+    private boolean allowFailed = false;
 
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -79,27 +85,41 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         ) {
             @SuppressWarnings("unchecked")
             HttpRequest<String> request = this.request(runContext);
+            Long size;
 
-            Long size = client
-                .exchangeStream(request)
-                .map(throwFunction(response -> {
-                    if (builder.code == null) {
-                        builder
-                            .code(response.code())
-                            .headers(response.getHeaders().asMap());
-                    }
+            try {
+                size = client
+                    .exchangeStream(request)
+                    .map(throwFunction(response -> {
+                        if (builder.code == null) {
+                            builder
+                                .code(response.code())
+                                .headers(response.getHeaders().asMap());
+                        }
 
-                    if (response.getBody().isPresent()) {
-                        byte[] bytes = response.getBody().get().toByteArray();
-                        output.write(bytes);
+                        if (response.getBody().isPresent()) {
+                            byte[] bytes = response.getBody().get().toByteArray();
+                            output.write(bytes);
 
-                        return (long) bytes.length;
-                    } else {
-                        return 0L;
-                    }
-                }))
-                .reduce(Long::sum)
-                .block();
+                            return (long) bytes.length;
+                        } else {
+                            return 0L;
+                        }
+                    }))
+                    .reduce(Long::sum)
+                    .block();
+            } catch (HttpClientResponseException e) {
+                if (!allowFailed) {
+                    throw e;
+                } else {
+                    builder
+                        .headers(e.getResponse().getHeaders().asMap())
+                        .code(e.getResponse().getStatus().getCode());
+
+                    size = e.getResponse().getContentLength();
+                }
+            }
+
 
             if (size == null) {
                 size = 0L;
@@ -118,7 +138,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             builder.length(size);
 
             if (size == 0) {
-                if (this.failOnEmptyResponse) {
+                if (this.failOnEmptyResponse && !this.allowFailed) {
                     throw new HttpClientResponseException("No response from server", HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE));
                 } else {
                     logger.warn("File '{}' is empty", from);

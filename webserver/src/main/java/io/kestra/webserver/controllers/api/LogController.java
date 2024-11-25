@@ -85,7 +85,8 @@ public class LogController {
             minLevel,
             taskRunId,
             Optional.ofNullable(taskId).map(List::of).orElse(null),
-            attempt
+            attempt,
+            true
         );
     }
 
@@ -105,7 +106,8 @@ public class LogController {
             minLevel,
             taskRunId,
             Optional.ofNullable(taskId).map(List::of).orElse(null),
-            attempt
+            attempt,
+            true
         );
         return new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log");
     }
@@ -117,7 +119,7 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
-        return executionLogService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
+
     }
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/{executionId}")

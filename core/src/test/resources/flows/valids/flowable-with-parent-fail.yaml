@@ -3,10 +3,14 @@ namespace: io.kestra.tests
 
 tasks:
   - id: vision
-    type: io.kestra.plugin.core.flow.EachParallel
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 0
+    values: "[\"MONTHLY\", \"CUMULATIVE\"]"
     tasks:
       - id: metaseg_date
-        type: io.kestra.plugin.core.flow.EachParallel
+        type: io.kestra.plugin.core.flow.ForEach
+        concurrencyLimit: 0
+        values: "[{\"NEW_MONTH\":\"2018-01-01\"}]"
         tasks:
           - id: if
             type: io.kestra.plugin.core.flow.If
@@ -19,5 +23,3 @@ tasks:
               - id: when-false
                 type: io.kestra.plugin.core.log.Log
                 message: 'Condition was false'
-        value: "[{\"NEW_MONTH\":\"2018-01-01\"}]"
-    value: "[\"MONTHLY\", \"CUMULATIVE\"]"

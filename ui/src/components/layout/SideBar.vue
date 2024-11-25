@@ -8,8 +8,13 @@
         width="268px"
         :collapsed="collapsed"
         link-component-name="LeftMenuLink"
+        hide-toggle
     >
         <template #header>
+            <el-button @click="collapsed = onToggleCollapse(!collapsed)" class="collapseButton" :size="collapsed ? 'small':undefined">
+                <chevron-right v-if="collapsed" />
+                <chevron-left v-else />
+            </el-button>
             <div class="logo">
                 <router-link :to="{name: 'home'}">
                     <span class="img" />
@@ -20,27 +25,6 @@
 
         <template #footer>
             <slot name="footer" />
-        </template>
-
-        <template #toggle-icon>
-            <el-button>
-                <chevron-double-right v-if="collapsed" />
-                <chevron-double-left v-else />
-            </el-button>
-            <span class="version">
-                <el-tooltip
-                    effect="light"
-                    :persistent="false"
-                    transition=""
-                    :hide-after="0"
-                    :disabled="!configs.commitId"
-                >
-                    <template #content>
-                        <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
-                    </template>
-                    {{ configs.version }}
-                </el-tooltip>
-            </span>
         </template>
     </sidebar-menu>
 </template>
@@ -60,11 +44,10 @@
 
     import {SidebarMenu} from "vue-sidebar-menu";
 
-    import ChevronDoubleLeft from "vue-material-design-icons/ChevronDoubleLeft.vue";
-    import ChevronDoubleRight from "vue-material-design-icons/ChevronDoubleRight.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
-    import DateAgo from "./DateAgo.vue"
     import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
 
@@ -82,8 +65,6 @@
     const {locale, t} = useI18n()
     const store = useStore()
 
-    const configs = computed(() => store.state.misc.configs);
-
     function flattenMenu(menu) {
         return menu.reduce((acc, item) => {
             if (item.child) {
@@ -99,6 +80,8 @@
         collapsed.value = folded;
         localStorage.setItem("menuCollapsed", folded ? "true" : "false");
         $emit("menu-collapse", folded);
+
+        return folded;
     }
 
     function disabledCurrentRoute(items) {
@@ -187,14 +170,36 @@
 </script>
 
 <style lang="scss">
+    .collapseButton {
+        position: absolute;
+        top: calc(var(--spacer) * .5);
+        right: 0;
+        z-index: 1;
+
+        #side-menu & {
+            border: none;
+            background: none;
+
+            &:hover {
+                background: none !important;
+                color: var(--bs-primary) !important;
+            }
+        }
+
+        .vsm_collapsed & {
+            top: calc(var(--spacer) * .5);
+        }
+    }
+
     #side-menu {
+        position: static;
         z-index: 1039;
         border-right: 1px solid var(--bs-border-color);
 
         .logo {
             overflow: hidden;
             padding: 35px 0;
-            height: 113px;
+            height: 112px;
             position: relative;
 
             a {
@@ -220,6 +225,8 @@
                 }
             }
         }
+
+
 
 
         span.version {

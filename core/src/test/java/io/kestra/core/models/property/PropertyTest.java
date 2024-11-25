@@ -153,7 +153,7 @@ class PropertyTest {
         FileSerde.writeAll(Files.newBufferedWriter(messages), Flux.fromIterable(inputValues)).block();
         URI uri;
         try (var input = new FileInputStream(messages.toFile())) {
-            uri = storage.put(null, URI.create("/messages.ion"), input);
+            uri = storage.put(null, null, URI.create("/messages.ion"), input);
         }
 
         var task = DynamicPropertyExampleTask.builder()

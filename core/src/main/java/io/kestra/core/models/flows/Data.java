@@ -22,6 +22,13 @@ public interface Data {
      */
     Type getType();
 
+    /**
+     * The Display Name for this data.
+     *
+     * @return a string displayName.
+     */
+    String getDisplayName();
+
     @SuppressWarnings("unchecked")
     default ConstraintViolationException toConstraintViolationException(String message, Object value) {
         Class<Data> cls = (Class<Data>) this.getClass();

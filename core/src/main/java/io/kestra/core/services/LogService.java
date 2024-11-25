@@ -1,11 +1,14 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.ArrayUtils;
@@ -79,11 +82,17 @@ public class LogService {
         return logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
     }
 
+
     public int bulkDelete(List<String> executionIds, String tenantId, String namespace, String flowId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
         int totalDeleted = 0;
         for (String executionId : executionIds) {
             totalDeleted += logRepository.deleteByQuery(tenantId, namespace, flowId, logLevels, startDate, endDate);
         }
         return totalDeleted;
+    }
+}
+   
+    public List<LogEntry> errorLogs(String tenantId, String executionId) {
+        return logRepository.findByExecutionId(tenantId, executionId, Level.ERROR, Pageable.from(1, 25, Sort.of(Sort.Order.asc("timestamp"))));
     }
 }

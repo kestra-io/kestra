@@ -223,7 +223,7 @@ public class FlowTopologyService {
     protected boolean isMandatoryMultipleCondition(Condition condition) {
         return Stream
             .of(
-                ExpressionCondition.class
+                Expression.class
             )
             .anyMatch(aClass -> condition.getClass().isAssignableFrom(aClass));
     }
@@ -231,11 +231,11 @@ public class FlowTopologyService {
     protected boolean isFilterCondition(Condition condition) {
         return Stream
             .of(
-                ExecutionStatusCondition.class,
-                DateTimeBetweenCondition.class,
-                DayWeekCondition.class,
-                HasRetryAttemptCondition.class,
-                WeekendCondition.class
+                ExecutionStatus.class,
+                DateTimeBetween.class,
+                DayWeek.class,
+                HasRetryAttempt.class,
+                Weekend.class
             )
             .anyMatch(aClass -> condition.getClass().isAssignableFrom(aClass));
     }

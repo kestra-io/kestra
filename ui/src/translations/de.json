@@ -956,7 +956,8 @@
         "state": "Zustand",
         "child": "Kind",
         "absolute_date": "Absolutes Datum",
-        "relative_date": "Relatives Datum"
+        "relative_date": "Relatives Datum",
+        "level": "Log-Ebene"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen",
@@ -974,6 +975,21 @@
     "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion.",
     "item": "Element",
     "items": "Elemente",
-    "warning": "Warnung"
+    "warning": "Warnung",
+    "cron": "Cron",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
+    "documentationMenu": "Dokumentationsmenü",
+    "task run id": "TaskRun-ID",
+    "execution failed": "Die Ausführung ist fehlgeschlagen, klicken Sie hier für weitere Details.",
+    "optional": "Optional",
+    "active": "Aktiv",
+    "contextBar": {
+      "news": "Nachrichten",
+      "issue": "Ein Issue öffnen",
+      "docs": "Dokumentation",
+      "demo": "Demo anfordern",
+      "help": "Hilfe"
+    }
   }
 }

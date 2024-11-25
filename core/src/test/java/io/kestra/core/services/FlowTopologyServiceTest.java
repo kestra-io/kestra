@@ -1,10 +1,10 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.plugin.core.condition.ExecutionFlowCondition;
-import io.kestra.plugin.core.condition.ExecutionStatusCondition;
+import io.kestra.plugin.core.condition.ExecutionFlow;
+import io.kestra.plugin.core.condition.ExecutionStatus;
 import io.kestra.plugin.core.condition.MultipleCondition;
-import io.kestra.plugin.core.condition.ExpressionCondition;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowRelation;
@@ -107,11 +107,11 @@ class FlowTopologyServiceTest {
             .triggers(List.of(
                 io.kestra.plugin.core.trigger.Flow.builder()
                     .conditions(List.of(
-                        ExecutionFlowCondition.builder()
+                        ExecutionFlow.builder()
                             .namespace("io.kestra.ee")
                             .flowId("parent")
                             .build(),
-                        ExecutionStatusCondition.builder()
+                        ExecutionStatus.builder()
                             .in(List.of(State.Type.SUCCESS))
                             .build()
                     ))
@@ -149,23 +149,23 @@ class FlowTopologyServiceTest {
             .triggers(List.of(
                 io.kestra.plugin.core.trigger.Flow.builder()
                     .conditions(List.of(
-                        ExecutionStatusCondition.builder()
+                        ExecutionStatus.builder()
                             .in(List.of(State.Type.SUCCESS))
                             .build(),
                         MultipleCondition.builder()
                             .conditions(Map.of(
-                                "first", ExecutionFlowCondition.builder()
+                                "first", ExecutionFlow.builder()
                                     .namespace("io.kestra.ee")
                                     .flowId("parent")
                                     .build(),
-                                "second", ExecutionFlowCondition.builder()
+                                "second", ExecutionFlow.builder()
                                     .namespace("io.kestra.others")
                                     .flowId("invalid")
                                     .build(),
-                                "filtered", ExecutionStatusCondition.builder()
+                                "filtered", ExecutionStatus.builder()
                                     .in(List.of(State.Type.SUCCESS))
                                     .build(),
-                                "variables", ExpressionCondition.builder()
+                                "variables", Expression.builder()
                                     .expression("{{ true }}")
                                     .build()
                             ))

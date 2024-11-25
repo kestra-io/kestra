@@ -35,7 +35,6 @@ html {
 
     &.menu-collapsed {
         #{--offset-from-menu}: var(--spacer);
-        padding-left: var(--menu-collapsed-width);
     }
 
     &.menu-not-collapsed {
@@ -43,8 +42,38 @@ html {
         @include mixin.res(lg) {
             #{--offset-from-menu}: calc(var(--spacer) * 4);
         }
+    }
+}
 
-        padding-left: var(--menu-width);
+* > {
+    ::-webkit-scrollbar {
+        width: 0.5rem;
+        height: 0.5rem;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bs-gray-200);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--bs-gray-300);
+        border-radius: var(--el-border-radius);
+
+        &:hover {
+            background: var(--bs-gray-400);
+        }
+    }
+}
+
+html.dark {
+    * > {
+        ::-webkit-scrollbar-thumb {
+            background: var(--bs-gray-400);
+
+            &:hover {
+                background: var(--bs-gray-500);
+            }
+        }
     }
 }
 
@@ -109,6 +138,15 @@ main {
             background: var(--bs-tertiary);
         }
     }
+}
+
+// Browser autofill background color
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+input[data-autocompleted] {
+    background-color: transparent !important;
 }
 
 // full page

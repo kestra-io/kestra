@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -383,7 +385,13 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = flow.getOutputs()
                     .stream()
-                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
+                    .collect(HashMap::new, (map, entry) -> {
+                        final ObjectMapper mapper = new ObjectMapper();
+                        final HashMap<String, Object> entryInfo = new HashMap<>();
+                        entryInfo.put("value", entry.getValue());
+                        entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
+                        map.put(entry.getId(), entryInfo);
+                    }, Map::putAll);
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
@@ -396,7 +404,7 @@ public class ExecutorService {
                     e
                 );
                 runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                newExecution = newExecution.withState(State.Type.FAILED).withError(ExecutionError.from(e));
+                newExecution = newExecution.withState(State.Type.FAILED);
             }
         }
 

@@ -129,8 +129,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         Throwable result = null;
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (null != throwableProxy) {
-            if (throwableProxy instanceof ThrowableProxy) {
-                result = ((ThrowableProxy) throwableProxy).getThrowable();
+            if (throwableProxy instanceof ThrowableProxy proxyThrowable) {
+                result = proxyThrowable.getThrowable();
             }
         }
         return result;
@@ -270,7 +270,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     this.logger,
                     event.getLevel(),
                     message,
-                    event.getThrowableProxy() instanceof ThrowableProxy ? ((ThrowableProxy) event.getThrowableProxy()).getThrowable() : null,
+                    event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
             } catch (Throwable e) {

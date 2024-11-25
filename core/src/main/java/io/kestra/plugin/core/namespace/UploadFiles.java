@@ -172,8 +172,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
         if (filesMap != null) {
             Map<String, Object> readFilesMap;
-            if (filesMap instanceof String) {
-                String renderedFilesMap = runContext.render((String) filesMap);
+            if (filesMap instanceof String stringValue) {
+                String renderedFilesMap = runContext.render(stringValue);
                 readFilesMap = JacksonMapper.ofJson().readValue(renderedFilesMap, Map.class);
             } else {
                 readFilesMap = (Map<String, Object>) filesMap;

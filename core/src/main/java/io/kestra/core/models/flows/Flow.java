@@ -264,7 +264,7 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Flow updateTask(String taskId, Task newValue) throws InternalException {
         Task task = this.findTaskByTaskId(taskId);
-        Flow flow = this instanceof FlowWithSource ? ((FlowWithSource) this).toFlow() : this;
+        Flow flow = this instanceof FlowWithSource flowWithSource ? flowWithSource.toFlow() : this;
 
         Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
 
@@ -275,8 +275,7 @@ public class Flow extends AbstractFlow implements HasUID {
     }
 
     private static Object recursiveUpdate(Object object, Task previous, Task newValue) {
-        if (object instanceof Map) {
-            Map<?, ?> value = (Map<?, ?>) object;
+        if (object instanceof Map<?, ?> value) {
             if (value.containsKey("id") && value.get("id").equals(previous.getId()) &&
                 value.containsKey("type") && value.get("type").equals(previous.getType())
             ) {
@@ -291,8 +290,7 @@ public class Flow extends AbstractFlow implements HasUID {
                     ))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
-        } else if (object instanceof Collection) {
-            Collection<?> value = (Collection<?>) object;
+        } else if (object instanceof Collection<?> value) {
             return value
                 .stream()
                 .map(r -> recursiveUpdate(r, previous, newValue))

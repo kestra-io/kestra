@@ -21,11 +21,11 @@ public class KestraConstraintViolationException extends ConstraintViolationExcep
         for (ConstraintViolation<?> violation : getConstraintViolations()) {
             String errorMessage = violation.getPropertyPath() + ": " + violation.getMessage();
             try {
-                if (violation.getLeafBean() instanceof Task) {
-                    errorMessage = replaceId("tasks", violation.getPropertyPath().toString(), ((Task) violation.getLeafBean()).getId()) + ": " + violation.getMessage();
+                if (violation.getLeafBean() instanceof Task task) {
+                    errorMessage = replaceId("tasks", violation.getPropertyPath().toString(), task.getId()) + ": " + violation.getMessage();
                 }
-                if (violation.getLeafBean() instanceof Input) {
-                    errorMessage = replaceId("inputs", violation.getPropertyPath().toString(), ((Input) violation.getLeafBean()).getId()) + ": " + violation.getMessage();
+                if (violation.getLeafBean() instanceof Input input) {
+                    errorMessage = replaceId("inputs", violation.getPropertyPath().toString(), input.getId()) + ": " + violation.getMessage();
 
                 }
             } catch (Exception e) {

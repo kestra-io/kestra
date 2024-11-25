@@ -127,7 +127,7 @@ class YamlParserTest {
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(11L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(18L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(3L));
-        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
+        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput stringInput && stringInput.getValidator() != null).count(), is(1L));
     }
 
 

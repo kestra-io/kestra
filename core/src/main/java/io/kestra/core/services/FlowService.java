@@ -347,8 +347,8 @@ public class FlowService {
      * @return the modified object
      */
     private static Object fixSnakeYaml(Object object) {
-        if (object instanceof Map) {
-            return ((Map<?, ?>) object)
+        if (object instanceof Map<?, ?> mapValue) {
+            return mapValue
                 .entrySet()
                 .stream()
                 .map(entry -> new AbstractMap.SimpleEntry<>(
@@ -364,14 +364,12 @@ public class FlowService {
                     },
                     LinkedHashMap::new
                 ));
-        } else if (object instanceof Collection) {
-            return ((Collection<?>) object)
+        } else if (object instanceof Collection<?> collectionValue) {
+            return collectionValue
                 .stream()
                 .map(FlowService::fixSnakeYaml)
                 .toList();
-        } else if (object instanceof String) {
-            String item = (String) object;
-
+        } else if (object instanceof String item) {
             if (item.contains("\n")) {
                 return item.replaceAll("\\s+\\n", "\\\n");
             }

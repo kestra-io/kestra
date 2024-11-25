@@ -43,15 +43,15 @@ public class MapUtils {
                         found = original;
                     } else if (original == null) {
                         found = value;
-                    } else if (value instanceof Map && original instanceof Map) {
-                        found = merge((Map) original, (Map) value);
-                    } else if (value instanceof Collection
-                        && original instanceof Collection) {
+                    } else if (value instanceof Map mapValue && original instanceof Map mapOriginal) {
+                        found = merge(mapOriginal, mapValue);
+                    } else if (value instanceof Collection collectionValue
+                        && original instanceof Collection collectionOriginal) {
                         try {
                             found = Lists
                                 .newArrayList(
-                                    (Collection) original,
-                                    (Collection) value
+                                    collectionOriginal,
+                                    collectionValue
                                 )
                                 .stream()
                                 .flatMap(Collection::stream)
@@ -84,10 +84,10 @@ public class MapUtils {
                     Object value = entry.getValue();
                     Object found;
 
-                    if (value instanceof Map) {
-                        found = cloneMap((Map) value);
-                    } else if (value instanceof Collection) {
-                        found = cloneCollection((Collection) value);
+                    if (value instanceof Map mapValue) {
+                        found = cloneMap(mapValue);
+                    } else if (value instanceof Collection collectionValue) {
+                        found = cloneCollection(collectionValue);
                     } else {
                         found = value;
                     }

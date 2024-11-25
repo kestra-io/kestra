@@ -55,8 +55,8 @@ public class DockerService {
         Map<String, Object> finalConfig = new HashMap<>();
 
         if (config != null) {
-            if (config instanceof String) {
-                finalConfig = JacksonMapper.toMap(runContext.render(config.toString()));
+            if (config instanceof String configString) {
+                finalConfig = JacksonMapper.toMap(runContext.render(configString));
             } else {
                 finalConfig = runContext.render((Map<String, Object>) config);
             }

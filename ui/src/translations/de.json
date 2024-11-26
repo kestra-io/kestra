@@ -993,6 +993,7 @@
     "execution failed header": "Ausführung fehlgeschlagen!",
     "execution failed message": "Mit letztem Fehler: <code>{message}</code>",
     "flow not imported": "Einige Flows konnten nicht importiert werden",
-    "flows imported": "Flows importiert"
+    "flows imported": "Flows importiert",
+    "is required": "{field} ist erforderlich"
   }
 }

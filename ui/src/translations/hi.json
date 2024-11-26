@@ -993,6 +993,7 @@
     "execution failed header": "निष्पादन FAILED!",
     "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
-    "flows imported": "फ़्लोज़ आयात किए गए"
+    "flows imported": "फ़्लोज़ आयात किए गए",
+    "is required": "{field} आवश्यक है"
   }
 }

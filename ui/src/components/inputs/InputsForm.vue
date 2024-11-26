@@ -5,7 +5,7 @@
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
-            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input.required)] : undefined"
+            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input)] : undefined"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
@@ -397,12 +397,13 @@
                     });
                 }
             },
-            requiredBooleanRule(required) {
-                return required !== false ? {
-                    validator(_, val){
+            requiredBooleanRule(input) {
+                return input.required !== false ? {
+                    validator: (_, val, callback) => {
                         if(val === "undefined"){
-                            throw new Error("This field is required");
+                            return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
                         }
+                        callback()
                     },
                 } : undefined
             }

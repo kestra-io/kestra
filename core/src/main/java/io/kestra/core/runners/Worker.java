@@ -61,6 +61,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Introspected
 public class Worker implements Service, Runnable, AutoCloseable {
+    public static final String EXECUTOR_NAME = "worker";
+
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
@@ -158,7 +160,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.numThreads = numThreads;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
-        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
+        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
         this.setState(ServiceState.CREATED);
     }
 

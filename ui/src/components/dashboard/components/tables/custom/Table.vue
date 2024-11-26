@@ -1,5 +1,5 @@
 <template>
-    <el-table v-if="generated.length" :data="generated">
+    <el-table :id="containerID" v-if="generated.length" :data="generated">
         <el-table-column
             v-for="(column, index) in Object.keys(props.chart.data.columns)"
             :key="index"
@@ -33,15 +33,20 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
 
+    const containerID = `${props.chart.id}__${Math.random()}`;
+
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const generated = ref([]);
     onMounted(async () => {
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
-            chartId: props.chart.id,
+            chartId: containerID,
             startDate:
-                route.query.startDate ?? moment().subtract(moment.duration("PT720H").as("milliseconds")).toISOString(true),
+                route.query.startDate ??
+                moment()
+                    .subtract(moment.duration("PT720H").as("milliseconds"))
+                    .toISOString(true),
             endDate: route.query.endDate ?? moment().toISOString(true),
         });
     });

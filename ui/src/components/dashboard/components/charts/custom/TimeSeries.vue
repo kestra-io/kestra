@@ -1,5 +1,5 @@
 <template>
-    <div :id="chart.id" class="float-end" />
+    <div :id="containerID" class="float-end" />
     <Bar
         v-if="generated.length"
         :data="parsedData"
@@ -36,6 +36,8 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
 
+    const containerID = `${props.chart.id}__${Math.random()}`;
+
     const {data, chartOptions} = props.chart;
 
     const aggregator = Object.entries(data.columns)
@@ -57,7 +59,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                barLegend: {containerID: props.chart.id, uppercase: true},
+                barLegend: {containerID, uppercase: true},
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,
@@ -190,7 +192,50 @@
 
     const generated = ref([]);
     onMounted(async () => {
-        generated.value = await store.dispatch("dashboard/generate", {
+        generated.value = [
+            {
+                date: "2024-11-26T00:00:00.000+01:00",
+                namespace: "dev_graph",
+                duration: 154.370180698,
+                country: "FR",
+                total: 8.0,
+                state: "SUCCESS",
+            },
+            {
+                date: "2024-11-26T00:00:00.000+01:00",
+                namespace: "dev_graph",
+                duration: 4.335978313,
+                country: "US",
+                total: 1.0,
+                state: "SUCCESS",
+            },
+            {
+                date: "2024-11-26T00:00:00.000+01:00",
+                namespace: "prod_graph",
+                duration: 2.039623763,
+                country: "EN",
+                total: 1.0,
+                state: "SUCCESS",
+            },
+            {
+                date: "2024-11-26T00:00:00.000+01:00",
+                namespace: "prod_graph",
+                duration: 1.920998162,
+                country: "IT",
+                total: 1.0,
+                state: "SUCCESS",
+            },
+            {
+                date: "2024-11-26T00:00:00.000+01:00",
+                namespace: "prod_graph",
+                duration: 155.214094732,
+                country: "FR",
+                total: 9.0,
+                state: "SUCCESS",
+            },
+        ];
+
+        await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
             startDate:

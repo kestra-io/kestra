@@ -13,7 +13,7 @@
             />
             <NoData v-else />
         </div>
-        <div :id="chart.id" />
+        <div :id="containerID" />
     </div>
 </template>
 
@@ -44,14 +44,14 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({chart: {type: Object, required: true}});
 
+    const containerID = `${props.chart.id}__${Math.random()}`;
+
     const {chartOptions} = props.chart;
 
     const options = computed(() =>
         defaultConfig({
             plugins: {
-                totalsLegend: {
-                    containerID: props.chart.id,
-                },
+                totalsLegend: {containerID},
                 tooltip: {
                     enabled: true,
                     intersect: true,

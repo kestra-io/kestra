@@ -1,6 +1,5 @@
 <template>
     <template v-if="initialInputs">
-        <pre>{{ inputsValidated }}</pre>
         <el-form-item
             v-for="input in filteredInputs || []"
             :key="input.id"

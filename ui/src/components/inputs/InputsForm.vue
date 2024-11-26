@@ -382,7 +382,9 @@
         watch: {
             inputsValues: {
                 handler(val, oldVal) {
+                    // only revalidate if values have changed
                     if(!isEqual(val, oldVal)){
+                        // only revalidate if values are stable for more than 200ms
                         debounce(this.validateInputs, 200)();
                         this.$emit("update:modelValue", this.inputsValues);
                     }

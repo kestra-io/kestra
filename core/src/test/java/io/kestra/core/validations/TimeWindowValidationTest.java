@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.OffsetTime;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +32,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldValidateDailyDeadline() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(OffsetTime.now()).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -49,7 +50,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldNotValidateDailyDeadlineWhenInvalidParam() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_DEADLINE).deadline(OffsetTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -59,7 +60,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldValidateDailyTimeWindow() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_WINDOW).startTime(OffsetTime.now()).endTime(OffsetTime.now()).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(true));
@@ -78,7 +79,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldNotValidateDailyTimeWindowWhenInvalidParam() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_WINDOW).startTime(LocalTime.now()).endTime(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DAILY_TIME_WINDOW).startTime(OffsetTime.now()).endTime(OffsetTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -97,7 +98,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldNotValidateDurationWindowWhenInvalidParam() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.DURATION_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.DURATION_WINDOW).deadline(OffsetTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));
@@ -115,7 +116,7 @@ class TimeWindowValidationTest {
 
     @Test
     void shouldNotValidateSlidingWindowWhenInvalidParam() {
-        var sla = TimeWindow.builder().type(TimeWindow.Type.SLIDING_WINDOW).deadline(LocalTime.now()).window(Duration.ofHours(1)).build();
+        var sla = TimeWindow.builder().type(TimeWindow.Type.SLIDING_WINDOW).deadline(OffsetTime.now()).window(Duration.ofHours(1)).build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
         assertThat(valid.isEmpty(), is(false));

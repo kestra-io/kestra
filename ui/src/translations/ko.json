@@ -993,6 +993,7 @@
     "execution failed header": "실행 실패!",
     "execution failed message": "마지막 오류: <code>{message}</code>",
     "flow not imported": "일부 flow를 가져올 수 없습니다.",
-    "flows imported": "Flow가 가져왔습니다."
+    "flows imported": "Flow가 가져왔습니다.",
+    "is required": "{field}는 필수 항목입니다."
   }
 }

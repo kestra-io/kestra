@@ -71,4 +71,31 @@
     span {
         font-weight: bold;
     }
+    
+</style>
+
+<style lang="scss">
+
+.el-checkbox {
+    &__inner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--bs-gray-700);
+        border-radius: 1.5px;
+    }
+
+    &.is-checked {
+        &__inner {
+            background-color: var(--el-text-color-primary);
+            border-color: var(--el-text-color-primary);
+        }
+    }
+
+    &:hover {
+        &__inner {
+            border-color: var(--el-text-color-primary);
+            transition: 1ms ease-in;
+        }
+    }
+}
 </style>

@@ -69,6 +69,9 @@
 </script>
 
 <style lang="scss" scoped>
+    code {
+        color: var(--bs-tertiary-color);
+    }
     code.link {
         cursor: pointer;
         &:hover {

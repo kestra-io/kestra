@@ -43,7 +43,7 @@
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
                     :refresh="{shown: true, callback: refresh}"
-                    :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                    :charts="{shown: true, value: showChart, callback: onShowChartChange}"
                 />
             </template>
 
@@ -73,14 +73,12 @@
                             @update:select-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
+                            <!-- Directly visible buttons -->
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
                             </el-button>
                             <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
                                 {{ $t("replay") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                {{ $t("change state") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
@@ -88,25 +86,38 @@
                             <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                                 {{ $t("delete") }}
                             </el-button>
-                            <el-button
-                                v-if="canUpdate"
-                                :icon="LabelMultiple"
-                                @click="isOpenLabelsModal = !isOpenLabelsModal"
-                            >
-                                {{ $t("Set labels") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                {{ $t("resume") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
-                                {{ $t("pause") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
-                                {{ $t("unqueue") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
-                                {{ $t("force run") }}
-                            </el-button>
+
+
+                            <!-- Dropdown for additional actions -->
+                            <el-dropdown>
+                                <el-button>
+                                    <el-icon>
+                                        <DotsVertical />
+                                    </el-icon>
+                                </el-button>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                                            {{ $t("Set labels") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                                            {{ $t("change state") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                            {{ $t("force run") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                            {{ $t("pause") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                            {{ $t("resume") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                            {{ $t("unqueue") }}
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
                         </bulk-select>
                         <el-dialog
                             v-if="isOpenLabelsModal"
@@ -211,6 +222,7 @@
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                                    class="me-1 link"
                                 >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
@@ -235,6 +247,12 @@
                             </template>
                         </el-table-column>
 
+                        <el-table-column :label="$t('triggers')" class-name="row-action">
+                            <template #default="scope">
+                                <trigger-avatar :flow="scope.row" />
+                            </template>
+                        </el-table-column>
+
                         <el-table-column
                             prop="flowRevision"
                             v-if="displayColumn('flowRevision')"
@@ -250,7 +268,6 @@
                             prop="inputs"
                             v-if="displayColumn('inputs')"
                             :label="$t('inputs')"
-                            align="center"
                         >
                             <template #default="scope">
                                 <el-tooltip effect="light">
@@ -343,6 +360,7 @@
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -375,6 +393,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
     import {storageKeys} from "../../utils/constants";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
@@ -394,6 +413,7 @@
             Labels,
             Id,
             TriggerFlow,
+            TriggerAvatar,
             TopNavBar,
             LabelInput,
             ExecutionsBar,
@@ -960,6 +980,12 @@
 .padding-bottom {
     padding-bottom: 4rem;
 }
+code {
+    color: var(--el-text-color-regular);
+    &:hover {
+    color: var(--bs-link-hover-color);
+    }
+}
 .custom-warning {
     border: 1px solid #ffb703;
     border-radius: 7px;
@@ -979,6 +1005,18 @@
         color: #ffb703;
     }
 }
+.link {
+    color: var(--bs-body-color);
+    &:hover{
+        color: var(--bs-link-hover-color);
+    }
+} 
+html.dark .link {
+    color: var(--bs-body-color);
+    &:hover{
+        color: var(--bs-link-hover-color);
+    }
+}
 </style>
 
 <style lang="scss">
@@ -990,5 +1028,8 @@
     .custom-warning {
         margin: 1rem 0;
     }
+}
+.el-dropdown {
+    border-left: 1px solid var(--bs-gray);
 }
 </style>

@@ -10,6 +10,7 @@
                 v-bind="$attrs"
                 :data="data"
                 @selection-change="selectionChanged"
+                :height="250"
             >
                 <slot name="expand" v-if="expandable" />
                 <el-table-column type="selection" v-if="selectable" />

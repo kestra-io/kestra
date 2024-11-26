@@ -29,7 +29,7 @@
                         </el-select>
                     </el-form-item>
                     <el-form-item>
-                        <refresh-button @refresh="load(onDataLoaded)" />
+                        <refresh-button class="float-right" @refresh="load(onDataLoaded)" />
                     </el-form-item>
                 </template>
                 <template #table>
@@ -95,6 +95,7 @@
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                                    class="me-1"
                                 >
                                     {{ $filters.invisibleSpace(scope.row.flowId) }}
                                 </router-link>
@@ -160,19 +161,6 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('cron')">
-                            <template #default="scope">
-                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
-                            </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('details')">
-                            <template #default="scope">
-                                <TriggerAvatar
-                                    :flow="{flowId: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
-                                    :trigger-id="scope.row.id"
-                                />
-                            </template>
-                        </el-table-column>                      
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -273,8 +261,6 @@
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
-    import Cron from "../layout/Cron.vue"
-    import TriggerAvatar from "../flows/TriggerAvatar.vue"
 </script>
 <script>
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -519,5 +505,12 @@
     .trigger-issue-icon {
         color: var(--bs-warning);
         font-size: 1.4em;
+    }
+    .me-1 {
+        color: var(--el-text-color-regular);
+        margin-right: .25rem;
+        &:hover{
+            color: var(--el-text-color-primary);
+        }
     }
 </style>

@@ -10,9 +10,9 @@
             disable-transitions
         >
             <router-link v-if="filterEnabled" :to="link(key, value)">
-                {{ key }}: {{ value }}
+                {{ value }}
             </router-link>
-            <template v-else>{{ key }}: {{ value }}</template>
+            <template v-else>{{ value }}</template>
         </el-tag>
     </span>
 </template>
@@ -92,6 +92,7 @@
 
         &.el-tag--info {
             background: var(--bs-gray-600);
+            padding: .80rem;
         }
     }
 </style>

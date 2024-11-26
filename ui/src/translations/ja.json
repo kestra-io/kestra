@@ -990,6 +990,8 @@
       "docs": "ドキュメント",
       "demo": "デモを取得",
       "help": "ヘルプ"
-    }
+    },
+    "execution failed header": "実行がFAILEDしました！",
+    "execution failed message": "最後のエラー: <code>{message}</code>"
   }
 }

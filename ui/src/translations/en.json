@@ -1003,7 +1003,8 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
-    "execution failed": "The execution failed, click here for more details.",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
     "task run id": "TaskRun ID",
     "active": "Active"
   }

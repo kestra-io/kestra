@@ -990,6 +990,8 @@
       "docs": "Dokumentation",
       "demo": "Demo anfordern",
       "help": "Hilfe"
-    }
+    },
+    "execution failed header": "Ausführung fehlgeschlagen!",
+    "execution failed message": "Mit letztem Fehler: <code>{message}</code>"
   }
 }

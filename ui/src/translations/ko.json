@@ -990,6 +990,8 @@
       "docs": "문서",
       "demo": "데모 받기",
       "help": "도움말"
-    }
+    },
+    "execution failed header": "실행 실패!",
+    "execution failed message": "마지막 오류: <code>{message}</code>"
   }
 }

@@ -990,6 +990,8 @@
       "docs": "डॉक्स",
       "demo": "डेमो प्राप्त करें",
       "help": "मदद"
-    }
+    },
+    "execution failed header": "निष्पादन FAILED!",
+    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>"
   }
 }

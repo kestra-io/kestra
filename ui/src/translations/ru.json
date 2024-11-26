@@ -990,6 +990,8 @@
       "docs": "Документация",
       "demo": "Получить демонстрацию",
       "help": "Помощь"
-    }
+    },
+    "execution failed header": "Выполнение FAILED!",
+    "execution failed message": "С последней ошибкой: <code>{message}</code>"
   }
 }

@@ -991,6 +991,8 @@
       "help": "ヘルプ"
     },
     "execution failed header": "実行がFAILEDしました！",
-    "execution failed message": "最後のエラー: <code>{message}</code>"
+    "execution failed message": "最後のエラー: <code>{message}</code>",
+    "flow not imported": "一部のflowをインポートできませんでした",
+    "flows imported": "フローがインポートされました"
   }
 }

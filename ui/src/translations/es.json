@@ -991,6 +991,8 @@
       "help": "Ayuda"
     },
     "execution failed header": "¡Ejecución FAILED!",
-    "execution failed message": "Con el último error: <code>{message}</code>"
+    "execution failed message": "Con el último error: <code>{message}</code>",
+    "flow not imported": "Algunos flow no pudieron ser importados",
+    "flows imported": "Flujos importados"
   }
 }

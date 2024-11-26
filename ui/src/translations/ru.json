@@ -991,6 +991,8 @@
       "help": "Помощь"
     },
     "execution failed header": "Выполнение FAILED!",
-    "execution failed message": "С последней ошибкой: <code>{message}</code>"
+    "execution failed message": "С последней ошибкой: <code>{message}</code>",
+    "flow not imported": "Некоторые flow не удалось импортировать",
+    "flows imported": "Потоки импортированы"
   }
 }

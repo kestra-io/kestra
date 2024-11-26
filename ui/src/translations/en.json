@@ -1006,6 +1006,8 @@
     "execution failed header": "Execution failed!",
     "execution failed message": "With last error: <code>{message}</code>",
     "task run id": "TaskRun ID",
-    "active": "Active"
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported"
   }
 }

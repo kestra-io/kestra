@@ -1,7 +1,7 @@
 <template>
-    <template v-if="inputsList">
+    <template v-if="initialInputs">
         <el-form-item
-            v-for="input in inputsList || []"
+            v-for="input in filteredInputs || []"
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
@@ -16,8 +16,8 @@
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 @confirm="onSubmit"
             />
             <el-select
@@ -26,8 +26,8 @@
                 :navbar="false"
                 v-if="input.type === 'ENUM' || input.type === 'SELECT'"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
             >
@@ -47,7 +47,7 @@
                 v-if="input.type === 'MULTISELECT'"
                 :data-test-id="`input-form-${input.id}`"
                 v-model="multiSelectInputs[input.id]"
-                @update:model-value="onMultiSelectChange(input.id, $event)"
+                @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
                 :allow-create="input.allowCustomValue"
@@ -65,15 +65,15 @@
                 type="password"
                 v-if="input.type === 'SECRET'"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 show-password
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
                     :data-test-id="`input-form-${input.id}`"
-                    v-model="inputs[input.id]"
-                    @update:model-value="onChange"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
                     :min="input.min"
                     :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
                     :step="1"
@@ -83,8 +83,8 @@
             <span v-if="input.type === 'FLOAT'">
                 <el-input-number
                     :data-test-id="`input-form-${input.id}`"
-                    v-model="inputs[input.id]"
-                    @update:model-value="onChange"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
                     :min="input.min"
                     :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
                     :step="0.001"
@@ -94,8 +94,8 @@
             <el-radio-group
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 class="w-100"
             >
                 <el-radio-button :label="$t('true')" :value="true" />
@@ -105,22 +105,22 @@
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 type="datetime"
             />
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 type="date"
             />
             <el-time-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
                 type="time"
             />
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
@@ -132,10 +132,10 @@
                         type="file"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
-                        :style="{display: typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///') ? 'none': ''}"
+                        :style="{display: typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///') ? 'none': ''}"
                     >
                     <label
-                        v-if="typeof(inputs[input.id]) === 'string' && inputs[input.id].startsWith('kestra:///')"
+                        v-if="typeof(inputsValues[input.id]) === 'string' && inputsValues[input.id].startsWith('kestra:///')"
                         :for="input.id+'-file'"
                     >Kestra Internal Storage File</label>
                 </div>
@@ -147,7 +147,7 @@
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
-                v-model="inputs[input.id]"
+                v-model="inputsValues[input.id]"
             />
             <editor
                 :full-height="false"
@@ -156,14 +156,14 @@
                 v-if="input.type === 'YAML'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="yaml"
-                :model-value="inputs[input.id]"
+                :model-value="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
             <duration-picker
                 v-if="input.type === 'DURATION'"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputs[input.id]"
-                @update:model-value="onChange"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
             />
             <markdown v-if="input.description" :data-test-id="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
@@ -187,13 +187,14 @@
     import ValidationError from "../flows/ValidationError.vue";
 </script>
 <script>
+    import {mapState} from "vuex";
+    import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
-    import {mapState} from "vuex";
 
     export default {
         computed: {
@@ -202,13 +203,25 @@
                 return YamlUtils
             },
             inputErrors() {
-                // we keep only error that don't target directly an inputs
-                const keepErrors = this.inputsList.filter(it => it.id === undefined);
+                // we only keep errors that don't target an input directly
+                const keepErrors = this.inputsMetaData.filter(it => it.inputId === undefined);
 
                 return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
                     keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
                     null
-            }
+            },
+            filteredInputs(){
+                const inputVisibility = this.inputsMetaData.reduce((acc, it) => {
+                    acc[it.inputId] = it.enabled;
+                    return acc;
+                }, {});
+                return this.initialInputs.filter(it => inputVisibility[it.id]);
+            },
+            /**
+             * To be able to compare values in a watcher, we need to return a new object
+             * We cannot compare proxied objects
+             * https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
+             */
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -217,7 +230,7 @@
                 default: false
             },
             modelValue: {
-                default: undefined,
+                default: () => ({}),
                 type: Object
             },
             initialInputs: {
@@ -235,17 +248,15 @@
         },
         data() {
             return {
-                inputs: {},
-                inputsList: [],
+                inputsValues: this.modelValue,
+                previousInputsValues: {},
+                inputsMetaData: [],
                 inputsValidation: [],
                 multiSelectInputs: {},
+                inputsValidated: new Set(),
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
-        created() {
-            this.inputsList.push(...(this.initialInputs ?? []));
-            this.validateInputs();
-        },
         mounted() {
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
@@ -269,32 +280,45 @@
         },
         methods: {
             inputError(id) {
-                const errors = this.inputsList
-                    .filter(it => it.id === id)
-                    .filter(it => it.errors && it.errors.length > 0)
+                // if this input has not been edited yet
+                // showing any error is annoying
+                if(!this.inputsValidated.has(id)){
+                    return null;
+                }
+
+                const errors = this.inputsMetaData
+                    .filter(({inputId, errors}) => {
+                        return inputId === id && errors && errors.length > 0;
+                    })
                     .map(it => it.errors.map(err => err.message).join("\n"))
 
                 return errors.length > 0 ? errors[0] : null;
             },
             updateDefaults() {
-                for (const input of this.inputsList || []) {
-                    if (this.inputs[input.id] === undefined || this.inputs[input.id] === null) {
-                        if (input.type === "MULTISELECT") {
+                for (const input of this.inputsMetaData || []) {
+                    if (this.inputsValues[input.inputId] === undefined || this.inputsValues[input.inputId] === null) {
+                        const {type, defaults} = this.initialInputs.find(it => it.id === input.inputId);
+                        if (type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }
-                        this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
+                        this.inputsValues[input.inputId] = Inputs.normalize(type, defaults);
                     }
                 }
             },
-            onChange() {
-                this.$emit("update:modelValue", this.inputs);
+            onChange(input) {
+                // give a second for the user to finish their edit
+                // and for the server to return with validated content
+                setTimeout(() => {
+                    this.inputsValidated.add(input.id);
+                }, 300);
+                this.$emit("update:modelValue", this.inputsValues);
             },
             onSubmit() {
                 this.$emit("confirm");
             },
             onMultiSelectChange(input, e) {
-                this.inputs[input] = JSON.stringify(e).toString();
-                this.onChange();
+                this.inputsValues[input.id] = JSON.stringify(e).toString();
+                this.onChange(input);
             },
             onFileChange(input, e) {
                 if (!e.target) {
@@ -305,12 +329,12 @@
                 if (!files.length) {
                     return;
                 }
-                this.inputs[input.id] = e.target.files[0];
-                this.onChange();
+                this.inputsValues[input.id] = e.target.files[0];
+                this.onChange(input);
             },
             onYamlChange(input, e) {
-                this.inputs[input.id] = e.target.value;
-                this.onChange();
+                this.inputsValues[input.id] = e.target.value;
+                this.onChange(input);
             },
             numberHint(input){
                 const {min, max} = input;
@@ -325,37 +349,49 @@
                 } else return false;
             },
             validateInputs() {
-                if (this.inputsList === undefined || this.inputsList.length === 0) {
+                if (this.initialInputs === undefined || this.initialInputs.length === 0) {
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.inputsList, this.inputs);
+                const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
 
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
                     this.$store.dispatch("execution/validateExecution", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
-                            });
+                            this.inputsMetaData = response.data.inputs.map(it => {
+                                return {
+                                    inputId: it.input?.id,
+                                    enabled: it.enabled,
+                                    errors: it.errors
+                                }
+                            })
                             this.updateDefaults();
                         });
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
                     this.$store.dispatch("execution/validateResume", {...options, formData})
                         .then(response => {
-                            this.inputsList = response.data.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
-                            });
+                            this.inputsMetaData = response.data.inputs.map(it => {
+                                return {
+                                    inputId: it.input?.id,
+                                    enabled: it.enabled,
+                                    errors: it.errors
+                                }
+                            })
                             this.updateDefaults();
                         });
                 } else {
                     this.$emit("validation", {
                         formData: formData,
                         callback: (response) => {
-                            this.inputsList = response.inputs.filter(it => it.enabled).map(it => {
-                                return {...it.input, errors: it.errors}
-                            });
+                            this.inputsMetaData = response.inputs.map(it => {
+                                return {
+                                    inputId: it.input?.id,
+                                    enabled: it.enabled,
+                                    errors: it.errors
+                                }
+                            })
                             this.updateDefaults();
                         }
                     });
@@ -372,10 +408,16 @@
             }
         },
         watch: {
-            inputs: {
-                handler() {
-                    this.validateInputs();
-                    this.$emit("update:modelValue", this.inputs);
+            inputsValues: {
+                handler(val) {
+                    // only revalidate if values have changed
+                    if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                        // only revalidate if values are stable for more than 200ms
+                        // to avoid too many useless calls to the server
+                        debounce(this.validateInputs, 200)();
+                        this.$emit("update:modelValue", this.inputsValues);
+                    }
+                    this.previousInputsValues = JSON.parse(JSON.stringify(val))
                 },
                 deep: true
             },

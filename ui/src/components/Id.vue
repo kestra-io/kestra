@@ -70,7 +70,7 @@
 
 <style lang="scss" scoped>
     code {
-        color: var(--bs-tertiary-color);
+        color: var(--el-link-color-regular);
     }
     code.link {
         cursor: pointer;

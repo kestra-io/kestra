@@ -31,6 +31,13 @@
     --el-fill-color-darker: var(--bs-gray-500);
     --el-fill-color-blank: var(--bs-white);
 
+    --el-color-alert-primary: var(--bs-primary);
+    --el-color-alert-info: #134ecc;
+    --el-color-alert-danger: #ab0009;
+    --el-color-alert-error: #ab0009;
+    --el-color-alert-warning: #dd5f00;
+    --el-color-alert-success: #016046;
+
     --el-box-shadow: $box-shadow;
     --el-box-shadow-light: $box-shadow-sm;
     --el-box-shadow-lighter: $box-shadow-sm;

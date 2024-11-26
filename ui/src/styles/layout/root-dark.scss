@@ -75,6 +75,13 @@ html.dark {
     --el-fill-color-darker: var(--bs-gray-900);
     --el-fill-color-blank: var(--bs-card-bg);
 
+    --el-color-alert-primary: var(--bs-primary);
+    --el-color-alert-info: #c7fdff;
+    --el-color-alert-danger: #e3262f;
+    --el-color-alert-error: #e3262f;
+    --el-color-alert-warning: #eeaf80;
+    --el-color-alert-success: #beefe2;
+
     #{--el-box-shadow}: $box-shadow;
     #{--el-box-shadow-light}: $box-shadow-sm;
     #{--el-box-shadow-lighter}: $box-shadow-sm;

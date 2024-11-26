@@ -26,7 +26,7 @@
         border-radius: 4px;
         border: 1px solid #5BB8FF;
         background-color: #5BB8FF33;
-        color: #134ecc;
+        color: var(--el-color-alert-info);
 
         html.dark & {
             color: #A2EFFF;

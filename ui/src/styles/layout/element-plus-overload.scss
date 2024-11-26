@@ -877,7 +877,12 @@ form.ks-horizontal {
 
     @each $type in $types {
         &.el-alert--#{$type} {
-            border: 1px solid var(--el-color-#{$type}-light-5);
+            border: 1px solid var(--el-color-alert-#{$type});
+            color: var(--el-color-alert-#{$type});
+            @if $type == 'info' {
+                background-color: rgba(14, 59, 154, 0.2);
+                border-color: rgba(23, 97, 253, 1);
+            }
         }
     }
 }

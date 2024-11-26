@@ -29,7 +29,7 @@
 
     .blueprints {
         background: url('../../assets/dots-bg.jpg') no-repeat top left;
-        background-color: #F6F6FA;
+        background-color: #FAFAFF;
         flex: 1;
         .dark & {
             background:  url('../../assets/dots-bg-dark.jpg') no-repeat top left;

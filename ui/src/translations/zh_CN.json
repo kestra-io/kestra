@@ -990,6 +990,8 @@
       "docs": "文档",
       "demo": "获取演示",
       "help": "帮助"
-    }
+    },
+    "execution failed header": "执行失败！",
+    "execution failed message": "最后错误：<code>{message}</code>"
   }
 }

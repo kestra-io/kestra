@@ -41,7 +41,7 @@
     onMounted(async () => {
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
-            chartId: containerID,
+            chartId: props.chart.id,
             startDate:
                 route.query.startDate ??
                 moment()

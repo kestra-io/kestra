@@ -156,6 +156,7 @@
     "select datetime": "Select a date",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
+    "is required": "{field} is required",
     "error": "Error",
     "form": "Form",
     "form error": "Form error",

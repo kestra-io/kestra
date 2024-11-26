@@ -981,7 +981,6 @@
     "showLess": "显示较少",
     "documentationMenu": "文档菜单",
     "task run id": "任务运行 ID",
-    "execution failed": "执行FAILED，点击此处查看详细信息。",
     "optional": "可选",
     "active": "活动",
     "contextBar": {
@@ -990,6 +989,8 @@
       "docs": "文档",
       "demo": "获取演示",
       "help": "帮助"
-    }
+    },
+    "execution failed header": "执行失败！",
+    "execution failed message": "最后错误：<code>{message}</code>"
   }
 }

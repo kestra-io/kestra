@@ -981,7 +981,6 @@
     "showLess": "表示を減らす",
     "documentationMenu": "ドキュメントメニュー",
     "task run id": "タスクランID",
-    "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
     "optional": "オプション",
     "active": "アクティブ",
     "contextBar": {
@@ -990,6 +989,8 @@
       "docs": "ドキュメント",
       "demo": "デモを取得",
       "help": "ヘルプ"
-    }
+    },
+    "execution failed header": "実行がFAILEDしました！",
+    "execution failed message": "最後のエラー: <code>{message}</code>"
   }
 }

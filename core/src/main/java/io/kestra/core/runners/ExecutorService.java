@@ -1090,16 +1090,16 @@ public class ExecutorService {
     public Executor processViolation(RunContext runContext, Executor executor, Violation violation) throws QueueException {
         Execution newExecution = switch (violation.behavior()) {
             case FAIL -> {
-                runContext.logger().error("Flow fail due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                runContext.logger().error("Execution failed due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
                 yield markAs(executor.getExecution(), State.Type.FAILED);
             }
             case CANCEL -> markAs(executor.getExecution(), State.Type.CANCELLED);
             case NONE -> executor.getExecution();
         };
 
-        if (!MapUtils.isEmpty(violation.labels())) {
+        if (!ListUtils.isEmpty(violation.labels())) {
             List<Label> labels = new ArrayList<>(newExecution.getLabels());
-            violation.labels().forEach((key, value) -> labels.add(new Label(key, String.valueOf(value))));
+            labels.addAll(violation.labels());
             newExecution = newExecution.withLabels(labels);
         }
 

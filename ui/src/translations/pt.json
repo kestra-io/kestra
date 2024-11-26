@@ -981,7 +981,6 @@
     "showLess": "Mostrar menos",
     "documentationMenu": "Menu de documentação",
     "task run id": "ID do TaskRun",
-    "execution failed": "A execução FAILED, clique aqui para mais detalhes.",
     "optional": "Opcional",
     "active": "Ativo",
     "contextBar": {
@@ -990,6 +989,8 @@
       "docs": "Documentos",
       "demo": "Obter uma demonstração",
       "help": "Ajuda"
-    }
+    },
+    "execution failed header": "Falha na execução!",
+    "execution failed message": "Com o último erro: <code>{message}</code>"
   }
 }

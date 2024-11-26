@@ -9,6 +9,7 @@
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
+            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input.required)] : undefined"
         >
             <editor
                 :full-height="false"
@@ -100,7 +101,7 @@
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
-                <el-radio-button :label="$t('undefined')" :value="undefined" />
+                <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
@@ -360,6 +361,15 @@
                         }
                     });
                 }
+            },
+            requiredBooleanRule(required) {
+                return required !== false ? {
+                    validator(_, val){
+                        if(val === "undefined"){
+                            throw new Error("This field is required");
+                        }
+                    },
+                } : undefined
             }
         },
         watch: {

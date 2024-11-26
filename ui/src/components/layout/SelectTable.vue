@@ -91,3 +91,8 @@
         }
     }
 </style>
+<style lang="css">
+    el-table__body-header{
+        height: 50px;
+    }
+</style>

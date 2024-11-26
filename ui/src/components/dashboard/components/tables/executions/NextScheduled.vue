@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="executions.results.length">
+        <div class="pt-4" v-if="props.flow">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -219,7 +219,7 @@
 
 <style lang="scss">
 code {
-    color: var(--bs-code-color);
+    color: var(--bs-body-color);
 }
 
 .nextscheduled {

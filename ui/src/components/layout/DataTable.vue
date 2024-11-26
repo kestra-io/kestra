@@ -65,26 +65,5 @@
                 margin-right: calc(var(--spacer) / 3);
             }
         }
-        th.el-table__cell {
-            background-color: var(--bs-gray-100-darken-2);
-        }
-        .el-table__body tr:hover > td.el-table__cell {
-            background-color: var(--bs-gray-100-darken-2); 
-        }
     }
-</style>
-
-<style>
-.el-table {
-    &.el-table--scrollable-y {
-        .el-table__body-header {
-            height: 55px;
-        }
-    }
-
-    th.el-table__cell,
-    td.el-table__cell {
-        vertical-align: middle;
-    }
-}
 </style>

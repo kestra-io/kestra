@@ -26,15 +26,14 @@
         border-radius: 4px;
         border: 1px solid #5BB8FF;
         background-color: #5BB8FF33;
-
-        color: #5BB8FF;
+        color: #134ecc;
 
         html.dark & {
             color: #A2EFFF;
         }
 
         .icon {
-            margin-right: 1px !important;
+            margin-right: 5px !important;
         }
     }
 </style>

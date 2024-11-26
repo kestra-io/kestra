@@ -249,10 +249,6 @@
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
-        created() {
-            this.inputsMetaData.push(...(this.initialInputs ?? []));
-            this.validateInputs();
-        },
         mounted() {
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
@@ -337,6 +333,8 @@
                 if (this.initialInputs === undefined || this.initialInputs.length === 0) {
                     return;
                 }
+
+                console.trace()
 
                 const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
 

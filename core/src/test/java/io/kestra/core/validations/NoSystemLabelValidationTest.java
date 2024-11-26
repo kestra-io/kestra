@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-public class NoSystemLabelValidationTest {
+class NoSystemLabelValidationTest {
     @Inject
     private ModelValidator modelValidator;
 

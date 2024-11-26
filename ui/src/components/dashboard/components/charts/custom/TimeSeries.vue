@@ -124,8 +124,8 @@
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.entries(columns)
-                .filter(([key, value]) => !value.agg && key !== column)
-                .map(([key]) => key);
+                .filter(([k, _v]) => k !== aggregator[0][0] && k !== column)
+                .map(([k]) => k);
 
             return array.reduce((acc, {...params}) => {
                 const stack = fields.map((f) => `${f}: ${params[f]}`).join(", ");

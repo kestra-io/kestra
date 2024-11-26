@@ -1,27 +1,31 @@
 <template>
     <div v-if="execution" class="execution-overview">
-        <div v-if="isFailed()" class="error-container">
-            <div class="error-header" @click="fetchErrorLogs()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <span class="error-message">{{ $t('execution failed') }}</span>
-                <span class="toggle-icon">
-                    <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
-                        <path d="M18 15l-6-6-6 6" />
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
-                        <path d="M6 9l6 6 6-6" />
-                    </svg>
-                </span>
-            </div>
-            <div v-if="isExpanded" class="error-stack">
-                <div v-for="log in logs" :key="log" class="stack-line">
-                    <span v-if="log.taskId"><span class="fw-bold">{{ $t("task id") }}</span>: {{ log.taskId }} - </span> <span v-if="log.taskRunId"><span class="fw-bold">{{ $t("task run id") }}</span>: {{ log.taskRunId }} - </span> {{ log.message }}
+        <div v-if="isFailed()">
+            <el-alert type="error" :closable="false" class="mb-4 main-error">
+                <template #title>
+                    <div @click="isExpanded = !isExpanded">
+                        <alert-outline class="main-icon" />
+                        {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
+                        <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
+                        <span class="toggle-icon" v-if="errorLogs">
+                            <menu-up v-if="isExpanded" />
+                            <menu-down v-else />
+                        </span>
+                    </div>
+                </template>
+                <div v-if="isExpanded && errorLogs" class="error-stack">
+                    <div v-for="log in errorLogs" :key="log" class="stack-line">
+                        <log-line :level="log.level" :log="log" :exclude-metas="['namespace', 'flowId', 'executionId']" />
+                    </div>
+                    <div class="text-end" v-if="errorLogsMore">
+                        <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
+                            <el-button type="danger" class="mt-3">
+                                {{ $t('homeDashboard.errorLogs') }}
+                            </el-button>
+                        </router-link>
+                    </div>
                 </div>
-            </div>
+            </el-alert>
         </div>
 
         <el-row class="mb-3">
@@ -129,6 +133,10 @@
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
+    import LogLine from "../../components/logs/LogLine.vue"
+    import AlertOutline from "vue-material-design-icons/AlertOutline.vue";
+    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+    import MenuUp from "vue-material-design-icons/MenuUp.vue";
 
     export default {
         components: {
@@ -145,7 +153,11 @@
             DateAgo,
             Labels,
             Crud,
-            KestraCascader
+            KestraCascader,
+            LogLine,
+            AlertOutline,
+            MenuDown,
+            MenuUp
         },
         emits: ["follow"],
         methods: {
@@ -188,33 +200,63 @@
             isFailed() {
                 return State.isFailed(this.execution.state.current);
             },
+            load() {
+                this.$store
+                    .dispatch(
+                        "execution/loadExecution",
+                        this.$route.params
+                    )
+                    .then(() => {
+                        this.fetchErrorLogs();
+                    })
+            },
             fetchErrorLogs() {
-                this.isExpanded = !this.isExpanded;
-                this.$store.dispatch("execution/loadLogs", {
-                    executionId: this.execution.id,
-                    params: {
-                        minLevel: "ERROR"
-                    }
-                })
+                this.$store
+                    .dispatch("execution/loadLogs", {
+                        store: false,
+                        executionId: this.execution.id,
+                        params: {
+                            minLevel: "ERROR"
+                        }
+                    })
+                    .then(response => {
+                        if (response && response.length >= 1) {
+                            this.errorLogsMore = response.length > 3;
+                            this.errorLast = response[response.length - 1];
+                            this.errorLogs = response.slice(1).slice(-3);
+
+                        } else {
+                            this.errorLogs = undefined;
+                            this.errorLogsMore = false;
+                            this.errorLast = undefined;
+                        }
+
+                        console.log(this.errorLast)
+                    })
+            }
+        },
+        mounted() {
+            if (this.isFailed()) {
+                this.fetchErrorLogs();
             }
         },
         watch: {
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
-                    this.$store.dispatch(
-                        "execution/loadExecution",
-                        this.$route.params
-                    );
+                    this.load();
                 }
             }
         },
         data() {
             return {
-                isExpanded: false
+                isExpanded: false,
+                errorLogs: undefined,
+                errorLogsMore: false,
+                errorLast: undefined,
             };
         },
         computed: {
-            ...mapState("execution", ["flow", "execution", "logs"]),
+            ...mapState("execution", ["flow", "execution"]),
             items() {
                 if (!this.execution) {
                     return []
@@ -290,61 +332,6 @@
     align-items: center;
 }
 
-.error-container {
-    background-color:var(--bs-border-color);
-    border: 1px solid #ff6b6b;
-    border-radius: 4px;
-    color: #ffffff;
-    margin: 10px 0 30px 0;
-}
-
-.error-header {
-    background-color: var(--bs-body-bg);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px;
-}
-
-.error-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 10px;
-    color: #ff6b6b;
-}
-
-.error-message {
-    font-weight: bold;
-    flex-grow: 1;
-    color: var(--el-text-color-regular);
-}
-
-.toggle-icon {
-    font-size: 1.2em;
-    color: #ff6b6b;
-    display: flex;
-    align-items: center;
-}
-
-.arrow-icon {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-.error-stack {
-    background-color: var(--bs-body-bg);
-    border-radius: 4px;
-    padding: 10px;
-    overflow-x: auto;
-}
-
-.stack-line {
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    color: var(--el-text-color-regular);
-}
-
 .execution-overview {
     .cascader {
         &::-webkit-scrollbar {
@@ -412,6 +399,72 @@
                 color: var(--el-text-color-regular);
             }
         }
+    }
+}
+
+.el-alert.main-error {
+    background-color: transparent;
+    padding: 0.5rem;
+
+    .el-alert__title {
+        cursor: pointer;
+        font-weight: bold;
+        position: relative;
+        line-height: 2rem;
+        color: var(--bs-body-color);
+        font-size: var(--font-size-sm);
+
+        span {
+            font-weight: normal;
+        }
+
+        > div {
+            padding-right: 3rem;
+        }
+
+        .main-icon.material-design-icon  {
+            color: var(--el-color-danger);
+            font-size: 1.25rem;
+            position: relative;
+            top: 4px;
+            margin-right: 0.75rem;
+        }
+
+        .toggle-icon {
+            position: absolute;
+            color: var(--el-color-danger);
+            right: 1rem;
+            width: 1rem;
+            height: 1rem;
+            font-size: 1.75rem;
+            top: 10%;
+        }
+
+    }
+
+    .el-alert__description {
+        color: var(--bs-body-color);
+    }
+
+    .el-alert__content {
+        width: 100%;
+
+        .error-stack {
+            margin-top: 0.5rem;
+        }
+
+        .text-end {
+            border-top: 1px solid var(--bs-border-color);
+        }
+    }
+}
+
+.stack-line {
+    margin-bottom: 0;
+
+    .line {
+        padding: calc(var(--spacer) / 2);
+        border-top: 1px solid var(--bs-border-color);
     }
 }
 </style>

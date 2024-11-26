@@ -198,7 +198,7 @@
                 }
             },
             isFailed() {
-                return State.isFailed(this.execution.state.current);
+                return this.execution.state.current === State.FAILED;
             },
             load() {
                 this.$store

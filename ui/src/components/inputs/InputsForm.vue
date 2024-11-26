@@ -413,6 +413,7 @@
                     // only revalidate if values have changed
                     if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
                         // only revalidate if values are stable for more than 200ms
+                        // to avoid too many useless calls to the server
                         debounce(this.validateInputs, 200)();
                         this.$emit("update:modelValue", this.inputsValues);
                     }

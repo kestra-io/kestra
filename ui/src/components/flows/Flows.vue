@@ -78,40 +78,6 @@
                     <el-form-item>
                         <filters :storage-key="storageKeys.FLOWS_FILTERS" />
                     </el-form-item>
-                    <el-form-item>
-                        <search-field />
-                    </el-form-item>
-                    <el-form-item>
-                        <namespace-select
-                            :value="selectedNamespace"
-                            data-type="flow"
-                            :disabled="!!namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <scope-filter-buttons
-                            :label="$t('flows')"
-                            :value="$route.query.scope"
-                            @update:model-value="onDataTableValue('scope', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <label-filter
-                            :model-value="$route.query.labels"
-                            @update:model-value="onDataTableValue('labels', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-switch
-                            :model-value="showChart"
-                            @update:model-value="onShowChartChange"
-                            :active-text="$t('show chart')"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <filters :storage-key="storageKeys.FLOWS_FILTERS" />
-                    </el-form-item>
                 </template>
 
                 <template #top>
@@ -647,9 +613,35 @@
     :deep(nav .dropdown-menu) {
         display: flex;
         width: 20rem;
-    }
-
+    }  
     .flow-id {
         min-width: 200px;
     }
+    :deep(.el-select),
+    :deep(.el-select-dropdown),
+    :deep(.label-filter),
+    :deep(.namespace-select),
+    :deep(.search-field) {
+        .el-input__inner,
+        .el-input__wrapper,
+        .el-select-dropdown__item,
+        .el-tag,
+        input {
+            font-size: 16px; 
+        }
+    }
+</style>
+<style>
+.el-table {
+    &.el-table--scrollable-y {
+        .el-table__body-header {
+            height: 55px;
+        }
+    }
+
+    th.el-table__cell,
+    td.el-table__cell {
+        vertical-align: middle;
+    }
+}
 </style>

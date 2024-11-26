@@ -30,7 +30,6 @@
                     </el-form-item>
                     <el-form-item>
                         <refresh-button class="float-right" @refresh="load(onDataLoaded)" />
-                        <refresh-button class="float-right" @refresh="load(onDataLoaded)" />
                     </el-form-item>
                 </template>
                 <template #table>
@@ -502,7 +501,7 @@
         }
     };
 </script>
-<style>
+<style lang="scss">
     .trigger-issue-icon {
         color: var(--bs-warning);
         font-size: 1.4em;

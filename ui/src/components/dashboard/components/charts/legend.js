@@ -1,5 +1,6 @@
 import Utils from "../../../../utils/utils.js";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
     const legendContainer = document.getElementById(id);
@@ -82,9 +83,78 @@ export const barLegend = {
                 : "";
             textContainer.style.textTransform = "capitalize";
 
-            if(!options.uppercase) item.text = item.text.toLowerCase();
-            
+            if (!options.uppercase) item.text = item.text.toLowerCase();
+
             const text = document.createTextNode(item.text);
+            textContainer.appendChild(text);
+
+            li.appendChild(boxSpan);
+            li.appendChild(textContainer);
+            ul.appendChild(li);
+        });
+    },
+};
+
+export const customBarLegend = {
+    id: "customBarLegend",
+    afterUpdate(chart, args, options) {
+        const ul = getOrCreateLegendList(chart, options.containerID);
+
+        while (ul.firstChild) {
+            ul.firstChild.remove();
+        }
+
+        const items = chart.options.plugins.legend.labels.generateLabels(chart);
+
+        const uniqueStatuses = new Set(
+            items
+                .map((item) => chart.data.datasets[item.datasetIndex]?.label)
+                .filter(Boolean),
+        );
+
+        uniqueStatuses.forEach((item) => {
+            const li = document.createElement("li");
+            li.style.alignItems = "center";
+            li.style.cursor = "pointer";
+            li.style.display = "flex";
+            li.style.marginLeft = "20px";
+            li.style.marginTop = "10px";
+
+            li.onclick = () => {
+                chart.data.datasets.forEach((dataset, index) => {
+                    if (dataset.label === item) {
+                        chart.setDatasetVisibility(
+                            index,
+                            !chart.isDatasetVisible(index),
+                        );
+                    }
+                });
+                chart.update();
+            };
+
+            const boxSpan = document.createElement("span");
+            const color = getConsistentHEXColor(item);
+            boxSpan.style.background = color;
+            boxSpan.style.borderColor = "transparent";
+            boxSpan.style.height = "5px";
+            boxSpan.style.width = "5px";
+            boxSpan.style.borderRadius = "50%";
+            boxSpan.style.display = "inline-block";
+            boxSpan.style.marginRight = "10px";
+
+            const textContainer = document.createElement("p");
+            textContainer.style.color =
+                Utils.getTheme() === "dark"
+                    ? "#FFFFFF"
+                    : cssVariable("--bs-gray-700");
+            textContainer.style.margin = 0;
+            // TODO: Improve the strikethrough of clicked items
+            textContainer.style.textDecoration = item.hidden
+                ? "line-through"
+                : "";
+            textContainer.style.textTransform = "capitalize";
+
+            const text = document.createTextNode(item);
             textContainer.appendChild(text);
 
             li.appendChild(boxSpan);

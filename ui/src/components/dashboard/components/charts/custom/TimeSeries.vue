@@ -4,7 +4,7 @@
         v-if="generated.length"
         :data="parsedData"
         :options="options"
-        :plugins="[barLegend]"
+        :plugins="[customBarLegend]"
         class="chart"
     />
     <NoData v-else />
@@ -17,7 +17,7 @@
 
     import {Bar} from "vue-chartjs";
 
-    import {barLegend} from "../legend.js";
+    import {customBarLegend} from "../legend.js";
     import {
         defaultConfig,
         getConsistentHEXColor,
@@ -59,7 +59,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                barLegend: {containerID, uppercase: true},
+                customBarLegend: {containerID, uppercase: true},
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,
@@ -119,35 +119,45 @@
         const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
 
-            return array.reduce((acc, {...params}) => {
-                const label = params[chartOptions.colorByColumn];
+            const {columns} = data;
+            const {column, colorByColumn} = chartOptions;
 
-                if (!acc[label]) {
-                    acc[label] = {
+            // Get the fields for stacks (columns without `agg` and not the xAxis column)
+            const fields = Object.entries(columns)
+                .filter(([key, value]) => !value.agg && key !== column)
+                .map(([key]) => key);
+
+            return array.reduce((acc, {...params}) => {
+                const stack = fields.map((f) => `${f}: ${params[f]}`).join(", ");
+
+                if (!acc[stack]) {
+                    acc[stack] = {
                         type: "bar",
                         yAxisID,
                         data: [],
-                        tooltip: label,
-                        label,
+                        tooltip: stack,
+                        label: params[colorByColumn],
+                        backgroundColor: getConsistentHEXColor(
+                            params[colorByColumn],
+                        ),
                         unique: new Set(),
-                        backgroundColor: getConsistentHEXColor(label),
-                        ...params,
                     };
                 }
 
-                const current = acc[label];
-                const parsed = parseValue(params[chartOptions.column]);
+                const current = acc[stack];
+                const parsedDate = parseValue(params[column]);
 
-                if (!current.unique.has(parsed)) {
-                    current.unique.add(parsed);
+                // Check if the date is already processed
+                if (!current.unique.has(parsedDate)) {
+                    current.unique.add(parsedDate);
                     current.data.push({
-                        date: parsed,
-                        label: parsed,
-                        [field]: params[field],
+                        x: parsedDate,
+                        y: params[field],
                     });
                 } else {
-                    const existing = current.data.find((v) => v.label === parsed);
-                    if (existing) existing[field] += params[field];
+                    // Update existing stack value for the same date
+                    const existing = current.data.find((v) => v.x === parsedDate);
+                    if (existing) existing.y += params[field];
                 }
 
                 return acc;
@@ -157,8 +167,8 @@
         const getData = (field, object = {}) => {
             return Object.values(object).map((dataset) => {
                 const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v) => v.date === xAxisLabel);
-                    return temp ? temp[field] : 0;
+                    const temp = dataset.data.find((v) => v.x === xAxisLabel);
+                    return temp ? temp.y : 0;
                 });
 
                 return {...dataset, data};
@@ -192,50 +202,7 @@
 
     const generated = ref([]);
     onMounted(async () => {
-        generated.value = [
-            {
-                date: "2024-11-26T00:00:00.000+01:00",
-                namespace: "dev_graph",
-                duration: 154.370180698,
-                country: "FR",
-                total: 8.0,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-26T00:00:00.000+01:00",
-                namespace: "dev_graph",
-                duration: 4.335978313,
-                country: "US",
-                total: 1.0,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-26T00:00:00.000+01:00",
-                namespace: "prod_graph",
-                duration: 2.039623763,
-                country: "EN",
-                total: 1.0,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-26T00:00:00.000+01:00",
-                namespace: "prod_graph",
-                duration: 1.920998162,
-                country: "IT",
-                total: 1.0,
-                state: "SUCCESS",
-            },
-            {
-                date: "2024-11-26T00:00:00.000+01:00",
-                namespace: "prod_graph",
-                duration: 155.214094732,
-                country: "FR",
-                total: 9.0,
-                state: "SUCCESS",
-            },
-        ];
-
-        await store.dispatch("dashboard/generate", {
+        generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
             startDate:

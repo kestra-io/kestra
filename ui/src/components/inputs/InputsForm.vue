@@ -282,11 +282,9 @@
                         if (input.type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }
-
                         this.inputs[input.id] = Inputs.normalize(input.type, input.defaults);
                     }
                 }
-                console.log("updateDefaults", JSON.stringify(this.inputs))
             },
             onChange() {
                 this.$emit("update:modelValue", this.inputs);
@@ -371,7 +369,6 @@
                         }
                     },
                 } : undefined
-
             }
         },
         watch: {

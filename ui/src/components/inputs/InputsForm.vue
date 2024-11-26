@@ -187,7 +187,7 @@
 </script>
 <script>
     import {mapState} from "vuex";
-    import {debounce} from "lodash";
+    import {debounce, isEqual} from "lodash";
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
@@ -334,8 +334,6 @@
                     return;
                 }
 
-                console.trace()
-
                 const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
 
                 if (this.flow !== undefined) {
@@ -383,9 +381,11 @@
         },
         watch: {
             inputsValues: {
-                handler() {
-                    debounce(this.validateInputs, 200)();
-                    this.$emit("update:modelValue", this.inputsValues);
+                handler(val, oldVal) {
+                    if(!isEqual(val, oldVal)){
+                        debounce(this.validateInputs, 200)();
+                        this.$emit("update:modelValue", this.inputsValues);
+                    }
                 },
                 deep: true
             },

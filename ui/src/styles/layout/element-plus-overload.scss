@@ -17,7 +17,7 @@
             }
     }
 
-      &:hover {
+    &--default:hover {
         border-color: #890fff !important;
         background-color: #f5f5ff !important;
         color:  black !important;
@@ -69,6 +69,15 @@
         * {
             width: 1.5rem;
             height: 1.5rem;
+        }
+    }
+
+    &--success {
+        #{--el-button-bg-color}: $green-500;
+        #{--el-button-hover-bg-color}: $green-400;
+        html.dark & {
+            #{--el-button-bg-color}: $green-400;
+            #{--el-button-hover-bg-color}: $green-300;
         }
     }
 }

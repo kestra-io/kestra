@@ -934,15 +934,15 @@
     "behavior": "Behavior",
     "concurrency": "Concurrency",
     "concurrency-view": {
-      "title_no_limit": "No limits are set for this Flow.",
+      "title_no_limit": "No limits are set for this flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
     },
     "dependency-view": {
-      "title_no_deps": "No dependencies are set for this Flow.",
+      "title_no_deps": "No dependencies are set for this flow.",
       "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
     },
     "triggers-view": {
-      "title_no_triggers": "Your flow does't have any Triggers.",
+      "title_no_triggers": "Your flow does't have any triggers.",
       "desc_no_triggers": "Read more about <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> in our documentation."
     },
     "open sidebar": "open sidebar",
@@ -982,7 +982,7 @@
       },
       "recent": {
         "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
+        "empty": "You haven't searched for anything."
       },
       "save": {
         "label": "Saved searches",
@@ -995,7 +995,7 @@
         }
       },
       "settings": {
-        "show_chart": "Show main chart"
+        "show_chart": "Show the main chart"
       },
       "labels": {
         "placeholder": "Type label as 'key:value'"
@@ -1005,8 +1005,8 @@
     "items": "items",
     "cron": "Cron",
     "execution failed header": "Execution failed!",
-    "execution failed message": "With last error: <code>{message}</code>",
-    "task run id": "TaskRun ID",
+    "execution failed message": "With the last error: <code>{message}</code>",
+    "task run id": "Task Run ID",
     "active": "Active",
     "flows imported": "Flows imported",
     "flow not imported": "Some flow could not be imported"

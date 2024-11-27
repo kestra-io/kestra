@@ -8,6 +8,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractFilterService<Q> {
     public <F extends Enum<F>> Q addFilters(Q query, Map<F, String> fieldsMapping, List<AbstractFilter<F>> filters) {
+        if (filters == null) {
+            return query;
+        }
+
         AtomicReference<Q> finalQuery = new AtomicReference<>(query);
         filters.forEach(filter ->
             finalQuery.set(

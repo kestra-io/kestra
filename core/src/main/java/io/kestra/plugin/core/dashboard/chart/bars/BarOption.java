@@ -25,10 +25,10 @@ public class BarOption extends ChartOption implements WithLegend, WithTooltip {
     @Builder.Default
     private LegendOption legend = LegendOption.builder().build();
 
-    private String colorByColumn;
+    private String column;
 
     @Override
     public List<String> neededColumns() {
-        return colorByColumn == null ? Collections.emptyList() : List.of(colorByColumn);
+        return column == null ? Collections.emptyList() : List.of(column);
     }
 }

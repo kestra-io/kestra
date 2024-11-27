@@ -65,10 +65,12 @@
             color: var(--el-text-color-regular);
             position: absolute;
             z-index: 1;
-            top: calc(.35 * var(--spacer));
-            right: calc(.5 * var(--spacer));
+            top: 0;
+            right: calc(.15 * var(--spacer));
             display: none;
             gap: calc(.5 * var(--spacer));
+            background-color: var(--el-bg-color);
+            padding: calc(.35 * var(--spacer));
             > span{
                 cursor: pointer;
             }

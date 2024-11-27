@@ -85,7 +85,7 @@
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
             },
             StarOutlineIcon() {
-                return this.starred ? StarIcon : StarOutlineIcon
+                return this.bookmarked ? StarIcon : StarOutlineIcon
             },
             bookmarked() {
                 return this.pages.some(page => page.path === this.currentFavURI)
@@ -128,7 +128,7 @@
                     console.log(this.title, this.breadcrumb)
                     this.$store.dispatch("bookmarks/add", {
                         path: this.currentFavURI,
-                        label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
+                        label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
                     })
                 }
             }

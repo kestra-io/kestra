@@ -5,12 +5,15 @@
         <el-select
             ref="select"
             :model-value="current"
+            value-key="label"
             :placeholder="t('filters.label')"
             allow-create
             filterable
             multiple
             popper-class="filters-select"
+            :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup.enter="() => handleEnterKey(select?.hoverOption.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
@@ -123,6 +126,26 @@
     };
     const dropdowns = ref({...INITIAL_DROPDOWNS});
     const closeDropdown = () => (select.value.dropdownMenuVisible = false);
+
+    const handleEnterKey = (option) => {
+        if (dropdowns.value.first.shown) {
+            const value = includedOptions.value.filter((o) => {
+                let comparator = o.key;
+
+                if (o.key === "timeRange") comparator = "relative_date";
+                if (o.key === "date") comparator = "absolute_date";
+
+                return comparator === option.label;
+            })[0];
+
+            filterCallback(value);
+        } else if (dropdowns.value.second.shown) {
+            comparatorCallback(option);
+        } else if (dropdowns.value.third.shown) {
+            valueCallback(option);
+        }
+    };
+
     const filterCallback = (option) => {
         option.value = {
             label: option.value?.label ?? "Unknown",
@@ -133,6 +156,11 @@
         dropdowns.value.second = {shown: true, index: current.value.length};
 
         current.value.push(option.value);
+
+        // If only one comparator option, automate selection of it
+        if (option.comparators.length === 1) {
+            comparatorCallback(option.comparators[0]);
+        }
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
@@ -144,6 +172,8 @@
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
+
+        select.value.states.hoveringIndex = 0;
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -169,6 +199,8 @@
             // If selection is not multiple, close the dropdown
             closeDropdown();
         }
+
+        triggerSearch();
     };
 
     import action from "../../models/action.js";
@@ -325,6 +357,8 @@
         current.value = current.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
+
+        triggerSearch();
     };
 
     const handleHistoryItems = (value) => {
@@ -359,6 +393,18 @@
 <style lang="scss">
 .filters {
     width: -webkit-fill-available;
+
+    & .el-select {
+        max-width: calc(100% - 237px);
+
+        &.settings {
+            max-width: calc(100% - 285px);
+        }
+
+        &:not(.refresh) {
+            max-width: calc(100% - 189px);
+        }
+    }
 
     & .el-select__placeholder {
         color: var(--bs-gray-700);

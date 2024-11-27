@@ -48,12 +48,12 @@ public interface MultipleConditionStorageInterface {
                 now.truncatedTo(ChronoUnit.MILLIS).plus(timeWindow.getWindow() == null ? Duration.ofDays(1) : timeWindow.getWindow())
             );
             case DAILY_TIME_WINDOW -> Pair.of(
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getStartTime().toSecondOfDay()),
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getEndTime().toSecondOfDay())
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getStartTime().toLocalTime().toSecondOfDay()),
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getEndTime().toLocalTime().toSecondOfDay())
             );
             case DAILY_TIME_DEADLINE -> Pair.of(
                 now.truncatedTo(ChronoUnit.DAYS),
-                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getDeadline().toSecondOfDay())
+                now.truncatedTo(ChronoUnit.DAYS).plusSeconds(timeWindow.getDeadline().toLocalTime().toSecondOfDay())
             );
         };
 

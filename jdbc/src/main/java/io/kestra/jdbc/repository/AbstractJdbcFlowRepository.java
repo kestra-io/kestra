@@ -618,8 +618,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SneakyThrows
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
-        if (flow instanceof FlowWithSource) {
-            flow = ((FlowWithSource) flow).toFlow();
+        if (flow instanceof FlowWithSource flowWithSource) {
+            flow = flowWithSource.toFlow();
         }
 
         // flow exists, return it

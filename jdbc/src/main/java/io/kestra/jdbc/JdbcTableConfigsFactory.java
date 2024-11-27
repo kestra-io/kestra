@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
@@ -115,6 +116,12 @@ public class JdbcTableConfigsFactory {
     @Named("executionqueued")
     public InstantiableJdbcTableConfig executionQueued() {
         return new InstantiableJdbcTableConfig("executionqueued", ExecutionQueued.class, "execution_queued");
+    }
+
+    @Bean
+    @Named("slamonitor")
+    public InstantiableJdbcTableConfig slaMonitor() {
+        return new InstantiableJdbcTableConfig("slamonitor", SLAMonitor.class, "sla_monitor");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

@@ -149,6 +149,7 @@
     "select datetime": "Select a date",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
+    "is required": "{field} is required",
     "error": "Error",
     "form": "Form",
     "form error": "Form error",
@@ -996,6 +997,13 @@
       }
     },
     "item": "item",
-    "items": "items"
+    "items": "items",
+    "cron": "Cron",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
+    "task run id": "TaskRun ID",
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported"
   }
 }

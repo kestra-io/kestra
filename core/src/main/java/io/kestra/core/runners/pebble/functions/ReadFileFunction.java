@@ -67,17 +67,6 @@ public class ReadFileFunction implements Function {
         }
     }
 
-    private boolean calledOnWorker() {
-        if ("WORKER".equals(serverType)) {
-            return true;
-        }
-        if ("STANDALONE".equals(serverType)) {
-            // check that it's called inside a worker thread
-            return Thread.currentThread().getClass().getName().equals("io.kestra.core.runners.Worker$WorkerThread");
-        }
-        return false;
-    }
-
     @SuppressWarnings("unchecked")
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");

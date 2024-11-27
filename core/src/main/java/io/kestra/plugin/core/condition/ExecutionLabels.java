@@ -11,6 +11,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -54,7 +55,7 @@ public class ExecutionLabels extends Condition {
         implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty
-    List<Label> labels;
+    List<@NoSystemLabelValidation Label> labels;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

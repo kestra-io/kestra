@@ -981,7 +981,6 @@
     "showLess": "Показать меньше",
     "documentationMenu": "Меню документации",
     "task run id": "ID выполнения задачи",
-    "execution failed": "Выполнение завершилось с ошибкой, нажмите здесь для получения дополнительных сведений.",
     "optional": "Опционально",
     "active": "Активно",
     "contextBar": {
@@ -990,6 +989,11 @@
       "docs": "Документация",
       "demo": "Получить демонстрацию",
       "help": "Помощь"
-    }
+    },
+    "execution failed header": "Выполнение FAILED!",
+    "execution failed message": "С последней ошибкой: <code>{message}</code>",
+    "flow not imported": "Некоторые flow не удалось импортировать",
+    "flows imported": "Потоки импортированы",
+    "is required": "{field} обязателен для заполнения"
   }
 }

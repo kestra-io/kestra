@@ -24,8 +24,7 @@ public class ValuesFilter implements Filter {
             return null;
         }
 
-        if (input instanceof Map) {
-            Map inputMap = (Map) input;
+        if (input instanceof Map inputMap) {
             return inputMap.values();
         }
 

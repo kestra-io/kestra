@@ -17,7 +17,7 @@
             }
     }
 
-      &:hover {
+    &--default:hover {
         border-color: #890fff !important;
         background-color: #f5f5ff !important;
         color:  black !important;
@@ -69,6 +69,15 @@
         * {
             width: 1.5rem;
             height: 1.5rem;
+        }
+    }
+
+    &--success {
+        #{--el-button-bg-color}: $green-500;
+        #{--el-button-hover-bg-color}: $green-400;
+        html.dark & {
+            #{--el-button-bg-color}: $green-400;
+            #{--el-button-hover-bg-color}: $green-300;
         }
     }
 }
@@ -877,7 +886,12 @@ form.ks-horizontal {
 
     @each $type in $types {
         &.el-alert--#{$type} {
-            border: 1px solid var(--el-color-#{$type}-light-5);
+            border: 1px solid var(--el-color-alert-#{$type});
+            color: var(--el-color-alert-#{$type});
+            @if $type == 'info' {
+                background-color: rgba(14, 59, 154, 0.2);
+                border-color: rgba(23, 97, 253, 1);
+            }
         }
     }
 }

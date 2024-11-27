@@ -874,7 +874,7 @@
     "behavior": "Verhalten",
     "concurrency-view": {
       "desc_no_limit": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a> in unserer Dokumentation.",
-      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
+      "title_no_limit": "Keine Grenzen sind für diesen Flow festgelegt."
     },
     "active-slots": "Aktive Slots",
     "concurrency": "Nebenläufigkeit",
@@ -903,7 +903,7 @@
       "title_no_triggers": "Ihr Flow hat keine Trigger."
     },
     "dependency-view": {
-      "title_no_deps": "Keine Abhängigkeiten sind für diesen Flow festgelegt.",
+      "title_no_deps": "Für diesen Flow sind keine Abhängigkeiten festgelegt.",
       "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
     },
     "create_flow": "Flow erstellen",
@@ -980,7 +980,7 @@
     "showMore": "Mehr anzeigen",
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "documentationMenu": "Dokumentationsmenü",
-    "task run id": "TaskRun-ID",
+    "task run id": "Task Run ID",
     "optional": "Optional",
     "active": "Aktiv",
     "contextBar": {
@@ -991,7 +991,7 @@
       "help": "Hilfe"
     },
     "execution failed header": "Ausführung fehlgeschlagen!",
-    "execution failed message": "Mit letztem Fehler: <code>{message}</code>",
+    "execution failed message": "Mit dem letzten Fehler: <code>{message}</code>",
     "flow not imported": "Einige Flows konnten nicht importiert werden",
     "flows imported": "Flows importiert",
     "is required": "{field} ist erforderlich"

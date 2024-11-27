@@ -874,7 +874,7 @@
     "behavior": "Comportamento",
     "concurrency-view": {
       "desc_no_limit": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> nella nostra documentazione.",
-      "title_no_limit": "Nessun limite è impostato per questo Flow."
+      "title_no_limit": "Nessun limite è impostato per questo flow."
     },
     "active-slots": "Slot attivi",
     "concurrency": "Concurrency",
@@ -903,7 +903,7 @@
       "title_no_triggers": "Il tuo flow non ha alcun trigger."
     },
     "dependency-view": {
-      "title_no_deps": "Nessuna dipendenza è impostata per questo Flow.",
+      "title_no_deps": "Nessuna dipendenza è impostata per questo flow.",
       "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione."
     },
     "create_flow": "Crea Flow",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "Ricerche recenti",
-        "empty": "Non hai ancora cercato nulla."
+        "empty": "Non hai cercato nulla."
       },
       "labels": {
         "placeholder": "Digita l'etichetta come 'key:value'"
@@ -962,7 +962,7 @@
       "empty": "Nessun dato.",
       "label": "Scegli filtri",
       "settings": {
-        "show_chart": "Mostra grafico principale"
+        "show_chart": "Mostra il grafico principale"
       }
     },
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
@@ -980,7 +980,7 @@
     "showMore": "Mostra di più",
     "showLess": "Mostra meno",
     "documentationMenu": "Menu documentazione",
-    "task run id": "ID di TaskRun",
+    "task run id": "ID di esecuzione del Task",
     "optional": "Opzionale",
     "active": "Attivo",
     "contextBar": {
@@ -991,7 +991,7 @@
       "help": "Aiuto"
     },
     "execution failed header": "Esecuzione fallita!",
-    "execution failed message": "Con ultimo errore: <code>{message}</code>",
+    "execution failed message": "Con l'ultimo errore: <code>{message}</code>",
     "flow not imported": "Alcuni flow non possono essere importati",
     "flows imported": "Flussi importati",
     "is required": "{field} è obbligatorio"

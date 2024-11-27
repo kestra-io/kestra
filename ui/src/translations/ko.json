@@ -874,7 +874,7 @@
     "behavior": "동작",
     "concurrency-view": {
       "desc_no_limit": "<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">동시성 제한</a>에 대해 자세히 알아보려면 문서를 참조하십시오.",
-      "title_no_limit": "이 Flow에 대한 제한이 설정되지 않았습니다."
+      "title_no_limit": "이 flow에 대한 제한이 설정되지 않았습니다."
     },
     "active-slots": "활성 슬롯",
     "concurrency": "동시성",
@@ -900,10 +900,10 @@
     "informative notice": "노트(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>에 대한 자세한 내용은 문서를 참조하세요.",
-      "title_no_triggers": "당신의 flow에는 Trigger가 없습니다."
+      "title_no_triggers": "귀하의 flow에는 trigger가 없습니다."
     },
     "dependency-view": {
-      "title_no_deps": "이 Flow에는 종속성이 설정되어 있지 않습니다.",
+      "title_no_deps": "이 flow에는 설정된 종속성이 없습니다.",
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
     },
     "create_flow": "Flow 생성",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "최근 검색",
-        "empty": "아직 아무 것도 검색하지 않았습니다."
+        "empty": "아직 아무것도 검색하지 않았습니다."
       },
       "labels": {
         "placeholder": "'label'을 'key:value'로 입력하세요."
@@ -980,7 +980,7 @@
     "showMore": "더 보기",
     "showLess": "덜 보기",
     "documentationMenu": "문서 메뉴",
-    "task run id": "TaskRun ID",
+    "task run id": "작업 실행 ID",
     "optional": "선택 사항",
     "active": "활성화됨",
     "contextBar": {

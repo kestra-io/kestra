@@ -874,7 +874,7 @@
     "behavior": "Поведение",
     "concurrency-view": {
       "desc_no_limit": "Прочитайте больше о <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> в нашей документации.",
-      "title_no_limit": "Для этого Flow не установлены ограничения."
+      "title_no_limit": "Для этого flow не установлены ограничения."
     },
     "active-slots": "Активные слоты",
     "concurrency": "Конкурентность",
@@ -900,10 +900,10 @@
     "informative notice": "Примечание(я)",
     "triggers-view": {
       "desc_no_triggers": "Узнайте больше о <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> в нашей документации.",
-      "title_no_triggers": "Ваш flow не имеет никаких Triggers."
+      "title_no_triggers": "Ваш flow не имеет никаких triggers."
     },
     "dependency-view": {
-      "title_no_deps": "Для этого Flow зависимости не установлены.",
+      "title_no_deps": "Для этого flow не установлены зависимости.",
       "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
     },
     "create_flow": "Создать Flow",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "Недавние поиски",
-        "empty": "Вы еще ничего не искали."
+        "empty": "Вы ничего не искали."
       },
       "labels": {
         "placeholder": "Введите label как 'key:value'"
@@ -980,7 +980,7 @@
     "showMore": "Показать больше",
     "showLess": "Показать меньше",
     "documentationMenu": "Меню документации",
-    "task run id": "ID выполнения задачи",
+    "task run id": "ID выполнения Task",
     "optional": "Опционально",
     "active": "Активно",
     "contextBar": {

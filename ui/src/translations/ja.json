@@ -874,7 +874,7 @@
     "behavior": "動作",
     "concurrency-view": {
       "desc_no_limit": "ドキュメント内の<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a>について詳しく読む。",
-      "title_no_limit": "このFlowには制限が設定されていません。"
+      "title_no_limit": "このflowには制限が設定されていません。"
     },
     "active-slots": "アクティブスロット",
     "concurrency": "並行性",
@@ -900,10 +900,10 @@
     "informative notice": "注記",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
-      "title_no_triggers": "あなたのflowにはトリガーがありません。"
+      "title_no_triggers": "あなたのflowにはtriggerがありません。"
     },
     "dependency-view": {
-      "title_no_deps": "このFlowには依存関係が設定されていません。",
+      "title_no_deps": "このflowには依存関係が設定されていません。",
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "最近の検索",
-        "empty": "まだ何も検索していません。"
+        "empty": "何も検索していません。"
       },
       "labels": {
         "placeholder": "'label' を 'key:value' と入力してください"
@@ -980,7 +980,7 @@
     "showMore": "もっと表示",
     "showLess": "表示を減らす",
     "documentationMenu": "ドキュメントメニュー",
-    "task run id": "タスクランID",
+    "task run id": "タスク実行ID",
     "optional": "オプション",
     "active": "アクティブ",
     "contextBar": {

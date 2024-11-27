@@ -874,7 +874,7 @@
     "behavior": "Comportamiento",
     "concurrency-view": {
       "desc_no_limit": "Lee más sobre los <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Límites de Concurrencia</a> en nuestra documentación.",
-      "title_no_limit": "No se han establecido límites para este Flow."
+      "title_no_limit": "No se han establecido límites para este flow."
     },
     "active-slots": "Ranuras activas",
     "concurrency": "Concurrente",
@@ -903,7 +903,7 @@
       "title_no_triggers": "Tu flow no tiene ningún trigger."
     },
     "dependency-view": {
-      "title_no_deps": "No se han establecido dependencias para este Flow.",
+      "title_no_deps": "No se han establecido dependencias para este flow.",
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "Búsquedas recientes",
-        "empty": "Todavía no has buscado nada."
+        "empty": "No has buscado nada."
       },
       "labels": {
         "placeholder": "Escriba label como 'key:value'"
@@ -962,7 +962,7 @@
       "empty": "Sin datos.",
       "label": "Elegir filtros",
       "settings": {
-        "show_chart": "Mostrar gráfico principal"
+        "show_chart": "Mostrar el gráfico principal"
       }
     },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
@@ -980,7 +980,7 @@
     "showMore": "Mostrar más",
     "showLess": "Mostrar menos",
     "documentationMenu": "Menú de documentación",
-    "task run id": "ID de TaskRun",
+    "task run id": "ID de Task Run",
     "optional": "Opcional",
     "active": "Activo",
     "contextBar": {

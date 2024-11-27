@@ -874,7 +874,7 @@
     "behavior": "行为",
     "concurrency-view": {
       "desc_no_limit": "了解更多关于<a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">并发限制</a>的信息，请参阅我们的文档。",
-      "title_no_limit": "没有为此 Flow 设置限制。"
+      "title_no_limit": "此flow没有设置限制。"
     },
     "active-slots": "活动槽位",
     "concurrency": "并发",
@@ -900,10 +900,10 @@
     "informative notice": "注意事项",
     "triggers-view": {
       "desc_no_triggers": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>的信息。",
-      "title_no_triggers": "您的 flow 没有任何 triggers。"
+      "title_no_triggers": "您的flow没有任何triggers。"
     },
     "dependency-view": {
-      "title_no_deps": "此 Flow 未设置任何依赖项。",
+      "title_no_deps": "此flow没有设置依赖项。",
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
     "create_flow": "创建Flow",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "最近的搜索",
-        "empty": "您还没有搜索任何内容。"
+        "empty": "您尚未搜索任何内容。"
       },
       "labels": {
         "placeholder": "输入label为'key:value'"
@@ -980,7 +980,7 @@
     "showMore": "显示更多",
     "showLess": "显示较少",
     "documentationMenu": "文档菜单",
-    "task run id": "任务运行 ID",
+    "task run id": "任务运行ID",
     "optional": "可选",
     "active": "活动",
     "contextBar": {
@@ -991,7 +991,7 @@
       "help": "帮助"
     },
     "execution failed header": "执行失败！",
-    "execution failed message": "最后错误：<code>{message}</code>",
+    "execution failed message": "最后的错误是：<code>{message}</code>",
     "flow not imported": "某些flow无法导入",
     "flows imported": "Flow已导入",
     "is required": "{field}是必需的"

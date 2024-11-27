@@ -874,7 +874,7 @@
     "behavior": "Comportement",
     "concurrency-view": {
       "desc_no_limit": "Lisez-en plus sur <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">les limites de Concurrency</a> dans notre documentation.",
-      "title_no_limit": "Aucune limite n'est définie pour ce Flow."
+      "title_no_limit": "Aucune limite n'est définie pour ce flow."
     },
     "active-slots": "Slots actifs",
     "concurrency": "Concurrence",
@@ -903,7 +903,7 @@
       "title_no_triggers": "Votre flow n'a pas de triggers."
     },
     "dependency-view": {
-      "title_no_deps": "Aucune dépendance n'est définie pour ce Flow.",
+      "title_no_deps": "Aucune dépendance n'est définie pour ce flow.",
       "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation."
     },
     "create_flow": "Créer Flow",
@@ -933,7 +933,7 @@
       },
       "recent": {
         "label": "Recherches récentes",
-        "empty": "Vous n'avez pas encore effectué de recherche."
+        "empty": "Vous n'avez rien recherché."
       },
       "labels": {
         "placeholder": "Tapez le label comme 'key:value'"
@@ -980,7 +980,7 @@
     "showMore": "Afficher plus",
     "showLess": "Afficher moins",
     "documentationMenu": "Menu de documentation",
-    "task run id": "ID d'exécution de tâche",
+    "task run id": "ID d'exécution de la tâche",
     "optional": "Optionnel",
     "active": "Actif",
     "contextBar": {

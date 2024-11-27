@@ -18,165 +18,128 @@
         },
         data() {
             return {
-                initialSource: `title: Executions per country
-description: Count executions per country label and execution state
+                initialSource: `title: Overview
+description: Default overview dashboard
 timeWindow:
   default: P30D # P30DT30H
   max: P365D
 
 charts:
-  - id: timeseries_executions
+  - id: executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
-      displayName: Executions per country over time
-      description: Count executions per country label and execution state # optional icon on hover
-      tooltip: ALL # ALL, NONE, SINGLE
+      displayName: Executions
+      description: Executions duration and count per date
       legend:
-        enabled: true # later on possible to extend it e.g. position AUTO, LEFT, RIGHT, TOP, BOTTOM
-      # colorScheme: CLASSIC # PURPLE - TBD - we may sync with the Settings color scheme as in the main dashboard
+        enabled: true
       column: date
       colorByColumn: state
     data:
-      type: io.kestra.plugin.core.dashboard.data.Executions # also: Logs and Metrics available
+      type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
         date:
           field: START_DATE
-          displayName: Execution Date
-        country:
-          field: LABELS
-          labelKey: country
+          displayName: Date
         state:
           field: STATE
-        duration: # left vertical axis
-          displayName: Executions duration
+        total:
+          displayName: Executions
+          agg: COUNT
+          graphStyle: BARS
+        duration:
+          displayName: Duration
           field: DURATION
           agg: SUM
-          graphStyle: LINES # LINES, BARS, POINTS
-        total: # left vertical axis
-          displayName: Total Executions
-          agg: COUNT
-          graphStyle: BARS # LINES, BARS, POINTS
-      where:
-        - field: NAMESPACE
-          type: IN
-          values:
-            - dev_graph
-            - prod_graph
+          graphStyle: LINES
 
-  - id: timeseries_executions_ns
-    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+  - id: executions_pie
+    type: io.kestra.plugin.core.dashboard.chart.Pie
     chartOptions:
-      displayName: Executions per country per namespace over time
-      description: Count executions per country label, execution state and namespace # optional icon on hover
-      tooltip: ALL # ALL, NONE, SINGLE
+      displayName: Total Executions
+      description: Total executions per state
       legend:
-        enabled: true # later on possible to extend it e.g. position AUTO, LEFT, RIGHT, TOP, BOTTOM
-      # colorScheme: CLASSIC # PURPLE - TBD - we may sync with the Settings color scheme as in the main dashboard
-      column: date
+        enabled: true
       colorByColumn: state
     data:
-      type: io.kestra.plugin.core.dashboard.data.Executions # also: Logs and Metrics available
+      type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
+        state:
+          field: STATE
+        total:
+          agg: COUNT
+
+  - id: executions_in_progress
+    type: io.kestra.plugin.core.dashboard.chart.Table
+    chartOptions:
+      displayName: Executions In Progress
+      description: In-Progress executions data
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        id:
+          field: ID
         namespace:
           field: NAMESPACE
-        date:
-          field: START_DATE
-          displayName: Execution Date
-        country:
-          field: LABELS
-          labelKey: country
+        flowId:
+          field: FLOW_ID
+        duration:
+          field: DURATION
         state:
           field: STATE
-        duration: # left vertical axis
-          displayName: Executions duration
-          field: DURATION
-          agg: SUM
-          graphStyle: LINES # LINES, BARS, POINTS
-        total: # left vertical axis
-          displayName: Total Executions
-          agg: COUNT
-          graphStyle: BARS # LINES, BARS, POINTS
       where:
-        - field: NAMESPACE
+        - field: STATE
           type: IN
           values:
-            - dev_graph
-            - prod_graph
-  - id: table_logs
-    type: io.kestra.plugin.core.dashboard.chart.Table
-    chartOptions:
-      displayName: Log count by level for filtered namespace
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Logs # also: Logs and Metrics available
-      columns:
-        level:
-          field: LEVEL
-        count:
-          agg: COUNT
-      where:
-        - field: NAMESPACE
-          type: IN
-          values:
-            - dev_graph
-            - prod_graph
-  - id: table_executions
-    type: io.kestra.plugin.core.dashboard.chart.Table
-    chartOptions:
-      displayName: Executions per country, state and date
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Executions # also: Logs and Metrics available
-      columns:
-        date:
-          field: START_DATE
-          displayName: Execution Date
-        country:
-          field: LABELS
-          labelKey: country
-        state:
-          field: STATE
-        duration: # left vertical axis
-          displayName: Executions duration
-          field: DURATION
-          agg: SUM
-        total: # left vertical axis
-          displayName: Total Executions
-          agg: COUNT
-      where:
-        - field: NAMESPACE
-          type: IN
-          values:
-            - dev_graph
-            - prod_graph
+            - RUNNING
+            - PAUSED
+            - RESTARTED
+            - KILLING
+            - QUEUED
+            - RETRYING
       orderBy:
-        - column: date
-          order: ASC
         - column: duration
           order: DESC
 
-  - id: table_metrics
-    type: io.kestra.plugin.core.dashboard.chart.Table
+  - id: executions_per_namespace_bars
+    type: io.kestra.plugin.core.dashboard.chart.Bar
     chartOptions:
-      displayName: Sum of sales per namespace
+      displayName: Executions (per namespace)
+      description: Executions count per namespace
+      legend:
+        enabled: true
+      column: namespace
     data:
-      type: io.kestra.plugin.core.dashboard.data.Metrics # also: Logs and Metrics available
+      type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
         namespace:
           field: NAMESPACE
-        value:
-          field: VALUE
-          agg: SUM
-      where:
-        - field: NAME
-          type: EQUAL_TO
-          value: sales_count
-        - field: NAMESPACE
-          type: IN
-          values:
-            - dev_graph
-            - prod_graph
-      orderBy:
-        - column: value
-          order: DESC`
+        state:
+          field: STATE
+        total:
+          displayName: Executions
+          agg: COUNT
+
+  - id: logs_timeseries
+    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+    chartOptions:
+      displayName: Logs
+      description: Logs count per date grouped by level
+      legend:
+        enabled: true
+      column: date
+      colorByColumn: level
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Logs
+      columns:
+        date:
+          field: DATE
+          displayName: Execution Date
+        level:
+          field: LEVEL
+        total:
+          displayName: Total Executions
+          agg: COUNT
+          graphStyle: BARS`
             }
         },
         methods: {

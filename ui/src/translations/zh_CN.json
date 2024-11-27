@@ -360,7 +360,7 @@
     },
     "cancel": "取消",
     "homeDashboard": {
-      "title": "仪表板",
+      "title": "概览",
       "today": "今天",
       "yesterday": "昨天",
       "last28Days": "最近28天",
@@ -994,6 +994,7 @@
     "flow not imported": "某些flow无法导入",
     "flows imported": "Flow已导入",
     "is required": "{field}是必需的",
-    "bookmark": "书签"
+    "bookmark": "书签",
+    "dashboards": "仪表板"
   }
 }

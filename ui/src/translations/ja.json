@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "ダッシュボード",
+      "title": "概要",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -994,6 +994,7 @@
     "flow not imported": "一部のflowをインポートできませんでした",
     "flows imported": "フローがインポートされました",
     "is required": "{field} は必須です",
-    "bookmark": "ブックマーク"
+    "bookmark": "ブックマーク",
+    "dashboards": "ダッシュボード"
   }
 }

@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "डैशबोर्ड",
+      "title": "सारांश",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -994,6 +994,7 @@
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
     "flows imported": "फ़्लोज़ आयात किए गए",
     "is required": "{field} आवश्यक है",
-    "bookmark": "बुकमार्क्स"
+    "bookmark": "बुकमार्क्स",
+    "dashboards": "डैशबोर्ड्स"
   }
 }

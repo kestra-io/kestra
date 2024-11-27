@@ -360,7 +360,7 @@
     },
     "cancel": "Annuler",
     "homeDashboard": {
-      "title": "Tableau de bord",
+      "title": "Vue d'ensemble",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "last28Days": "Dernier 28 jours",
@@ -994,6 +994,7 @@
     "flow not imported": "Certains flow n'ont pas pu être importés",
     "flows imported": "Flux importés",
     "is required": "{field} est requis",
-    "bookmark": "Favoris"
+    "bookmark": "Favoris",
+    "dashboards": "Tableaux de bord"
   }
 }

@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
@@ -30,6 +30,9 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
 
     public static Flow createThreadFlow() {
         return createThreadFlow(null);
@@ -71,17 +74,23 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-
+        SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
             .flows();
+
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(schedulerExecutionStateSpy)
+            .findById(any(), any());
 
         // scheduler
         try (
             AbstractScheduler scheduler = new DefaultScheduler(
                 applicationContext,
                 flowListenersServiceSpy,
+                schedulerExecutionStateSpy,
                 triggerState
             );
             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null);

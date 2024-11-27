@@ -36,6 +36,9 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     private SchedulerTriggerStateInterface triggerState;
 
     @Inject
+    private SchedulerExecutionState schedulerExecutionState;
+
+    @Inject
     private FlowListeners flowListenersService;
 
 
@@ -188,6 +191,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         return new DefaultScheduler(
             applicationContext,
             flowListenersServiceSpy,
+            schedulerExecutionState,
             triggerState
         );
     }

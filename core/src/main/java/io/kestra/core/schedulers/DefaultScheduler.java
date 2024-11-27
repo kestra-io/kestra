@@ -36,10 +36,12 @@ public class DefaultScheduler extends AbstractScheduler {
     public DefaultScheduler(
         ApplicationContext applicationContext,
         FlowListenersInterface flowListeners,
+        SchedulerExecutionStateInterface executionState,
         SchedulerTriggerStateInterface triggerState
     ) {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
+        this.executionState = executionState;
 
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);

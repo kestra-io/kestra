@@ -7,7 +7,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.FlowListeners;
-import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -17,13 +16,13 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
@@ -31,6 +30,9 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
 
     private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
@@ -57,6 +59,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(4);
 
         Flow flow = createScheduleFlow();
@@ -74,12 +77,22 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(executionRepositorySpy)
+            .findById(any(), any());
+
+        // start the worker as it execute polling triggers
+        Worker worker = new Worker(applicationContext, 8, null);
+        worker.run();
+
         // scheduler
         try (AbstractScheduler scheduler = new DefaultScheduler(
             applicationContext,
             flowListenersServiceSpy,
-            triggerState);
-             Worker worker = new TestMethodScopedWorker(applicationContext, 8, null)) {
+            executionRepositorySpy,
+            triggerState
+        )) {
             // wait for execution
             Runnable assertionStop = executionQueue.receive(SchedulerConditionTest.class, either -> {
                 Execution execution = either.getLeft();
@@ -96,8 +109,6 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
             scheduler.run();
             queueCount.await(15, TimeUnit.SECONDS);
-            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
-            assertionStop.run();
 
             assertThat(queueCount.getCount(), is(0L));
         }

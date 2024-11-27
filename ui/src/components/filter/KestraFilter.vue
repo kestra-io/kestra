@@ -328,6 +328,8 @@
         current.value = current.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
+
+        triggerSearch();
     };
 
     const handleHistoryItems = (value) => {

@@ -994,6 +994,7 @@
     "execution failed message": "Con el último error: <code>{message}</code>",
     "flow not imported": "Algunos flow no pudieron ser importados",
     "flows imported": "Flujos importados",
-    "is required": "{field} es obligatorio"
+    "is required": "{field} es obligatorio",
+    "bookmark": "Marcador"
   }
 }

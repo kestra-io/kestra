@@ -663,7 +663,7 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    void fetchData() throws IOException {
+    protected void fetchData() throws IOException {
         String tenantId = "data-tenant";
         Execution execution = Execution.builder()
             .tenantId(tenantId)

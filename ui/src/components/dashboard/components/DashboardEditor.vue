@@ -12,7 +12,7 @@
     <el-row>
         <el-col :span="24">
             <editor
-                @save="$emit('save', $event)"
+                @save="source != initialSource ? $emit('save', $event) : undefined"
                 v-model="source"
                 schema-type="dashboard"
                 lang="yaml"

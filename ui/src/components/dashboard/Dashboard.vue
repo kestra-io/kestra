@@ -243,6 +243,7 @@
 
     import Markdown from "../layout/Markdown.vue";
     import TimeSeries from "./components/charts/custom/TimeSeries.vue";
+    import Bar from "./components/charts/custom/Bar.vue";
     import Pie from "./components/charts/custom/Pie.vue";
     import Table from "./components/tables/custom/Table.vue";
 
@@ -308,6 +309,7 @@
     };
     const types = {
         "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
+        "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
         "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
         "io.kestra.plugin.core.dashboard.chart.Table": Table,
         "io.kestra.plugin.core.dashboard.chart.Pie": Pie,

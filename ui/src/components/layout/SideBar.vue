@@ -120,7 +120,7 @@
     const menu = computed(() => {
         return [
             ...(store.state.starred.pages?.length ? [{
-                title: t("starred"),
+                title: t("bookmark"),
                 icon: {
                     element: shallowRef(StarOutline),
                     class: "menu-icon",

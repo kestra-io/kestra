@@ -20,7 +20,7 @@
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
     function deleteBookmark() {
-        $store.dispatch("starred/remove", {
+        $store.dispatch("bookmark/remove", {
             path: props.href
         })
     }
@@ -34,7 +34,7 @@
     }
 
     function renameBookmark() {
-        $store.dispatch("starred/rename", {
+        $store.dispatch("bookmark/rename", {
             path: props.href,
             label: updatedTitle.value
         })

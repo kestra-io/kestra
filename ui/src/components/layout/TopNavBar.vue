@@ -121,12 +121,12 @@
             },
             onStarClick() {
                 if (this.starred) {
-                    this.$store.dispatch("starred/remove", {
+                    this.$store.dispatch("bookmark/remove", {
                         path: this.currentFavURI
                     })
                 } else {
                     console.log(this.title, this.breadcrumb)
-                    this.$store.dispatch("starred/add", {
+                    this.$store.dispatch("bookmark/add", {
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
                     })

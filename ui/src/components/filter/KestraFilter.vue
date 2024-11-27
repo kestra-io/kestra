@@ -10,6 +10,7 @@
             filterable
             multiple
             popper-class="filters-select"
+            :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -169,6 +170,8 @@
             // If selection is not multiple, close the dropdown
             closeDropdown();
         }
+
+        triggerSearch();
     };
 
     import action from "../../models/action.js";
@@ -359,6 +362,18 @@
 <style lang="scss">
 .filters {
     width: -webkit-fill-available;
+
+    & .el-select {
+        max-width: calc(100% - 237px);
+
+        &.settings {
+            max-width: calc(100% - 285px);
+        }
+
+        &:not(.refresh) {
+            max-width: calc(100% - 189px);
+        }
+    }
 
     & .el-select__placeholder {
         color: var(--bs-gray-700);

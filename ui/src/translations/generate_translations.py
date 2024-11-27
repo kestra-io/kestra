@@ -171,19 +171,6 @@ def remove_en_prefix(dictionary, prefix="en|"):
     return {k[len(prefix):]: v for k, v in dictionary.items() if k.startswith(prefix)}
 
 
-def remove_keys_from_dict(main_dict, remove_dict):
-    """
-    Remove keys from `main_dict` if they are present in `remove_dict`.
-    :param main_dict: Dictionary from which keys will be removed
-    :param remove_dict: Dictionary containing keys to be removed from `main_dict`
-    """
-    # Loop through keys in the second dictionary (remove_dict)
-    for key in remove_dict:
-        if key in main_dict:
-            del main_dict[key]  # Remove the key from the main dictionary
-
-
-
 def main(
     language_code,
     target_language,
@@ -194,18 +181,15 @@ def main(
 
     to_translate = get_keys_to_translate(input_file)
     to_translate = remove_en_prefix(to_translate)
+    translated_flat_dict = translate_dict(to_translate, target_language)
+
+    # Merge with the existing translations
     target_flat = flatten_dict(target_dict)
-    # Remove the previously translated keys from the list of keys in the `en.json` update that require translation.
-    remove_keys_from_dict(to_translate, target_flat)
-    if len(to_translate) > 0:
-        translated_flat_dict = translate_dict(to_translate, target_language)
+    target_flat.update(translated_flat_dict)
+    updated_target_dict = unflatten_dict(target_flat)
 
-        # Merge with the existing translations
-        target_flat.update(translated_flat_dict)
-        updated_target_dict = unflatten_dict(target_flat)
-
-        with open(f"ui/src/translations/{language_code}.json", "w") as f:
-            json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
+    with open(f"ui/src/translations/{language_code}.json", "w") as f:
+        json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
@@ -10,21 +9,13 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
-import io.kestra.core.models.tasks.ExecutableTask;
-import io.kestra.core.models.tasks.ExecutionUpdatableTask;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WaitFor;
@@ -38,13 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -1088,22 +1073,31 @@ public class ExecutorService {
      * Then, if there are labels, they are added to the SLA (modifying the executor)
      */
     public Executor processViolation(RunContext runContext, Executor executor, Violation violation) throws QueueException {
+        boolean hasChanged = false;
         Execution newExecution = switch (violation.behavior()) {
             case FAIL -> {
                 runContext.logger().error("Execution failed due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                hasChanged = true;
                 yield markAs(executor.getExecution(), State.Type.FAILED);
             }
-            case CANCEL -> markAs(executor.getExecution(), State.Type.CANCELLED);
+            case CANCEL -> {
+                hasChanged = true;
+                yield markAs(executor.getExecution(), State.Type.CANCELLED);
+            }
             case NONE -> executor.getExecution();
         };
 
-        if (!ListUtils.isEmpty(violation.labels())) {
+        if (!ListUtils.isEmpty(violation.labels()) && !LabelService.containsAll(executor.getExecution().getLabels(), violation.labels())) {
             List<Label> labels = new ArrayList<>(newExecution.getLabels());
             labels.addAll(violation.labels());
+            hasChanged = true;
             newExecution = newExecution.withLabels(labels);
         }
 
-        return executor.withExecution(newExecution, "SLAViolation");
+        if (hasChanged) {
+            return executor.withExecution(newExecution, "SLAViolation");
+        }
+        return executor;
     }
 
     private Execution markAs(Execution execution, State.Type state) throws QueueException {

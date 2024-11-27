@@ -257,6 +257,9 @@
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
+        created() {
+            this.validateInputs();
+        },
         mounted() {
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")

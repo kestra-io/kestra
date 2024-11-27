@@ -14,7 +14,7 @@
                 </slot>
                 <el-button
                     class="star-button"
-                    :class="{'star-active': starred}"
+                    :class="{'star-active': bookmarked}"
                     :icon="StarOutlineIcon"
                     circle
                     @click="onStarClick"
@@ -71,7 +71,7 @@
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
             ...mapState("log", ["logs"]),
-            ...mapState("starred", ["pages"]),
+            ...mapState("bookmarks", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -87,7 +87,7 @@
             StarOutlineIcon() {
                 return this.starred ? StarIcon : StarOutlineIcon
             },
-            starred() {
+            bookmarked() {
                 return this.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
@@ -120,13 +120,13 @@
                 )
             },
             onStarClick() {
-                if (this.starred) {
-                    this.$store.dispatch("bookmark/remove", {
+                if (this.bookmarked) {
+                    this.$store.dispatch("bookmarks/remove", {
                         path: this.currentFavURI
                     })
                 } else {
                     console.log(this.title, this.breadcrumb)
-                    this.$store.dispatch("bookmark/add", {
+                    this.$store.dispatch("bookmarks/add", {
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
                     })

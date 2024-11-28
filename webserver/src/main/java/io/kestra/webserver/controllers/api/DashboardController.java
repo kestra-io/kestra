@@ -69,7 +69,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{id}")
     @Operation(tags = {"Dashboards"}, summary = "Retrieve a dashboard")
-    public DashboardWithSource index(
+    public DashboardWithSource get(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);

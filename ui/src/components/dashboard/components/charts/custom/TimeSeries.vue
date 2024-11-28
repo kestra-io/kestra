@@ -178,7 +178,7 @@
         const yDataset = reducer(generated.value, aggregator[0][0], "y");
         const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
-        const label = aggregator[1][1].displayName ?? aggregator[1][1].field;
+        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
 
         return {
             labels: xAxis,

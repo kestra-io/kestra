@@ -25,7 +25,9 @@ import lombok.With;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -173,7 +175,7 @@ public class DefaultRunContext extends RunContext {
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
-        if (this.isInitialized.get()) {
+        if (this.isInitialized()) {
             //Inject all services
             runContext.init(applicationContext);
         }
@@ -526,12 +528,17 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String version() {
-        return isInitialized.get() ? version.get().getVersion() : null;
+        return this.isInitialized() ? version.get().getVersion() : null;
     }
 
     @Override
     public KVStore namespaceKv(String namespace) {
         return kvStoreService.get(this.flowInfo().tenantId(), namespace, this.flowInfo().namespace());
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return isInitialized.get();
     }
 
     /**

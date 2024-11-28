@@ -15,3 +15,4 @@ CREATE TABLE IF NOT EXISTS dashboards (
     );
 
 CREATE INDEX IF NOT EXISTS dashboards_tenant ON dashboards ("deleted", "tenant_id");
+CREATE INDEX IF NOT EXISTS dashboards_id ON dashboards ("id", "deleted", "tenant_id");

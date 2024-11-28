@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS `dashboards` (
     `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX ix_tenant (deleted, tenant_id),
+    INDEX ix_id (id, deleted, tenant_id),
     FULLTEXT ix_fulltext (title)
     ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -60,7 +60,13 @@
             borderWidth: 2,
             plugins: {
                 ...(chartOptions.legend.enabled
-                    ? {customBarLegend: {containerID, uppercase: true}}
+                    ? {
+                        customBarLegend: {
+                            containerID,
+                            uppercase: true,
+                            length: generated.value.length,
+                        },
+                    }
                     : {}),
                 tooltip: {
                     enabled: true,

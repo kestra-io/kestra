@@ -56,7 +56,12 @@
         defaultConfig({
             plugins: {
                 ...(chartOptions.legend.enabled
-                    ? {totalsLegend: {containerID}}
+                    ? {
+                        totalsLegend: {
+                            containerID,
+                            length: generated.value.length,
+                        },
+                    }
                     : {}),
                 tooltip: {
                     enabled: true,

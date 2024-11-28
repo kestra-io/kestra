@@ -85,6 +85,7 @@
             plugins: {
                 barLegend: {
                     containerID: "logs",
+                    length: props.data.length,
                 },
                 tooltip: {
                     enabled: true,

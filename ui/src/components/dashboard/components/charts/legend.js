@@ -22,7 +22,9 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
 export const barLegend = {
     id: "barLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, args, options, length) {
+        if (!length) return;
+
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul.firstChild) {
@@ -97,7 +99,9 @@ export const barLegend = {
 
 export const customBarLegend = {
     id: "customBarLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, args, options, length) {
+        if (!length) return;
+
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul.firstChild) {
@@ -166,7 +170,9 @@ export const customBarLegend = {
 
 export const totalsLegend = {
     id: "totalsLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, args, options, length) {
+        if (!length) return;
+
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
 
         while (ul.firstChild) {

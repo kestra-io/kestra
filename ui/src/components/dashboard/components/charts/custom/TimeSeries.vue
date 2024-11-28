@@ -4,7 +4,7 @@
         v-if="generated.length"
         :data="parsedData"
         :options="options"
-        :plugins="[customBarLegend]"
+        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
     />
     <NoData v-else />
@@ -59,7 +59,9 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                customBarLegend: {containerID, uppercase: true},
+                ...(chartOptions.legend.enabled
+                    ? {customBarLegend: {containerID, uppercase: true}}
+                    : {}),
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,

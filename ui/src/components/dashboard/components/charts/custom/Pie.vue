@@ -8,7 +8,11 @@
                 v-if="generated.length"
                 :data="parsedData"
                 :options="options"
-                :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
+                :plugins="
+                    chartOptions.legend.enabled
+                        ? [totalsLegend, centerPlugin, thicknessPlugin]
+                        : [centerPlugin, thicknessPlugin]
+                "
                 class="chart"
             />
             <NoData v-else />
@@ -51,7 +55,9 @@
     const options = computed(() =>
         defaultConfig({
             plugins: {
-                totalsLegend: {containerID},
+                ...(chartOptions.legend.enabled
+                    ? {totalsLegend: {containerID}}
+                    : {}),
                 tooltip: {
                     enabled: true,
                     intersect: true,

@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-    // import RunFast from "vue-material-design-icons/RunFast.vue";
+    import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>
 
 <script>

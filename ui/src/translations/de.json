@@ -1001,6 +1001,6 @@
     "custom_dashboard": "Benutzerdefiniertes Dashboard",
     "create_custom_dashboard": "Neues Dashboard erstellen",
     "edit_custom_dashboard": "Dashboard bearbeiten",
-    "custom_dashboard_empty": "Es sind keine Ergebnisse anzuzeigen."
+    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen."
   }
 }

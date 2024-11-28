@@ -1000,7 +1000,7 @@
     "default_dashboard": "Панель по умолчанию",
     "custom_dashboard": "Пользовательская панель управления",
     "create_custom_dashboard": "Создать новую панель управления",
-    "edit_custom_dashboard": "Редактировать панель управления",
+    "edit_custom_dashboard": "Редактировать Dashboard",
     "custom_dashboard_empty": "Нет результатов для отображения."
   }
 }

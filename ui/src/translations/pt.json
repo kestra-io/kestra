@@ -998,7 +998,7 @@
     "dashboards": "Painéis",
     "dashboard_label": "Painel de Controle",
     "default_dashboard": "Painel Padrão",
-    "custom_dashboard": "Painel Personalizado",
+    "custom_dashboard": "Dashboard Personalizado",
     "create_custom_dashboard": "Criar novo dashboard",
     "edit_custom_dashboard": "Editar Dashboard",
     "custom_dashboard_empty": "Não há resultados para serem exibidos."

@@ -998,8 +998,8 @@
     "dashboards": "Tableros de control",
     "dashboard_label": "Tablero de control",
     "default_dashboard": "Tablero Predeterminado",
-    "custom_dashboard": "Tablero Personalizado",
-    "create_custom_dashboard": "Crear nuevo dashboard",
+    "custom_dashboard": "Panel de Control Personalizado",
+    "create_custom_dashboard": "Crear nuevo panel de control",
     "edit_custom_dashboard": "Editar Panel de Control",
     "custom_dashboard_empty": "No hay resultados para mostrar."
   }

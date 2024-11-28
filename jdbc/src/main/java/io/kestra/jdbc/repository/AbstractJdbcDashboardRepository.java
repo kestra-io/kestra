@@ -4,7 +4,6 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.dashboards.DashboardWithSource;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -32,7 +31,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
 
     @Override
-    public Optional<DashboardWithSource> get(String tenantId, String id) {
+    public Optional<Dashboard> get(String tenantId, String id) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -54,8 +53,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                 }
 
                 Dashboard dashboard = jdbcRepository.map(fetched);
-                String source = fetched.get("source_code", String.class);
-                return Optional.of(DashboardWithSource.of(dashboard, source));
+                return Optional.of(dashboard.toBuilder().sourceCode(fetched.get("source_code", String.class)).build());
             });
     }
 
@@ -83,12 +81,9 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public DashboardWithSource save(DashboardWithSource previousDashboard, Dashboard dashboard, String source) throws ConstraintViolationException {
-        if (dashboard instanceof DashboardWithSource dashboardWithSource) {
-            dashboard = dashboardWithSource.toDashboard();
-        }
-
-        if (previousDashboard != null && previousDashboard.equals(DashboardWithSource.of(dashboard, source))) {
+    public Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) throws ConstraintViolationException {
+        dashboard = dashboard.toBuilder().sourceCode(source).build();
+        if (previousDashboard != null && previousDashboard.equals(dashboard)) {
             return previousDashboard;
         }
 
@@ -99,6 +94,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(dashboard);
+        fields.remove(field("sourceCode"));
         fields.put(field("source_code"), source);
 
         this.jdbcRepository.persist(dashboard, fields);
@@ -109,26 +105,27 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
             eventPublisher.publishEvent(new CrudEvent<>(dashboard, previousDashboard, CrudEventType.UPDATE));
         }
 
-        return DashboardWithSource.of(dashboard, source);
+        return dashboard;
     }
 
     @Override
-    public DashboardWithSource delete(String tenantId, String id) {
-        Optional<DashboardWithSource> dashboard = this.get(tenantId, id);
+    public Dashboard delete(String tenantId, String id) {
+        Optional<Dashboard> dashboard = this.get(tenantId, id);
         if (dashboard.isEmpty()) {
             throw new IllegalStateException("Dashboard " + id + " doesn't exists");
         }
 
-        Dashboard deleted = dashboard.get().toDashboard().toDeleted();
+        Dashboard deleted = dashboard.get().toDeleted();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
+        fields.remove(field("sourceCode"));
         fields.put(field("source_code"), dashboard.get().getSourceCode());
 
         this.jdbcRepository.persist(deleted, fields);
 
         eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
 
-        return (DashboardWithSource) dashboard.get().toDeleted();
+        return dashboard.get().toDeleted();
     }
 
     @Override

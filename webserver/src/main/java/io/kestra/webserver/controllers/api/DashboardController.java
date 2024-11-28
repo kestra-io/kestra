@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.dashboards.DashboardWithSource;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.validations.ModelValidator;
@@ -69,7 +68,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{id}")
     @Operation(tags = {"Dashboards"}, summary = "Retrieve a dashboard")
-    public DashboardWithSource get(
+    public Dashboard get(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);
@@ -78,7 +77,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Create a dashboard from yaml source")
-    public HttpResponse<DashboardWithSource> create(
+    public HttpResponse<Dashboard> create(
         @Parameter(description = "The dashboard") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
         Dashboard dashboardParsed = YAML_PARSER.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
@@ -120,11 +119,11 @@ public class DashboardController {
     @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Dashboards"}, summary = "Update a dashboard")
-    public HttpResponse<DashboardWithSource> update(
+    public HttpResponse<Dashboard> update(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The dashboard") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
-        Optional<DashboardWithSource> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
+        Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
@@ -134,7 +133,7 @@ public class DashboardController {
         return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
     }
 
-    protected DashboardWithSource save(DashboardWithSource previousDashboard, Dashboard dashboard, String source) {
+    protected Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) {
         return dashboardRepository.save(previousDashboard, dashboard, source);
     }
 
@@ -170,17 +169,17 @@ public class DashboardController {
         }
 
         String tenantId = tenantService.resolveTenant();
-        DashboardWithSource dashboardWithSource = dashboardRepository.get(tenantId, id).orElse(null);
-        if (dashboardWithSource == null) {
+        Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
+        if (dashboard == null) {
             return null;
         }
 
         Duration windowDuration = Duration.ofSeconds(endDate.minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
-        if (windowDuration.compareTo(dashboardWithSource.getTimeWindow().getMax()) > 0) {
+        if (windowDuration.compareTo(dashboard.getTimeWindow().getMax()) > 0) {
             throw new IllegalArgumentException("The queried window is larger than the max allowed one.");
         }
 
-        Chart<?> chart = dashboardWithSource.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
+        Chart<?> chart = dashboard.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
         if (chart == null) {
             return null;
         }

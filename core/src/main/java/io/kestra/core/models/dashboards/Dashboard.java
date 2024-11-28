@@ -29,34 +29,36 @@ import java.util.Objects;
 public class Dashboard implements HasUID, DeletedInterface {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
-    protected String tenantId;
+    private String tenantId;
 
     @Hidden
-    protected String id;
+    private String id;
 
     @NotNull
     @NotBlank
-    protected String title;
+    private String title;
 
-    protected String description;
+    private String description;
 
     @Valid
     @Builder.Default
-    protected TimeWindow timeWindow = TimeWindow.builder().build();
+    private TimeWindow timeWindow = TimeWindow.builder().build();
 
     @Valid
-    protected List<Chart<?>> charts;
+    private List<Chart<?>> charts;
 
     @Hidden
     @NotNull
     @Builder.Default
-    protected boolean deleted = false;
+    private boolean deleted = false;
 
     @Hidden
-    protected Instant created;
+    private Instant created;
 
     @Hidden
-    protected Instant updated;
+    private Instant updated;
+
+    private String sourceCode;
 
     @Override
     @JsonIgnore
@@ -78,11 +80,11 @@ public class Dashboard implements HasUID, DeletedInterface {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Dashboard dashboard = (Dashboard) o;
-        return deleted == dashboard.deleted && Objects.equals(tenantId, dashboard.tenantId) && Objects.equals(id, dashboard.id) && Objects.equals(title, dashboard.title) && Objects.equals(description, dashboard.description) && Objects.equals(timeWindow, dashboard.timeWindow) && Objects.equals(charts, dashboard.charts);
+        return deleted == dashboard.deleted && Objects.equals(tenantId, dashboard.tenantId) && Objects.equals(id, dashboard.id) && Objects.equals(title, dashboard.title) && Objects.equals(description, dashboard.description) && Objects.equals(timeWindow, dashboard.timeWindow) && Objects.equals(charts, dashboard.charts) && Objects.equals(sourceCode, dashboard.sourceCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tenantId, id, title, description, timeWindow, charts, deleted);
+        return Objects.hash(tenantId, id, title, description, timeWindow, charts, deleted, sourceCode);
     }
 }

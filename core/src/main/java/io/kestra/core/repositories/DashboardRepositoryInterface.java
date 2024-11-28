@@ -2,7 +2,6 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.dashboards.DashboardWithSource;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.micronaut.data.model.Pageable;
@@ -17,17 +16,17 @@ import java.util.Optional;
 public interface DashboardRepositoryInterface {
     Boolean isEnabled();
 
-    Optional<DashboardWithSource> get(String tenantId, String id);
+    Optional<Dashboard> get(String tenantId, String id);
 
     ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query);
 
-    default DashboardWithSource save(Dashboard dashboard, String source) {
+    default Dashboard save(Dashboard dashboard, String source) {
         return this.save(null, dashboard, source);
     }
 
-    DashboardWithSource save(@Nullable DashboardWithSource previousDashboard, Dashboard dashboard, String source);
+    Dashboard save(@Nullable Dashboard previousDashboard, Dashboard dashboard, String source);
 
-    DashboardWithSource delete(String tenantId, String id);
+    Dashboard delete(String tenantId, String id);
 
     <F extends Enum<F>> List<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException;
 }

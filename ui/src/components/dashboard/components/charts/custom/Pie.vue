@@ -119,7 +119,7 @@
             (result, [key, column]) => {
                 const type = "agg" in column ? "value" : "field";
                 result[type] = {
-                    label: column.displayName,
+                    label: column.displayName ?? column.agg,
                     key,
                 };
                 return result;

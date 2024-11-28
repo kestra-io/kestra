@@ -107,11 +107,12 @@
     }
 
     .el-card {
-        background-color: var(--bs-gray-100);
+        background-color: var(--card-bg);
         border-color: var(--el-border-color);
         box-shadow: var(--el-box-shadow);
         position: relative;
-        height: 100%;
+        min-width: 250px;
+        flex: 1;
         cursor: pointer;
 
         &:deep(.el-card__header) {

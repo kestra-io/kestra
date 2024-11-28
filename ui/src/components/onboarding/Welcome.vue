@@ -46,7 +46,7 @@
                         Watch Video
                     </el-button>
                 </div>
-                <div class="container mb-3">
+                <div class="mid-bar mb-3">
                     <div class="title title--center-line">
                         {{ $t("homeDashboard.guide") }}
                     </div>
@@ -119,6 +119,7 @@
         width: auto;
         display: flex;
         flex-direction: column;
+        container-type: inline-size;
 
         @media (min-width: 768px) {
             padding: 3rem 2rem 1rem;
@@ -190,9 +191,8 @@
             }
         }
 
-        .container {
+        .mid-bar {
             margin-top: 50px;
-            width: 76%;
 
             .title {
                 font-weight: 500;
@@ -226,13 +226,13 @@
         }
     }
 
-    @media only screen and (max-width: 1024px) {
+    @container (max-width: 20px) {
         .main .section-1 .section-1-main {
             width: 90%;
         }
     }
 
-    @media only screen and (max-width: 600px) {
+    @container (max-width: 50px) {
         .main .section-1 .section-1-main {
             padding-top: 30px;
         }

@@ -1,4 +1,12 @@
 import {useI18n} from "vue-i18n";
+import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import TagOutline from "vue-material-design-icons/TagOutline.vue";
+import MathLog from "vue-material-design-icons/MathLog.vue";
+import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
+import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
+import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
+import StateMachine from "vue-material-design-icons/StateMachine.vue";
+import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
 
 const getItem = (key) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -69,48 +77,56 @@ export function useFilters(prefix) {
     const OPTIONS = [
         {
             key: "namespace",
+            icon: DotsSquare,
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
             comparators: [COMPARATORS.STARTS_WITH],
         },
         {
             key: "state",
+            icon: StateMachine,
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "scope",
+            icon: FilterSettingsOutline,
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "labels",
+            icon: TagOutline,
             label: t("filters.options.labels"),
             value: {label: "labels", comparator: undefined, value: []},
             comparators: [COMPARATORS.CONTAINS],
         },
         {
             key: "childFilter",
+            icon: FilterVariantMinus,
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "level",
+            icon: MathLog,
             label: t("filters.options.level"),
             value: {label: "level", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "timeRange",
+            icon: CalendarRangeOutline,
             label: t("filters.options.relative_date"),
             value: {label: "relative_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.IN],
         },
         {
             key: "date",
+            icon: CalendarEndOutline,
             label: t("filters.options.absolute_date"),
             value: {label: "absolute_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.BETWEEN],

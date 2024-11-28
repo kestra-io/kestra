@@ -34,7 +34,10 @@
                     :value="option.value"
                     :label="option.label"
                     @click="() => filterCallback(option)"
-                />
+                >
+                    <component v-if="option.icon" :is="option.icon" class="me-2" />
+                    <span>{{ option.label }}</span>
+                </el-option>
             </template>
             <template v-else-if="dropdowns.second.shown">
                 <el-option
@@ -155,7 +158,6 @@
     };
 
     const filterCallback = (option) => {
-        console.log(option);
         if (!option.value) {
             triggerEnter.value = false;
             return;
@@ -483,6 +485,10 @@
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
+    }
+
+    & .el-select-dropdown__item .material-design-icon {
+        bottom: -0.15rem;
     }
 }
 </style>

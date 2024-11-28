@@ -141,6 +141,7 @@ public class Extension extends AbstractExtension {
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new PrintContextFunction());
+        functions.put("fetchContext", new FetchContextFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
         if (this.errorLogsFunction != null) {

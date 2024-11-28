@@ -10,7 +10,7 @@
             </ul>
         </template>
     </top-nav-bar>
-    <div class="main d-flex w-auto">
+    <div class="main">
         <div class="section-1">
             <div class="section-1-main">
                 <div class="section-content">
@@ -110,20 +110,26 @@
 <style scoped lang="scss">
 
     .main {
-        margin: 3rem 1rem 1rem;
-        padding: 10px 0;
-
+        padding: 3rem 1rem 1rem;
+        background: var(--el-text-color-primary);
+        background: radial-gradient(ellipse at top, rgba(102,51,255,0.6) 0%, rgba(253, 253, 253, 0) 20%);
+        background-size: 4000px;
+        background-position: center;
+        height: 100%;
+        width: auto;
+        display: flex;
+        flex-direction: column;
 
         @media (min-width: 768px) {
-            margin: 3rem 2rem 1rem;
+            padding: 3rem 2rem 1rem;
         }
 
         @media (min-width: 992px) {
-            margin: 3rem 3rem 1rem;
+            padding: 3rem 3rem 1rem;
         }
 
         @media (min-width: 1920px) {
-            margin: 3rem 10rem 1rem;
+            padding: 3rem 10rem 1rem;
         }
     }
 
@@ -155,14 +161,9 @@
 
     .main .section-1 {
         display: flex;
-        flex: auto;
-        background: var(--el-text-color-primary);
-        background: linear-gradient(180deg, rgba(102,51,255,0.6) 0%, rgba(253, 253, 253, 0) 47%);
-        flex-wrap: wrap;
-        background-size: cover;
-        background-position: center;
+        flex-grow: 1;
         justify-content: center;
-        background-repeat: no-repeat;
+        align-items: center;
         border-radius: var(--bs-border-radius);
     }
     .section-1-main {
@@ -186,10 +187,6 @@
                 font-size: 1rem;
                 text-align: center;
                 color: var(--el-text-color-regular);
-            }
-
-            .section-1-img {
-                margin-top: 70px;
             }
         }
 

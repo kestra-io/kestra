@@ -128,16 +128,6 @@
                                 </router-link>
                             </template>
                         </el-table-column>
-
-                        <el-table-column v-if="visibleColumns.executionCurrentState" :label="$t('state')">
-                            <template #default="scope">
-                                <status
-                                    v-if="scope.row.executionCurrentState"
-                                    :status="scope.row.executionCurrentState"
-                                    size="small"
-                                />
-                            </template>
-                        </el-table-column>
                         <el-table-column v-if="visibleColumns.workerId" prop="workerId" :label="$t('workerId')">
                             <template #default="scope">
                                 <id
@@ -273,7 +263,6 @@
     import RefreshButton from "../layout/RefreshButton.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import Status from "../Status.vue";
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
@@ -288,7 +277,6 @@
             SearchField,
             NamespaceSelect,
             DateAgo,
-            Status,
             Id,
             LogsWrapper
         },

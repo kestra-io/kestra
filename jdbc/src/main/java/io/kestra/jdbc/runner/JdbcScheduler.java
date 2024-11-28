@@ -31,10 +31,10 @@ import java.util.function.BiConsumer;
 public class JdbcScheduler extends AbstractScheduler {
     private final QueueInterface<Execution> executionQueue;
     private final TriggerRepositoryInterface triggerRepository;
-    private final ConditionService conditionService;
 
     private final FlowRepositoryInterface flowRepository;
     private final JooqDSLContextWrapper dslContextWrapper;
+    private final ConditionService conditionService;
 
 
     @SuppressWarnings("unchecked")
@@ -48,6 +48,7 @@ public class JdbcScheduler extends AbstractScheduler {
         executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         triggerRepository = applicationContext.getBean(AbstractJdbcTriggerRepository.class);
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
+        executionState = applicationContext.getBean(SchedulerExecutionState.class);
         conditionService = applicationContext.getBean(ConditionService.class);
         flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
@@ -74,14 +75,6 @@ public class JdbcScheduler extends AbstractScheduler {
                             .findByExecution(execution)
                             .ifPresent(trigger -> {
                                 this.triggerState.update(trigger.resetExecution(execution.getState().getCurrent()));
-                            });
-                    } else {
-                        // update execution state on each state change so the scheduler knows the execution is running
-                        triggerRepository
-                            .findByExecution(execution)
-                            .filter(trigger -> execution.getState().getCurrent() != trigger.getExecutionCurrentState())
-                            .ifPresent(trigger -> {
-                                ((JdbcSchedulerTriggerState) this.triggerState).updateExecution(Trigger.of(execution, trigger));
                             });
                     }
                 }

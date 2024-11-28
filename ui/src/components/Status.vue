@@ -32,9 +32,9 @@
         computed: {
             style() {
                 return {
-                    color: `var(--content-color-${this.status.toLowerCase()})`,
-                    "border-color": `var(--border-color-${this.status.toLowerCase()})`,
-                    "background-color": `var(--background-color-${this.status.toLowerCase()})`
+                    color: `var(--content-color-${this.status.toLowerCase()}) !important`,
+                    "border-color": `var(--border-color-${this.status.toLowerCase()}) !important`,
+                    "background-color": `var(--background-color-${this.status.toLowerCase()}) !important`
                 }
             },
             icon() {
@@ -48,6 +48,7 @@
         white-space: nowrap;
         border-radius: var(--el-border-radius-base);
         width: 7rem;
+        cursor: default;
 
         &.no-label {
             padding: 0.5rem;

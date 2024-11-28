@@ -254,25 +254,19 @@
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
 
             this.validateInputs().then(() => {
-                // wait for vuex to set the flow or execution
-                // before watching for changes
-                setTimeout(() => {
-                    this.$watch("flow", this.validateInputs);
-                    this.$watch("execution", this.validateInputs);
-                    this.$watch("inputsValues", {
-                        handler(val) {
-                            // only revalidate if values have changed
-                            if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                                // only revalidate if values are stable for more than 200ms
-                                // to avoid too many useless calls to the server
-                                debounce(this.validateInputs, 200)();
-                                this.$emit("update:modelValue", this.inputsValues);
-                            }
-                            this.previousInputsValues = JSON.parse(JSON.stringify(val))
-                        },
-                        deep: true
-                    });
-                }, 10)
+                this.$watch("inputsValues", {
+                    handler(val) {
+                        // only revalidate if values have changed
+                        if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                            // only revalidate if values are stable for more than 200ms
+                            // to avoid too many useless calls to the server
+                            debounce(this.validateInputs, 200)();
+                            this.$emit("update:modelValue", this.inputsValues);
+                        }
+                        this.previousInputsValues = JSON.parse(JSON.stringify(val))
+                    },
+                    deep: true
+                });
             });
         },
         mounted() {
@@ -412,6 +406,15 @@
                         callback()
                     },
                 } : undefined
+            }
+        },
+        watch: {
+            flow () {
+                this.validateInputs();
+
+            },
+            execution () {
+                this.validateInputs();
             }
         }
     };

@@ -169,7 +169,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     Trigger current = optionalTrigger.get();
                     current = current.toBuilder()
                         .executionId(trigger.getExecutionId())
-                        .executionCurrentState(trigger.getExecutionCurrentState())
                         .updatedDate(trigger.getUpdatedDate())
                         .build();
                     this.save(context, current);

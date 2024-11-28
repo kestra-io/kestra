@@ -34,8 +34,8 @@
             </el-col>
             <el-col :span="12" class="d-flex gap-2 justify-content-end">
                 <set-labels :execution="execution" />
-                <restart is-replay :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <pause :execution="execution" />

@@ -5,13 +5,14 @@
         transition=""
         :hide-after="0"
         :content="$t('force run tooltip')"
+        v-if="enabled"
         raw-content
     >
         <component
             :is="component"
             :icon="RunFast"
             @click="click"
-            v-if="enabled"
+
             class="ms-0 me-1"
         >
             {{ $t('force run') }}

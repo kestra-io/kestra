@@ -1,7 +1,7 @@
 <template>
     <template v-if="initialInputs">
         <el-form-item
-            v-for="input in filteredInputs || []"
+            v-for="input in inputsMetaData || []"
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
@@ -204,24 +204,12 @@
             },
             inputErrors() {
                 // we only keep errors that don't target an input directly
-                const keepErrors = this.inputsMetaData.filter(it => it.inputId === undefined);
+                const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
 
                 return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
                     keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
                     null
-            },
-            filteredInputs(){
-                const inputVisibility = this.inputsMetaData.reduce((acc, it) => {
-                    acc[it.inputId] = it.enabled;
-                    return acc;
-                }, {});
-                return this.initialInputs.filter(it => inputVisibility[it.id]);
-            },
-            /**
-             * To be able to compare values in a watcher, we need to return a new object
-             * We cannot compare proxied objects
-             * https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
-             */
+            }
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -249,6 +237,11 @@
         data() {
             return {
                 inputsValues: this.modelValue,
+                /**
+                 * To be able to compare values in a watcher, we need to return a new object
+                 * We cannot compare proxied objects, that is the sole purpose of this variable.
+                 * @see https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
+                 */
                 previousInputsValues: {},
                 inputsMetaData: [],
                 inputsValidation: [],
@@ -258,26 +251,22 @@
         },
         emits: ["update:modelValue", "confirm", "validation"],
         created() {
+            this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
+
             this.validateInputs().then(() => {
-                // wait for vuex to set the flow or execution
-                // before watching for changes
-                setTimeout(() => {
-                    this.$watch("flow", this.validateInputs);
-                    this.$watch("execution", this.validateInputs);
-                    this.$watch("inputsValues", {
-                        handler(val) {
-                            // only revalidate if values have changed
-                            if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                                // only revalidate if values are stable for more than 200ms
-                                // to avoid too many useless calls to the server
-                                debounce(this.validateInputs, 200)();
-                                this.$emit("update:modelValue", this.inputsValues);
-                            }
-                            this.previousInputsValues = JSON.parse(JSON.stringify(val))
-                        },
-                        deep: true
-                    });
-                }, 10)
+                this.$watch("inputsValues", {
+                    handler(val) {
+                        // only revalidate if values have changed
+                        if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                            // only revalidate if values are stable for more than 500ms
+                            // to avoid too many calls to the server
+                            debounce(this.validateInputs, 500)();
+                            this.$emit("update:modelValue", this.inputsValues);
+                        }
+                        this.previousInputsValues = JSON.parse(JSON.stringify(val))
+                    },
+                    deep: true
+                });
             });
         },
         mounted() {
@@ -310,8 +299,8 @@
                 }
 
                 const errors = this.inputsMetaData
-                    .filter(({inputId, errors}) => {
-                        return inputId === id && errors && errors.length > 0;
+                    .filter((it) => {
+                        return it.id === id && it.errors && it.errors.length > 0;
                     })
                     .map(it => it.errors.map(err => err.message).join("\n"))
 
@@ -319,12 +308,12 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    if (this.inputsValues[input.inputId] === undefined || this.inputsValues[input.inputId] === null) {
-                        const {type, defaults} = this.initialInputs.find(it => it.id === input.inputId);
+                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
+                        const {type, defaults} = input;
                         if (type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }
-                        this.inputsValues[input.inputId] = Inputs.normalize(type, defaults);
+                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
                     }
                 }
             },
@@ -340,7 +329,7 @@
                 this.$emit("confirm");
             },
             onMultiSelectChange(input, e) {
-                this.inputsValues[input.id] = JSON.stringify(e).toString();
+                this.inputsValues[input.id] = JSON.stringify(e);
                 this.onChange(input);
             },
             onFileChange(input, e) {
@@ -372,20 +361,20 @@
                 } else return false;
             },
             async validateInputs() {
-                if (this.initialInputs === undefined || this.initialInputs.length === 0) {
+                if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
+                const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
 
                 const metadataCallback = (response) => {
-                    this.inputsMetaData = response.inputs.map(it => {
-                        return {
-                            inputId: it.input?.id,
-                            enabled: it.enabled,
-                            errors: it.errors
+                    console.log("metadataCallback", response.inputs);
+                    this.inputsMetaData = response.inputs.reduce((acc,it) => {
+                        if(it.enabled){
+                            acc.push({...it.input, errors: it.errors});
                         }
-                    })
+                        return acc;
+                    }, [])
                     this.updateDefaults();
                 }
 
@@ -418,6 +407,15 @@
                         callback()
                     },
                 } : undefined
+            }
+        },
+        watch: {
+            flow () {
+                this.validateInputs();
+
+            },
+            execution () {
+                this.validateInputs();
             }
         }
     };

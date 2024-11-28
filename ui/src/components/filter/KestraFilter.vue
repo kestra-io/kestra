@@ -342,7 +342,15 @@
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
-        return OPTIONS.filter((o) => props.include.includes(o.value?.label));
+        const dates = ["relative_date", "absolute_date"];
+
+        const found = current.value?.find((v) => dates.includes(v?.label));
+        const exclude = found ? dates.find((date) => date !== found.label) : null;
+
+        return OPTIONS.filter((o) => {
+            const label = o.value?.label;
+            return props.include.includes(label) && label !== exclude;
+        });
     });
 
     const changeCallback = (v) => {

@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -87,7 +88,10 @@ public class FlowTriggerService {
                                 multipleCondition
                             )
                         )
-                ).toList();
+                )
+                // avoid evaluating expired windows (for ex for daily time window or deadline)
+                .filter(flowWithFlowTriggerAndMultipleCondition -> flowWithFlowTriggerAndMultipleCondition.getMultipleConditionWindow().isValid(ZonedDateTime.now()))
+                .toList();
 
             // evaluate multiple conditions
             multipleConditionWindowsByFlow = flowWithMultipleConditionsToEvaluate.stream().map(f -> {

@@ -1,13 +1,14 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :icon="icon" :size="size" :class="cls">
+    <div data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :size="size" :class="cls" :style="style">
         <template v-if="label">
-            {{ title || $filters.cap($filters.lower(status)) }}
+            {{ title || $filters.cap(status) }}
         </template>
-    </el-button>
+    </div>
 </template>
 
 <script>
     import State from "../utils/state";
+    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
     export default {
         props: {
@@ -30,11 +31,11 @@
         },
         emits: ["click"],
         computed: {
-            cls() {
-                const bg = "status-" + State.colorClass()[this.status];
+            style() {
                 return {
-                    "no-label": !this.label,
-                    [bg]: true,
+                    color: cssVariable(`--content-color-${this.status.toLowerCase()}`),
+                    "border-color": cssVariable(`--border-color-${this.status.toLowerCase()}`),
+                    "background-color": cssVariable(`--background-color-${this.status.toLowerCase()}`)
                 }
             },
             icon() {
@@ -44,16 +45,11 @@
     };
 </script>
 <style scoped lang="scss">
-    .el-button {
-        white-space: nowrap;
-
-        &.no-label {
-            padding: 8px;
-            line-height: 1;
-        }
-
-        &:not(.no-label) {
-            border-radius: var(--bs-border-radius-pill);
-        }
+    .status {
+        display: flex;
+        justify-content: center;
+        border: 1px solid;
+        border-radius: 4px;
+        width: 6rem;
     }
 </style>

@@ -995,6 +995,12 @@
     "flows imported": "フローがインポートされました",
     "is required": "{field} は必須です",
     "bookmark": "ブックマーク",
-    "dashboards": "ダッシュボード"
+    "dashboards": "ダッシュボード",
+    "dashboard_label": "ダッシュボード",
+    "default_dashboard": "デフォルトダッシュボード",
+    "custom_dashboard": "カスタムダッシュボード",
+    "create_custom_dashboard": "新しいダッシュボードを作成",
+    "edit_custom_dashboard": "ダッシュボードを編集",
+    "custom_dashboard_empty": "表示する結果がありません。"
   }
 }

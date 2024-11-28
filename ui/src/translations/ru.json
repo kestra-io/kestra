@@ -995,6 +995,12 @@
     "flows imported": "Потоки импортированы",
     "is required": "{field} обязателен для заполнения",
     "bookmark": "Закладки",
-    "dashboards": "Панели управления"
+    "dashboards": "Панели управления",
+    "dashboard_label": "Панель управления",
+    "default_dashboard": "Панель по умолчанию",
+    "custom_dashboard": "Пользовательская панель управления",
+    "create_custom_dashboard": "Создать новую панель управления",
+    "edit_custom_dashboard": "Редактировать панель управления",
+    "custom_dashboard_empty": "Нет результатов для отображения."
   }
 }

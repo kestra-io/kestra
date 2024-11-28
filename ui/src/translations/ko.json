@@ -995,6 +995,12 @@
     "flows imported": "Flow가 가져왔습니다.",
     "is required": "{field}는 필수 항목입니다.",
     "bookmark": "북마크",
-    "dashboards": "대시보드"
+    "dashboards": "대시보드",
+    "dashboard_label": "대시보드",
+    "default_dashboard": "기본 대시보드",
+    "custom_dashboard": "사용자 정의 대시보드",
+    "create_custom_dashboard": "새 대시보드 생성",
+    "edit_custom_dashboard": "대시보드 편집",
+    "custom_dashboard_empty": "결과가 표시되지 않습니다."
   }
 }

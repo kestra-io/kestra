@@ -995,6 +995,12 @@
     "flows imported": "Flux importés",
     "is required": "{field} est requis",
     "bookmark": "Favoris",
-    "dashboards": "Tableaux de bord"
+    "dashboards": "Tableaux de bord",
+    "dashboard_label": "Tableau de bord",
+    "default_dashboard": "Tableau de bord par défaut",
+    "custom_dashboard": "Tableau de bord personnalisé",
+    "create_custom_dashboard": "Créer un nouveau tableau de bord",
+    "edit_custom_dashboard": "Modifier le tableau de bord",
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher."
   }
 }

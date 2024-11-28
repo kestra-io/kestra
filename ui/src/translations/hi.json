@@ -995,6 +995,12 @@
     "flows imported": "फ़्लोज़ आयात किए गए",
     "is required": "{field} आवश्यक है",
     "bookmark": "बुकमार्क्स",
-    "dashboards": "डैशबोर्ड्स"
+    "dashboards": "डैशबोर्ड्स",
+    "dashboard_label": "डैशबोर्ड",
+    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
+    "custom_dashboard": "कस्टम डैशबोर्ड",
+    "create_custom_dashboard": "नया डैशबोर्ड बनाएँ",
+    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
   }
 }

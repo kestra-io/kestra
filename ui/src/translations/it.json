@@ -995,6 +995,12 @@
     "flows imported": "Flussi importati",
     "is required": "{field} è obbligatorio",
     "bookmark": "Segnalibri",
-    "dashboards": "Dashboard"
+    "dashboards": "Dashboard",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Dashboard Predefinito",
+    "custom_dashboard": "Dashboard Personalizzato",
+    "create_custom_dashboard": "Crea nuovo dashboard",
+    "edit_custom_dashboard": "Modifica Dashboard",
+    "custom_dashboard_empty": "Non ci sono risultati da mostrare."
   }
 }

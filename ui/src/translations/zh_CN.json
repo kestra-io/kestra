@@ -995,6 +995,12 @@
     "flows imported": "Flow已导入",
     "is required": "{field}是必需的",
     "bookmark": "书签",
-    "dashboards": "仪表板"
+    "dashboards": "仪表板",
+    "dashboard_label": "仪表板",
+    "default_dashboard": "默认仪表板",
+    "custom_dashboard": "自定义仪表板",
+    "create_custom_dashboard": "创建新仪表板",
+    "edit_custom_dashboard": "编辑仪表板",
+    "custom_dashboard_empty": "没有结果显示。"
   }
 }

@@ -995,6 +995,12 @@
     "flows imported": "Zaimportowane flows",
     "is required": "Pole {field} jest wymagane",
     "bookmark": "Zakładki",
-    "dashboards": "Panele sterowania"
+    "dashboards": "Panele sterowania",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Domyślny Dashboard",
+    "custom_dashboard": "Niestandardowy Dashboard",
+    "create_custom_dashboard": "Utwórz nowy dashboard",
+    "edit_custom_dashboard": "Edytuj Dashboard",
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia."
   }
 }

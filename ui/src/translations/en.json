@@ -1010,6 +1010,12 @@
     "task run id": "TaskRun ID",
     "active": "Active",
     "flows imported": "Flows imported",
-    "flow not imported": "Some flow could not be imported"
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboard",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown."
   }
 }

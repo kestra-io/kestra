@@ -1,15 +1,28 @@
 <template>
-    <el-table :id="containerID" v-if="generated.length" :data="generated">
-        <el-table-column
-            v-for="(column, index) in sortedColumns"
-            :key="index"
-            :label="column"
-        >
-            <template #default="scope">
-                {{ scope.row[column] }}
-            </template>
-        </el-table-column>
-    </el-table>
+    <template v-if="generated.length">
+        <el-table :id="containerID" :data="paginatedData">
+            <el-table-column
+                v-for="(column, index) in sortedColumns"
+                :key="index"
+                :label="column"
+            >
+                <template #default="scope">
+                    {{ scope.row[column] }}
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :total="generated.length"
+            @current-change="handlePageChange"
+            @size-change="handlePageSizeChange"
+            layout="prev, pager, next, sizes"
+            :page-sizes="[5, 10, 20, 50]"
+            :pager-count="5"
+            class="mt-3"
+        />
+    </template>
 
     <NoData v-else :text="t('custom_dashboard_empty')" />
 </template>
@@ -43,6 +56,22 @@
 
         return Object.keys(columns).sort((key) => (key === orderByColumn ? 1 : -1));
     });
+
+    const currentPage = ref(1);
+    const pageSize = ref(5);
+
+    const paginatedData = computed(() => {
+        const start = (currentPage.value - 1) * pageSize.value;
+        return generated.value.slice(start, start + pageSize.value);
+    });
+
+    const handlePageChange = (page) => {
+        currentPage.value = page;
+    };
+
+    const handlePageSizeChange = (size) => {
+        pageSize.value = size;
+    };
 
     const generated = ref([]);
     onMounted(async () => {

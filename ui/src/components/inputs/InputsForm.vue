@@ -258,9 +258,9 @@
                     handler(val) {
                         // only revalidate if values have changed
                         if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                            // only revalidate if values are stable for more than 200ms
-                            // to avoid too many useless calls to the server
-                            debounce(this.validateInputs, 200)();
+                            // only revalidate if values are stable for more than 500ms
+                            // to avoid too many calls to the server
+                            debounce(this.validateInputs, 500)();
                             this.$emit("update:modelValue", this.inputsValues);
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
@@ -368,6 +368,7 @@
                 const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
 
                 const metadataCallback = (response) => {
+                    console.log("metadataCallback", response.inputs);
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
                             acc.push({...it.input, errors: it.errors});

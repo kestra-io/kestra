@@ -907,7 +907,6 @@
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
-    "starred": "Estrellado",
     "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
     "unqueue done": "La ejecución está descolada",
     "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",

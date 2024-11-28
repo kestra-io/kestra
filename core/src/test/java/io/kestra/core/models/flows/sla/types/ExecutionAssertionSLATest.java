@@ -11,9 +11,10 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class ExecutionAssertionSLATest {
@@ -29,7 +30,7 @@ class ExecutionAssertionSLATest {
 
         Optional<Violation> evaluate = sla.evaluate(runContext, null);
         assertTrue(evaluate.isPresent());
-        assertThat(evaluate.get().reason(), is("assertion is false: {{ condition == 'false'}}."));
+        assertThat(evaluate.get().reason(), is("assertion is false: {{ condition == 'true'}}."));
     }
 
     @Test

@@ -66,10 +66,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             full = true,
             title = """
                 1) Trigger the `transform` flow after the `extract` flow finishes successfully. \
-                The `extract` flow generates a `last_ingested_date` output that is passed to the \
+                The `extract` flow generates a `date` output that is passed to the \
                 `transform` flow as an input. \
-
-                Here is the `extract` flow:
                 ```yaml
                 id: extract
                 namespace: company.team
@@ -80,24 +78,24 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
 
                 outputs:
-                  - id: last_ingested_date
+                  - id: date
                     type: STRING
                     value: "{{ outputs.final_date.value }}"
                 ```
-                Below is the `transform` flow triggered in response to the `extract` flow's successful completion.""",
+                The `transform` flow is triggered after the `extract` flow finishes successfully.""",
             code = """
                 id: transform
                 namespace: company.team
 
                 inputs:
-                  - id: last_ingested_date
+                  - id: date
                     type: STRING
                     defaults: "2025-01-01"
 
                 variables:
                   result: |
                     Ingestion done in {{ trigger.executionId }}.
-                    Now transforming data up to {{ inputs.last_ingested_date }}
+                    Now transforming data up to {{ inputs.date }}
 
                 tasks:
                   - id: run_transform
@@ -112,8 +110,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                   - id: run_after_extract
                     type: io.kestra.plugin.core.trigger.Flow
                     inputs:
-                      last_ingested_date: "{{ trigger.outputs.last_ingested_date }}"
+                      date: "{{ trigger.outputs.date }}"
                     preconditions:
+                      id: flows
                       flows:
                         - namespace: company.team
                           flowId: extract
@@ -123,10 +122,16 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             full = true,
             title = """
                 2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM. \
-                This ensures that no new executions are triggered past the deadline. \
-
-                Here is the `silver_layer` flow:
                 ```yaml
+                id: bronze_layer
+                namespace: company.team
+
+                tasks:
+                  - id: raw_data
+                    type: io.kestra.plugin.core.log.Log
+                    message: Ingesting raw data                
+                ```""",
+            code = """
                 id: silver_layer
                 namespace: company.team
 
@@ -146,8 +151,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                       flows:
                         - namespace: company.team
                           flowId: bronze_layer
-                          states: [SUCCESS]
-                ```"""
+                          states: [SUCCESS]"""
         ),
         @Example(
             full = true,

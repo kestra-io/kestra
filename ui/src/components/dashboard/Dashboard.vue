@@ -303,7 +303,6 @@
         if (route.name === "home") {
             router.replace({params: {...route.params, id: v?.id ?? "default"}});
             if (v && v.id !== "default") {
-                console.log(route)
                 dashboard = await store.dispatch("dashboard/load", v.id);
             }
 

@@ -27,7 +27,9 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -685,14 +687,15 @@ public abstract class AbstractExecutionRepositoryTest {
                     "country", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.LABELS).labelKey("country").build(),
                     "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build()
                 )).build(),
-            ZonedDateTime.now().minus(1, ChronoUnit.DAYS),
+            ZonedDateTime.now().minus(1, ChronoUnit.HOURS),
             ZonedDateTime.now()
         );
 
         assertThat(data.size(), is(1));
         assertThat(data.get(0).get("count"), is(1L));
         assertThat(data.get(0).get("country"), is("FR"));
-        assertThat(data.get(0).get("date"), is(execution.getState().getStartDate()));
+        Instant startDate = execution.getState().getStartDate();
+        assertThat(data.get(0).get("date"), is(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(ZonedDateTime.ofInstant(startDate, ZoneId.systemDefault()).withSecond(0).withNano(0))));
     }
 
     private static Execution buildWithCreatedDate(Instant instant) {

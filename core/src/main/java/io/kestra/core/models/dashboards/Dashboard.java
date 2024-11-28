@@ -11,7 +11,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
@@ -28,6 +31,7 @@ public class Dashboard implements HasUID, DeletedInterface {
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     protected String tenantId;
 
+    @Hidden
     protected String id;
 
     @NotNull
@@ -43,14 +47,15 @@ public class Dashboard implements HasUID, DeletedInterface {
     @Valid
     protected List<Chart<?>> charts;
 
+    @Hidden
     @NotNull
     @Builder.Default
     protected boolean deleted = false;
 
-    @Setter(AccessLevel.NONE)
+    @Hidden
     protected Instant created;
 
-    @Setter(AccessLevel.NONE)
+    @Hidden
     protected Instant updated;
 
     @Override

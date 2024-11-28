@@ -13,7 +13,6 @@ import org.junitpioneer.jupiter.RetryingTest;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -164,7 +163,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void dailyTimeDeadline() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(OffsetTime.now().plusSeconds(1)).build());
+        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now().plusSeconds(1)).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
@@ -186,7 +185,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void dailyTimeDeadline_Expired() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(OffsetTime.now().minusSeconds(1)).build());
+        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now().minusSeconds(1)).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
@@ -203,7 +202,7 @@ public abstract class AbstractMultipleConditionStorageTest {
     void dailyTimeWindow() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
-        OffsetTime startTime = OffsetTime.now().truncatedTo(ChronoUnit.MINUTES);
+        LocalTime startTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
         Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_WINDOW).startTime(startTime).endTime(startTime.plusMinutes(5)).build());
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());

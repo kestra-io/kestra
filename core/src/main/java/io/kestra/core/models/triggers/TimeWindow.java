@@ -10,8 +10,6 @@ import lombok.With;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.OffsetTime;
-import java.time.ZonedDateTime;
 
 @Getter
 @Builder
@@ -31,7 +29,7 @@ public class TimeWindow {
         description = "Use it only for `DAILY_TIME_DEADLINE` SLA."
     )
     @PluginProperty
-    private OffsetTime deadline;
+    private LocalTime deadline;
 
     @Schema(
         title = "The duration of the window",
@@ -60,14 +58,14 @@ public class TimeWindow {
         description = "Use it only for `DAILY_TIME_WINDOW` SLA."
     )
     @PluginProperty
-    private OffsetTime startTime;
+    private LocalTime startTime;
 
     @Schema(
         title = "SLA daily end time",
         description = "Use it only for `DAILY_TIME_WINDOW` SLA."
     )
     @PluginProperty
-    private OffsetTime endTime;
+    private LocalTime endTime;
 
     public enum Type {
         DAILY_TIME_DEADLINE,

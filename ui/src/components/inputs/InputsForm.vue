@@ -204,7 +204,7 @@
             },
             inputErrors() {
                 // we only keep errors that don't target an input directly
-                const keepErrors = this.inputsMetaData.filter(it => it.inputId === undefined);
+                const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
 
                 return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
                     keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
@@ -306,7 +306,7 @@
 
                 const errors = this.inputsMetaData
                     .filter((it) => {
-                        return it.id === id && errors && errors.length > 0;
+                        return it.id === id && it.errors && it.errors.length > 0;
                     })
                     .map(it => it.errors.map(err => err.message).join("\n"))
 
@@ -378,6 +378,7 @@
                         if(it.enabled){
                             acc.push({...it.input, errors: it.errors});
                         }
+                        return acc;
                     }, [])
                     this.updateDefaults();
                 }

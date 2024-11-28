@@ -14,5 +14,5 @@ public class IsNull <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "IS_NULL";
+    protected FilterType type = FilterType.IS_NULL;
 }

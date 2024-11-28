@@ -16,7 +16,7 @@ public class EndsWith <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "ENDS_WITH";
+    protected FilterType type = FilterType.ENDS_WITH;
 
     @NotNull
     private String value;

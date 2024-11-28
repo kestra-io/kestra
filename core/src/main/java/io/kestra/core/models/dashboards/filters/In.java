@@ -21,7 +21,7 @@ public class In <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "IN";
+    protected FilterType type = FilterType.IN;
 
     @NotNull
     @NotEmpty

@@ -19,7 +19,7 @@ public class GreaterThanOrEqualTo <F extends Enum<F>> extends AbstractFilter<F> 
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "GREATER_THAN_OR_EQUAL_TO";
+    protected FilterType type = FilterType.GREATER_THAN_OR_EQUAL_TO;
 
     @NotNull
     @Schema(anyOf = {Number.class, ZonedDateTime.class})

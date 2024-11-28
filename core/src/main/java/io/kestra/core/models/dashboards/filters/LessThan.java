@@ -19,7 +19,7 @@ public class LessThan <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "LESS_THAN";
+    protected FilterType type = FilterType.LESS_THAN;
 
     @NotNull
     @Schema(anyOf = {Number.class, ZonedDateTime.class})

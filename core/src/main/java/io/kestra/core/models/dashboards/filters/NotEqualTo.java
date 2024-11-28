@@ -19,7 +19,7 @@ public class NotEqualTo <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "NOT_EQUAL_TO";
+    protected FilterType type = FilterType.NOT_EQUAL_TO;
 
     @NotNull
     @Schema(anyOf = {Number.class, ZonedDateTime.class, String.class})

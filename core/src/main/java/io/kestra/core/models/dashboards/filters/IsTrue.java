@@ -14,5 +14,5 @@ public class IsTrue <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "IS_TRUE";
+    protected FilterType type = FilterType.IS_TRUE;
 }

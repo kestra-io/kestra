@@ -16,8 +16,6 @@ import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidatio
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.property.Data;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
@@ -25,6 +23,7 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
@@ -447,12 +446,6 @@ public class JsonSchemaGenerator {
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext) {
-        List<Class<? extends DataFilter<?, ?>>> dataFilters = getRegisteredPlugins()
-            .stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getDataFilters().stream())
-            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-            .toList();
-
         if (declaredType.getErasedType() == Task.class) {
             return getRegisteredPlugins()
                 .stream()
@@ -496,6 +489,12 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .<ResolvedType>mapMulti((clz, consumer) -> {
                     if (DataChart.class.isAssignableFrom(clz)) {
+                        List<Class<? extends DataFilter<?, ?>>> dataFilters = getRegisteredPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getDataFilters().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                            .toList();
+
                         TypeVariable<? extends Class<? extends Chart<?>>> dataFilterType = clz.getTypeParameters()[1];
                         ParameterizedType chartAwareColumnDescriptor = ((ParameterizedType) ((WildcardType) ((ParameterizedType) dataFilterType.getBounds()[0]).getActualTypeArguments()[1]).getUpperBounds()[0]);
                         dataFilters.forEach(dataFilter -> {

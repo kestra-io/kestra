@@ -21,7 +21,7 @@ public class NotIn <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "NOT_IN";
+    protected FilterType type = FilterType.NOT_IN;
 
     @NotNull
     @NotEmpty

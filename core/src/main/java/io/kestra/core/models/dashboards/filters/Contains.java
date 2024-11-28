@@ -17,7 +17,7 @@ public class Contains<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "CONTAINS";
+    protected FilterType type = FilterType.CONTAINS;
 
     @NotNull
     @Schema(anyOf = {Number.class, String.class})

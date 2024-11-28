@@ -16,7 +16,7 @@ public class StartsWith <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "STARTS_WITH";
+    protected FilterType type = FilterType.STARTS_WITH;
 
     @NotNull
     private String value;

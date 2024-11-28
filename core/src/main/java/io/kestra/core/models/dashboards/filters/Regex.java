@@ -16,7 +16,7 @@ public class Regex <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "REGEX";
+    protected FilterType type = FilterType.REGEX;
 
     @NotNull
     private String value;

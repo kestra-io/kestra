@@ -21,7 +21,7 @@ public class Or <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected String type = "OR";
+    protected FilterType type = FilterType.OR;
 
     @NotNull
     @NotEmpty

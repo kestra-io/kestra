@@ -42,6 +42,7 @@
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
+                    :class="{selected: current.some(c => c.comparator === comparator)}"
                     @click="() => comparatorCallback(comparator)"
                 />
             </template>
@@ -51,6 +52,7 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
+                    :class="{selected: current.some(c => c.value.includes(filter.value))}"
                     @click="() => valueCallback(filter)"
                 />
             </template>
@@ -173,7 +175,11 @@
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
 
-        select.value.states.hoveringIndex = 0;
+        // Set hover index to the selected comparator for highlighting
+        const selectedIndex = valueOptions.value.findIndex(
+            (opt) => opt.value === value.value
+        );
+        select.value.states.hoveringIndex = selectedIndex >= 0 ? selectedIndex : 0;
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -181,6 +187,12 @@
 
             // If last filter item selection was not completed, remove it from array
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+        } else {
+            // Highlight all selected items by setting hoveringIndex to match the first selected item
+            const firstSelectedIndex = valueOptions.value.findIndex((opt) =>
+                current.value.some((c) => c.value.includes(opt.value))
+            );
+            select.value.states.hoveringIndex = firstSelectedIndex >= 0 ? firstSelectedIndex : 0;
         }
     };
     const valueCallback = (filter, isDate = false) => {
@@ -190,6 +202,10 @@
 
             if (index === -1) values.push(filter.value);
             else values.splice(index, 1);
+
+            // Update the hover index for better UX
+            const selectedIndex = valueOptions.value.findIndex((opt) => opt.value === filter.value);
+            select.value.states.hoveringIndex = selectedIndex >= 0 ? selectedIndex : 0;
         } else {
             const match = current.value.find((v) => v.label === "absolute_date");
             if (match) match.value = [filter];

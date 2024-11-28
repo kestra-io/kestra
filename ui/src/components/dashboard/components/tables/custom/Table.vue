@@ -2,7 +2,7 @@
     <template v-if="generated.length">
         <el-table :id="containerID" :data="paginatedData">
             <el-table-column
-                v-for="(column, index) in sortedColumns"
+                v-for="(column, index) in Object.keys(props.chart.data.columns)"
                 :key="index"
                 :label="column"
             >
@@ -49,13 +49,6 @@
     const containerID = `${props.chart.id}__${Math.random()}`;
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
-
-    const sortedColumns = computed(() => {
-        const {columns, orderBy} = props.chart.data;
-        const orderByColumn = orderBy?.[0]?.column;
-
-        return Object.keys(columns).sort((key) => (key === orderByColumn ? 1 : -1));
-    });
 
     const currentPage = ref(1);
     const pageSize = ref(5);

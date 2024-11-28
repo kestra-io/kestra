@@ -1,7 +1,7 @@
 <template>
     <el-table :id="containerID" v-if="generated.length" :data="generated">
         <el-table-column
-            v-for="(column, index) in Object.keys(props.chart.data.columns)"
+            v-for="(column, index) in sortedColumns"
             :key="index"
             :label="column"
         >
@@ -36,6 +36,13 @@
     const containerID = `${props.chart.id}__${Math.random()}`;
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
+
+    const sortedColumns = computed(() => {
+        const {columns, orderBy} = props.chart.data;
+        const orderByColumn = orderBy?.[0]?.column;
+
+        return Object.keys(columns).sort((key) => (key === orderByColumn ? 1 : -1));
+    });
 
     const generated = ref([]);
     onMounted(async () => {

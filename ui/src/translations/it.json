@@ -907,7 +907,6 @@
       "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione."
     },
     "create_flow": "Crea Flow",
-    "starred": "Preferiti",
     "invalid bulk unqueue": "Impossibile rimuovere dalla coda le esecuzioni",
     "unqueue done": "L'esecuzione è in coda",
     "bulk unqueue": "Sei sicuro di voler rimuovere dalla coda <code>{executionCount}</code> esecuzione/i?",

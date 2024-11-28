@@ -907,7 +907,6 @@
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
     "create_flow": "创建Flow",
-    "starred": "已加星标",
     "invalid bulk unqueue": "无法取消排队的执行",
     "unqueue done": "执行已出队列",
     "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",

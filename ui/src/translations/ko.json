@@ -907,7 +907,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
     },
     "create_flow": "Flow 생성",
-    "starred": "별표 표시됨",
     "invalid bulk unqueue": "실행을 큐에서 제거할 수 없습니다.",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "bulk unqueue": "<code>{executionCount}</code> 실행을 대기열에서 제거하시겠습니까?",

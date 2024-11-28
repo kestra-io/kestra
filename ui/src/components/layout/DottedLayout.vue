@@ -3,8 +3,8 @@
     <div class="blueprints" v-else>
         <nav class="header">
             <div class="image-box">
-                <img :src="image" :alt="alt">
-                <img :src="imageDark" :alt="alt" class="blueprint-dark">
+                <img :src="image" :alt="alt || phrase">
+                <img :src="imageDark" :alt="alt || phrase" class="blueprint-dark">
             </div>
             <h4 class="catch-phrase">
                 {{ phrase }}
@@ -18,7 +18,7 @@
     defineProps<{
         embed: boolean;
         phrase:string;
-        alt:string;
+        alt: {type: string, required: false, default: undefined};
         image:string;
         imageDark:string;
     }>();

@@ -907,7 +907,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
-    "starred": "スター付き",
     "invalid bulk unqueue": "実行をキューから外すことができませんでした",
     "unqueue done": "実行はキューから外されました",
     "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",

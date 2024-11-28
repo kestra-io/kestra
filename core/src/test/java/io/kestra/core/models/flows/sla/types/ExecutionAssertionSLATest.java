@@ -11,33 +11,34 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
-class ExecutionConditionSLATest {
+class ExecutionAssertionSLATest {
     @Inject
     private RunContextFactory runContextFactory;
 
     @Test
     void shouldEvaluateToAViolation() throws InternalException {
-        ExecutionConditionSLA sla = ExecutionConditionSLA.builder()
-            .condition("{{ condition == 'true'}}")
+        ExecutionAssertionSLA sla = ExecutionAssertionSLA.builder()
+            ._assert("{{ condition == 'true'}}")
             .build();
-        RunContext runContext = runContextFactory.of(Map.of("condition", "true"));
+        RunContext runContext = runContextFactory.of(Map.of("condition", "false"));
 
         Optional<Violation> evaluate = sla.evaluate(runContext, null);
         assertTrue(evaluate.isPresent());
-        assertThat(evaluate.get().reason(), is("condition met: {{ condition == 'true'}}."));
+        assertThat(evaluate.get().reason(), is("assertion is false: {{ condition == 'true'}}."));
     }
 
     @Test
     void shouldEvaluateToNoViolation() throws InternalException {
-        ExecutionConditionSLA sla = ExecutionConditionSLA.builder()
-            .condition("{{ condition == 'true'}}")
+        ExecutionAssertionSLA sla = ExecutionAssertionSLA.builder()
+            ._assert("{{ condition == 'true'}}")
             .build();
-        RunContext runContext = runContextFactory.of(Map.of("condition", "false"));
+        RunContext runContext = runContextFactory.of(Map.of("condition", "true"));
 
         Optional<Violation> evaluate = sla.evaluate(runContext, null);
         assertTrue(evaluate.isEmpty());
@@ -45,8 +46,8 @@ class ExecutionConditionSLATest {
 
     @Test
     void shouldFailToEvaluate() throws InternalException {
-        ExecutionConditionSLA sla = ExecutionConditionSLA.builder()
-            .condition("{{ condition == 'true'}}")
+        ExecutionAssertionSLA sla = ExecutionAssertionSLA.builder()
+            ._assert("{{ condition == 'true'}}")
             .build();
         RunContext runContext = runContextFactory.of();
 

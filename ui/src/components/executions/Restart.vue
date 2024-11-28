@@ -83,6 +83,7 @@
     import ExecutionUtils from "../../utils/executionUtils";
 
     export default {
+        inheritAttrs: false,
         props: {
             component: {
                 type: String,
@@ -229,6 +230,6 @@
 </script>
 <style scoped>
 .execution-description {
-    color: var(--bs-gray-700); 
+    color: var(--bs-gray-700);
 }
 </style>

@@ -13,7 +13,7 @@
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
-            @keyup.enter="() => handleEnterKey(select?.hoverOption.value)"
+            @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
@@ -127,7 +127,15 @@
     const dropdowns = ref({...INITIAL_DROPDOWNS});
     const closeDropdown = () => (select.value.dropdownMenuVisible = false);
 
+    const triggerEnter = ref(true);
     const handleEnterKey = (option) => {
+        if (!option) return;
+
+        if (!triggerEnter.value) {
+            triggerEnter.value = true;
+            return;
+        }
+
         if (dropdowns.value.first.shown) {
             const value = includedOptions.value.filter((o) => {
                 let comparator = o.key;
@@ -147,6 +155,12 @@
     };
 
     const filterCallback = (option) => {
+        console.log(option);
+        if (!option.value) {
+            triggerEnter.value = false;
+            return;
+        }
+
         option.value = {
             label: option.value?.label ?? "Unknown",
             comparator: undefined,
@@ -328,7 +342,15 @@
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
-        return OPTIONS.filter((o) => props.include.includes(o.value?.label));
+        const dates = ["relative_date", "absolute_date"];
+
+        const found = current.value?.find((v) => dates.includes(v?.label));
+        const exclude = found ? dates.find((date) => date !== found.label) : null;
+
+        return OPTIONS.filter((o) => {
+            const label = o.value?.label;
+            return props.include.includes(label) && label !== exclude;
+        });
     });
 
     const changeCallback = (v) => {
@@ -347,6 +369,8 @@
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
             }
+
+            triggerEnter.value = false;
         }
 
         // Clearing the input field after value is being submitted

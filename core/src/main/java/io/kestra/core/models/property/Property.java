@@ -64,8 +64,18 @@ public class Property<T> {
                 throw new IllegalArgumentException(e);
             }
         } else {
-            expression = MAPPER.convertValue(value, String.class);
+            try {
+                expression = MAPPER.convertValue(value, String.class);
+            } catch (IllegalArgumentException e) {
+                // if it fails, try with writeValueAsString instead
+                try {
+                    expression = MAPPER.writeValueAsString(value);
+                } catch (JsonProcessingException e2) {
+                    throw new IllegalArgumentException(e2);
+                }
+            }
         }
+
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;

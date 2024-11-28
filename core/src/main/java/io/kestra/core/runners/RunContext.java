@@ -185,4 +185,6 @@ public abstract class RunContext {
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
     }
+
+    public abstract boolean isInitialized();
 }

@@ -31,6 +31,9 @@
     </div>
 
     <div v-if="custom.shown">
+        <p v-if="custom.dashboard.description" class="description">
+            <small>{{ custom.dashboard.description }}</small>
+        </p>
         <el-row class="custom">
             <el-col
                 v-for="(chart, index) in custom.dashboard.charts"
@@ -288,7 +291,9 @@
         },
     });
 
-    const customDashboardsEnabled = computed(() => store.state.misc.configs.isCustomDashboardsEnabled);
+    const customDashboardsEnabled = computed(
+        () => store.state.misc.configs.isCustomDashboardsEnabled,
+    );
 
     // Custom Dashboards
     const custom = ref({shown: false, dashboard: {}});
@@ -583,9 +588,14 @@
         }
     }
 
+    .description {
+        padding: 0px 32px;
+        margin: 0;
+        color: var(--bs-gray-700);
+    }
+
     .custom {
         padding: 24px 32px;
-        // margin: 24px 0;
 
         &.el-row {
             width: 100%;

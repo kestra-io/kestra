@@ -68,7 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 1) Trigger the `transform` flow after the `extract` flow finishes successfully. \
                 The `extract` flow generates a `last_ingested_date` output that is passed to the \
                 `transform` flow as an input. \
-                
+
                 Here is the `extract` flow:
                 ```yaml
                 id: extract
@@ -122,10 +122,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully \
-                by 9 AM. The deadline time string must include the timezone offset, e.g. "+00:00" for UTC. \
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM. \
                 This ensures that no new executions are triggered past the deadline. \
-                
+
                 Here is the `silver_layer` flow:
                 ```yaml
                 id: silver_layer
@@ -143,7 +142,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                       id: bronze_layer
                       timeWindow:
                         type: DAILY_TIME_DEADLINE
-                        deadline: "09:00:00+01:00"
+                        deadline: "09:00:00"
                       flows:
                         - namespace: company.team
                           flowId: bronze_layer
@@ -284,8 +283,8 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 You can set the `type` of `timeWindow` to one of the following values:
                 1. `DURATION_WINDOW`: this is the default `type`. It uses a start time (`windowAdvance`) and end time (`window`) that advance to the next interval whenever the evaluation time reaches the end time, based on the defined duration `window`. For example, with a 1-day window (the default option: `window: PT1D`), the preconditions are evaluated during a 24-hour period starting at midnight (i.e., at "00:00:00+00:00") each day. If you set `windowAdvance: PT6H`, the window will start at 6 AM each day. If you set `windowAdvance: PT6H` and also override the `window` property to `PT6H`, the window will start at 6 AM and last for 6 hours. In this configuration, the preconditions will be evaluated during the following intervals: 06:00 to 12:00, 12:00 to 18:00, 18:00 to 00:00, and 00:00 to 06:00.
                 2. `SLIDING_WINDOW`: this option evaluates preconditions over a fixed time `window` but always goes backward from the current time. For example, a sliding window of 1 hour (`window: PT1H`) evaluates executions within the past hour (from one hour ago up to now). It uses a default window of 1 day.
-                3. `DAILY_TIME_DEADLINE`: this option declares that preconditions should be met "before a specific time in a day." Using the string property `deadline`, you can configure a daily cutoff for evaluating preconditions. For example, `deadline: "09:00:00+00:00"` specifies that preconditions must be met from midnight until 9 AM UTC time each day; otherwise, the flow will not be triggered. Note how this requires the addition of a time zone offset — if you want to use UTC time, use the `+00:00` offset. Otherwise, you can use the offset for your local time zone, e.g. for US Eastern Time, use `deadline: "09:00:00-05:00"`.
-                4. `DAILY_TIME_WINDOW`: this option declares that preconditions should be met "within a specific time range in a day". For example, a window from `startTime: "06:00:00+00:00"` to `endTime: "09:00:00+00:00"` evaluates executions within that interval each day. This option is particularly useful for defining freshness conditions declaratively when building data pipelines that span multiple teams and namespaces. Normally, a failure in any task in your flow will block the entire pipeline, but with this decoupled flow trigger alternative, you can proceed as soon as the data is successfully refreshed within the specified time window."""
+                3. `DAILY_TIME_DEADLINE`: this option declares that preconditions should be met "before a specific time in a day." Using the string property `deadline`, you can configure a daily cutoff for evaluating preconditions. For example, `deadline: "09:00:00"` specifies that preconditions must be met from midnight until 9 AM UTC time each day; otherwise, the flow will not be triggered.
+                4. `DAILY_TIME_WINDOW`: this option declares that preconditions should be met "within a specific time range in a day". For example, a window from `startTime: "06:00:00"` to `endTime: "09:00:00"` evaluates executions within that interval each day. This option is particularly useful for defining freshness conditions declaratively when building data pipelines that span multiple teams and namespaces. Normally, a failure in any task in your flow will block the entire pipeline, but with this decoupled flow trigger alternative, you can proceed as soon as the data is successfully refreshed within the specified time window."""
         )
         @PluginProperty
         @Builder.Default

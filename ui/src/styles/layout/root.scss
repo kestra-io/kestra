@@ -6,6 +6,8 @@
 
 // use bootstrap for main style
 :root {
+    #{--bs-body-bg}: #fafaff;
+
     --el-bg-color: var(--bs-body-bg);
     --el-bg-color-page: var(--bs-body-bg);
     --el-bg-color-overlay: var(--bs-white);

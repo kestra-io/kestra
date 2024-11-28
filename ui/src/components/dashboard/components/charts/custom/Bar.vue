@@ -54,7 +54,15 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                customBarLegend: {containerID, uppercase: true},
+                ...(chartOptions.legend.enabled
+                    ? {
+                        customBarLegend: {
+                            containerID,
+                            uppercase: true,
+                            length: generated.value.length,
+                        },
+                    }
+                    : {}),
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,
@@ -66,6 +74,13 @@
                 },
             },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                    },
+                    position: "bottom",
+                    ...DEFAULTS,
+                },
                 y: {
                     title: {
                         display: true,

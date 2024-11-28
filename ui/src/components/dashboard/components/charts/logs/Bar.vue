@@ -83,10 +83,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                barLegend: {
-                    containerID: "logs",
-                    length: props.data.length,
-                },
+                barLegend: {containerID: "logs"},
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,

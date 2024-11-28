@@ -40,6 +40,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.time.Duration;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -205,7 +206,11 @@ public class JsonSchemaGenerator {
                         ObjectNode definitionReference = context
                             .createDefinitionReference(context.getTypeContext().resolve(String.class))
                             .put("format", "duration");
-
+                        return new CustomDefinition(definitionReference, true);
+                    } else if (javaType.isInstanceOf(LocalTime.class)) {
+                        ObjectNode definitionReference = context
+                            .createDefinitionReference(context.getTypeContext().resolve(String.class))
+                            .put("format", "partial-time"); // we change the default 'time' format for 'partial-time' as Monaco Editor mandates an offset or a timezone for 'time' format
                         return new CustomDefinition(definitionReference, true);
                     } else {
                         return null;

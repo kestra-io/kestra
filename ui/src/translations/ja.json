@@ -994,6 +994,7 @@
     "execution failed message": "最後のエラー: <code>{message}</code>",
     "flow not imported": "一部のflowをインポートできませんでした",
     "flows imported": "フローがインポートされました",
-    "is required": "{field} は必須です"
+    "is required": "{field} は必須です",
+    "bookmark": "ブックマーク"
   }
 }

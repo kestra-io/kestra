@@ -182,7 +182,7 @@
     .search {
         display: flex;
         width: 22rem;
-        padding: 0.25rem calc(2 * var(--spacer));
+        padding: 0.25rem 2rem;
         justify-content: center;
         align-items: center;
         gap: 0.25rem;
@@ -190,14 +190,11 @@
     }
 
     .plugins-container {
-        display: flex;
+        display: grid;
         gap: 16px;
-        flex-wrap: wrap;
-        margin: 0 calc(2 * var(--spacer));
-        justify-content: space-between;
-        align-items: flex-start;
+        grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+        margin: 0 2rem;
         padding-bottom: 4rem;
-
     }
 
     .tasks-tooltips {
@@ -210,7 +207,7 @@
         }
 
         &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
+            padding: 1.5rem;
             background-color: var(--bs-gray-100);
         }
 

@@ -179,7 +179,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" v-else>
+    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
@@ -258,7 +258,27 @@
         },
         emits: ["update:modelValue", "confirm", "validation"],
         created() {
-            this.validateInputs();
+            this.validateInputs().then(() => {
+                // wait for vuex to set the flow or execution
+                // before watching for changes
+                setTimeout(() => {
+                    this.$watch("flow", this.validateInputs);
+                    this.$watch("execution", this.validateInputs);
+                    this.$watch("inputsValues", {
+                        handler(val) {
+                            // only revalidate if values have changed
+                            if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                                // only revalidate if values are stable for more than 200ms
+                                // to avoid too many useless calls to the server
+                                debounce(this.validateInputs, 200)();
+                                this.$emit("update:modelValue", this.inputsValues);
+                            }
+                            this.previousInputsValues = JSON.parse(JSON.stringify(val))
+                        },
+                        deep: true
+                    });
+                }, 10)
+            });
         },
         mounted() {
             setTimeout(() => {
@@ -351,51 +371,40 @@
                     return `Maximum value is ${max}.`;
                 } else return false;
             },
-            validateInputs() {
+            async validateInputs() {
                 if (this.initialInputs === undefined || this.initialInputs.length === 0) {
                     return;
                 }
 
                 const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
 
+                const metadataCallback = (response) => {
+                    this.inputsMetaData = response.inputs.map(it => {
+                        return {
+                            inputId: it.input?.id,
+                            enabled: it.enabled,
+                            errors: it.errors
+                        }
+                    })
+                    this.updateDefaults();
+                }
+
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    this.$store.dispatch("execution/validateExecution", {...options, formData})
-                        .then(response => {
-                            this.inputsMetaData = response.data.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
-                        });
+                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+
+                    metadataCallback(data);
+
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
-                    this.$store.dispatch("execution/validateResume", {...options, formData})
-                        .then(response => {
-                            this.inputsMetaData = response.data.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
-                        });
+                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+
+                    metadataCallback(data);
                 } else {
                     this.$emit("validation", {
                         formData: formData,
                         callback: (response) => {
-                            this.inputsMetaData = response.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
+                            metadataCallback(response);
                         }
                     });
                 }
@@ -409,31 +418,6 @@
                         callback()
                     },
                 } : undefined
-            }
-        },
-        watch: {
-            inputsValues: {
-                handler(val) {
-                    // only revalidate if values have changed
-                    if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                        // only revalidate if values are stable for more than 200ms
-                        // to avoid too many useless calls to the server
-                        debounce(this.validateInputs, 200)();
-                        this.$emit("update:modelValue", this.inputsValues);
-                    }
-                    this.previousInputsValues = JSON.parse(JSON.stringify(val))
-                },
-                deep: true
-            },
-            flow: {
-                handler() {
-                    this.validateInputs()
-                }
-            },
-            execution: {
-                handler() {
-                    this.validateInputs()
-                }
             }
         }
     };

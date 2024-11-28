@@ -119,15 +119,15 @@
 
     const menu = computed(() => {
         return [
-            ...(store.state.starred.pages?.length ? [{
-                title: t("starred"),
+            ...(store.state.bookmarks.pages?.length ? [{
+                title: t("bookmark"),
                 icon: {
                     element: shallowRef(StarOutline),
                     class: "menu-icon",
                 },
                 child: [{
 
-                    component: () => h(BookmarkLinkList, {pages: store.state.starred.pages}),
+                    component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
                 }]
             }] : []),
             ...disabledCurrentRoute(props.generateMenu())

@@ -162,7 +162,7 @@
                                     :trigger-id="scope.row.id"
                                 />
                             </template>
-                        </el-table-column>                      
+                        </el-table-column>
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -174,7 +174,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
@@ -191,7 +191,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if=" scope.row.evaluateRunningDate">
+                                <el-button>
                                     <kicon
                                         :tooltip="$t(`restart trigger.tooltip`)"
                                         placement="left"
@@ -220,7 +220,6 @@
                             <template #default="scope">
                                 <el-switch
                                     v-if="!scope.row.missingSource"
-                                    size="small"
                                     :active-text="$t('enabled')"
                                     :model-value="!scope.row.disabled"
                                     @change="setDisabled(scope.row, $event)"

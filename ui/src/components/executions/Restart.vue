@@ -51,6 +51,16 @@
         </template>
 
         <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
+        <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+        <div class="bottom-buttons" v-if="!embed">
+            <div class="left-align">
+                <el-form-item>
+                    <el-button :icon="ContentCopy" @click="fillInputsFromExecution">
+                        {{ $t('prefill inputs') }}
+                    </el-button>
+                </el-form-item>
+            </div>
+        </div>
 
         <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="execution-description">
@@ -81,8 +91,12 @@
     import action from "../../models/action";
     import State from "../../utils/state";
     import ExecutionUtils from "../../utils/executionUtils";
+    import InputsForm from "../../components/inputs/InputsForm.vue";
+    import Inputs from "../../utils/inputs";
+    import {inputsToFormDate} from "../../utils/submitTask"
 
     export default {
+        components: {InputsForm},
         props: {
             component: {
                 type: String,
@@ -113,6 +127,10 @@
             tooltipPosition: {
                 type: String,
                 default: "bottom"
+            },
+            flow: {
+                type: Object,
+                default: undefined,
             }
         },
         emits: ["follow"],
@@ -124,6 +142,23 @@
             }
         },
         methods: {
+            fillInputsFromExecution(){
+                const nonEmptyInputNames = Object.keys(this.execution.inputs);
+                this.flow.inputs
+                    .filter(input => nonEmptyInputNames.includes(input.id))
+                    .forEach(input => {
+                        let value = this.execution.inputs[input.id];
+                        this.inputs[input.id] = Inputs.normalize(input.type, value);
+                    });
+            },
+            purgeInputs(inputs){
+                for (let input in inputs) {
+                    if (inputs[input] === undefined || inputs[input] === "") {
+                        delete inputs[input];
+                    }
+                }
+                return inputs;
+            },
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
                 this.$store
@@ -138,9 +173,12 @@
             },
             restart() {
                 this.isOpen = false
+                const inputs = this.purgeInputs(this.inputs)
+                const formData = inputsToFormDate(this, this.flow.inputs, inputs);
 
                 this.$store
                     .dispatch(`execution/${this.replayOrRestart}Execution`, {
+                        formData: formData,
                         executionId: this.execution.id,
                         taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
                         revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
@@ -221,6 +259,7 @@
         },
         data() {
             return {
+                inputs: {},
                 revisionsSelected: undefined,
                 isOpen: false,
             };

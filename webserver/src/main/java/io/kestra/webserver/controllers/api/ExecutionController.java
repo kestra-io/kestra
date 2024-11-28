@@ -769,6 +769,7 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Restart a new execution from an old one")
     public Execution restart(
         @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
@@ -862,10 +863,11 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay")
+    @Post(uri = "/{executionId}/replay", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
     public Execution replay(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
     ) throws Exception {

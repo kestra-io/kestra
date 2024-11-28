@@ -25,7 +25,7 @@ export default {
         restartExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/restart`,
-                null,
+                options.formData,
                 {
                     params: {
                         revision: options.revision
@@ -92,8 +92,11 @@ export default {
         replayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/${options.executionId}/replay`,
-                null,
+                options.formData,
                 {
+                    headers: {
+                        "content-type": "multipart/form-data"
+                    },
                     params: {
                         taskRunId: options.taskRunId,
                         revision: options.revision

@@ -87,6 +87,7 @@
                         :execution="followedExecution"
                         :task-run="currentTaskRun"
                         :attempt-index="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+                        :flow="flow"
                         @follow="forwardEvent('follow', $event)"
                     />
 

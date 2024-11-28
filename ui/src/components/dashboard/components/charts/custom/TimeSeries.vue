@@ -65,6 +65,7 @@
                     filter: (value) => value.raw,
                     callbacks: {
                         label: (value) => {
+                            if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip} : ${value.raw}`;
                         },
                     },
@@ -178,7 +179,8 @@
         const yDataset = reducer(generated.value, aggregator[0][0], "y");
         const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
-        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+        const label =
+            aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
 
         return {
             labels: xAxis,
@@ -188,7 +190,6 @@
                         yAxisID: "yB",
                         type: "line",
                         data: generated.value.map((v) => v[aggregator[1][0]]),
-                        tooltip: label,
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,

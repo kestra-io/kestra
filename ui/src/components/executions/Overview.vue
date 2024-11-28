@@ -223,15 +223,13 @@
                         if (response && response.length >= 1) {
                             this.errorLogsMore = response.length > 3;
                             this.errorLast = response[response.length - 1];
-                            this.errorLogs = response.slice(1).slice(-3);
+                            this.errorLogs = response.length > 3 ? response.slice(1).slice(-3) : response;
 
                         } else {
                             this.errorLogs = undefined;
                             this.errorLogsMore = false;
                             this.errorLast = undefined;
                         }
-
-                        console.log(this.errorLast)
                     })
             }
         },

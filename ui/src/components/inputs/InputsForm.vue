@@ -179,7 +179,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" v-else>
+    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>

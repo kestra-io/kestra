@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue";
+    import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
 
@@ -204,7 +204,7 @@
     });
 
     const generated = ref([]);
-    onMounted(async () => {
+    const generate = async () => {
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
@@ -215,7 +215,10 @@
                     .toISOString(true),
             endDate: route.query.endDate ?? moment().toISOString(true),
         });
-    });
+    };
+
+    watch(route, async () => await generate());
+    onMounted(() => generate());
 </script>
 
 <style lang="scss" scoped>

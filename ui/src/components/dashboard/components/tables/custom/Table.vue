@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, computed, ref, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -74,7 +74,7 @@
     };
 
     const generated = ref([]);
-    onMounted(async () => {
+    const generate = async () => {
         generated.value = await store.dispatch("dashboard/generate", {
             id: dashboard.value.id,
             chartId: props.chart.id,
@@ -85,7 +85,10 @@
                     .toISOString(true),
             endDate: route.query.endDate ?? moment().toISOString(true),
         });
-    });
+    };
+
+    watch(route, async () => await generate());
+    onMounted(() => generate());
 </script>
 
 <style lang="scss" scoped>

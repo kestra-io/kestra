@@ -79,7 +79,7 @@
     });
 
     const parsedData = computed(() => {
-        const column = chartOptions.colorByColumn;
+        const column = chartOptions.column;
         const {columns} = data;
 
         // Ignore columns with `agg` and dynamically fetch valid ones

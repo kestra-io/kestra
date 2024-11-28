@@ -99,7 +99,7 @@
     }
 </style>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
 .el-button {
     background: var(--el-button-bg-color);

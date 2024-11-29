@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+
 @Slf4j
 public final class ExecutableUtils {
 
@@ -88,7 +90,7 @@ public final class ExecutableUtils {
 
         List<Label> newLabels = inheritLabels ? new ArrayList<>(currentExecution.getLabels()) : new ArrayList<>(systemLabels(currentExecution));
         if (labels != null) {
-            newLabels.addAll(labels);
+            labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
         }
 
         Map<String, Object> variables = ImmutableMap.of(

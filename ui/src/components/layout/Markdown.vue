@@ -4,57 +4,49 @@
     </div>
 </template>
 
-<script>
-    import Markdown from "../../utils/markdown";
+<script setup lang="ts">
+    import {computed, onMounted, ref, watch} from "vue";
+    import * as Markdown from "../../utils/markdown";
 
-    export default {
-        props: {
-            watches: {
-                type: Array,
-                default: () => ["source", "show", "toc"],
-            },
-            source: {
-                type: String,
-                default: "",
-            },
-            permalink: {
-                type: Boolean,
-                default: false,
-            },
-            fontSizeVar: {
-                type: String,
-                default: "font-size-sm"
-            }
-        },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
-        },
-        async created() {
-            this.markdownRenderer = await this.renderMarkdown();
-        },
-        watch: {
-            async source() {
-                this.markdownRenderer = await this.renderMarkdown();
-            }
-        },
-        methods: {
-            async renderMarkdown() {
-                return  await Markdown.render(this.source, {
-                    permalink: this.permalink,
-                });
-            },
-        },
-        computed: {
-            fontSizeCss() {
-                return `var(--${this.fontSizeVar})`;
-            },
-            permalinkCss() {
-                return this.permalink ? "-20px" : "0";
-            }
-        },
-    };
+    const props = withDefaults(
+        defineProps<{
+            watches?: string[];
+            source?: string;
+            permalink?: boolean;
+            fontSizeVar?: string;
+        }>(),
+        {
+            watches: () => ["source", "show", "toc"],
+            source: "",
+            permalink: false,
+            fontSizeVar: "font-size-sm"
+        })
+
+
+    const markdownRenderer = ref<string | null>(null);
+
+    onMounted(async ()=> {
+        markdownRenderer.value = await renderMarkdown();
+    })
+
+    watch(() => props.source, async () => {
+
+        markdownRenderer.value = await renderMarkdown();
+
+    })
+
+    async function renderMarkdown() {
+        return  await Markdown.render(props.source, {
+            permalink: props.permalink,
+        });
+    }
+
+    const fontSizeCss = computed(() =>{
+        return `var(--${props.fontSizeVar})`;
+    })
+    const permalinkCss = computed(() => {
+        return props.permalink ? "-20px" : "0";
+    })
 </script>
 
 <style lang="scss">

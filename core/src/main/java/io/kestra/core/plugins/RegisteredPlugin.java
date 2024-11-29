@@ -111,7 +111,15 @@ public class RegisteredPlugin {
             return DataFilter.class;
         }
 
-        if(this.getAliases().containsKey(cls.toLowerCase())) {
+        if (this.getAppBlocks().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AppBlockInterface.class;
+        }
+
+        if (this.getApps().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AppPluginInterface.class;
+        }
+
+        if (this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
         }

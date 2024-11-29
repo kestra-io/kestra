@@ -2,9 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
@@ -29,6 +27,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.aMapWithSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.is;
 
 @KestraTest
 class FlowInputOutputTest {
@@ -247,6 +250,17 @@ class FlowInputOutputTest {
                 new InputAndValue(input2, 0, true, null)),
             values
         );
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void flowOutputsToMap() {
+        Flow flow = Flow.builder().id("flow").outputs(List.of(Output.builder().id("output").value("something").build())).build();
+
+        Map<String, Object> stringObjectMap = flowInputOutput.flowOutputsToMap(flow.getOutputs());
+        assertThat(stringObjectMap, aMapWithSize(1));
+        assertThat(stringObjectMap.get("output"), notNullValue());
+        assertThat(((Map<String, Object>) stringObjectMap.get("output")).get("value"), is("something"));
     }
 
     private static final class MemoryCompletedFileUpload implements CompletedFileUpload {

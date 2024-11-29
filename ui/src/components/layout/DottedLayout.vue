@@ -18,7 +18,7 @@
     defineProps<{
         embed: boolean;
         phrase: string;
-        alt: string;
+        alt?: string;
         image: string;
         imageDark: string;
     }>();

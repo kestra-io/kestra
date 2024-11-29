@@ -514,15 +514,17 @@
             ? moment().toISOString(true)
             : route.query.endDate || moment().toISOString(true);
 
-        try {
-            await Promise.any([
-                fetchNumbers(),
-                fetchExecutions(),
-                fetchNamespaceExecutions(),
-                fetchLogs(),
-            ]);
-        } catch (error) {
-            console.error("All promises failed:", error);
+        if (!custom.value.shown) {
+            try {
+                await Promise.any([
+                    fetchNumbers(),
+                    fetchExecutions(),
+                    fetchNamespaceExecutions(),
+                    fetchLogs(),
+                ]);
+            } catch (error) {
+                console.error("All promises failed:", error);
+            }
         }
     };
 

@@ -24,7 +24,10 @@
                         'relative_date',
                         'absolute_date',
                     ]"
-            :refresh="{shown: true, callback: fetchAll}"
+            :refresh="{
+                shown: true,
+                callback: custom.shown ? refreshCustom : fetchAll,
+            }"
             :dashboards="{shown: customDashboardsEnabled}"
             @dashboard="(v) => handleCustomUpdate(v)"
         />
@@ -57,6 +60,7 @@
                             :is="types[chart.type]"
                             :source="chart.content"
                             :chart
+                            :identifier="custom.id"
                         />
                     </div>
                 </div>
@@ -296,7 +300,7 @@
     );
 
     // Custom Dashboards
-    const custom = ref({shown: false, dashboard: {}});
+    const custom = ref({id: Math.random(), shown: false, dashboard: {}});
     const handleCustomUpdate = async (v) => {
         let dashboard = {};
 
@@ -307,10 +311,16 @@
             }
 
             custom.value = {
+                id: Math.random(),
                 shown: !v || v.id === "default" ? false : true,
                 dashboard,
             };
         }
+    };
+    const refreshCustom = async () => {
+        const ID = custom.value.dashboard.id;
+        let dashboard = await store.dispatch("dashboard/load", ID);
+        custom.value = {id: Math.random(), shown: true, dashboard};
     };
     const types = {
         "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
@@ -535,89 +545,89 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    $spacing: 20px;
+$spacing: 20px;
 
-    .dashboard-filters,
-    .dashboard {
-        padding: 0 32px;
+.dashboard-filters,
+.dashboard {
+    padding: 0 32px;
 
-        & .el-row {
-            width: 100%;
-
-            & .el-col {
-                padding-bottom: $spacing;
-
-                & div {
-                    background: var(--card-bg);
-                    border: 1px solid var(--bs-gray-300);
-                    border-radius: $border-radius;
-
-                    html.dark & {
-                        border-color: var(--bs-gray-600);
-                    }
-                }
-            }
-        }
-
-        .description {
-            border: none !important;
-            color: #564a75;
-
-            html.dark & {
-                color: #e3dbff;
-            }
-        }
-    }
-
-    .dashboard {
-        margin: 0;
-    }
-
-    .dashboard-filters {
-        margin: 24px 0 0 0;
-        padding-bottom: 0;
-
-        & .el-row {
-            padding: 0 5px;
-        }
+    & .el-row {
+        width: 100%;
 
         & .el-col {
-            padding-bottom: 0 !important;
+            padding-bottom: $spacing;
+
+            & div {
+                background: var(--card-bg);
+                border: 1px solid var(--bs-gray-300);
+                border-radius: $border-radius;
+
+                html.dark & {
+                    border-color: var(--bs-gray-600);
+                }
+            }
         }
     }
 
     .description {
-        padding: 0px 32px;
-        margin: 0;
-        color: var(--bs-gray-700);
+        border: none !important;
+        color: #564a75;
+
+        html.dark & {
+            color: #e3dbff;
+        }
+    }
+}
+
+.dashboard {
+    margin: 0;
+}
+
+.dashboard-filters {
+    margin: 24px 0 0 0;
+    padding-bottom: 0;
+
+    & .el-row {
+        padding: 0 5px;
     }
 
-    .custom {
-        padding: 24px 32px;
+    & .el-col {
+        padding-bottom: 0 !important;
+    }
+}
 
-        &.el-row {
-            width: 100%;
+.description {
+    padding: 0px 32px;
+    margin: 0;
+    color: var(--bs-gray-700);
+}
 
-            & .el-col {
-                padding-bottom: $spacing;
+.custom {
+    padding: 24px 32px;
 
-                &:nth-of-type(even) > div {
-                    margin-left: 1rem;
-                }
+    &.el-row {
+        width: 100%;
 
-                & > div {
-                    height: 100%;
-                    background: var(--card-bg);
-                    border: 1px solid var(--bs-gray-300);
-                    border-radius: $border-radius;
+        & .el-col {
+            padding-bottom: $spacing;
 
-                    html.dark & {
-                        border-color: var(--bs-gray-600);
-                    }
+            &:nth-of-type(even) > div {
+                margin-left: 1rem;
+            }
+
+            & > div {
+                height: 100%;
+                background: var(--card-bg);
+                border: 1px solid var(--bs-gray-300);
+                border-radius: $border-radius;
+
+                html.dark & {
+                    border-color: var(--bs-gray-600);
                 }
             }
         }
     }
+}
 </style>

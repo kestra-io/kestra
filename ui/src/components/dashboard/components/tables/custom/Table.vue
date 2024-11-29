@@ -44,7 +44,10 @@
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
-    const props = defineProps({chart: {type: Object, required: true}});
+    const props = defineProps({
+        identifier: {type: Number, required: true},
+        chart: {type: Object, required: true},
+    });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
@@ -81,6 +84,10 @@
     };
 
     watch(route, async () => await generate());
+    watch(
+        () => props.identifier,
+        () => generate(),
+    );
     onMounted(() => generate());
 </script>
 

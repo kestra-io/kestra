@@ -99,11 +99,3 @@
     );
     onMounted(() => generate());
 </script>
-
-<style lang="scss" scoped>
-$height: 200px;
-
-.chart {
-    max-height: $height;
-}
-</style>

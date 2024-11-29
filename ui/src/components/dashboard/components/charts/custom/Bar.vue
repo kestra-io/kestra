@@ -62,7 +62,6 @@
                         customBarLegend: {
                             containerID,
                             uppercase: true,
-                            length: generated.value.length,
                         },
                     }
                     : {}),

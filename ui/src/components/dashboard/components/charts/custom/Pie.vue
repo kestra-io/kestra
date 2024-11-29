@@ -62,7 +62,6 @@
                     ? {
                         totalsLegend: {
                             containerID,
-                            length: generated.value.length,
                         },
                     }
                     : {}),

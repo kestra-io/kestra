@@ -4,7 +4,7 @@ import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
     const legendContainer = document.getElementById(id);
-    let listContainer = legendContainer.querySelector("ul");
+    let listContainer = legendContainer?.querySelector("ul");
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
@@ -14,7 +14,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
         listContainer.style.margin = 0;
         listContainer.style.padding = 0;
 
-        legendContainer.appendChild(listContainer);
+        legendContainer?.appendChild(listContainer);
     }
 
     return listContainer;
@@ -22,9 +22,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
 export const barLegend = {
     id: "barLegend",
-    afterUpdate(chart, args, options, length) {
-        if (!length) return;
-
+    afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul.firstChild) {
@@ -99,9 +97,7 @@ export const barLegend = {
 
 export const customBarLegend = {
     id: "customBarLegend",
-    afterUpdate(chart, args, options, length) {
-        if (!length) return;
-
+    afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul.firstChild) {
@@ -170,9 +166,7 @@ export const customBarLegend = {
 
 export const totalsLegend = {
     id: "totalsLegend",
-    afterUpdate(chart, args, options, length) {
-        if (!length) return;
-
+    afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
 
         while (ul.firstChild) {

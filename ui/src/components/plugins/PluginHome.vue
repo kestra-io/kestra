@@ -65,7 +65,7 @@
                         </ul>
                     </div>
                 </template>
-                <div v-if="isVisible(plugin)" class="plugin-card" @click="openGroup(plugin)">
+                <div class="plugin-card" @click="openGroup(plugin)">
                     <task-icon
                         class="size"
                         :only-icon="true"
@@ -90,6 +90,10 @@
             plugins: {
                 type: Array,
                 required: true
+            },
+            embed: {
+                type: Boolean,
+                default: false
             }
         },
         components: {
@@ -144,7 +148,9 @@
                             plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
                             plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
                             plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    }).sort((a, b) => {
+                    })
+                    .filter(plugin => this.isVisible(plugin))
+                    .sort((a, b) => {
                         const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
                               nameB = b.manifest["X-Kestra-Title"].toLowerCase();
 

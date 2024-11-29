@@ -11,7 +11,8 @@
     "test:unit": "vitest run",
     "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
-    "translations:check": "node ./src/translations/check.js"
+    "translations:check": "node ./src/translations/check.js",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",
@@ -70,6 +71,7 @@
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^1.23.1",
+    "@types/path-browserify": "^1.0.3",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-vue": "^5.2.0",
     "@vue/eslint-config-prettier": "^10.1.0",

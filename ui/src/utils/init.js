@@ -90,7 +90,7 @@ export default (app, routes, stores, translations) => {
     /* eslint-disable no-undef */
     // router
     let router = createRouter({
-        history: createWebHistory(KESTRA_UI_PATH),
+        history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 
@@ -101,11 +101,11 @@ export default (app, routes, stores, translations) => {
     app.use(router)
 
     // Google Analytics
-    if (KESTRA_GOOGLE_ANALYTICS !== null) {
+    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
         app.use(
             VueGtag,
             {
-                config: {id: KESTRA_GOOGLE_ANALYTICS}
+                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
             },
             router
         );

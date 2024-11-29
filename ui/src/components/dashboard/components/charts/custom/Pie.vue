@@ -67,12 +67,6 @@
                     enabled: true,
                     intersect: true,
                     filter: (value) => value.raw,
-                    callbacks: {
-                        title: () => "",
-                        label: (value) => {
-                            return `${value.dataset.tooltip} : ${value.raw}`;
-                        },
-                    },
                 },
             },
         }),
@@ -162,7 +156,6 @@
             datasets: [
                 {
                     data: dataElements,
-                    tooltip: aggregator.value.label,
                     backgroundColor,
                     thicknessScale,
                     borderWidth: 0,

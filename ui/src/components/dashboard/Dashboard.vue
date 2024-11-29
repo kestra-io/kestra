@@ -229,7 +229,7 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    import moment from "moment";
+    // import moment from "moment";
 
     import {apiUrl} from "override/utils/route";
     import State from "../../utils/state";
@@ -492,12 +492,12 @@
     // };
 
     const fetchAll = async () => {
-        if (!route.query.startDate || !route.query.endDate) {
-            route.query.startDate = moment()
-                .subtract(moment.duration("PT720H").as("milliseconds"))
-                .toISOString(true);
-            route.query.endDate = moment().toISOString(true);
-        }
+        // if (!route.query.startDate || !route.query.endDate) {
+        //     route.query.startDate = moment()
+        //         .subtract(moment.duration("PT720H").as("milliseconds"))
+        //         .toISOString(true);
+        //     route.query.endDate = moment().toISOString(true);
+        // }
 
         try {
             await Promise.any([

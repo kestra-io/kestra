@@ -137,16 +137,25 @@
 
     const generated = ref([]);
     const generate = async () => {
-        generated.value = await store.dispatch("dashboard/generate", {
+        const params = {
             id: dashboard.value.id,
             chartId: props.chart.id,
-            startDate:
-                route.query.startDate ??
-                moment()
-                    .subtract(moment.duration("PT720H").as("milliseconds"))
-                    .toISOString(true),
-            endDate: route.query.endDate ?? moment().toISOString(true),
-        });
+            startDate: route.query.timeRange
+                ? moment()
+                    .subtract(
+                        moment.duration(route.query.timeRange).as("milliseconds"),
+                    )
+                    .toISOString(true)
+                : route.query.startDate ||
+                    moment()
+                        .subtract(moment.duration("PT720H").as("milliseconds"))
+                        .toISOString(true),
+            endDate: route.query.timeRange
+                ? moment().toISOString(true)
+                : route.query.endDate || moment().toISOString(true),
+        };
+
+        generated.value = await store.dispatch("dashboard/generate", params);
     };
 
     watch(route, async () => await generate());

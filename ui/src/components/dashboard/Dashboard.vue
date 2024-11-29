@@ -519,11 +519,11 @@
     });
 
     onBeforeMount(() => {
+        handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
+
         if (props.flowID) {
             router.replace({query: {...route.query, flowId: props.flowID}});
         }
-
-        handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
 
         // if (!route.query.namespace && props.restoreURL) {
         //     router.replace({query: {...route.query, namespace: defaultNamespace}});
@@ -532,6 +532,7 @@
         // else {
         //     filters.value.namespace = null
         // }
+
         // updateParams(route.query);
     });
 

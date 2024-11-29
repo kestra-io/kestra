@@ -995,10 +995,10 @@
     "flows imported": "Потоки импортированы",
     "is required": "{field} обязателен для заполнения",
     "bookmark": "Закладки",
-    "dashboards": "Панели управления",
+    "dashboards": "Панели мониторинга",
     "dashboard_label": "Панель управления",
     "default_dashboard": "Панель по умолчанию",
-    "custom_dashboard": "Пользовательские Dashboards",
+    "custom_dashboard": "Пользовательские панели мониторинга",
     "create_custom_dashboard": "Создать новую панель управления",
     "edit_custom_dashboard": "Редактировать Dashboard",
     "custom_dashboard_empty": "Нет результатов для отображения."

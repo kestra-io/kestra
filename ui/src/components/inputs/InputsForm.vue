@@ -223,7 +223,7 @@
             },
             initialInputs: {
                 type: Array,
-                default: undefined
+                default: () => []
             },
             flow: {
                 type: Object,

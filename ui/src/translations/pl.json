@@ -998,7 +998,7 @@
     "dashboards": "Panele sterowania",
     "dashboard_label": "Dashboard",
     "default_dashboard": "Domyślny Dashboard",
-    "custom_dashboard": "Niestandardowy Dashboard",
+    "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
     "create_custom_dashboard": "Utwórz nowy dashboard",
     "edit_custom_dashboard": "Edytuj Dashboard",
     "custom_dashboard_empty": "Nie ma wyników do wyświetlenia."

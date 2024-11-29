@@ -998,7 +998,7 @@
     "dashboards": "Панели управления",
     "dashboard_label": "Панель управления",
     "default_dashboard": "Панель по умолчанию",
-    "custom_dashboard": "Пользовательская панель управления",
+    "custom_dashboard": "Пользовательские Dashboards",
     "create_custom_dashboard": "Создать новую панель управления",
     "edit_custom_dashboard": "Редактировать Dashboard",
     "custom_dashboard_empty": "Нет результатов для отображения."

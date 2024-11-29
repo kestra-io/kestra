@@ -4,7 +4,13 @@
     <div class="dashboard-filters">
         <KestraFilter
             prefix="dashboard"
-            :include="['namespace', 'state', 'scope', 'relative_date', 'absolute_date']"
+            :include="[
+                'namespace',
+                'state',
+                'scope',
+                'relative_date',
+                'absolute_date',
+            ]"
             :refresh="{shown: true, callback: fetchAll}"
         />
     </div>
@@ -75,10 +81,18 @@
 
         <el-row>
             <el-col :xs="24" :lg="props.flow ? 24 : 16">
-                <ExecutionsBar :data="graphData" :total="stats.total" :class="{'me-2': !props.flow}" />
+                <ExecutionsBar
+                    :data="graphData"
+                    :total="stats.total"
+                    :class="{'me-2': !props.flow}"
+                />
             </el-col>
             <el-col v-if="!props.flow" :xs="24" :lg="8">
-                <ExecutionsDoughnut :data="graphData" :total="stats.total" class="ms-2" />
+                <ExecutionsDoughnut
+                    :data="graphData"
+                    :total="stats.total"
+                    class="ms-2"
+                />
             </el-col>
         </el-row>
 
@@ -159,7 +173,7 @@
 
 <script setup>
     import {onBeforeMount, ref, computed, watch} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -171,7 +185,7 @@
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
 
-    import KestraFilter from "../filter/KestraFilter.vue"
+    import KestraFilter from "../filter/KestraFilter.vue";
 
     import ExecutionsBar from "./components/charts/executions/Bar.vue";
     import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
@@ -193,7 +207,7 @@
     import action from "../../models/action.js";
     // import {storageKeys} from "../../utils/constants";
 
-    // const router = useRouter();
+    const router = useRouter();
     const route = useRoute();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
@@ -219,10 +233,10 @@
             required: false,
             default: null,
         },
-        restoreURL:{
+        restoreURL: {
             type: Boolean,
             default: true,
-        }
+        },
     });
 
     const descriptionDialog = ref(false);
@@ -387,8 +401,10 @@
     // };
 
     const fetchAll = async () => {
-        if(!route.query.startDate || !route.query.endDate){
-            route.query.startDate = moment().subtract(moment.duration("PT720H").as("milliseconds")).toISOString(true);
+        if (!route.query.startDate || !route.query.endDate) {
+            route.query.startDate = moment()
+                .subtract(moment.duration("PT720H").as("milliseconds"))
+                .toISOString(true);
             route.query.endDate = moment().toISOString(true);
         }
 
@@ -412,21 +428,29 @@
     });
 
     onBeforeMount(() => {
-        // if (!route.query.namespace && props.restoreURL) {
-        //     router.replace({query: {...route.query, namespace: defaultNamespace}});
-        //     filters.value.namespace = route.query.namespace || defaultNamespace;
-        // }
-        // else {
-        //     filters.value.namespace = null
-        // }
+        if (props.flowID) {
+            router.replace({query: {...route.query, flowId: props.flowID}});
+        }
 
-        // updateParams(route.query);
+    // if (!route.query.namespace && props.restoreURL) {
+    //     router.replace({query: {...route.query, namespace: defaultNamespace}});
+    //     filters.value.namespace = route.query.namespace || defaultNamespace;
+    // }
+    // else {
+    //     filters.value.namespace = null
+    // }
+
+    // updateParams(route.query);
     });
 
-    watch(route, () => {
-        fetchAll()
-    }, {immediate: true, deep: true})
-  </script>
+    watch(
+        route,
+        () => {
+            fetchAll();
+        },
+        {immediate: true, deep: true},
+    );
+</script>
 
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";

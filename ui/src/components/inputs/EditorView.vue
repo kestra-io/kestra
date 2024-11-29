@@ -1,6 +1,7 @@
 <script setup>
     import {computed, getCurrentInstance, h, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
+    import {useRouter} from "vue-router";
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -31,7 +32,7 @@
     import {ElMessageBox} from "element-plus";
 
     const store = useStore();
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
     const emit = defineEmits(["follow", "expand-subflow"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -1413,7 +1414,7 @@
         position: fixed;
         z-index: 9999;
         border-right: none;
-        
+
         & li {
             height: 30px;
             padding: 16px;
@@ -1421,7 +1422,7 @@
             color: var(--bs-gray-700);
 
             &:hover {
-                color: var(--bs-secondary);            
+                color: var(--bs-secondary);
             }
         }
     }

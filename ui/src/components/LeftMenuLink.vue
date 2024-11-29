@@ -28,7 +28,8 @@
 </script>
 
 <script setup>
-    import {computed, getCurrentInstance, ref, onMounted} from "vue"
+    import {computed, ref, onMounted} from "vue"
+    import {useRouter} from "vue-router";
     import EnterpriseTooltip from "./EnterpriseTooltip.vue";
 
     const props = defineProps({
@@ -38,7 +39,7 @@
         },
     })
 
-    const router = getCurrentInstance().appContext.config.globalProperties.$router
+    const router = useRouter()
 
     const isHyperLink = computed(() => {
         return !!(!props.item.href || props.item.external || !router)

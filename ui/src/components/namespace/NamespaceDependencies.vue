@@ -1,5 +1,7 @@
 <script setup>
-    import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
+    import {ref, onMounted, inject, nextTick} from "vue";
+    import {useStore} from "vuex";
+    import {useRouter} from "vue-router"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background";
@@ -11,12 +13,12 @@
 
     import {linkedElements} from "../../utils/vueFlow"
     import {apiUrl} from "override/utils/route";
-    import {useStore} from "vuex";
+
 
     const {id: vueFlowId, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow();
 
     const axios = inject("axios")
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
     const store = useStore();
 
     const loaded = ref([]);

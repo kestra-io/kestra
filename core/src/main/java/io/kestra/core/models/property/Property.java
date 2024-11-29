@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Define a plugin properties that will be rendered and converted to a target type at use time.
@@ -330,6 +331,18 @@ public class Property<T> {
     @Override
     public String toString() {
         return value != null ? value.toString() : expression;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Property<?> property = (Property<?>) o;
+        return Objects.equals(expression, property.expression);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(expression);
     }
 
     // used only by the serializer

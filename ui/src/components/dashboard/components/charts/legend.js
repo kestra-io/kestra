@@ -4,6 +4,10 @@ import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
     const legendContainer = document.getElementById(id);
+
+    legendContainer.style.width = "100%";
+    legendContainer.style.justifyItems = "end";
+
     let listContainer = legendContainer?.querySelector("ul");
 
     if (!listContainer) {
@@ -13,6 +17,9 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
         listContainer.style.padding = 0;
+
+        listContainer.style.maxHeight = "200px";
+        listContainer.style.overflow = "auto";
 
         legendContainer?.appendChild(listContainer);
     }

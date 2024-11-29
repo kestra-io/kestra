@@ -1,5 +1,5 @@
 <template>
-    <div :id="containerID" class="float-end" />
+    <div :id="containerID" />
     <Bar
         v-if="generated.length"
         :data="parsedData"

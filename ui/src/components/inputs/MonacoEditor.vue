@@ -719,6 +719,8 @@
         width: 100%;
         height: 100%;
         outline: none;
+        padding-top: 15px;
+        padding-left: 10px;
     }
 </style>
 

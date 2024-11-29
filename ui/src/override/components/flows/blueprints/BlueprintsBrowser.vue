@@ -373,6 +373,7 @@
                     .title {
                         font-weight: bold;
                         font-size: $small-font-size;
+                        padding-left: 0;
                     }
 
                     .tags {

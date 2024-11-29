@@ -35,7 +35,11 @@
                     :label="option.label"
                     @click="() => filterCallback(option)"
                 >
-                    <component v-if="option.icon" :is="option.icon" class="me-2" />
+                    <component
+                        v-if="option.icon"
+                        :is="option.icon"
+                        class="me-2"
+                    />
                     <span>{{ option.label }}</span>
                 </el-option>
             </template>
@@ -363,6 +367,7 @@
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();
+                triggerSearch();
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
@@ -370,6 +375,8 @@
 
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
+
+                triggerSearch();
             }
 
             triggerEnter.value = false;

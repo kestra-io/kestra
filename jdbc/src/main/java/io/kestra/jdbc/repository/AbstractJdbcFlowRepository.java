@@ -15,7 +15,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
@@ -23,14 +22,14 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.ConstraintViolationException;
 import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -174,7 +173,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("value", String.class)
                         )
                         .from(fromLastRevision(true))
-                        .where(allowDeleted ? this.revisionDefaultFilter(tenantId) :this.defaultFilter(tenantId))
+                        .where(allowDeleted ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
                 Record2<String, String> fetched = from.fetchAny();

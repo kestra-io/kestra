@@ -1,5 +1,7 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -7,13 +9,16 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -547,5 +552,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        throw new NotImplementedException();
     }
 }

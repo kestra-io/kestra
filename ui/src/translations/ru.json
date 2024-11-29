@@ -360,7 +360,7 @@
     },
     "cancel": "Отмена",
     "homeDashboard": {
-      "title": "Панель управления",
+      "title": "Обзор",
       "today": "Сегодня",
       "yesterday": "Вчера",
       "last28Days": "Последние 28 дней",
@@ -994,6 +994,13 @@
     "flow not imported": "Некоторые flow не удалось импортировать",
     "flows imported": "Потоки импортированы",
     "is required": "{field} обязателен для заполнения",
-    "bookmark": "Закладки"
+    "bookmark": "Закладки",
+    "dashboards": "Панели управления",
+    "dashboard_label": "Панель управления",
+    "default_dashboard": "Панель по умолчанию",
+    "custom_dashboard": "Пользовательские Dashboards",
+    "create_custom_dashboard": "Создать новую панель управления",
+    "edit_custom_dashboard": "Редактировать Dashboard",
+    "custom_dashboard_empty": "Нет результатов для отображения."
   }
 }

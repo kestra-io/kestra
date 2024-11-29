@@ -1,5 +1,7 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -8,11 +10,14 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -309,5 +314,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         );
 
         return mapper::get;
+    }
+
+    @Override
+    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        throw new NotImplementedException();
     }
 }

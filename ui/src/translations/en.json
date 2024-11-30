@@ -527,6 +527,8 @@
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code>?",
     "can not save": "Can not save",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "duplicate filter": "Duplicate filter not allowed",
+    "duplicate filter message": "Duplicate filter `{filterName}` found, please remove it and choose another one.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
     "avg": "Average",

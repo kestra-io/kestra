@@ -5,6 +5,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {ElMessageBox} from "element-plus";
 
     const {t} = useI18n();
 
@@ -19,10 +20,23 @@
     const updatedTitle = ref(props.title)
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
-    function deleteBookmark() {
-        $store.dispatch("bookmarks/remove", {
-            path: props.href
-        })
+    async function deleteBookmark() {
+        try {
+            await ElMessageBox.confirm(
+                t("Are you sure you want to remove this bookmark?"),
+                t("Remove Bookmark"),
+                {
+                    confirmButtonText: t("Yes"),
+                    cancelButtonText: t("No"),
+                    type: "warning",
+                }
+            );
+            $store.dispatch("bookmarks/remove", {
+                path: props.href,
+            });
+        } catch {
+            // User canceled the action, do nothing
+        }
     }
 
     function startEditBookmark() {

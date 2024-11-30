@@ -68,6 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 1) Trigger the `transform` flow after the `extract` flow finishes successfully. \
                 The `extract` flow generates a `date` output that is passed to the \
                 `transform` flow as an input. \
+
                 ```yaml
                 id: extract
                 namespace: company.team
@@ -82,6 +83,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     type: STRING
                     value: "{{ outputs.final_date.value }}"
                 ```
+
                 The `transform` flow is triggered after the `extract` flow finishes successfully.""",
             code = """
                 id: transform
@@ -121,7 +123,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM. \
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                
                 ```yaml
                 id: bronze_layer
                 namespace: company.team

@@ -180,7 +180,6 @@
                     :flow="props.flowID"
                     :namespace="props.namespace"
                     class="me-2"
-                    style="height:370px"
                 />
             </el-col>
             <el-col v-if="props.flow" :xs="24" :lg="10">
@@ -188,7 +187,6 @@
                     :flow="props.flowID"
                     :namespace="filters.namespace"
                     class="mx-2"
-                    style="height:370px"
                 />
             </el-col>
             <el-col :xs="24" :lg="props.flow ? 7 : 12">
@@ -203,7 +201,6 @@
                     :flow="props.flowID"
                     :namespace="filters.namespace"
                     class="ms-2"
-                    style="height:370px"
                 />
                 <ExecutionsEmptyNextScheduled v-else />
             </el-col>

@@ -54,4 +54,3 @@ core/src/main/resources/gradle.properties
 
 # Allure Reports
 **/allure-results/*
-ui/docker-compose.yml

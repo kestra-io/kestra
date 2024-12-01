@@ -27,6 +27,7 @@
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
                     @close="logCursor = undefined"
+                    style="width: fit-content"
                 />
             </el-form-item>
             <el-form-item>

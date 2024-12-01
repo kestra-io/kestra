@@ -4,7 +4,7 @@
             :icon="ContentSave"
             @click="$emit('save', source)"
             :type="buttonType"
-            :disabled="source === initialSource"
+            :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
         </el-button>
@@ -12,7 +12,7 @@
     <el-row>
         <el-col :span="24">
             <editor
-                @save="source != initialSource ? $emit('save', $event) : undefined"
+                @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                 v-model="source"
                 schema-type="dashboard"
                 lang="yaml"
@@ -51,6 +51,10 @@
         },
         emits: ["save"],
         props: {
+            allowSaveUnchanged: {
+                type: Boolean,
+                default: false
+            },
             initialSource: {
                 type: String,
                 default: undefined

@@ -26,7 +26,7 @@ public class PieOption extends ChartOption implements WithLegend, WithTooltip {
     private LegendOption legend = LegendOption.builder().build();
 
     @Builder.Default
-    private PieGraphStyle graphStyle = PieGraphStyle.PIE;
+    private PieGraphStyle graphStyle = PieGraphStyle.DONUT;
 
     private String colorByColumn;
 

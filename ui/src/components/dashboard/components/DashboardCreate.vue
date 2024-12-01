@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <dashboard-editor @save="save" :initial-source="initialSource" />
+        <dashboard-editor allow-save-unchanged @save="save" :initial-source="initialSource" />
     </section>
 </template>
 

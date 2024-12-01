@@ -59,5 +59,8 @@ export default {
         guidedProperties(state) {
             return state.guidedProperties;
         },
+        error(state) {
+            return state.error;
+        }
     }
 }

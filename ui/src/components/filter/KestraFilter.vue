@@ -8,6 +8,7 @@
             value-key="label"
             :placeholder="t('filters.label')"
             allow-create
+            default-first-option
             filterable
             multiple
             popper-class="filters-select"

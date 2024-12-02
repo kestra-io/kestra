@@ -74,7 +74,7 @@
                     callbacks: {
                         label: (value) => {
                             if (!value.dataset.tooltip) return "";
-                            return `${value.dataset.tooltip} : ${value.raw}`;
+                            return `${value.dataset.tooltip}`;
                         },
                     },
                 },
@@ -126,6 +126,8 @@
             return Array.from(new Set(values)).sort();
         })();
 
+        const aggregatorKeys = aggregator.map(([key]) => key);
+
         const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
 
@@ -133,12 +135,12 @@
             const {column, colorByColumn} = chartOptions;
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
-            const fields = Object.entries(columns)
-                .filter(([k, _v]) => k !== aggregator[0][0] && k !== column)
-                .map(([k]) => k);
+            const fields = Object.keys(columns)
+                .filter(key => !aggregatorKeys.includes(key))
+                .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = fields.map((f) => `${f}: ${params[f]}`).join(", ");
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + params[agg[0]]).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {

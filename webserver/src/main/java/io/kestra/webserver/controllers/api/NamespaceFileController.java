@@ -193,7 +193,7 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return;
         }
-        //Creation of file with name _flows*
+        //Creation of file with name _flows* check
         if(filePath.matches(".*/" + FLOWS_FOLDER + "(?!/).*")) {
             throw new IllegalArgumentException("Can't name file " + filePath + " because it contains the keyword _flows");
         }

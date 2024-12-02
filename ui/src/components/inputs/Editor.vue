@@ -466,7 +466,7 @@
                 box-shadow: 0 0 0 1px var(--bs-border-color) inset;
                 padding-top: 7px;
 
-                &:has(.vs-dark){
+                &.custom-dark-vs-theme {
                     background-color: $input-bg;
                 }
 

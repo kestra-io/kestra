@@ -498,6 +498,7 @@
 
 .el-button-group > .el-dropdown > .el-button {
     border-left-color: transparent;
+    margin-left: 1px;
 }
 
 .filters-select {

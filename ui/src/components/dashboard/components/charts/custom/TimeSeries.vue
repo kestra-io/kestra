@@ -6,6 +6,7 @@
         :options
         :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
+        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -257,10 +258,15 @@
 </script>
 
 <style lang="scss" scoped>
-$height: 200px;
-
 .chart {
-    max-height: $height;
+    #{--chart-height}: 200px;
+
+    &:not(.with-legend) {
+        #{--chart-height}: 231px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
 }
 </style>
-ss
+

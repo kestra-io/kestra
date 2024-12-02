@@ -181,9 +181,14 @@
 </script>
 
 <style lang="scss" scoped>
-$height: 200px;
+    .chart {
+        #{--chart-height}: 200px;
 
-.chart {
-    max-height: $height;
-}
+        &:not(.with-legend) {
+            #{--chart-height}: 231px;
+        }
+
+        min-height: var(--chart-height);
+        max-height: var(--chart-height);
+    }
 </style>

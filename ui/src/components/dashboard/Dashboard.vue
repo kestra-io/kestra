@@ -45,7 +45,7 @@
                 :xs="24"
                 :sm="12"
             >
-                <div class="p-4">
+                <div class="p-4 d-flex flex-column">
                     <p class="m-0 fs-6 fw-bold">
                         {{ chart.chartOptions?.displayName ?? chart.id }}
                     </p>
@@ -56,7 +56,7 @@
                         <small>{{ chart.chartOptions.description }}</small>
                     </p>
 
-                    <div class="mt-4">
+                    <div class="mt-4 flex-grow-1">
                         <component
                             :is="types[chart.type]"
                             :source="chart.content"

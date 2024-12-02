@@ -1,7 +1,7 @@
 <template>
     <div :id="containerID" />
     <Bar
-        v-if="generated.length"
+        v-if="generated !== undefined"
         :data="parsedData"
         :options="options"
         :plugins="[customBarLegend]"
@@ -18,19 +18,17 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {
-        defaultConfig,
-        getConsistentHEXColor,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
+    import moment from "moment";
+
+    import {useRoute} from "vue-router";
+
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
-    import moment from "moment";
-
-    import {useRoute} from "vue-router";
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
@@ -108,7 +106,8 @@
 
         const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
 
-        generated.value.forEach((item) => {
+        const rawData = generated.value.results;
+        rawData.forEach((item) => {
             const key = validColumns.map((col) => item[col]).join("|"); // Use '|' as a delimiter
 
             if (!grouped[key]) {
@@ -122,7 +121,7 @@
         });
 
         const labels = Object.keys(grouped);
-        const unique = [...new Set(generated.value.map((item) => item[column]))];
+        const unique = [...new Set(rawData.map((item) => item[column]))];
 
         const datasets = unique.map((value) => ({
             label: value,
@@ -134,7 +133,7 @@
         return {labels, datasets};
     });
 
-    const generated = ref([]);
+    const generated = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,

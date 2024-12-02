@@ -1,6 +1,6 @@
 <template>
-    <template v-if="generated.length">
-        <el-table :id="containerID" :data="paginatedData">
+    <template v-if="data !== undefined">
+        <el-table :id="containerID" :data="data.results" :height="240">
             <el-table-column
                 v-for="(column, index) in Object.keys(props.chart.data.columns)"
                 :key="index"
@@ -12,9 +12,10 @@
             </el-table-column>
         </el-table>
         <el-pagination
+            v-if="props.chart.chartOptions?.pagination?.enabled"
             :current-page="currentPage"
             :page-size="pageSize"
-            :total="generated.length"
+            :total="data.total"
             @current-change="handlePageChange"
             @size-change="handlePageSizeChange"
             layout="prev, pager, next, sizes"
@@ -28,19 +29,20 @@
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, computed, ref, watch} from "vue";
+    import {computed, onMounted, ref, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     import NoData from "../../../../layout/NoData.vue";
 
     import {useStore} from "vuex";
-    const store = useStore();
-
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+
+    const {t} = useI18n({useScope: "global"});
+
+    const store = useStore();
+
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
@@ -56,20 +58,18 @@
     const currentPage = ref(1);
     const pageSize = ref(5);
 
-    const paginatedData = computed(() => {
-        const start = (currentPage.value - 1) * pageSize.value;
-        return generated.value.slice(start, start + pageSize.value);
-    });
-
     const handlePageChange = (page) => {
         currentPage.value = page;
+        generate();
     };
 
     const handlePageSizeChange = (size) => {
+        currentPage.value = 1;
         pageSize.value = size;
+        generate();
     };
 
-    const generated = ref([]);
+    const data = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,
@@ -89,7 +89,12 @@
                 : route.query.endDate || moment().toISOString(true),
         };
 
-        generated.value = await store.dispatch("dashboard/generate", params);
+        if (props.chart.chartOptions?.pagination?.enabled) {
+            params.pageNumber = currentPage.value;
+            params.pageSize = pageSize.value;
+        }
+
+        data.value = await store.dispatch("dashboard/generate", params);
     };
 
     watch(route, async () => await generate());

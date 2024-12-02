@@ -1088,7 +1088,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         throw new NotImplementedException();
     }
 }

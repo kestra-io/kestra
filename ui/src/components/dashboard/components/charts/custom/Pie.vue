@@ -5,7 +5,7 @@
         <div class="w-75">
             <component
                 :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
-                v-if="generated.length"
+                v-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
@@ -29,18 +29,16 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {
-        defaultConfig,
-        getConsistentHEXColor,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
     import {totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import {useStore} from "vuex";
+
     const route = useRoute();
 
-    import {useStore} from "vuex";
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
@@ -136,7 +134,7 @@
 
         let results = Object.create(null);
 
-        generated.value.forEach((value) => {
+        generated.value.results.forEach((value) => {
             const field = parseValue(value[aggregator.field.key]);
             const aggregated = value[aggregator.value.key];
 
@@ -166,7 +164,7 @@
         };
     });
 
-    const generated = ref([]);
+    const generated = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,

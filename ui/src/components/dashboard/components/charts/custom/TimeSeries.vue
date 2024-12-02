@@ -1,7 +1,7 @@
 <template>
     <div :id="containerID" />
     <Bar
-        v-if="generated.length"
+        v-if="generated !== undefined"
         :data="parsedData"
         :options
         :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
@@ -18,19 +18,17 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {
-        defaultConfig,
-        getConsistentHEXColor,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
+    import moment from "moment";
+
+    import {useRoute} from "vue-router";
+
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
-    import moment from "moment";
-
-    import {useRoute} from "vue-router";
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
@@ -119,8 +117,9 @@
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
 
+        const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = generated.value.map((v) => {
+            const values = rawData.map((v) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -186,7 +185,7 @@
             });
         };
 
-        const yDataset = reducer(generated.value, aggregator[0][0], "y");
+        const yDataset = reducer(rawData, aggregator[0][0], "y");
         const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
         const label =
@@ -199,7 +198,7 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: generated.value.map((v) => v[aggregator[1][0]]),
+                        data: rawData.map((v) => v[aggregator[1][0]]),
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
@@ -211,7 +210,7 @@
         };
     });
 
-    const generated = ref([]);
+    const generated = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,

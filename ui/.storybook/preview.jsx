@@ -34,7 +34,7 @@ const preview = {
 };
 
 setup((app) => {
-  initApp(app, [], stores, {en});
+  initApp(app, [], stores, en);
 });
 
 export default preview;

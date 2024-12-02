@@ -376,6 +376,12 @@
             margin: 0 0 1px 0;
             border-radius: 0;
             border: 0;
+            border-bottom: 1px solid var(--el-border-color-darker);
+            
+            html.dark &.blueprint-card{
+                background-color: var(--bs-tertiary);
+                border-bottom: solid var(--el-border-color-darker);
+            }
 
             .blueprint-link {
                 display: flex;
@@ -404,7 +410,7 @@
                         
 
                         .el-tag.el-tag--info {
-                            background-color: #f8f9fa;
+                            background-color: #FEFEFE;
                             padding: 15px 10px;
                             color: var(--el-text-color-regular);
                             text-transform: capitalize;
@@ -423,7 +429,7 @@
 
 
                     .tasks-container {
-                        $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
+                        $plugin-icon-size: calc(var(--font-size-base) + 0.3rem);
                         display: flex;
                         gap: calc(var(--spacer) / 4);
                         width: fit-content;
@@ -441,8 +447,9 @@
                         white-space: nowrap;
                     }
 
-                    html.dark & :deep(.el-button) {
-                        background-color: var(--bs-primary);
+                    :deep(.el-button){
+                        background-color:  var(--el-color-primary);
+                        color:  var(--el-color-white);
                     }
                 }
             }

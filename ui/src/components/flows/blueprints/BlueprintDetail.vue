@@ -287,7 +287,6 @@
             margin: 10px 0;
             display: flex;
                         
-
             .el-tag.el-tag--info {
                 background-color: var(--card-bg);
                 padding: 15px 10px;

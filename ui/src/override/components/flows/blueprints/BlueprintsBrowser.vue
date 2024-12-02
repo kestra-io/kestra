@@ -379,7 +379,6 @@
             border-bottom: 1px solid var(--el-border-color-darker);
             
             html.dark &.blueprint-card{
-                background-color: var(--bs-tertiary);
                 border-bottom: solid var(--el-border-color-darker);
             }
 

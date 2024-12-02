@@ -466,6 +466,10 @@
                 box-shadow: 0 0 0 1px var(--bs-border-color) inset;
                 padding-top: 7px;
 
+                &:has(.vs-dark){
+                    background-color: $input-bg;
+                }
+
                 html.dark & {
                     background-color: var(--bs-gray-100);
                 }

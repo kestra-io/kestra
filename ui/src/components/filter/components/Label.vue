@@ -1,6 +1,6 @@
 <template>
-    <span v-if="label">{{ label }}</span>
-    <span v-if="comparator" class="text-primary">:{{ comparator }}:</span>
+    <span v-if="label">{{ $t("filters.options." + label) }}</span>
+    <span v-if="comparator" class="comparator">{{ comparator }}</span>
     <!-- TODO: Amend line below after merging issue: https://github.com/kestra-io/kestra/issues/5955 -->
     <span v-if="value">{{ !comparator ? ":" : "" }}{{ value }}</span>
 </template>
@@ -28,3 +28,12 @@
         return `${startDate ? formatter.format(new Date(startDate)) : "unknown"}:and:${endDate ? formatter.format(new Date(endDate)) : "unknown"}`;
     });
 </script>
+
+<style lang="scss" scoped>
+    .comparator {
+        background: var(--bs-gray-500);
+        padding: 0.30rem 0.35rem;
+        margin: 0 0.5rem;
+        display: inline-block;
+    }
+</style>

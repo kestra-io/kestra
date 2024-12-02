@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
+import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 
@@ -10,7 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
 
-public interface MetricRepositoryInterface extends SaveRepositoryInterface<MetricEntry> {
+public interface MetricRepositoryInterface extends SaveRepositoryInterface<MetricEntry>, QueryBuilderInterface<Metrics.Fields> {
     ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable);
 
     ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable);

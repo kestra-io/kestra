@@ -8,12 +8,16 @@
             value-key="label"
             :placeholder="t('filters.label')"
             allow-create
+            default-first-option
             filterable
             multiple
+            placement="bottom"
+            :show-arrow="false"
+            fit-input-width
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
-            @keyup.enter="() => handleEnterKey(select?.hoverOption.value)"
+            @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
@@ -34,7 +38,14 @@
                     :value="option.value"
                     :label="option.label"
                     @click="() => filterCallback(option)"
-                />
+                >
+                    <component
+                        v-if="option.icon"
+                        :is="option.icon"
+                        class="me-2"
+                    />
+                    <span>{{ option.label }}</span>
+                </el-option>
             </template>
             <template v-else-if="dropdowns.second.shown">
                 <el-option
@@ -62,6 +73,11 @@
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
         </el-button-group>
+
+        <Dashboards
+            v-if="dashboards.shown"
+            @dashboard="(value) => emits('dashboard', value)"
+        />
     </section>
 </template>
 
@@ -85,12 +101,14 @@
     import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
+    import Dashboards from "./components/Dashboards.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
+    const emits = defineEmits(["dashboard"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -104,6 +122,10 @@
                 shown: false,
                 charts: {shown: false, value: false, callback: () => {}},
             }),
+        },
+        dashboards: {
+            type: Object,
+            default: () => ({shown: false}),
         },
     });
 
@@ -127,7 +149,15 @@
     const dropdowns = ref({...INITIAL_DROPDOWNS});
     const closeDropdown = () => (select.value.dropdownMenuVisible = false);
 
+    const triggerEnter = ref(true);
     const handleEnterKey = (option) => {
+        if (!option) return;
+
+        if (!triggerEnter.value) {
+            triggerEnter.value = true;
+            return;
+        }
+
         if (dropdowns.value.first.shown) {
             const value = includedOptions.value.filter((o) => {
                 let comparator = o.key;
@@ -147,6 +177,11 @@
     };
 
     const filterCallback = (option) => {
+        if (!option.value) {
+            triggerEnter.value = false;
+            return;
+        }
+
         option.value = {
             label: option.value?.label ?? "Unknown",
             comparator: undefined,
@@ -323,12 +358,21 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
-        return OPTIONS.filter((o) => props.include.includes(o.value?.label));
+        const dates = ["relative_date", "absolute_date"];
+
+        const found = current.value?.find((v) => dates.includes(v?.label));
+        const exclude = found ? dates.find((date) => date !== found.label) : null;
+
+        return OPTIONS.filter((o) => {
+            const label = o.value?.label;
+            return props.include.includes(label) && label !== exclude;
+        });
     });
 
     const changeCallback = (v) => {
@@ -339,6 +383,7 @@
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();
+                triggerSearch();
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
@@ -346,7 +391,11 @@
 
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
+
+                triggerSearch();
             }
+
+            triggerEnter.value = false;
         }
 
         // Clearing the input field after value is being submitted
@@ -456,9 +505,21 @@
 }
 
 .filters-select {
+    & .el-select-dropdown {
+        width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
+    }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
+    }
+
+    & .el-select-dropdown__item .material-design-icon {
+        bottom: -0.15rem;
     }
 }
 </style>

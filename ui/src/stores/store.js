@@ -17,6 +17,7 @@ import trigger from "./trigger";
 import editor from "./editor";
 import doc from "./doc";
 import bookmarks from "./bookmarks";
+import dashboard from "./dashboard";
 
 export default {
     modules: {
@@ -38,6 +39,7 @@ export default {
         trigger,
         editor,
         doc,
-        bookmarks
+        bookmarks,
+        dashboard
     }
 }

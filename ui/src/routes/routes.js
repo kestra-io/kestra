@@ -11,6 +11,8 @@ import Templates from "../components/templates/Templates.vue"
 import FlowsSearch from "../components/flows/FlowsSearch.vue";
 import Errors from "../components/errors/Errors.vue";
 import Dashboard from "../components/dashboard/Dashboard.vue";
+import DashboardCreate from "../components/dashboard/components/DashboardCreate.vue";
+import DashboardEdit from "../components/dashboard/components/DashboardEdit.vue";
 import Welcome from "../components/onboarding/Welcome.vue";
 import FlowCreate from "../components/flows/FlowCreate.vue";
 import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
@@ -22,10 +24,14 @@ import Namespace from "../components/namespace/Namespace.vue";
 import Docs from "../components/docs/Docs.vue";
 
 export default [
-    //Flows
+    //Initial
     {name: "root", path: "/", redirect: {name: "home"}},
-    {name: "home", path: "/:tenant?/dashboard", component: Dashboard},
     {name: "welcome", path: "/:tenant?/welcome", component: Welcome},
+
+    //Dashboards
+    {name: "home", path: "/:tenant?/dashboards/:id?", component: Dashboard},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: DashboardCreate},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: DashboardEdit},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: Flows},

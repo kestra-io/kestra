@@ -41,6 +41,9 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     private SchedulerTriggerStateInterface triggerState;
 
     @Inject
+    private SchedulerExecutionState schedulerExecutionState;
+
+    @Inject
     private FlowListeners flowListenersService;
 
 

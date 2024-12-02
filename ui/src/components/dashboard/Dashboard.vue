@@ -4,9 +4,9 @@
         :title="custom.shown ? custom.dashboard.title : t('overview')"
         :breadcrumb="[
             {
-                label: t(custom ? 'custom_dashboard' : 'dashboard_label'),
-                link: {},
-            },
+                label: t(custom.shown ? 'custom_dashboard' : 'dashboard_label'),
+                link: {}
+            }
         ]"
         :id="custom.dashboard.id ?? undefined"
     />

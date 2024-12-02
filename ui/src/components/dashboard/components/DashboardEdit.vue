@@ -43,12 +43,18 @@
         },
         computed: {
             routeInfo() {
+                const id = this.$route.params.id;
                 return {
-                    title: this.$route.params.id,
+                    title: id,
                     breadcrumb: [
                         {
                             label: this.$t("custom_dashboard"),
-                            link: {},
+                            link: {
+                                name: "home",
+                                params: {
+                                    id: id
+                                }
+                            },
                         },
                     ],
                 };

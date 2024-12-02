@@ -193,7 +193,10 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return;
         }
-
+        //Creation of file with name _flows*
+        if(filePath.matches(".*/" + FLOWS_FOLDER + "(?!/).*")) {
+            throw new IllegalArgumentException("Can't name file " + filePath + " because it contains the keyword _flows");
+        }
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 

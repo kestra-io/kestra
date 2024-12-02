@@ -46,7 +46,7 @@
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="multiSelectInputs[input.id]"
+                v-model="inputsValues[input.id]"
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
@@ -328,8 +328,8 @@
             onSubmit() {
                 this.$emit("confirm");
             },
-            onMultiSelectChange(input, e) {
-                this.inputsValues[input.id] = JSON.stringify(e);
+            onMultiSelectChange(input, val) {
+                this.inputsValues[input.id] = JSON.stringify(val);
                 this.onChange(input);
             },
             onFileChange(input, e) {

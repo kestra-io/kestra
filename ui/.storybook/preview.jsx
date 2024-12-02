@@ -1,10 +1,11 @@
 import {setup} from "@storybook/vue3";
 import initApp from "../src/utils/init";
 import stores from "../src/stores/store";
-import DarkModeSwitch from "../src/components/layout/DarkModeSwitch.vue"
+import { withThemeByClassName } from '@storybook/addon-themes';
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
+import en from "../src/translations/en.json";
 
 window.KESTRA_BASE_PATH = "/ui";
 window.KESTRA_UI_PATH = "./";
@@ -22,20 +23,18 @@ const preview = {
     },
   },
   decorators: [
-    () => ({
-        components: {
-            DarkModeSwitch,
+    withThemeByClassName({
+        themes: {
+          light: 'light',
+          dark: 'dark',
         },
-        template:`<div style="margin: 1rem;">
-            <DarkModeSwitch />
-            <story/>
-        </div>`
-    })
+        defaultTheme: 'light',
+      }),
   ]
 };
 
 setup((app) => {
-  initApp(app, [], stores, {en: {}});
+  initApp(app, [], stores, {en});
 });
 
 export default preview;

@@ -13,7 +13,7 @@ export default meta;
 const Sut = defineComponent((props) => {
     const values = ref({});
     return () => (<>
-        <el-form label-position="top">
+        <el-form label-position="top" modelValue={values.value}>
             <InputsForm initialInputs={props.inputs} modelValue={values.value} onUpdate:modelValue={(value) => values.value = value}/>
         </el-form>
         <pre>{

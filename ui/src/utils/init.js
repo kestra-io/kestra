@@ -105,7 +105,7 @@ export default (app, routes, stores, translations) => {
     }
 
     // Google Analytics
-    if (KESTRA_GOOGLE_ANALYTICS !== null) {
+    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
         app.use(
             VueGtag,
             {

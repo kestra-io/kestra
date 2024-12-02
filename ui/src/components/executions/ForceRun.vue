@@ -5,7 +5,7 @@
         transition=""
         :hide-after="0"
         :content="$t('force run tooltip')"
-        v-if="enabled"
+        :disabled="!enabled"
         raw-content
     >
         <component

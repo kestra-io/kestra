@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "ダッシュボード",
+      "title": "概要",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -994,6 +994,13 @@
     "flow not imported": "一部のflowをインポートできませんでした",
     "flows imported": "フローがインポートされました",
     "is required": "{field} は必須です",
-    "bookmark": "ブックマーク"
+    "bookmark": "ブックマーク",
+    "dashboards": "ダッシュボード",
+    "dashboard_label": "ダッシュボード",
+    "default_dashboard": "デフォルトダッシュボード",
+    "custom_dashboard": "カスタムダッシュボード",
+    "create_custom_dashboard": "新しいダッシュボードを作成",
+    "edit_custom_dashboard": "ダッシュボードを編集",
+    "custom_dashboard_empty": "表示する結果がありません。"
   }
 }

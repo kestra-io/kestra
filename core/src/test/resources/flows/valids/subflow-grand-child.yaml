@@ -1,6 +1,11 @@
 id: subflow-grand-child
 namespace: io.kestra.tests
 
+outputs:
+  - id: myResult
+    type: STRING
+    value: something
+
 tasks:
   - id: firstLevel
     type: io.kestra.plugin.core.log.Log

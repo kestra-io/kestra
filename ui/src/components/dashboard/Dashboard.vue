@@ -1,21 +1,74 @@
 <template>
-    <Header v-if="!embed" />
+    <Header
+        v-if="!embed"
+        :title="custom.shown ? custom.dashboard.title : t('overview')"
+        :breadcrumb="[
+            {
+                label: t(custom ? 'custom_dashboard' : 'dashboard_label'),
+                link: {},
+            },
+        ]"
+        :id="custom.dashboard.id ?? undefined"
+    />
 
     <div class="dashboard-filters">
         <KestraFilter
-            prefix="dashboard"
-            :include="[
-                'namespace',
-                'state',
-                'scope',
-                'relative_date',
-                'absolute_date',
-            ]"
-            :refresh="{shown: true, callback: fetchAll}"
+            :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
+            :include="
+                custom.shown
+                    ? ['relative_date', 'absolute_date']
+                    : [
+                        'namespace',
+                        'state',
+                        'scope',
+                        'relative_date',
+                        'absolute_date',
+                    ]
+            "
+            :refresh="{
+                shown: true,
+                callback: custom.shown ? refreshCustom : fetchAll,
+            }"
+            :dashboards="{shown: customDashboardsEnabled}"
+            @dashboard="(v) => handleCustomUpdate(v)"
         />
     </div>
 
-    <div class="dashboard">
+    <div v-if="custom.shown">
+        <p v-if="custom.dashboard.description" class="description">
+            <small>{{ custom.dashboard.description }}</small>
+        </p>
+        <el-row class="custom">
+            <el-col
+                v-for="(chart, index) in custom.dashboard.charts"
+                :key="index"
+                :xs="24"
+                :sm="12"
+            >
+                <div class="p-4">
+                    <p class="m-0 fs-6 fw-bold">
+                        {{ chart.chartOptions?.displayName ?? chart.id }}
+                    </p>
+                    <p
+                        v-if="chart.chartOptions?.description"
+                        class="m-0 fw-light"
+                    >
+                        <small>{{ chart.chartOptions.description }}</small>
+                    </p>
+
+                    <div class="mt-4">
+                        <component
+                            :is="types[chart.type]"
+                            :source="chart.content"
+                            :chart
+                            :identifier="custom.id"
+                        />
+                    </div>
+                </div>
+            </el-col>
+        </el-row>
+    </div>
+    <div v-else class="dashboard">
         <el-row v-if="!props.flow">
             <el-col :xs="24" :sm="12" :lg="6">
                 <Card
@@ -172,7 +225,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref, computed, watch} from "vue";
+    import {computed, onBeforeMount, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
@@ -197,6 +250,10 @@
     import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
 
     import Markdown from "../layout/Markdown.vue";
+    import TimeSeries from "./components/charts/custom/TimeSeries.vue";
+    import Bar from "./components/charts/custom/Bar.vue";
+    import Pie from "./components/charts/custom/Pie.vue";
+    import Table from "./components/tables/custom/Table.vue";
 
     import CheckBold from "vue-material-design-icons/CheckBold.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -238,6 +295,41 @@
             default: true,
         },
     });
+
+    const customDashboardsEnabled = computed(
+        () => store.state.misc.configs.isCustomDashboardsEnabled,
+    );
+
+    // Custom Dashboards
+    const custom = ref({id: Math.random(), shown: false, dashboard: {}});
+    const handleCustomUpdate = async (v) => {
+        let dashboard = {};
+
+        if (route.name === "home") {
+            router.replace({params: {...route.params, id: v?.id ?? "default"}});
+            if (v && v.id !== "default") {
+                dashboard = await store.dispatch("dashboard/load", v.id);
+            }
+
+            custom.value = {
+                id: Math.random(),
+                shown: !v || v.id === "default" ? false : true,
+                dashboard,
+            };
+        }
+    };
+    const refreshCustom = async () => {
+        const ID = custom.value.dashboard.id;
+        let dashboard = await store.dispatch("dashboard/load", ID);
+        custom.value = {id: Math.random(), shown: true, dashboard};
+    };
+    const types = {
+        "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
+        "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
+        "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
+        "io.kestra.plugin.core.dashboard.chart.Table": Table,
+        "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+    };
 
     const descriptionDialog = ref(false);
     const description = props.flow
@@ -401,22 +493,38 @@
     // };
 
     const fetchAll = async () => {
-        if (!route.query.startDate || !route.query.endDate) {
-            route.query.startDate = moment()
-                .subtract(moment.duration("PT720H").as("milliseconds"))
-                .toISOString(true);
-            route.query.endDate = moment().toISOString(true);
-        }
+        // if (!route.query.startDate || !route.query.endDate) {
+        //     route.query.startDate = moment()
+        //         .subtract(moment.duration("PT720H").as("milliseconds"))
+        //         .toISOString(true);
+        //     route.query.endDate = moment().toISOString(true);
+        // }
 
-        try {
-            await Promise.any([
-                fetchNumbers(),
-                fetchExecutions(),
-                fetchNamespaceExecutions(),
-                fetchLogs(),
-            ]);
-        } catch (error) {
-            console.error("All promises failed:", error);
+        route.query.startDate = route.query.timeRange
+            ? moment()
+                .subtract(
+                    moment.duration(route.query.timeRange).as("milliseconds"),
+                )
+                .toISOString(true)
+            : route.query.startDate ||
+                moment()
+                    .subtract(moment.duration("PT720H").as("milliseconds"))
+                    .toISOString(true);
+        route.query.endDate = route.query.timeRange
+            ? moment().toISOString(true)
+            : route.query.endDate || moment().toISOString(true);
+
+        if (!custom.value.shown) {
+            try {
+                await Promise.any([
+                    fetchNumbers(),
+                    fetchExecutions(),
+                    fetchNamespaceExecutions(),
+                    fetchLogs(),
+                ]);
+            } catch (error) {
+                console.error("All promises failed:", error);
+            }
         }
     };
 
@@ -428,6 +536,8 @@
     });
 
     onBeforeMount(() => {
+        handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
+
         if (props.flowID) {
             router.replace({query: {...route.query, flowId: props.flowID}});
         }
@@ -503,6 +613,39 @@ $spacing: 20px;
 
     & .el-col {
         padding-bottom: 0 !important;
+    }
+}
+
+.description {
+    padding: 0px 32px;
+    margin: 0;
+    color: var(--bs-gray-700);
+}
+
+.custom {
+    padding: 24px 32px;
+
+    &.el-row {
+        width: 100%;
+
+        & .el-col {
+            padding-bottom: $spacing;
+
+            &:nth-of-type(even) > div {
+                margin-left: 1rem;
+            }
+
+            & > div {
+                height: 100%;
+                background: var(--card-bg);
+                border: 1px solid var(--bs-gray-300);
+                border-radius: $border-radius;
+
+                html.dark & {
+                    border-color: var(--bs-gray-600);
+                }
+            }
+        }
     }
 }
 </style>

@@ -9,12 +9,7 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Data;
-import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.RenderableInput;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
@@ -35,8 +30,6 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -73,10 +66,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-    private static final Logger log = LoggerFactory.getLogger(FlowInputOutput.class);
+    private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
+    private static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
 
-    public static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
-    public static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;
@@ -90,6 +83,21 @@ public class FlowInputOutput {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = Optional.ofNullable(secretKey);
+    }
+
+    /**
+     * Transform a list of flow outputs to a Map of output id -> output value map.
+     * An Output value map is a map with value and displayName.
+     */
+    public Map<String, Object> flowOutputsToMap(List<Output> flowOutputs) {
+        return ListUtils.emptyOnNull(flowOutputs)
+            .stream()
+            .collect(HashMap::new, (map, entry) -> {
+                final HashMap<String, Object> entryInfo = new HashMap<>();
+                entryInfo.put("value", entry.getValue());
+                entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
+                map.put(entry.getId(), entryInfo);
+            }, Map::putAll);
     }
 
     /**
@@ -358,7 +366,6 @@ public class FlowInputOutput {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
-        final ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> results = flow
             .getOutputs()
             .stream()
@@ -366,8 +373,8 @@ public class FlowInputOutput {
                 final HashMap<String, Object> current;
                 final Object currentValue;
                 try {
-                    current = in == null ? null : mapper.readValue(
-                        mapper.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
+                    current = in == null ? null : JSON_MAPPER.readValue(
+                        JSON_MAPPER.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }

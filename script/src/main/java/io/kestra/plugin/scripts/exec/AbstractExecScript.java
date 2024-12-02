@@ -20,6 +20,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.SystemUtils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +162,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withInputFiles(this.getInputFiles())
             .withOutputFiles(this.getOutputFiles())
             .withEnableOutputDirectory(this.getOutputDirectory())
-            .withTimeout(this.getTimeout())
+            .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
             .withTargetOS(this.getTargetOS());
     }
 

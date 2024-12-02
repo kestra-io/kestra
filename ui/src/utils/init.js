@@ -87,30 +87,36 @@ export default (app, routes, stores, translations) => {
     let store = createStore(stores);
     app.use(store);
 
-    /* eslint-disable no-undef */
     // router
     let router = createRouter({
         history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 
-    router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
-    })
+    if(routes.length){
 
-    app.use(router)
 
-    // Google Analytics
-    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
-        app.use(
-            VueGtag,
-            {
-                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
-            },
-            router
-        );
+        router.afterEach((to) => {
+            window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
+        })
+
+        app.use(router)
+
+        // Google Analytics
+        if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
+            app.use(
+                VueGtag,
+                {
+                    config: {id: window.KESTRA_GOOGLE_ANALYTICS}
+                },
+                router
+            );
+        }
+
+        // navigation guard
+        createUnsavedChanged(app, store, router);
+        createEventsRouter(app, store, router);
     }
-    /* eslint-enable no-undef */
 
 
     // l18n
@@ -143,9 +149,7 @@ export default (app, routes, stores, translations) => {
     // element-plus
     app.use(ElementPlus)
 
-    // navigation guard
-    createUnsavedChanged(app, store, router);
-    createEventsRouter(app, store, router);
+
 
     // Task have some recursion and need to be register globally
     app.component("TaskArray", TaskArray)

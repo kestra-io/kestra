@@ -27,5 +27,5 @@
       "override/*": ["src/override/*"]
     },
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", ".storybook/preview.*"]
 }

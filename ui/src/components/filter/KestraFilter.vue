@@ -358,8 +358,9 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {

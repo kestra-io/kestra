@@ -504,10 +504,12 @@
 }
 
 .filters-select {
-    width: 300px;
-
     & .el-select-dropdown {
         width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
     }
 
     & .el-date-editor.el-input__wrapper {

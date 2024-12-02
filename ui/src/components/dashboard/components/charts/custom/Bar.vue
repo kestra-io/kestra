@@ -90,7 +90,7 @@
                 y: {
                     title: {
                         display: true,
-                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     beginAtZero: true,
                     position: "left",

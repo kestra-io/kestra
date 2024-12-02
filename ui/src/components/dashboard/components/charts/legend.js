@@ -19,7 +19,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
         listContainer.style.padding = 0;
 
         listContainer.style.maxHeight = "200px";
-        listContainer.style.overflow = "auto";
+        listContainer.style.flexWrap = "wrap";
 
         legendContainer?.appendChild(listContainer);
     }
@@ -111,15 +111,17 @@ export const customBarLegend = {
             ul.firstChild.remove();
         }
 
-        const items = chart.options.plugins.legend.labels.generateLabels(chart);
+        const seenLegendLabels = [];
+        const items = chart.options.plugins.legend.labels.generateLabels(chart).filter(l => {
+            if (seenLegendLabels.includes(l.text)) {
+                return false;
+            }
 
-        const uniqueStatuses = new Set(
-            items
-                .map((item) => chart.data.datasets[item.datasetIndex]?.label)
-                .filter(Boolean),
-        );
+            seenLegendLabels.push(l.text);
+            return true;
+        });
 
-        uniqueStatuses.forEach((item) => {
+        items.forEach((item) => {
             const li = document.createElement("li");
             li.style.alignItems = "center";
             li.style.cursor = "pointer";
@@ -129,7 +131,7 @@ export const customBarLegend = {
 
             li.onclick = () => {
                 chart.data.datasets.forEach((dataset, index) => {
-                    if (dataset.label === item) {
+                    if (dataset.label === item.text) {
                         chart.setDatasetVisibility(
                             index,
                             !chart.isDatasetVisible(index),
@@ -140,7 +142,7 @@ export const customBarLegend = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(item);
+            const color = getConsistentHEXColor(item.text);
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";
@@ -155,13 +157,12 @@ export const customBarLegend = {
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
             textContainer.style.margin = 0;
-            // TODO: Improve the strikethrough of clicked items
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
             textContainer.style.textTransform = "capitalize";
 
-            const text = document.createTextNode(item);
+            const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
 
             li.appendChild(boxSpan);

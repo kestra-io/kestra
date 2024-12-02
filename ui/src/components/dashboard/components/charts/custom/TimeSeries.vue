@@ -84,33 +84,45 @@
                 x: {
                     title: {
                         display: true,
-                        text: data.columns[chartOptions.column].displayName,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
-                    ...DEFAULTS,
+                    ...DEFAULTS
                 },
                 y: {
                     title: {
                         display: true,
-                        text: aggregator[0][1].displayName,
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     position: "left",
                     ...DEFAULTS,
+                    ticks: {
+                        ...DEFAULTS.ticks,
+                        callback: value => isDuration(aggregator[0][1].field) ? Utils.humanDuration(value) : value
+                    }
                 },
                 ...(yBShown && {
                     yB: {
                         title: {
                             display: true,
-                            text: aggregator[1][1].displayName,
+                            text: aggregator[1][1].displayName ?? aggregator[1][0],
                         },
                         position: "right",
                         ...DEFAULTS,
                         display: true,
+                        ticks: {
+                            ...DEFAULTS.ticks,
+                            callback: value => isDuration(aggregator[1][1].field) ? Utils.humanDuration(value) : value
+                        }
                     },
                 }),
             },
         });
     });
+
+    function isDuration(field) {
+        return field === "DURATION";
+    }
 
     const parsedData = computed(() => {
         const parseValue = (value) => {
@@ -141,7 +153,7 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (agg[1].field === "DURATION" ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {

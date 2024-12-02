@@ -4,7 +4,7 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options="options"
-        :plugins="[customBarLegend]"
+        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
     />
     <NoData v-else />
@@ -48,6 +48,9 @@
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
+
+    const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -79,6 +82,7 @@
                 x: {
                     title: {
                         display: true,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
                     ...DEFAULTS,
@@ -86,14 +90,23 @@
                 y: {
                     title: {
                         display: true,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     beginAtZero: true,
                     position: "left",
                     ...DEFAULTS,
+                    ticks: {
+                        ...DEFAULTS.ticks,
+                        callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
+                    }
                 },
             },
         });
     });
+
+    function isDurationAgg() {
+        return aggregator[0][1].field === "DURATION";
+    }
 
     const parsedData = computed(() => {
         const column = chartOptions.column;
@@ -106,8 +119,6 @@
             .map(([key]) => key);
 
         const grouped = {};
-
-        const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
 
         const rawData = generated.value.results;
         rawData.forEach((item) => {
@@ -131,7 +142,7 @@
                 label: subSectionsEntry[0],
                 data: [subSectionsEntry[1]],
                 backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
-                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(aggregator[0][1].field === "DURATION" ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
+                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
 

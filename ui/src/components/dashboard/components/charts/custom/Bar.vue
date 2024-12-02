@@ -24,6 +24,7 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const store = useStore();
 
@@ -126,11 +127,11 @@
         const xLabels = [...new Set(rawData.map((item) => item[column]))];
 
         const datasets = xLabels.flatMap((xLabel) => {
-            return Object.entries(grouped[xLabel]).map(subSections => ({
-                label: subSections[0],
-                data: [subSections[1]],
-                backgroundColor: getConsistentHEXColor(subSections[0]),
-                tooltip: `(${subSections[0]}): ${aggregator[0][0]} = ${subSections[1]}`,
+            return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
+                label: subSectionsEntry[0],
+                data: [subSectionsEntry[1]],
+                backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
+                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(aggregator[0][1].field === "DURATION" ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
 

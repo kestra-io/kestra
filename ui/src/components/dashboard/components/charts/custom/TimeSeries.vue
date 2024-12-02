@@ -24,6 +24,7 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const store = useStore();
 
@@ -140,7 +141,7 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + params[agg[0]]).join(", ")}`;
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (agg[1].field === "DURATION" ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {

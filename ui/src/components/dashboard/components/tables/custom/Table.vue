@@ -2,12 +2,14 @@
     <template v-if="data !== undefined">
         <el-table :id="containerID" :data="data.results" :height="240">
             <el-table-column
-                v-for="(column, index) in Object.keys(props.chart.data.columns)"
+                v-for="(column, index) in Object.entries(props.chart.data.columns)"
                 :key="index"
-                :label="column"
+                :label="column[0]"
             >
                 <template #default="scope">
-                    {{ scope.row[column] }}
+                    {{
+                        column[1].field === "DURATION" ? Utils.humanDuration(scope.row[column[0]]) : scope.row[column[0]]
+                    }}
                 </template>
             </el-table-column>
         </el-table>
@@ -38,6 +40,7 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const {t} = useI18n({useScope: "global"});
 

@@ -171,7 +171,7 @@ export const customBarLegend = {
     },
 };
 
-export const totalsLegend = {
+const generateTotalsLegend = (isDuration) => ({
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
@@ -247,7 +247,7 @@ export const totalsLegend = {
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            executionsText.textContent = dataset.data[item.index];
+            executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index]) : dataset.data[item.index];
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
@@ -260,5 +260,9 @@ export const totalsLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
-    },
-};
+    }
+});
+
+export const totalsDurationLegend = generateTotalsLegend(true)
+
+export const totalsLegend = generateTotalsLegend(false);

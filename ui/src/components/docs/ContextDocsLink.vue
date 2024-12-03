@@ -30,7 +30,18 @@
     <a v-if="isRemote" :href="finalHref" @click="emit('click')" target="_blank" rel="noopener noreferrer">
         <slot />
     </a>
-    <RouterLink v-else :to="{name:'docs/view', params: {path: finalHref.replace(/^\//, '')}}" @click.prevent="() => {navigateInVuex();emit('click');}">
-        <slot />
+    <RouterLink
+        v-else
+        :to="{name:'docs/view', params: {path: finalHref.replace(/^\//, '')}}"
+        custom
+        v-slot="{href:linkHref}"
+    >
+        <a
+            :href="linkHref"
+            @click.prevent="() => {navigateInVuex();emit('click');}"
+            :class="isActive ? activeClass : inactiveClass"
+        >
+            <slot />
+        </a>
     </RouterLink>
 </template>

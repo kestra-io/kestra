@@ -53,7 +53,11 @@
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
-                    :class="{selected: current.some(c => c.comparator === comparator)}"
+                    :class="{
+                        selected: current.some(
+                            (c) => c.comparator === comparator,
+                        ),
+                    }"
                     @click="() => comparatorCallback(comparator)"
                 />
             </template>
@@ -63,7 +67,11 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
-                    :class="{selected: current.some(c => c.value.includes(filter.value))}"
+                    :class="{
+                        selected: current.some((c) =>
+                            c.value.includes(filter.value),
+                        ),
+                    }"
                     @click="() => valueCallback(filter)"
                 />
             </template>
@@ -142,6 +150,9 @@
     } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const updateHoveringIndex = (index) => {
+        select.value.states.hoveringIndex = index >= 0 ? index : 0;
+    };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
@@ -211,10 +222,8 @@
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
 
         // Set hover index to the selected comparator for highlighting
-        const selectedIndex = valueOptions.value.findIndex(
-            (opt) => opt.value === value.value
-        );
-        select.value.states.hoveringIndex = selectedIndex >= 0 ? selectedIndex : 0;
+        const index = valueOptions.value.findIndex((o) => o.value === value.value);
+        updateHoveringIndex(index);
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -224,10 +233,10 @@
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
         } else {
             // Highlight all selected items by setting hoveringIndex to match the first selected item
-            const firstSelectedIndex = valueOptions.value.findIndex((opt) =>
-                current.value.some((c) => c.value.includes(opt.value))
-            );
-            select.value.states.hoveringIndex = firstSelectedIndex >= 0 ? firstSelectedIndex : 0;
+            const index = valueOptions.value.findIndex((o) => {
+                return current.value.some((c) => c.value.includes(o.value));
+            });
+            updateHoveringIndex(index);
         }
     };
     const valueCallback = (filter, isDate = false) => {
@@ -239,8 +248,10 @@
             else values.splice(index, 1);
 
             // Update the hover index for better UX
-            const selectedIndex = valueOptions.value.findIndex((opt) => opt.value === filter.value);
-            select.value.states.hoveringIndex = selectedIndex >= 0 ? selectedIndex : 0;
+            const hoverIndex = valueOptions.value.findIndex(
+                (o) => o.value === filter.value,
+            );
+            updateHoveringIndex(hoverIndex);
         } else {
             const match = current.value.find((v) => v.label === "absolute_date");
             if (match) match.value = [filter];

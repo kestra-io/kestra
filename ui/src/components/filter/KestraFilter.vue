@@ -11,6 +11,9 @@
             default-first-option
             filterable
             multiple
+            placement="bottom"
+            :show-arrow="false"
+            fit-input-width
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
@@ -355,8 +358,9 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
@@ -501,6 +505,14 @@
 }
 
 .filters-select {
+    & .el-select-dropdown {
+        width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
+    }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;

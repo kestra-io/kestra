@@ -34,8 +34,8 @@ export default {
         delete(_, id) {
             return this.$http.delete(`${apiUrl(this)}/dashboards/${id}`).then(response => response.data);
         },
-        generate(_, {id, chartId, startDate, endDate}) {
-            return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, {startDate, endDate}).then(response => response.data);
+        generate(_, {id, chartId, ...filters}) {
+            return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, filters).then(response => response.data);
         }
     },
     mutations: {

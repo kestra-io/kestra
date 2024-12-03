@@ -1,6 +1,6 @@
 import axios from "axios";
 import NProgress from "nprogress"
-import {storageKeys} from "./constants.js";
+import {storageKeys} from "./constants";
 
 // nprogress
 let requestsTotal = 0
@@ -140,7 +140,7 @@ export default (callback, store, router) => {
                     }
                 } else {
                     toRefreshQueue.push(originalRequest);
-                    
+
                     return;
                 }
             }

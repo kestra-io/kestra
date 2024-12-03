@@ -21,7 +21,7 @@
     import TaskEditor from "../flows/TaskEditor.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import Editor from "./Editor.vue";
-    import {SECTIONS} from "../../utils/constants.js";
+    import {SECTIONS} from "../../utils/constants";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
@@ -1413,7 +1413,7 @@
         position: fixed;
         z-index: 9999;
         border-right: none;
-        
+
         & li {
             height: 30px;
             padding: 16px;
@@ -1421,7 +1421,7 @@
             color: var(--bs-gray-700);
 
             &:hover {
-                color: var(--bs-secondary);            
+                color: var(--bs-secondary);
             }
         }
     }

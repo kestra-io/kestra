@@ -15,6 +15,10 @@
         useRaw: {
             type: Boolean,
             default: false
+        },
+        "class": {
+            type: String,
+            default: undefined
         }
     });
 
@@ -27,7 +31,7 @@
 </script>
 
 <template>
-    <a v-if="isRemote" :href="finalHref" @click="emit('click')" target="_blank" rel="noopener noreferrer">
+    <a v-if="isRemote" :class="props.class" :href="finalHref" @click="emit('click')" target="_blank" rel="noopener noreferrer">
         <slot />
     </a>
     <RouterLink
@@ -38,8 +42,8 @@
     >
         <a
             :href="linkHref"
+            :class="props.class"
             @click.prevent="() => {navigateInVuex();emit('click');}"
-            :class="isActive ? activeClass : inactiveClass"
         >
             <slot />
         </a>

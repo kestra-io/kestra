@@ -23,7 +23,8 @@
                         'scope',
                         'relative_date',
                         'absolute_date',
-                    ]"
+                    ]
+            "
             :refresh="{
                 shown: true,
                 callback: custom.shown ? refreshCustom : fetchAll,
@@ -229,7 +230,7 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    // import moment from "moment";
+    import moment from "moment";
 
     import {apiUrl} from "override/utils/route";
     import State from "../../utils/state";
@@ -499,15 +500,31 @@
         //     route.query.endDate = moment().toISOString(true);
         // }
 
-        try {
-            await Promise.any([
-                fetchNumbers(),
-                fetchExecutions(),
-                fetchNamespaceExecutions(),
-                fetchLogs(),
-            ]);
-        } catch (error) {
-            console.error("All promises failed:", error);
+        route.query.startDate = route.query.timeRange
+            ? moment()
+                .subtract(
+                    moment.duration(route.query.timeRange).as("milliseconds"),
+                )
+                .toISOString(true)
+            : route.query.startDate ||
+                moment()
+                    .subtract(moment.duration("PT720H").as("milliseconds"))
+                    .toISOString(true);
+        route.query.endDate = route.query.timeRange
+            ? moment().toISOString(true)
+            : route.query.endDate || moment().toISOString(true);
+
+        if (!custom.value.shown) {
+            try {
+                await Promise.any([
+                    fetchNumbers(),
+                    fetchExecutions(),
+                    fetchNamespaceExecutions(),
+                    fetchLogs(),
+                ]);
+            } catch (error) {
+                console.error("All promises failed:", error);
+            }
         }
     };
 
@@ -525,15 +542,15 @@
             router.replace({query: {...route.query, flowId: props.flowID}});
         }
 
-        // if (!route.query.namespace && props.restoreURL) {
-        //     router.replace({query: {...route.query, namespace: defaultNamespace}});
-        //     filters.value.namespace = route.query.namespace || defaultNamespace;
-        // }
-        // else {
-        //     filters.value.namespace = null
-        // }
+    // if (!route.query.namespace && props.restoreURL) {
+    //     router.replace({query: {...route.query, namespace: defaultNamespace}});
+    //     filters.value.namespace = route.query.namespace || defaultNamespace;
+    // }
+    // else {
+    //     filters.value.namespace = null
+    // }
 
-        // updateParams(route.query);
+    // updateParams(route.query);
     });
 
     watch(

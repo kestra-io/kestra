@@ -282,6 +282,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    public void pauseRunDelayFromInput() throws Exception {
+        pauseTest.runDelayFromInput(runnerUtils);
+    }
+
+    @Test
     public void pauseRunParallelDelay() throws Exception {
         pauseTest.runParallelDelay(runnerUtils);
     }

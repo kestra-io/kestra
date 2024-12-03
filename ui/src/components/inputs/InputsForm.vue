@@ -368,7 +368,6 @@
                 const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
 
                 const metadataCallback = (response) => {
-                    console.log("metadataCallback", response.inputs);
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
                             acc.push({...it.input, errors: it.errors});

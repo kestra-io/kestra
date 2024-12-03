@@ -32,17 +32,17 @@
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end">
+            <el-col :span="12" class="d-flex gap-2 justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <pause :execution="execution" />
-                <kill :execution="execution" class="ms-0" />
+                <kill :execution="execution" />
                 <unqueue :execution="execution" />
                 <force-run :execution="execution" />
-                <status :status="execution.state.current" class="ms-0" />
+                <status :status="execution.state.current" />
             </el-col>
         </el-row>
 
@@ -396,6 +396,13 @@
             code span.regular {
                 color: var(--el-text-color-regular);
             }
+        }
+    }
+
+    .actions-buttons {
+        .el-button {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
     }
 }

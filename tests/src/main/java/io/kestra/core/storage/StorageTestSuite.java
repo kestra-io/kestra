@@ -1,11 +1,11 @@
 package io.kestra.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -272,13 +272,14 @@ public abstract class StorageTestSuite {
             "/" + prefix + "/storage/level1/level2/1.yml",
             "/" + prefix + "/storage/another/1.yml"
         );
-        path.forEach(throwConsumer(s -> putFile(tenantId, s)));
+        path.forEach(throwConsumer(s -> putFile(tenantId, s, Map.of("someMetadata", "someValue"))));
 
         List<FileAttributes> list = storageInterface.list(tenantId, prefix, null);
         assertThat(list.stream().map(FileAttributes::getFileName).toList(), hasItem(prefix));
 
         list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage"));
         assertThat(list.stream().map(FileAttributes::getFileName).toList(), containsInAnyOrder("root.yml", "level1", "another"));
+        assertThat(list.get(0).getMetadata(), hasEntry("someMetadata", "someValue"));
     }
     //endregion
 

@@ -166,7 +166,7 @@ export function useFilters(prefix) {
     };
 
     const decodeParams = (query, include) => {
-        const params = Object.entries(query)
+        let params = Object.entries(query)
             .filter(
                 ([key]) =>
                     key === "q" ||
@@ -196,7 +196,10 @@ export function useFilters(prefix) {
             });
         }
 
-        return params;
+        return params.map((p) => {
+            const comparator = OPTIONS.find((o) => o.value.label === p.label);
+            return {...p, comparator: comparator?.comparators?.[0]};
+        });
     };
 
     return {

@@ -125,7 +125,8 @@ The table below lists common Pebble expressions and functions.
 | Expression                                                                                         | Description                                                                                                                     |
 |----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | `{{ printContext() }}`                                                                             | Fetch the entire execution context as a JSON object.                                                                            |
-| `{{ errorLogs() }}`                                                                                | Fetch error logs of the execution context.                                                                                      |
+| `{{ errorLogs() }}`            | Enrich your alert notifications with context about why Execution failed incl. information about failed task runs and their error stacktraces.                                                            |
+| `{{ appLink('appId') }}`            | Fetch the URL of the App linked to the current Execution. To get the base URL of the app allowing to create new Executions, add `baseUrl=true` e.g. `{{ appLink('yourAppId', baseUrl=true) }}`. If there is only one App linked to the flow, you can skip the App ID argument e.g. `{{ appLink() }}`.                                                                                          |
 | `{{ flow.id }}`                                                                                    | The identifier of the flow.                                                                                                     |
 | `{{ flow.namespace }}`                                                                             | The name of the flow namespace.                                                                                                 |
 | `{{ flow.tenantId }}`                                                                              | The identifier of the tenant (EE only).                                                                                         |
@@ -212,14 +213,11 @@ The table below lists common Pebble expressions and functions.
 | `{% if user.email is null %} ... {% endif %}`                                                      | Checks if a variable is null.                                                                                                   |
 | `{% if 3 is odd %} ... {% endif %}`                                                                | Checks if an integer is odd.                                                                                                    |
 
----
 
 The table below lists Pebble functions and filter expressions:
 
 | Filter           | Example and Description                                                                                                          |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `errorLogs()`            | `{{ errorLogs() }}` — Allows you to enrich your alert notifications with context about why Execution failed incl. information about failed task runs and their error stacktraces.                                                            |
-| `appLink()`            | `{{ appLink('appId') }}` — Returns the URL of the App linked to the current Execution. To get the base URL of the app allowing to create new Executions, add `baseUrl=true` e.g. `{{ appLink('yourAppId', baseUrl=true) }}`. If there is only one App linked to the flow, you can skip the App ID argument e.g. `{{ appLink() }}`.                                                           |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------|                                                       |
 | `abs`            | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                            |
 | `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                           |
 | `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                 |

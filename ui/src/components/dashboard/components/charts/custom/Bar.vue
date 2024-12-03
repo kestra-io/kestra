@@ -4,7 +4,7 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options="options"
-        :plugins="[customBarLegend]"
+        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
     />
     <NoData v-else />
@@ -24,6 +24,7 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const store = useStore();
 
@@ -47,6 +48,9 @@
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
+
+    const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -68,7 +72,8 @@
                     filter: (value) => value.raw,
                     callbacks: {
                         label: (value) => {
-                            return `${value.dataset.tooltip} : ${value.raw}`;
+                            if (!value.dataset.tooltip) return "";
+                            return `${value.dataset.tooltip}`;
                         },
                     },
                 },
@@ -77,6 +82,7 @@
                 x: {
                     title: {
                         display: true,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
                     ...DEFAULTS,
@@ -84,14 +90,23 @@
                 y: {
                     title: {
                         display: true,
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     beginAtZero: true,
                     position: "left",
                     ...DEFAULTS,
+                    ticks: {
+                        ...DEFAULTS.ticks,
+                        callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
+                    }
                 },
             },
         });
     });
+
+    function isDurationAgg() {
+        return aggregator[0][1].field === "DURATION";
+    }
 
     const parsedData = computed(() => {
         const column = chartOptions.column;
@@ -99,36 +114,37 @@
 
         // Ignore columns with `agg` and dynamically fetch valid ones
         const validColumns = Object.entries(columns)
-            .filter(([_, value]) => !value.agg) // Exclude columns with `agg`
+            .filter(([_, value]) => !value.agg)
+            .filter(c => c[0] !== column)// Exclude columns with `agg`
             .map(([key]) => key);
 
         const grouped = {};
 
-        const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
-
         const rawData = generated.value.results;
         rawData.forEach((item) => {
-            const key = validColumns.map((col) => item[col]).join("|"); // Use '|' as a delimiter
+            const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
 
-            if (!grouped[key]) {
-                grouped[key] = {};
+            if (!grouped[item[column]]) {
+                grouped[item[column]] = {};
             }
-            if (!grouped[key][item[column]]) {
-                grouped[key][item[column]] = 0;
+            if (!grouped[item[column]][key]) {
+                grouped[item[column]][key] = 0;
             }
 
-            grouped[key][item[column]] += item[aggregator[0][0]];
+            grouped[item[column]][key] += item[aggregator[0][0]];
         });
 
         const labels = Object.keys(grouped);
-        const unique = [...new Set(rawData.map((item) => item[column]))];
+        const xLabels = [...new Set(rawData.map((item) => item[column]))];
 
-        const datasets = unique.map((value) => ({
-            label: value,
-            data: labels.map((label) => grouped[label][value] || 0),
-            backgroundColor: getConsistentHEXColor(value),
-            tooltip: aggregator[0][0],
-        }));
+        const datasets = xLabels.flatMap((xLabel) => {
+            return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
+                label: subSectionsEntry[0],
+                data: [subSectionsEntry[1]],
+                backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
+                tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
+            }));
+        });
 
         return {labels, datasets};
     });
@@ -165,9 +181,14 @@
 </script>
 
 <style lang="scss" scoped>
-$height: 200px;
+    .chart {
+        #{--chart-height}: 200px;
 
-.chart {
-    max-height: $height;
-}
+        &:not(.with-legend) {
+            #{--chart-height}: 231px;
+        }
+
+        min-height: var(--chart-height);
+        max-height: var(--chart-height);
+    }
 </style>

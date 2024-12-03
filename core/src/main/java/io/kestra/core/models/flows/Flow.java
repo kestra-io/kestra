@@ -120,6 +120,7 @@ public class Flow extends AbstractFlow implements HasUID {
     AbstractRetry retry;
 
     @Valid
+    @PluginProperty(beta = true)
     List<SLA> sla;
 
 

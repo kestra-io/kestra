@@ -6,6 +6,7 @@
         :options
         :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
+        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -24,6 +25,7 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
 
     const store = useStore();
 
@@ -74,7 +76,7 @@
                     callbacks: {
                         label: (value) => {
                             if (!value.dataset.tooltip) return "";
-                            return `${value.dataset.tooltip} : ${value.raw}`;
+                            return `${value.dataset.tooltip}`;
                         },
                     },
                 },
@@ -83,33 +85,45 @@
                 x: {
                     title: {
                         display: true,
-                        text: data.columns[chartOptions.column].displayName,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
-                    ...DEFAULTS,
+                    ...DEFAULTS
                 },
                 y: {
                     title: {
                         display: true,
-                        text: aggregator[0][1].displayName,
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     position: "left",
                     ...DEFAULTS,
+                    ticks: {
+                        ...DEFAULTS.ticks,
+                        callback: value => isDuration(aggregator[0][1].field) ? Utils.humanDuration(value) : value
+                    }
                 },
                 ...(yBShown && {
                     yB: {
                         title: {
                             display: true,
-                            text: aggregator[1][1].displayName,
+                            text: aggregator[1][1].displayName ?? aggregator[1][0],
                         },
                         position: "right",
                         ...DEFAULTS,
                         display: true,
+                        ticks: {
+                            ...DEFAULTS.ticks,
+                            callback: value => isDuration(aggregator[1][1].field) ? Utils.humanDuration(value) : value
+                        }
                     },
                 }),
             },
         });
     });
+
+    function isDuration(field) {
+        return field === "DURATION";
+    }
 
     const parsedData = computed(() => {
         const parseValue = (value) => {
@@ -126,6 +140,8 @@
             return Array.from(new Set(values)).sort();
         })();
 
+        const aggregatorKeys = aggregator.map(([key]) => key);
+
         const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
 
@@ -133,12 +149,12 @@
             const {column, colorByColumn} = chartOptions;
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
-            const fields = Object.entries(columns)
-                .filter(([k, _v]) => k !== aggregator[0][0] && k !== column)
-                .map(([k]) => k);
+            const fields = Object.keys(columns)
+                .filter(key => !aggregatorKeys.includes(key))
+                .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = fields.map((f) => `${f}: ${params[f]}`).join(", ");
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -242,10 +258,15 @@
 </script>
 
 <style lang="scss" scoped>
-$height: 200px;
-
 .chart {
-    max-height: $height;
+    #{--chart-height}: 200px;
+
+    &:not(.with-legend) {
+        #{--chart-height}: 231px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
 }
 </style>
-ss
+

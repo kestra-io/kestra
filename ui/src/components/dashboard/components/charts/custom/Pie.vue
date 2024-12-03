@@ -10,7 +10,7 @@
                 :options="options"
                 :plugins="
                     chartOptions.legend.enabled
-                        ? [totalsLegend, centerPlugin, thicknessPlugin]
+                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
                         : [centerPlugin, thicknessPlugin]
                 "
                 class="chart"
@@ -30,7 +30,7 @@
     import {Doughnut, Pie} from "vue-chartjs";
 
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
-    import {totalsLegend} from "../legend.js";
+    import {totalsDurationLegend, totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
@@ -53,8 +53,10 @@
 
     const {chartOptions} = props.chart;
 
-    const options = computed(() =>
-        defaultConfig({
+    const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
+
+    const options = computed(() => {
+        return defaultConfig({
             plugins: {
                 ...(chartOptions.legend.enabled
                     ? {
@@ -67,10 +69,15 @@
                     enabled: true,
                     intersect: true,
                     filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            return `${isDuration ? Utils.humanDuration(value.raw) : value.raw}`;
+                        },
+                    }
                 },
             },
-        }),
-    );
+        });
+    });
 
     const centerPlugin = {
         id: "centerPlugin",
@@ -79,7 +86,12 @@
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
-            const total = dataset.data.reduce((acc, val) => acc + val, 0);
+
+            let total = dataset.data.reduce((acc, val) => acc + val, 0);
+            if (isDuration) {
+                total = Utils.humanDuration(total);
+            }
+
             const centerX = chart.width / 2;
             const centerY = chart.height / 2;
 

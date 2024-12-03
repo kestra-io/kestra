@@ -20,23 +20,14 @@
     const updatedTitle = ref(props.title)
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
-    async function deleteBookmark() {
-        try {
-            await ElMessageBox.confirm(
-                t("Are you sure you want to remove this bookmark?"),
-                t("Remove Bookmark"),
-                {
-                    confirmButtonText: t("Yes"),
-                    cancelButtonText: t("No"),
-                    type: "warning",
-                }
-            );
-            $store.dispatch("bookmarks/remove", {
-                path: props.href,
-            });
-        } catch {
-            // User canceled the action, do nothing
-        }
+    function deleteBookmark() {
+        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            $store.dispatch("bookmarks/remove", {path: props.href});
+        });
     }
 
     function startEditBookmark() {

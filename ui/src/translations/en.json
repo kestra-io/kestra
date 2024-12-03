@@ -953,6 +953,7 @@
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
     "bookmark": "Bookmarks",
+    "remove_bookmark": "Are you sure you want to remove this bookmark?",
     "showLess": "Show less",
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",

@@ -31,8 +31,8 @@ public class BasicAuthEndpointsFilter implements HttpServerFilter {
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
-        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch) {
-            ExecutableMethod<?, ?> method = ((MethodBasedRouteMatch<?, ?>) routeMatch.get()).getExecutableMethod();
+        if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch<?, ?> methodBasedRouteMatch) {
+            ExecutableMethod<?, ?> method = methodBasedRouteMatch.getExecutableMethod();
             if (method.getAnnotation(Endpoint.class) != null) {
                 if (!validateUser(request)) {
                     return Publishers.just(HttpResponse.status(HttpStatus.UNAUTHORIZED));

@@ -16,6 +16,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -91,6 +92,9 @@ public abstract class JdbcRunnerTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private SLATestCase slaTestCase;
+
     @BeforeAll
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
@@ -127,15 +131,9 @@ public abstract class JdbcRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(7));
 
         receive.blockLast();
-        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("It's the fault of "));
+        LogEntry logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().contains("- task: failed, message: Task failure"));
         assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("It's the fault of 'failed'"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the message: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("See the message: Task failure"));
-        logEntry = TestsUtils.awaitLog(logs, log -> log.getMessage().startsWith("See the stackTrace: "));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), startsWith("See the stackTrace: java.lang.Exception: Task failure"));
+        assertThat(logEntry.getMessage(), is("- task: failed, message: Task failure"));
     }
 
     @Test
@@ -281,6 +279,11 @@ public abstract class JdbcRunnerTest {
     @Test
     public void pauseRunDelay() throws Exception {
         pauseTest.runDelay(runnerUtils);
+    }
+
+    @Test
+    public void pauseRunDelayFromInput() throws Exception {
+        pauseTest.runDelayFromInput(runnerUtils);
     }
 
     @Test
@@ -477,5 +480,30 @@ public abstract class JdbcRunnerTest {
     @Test
     void shouldScheduleOnDate() throws QueueException, InterruptedException {
         scheduleDateCaseTest.shouldScheduleOnDate();
+    }
+
+    @Test
+    void maxDurationSLAShouldFail() throws QueueException, TimeoutException {
+        slaTestCase.maxDurationSLAShouldFail();
+    }
+
+    @Test
+    void maxDurationSLAShouldPass() throws QueueException, TimeoutException {
+        slaTestCase.maxDurationSLAShouldPass();
+    }
+
+    @Test
+    void executionConditionSLAShouldPass() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldPass();
+    }
+
+    @Test
+    void executionConditionSLAShouldCancel() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldCancel();
+    }
+
+    @Test
+    void executionConditionSLAShouldLabel() throws QueueException, TimeoutException {
+        slaTestCase.executionConditionSLAShouldLabel();
     }
 }

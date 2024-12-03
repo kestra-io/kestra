@@ -108,7 +108,7 @@ import java.util.stream.Stream;
                   - id: schedule
                     cron: "0 11 * * 1"
                     conditions:
-                      - type: io.kestra.plugin.core.condition.DayWeekInMonthCondition
+                      - type: io.kestra.plugin.core.condition.DayWeekInMonth
                         date: "{{ trigger.date }}"
                         dayOfWeek: "MONDAY"
                         dayInMonth: "FIRST"

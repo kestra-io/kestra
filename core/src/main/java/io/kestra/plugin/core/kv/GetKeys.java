@@ -67,7 +67,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
         String renderedNamespace = runContext.render(this.namespace);
 
         FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.tenantId(), renderedNamespace, runContext.tenantId(), runContext.flowInfo().namespace());
+        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
 
         String renderedPrefix = runContext.render(this.prefix);
         Predicate<String> filter = renderedPrefix == null ? key -> true : key -> key.startsWith(renderedPrefix);

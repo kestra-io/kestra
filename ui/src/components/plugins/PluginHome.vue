@@ -1,102 +1,111 @@
 <template>
-    <el-row justify="center" align="middle" class="headband-row">
-        <el-col justify="center">
-            <p class="fs-5 text-center text-truncate text-white">
-                <span class="fw-lighter">{{ $t("pluginPage.title1") }}</span>
-                <br>
-                <span class="fw-bold">{{ $t("pluginPage.title2") }}</span>
-            </p>
-        </el-col>
-    </el-row>
-    <el-row justify="center" class="my-4">
-        <el-input
-            class="search"
-            :placeholder="$t('pluginPage.search', {count: countPlugin})"
-            v-model="searchInput"
-            clearable
-        />
-    </el-row>
-    <section class="container plugins-container">
-        <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
-            <template #content>
-                <div class="tasks-tooltips">
-                    <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                        Tasks
-                    </p>
-                    <ul>
-                        <li
-                            v-for="task in plugin.tasks.filter(t => t.toLowerCase().includes(searchInput))"
-                            :key="task"
-                        >
-                            <span @click="openPlugin(task)">{{ task }}</span>
-                        </li>
-                    </ul>
-                    <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                        Triggers
-                    </p>
-                    <ul>
-                        <li
-                            v-for="trigger in plugin.triggers.filter(t => t.toLowerCase().includes(searchInput))"
-                            :key="trigger"
-                        >
-                            <span @click="openPlugin(trigger)">{{ trigger }}</span>
-                        </li>
-                    </ul>
-                    <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                        Conditions
-                    </p>
-                    <ul>
-                        <li
-                            v-for="condition in plugin.conditions.filter(t => t.toLowerCase().includes(searchInput))"
-                            :key="condition"
-                        >
-                            <span @click="openPlugin(condition)">{{ condition }}</span>
-                        </li>
-                    </ul>
-                    <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                        Task
-                        Runners
-                    </p>
-                    <ul>
-                        <li
-                            v-for="taskRunner in plugin.taskRunners.filter(t => t.toLowerCase().includes(searchInput))"
-                            :key="taskRunner"
-                        >
-                            <span @click="openPlugin(taskRunner)">{{ taskRunner }}</span>
-                        </li>
-                    </ul>
+    <dotted-layout
+        :embed="embed"
+        :phrase="$t('pluginPage.title2')"
+        :alt="$t('blueprints.header.alt')"
+        :image="headerImage"
+        :image-dark="headerImageDark"
+    >
+        <el-row class="my-4">
+            <el-input
+                class="search"
+                :placeholder="$t('pluginPage.search', {count: countPlugin})"
+                v-model="searchInput"
+                clearable
+            />
+        </el-row>
+        <section class="plugins-container">
+            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
+                <template #content>
+                    <div class="tasks-tooltips">
+                        <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
+                            Tasks
+                        </p>
+                        <ul>
+                            <li
+                                v-for="task in plugin.tasks.filter(t => t.toLowerCase().includes(searchInput))"
+                                :key="task"
+                            >
+                                <span @click="openPlugin(task)">{{ task }}</span>
+                            </li>
+                        </ul>
+                        <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
+                            Triggers
+                        </p>
+                        <ul>
+                            <li
+                                v-for="trigger in plugin.triggers.filter(t => t.toLowerCase().includes(searchInput))"
+                                :key="trigger"
+                            >
+                                <span @click="openPlugin(trigger)">{{ trigger }}</span>
+                            </li>
+                        </ul>
+                        <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
+                            Conditions
+                        </p>
+                        <ul>
+                            <li
+                                v-for="condition in plugin.conditions.filter(t => t.toLowerCase().includes(searchInput))"
+                                :key="condition"
+                            >
+                                <span @click="openPlugin(condition)">{{ condition }}</span>
+                            </li>
+                        </ul>
+                        <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
+                            Task
+                            Runners
+                        </p>
+                        <ul>
+                            <li
+                                v-for="taskRunner in plugin.taskRunners.filter(t => t.toLowerCase().includes(searchInput))"
+                                :key="taskRunner"
+                            >
+                                <span @click="openPlugin(taskRunner)">{{ taskRunner }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </template>
+                <div class="plugin-card" @click="openGroup(plugin)">
+                    <task-icon
+                        class="size"
+                        :only-icon="true"
+                        :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
+                        :icons="icons"
+                    />
+                    <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
                 </div>
-            </template>
-            <div v-if="isVisible(plugin)" class="plugin-card" @click="openGroup(plugin)">
-                <task-icon
-                    class="size"
-                    :only-icon="true"
-                    :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
-                    :icons="icons"
-                />
-                <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
-            </div>
-        </el-tooltip>
-    </section>
+            </el-tooltip>
+        </section>
+    </dotted-layout>
 </template>
 
 <script>
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import DottedLayout from "../layout/DottedLayout.vue";
+    import headerImage from "../../assets/icons/plugin.svg";
+    import headerImageDark from "../../assets/icons/plugin-dark.svg";
 
     export default {
         props: {
             plugins: {
                 type: Array,
                 required: true
+            },
+            embed: {
+                type: Boolean,
+                default: false
             }
         },
         components: {
+            DottedLayout,
             TaskIcon
         },
         data() {
             return {
                 icons: [],
-                searchInput: ""
+                searchInput: "",
+                headerImage,
+                headerImageDark
             }
         },
         created() {
@@ -139,7 +148,9 @@
                             plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
                             plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
                             plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    }).sort((a, b) => {
+                    })
+                    .filter(plugin => this.isVisible(plugin))
+                    .sort((a, b) => {
                         const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
                               nameB = b.manifest["X-Kestra-Title"].toLowerCase();
 
@@ -174,29 +185,21 @@
 </script>
 
 <style scoped lang="scss">
-    .headband-row {
-        width: 100%;
-        background: url("../../assets/plugins/headband.webp") no-repeat center;
-        background-size: cover;
-        height: 9em;
-    }
-
     .search {
         display: flex;
         width: 22rem;
-        padding: 0.25rem 1rem;
+        padding: 0.25rem 2rem;
         justify-content: center;
         align-items: center;
         gap: 0.25rem;
+        background-color: transparent;
     }
 
     .plugins-container {
-        display: flex;
+        display: grid;
         gap: 16px;
-        flex-wrap: wrap;
-        margin: 0 auto;
-        justify-content: center;
-        align-items: flex-start;
+        grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+        margin: 0 2rem;
         padding-bottom: 4rem;
     }
 
@@ -210,7 +213,7 @@
         }
 
         &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
+            padding: 1.5rem;
             background-color: var(--bs-gray-100);
         }
 

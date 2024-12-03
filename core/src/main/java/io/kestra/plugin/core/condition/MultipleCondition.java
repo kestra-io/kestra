@@ -42,7 +42,7 @@ import java.util.*;
                 "  - id: multiple-listen-flow",
                 "    type: io.kestra.plugin.core.trigger.Flow",
                 "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition",
+                "      - type: io.kestra.plugin.core.condition.ExecutionStatus",
                 "        in:",
                 "        - SUCCESS",
                 "      - id: multiple",
@@ -51,11 +51,11 @@ import java.util.*;
                 "          window: PT12H",
                 "        conditions:",
                 "          flow-a:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlowCondition",
+                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
                 "            namespace: io.kestra.demo",
                 "            flowId: multiplecondition-flow-a",
                 "          flow-b:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlowCondition",
+                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
                 "            namespace: io.kestra.demo",
                 "            flowId: multiplecondition-flow-b"
             }

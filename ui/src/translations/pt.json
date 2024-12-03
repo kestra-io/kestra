@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Visão Geral",
       "today": "Hoje",
       "yesterday": "Ontem",
       "last28Days": "Últimos 28 dias",
@@ -850,7 +850,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "O uso de variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
+    "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação."
     },
     "create_flow": "Criar Flow",
-    "starred": "Favoritos",
     "invalid bulk unqueue": "Não foi possível remover as execuções da fila",
     "unqueue done": "A execução está fora da fila",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
@@ -956,7 +955,8 @@
         "state": "Estado",
         "child": "Filho",
         "absolute_date": "Data absoluta",
-        "relative_date": "Data relativa"
+        "relative_date": "Data relativa",
+        "level": "Nível de Log"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",
@@ -975,6 +975,32 @@
     "item": "item",
     "items": "itens",
     "warning": "Aviso",
-    "cron": "Cron"
+    "cron": "Cron",
+    "showMore": "Mostrar mais",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menu de documentação",
+    "task run id": "ID do TaskRun",
+    "optional": "Opcional",
+    "active": "Ativo",
+    "contextBar": {
+      "news": "Notícias",
+      "issue": "Abrir um Issue",
+      "docs": "Documentos",
+      "demo": "Obter uma demonstração",
+      "help": "Ajuda"
+    },
+    "execution failed header": "Falha na execução!",
+    "execution failed message": "Com o último erro: <code>{message}</code>",
+    "flow not imported": "Algum flow não pôde ser importado",
+    "flows imported": "Fluxos importados",
+    "is required": "{field} é obrigatório",
+    "bookmark": "Favoritos",
+    "dashboards": "Dashboards",
+    "dashboard_label": "Painel de Controle",
+    "default_dashboard": "Painel Padrão",
+    "custom_dashboard": "Painéis Personalizados",
+    "create_custom_dashboard": "Criar novo dashboard",
+    "edit_custom_dashboard": "Editar Dashboard",
+    "custom_dashboard_empty": "Não há resultados para serem exibidos."
   }
 }

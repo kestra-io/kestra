@@ -198,7 +198,7 @@ public class FileChangedEventListener {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (file.endsWith(".yml") || file.endsWith(".yaml")) {
+                    if (file.toString().endsWith(".yml") || file.toString().endsWith(".yaml")) {
                         String content = Files.readString(file, Charset.defaultCharset());
                         Optional<Flow> flow = parseFlow(content, file);
 

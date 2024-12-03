@@ -4,8 +4,8 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
-import io.kestra.plugin.core.condition.DateTimeBetweenCondition;
-import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
+import io.kestra.plugin.core.condition.DateTimeBetween;
+import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
@@ -268,9 +268,9 @@ class ScheduleTest {
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
-                DayWeekInMonthCondition.builder()
+                DayWeekInMonth.builder()
                     .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonthCondition.DayInMonth.FIRST)
+                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
                     .date("{{ trigger.date }}")
                     .build()
             ))
@@ -301,7 +301,7 @@ class ScheduleTest {
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
-                DateTimeBetweenCondition.builder()
+                DateTimeBetween.builder()
                     .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
                     .date("{{ trigger.date }}")
                     .build()

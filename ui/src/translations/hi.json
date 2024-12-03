@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "डैशबोर्ड",
+      "title": "सारांश",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -850,7 +850,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैन्युअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
+    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -907,7 +907,6 @@
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
     "create_flow": "फ़्लो बनाएं",
-    "starred": "सितारे लगे",
     "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं किया जा सका",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
@@ -956,7 +955,8 @@
         "state": "स्थिति",
         "child": "बच्चा",
         "absolute_date": "सटीक तिथि",
-        "relative_date": "सापेक्ष तिथि"
+        "relative_date": "सापेक्ष तिथि",
+        "level": "Log स्तर"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें",
@@ -975,6 +975,32 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "warning": "चेतावनी",
-    "cron": "क्रॉन"
+    "cron": "क्रॉन",
+    "showMore": "और दिखाएँ",
+    "showLess": "कम दिखाएं",
+    "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "task run id": "टास्करन ID",
+    "optional": "वैकल्पिक",
+    "active": "सक्रिय",
+    "contextBar": {
+      "news": "समाचार",
+      "issue": "समस्या खोलें",
+      "docs": "डॉक्स",
+      "demo": "डेमो प्राप्त करें",
+      "help": "मदद"
+    },
+    "execution failed header": "निष्पादन FAILED!",
+    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
+    "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flows imported": "फ़्लोज़ आयात किए गए",
+    "is required": "{field} आवश्यक है",
+    "bookmark": "बुकमार्क्स",
+    "dashboards": "डैशबोर्ड्स",
+    "dashboard_label": "डैशबोर्ड",
+    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
+    "custom_dashboard": "कस्टम डैशबोर्ड्स",
+    "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
+    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
   }
 }

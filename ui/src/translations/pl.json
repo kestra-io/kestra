@@ -360,7 +360,7 @@
     },
     "cancel": "Anuluj",
     "homeDashboard": {
-      "title": "Panel",
+      "title": "Przegląd",
       "today": "Dzisiaj",
       "yesterday": "Wczoraj",
       "last28Days": "Ostatnie 28 dni",
@@ -850,7 +850,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Używanie zmiennych trigger nie będzie działać z ręcznym wykonaniem flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
+    "trigger_check_warning": "Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
     },
     "create_flow": "Utwórz Flow",
-    "starred": "Oznaczone gwiazdką",
     "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
     "unqueue done": "Wykonanie jest odkolejkowane",
     "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
@@ -956,7 +955,8 @@
         "state": "Stan",
         "child": "Dziecko",
         "absolute_date": "Data bezwzględna",
-        "relative_date": "Data względna"
+        "relative_date": "Data względna",
+        "level": "Poziom logowania"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry",
@@ -975,6 +975,32 @@
     "item": "element",
     "items": "elementy",
     "warning": "Ostrzeżenie",
-    "cron": "Kron"
+    "cron": "Kron",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "documentationMenu": "Menu dokumentacji",
+    "task run id": "ID TaskRun",
+    "optional": "Opcjonalne",
+    "active": "Aktywny",
+    "contextBar": {
+      "news": "Wiadomości",
+      "issue": "Otwórz Issue",
+      "docs": "Dokumentacja",
+      "demo": "Uzyskaj demo",
+      "help": "Pomoc"
+    },
+    "execution failed header": "Wykonanie nie powiodło się!",
+    "execution failed message": "Z ostatnim błędem: <code>{message}</code>",
+    "flow not imported": "Niektóre flow nie mogły zostać zaimportowane",
+    "flows imported": "Zaimportowane flows",
+    "is required": "Pole {field} jest wymagane",
+    "bookmark": "Zakładki",
+    "dashboards": "Panele sterowania",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Domyślny Dashboard",
+    "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
+    "create_custom_dashboard": "Utwórz nowy dashboard",
+    "edit_custom_dashboard": "Edytuj Dashboard",
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia."
   }
 }

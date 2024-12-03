@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "ダッシュボード",
+      "title": "概要",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -850,7 +850,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために、`??` コアレス演算子を追加してください。例えば、`trigger.date` の代わりに `trigger.date ?? execution.startDate` を使用してください。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -907,7 +907,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
-    "starred": "スター付き",
     "invalid bulk unqueue": "実行をキューから外すことができませんでした",
     "unqueue done": "実行はキューから外されました",
     "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
@@ -956,7 +955,8 @@
         "state": "状態",
         "child": "子",
         "absolute_date": "絶対日付",
-        "relative_date": "相対日付"
+        "relative_date": "相対日付",
+        "level": "ログレベル"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",
@@ -975,6 +975,32 @@
     "item": "アイテム",
     "items": "アイテム",
     "warning": "警告",
-    "cron": "Cron"
+    "cron": "Cron（クーロン）",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす",
+    "documentationMenu": "ドキュメントメニュー",
+    "task run id": "タスクランID",
+    "optional": "オプション",
+    "active": "アクティブ",
+    "contextBar": {
+      "news": "ニュース",
+      "issue": "問題を開く",
+      "docs": "ドキュメント",
+      "demo": "デモを取得",
+      "help": "ヘルプ"
+    },
+    "execution failed header": "実行がFAILEDしました！",
+    "execution failed message": "最後のエラー: <code>{message}</code>",
+    "flow not imported": "一部のflowをインポートできませんでした",
+    "flows imported": "フローがインポートされました",
+    "is required": "{field} は必須です",
+    "bookmark": "ブックマーク",
+    "dashboards": "ダッシュボード",
+    "dashboard_label": "ダッシュボード",
+    "default_dashboard": "デフォルトダッシュボード",
+    "custom_dashboard": "カスタムダッシュボード",
+    "create_custom_dashboard": "新しいダッシュボードを作成",
+    "edit_custom_dashboard": "ダッシュボードを編集",
+    "custom_dashboard_empty": "表示する結果がありません。"
   }
 }

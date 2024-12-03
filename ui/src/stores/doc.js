@@ -8,6 +8,7 @@ export default {
     state: {
         pageMetadata: undefined,
         resourceUrlTemplate: undefined,
+        docPath: undefined
     },
     actions: {
         async children({getters}, prefix) {
@@ -41,6 +42,9 @@ export default {
         },
         setResourceUrlTemplate(state, resourceUrlTemplate) {
             state.resourceUrlTemplate = resourceUrlTemplate;
+        },
+        setDocPath(state, newPath) {
+            state.docPath = newPath;
         }
     },
     getters: {
@@ -55,6 +59,9 @@ export default {
                 }
                 return state.resourceUrlTemplate.replace(PATH_PLACEHOLDER, resourcePath);
             }
+        },
+        docPath: (state) => {
+            return state.docPath;
         }
     }
 }

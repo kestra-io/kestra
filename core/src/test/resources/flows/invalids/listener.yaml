@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 listeners:
   - conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
     tasks: []
 
   - tasks: []

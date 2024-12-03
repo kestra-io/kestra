@@ -19,21 +19,12 @@ import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -280,7 +271,7 @@ public class FlowService {
             .stream()
             .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                 .stream()
-                .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !trigger.equals(oldTrigger))
+                .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !EqualsBuilder.reflectionEquals(trigger, oldTrigger))
             )
             .toList();
     }
@@ -356,8 +347,8 @@ public class FlowService {
      * @return the modified object
      */
     private static Object fixSnakeYaml(Object object) {
-        if (object instanceof Map) {
-            return ((Map<?, ?>) object)
+        if (object instanceof Map<?, ?> mapValue) {
+            return mapValue
                 .entrySet()
                 .stream()
                 .map(entry -> new AbstractMap.SimpleEntry<>(
@@ -373,14 +364,12 @@ public class FlowService {
                     },
                     LinkedHashMap::new
                 ));
-        } else if (object instanceof Collection) {
-            return ((Collection<?>) object)
+        } else if (object instanceof Collection<?> collectionValue) {
+            return collectionValue
                 .stream()
                 .map(FlowService::fixSnakeYaml)
                 .toList();
-        } else if (object instanceof String) {
-            String item = (String) object;
-
+        } else if (object instanceof String item) {
             if (item.contains("\n")) {
                 return item.replaceAll("\\s+\\n", "\\\n");
             }

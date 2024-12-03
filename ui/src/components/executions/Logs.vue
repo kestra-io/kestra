@@ -77,7 +77,7 @@
                 :items="temporalLogs"
                 :min-item-size="50"
                 key-field="index"
-                class="log-lines"
+                class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
             >
@@ -93,10 +93,10 @@
                             class="line"
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
                             :cursor="item.index.toString() === logCursor"
+                            :exclude-metas="['namespace', 'flowId', 'executionId']"
                             :level="level"
                             :filter="filter"
                             :log="item"
-                            title
                         />
                     </DynamicScrollerItem>
                 </template>
@@ -298,7 +298,7 @@
 </script>
 
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables";
+    @import "@kestra-io/ui-libs/src/scss/variables";
     .attempt-wrapper {
         background-color: var(--bs-white);
 
@@ -313,7 +313,8 @@
         .attempt-wrapper & {
             border-radius: .25rem;
         }
-        }
+    }
+
     .log-lines {
         max-height: calc(100vh - 335px);
         transition: max-height 0.2s ease-out;
@@ -338,5 +339,11 @@
         &::-webkit-scrollbar-thumb {
             background: var(--bs-primary);
         }
+    }
+
+    .temporal {
+        .line {
+            align-items: flex-start;
         }
+    }
 </style>

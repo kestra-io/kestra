@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Tablero",
+      "title": "Resumen",
       "today": "Hoy",
       "yesterday": "Ayer",
       "last28Days": "Últimos 28 días",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
-    "starred": "Estrellado",
     "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
     "unqueue done": "La ejecución está descolada",
     "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
@@ -956,7 +955,8 @@
         "state": "Estado",
         "child": "Niño",
         "absolute_date": "Fecha absoluta",
-        "relative_date": "Fecha relativa"
+        "relative_date": "Fecha relativa",
+        "level": "Nivel de log"
       },
       "empty": "Sin datos.",
       "label": "Elegir filtros",
@@ -975,6 +975,32 @@
     "item": "elemento",
     "items": "elementos",
     "warning": "Advertencia",
-    "cron": "Cron"
+    "cron": "Cron",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menú de documentación",
+    "task run id": "ID de TaskRun",
+    "optional": "Opcional",
+    "active": "Activo",
+    "contextBar": {
+      "news": "Noticias",
+      "issue": "Abrir un Issue",
+      "docs": "Documentos",
+      "demo": "Obtener una demostración",
+      "help": "Ayuda"
+    },
+    "execution failed header": "¡Ejecución FAILED!",
+    "execution failed message": "Con el último error: <code>{message}</code>",
+    "flow not imported": "Algunos flow no pudieron ser importados",
+    "flows imported": "Flujos importados",
+    "is required": "{field} es obligatorio",
+    "bookmark": "Marcadores",
+    "dashboards": "Tableros de control",
+    "dashboard_label": "Tablero de control",
+    "default_dashboard": "Tablero Predeterminado",
+    "custom_dashboard": "Tableros Personalizados",
+    "create_custom_dashboard": "Crear nuevo dashboard",
+    "edit_custom_dashboard": "Editar Panel de Control",
+    "custom_dashboard_empty": "No hay resultados para mostrar."
   }
 }

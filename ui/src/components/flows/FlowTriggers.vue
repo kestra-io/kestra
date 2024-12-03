@@ -5,7 +5,7 @@
         :data="triggersWithType"
         table-layout="auto"
         @row-dblclick="triggerId = $event.id; isOpen = true"
-        default-expand-all
+        :row-class-name="rowExpand"
     >
         <el-table-column type="expand">
             <template #default="props">
@@ -263,6 +263,7 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
+            ...mapState("log", ["logs"]),
             modalData() {
                 return Object
                     .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
@@ -297,6 +298,10 @@
             }
         },
         methods: {
+            rowExpand({row}) {
+                const triggerLogs = this.logs?.filter(log => log.triggerId === row.id);
+                return triggerLogs && triggerLogs.length > 0 ? "" : "no-expand";
+            },
             userCan(action) {
                 return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
             },
@@ -459,7 +464,14 @@
         }
     };
 </script>
-
+<style>
+    .no-expand .el-icon {
+    color: gray  
+    }
+    .no-expand .el-table__expand-icon {
+    pointer-events: none;
+    }
+</style>
 <style scoped>
     .pickers {
         display: flex;

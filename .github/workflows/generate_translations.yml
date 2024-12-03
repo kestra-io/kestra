@@ -22,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10
+          fetch-depth: 50
           ref: ${{ github.head_ref }}
 
       - name: Set up Python

@@ -159,7 +159,7 @@
         white-space: pre-wrap;
         word-break: break-all;
         display: flex;
-        align-items: center;
+        align-items: baseline;
         gap: $spacer;
 
         border-left-width: 2px !important;

@@ -182,6 +182,23 @@ public abstract class AbstractMultipleConditionStorageTest {
     }
 
     @Test
+    void dailyTimeDeadline_Expired() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now().minusSeconds(1)).build());
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults(), anEmptyMap());
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(1));
+    }
+
+    @Test
     void dailyTimeWindow() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 

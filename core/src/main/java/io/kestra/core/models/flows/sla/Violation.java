@@ -1,6 +1,8 @@
 package io.kestra.core.models.flows.sla;
 
-import java.util.Map;
+import io.kestra.core.models.Label;
 
-public record Violation(String slaId, SLA.Behavior behavior, Map<String, Object> labels, String reason) {
+import java.util.List;
+
+public record Violation(String slaId, SLA.Behavior behavior, List<Label> labels, String reason) {
 }

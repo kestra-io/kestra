@@ -4,8 +4,10 @@ import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.storages.StorageInterface;
@@ -101,7 +103,8 @@ public class PluginScanner {
         List<Class<? extends TaskRunner>> taskRunners = new ArrayList<>();
         List<Class<? extends AppPluginInterface>> apps = new ArrayList<>();
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
-
+        List<Class<? extends Chart<?>>> charts = new ArrayList<>();
+        List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -149,6 +152,16 @@ public class PluginScanner {
                         log.debug("Loading AppBlocking plugin: '{}'", plugin.getClass());
                         appBlocks.add(appBlock.getClass());
                     }
+                    case Chart<?> chart -> {
+                        log.debug("Loading Chart plugin: '{}'", plugin.getClass());
+                        //noinspection unchecked
+                        charts.add((Class<? extends Chart<?>>) chart.getClass());
+                    }
+                    case DataFilter<?, ?> dataFilter -> {
+                        log.debug("Loading DataFilter plugin: '{}'", plugin.getClass());
+                        //noinspection unchecked
+                        dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
+                    }
                     default -> {
                     }
                 }
@@ -195,6 +208,8 @@ public class PluginScanner {
             .apps(apps)
             .appBlocks(appBlocks)
             .taskRunners(taskRunners)
+            .charts(charts)
+            .dataFilters(dataFilters)
             .guides(guides)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey().toLowerCase(),

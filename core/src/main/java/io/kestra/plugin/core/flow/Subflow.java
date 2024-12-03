@@ -206,24 +206,12 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         final Map<String, Object> subflowOutputs = Optional
             .ofNullable(flow.getOutputs())
             .map(outputs -> flowInputOutput.flowOutputsToMap(flow.getOutputs()))
-            .orElseGet(() -> isOutputsAllowed ? transformOutputs(this.getOutputs()) : null);
+            .map(outputs -> flowInputOutput.typedOutputs(flow, execution, outputs))
+            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
 
         if (subflowOutputs != null) {
             try {
-                Map<String, Object> outputs = flow.getOutputs()
-                    .stream()
-                    .collect(HashMap::new, (map, entry) -> {
-                        final HashMap<String, Object> entryInfo = new HashMap<>();
-                        entryInfo.put("value", entry.getValue());
-                        entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
-                        map.put(entry.getId(), entryInfo);
-                    }, Map::putAll);
-                outputs = runContext.render(outputs);
-
-                if (flow.getOutputs() != null && flowInputOutput != null) {
-                    outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
-                }
-                builder.outputs(outputs);
+                builder.outputs(runContext.render(subflowOutputs));
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
@@ -248,16 +236,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         }
 
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
-    }
-
-    private Map<String, Object> transformOutputs(Map<String, Object> outputs) {
-        return outputs == null ? null : outputs.entrySet()
-            .stream()
-            .collect(HashMap::new, (map, entry) -> {
-                final HashMap<String, Object> entryInfo = new HashMap<>();
-                entryInfo.put("value", entry.getValue());
-                map.put(entry.getKey(), entryInfo);
-            }, Map::putAll);
     }
 
     @Override

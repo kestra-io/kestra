@@ -680,7 +680,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
         execution = executionRepository.save(execution);
 
-        List<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
                 .type(Executions.class.getName())
                 .columns(Map.of(
                     "count", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
@@ -688,10 +688,11 @@ public abstract class AbstractExecutionRepositoryTest {
                     "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build()
                 )).build(),
             ZonedDateTime.now().minus(1, ChronoUnit.HOURS),
-            ZonedDateTime.now()
+            ZonedDateTime.now(),
+            null
         );
 
-        assertThat(data.size(), is(1));
+        assertThat(data.getTotal(), is(1L));
         assertThat(data.get(0).get("count"), is(1L));
         assertThat(data.get(0).get("country"), is("FR"));
         Instant startDate = execution.getState().getStartDate();

@@ -20,7 +20,6 @@ import org.jooq.impl.DSL;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -129,7 +128,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public <F extends Enum<F>> List<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         throw new NotImplementedException();
     }
 

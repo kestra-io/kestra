@@ -192,13 +192,7 @@
         justify-content: center;
         align-items: center;
         gap: 0.25rem;
-        background: none;
-        border: 1px solid var(--bs-gray-300);
-    }
-
-    html.dark .search {
-        background: transparent; 
-        border-color: #404559; 
+        background: transparent;
     }
 
     .plugins-container {

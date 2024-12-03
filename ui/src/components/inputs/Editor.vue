@@ -530,7 +530,7 @@
             --vscode-editorGutter-background: $input-bg;
         }
         .monaco-editor .margin {
-            background-color: $input-bg; 
+            background-color: $input-bg;
         }
     }
 

@@ -719,8 +719,7 @@
         width: 100%;
         height: 100%;
         outline: none;
-        padding-top: 15px;
-        padding-left: 10px;
+        padding: 1rem 0 0 1rem;
     }
 </style>
 

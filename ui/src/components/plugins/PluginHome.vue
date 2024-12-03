@@ -192,7 +192,7 @@
         justify-content: center;
         align-items: center;
         gap: 0.25rem;
-        background: transparent;
+        background-color: transparent;
     }
 
     .plugins-container {

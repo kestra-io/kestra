@@ -14,7 +14,7 @@
                 </slot>
                 <el-button
                     class="star-button"
-                    :class="{'star-active': starred}"
+                    :class="{'star-active': bookmarked}"
                     :icon="StarOutlineIcon"
                     circle
                     @click="onStarClick"
@@ -71,7 +71,7 @@
             ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
             ...mapState("log", ["logs"]),
-            ...mapState("starred", ["pages"]),
+            ...mapState("bookmarks", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
             displayNavBar() {
@@ -85,9 +85,9 @@
                 return this.$route.name === "flows/update" && this.$route.params?.tab === "logs"
             },
             StarOutlineIcon() {
-                return this.starred ? StarIcon : StarOutlineIcon
+                return this.bookmarked ? StarIcon : StarOutlineIcon
             },
-            starred() {
+            bookmarked() {
                 return this.pages.some(page => page.path === this.currentFavURI)
             },
             currentFavURI() {
@@ -120,15 +120,15 @@
                 )
             },
             onStarClick() {
-                if (this.starred) {
-                    this.$store.dispatch("starred/remove", {
+                if (this.bookmarked) {
+                    this.$store.dispatch("bookmarks/remove", {
                         path: this.currentFavURI
                     })
                 } else {
                     console.log(this.title, this.breadcrumb)
-                    this.$store.dispatch("starred/add", {
+                    this.$store.dispatch("bookmarks/add", {
                         path: this.currentFavURI,
-                        label: this.breadcrumb?.length ? `${this.breadcrumb[0].label}: ${this.title}` : this.title,
+                        label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
                     })
                 }
             }

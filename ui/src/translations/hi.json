@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "डैशबोर्ड",
+      "title": "सारांश",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -907,7 +907,6 @@
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
     "create_flow": "फ़्लो बनाएं",
-    "starred": "सितारे लगे",
     "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं किया जा सका",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
@@ -981,7 +980,6 @@
     "showLess": "कम दिखाएं",
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
     "task run id": "टास्करन ID",
-    "execution failed": "निष्पादन FAILED हो गया, अधिक विवरण के लिए यहां क्लिक करें।",
     "optional": "वैकल्पिक",
     "active": "सक्रिय",
     "contextBar": {
@@ -990,6 +988,19 @@
       "docs": "डॉक्स",
       "demo": "डेमो प्राप्त करें",
       "help": "मदद"
-    }
+    },
+    "execution failed header": "निष्पादन FAILED!",
+    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
+    "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flows imported": "फ़्लोज़ आयात किए गए",
+    "is required": "{field} आवश्यक है",
+    "bookmark": "बुकमार्क्स",
+    "dashboards": "डैशबोर्ड्स",
+    "dashboard_label": "डैशबोर्ड",
+    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
+    "custom_dashboard": "कस्टम डैशबोर्ड्स",
+    "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
+    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
   }
 }

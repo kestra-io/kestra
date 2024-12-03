@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.docs.*;
+import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.PluginDefault;
@@ -74,6 +75,8 @@ public class PluginController {
             return jsonSchemaGenerator.schemas(AbstractTrigger.class, arrayOf);
         } else if (type == SchemaType.plugindefault) {
             return jsonSchemaGenerator.schemas(PluginDefault.class, arrayOf);
+        } else if (type == SchemaType.dashboard) {
+            return jsonSchemaGenerator.schemas(Dashboard.class, arrayOf);
         } else {
             throw new IllegalArgumentException("Invalid type " + type);
         }

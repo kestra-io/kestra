@@ -88,6 +88,10 @@
         :deep(.el-input) {
             font-size: var(--font-size-sm);
 
+            .el-input__wrapper {
+                background: transparent;
+            }
+
             @include res(sm) {
                 max-width: 135px;
             }

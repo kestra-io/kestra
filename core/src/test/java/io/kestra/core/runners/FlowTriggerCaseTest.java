@@ -103,7 +103,6 @@ public class FlowTriggerCaseTest {
         receive.blockLast();
 
         assertThat(flowListeners.size(), is(4));
-        System.out.println(flowListeners.get(0).getOutputs());
         assertThat(flowListeners.get(0).getOutputs().get("status"), is("RUNNING"));
         assertThat(flowListeners.get(1).getOutputs().get("status"), is("PAUSED"));
         assertThat(flowListeners.get(2).getOutputs().get("status"), is("RUNNING"));

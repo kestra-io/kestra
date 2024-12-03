@@ -43,6 +43,8 @@
             <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
+        <slot name="buttons" />
+
         <el-select
             class="d-none d-md-inline-block attempt-select"
             :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"

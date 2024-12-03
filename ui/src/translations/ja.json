@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "ダッシュボード",
+      "title": "概要",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -907,7 +907,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
-    "starred": "スター付き",
     "invalid bulk unqueue": "実行をキューから外すことができませんでした",
     "unqueue done": "実行はキューから外されました",
     "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
@@ -981,7 +980,6 @@
     "showLess": "表示を減らす",
     "documentationMenu": "ドキュメントメニュー",
     "task run id": "タスクランID",
-    "execution failed": "実行がFAILEDしました。詳細については、こちらをクリックしてください。",
     "optional": "オプション",
     "active": "アクティブ",
     "contextBar": {
@@ -990,6 +988,19 @@
       "docs": "ドキュメント",
       "demo": "デモを取得",
       "help": "ヘルプ"
-    }
+    },
+    "execution failed header": "実行がFAILEDしました！",
+    "execution failed message": "最後のエラー: <code>{message}</code>",
+    "flow not imported": "一部のflowをインポートできませんでした",
+    "flows imported": "フローがインポートされました",
+    "is required": "{field} は必須です",
+    "bookmark": "ブックマーク",
+    "dashboards": "ダッシュボード",
+    "dashboard_label": "ダッシュボード",
+    "default_dashboard": "デフォルトダッシュボード",
+    "custom_dashboard": "カスタムダッシュボード",
+    "create_custom_dashboard": "新しいダッシュボードを作成",
+    "edit_custom_dashboard": "ダッシュボードを編集",
+    "custom_dashboard_empty": "表示する結果がありません。"
   }
 }

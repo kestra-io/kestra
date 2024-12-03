@@ -41,4 +41,6 @@ public class Output implements Data {
     @NotNull
     @Valid
     Type type;
+
+    String displayName;
 }

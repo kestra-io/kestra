@@ -5,14 +5,21 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Optional;
 
 /**
@@ -22,19 +29,19 @@ import java.util.Optional;
  * a plugin type.
  */
 public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
-    
+
     private static final Logger log = LoggerFactory.getLogger(PluginDeserializer.class);
-    
+
     private static final String TYPE = "type";
-    
+
     private volatile PluginRegistry pluginRegistry;
-    
+
     /**
      * Creates a new {@link PluginDeserializer} instance.
      */
     public PluginDeserializer() {
     }
-    
+
     /**
      * Creates a new {@link PluginDeserializer} instance.
      *
@@ -43,7 +50,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
     PluginDeserializer(final PluginRegistry pluginRegistry) {
         this.pluginRegistry = pluginRegistry;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -57,7 +64,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             return null;
         }
     }
-    
+
     private void checkState() {
         if (pluginRegistry == null) {
             try {
@@ -71,13 +78,13 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             }
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private T fromObjectNode(JsonParser jp,
                              JsonNode node,
                              DeserializationContext context) throws IOException {
         Class<? extends Plugin> pluginType = null;
-        
+
         final String identifier = extractPluginRawIdentifier(node);
         if (identifier != null) {
             log.trace("Looking for Plugin for: {}",
@@ -85,7 +92,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             );
             pluginType = pluginRegistry.findClassByIdentifier(identifier);
         }
-        
+
         if (pluginType == null) {
             String type = Optional.ofNullable(identifier).orElse("<null>");
             throwInvalidTypeException(context, type);
@@ -93,16 +100,38 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             log.trace("Read plugin for: {}",
                 pluginType.getName()
             );
+
+            if (DataChart.class.isAssignableFrom(pluginType)) {
+                Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data")));
+                ParameterizedType genericDataFilterClass = (ParameterizedType) pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"))).getGenericSuperclass();
+                Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
+                TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
+                Type chartAwareColumnDescriptorClass = ((ParameterizedType) ((WildcardType) ((ParameterizedType) ((TypeVariable<?>)
+                    // DataChart generic class
+                    ((ParameterizedType) pluginType.getGenericSuperclass())
+                        // DataFilter generic class
+                        .getActualTypeArguments()[1]).getBounds()[0]
+                    // ColumnDescriptor implementation class
+                ).getActualTypeArguments()[1]).getUpperBounds()[0]).getRawType();
+
+                return JacksonMapper.ofJson().convertValue(node, typeFactory.constructParametricType(
+                    pluginType,
+                    typeFactory.constructType(dataFieldsEnum),
+                    typeFactory.constructParametricType(dataFilterClass,
+                        typeFactory.constructParametricType((Class<?>) chartAwareColumnDescriptorClass, (Class<?>) dataFieldsEnum)
+                    )));
+            }
+
             // Note that if the provided plugin is not annotated with `@JsonDeserialize()` then
             // the following method will end up to a StackOverflowException as the `PluginDeserializer` will be re-invoked.
             return (T) jp.getCodec().treeToValue(node, pluginType);
         }
-        
+
         // should not happen.
         log.warn("Failed get plugin type from JsonNode");
         return null;
     }
-    
+
     private static void throwInvalidTypeException(final DeserializationContext context,
                                                   final String type) throws JsonMappingException {
         throw context.invalidTypeIdException(
@@ -111,7 +140,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             "No plugin registered for the defined type: '" + type + "'"
         );
     }
-    
+
     static String extractPluginRawIdentifier(final JsonNode node) {
         JsonNode type = node.get(TYPE);
         if (type == null || type.textValue().isEmpty()) {

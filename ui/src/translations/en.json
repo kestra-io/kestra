@@ -156,6 +156,7 @@
     "select datetime": "Select a date",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
+    "is required": "{field} is required",
     "error": "Error",
     "form": "Form",
     "form error": "Form error",
@@ -409,7 +410,7 @@
     },
     "cancel": "Cancel",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Overview",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -420,6 +421,7 @@
       "errorLogs": "Errors logs",
       "no executions": "Ready to see your flow in action?"
     },
+    "dashboards": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -886,7 +888,7 @@
     },
     "curl": {
       "command": "cURL command",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "For SECRET and FILE-type inputs, adjust the command to match the actual value."
     },
     "logs_view": {
       "raw": "Temporal view",
@@ -950,7 +952,7 @@
     "files": "Files",
     "optional": "Optional",
     "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
-    "starred": "Starred",
+    "bookmark": "Bookmarks",
     "showLess": "Show less",
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",
@@ -1003,8 +1005,17 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
-    "execution failed": "The execution failed, click here for more details.",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
     "task run id": "TaskRun ID",
-    "active": "Active"
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboards",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown."
   }
 }

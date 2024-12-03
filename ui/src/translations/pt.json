@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Visão Geral",
       "today": "Hoje",
       "yesterday": "Ontem",
       "last28Days": "Últimos 28 dias",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação."
     },
     "create_flow": "Criar Flow",
-    "starred": "Favoritos",
     "invalid bulk unqueue": "Não foi possível remover as execuções da fila",
     "unqueue done": "A execução está fora da fila",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
@@ -981,7 +980,6 @@
     "showLess": "Mostrar menos",
     "documentationMenu": "Menu de documentação",
     "task run id": "ID do TaskRun",
-    "execution failed": "A execução FAILED, clique aqui para mais detalhes.",
     "optional": "Opcional",
     "active": "Ativo",
     "contextBar": {
@@ -990,6 +988,19 @@
       "docs": "Documentos",
       "demo": "Obter uma demonstração",
       "help": "Ajuda"
-    }
+    },
+    "execution failed header": "Falha na execução!",
+    "execution failed message": "Com o último erro: <code>{message}</code>",
+    "flow not imported": "Algum flow não pôde ser importado",
+    "flows imported": "Fluxos importados",
+    "is required": "{field} é obrigatório",
+    "bookmark": "Favoritos",
+    "dashboards": "Dashboards",
+    "dashboard_label": "Painel de Controle",
+    "default_dashboard": "Painel Padrão",
+    "custom_dashboard": "Painéis Personalizados",
+    "create_custom_dashboard": "Criar novo dashboard",
+    "edit_custom_dashboard": "Editar Dashboard",
+    "custom_dashboard_empty": "Não há resultados para serem exibidos."
   }
 }

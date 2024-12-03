@@ -360,7 +360,7 @@
     },
     "cancel": "Abbrechen",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Übersicht",
       "today": "Heute",
       "yesterday": "Gestern",
       "last28Days": "Letzte 28 Tage",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
     },
     "create_flow": "Flow erstellen",
-    "starred": "Markiert",
     "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
     "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
@@ -981,7 +980,6 @@
     "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
     "documentationMenu": "Dokumentationsmenü",
     "task run id": "TaskRun-ID",
-    "execution failed": "Die Ausführung ist fehlgeschlagen, klicken Sie hier für weitere Details.",
     "optional": "Optional",
     "active": "Aktiv",
     "contextBar": {
@@ -990,6 +988,19 @@
       "docs": "Dokumentation",
       "demo": "Demo anfordern",
       "help": "Hilfe"
-    }
+    },
+    "execution failed header": "Ausführung fehlgeschlagen!",
+    "execution failed message": "Mit letztem Fehler: <code>{message}</code>",
+    "flow not imported": "Einige Flows konnten nicht importiert werden",
+    "flows imported": "Flows importiert",
+    "is required": "{field} ist erforderlich",
+    "bookmark": "Lesezeichen",
+    "dashboards": "Dashboards",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Standard-Dashboard",
+    "custom_dashboard": "Benutzerdefinierte Dashboards",
+    "create_custom_dashboard": "Neues Dashboard erstellen",
+    "edit_custom_dashboard": "Dashboard bearbeiten",
+    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen."
   }
 }

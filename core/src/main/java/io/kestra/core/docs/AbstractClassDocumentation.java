@@ -126,8 +126,8 @@ public abstract class AbstractClassDocumentation<T> {
             }
 
             result.put(flattenKey(current.getKey(), parentName), finalValue);
-            if (current.getValue() instanceof Map) {
-                Map<String, Object> value = (Map<String, Object>) current.getValue();
+            if (current.getValue() instanceof Map<?, ?> mapValue) {
+                Map<String, Object> value = (Map<String, Object>) mapValue;
 
                 if (value.containsKey("properties")) {
                     result.putAll(flatten(properties(value), required(value), current.getKey()));

@@ -360,7 +360,7 @@
     },
     "cancel": "Отмена",
     "homeDashboard": {
-      "title": "Панель управления",
+      "title": "Обзор",
       "today": "Сегодня",
       "yesterday": "Вчера",
       "last28Days": "Последние 28 дней",
@@ -907,7 +907,6 @@
       "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
     },
     "create_flow": "Создать Flow",
-    "starred": "Избранное",
     "invalid bulk unqueue": "Не удалось удалить выполнения из очереди",
     "unqueue done": "Выполнение находится вне очереди",
     "bulk unqueue": "Вы уверены, что хотите удалить из очереди выполнение(я) <code>{executionCount}</code>?",
@@ -981,7 +980,6 @@
     "showLess": "Показать меньше",
     "documentationMenu": "Меню документации",
     "task run id": "ID выполнения задачи",
-    "execution failed": "Выполнение завершилось с ошибкой, нажмите здесь для получения дополнительных сведений.",
     "optional": "Опционально",
     "active": "Активно",
     "contextBar": {
@@ -990,6 +988,19 @@
       "docs": "Документация",
       "demo": "Получить демонстрацию",
       "help": "Помощь"
-    }
+    },
+    "execution failed header": "Выполнение FAILED!",
+    "execution failed message": "С последней ошибкой: <code>{message}</code>",
+    "flow not imported": "Некоторые flow не удалось импортировать",
+    "flows imported": "Потоки импортированы",
+    "is required": "{field} обязателен для заполнения",
+    "bookmark": "Закладки",
+    "dashboards": "Панели мониторинга",
+    "dashboard_label": "Панель управления",
+    "default_dashboard": "Панель по умолчанию",
+    "custom_dashboard": "Пользовательские панели мониторинга",
+    "create_custom_dashboard": "Создать новую панель управления",
+    "edit_custom_dashboard": "Редактировать Dashboard",
+    "custom_dashboard_empty": "Нет результатов для отображения."
   }
 }

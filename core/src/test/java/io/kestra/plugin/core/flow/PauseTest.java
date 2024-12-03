@@ -57,6 +57,11 @@ public class PauseTest extends AbstractMemoryRunnerTest {
     }
 
     @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
+    void delayFromInput() throws Exception {
+        suite.runDelayFromInput(runnerUtils);
+    }
+
+    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }
@@ -128,6 +133,24 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
         public void runDelay(RunnerUtils runnerUtils) throws Exception {
             Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
+            String executionId = execution.getId();
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList(), hasSize(1));
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
+                () -> {},
+                Duration.ofSeconds(5)
+            );
+
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
+            assertThat(execution.getTaskRunList(), hasSize(3));
+        }
+
+        public void runDelayFromInput(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay-from-input", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));

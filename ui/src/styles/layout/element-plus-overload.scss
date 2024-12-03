@@ -227,6 +227,10 @@
 
 .el-input-number__increase, .el-input-number__decrease {
     background: var(--bs-white);
+
+    html.dark & {
+        background: var(--bs-card-bg);
+    }
 }
 
 .el-input-number__increase:hover, .el-input-number__decrease:hover {

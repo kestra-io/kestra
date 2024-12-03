@@ -73,6 +73,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;
     private final LogService logService;
+    protected SchedulerExecutionStateInterface executionState;
 
     // must be volatile as it's updated by the flow listener thread and read by the scheduleExecutor thread
     private volatile Boolean isReady = false;
@@ -637,8 +638,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             return true;
         }
 
-        // The execution is not yet started, we skip
-        if (lastTrigger.getExecutionCurrentState() == null) {
+        Optional<Execution> execution = executionState.findById(lastTrigger.getTenantId(), lastTrigger.getExecutionId());
+
+        // executionState hasn't received the execution, we skip
+        if (execution.isEmpty()) {
             if (lastTrigger.getUpdatedDate() != null) {
                 metricRegistry
                     .timer(MetricRegistry.SCHEDULER_EXECUTION_MISSING_DURATION, metricRegistry.tags(lastTrigger))
@@ -672,7 +675,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 Level.DEBUG,
                 "Execution '{}' is still '{}', updated at '{}'",
                 lastTrigger.getExecutionId(),
-                lastTrigger.getExecutionCurrentState(),
+                execution.get().getState().getCurrent(),
                 lastTrigger.getUpdatedDate()
             );
         }

@@ -360,7 +360,7 @@
     },
     "cancel": "取消",
     "homeDashboard": {
-      "title": "仪表板",
+      "title": "概览",
       "today": "今天",
       "yesterday": "昨天",
       "last28Days": "最近28天",
@@ -907,7 +907,6 @@
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
     "create_flow": "创建Flow",
-    "starred": "已加星标",
     "invalid bulk unqueue": "无法取消排队的执行",
     "unqueue done": "执行已出队列",
     "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
@@ -995,6 +994,13 @@
     "flow not imported": "某些flow无法导入",
     "flows imported": "Flow已导入",
     "is required": "{field}是必需的",
-    "bookmark": "书签"
+    "bookmark": "书签",
+    "dashboards": "仪表板",
+    "dashboard_label": "仪表板",
+    "default_dashboard": "默认仪表板",
+    "custom_dashboard": "自定义仪表板",
+    "create_custom_dashboard": "创建新仪表板",
+    "edit_custom_dashboard": "编辑仪表板",
+    "custom_dashboard_empty": "没有结果显示。"
   }
 }

@@ -1,9 +1,12 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -12,18 +15,14 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
+import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -31,6 +30,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -203,6 +203,49 @@ class JsonSchemaGeneratorTest {
         assertThat(generate.get("$beta"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void dashboard() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) -> {
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Dashboard.class);
+
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+            String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields__";
+            assertThat(
+                properties(definitions.get("io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.Executions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields___"))
+                    .get("data")
+                    .get("$ref"),
+                Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey)
+            );
+
+            String timeseriesColumnDescriptorExecutionFields = "io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields_";
+            assertThat(
+                ((Map<String, String>) properties(definitions.get("io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields__"))
+                    .get("columns")
+                    .get("additionalProperties")
+                ).get("$ref"),
+                Matchers.is("#/definitions/" + timeseriesColumnDescriptorExecutionFields)
+            );
+
+            Map<String, Map<String, Object>> executionTimeseriesProps = properties(definitions.get(timeseriesColumnDescriptorExecutionFields));
+
+            // We verify that it holds TimeSeries-specific props
+            assertThat(
+                ((List<String>) (
+                    executionTimeseriesProps.get("graphStyle")
+                ).get("enum")).toArray(),
+                Matchers.arrayContainingInAnyOrder(Arrays.stream(GraphStyle.values()).map(Object::toString).toArray())
+            );
+
+            // We verify that it holds Executions-specific props
+            assertThat(
+                ((List<String>) executionTimeseriesProps.get("field").get("enum")).toArray(),
+                Matchers.arrayContainingInAnyOrder(Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray())
+            );
+        });
     }
 
     @SuppressWarnings("unchecked")

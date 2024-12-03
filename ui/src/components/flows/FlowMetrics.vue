@@ -63,7 +63,7 @@
                 />
             </el-form-item>
             <el-form-item>
-                <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
+                <refresh-button @refresh="load" :can-auto-refresh="canAutoRefresh" />
             </el-form-item>
         </collapse>
     </nav>

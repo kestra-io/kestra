@@ -91,7 +91,7 @@
                 </el-table-column>
                 <el-table-column :label="$t('state')">
                     <template #default="scope">
-                        <Status :status="scope.row.state.current" />
+                        <Status size="small" :status="scope.row.state.current" />
                     </template>
                 </el-table-column>
             </el-table>

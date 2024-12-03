@@ -41,10 +41,6 @@
                 type: Object,
                 required: true
             },
-            component: {
-                type: String,
-                default: "el-button"
-            },
         },
         methods: {
             kill(isOnKillCascade) {

@@ -18,14 +18,14 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
@@ -33,6 +33,9 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
 
     private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
@@ -59,6 +62,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     void schedule() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(4);
 
         Flow flow = createScheduleFlow();
@@ -74,6 +78,11 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
             .flows();
+
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(executionRepositorySpy)
+            .findById(any(), any());
 
         // scheduler
         try (AbstractScheduler scheduler = new JdbcScheduler(
@@ -95,7 +104,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             }));
 
             scheduler.run();
-            queueCount.await(30, TimeUnit.SECONDS);
+            queueCount.await(15, TimeUnit.SECONDS);
 
             receive.blockLast();
 

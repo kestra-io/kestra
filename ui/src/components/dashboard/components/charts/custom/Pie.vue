@@ -5,12 +5,12 @@
         <div class="w-75">
             <component
                 :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
-                v-if="generated.length"
+                v-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
                     chartOptions.legend.enabled
-                        ? [totalsLegend, centerPlugin, thicknessPlugin]
+                        ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
                         : [centerPlugin, thicknessPlugin]
                 "
                 class="chart"
@@ -29,18 +29,16 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {
-        defaultConfig,
-        getConsistentHEXColor,
-    } from "../../../../../utils/charts.js";
-    import {totalsLegend} from "../legend.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {totalsDurationLegend, totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
     import {useRoute} from "vue-router";
+    import {useStore} from "vuex";
+
     const route = useRoute();
 
-    import {useStore} from "vuex";
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
@@ -55,8 +53,10 @@
 
     const {chartOptions} = props.chart;
 
-    const options = computed(() =>
-        defaultConfig({
+    const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
+
+    const options = computed(() => {
+        return defaultConfig({
             plugins: {
                 ...(chartOptions.legend.enabled
                     ? {
@@ -69,10 +69,15 @@
                     enabled: true,
                     intersect: true,
                     filter: (value) => value.raw,
+                    callbacks: {
+                        label: (value) => {
+                            return `${isDuration ? Utils.humanDuration(value.raw) : value.raw}`;
+                        },
+                    }
                 },
             },
-        }),
-    );
+        });
+    });
 
     const centerPlugin = {
         id: "centerPlugin",
@@ -81,7 +86,12 @@
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
-            const total = dataset.data.reduce((acc, val) => acc + val, 0);
+
+            let total = dataset.data.reduce((acc, val) => acc + val, 0);
+            if (isDuration) {
+                total = Utils.humanDuration(total);
+            }
+
             const centerX = chart.width / 2;
             const centerY = chart.height / 2;
 
@@ -136,7 +146,7 @@
 
         let results = Object.create(null);
 
-        generated.value.forEach((value) => {
+        generated.value.results.forEach((value) => {
             const field = parseValue(value[aggregator.field.key]);
             const aggregated = value[aggregator.value.key];
 
@@ -166,7 +176,7 @@
         };
     });
 
-    const generated = ref([]);
+    const generated = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,

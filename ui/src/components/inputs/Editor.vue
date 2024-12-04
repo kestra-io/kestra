@@ -524,6 +524,7 @@
 
     .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
+            outline: none;
             background-color: $input-bg;
             --vscode-editor-background: $input-bg;
             --vscode-breadcrumb-background: $input-bg;

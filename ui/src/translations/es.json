@@ -1001,6 +1001,7 @@
     "custom_dashboard": "Tableros Personalizados",
     "create_custom_dashboard": "Crear nuevo dashboard",
     "edit_custom_dashboard": "Editar Panel de Control",
-    "custom_dashboard_empty": "No hay resultados para mostrar."
+    "custom_dashboard_empty": "No hay resultados para mostrar.",
+    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?"
   }
 }

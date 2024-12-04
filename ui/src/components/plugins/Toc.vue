@@ -1,7 +1,7 @@
 <template>
     <div class="plugins-list">
         <el-input
-            class="search p-2"
+            class="p-2 bg-transparent search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable

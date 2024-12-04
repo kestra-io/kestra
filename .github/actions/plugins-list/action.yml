@@ -13,6 +13,9 @@ outputs:
   plugins:
     description: "List of all Kestra plugins"
     value: ${{ steps.plugins.outputs.plugins }}
+  repositories:
+    description: "List of all Kestra repositories of plugins"
+    value: ${{ steps.plugins.outputs.repositories }}
 runs:
   using: composite
   steps:
@@ -20,5 +23,7 @@ runs:
       id: plugins
       shell: bash
       run: |
-        PLUGINS=$([ -f ${{ inputs.plugin-file }} ] && cat ${{ inputs.plugin-file }} | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | sed -e "s/LATEST/${{ inputs.plugin-version }}/g" | xargs || echo '');
+        PLUGINS=$([ -f ${{ inputs.plugin-file }} ] && cat ${{ inputs.plugin-file }} | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | sed -e "s/LATEST/${{ inputs.plugin-version }}/g" | cut -d':' -f2- | xargs || echo '');
+        REPOSITORIES=$([ -f ${{ inputs.plugin-file }} ] && cat ${{ inputs.plugin-file }} | grep "io\\.kestra\\." | sed -e '/#/s/^.//' | cut -d':' -f1 | uniq | sort | xargs || echo '')
         echo "plugins=$PLUGINS" >> $GITHUB_OUTPUT
+        echo "repositories=$REPOSITORIES" >> $GITHUB_OUTPUT

@@ -127,16 +127,6 @@
                                 </router-link>
                             </template>
                         </el-table-column>
-
-                        <el-table-column v-if="visibleColumns.executionCurrentState" :label="$t('state')">
-                            <template #default="scope">
-                                <status
-                                    v-if="scope.row.executionCurrentState"
-                                    :status="scope.row.executionCurrentState"
-                                    size="small"
-                                />
-                            </template>
-                        </el-table-column>
                         <el-table-column v-if="visibleColumns.workerId" prop="workerId" :label="$t('workerId')">
                             <template #default="scope">
                                 <id
@@ -162,9 +152,9 @@
                         </el-table-column>
                         <el-table-column :label="$t('cron')">
                             <template #default="scope">
-                                <Cron :cron-expression="scope.row.cron" />
+                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
                             </template>
-                        </el-table-column>  
+                        </el-table-column>
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
@@ -172,7 +162,7 @@
                                     :trigger-id="scope.row.id"
                                 />
                             </template>
-                        </el-table-column>                      
+                        </el-table-column>
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -184,7 +174,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
@@ -201,7 +191,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if=" scope.row.evaluateRunningDate">
+                                <el-button>
                                     <kicon
                                         :tooltip="$t(`restart trigger.tooltip`)"
                                         placement="left"
@@ -230,7 +220,6 @@
                             <template #default="scope">
                                 <el-switch
                                     v-if="!scope.row.missingSource"
-                                    size="small"
                                     :active-text="$t('enabled')"
                                     :model-value="!scope.row.disabled"
                                     @change="setDisabled(scope.row, $event)"
@@ -287,7 +276,6 @@
     import RefreshButton from "../layout/RefreshButton.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import Status from "../Status.vue";
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
@@ -302,7 +290,6 @@
             SearchField,
             NamespaceSelect,
             DateAgo,
-            Status,
             Id,
             LogsWrapper
         },

@@ -3,6 +3,8 @@ package io.kestra.core.plugins;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -31,6 +33,8 @@ public class PluginModule extends SimpleModule {
         super(NAME);
         addDeserializer(ExecutableTask.class, new PluginDeserializer<>());
         addDeserializer(Task.class, new PluginDeserializer<>());
+        addDeserializer(Chart.class, new PluginDeserializer<>());
+        addDeserializer(DataFilter.class, new PluginDeserializer<>());
         addDeserializer(AbstractTrigger.class, new PluginDeserializer<>());
         addDeserializer(Condition.class, new PluginDeserializer<>());
         addDeserializer(TaskRunner.class, new PluginDeserializer<>());

@@ -74,12 +74,12 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
     }
 
     private static Double computeValue(AbstractMetricEntry<?> metricEntry) {
-        if (metricEntry instanceof Counter) {
-            return ((Counter) metricEntry).getValue();
+        if (metricEntry instanceof Counter counter) {
+            return counter.getValue();
         }
 
-        if (metricEntry instanceof Timer) {
-            return (double) ((Timer) metricEntry).getValue().toMillis();
+        if (metricEntry instanceof Timer timer) {
+            return (double) timer.getValue().toMillis();
         }
 
         throw new IllegalArgumentException("Unknown metric type: " + metricEntry.getClass());

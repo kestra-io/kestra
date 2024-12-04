@@ -103,7 +103,7 @@
         },
         mounted() {
             this.maxPreview = this.configPreviewInitialRows();
-            this.encoding = this.encodingOptions[0];
+            this.encoding = this.encodingOptions[0].value;
         },
         computed: {
             ...mapState("execution", ["filePreview"]),
@@ -143,10 +143,10 @@
                 return this.configs?.preview.max || 5000
             },
             getFilePreview() {
-                let data = {
+                const data = {
                     path: this.value,
                     maxRows: this.maxPreview,
-                    encoding: this.encoding.value
+                    encoding: this.encoding
                 };
                 this.selectedPreview = this.value;
                 if (this.executionId !== undefined) {

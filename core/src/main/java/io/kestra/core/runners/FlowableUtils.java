@@ -386,25 +386,25 @@ public class FlowableUtils {
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
         List<Object> values;
 
-        if (value instanceof String) {
-            String renderValue = runContext.render((String) value);
+        if (value instanceof String stringValue) {
+            String renderValue = runContext.render(stringValue);
             try {
                 values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
-        } else if (value instanceof List) {
-            values = new ArrayList<>(((List<?>) value).size());
+        } else if (value instanceof List<?> listValue) {
+            values = new ArrayList<>(listValue.size());
             for (Object obj : (List<Object>) value) {
-                if (obj instanceof String) {
-                    values.add(runContext.render((String) obj));
+                if (obj instanceof String stringObj) {
+                    values.add(runContext.render(stringObj));
                 }
                 else if (obj instanceof Integer) {
                     values.add(runContext.render(obj.toString()));
                 }
-                else if(obj instanceof Map<?, ?>) {
+                else if(obj instanceof Map mapObj) {
                     //JSON or YAML map
-                    values.add(runContext.render((Map) obj));
+                    values.add(runContext.render(mapObj));
                 } else {
                     throw new IllegalVariableEvaluationException("Unknown value element type: " + obj.getClass());
                 }
@@ -434,7 +434,7 @@ public class FlowableUtils {
         for (Object current : distinctValue) {
             for (Task task : tasks) {
                 try {
-                    String resolvedValue = current instanceof String ? (String) current : MAPPER.writeValueAsString(current);
+                    String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
 
                     result.add(ResolvedTask.builder()
                         .task(task)

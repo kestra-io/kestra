@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Tablero",
+      "title": "Tablero de control",
       "today": "Hoy",
       "yesterday": "Ayer",
       "last28Days": "Últimos 28 días",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Errores de ejecuciones por namespace",
       "failedExecutions": "Ejecuciones FAILED",
       "errorLogs": "Logs de errores",
-      "no executions": "¿Listo para ver tu flow en acción?"
+      "no executions": "¿Listo para ver tu flow en acción?",
+      "wel_text": "¡Bienvenido!",
+      "start": "Vamos a poner en marcha tu primer flujo de trabajo.",
+      "guide": "¿Necesitas orientación para ejecutar tu primer flow?",
+      "welcome": "Bienvenido a Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducidas",
     "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudadas",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "¿Necesitas ayuda?"
+      },
+      "tutorial": {
+        "title": "Tutorial"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Ten en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
+      "note": "Tenga en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
     },
     "logs_view": {
       "raw": "Vista temporal",
@@ -907,7 +914,6 @@
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
-    "starred": "Estrellado",
     "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
     "unqueue done": "La ejecución está descolada",
     "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
@@ -981,7 +987,6 @@
     "showLess": "Mostrar menos",
     "documentationMenu": "Menú de documentación",
     "task run id": "ID de TaskRun",
-    "execution failed": "La ejecución FAILED, haz clic aquí para más detalles.",
     "optional": "Opcional",
     "active": "Activo",
     "contextBar": {
@@ -990,6 +995,20 @@
       "docs": "Documentos",
       "demo": "Obtener una demostración",
       "help": "Ayuda"
-    }
+    },
+    "execution failed header": "¡Ejecución FAILED!",
+    "execution failed message": "Con el último error: <code>{message}</code>",
+    "flow not imported": "Algunos flow no pudieron ser importados",
+    "flows imported": "Flujos importados",
+    "is required": "{field} es obligatorio",
+    "bookmark": "Marcadores",
+    "dashboards": "Tableros de control",
+    "dashboard_label": "Tablero de control",
+    "default_dashboard": "Tablero Predeterminado",
+    "custom_dashboard": "Tableros Personalizados",
+    "create_custom_dashboard": "Crear nuevo dashboard",
+    "edit_custom_dashboard": "Editar Panel de Control",
+    "custom_dashboard_empty": "No hay resultados para mostrar.",
+    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?"
   }
 }

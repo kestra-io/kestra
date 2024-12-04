@@ -19,21 +19,21 @@ import reactor.core.publisher.Flux;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;
 
     @Inject
-    protected SchedulerTriggerStateInterface triggerState;
+    protected SchedulerExecutionStateInterface executionState;
 
     @Test
     void thread() throws Exception {
@@ -54,11 +54,16 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-
+        SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
             .flows();
+
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(schedulerExecutionStateSpy)
+            .findById(any(), any());
 
         // scheduler
         try (

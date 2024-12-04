@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "namespace별 실행 오류",
       "failedExecutions": "실패한 실행",
       "errorLogs": "오류 로그",
-      "no executions": "flow를 실행해 보시겠습니까?"
+      "no executions": "flow를 실행해 보시겠습니까?",
+      "wel_text": "환영합니다!",
+      "start": "첫 번째 workflow를 시작하고 실행해 봅시다.",
+      "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
+      "welcome": "Kestra에 오신 것을 환영합니다"
     },
     "executions replayed": "<code>{executionCount}</code> 개의 실행이 재실행되었습니다",
     "executions resumed": "<code>{executionCount}</code> 개의 실행이 재개되었습니다",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "도움이 필요하십니까?"
+      },
+      "tutorial": {
+        "title": "튜토리얼"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "cURL 명령어",
-      "note": "SECRET 및 FILE input 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
+      "note": "SECRET 및 FILE 입력 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
     },
     "logs_view": {
       "raw": "Temporal 보기",
@@ -907,7 +914,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
     },
     "create_flow": "Flow 생성",
-    "starred": "별표 표시됨",
     "invalid bulk unqueue": "실행을 큐에서 제거할 수 없습니다.",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "bulk unqueue": "<code>{executionCount}</code> 실행을 대기열에서 제거하시겠습니까?",
@@ -981,7 +987,6 @@
     "showLess": "덜 보기",
     "documentationMenu": "문서 메뉴",
     "task run id": "TaskRun ID",
-    "execution failed": "실행이 FAILED되었습니다. 자세한 내용을 보려면 여기를 클릭하세요.",
     "optional": "선택 사항",
     "active": "활성화됨",
     "contextBar": {
@@ -990,6 +995,20 @@
       "docs": "문서",
       "demo": "데모 받기",
       "help": "도움말"
-    }
+    },
+    "execution failed header": "실행 실패!",
+    "execution failed message": "마지막 오류: <code>{message}</code>",
+    "flow not imported": "일부 flow를 가져올 수 없습니다.",
+    "flows imported": "Flow가 가져왔습니다.",
+    "is required": "{field}는 필수 항목입니다.",
+    "bookmark": "북마크",
+    "dashboards": "대시보드",
+    "dashboard_label": "대시보드",
+    "default_dashboard": "기본 대시보드",
+    "custom_dashboard": "맞춤 대시보드",
+    "create_custom_dashboard": "새 대시보드 생성",
+    "edit_custom_dashboard": "대시보드 편집",
+    "custom_dashboard_empty": "결과가 표시되지 않습니다.",
+    "remove_bookmark": "이 북마크를 제거하시겠습니까?"
   }
 }

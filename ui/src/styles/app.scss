@@ -45,6 +45,38 @@ html {
     }
 }
 
+* > {
+    ::-webkit-scrollbar {
+        width: 0.5rem;
+        height: 0.5rem;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bs-gray-200);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--bs-gray-300);
+        border-radius: var(--el-border-radius);
+
+        &:hover {
+            background: var(--bs-gray-400);
+        }
+    }
+}
+
+html.dark {
+    * > {
+        ::-webkit-scrollbar-thumb {
+            background: var(--bs-gray-400);
+
+            &:hover {
+                background: var(--bs-gray-500);
+            }
+        }
+    }
+}
+
 // main layout
 main {
     display: flex;

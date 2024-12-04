@@ -1,5 +1,52 @@
+<template>
+    <div class="barWrapper" :class="{opened: activeTab?.length > 0}">
+        <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
+
+        <el-button
+            v-for="(button, key) of buttonsList"
+            :key="key"
+            :type="activeTab === key ? 'primary' : 'default'"
+            :tag="button.url ? 'a' : 'button'"
+            :href="button.url"
+            @click="() => {if(!button.url){ setActiveTab(key)}}"
+            :target="button.url ? '_blank' : undefined"
+        >
+            <component :is="button.icon" class="context-button-icon" />{{ button.title }}
+            <OpenInNew v-if="button.url" class="open-in-new" />
+            <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+        </el-button>
+
+        <div style="flex:1" />
+
+        <el-tooltip
+            effect="light"
+            :persistent="false"
+            transition=""
+            :hide-after="0"
+            :disabled="!configs.commitId"
+        >
+            <template #content>
+                <code>{{ configs.commitId }}</code> <DateAgo v-if="configs.commitDate" :inverted="true" :date="configs.commitDate" />
+            </template>
+            <span class="versionNumber">{{ configs?.version }}</span>
+        </el-tooltip>
+    </div>
+    <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+        <div :style="{overflow: 'hidden'}">
+            <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
+                <Close />
+            </button>
+            <ContextDocs v-if="activeTab === 'docs'" />
+            <ContextNews v-else-if="activeTab === 'news'" />
+            <template v-else>
+                {{ activeTab }}
+            </template>
+        </div>
+    </div>
+</template>
+
 <script lang="ts" setup>
-    import {computed, ref, watch, type Ref} from "vue";
+    import {computed, ref, watch, type Ref, type Component} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -32,6 +79,41 @@
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
         )
     })
+
+    const buttonsList: Record<string, {
+        title:string,
+        icon: Component,
+        component?: Component,
+        url?: string,
+        hasUnreadMarker?: boolean
+    }> = {
+        news: {
+            title: t("contextBar.news"),
+            icon: MessageOutline,
+            component: ContextNews,
+            hasUnreadMarker: true
+        },
+        docs: {
+            title: t("contextBar.docs"),
+            icon: FileDocument,
+            component: ContextDocs
+        },
+        help: {
+            title: t("contextBar.help"),
+            icon: Slack,
+            url: "https://kestra.io/slack"
+        },
+        issue: {
+            title: t("contextBar.issue"),
+            icon: Github,
+            url: "https://github.com/kestra-io/kestra/issues/new/choose"
+        },
+        demo: {
+            title: t("contextBar.demo"),
+            icon: Calendar,
+            url: "https://kestra.io/demo"
+        }
+    }
 
     const panelWidth = ref(640)
 
@@ -71,179 +153,119 @@
         return {startResizing, resizing}
     }
 
-    function setActiveTab(tab: string){
-        if(activeTab.value === tab){
+    function setActiveTab(tab: string) {
+        if (activeTab.value === tab) {
             activeTab.value = ""
-        }else{
+        } else {
             activeTab.value = tab
         }
     }
 </script>
 
-<template>
-    <div class="barWrapper">
-        <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
-        <button class="barButton" :class="{barButtonActive: activeTab === 'news'}" @click="() => setActiveTab('news')">
-            <MessageOutline class="buttonIcon" />{{ t('contextBar.news') }}
-            <div v-if="hasUnread" class="newsDot" />
-        </button>
-        <button class="barButton" :class="{barButtonActive: activeTab === 'docs'}" @click="() => setActiveTab('docs')">
-            <FileDocument class="buttonIcon" />{{ t('contextBar.docs') }}
-        </button>
-        <a href="https://kestra.io/slack" target="_blank" class="barButton">
-            <Slack class="buttonIcon" />{{ t('contextBar.help') }}<OpenInNew class="openIcon" />
-        </a>
-        <a href="https://github.com/kestra-io/kestra/issues/new/choose" target="_blank" class="barButton">
-            <Github class="buttonIcon" />{{ t('contextBar.issue') }}<OpenInNew class="openIcon" />
-        </a>
-        <a href="https://kestra.io/demo" target="_blank" class="barButton">
-            <Calendar class="buttonIcon" />{{ t('contextBar.demo') }}<OpenInNew class="openIcon" />
-        </a>
-        <div style="flex:1" />
-        <span class="versionNumber">{{ configs?.version }}</span>
-        <el-tooltip
-            v-if="configs?.commitId"
-            effect="light"
-            :persistent="false"
-            transition=""
-            :hide-after="0"
-            placement="left"
-        >
-            <template #content>
-                <DateAgo :inverted="true" :date="configs.commitDate" />
-            </template>
-            <span class="commitNumber">{{ configs?.commitId }}</span>
-        </el-tooltip>
-    </div>
-    <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
-        <div :style="{overflow: 'hidden', width:`${panelWidth}px`}">
-            <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
-                <Close />
-            </button>
-            <ContextDocs v-if="activeTab === 'docs'" />
-            <ContextNews v-else-if="activeTab === 'news'" />
-            <template v-else>
-                {{ activeTab }}
-            </template>
-        </div>
-    </div>
-</template>
+<style lang="scss" scoped>
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-<style scoped>
-.barResizer{
-    height: 100vh;
-    width: 10px;
-    position: absolute;
-    top: 0;
-    left: -5px;
-    z-index: 1040;
-    background-color: var(--bs-primary);
-    background: linear-gradient(90deg, transparent 0%, var(--bs-primary) 50%, transparent 100%);
-    opacity: 0;
-    transition: opacity .1s;
-    border: none;
-    cursor: col-resize;
-}
+    .barResizer {
+        height: 100vh;
+        width: 5px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        background-color: var(--bs-primary);
+        opacity: 0;
+        transition: opacity .1s;
+        border: none;
+        cursor: col-resize;
 
-.barResizer:hover{
-    opacity: 1;
-}
-
-.barWrapper {
-    position: relative;
-    width: 65px;
-    padding: 16px;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    border-left: 1px solid var(--el-border-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--card-bg);
-}
-
-.barWrapper .barButton{
-    background:  var(--bs-border-color);
-    color: var(--bs-body-color);
-    border-radius: 5px;
-    border: 1px solid var(--el-border-color);
-    padding: 10px 5px;
-    width: 32px;
-    display: block;
-    line-height: normal;
-    white-space: nowrap;
-    position: relative;
-}
-
-.barWrapper .barButton:hover{
-    border-color: var(--bs-primary);
-}
-
-.barWrapper .barButtonActive{
-    background: var(--bs-primary);
-    border-color: var(--bs-primary);
-    color: white;
-    html.dark & {
-        color: var(--bs-primary-color);
+        &:hover {
+            opacity: 1;
+        }
     }
-}
 
-.newsDot{
-    width: 10px;
-    height: 10px;
-    background: #FD7278;
-    border: 2px solid white;
-    border-radius: 50%;
-    display: block;
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    html.dark & {
-        border-color: #2F3342;
+    .barWrapper {
+        position: relative;
+        width: 4rem;
+        padding: 0.75rem;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        border-left: 1px solid var(--el-border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: var(--font-size-sm);
+
+        &.opened {
+            border-right: 1px solid var(--el-border-color);
+        }
+
+        .el-button {
+            font-size: var(--font-size-sm);
+            height: auto;
+            padding: 10px 5px;
+            width: 32px;
+            position: relative;
+        }
+
+        .el-button + .el-button {
+            margin-left: 0;
+        }
+
+        .versionNumber {
+            color: var(--bs-gray-400);
+            html.dark & {
+                color: var(--bs-gray-600);
+            }
+            margin-top: var(--spacer);
+        }
+
+        .context-button-icon {
+            transform: rotate(90deg);
+            margin-bottom: 0.75rem;
+        }
+
+        .open-in-new {
+            transform: rotate(90deg);
+            margin-top: 0.75rem;
+            margin-bottom: 0;
+            color: var(--bs-text-opacity-5);
+            opacity: .25;
+        }
+
+        @include res(xs) {
+            display: none;
+        }
+
+        .newsDot{
+            width: 10px;
+            height: 10px;
+            background-color: var(--content-alert);
+            border: 2px solid var(--el-button-bg-color);
+            border-radius: 50%;
+            display: block;
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+        }
     }
-}
 
-.buttonIcon{
-    transform: rotate(90deg);
-    margin-bottom: 8px;
-}
+    .panelWrapper {
+        transition: width .1s;
+        width: 0;
+        position: relative;
+        overflow-y: auto;
 
-.openIcon{
-    transform: rotate(90deg);
-    margin-top: 8px;
-    color: var(--bs-tertiary-color);
-    font-size: 12px;
-}
+        .closeButton {
+            position: fixed;
+            top: var(--spacer);
+            right: var(--spacer);
+            color: var(--bs-tertiary-color);
+            background: none;
+            border: none;
+        }
 
-.versionNumber{
-    font-size: 12px;
-    color: var(--bs-tertiary-color);
-    margin-top: var(--spacer);
-}
-
-.commitNumber{
-    font-size: 12px;
-    color: var(--bs-primary);
-    margin-top: calc(.5 * var(--spacer));
-}
-
-.panelWrapper{
-    transition: width .3s;
-    width: 0;
-    position: relative;
-    overflow-y: auto;
-}
-
-.panelWrapper .closeButton{
-    position: fixed;
-    top: var(--spacer);
-    right: var(--spacer);
-    color: var(--bs-tertiary-color);
-    background: none;
-    border: none;
-}
-
-.panelTabResizing{
-    transition: none;
-}
+        &.panelTabResizing {
+            transition: none;
+        }
+    }
 </style>

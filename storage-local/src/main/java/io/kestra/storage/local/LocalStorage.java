@@ -233,12 +233,18 @@ public class LocalStorage implements StorageInterface {
                 .toList();
         }
     }
-
     private URI getKestraUri(String tenantId, Path path) {
         Path prefix = (tenantId == null) ?
-            basePath.toAbsolutePath() :
-            Path.of(basePath.toAbsolutePath().toString(), tenantId);
+            basePath.toAbsolutePath():
+            basePath.toAbsolutePath().resolve(tenantId);
+        subPathParentGuard(path, prefix);
         return URI.create("kestra:///" + prefix.relativize(path).toString().replace("\\", "/"));
+    }
+
+    private void subPathParentGuard(Path path, Path prefix) {
+        if (!path.toAbsolutePath().startsWith(prefix)) {
+            throw new IllegalArgumentException("The path must be a subpath of the base path with the tenant ID.");
+        }
     }
 
     private void parentTraversalGuard(URI uri) {

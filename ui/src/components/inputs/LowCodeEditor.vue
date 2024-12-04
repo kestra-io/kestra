@@ -1,3 +1,98 @@
+<template>
+    <div ref="vueFlow" class="vueflow">
+        <slot name="top-bar" />
+        <Topology
+            :id="vueflowId"
+            :is-horizontal="isHorizontal"
+            :is-read-only="isReadOnly"
+            :is-allowed-edit="isAllowedEdit"
+            :source="source"
+            :toggle-orientation-button="['topology'].includes(viewType)"
+            :flow-graph="props.flowGraph"
+            :flow-id="flowId"
+            :namespace="namespace"
+            :expanded-subflows="props.expandedSubflows"
+            @toggle-orientation="toggleOrientation"
+            @edit="onEditTask"
+            @delete="onDelete"
+            @open-link="openFlow"
+            @show-logs="showLogs"
+            @show-description="showDescription"
+            @show-condition="showCondition"
+            @on-add-flowable-error="onAddFlowableError"
+            @add-task="onCreateNewTask"
+            @swapped-task="onSwappedTask"
+            @message="message"
+            @expand-subflow="expandSubflow"
+            :icons="icons"
+        />
+
+        <!-- Drawer to create/add task -->
+        <task-edit
+            v-if="source"
+            component="div"
+            is-hidden
+            class="node-action"
+            :section="taskEditData?.section"
+            :task="taskObject"
+            :flow-id="flowId"
+            size="small"
+            :namespace="namespace"
+            :revision="execution ? execution.flowRevision : undefined"
+            @update:task="confirmEdit"
+            @close="closeEdit()"
+            :flow-source="source"
+            ref="taskEditDomElement"
+        />
+
+        <!--    Drawer to task informations (logs, description, ..)   -->
+        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
+        <drawer
+            v-if="isDrawerOpen && selectedTask"
+            v-model="isDrawerOpen"
+        >
+            <template #header>
+                <code>{{ selectedTask.id }}</code>
+            </template>
+            <div v-if="isShowLogsOpen">
+                <collapse>
+                    <el-form-item>
+                        <search-field :router="false" @search="onSearch" class="me-2" />
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
+                    </el-form-item>
+                </collapse>
+                <task-run-details
+                    v-for="taskRun in selectedTask.taskRuns"
+                    :key="taskRun.id"
+                    :target-execution-id="selectedTask.execution?.id"
+                    :task-run-id="taskRun.id"
+                    :filter="logFilter"
+                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                    :level="logLevel"
+                    @follow="forwardEvent('follow', $event)"
+                />
+            </div>
+            <div v-if="isShowDescriptionOpen">
+                <markdown class="markdown-tooltip" :source="selectedTask.description" />
+            </div>
+            <div v-if="isShowConditionOpen">
+                <editor
+                    :read-only="true"
+                    :input="true"
+                    :full-height="false"
+                    :navbar="false"
+                    :minimap="false"
+                    :model-value="selectedTask.runIf"
+                    lang="yaml"
+                    class="mt-3"
+                />
+            </div>
+        </drawer>
+    </div>
+</template>
+
 <script setup>
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
@@ -299,101 +394,6 @@
         emit("expand-subflow", event)
     }
 </script>
-
-<template>
-    <div ref="vueFlow" class="vueflow">
-        <slot name="top-bar" />
-        <Topology
-            :id="vueflowId"
-            :is-horizontal="isHorizontal"
-            :is-read-only="isReadOnly"
-            :is-allowed-edit="isAllowedEdit"
-            :source="source"
-            :toggle-orientation-button="['topology'].includes(viewType)"
-            :flow-graph="props.flowGraph"
-            :flow-id="flowId"
-            :namespace="namespace"
-            :expanded-subflows="props.expandedSubflows"
-            @toggle-orientation="toggleOrientation"
-            @edit="onEditTask"
-            @delete="onDelete"
-            @open-link="openFlow"
-            @show-logs="showLogs"
-            @show-description="showDescription"
-            @show-condition="showCondition"
-            @on-add-flowable-error="onAddFlowableError"
-            @add-task="onCreateNewTask"
-            @swapped-task="onSwappedTask"
-            @message="message"
-            @expand-subflow="expandSubflow"
-            :icons="icons"
-        />
-
-        <!-- Drawer to create/add task -->
-        <task-edit
-            v-if="source"
-            component="div"
-            is-hidden
-            class="node-action"
-            :section="taskEditData?.section"
-            :task="taskObject"
-            :flow-id="flowId"
-            size="small"
-            :namespace="namespace"
-            :revision="execution ? execution.flowRevision : undefined"
-            @update:task="confirmEdit"
-            @close="closeEdit()"
-            :flow-source="source"
-            ref="taskEditDomElement"
-        />
-
-        <!--    Drawer to task informations (logs, description, ..)   -->
-        <!--    Assuming selectedTask is always the id and the required data for the opened drawer    -->
-        <drawer
-            v-if="isDrawerOpen && selectedTask"
-            v-model="isDrawerOpen"
-        >
-            <template #header>
-                <code>{{ selectedTask.id }}</code>
-            </template>
-            <div v-if="isShowLogsOpen">
-                <collapse>
-                    <el-form-item>
-                        <search-field :router="false" @search="onSearch" class="me-2" />
-                    </el-form-item>
-                    <el-form-item>
-                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
-                    </el-form-item>
-                </collapse>
-                <task-run-details
-                    v-for="taskRun in selectedTask.taskRuns"
-                    :key="taskRun.id"
-                    :target-execution-id="selectedTask.execution?.id"
-                    :task-run-id="taskRun.id"
-                    :filter="logFilter"
-                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                    :level="logLevel"
-                    @follow="forwardEvent('follow', $event)"
-                />
-            </div>
-            <div v-if="isShowDescriptionOpen">
-                <markdown class="markdown-tooltip" :source="selectedTask.description" />
-            </div>
-            <div v-if="isShowConditionOpen">
-                <editor
-                    :read-only="true"
-                    :input="true"
-                    :full-height="false"
-                    :navbar="false"
-                    :minimap="false"
-                    :model-value="selectedTask.runIf"
-                    lang="yaml"
-                    class="mt-3"
-                />
-            </div>
-        </drawer>
-    </div>
-</template>
 
 
 <style scoped lang="scss">

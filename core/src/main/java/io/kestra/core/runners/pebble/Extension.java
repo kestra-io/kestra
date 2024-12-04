@@ -147,7 +147,7 @@ public class Extension extends AbstractExtension {
         if (this.errorLogsFunction != null) {
             functions.put("errorLogs", errorLogsFunction);
         }
-        functions.put("randomNumber", new RandomNumberGenerator());
+        functions.put("randomNumber", new RandomNumberFunction());
         return functions;
     }
 

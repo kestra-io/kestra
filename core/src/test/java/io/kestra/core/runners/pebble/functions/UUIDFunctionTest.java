@@ -10,14 +10,14 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 @KestraTest
-class IDFunctionTest {
+class UUIDFunctionTest {
     @Inject VariableRenderer variableRenderer;
 
     @Test
-    void checkIdIsNotEmpty() throws IllegalVariableEvaluationException {
+    void checkUuidIsNotEmpty() throws IllegalVariableEvaluationException {
         String rendered =
             variableRenderer.render(
-                "{{ id() }}", Collections.emptyMap());
+                "{{ uuid() }}", Collections.emptyMap());
         assertThat(rendered, !rendered.isEmpty());
     }
 }

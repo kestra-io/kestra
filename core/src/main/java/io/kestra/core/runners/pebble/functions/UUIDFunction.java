@@ -12,7 +12,7 @@ public class UUIDFunction implements Function {
   @Override
   public Object execute(
       Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-    return UUID.randomUUID().toString().replace("-", "");
+    return UUID.randomUUID().toString();
   }
 
   @Override

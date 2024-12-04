@@ -360,7 +360,7 @@
     },
     "cancel": "Annuler",
     "homeDashboard": {
-      "title": "Tableau de bord",
+      "title": "Vue d'ensemble",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "last28Days": "Dernier 28 jours",
@@ -994,6 +994,13 @@
     "flow not imported": "Certains flow n'ont pas pu être importés",
     "flows imported": "Flux importés",
     "is required": "{field} est requis",
-    "bookmark": "Favoris"
+    "bookmark": "Favoris",
+    "dashboards": "Tableaux de bord",
+    "dashboard_label": "Tableau de bord",
+    "default_dashboard": "Tableau de bord par défaut",
+    "custom_dashboard": "Tableaux de bord personnalisés",
+    "create_custom_dashboard": "Créer un nouveau tableau de bord",
+    "edit_custom_dashboard": "Modifier le tableau de bord",
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher."
   }
 }

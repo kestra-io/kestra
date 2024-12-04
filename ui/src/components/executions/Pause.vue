@@ -3,7 +3,7 @@
         :is="component"
         :icon="PauseBox"
         @click="click"
-        v-if="enabled"
+        :disabled="!enabled"
         class="ms-0 me-1"
     >
         {{ $t('pause') }}

@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -51,7 +52,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .id("test")
                 .type(Sleep.class.getName())
                 .duration(100000L)
-                .timeout(Duration.ofNanos(100000))
+                .timeout(Property.of(Duration.ofNanos(100000)))
                 .build()))
             .build();
 

@@ -38,6 +38,7 @@
     import ContextChildCard from "./ContextChildCard.vue";
     import DocsMenu from "./ContextDocsMenu.vue";
     import ContextInfoContent from "../ContextInfoContent.vue";
+    import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
     const parse = useMarkdownParser();
     const store = useStore();
@@ -59,10 +60,13 @@
     const ast = ref<any>(undefined);
     const proseComponents = Object.fromEntries(
         [...Object.keys(getCurrentInstance()?.appContext.components ?? {})
-            .filter(componentName => componentName.startsWith("Prose"))
-            .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-            .map(name => [name, "prose-" + name]), ["a", ContextDocsLink], ["ChildCard", ContextChildCard]]
-    );
+             .filter(componentName => componentName.startsWith("Prose"))
+             .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
+             .map(name => [name, "prose-" + name]),
+         ["a", ContextDocsLink],
+         ["ChildCard", ContextChildCard],
+         ["ChildTableOfContents", ContextChildTableOfContents]
+        ]);
 
 
     watch(docPath, async (val) => {

@@ -17,10 +17,10 @@
 <script setup lang="ts">
     defineProps<{
         embed: boolean;
-        phrase:string;
-        alt: {type: string, required: false, default: undefined};
-        image:string;
-        imageDark:string;
+        phrase: string;
+        alt?: string;
+        image: string;
+        imageDark: string;
     }>();
 </script>
 

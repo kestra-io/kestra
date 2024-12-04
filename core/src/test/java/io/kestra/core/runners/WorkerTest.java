@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -97,7 +98,7 @@ class WorkerTest {
 
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
-            .delay(Duration.ofSeconds(1))
+            .delay(Property.of(Duration.ofSeconds(1)))
             .id("unit-test")
             .build();
 

@@ -68,6 +68,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 1) Trigger the `transform` flow after the `extract` flow finishes successfully. \
                 The `extract` flow generates a `date` output that is passed to the \
                 `transform` flow as an input. \
+
                 ```yaml
                 id: extract
                 namespace: company.team
@@ -82,6 +83,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     type: STRING
                     value: "{{ outputs.final_date.value }}"
                 ```
+
                 The `transform` flow is triggered after the `extract` flow finishes successfully.""",
             code = """
                 id: transform
@@ -121,7 +123,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM. \
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+
                 ```yaml
                 id: bronze_layer
                 namespace: company.team
@@ -129,7 +132,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 tasks:
                   - id: raw_data
                     type: io.kestra.plugin.core.log.Log
-                    message: Ingesting raw data                
+                    message: Ingesting raw data
                 ```""",
             code = """
                 id: silver_layer
@@ -218,6 +221,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder.Default
     private List<State.Type> states = State.Type.terminatedTypes();
 
+    @Valid
     @Schema(
         title = "Preconditions on upstream flow executions",
         description = "Express preconditions to be met, on a time window, for the flow trigger to be evaluated."
@@ -303,7 +307,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             You can disable this by setting this property to `false`, so that within the same window, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
         )
         @PluginProperty
-        @NotNull
         @Builder.Default
         private Boolean resetOnSuccess = Boolean.TRUE;
 
@@ -412,7 +415,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(title = "A unique identifier for the filter.")
         private String id;
 
-        @NotNull
         @Builder.Default
         @PluginProperty
         @Schema(title = "The operand to apply between all filters of the precondition.")

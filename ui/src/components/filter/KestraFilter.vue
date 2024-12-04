@@ -8,8 +8,12 @@
             value-key="label"
             :placeholder="t('filters.label')"
             allow-create
+            default-first-option
             filterable
             multiple
+            placement="bottom"
+            :show-arrow="false"
+            fit-input-width
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
@@ -35,7 +39,11 @@
                     :label="option.label"
                     @click="() => filterCallback(option)"
                 >
-                    <component v-if="option.icon" :is="option.icon" class="me-2" />
+                    <component
+                        v-if="option.icon"
+                        :is="option.icon"
+                        class="me-2"
+                    />
                     <span>{{ option.label }}</span>
                 </el-option>
             </template>
@@ -45,6 +53,11 @@
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
+                    :class="{
+                        selected: current.some(
+                            (c) => c.comparator === comparator,
+                        ),
+                    }"
                     @click="() => comparatorCallback(comparator)"
                 />
             </template>
@@ -54,6 +67,11 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
+                    :class="{
+                        selected: current.some((c) =>
+                            c.value.includes(filter.value),
+                        ),
+                    }"
                     @click="() => valueCallback(filter)"
                 />
             </template>
@@ -65,6 +83,11 @@
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
         </el-button-group>
+
+        <Dashboards
+            v-if="dashboards.shown"
+            @dashboard="(value) => emits('dashboard', value)"
+        />
     </section>
 </template>
 
@@ -88,12 +111,14 @@
     import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
+    import Dashboards from "./components/Dashboards.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
+    const emits = defineEmits(["dashboard"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -108,6 +133,10 @@
                 charts: {shown: false, value: false, callback: () => {}},
             }),
         },
+        dashboards: {
+            type: Object,
+            default: () => ({shown: false}),
+        },
     });
 
     import {useFilters, compare} from "./useFilters.js";
@@ -121,6 +150,9 @@
     } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const updateHoveringIndex = (index) => {
+        select.value.states.hoveringIndex = index >= 0 ? index : 0;
+    };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
@@ -189,7 +221,9 @@
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
 
-        select.value.states.hoveringIndex = 0;
+        // Set hover index to the selected comparator for highlighting
+        const index = valueOptions.value.findIndex((o) => o.value === value.value);
+        updateHoveringIndex(index);
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -197,6 +231,12 @@
 
             // If last filter item selection was not completed, remove it from array
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+        } else {
+            // Highlight all selected items by setting hoveringIndex to match the first selected item
+            const index = valueOptions.value.findIndex((o) => {
+                return current.value.some((c) => c.value.includes(o.value));
+            });
+            updateHoveringIndex(index);
         }
     };
     const valueCallback = (filter, isDate = false) => {
@@ -206,6 +246,12 @@
 
             if (index === -1) values.push(filter.value);
             else values.splice(index, 1);
+
+            // Update the hover index for better UX
+            const hoverIndex = valueOptions.value.findIndex(
+                (o) => o.value === filter.value,
+            );
+            updateHoveringIndex(hoverIndex);
         } else {
             const match = current.value.find((v) => v.label === "absolute_date");
             if (match) match.value = [filter];
@@ -339,8 +385,9 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
@@ -363,6 +410,7 @@
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();
+                triggerSearch();
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
@@ -370,6 +418,8 @@
 
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
+
+                triggerSearch();
             }
 
             triggerEnter.value = false;
@@ -482,6 +532,14 @@
 }
 
 .filters-select {
+    & .el-select-dropdown {
+        width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
+    }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;

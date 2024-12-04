@@ -16,12 +16,15 @@ import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidatio
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.property.Data;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.property.Data;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -31,14 +34,12 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
@@ -334,11 +335,20 @@ public class JsonSchemaGenerator {
                 }
             });
 
-        // PluginProperty additionalProperties
         builder.forFields().withAdditionalPropertiesResolver(target -> {
             PluginProperty pluginPropertyAnnotation = target.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
+            Schema schemaAnnotation = target.getAnnotationConsideringFieldAndGetter(Schema.class);
+            Content contentAnnotation = target.getAnnotationConsideringFieldAndGetter(Content.class);
+            Schema contentSchemaAnnotation = contentAnnotation == null ? null : contentAnnotation.additionalPropertiesSchema();
+
             if (pluginPropertyAnnotation != null) {
                 return pluginPropertyAnnotation.additionalProperties();
+            } else if (target.getType().isInstanceOf(Map.class)) {
+                return target.getTypeParameterFor(Map.class, 1);
+            } else if (schemaAnnotation != null && schemaAnnotation.additionalPropertiesSchema() != Void.class) {
+                return schemaAnnotation.additionalPropertiesSchema();
+            } else if (contentSchemaAnnotation != null && contentSchemaAnnotation.additionalPropertiesSchema() != Void.class) {
+                return contentSchemaAnnotation.additionalPropertiesSchema();
             }
 
             return Object.class;
@@ -472,6 +482,29 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
+        } else if (declaredType.getErasedType() == Chart.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getCharts().stream())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .<ResolvedType>mapMulti((clz, consumer) -> {
+                    if (DataChart.class.isAssignableFrom(clz)) {
+                        List<Class<? extends DataFilter<?, ?>>> dataFilters = getRegisteredPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getDataFilters().stream())
+                            .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                            .toList();
+
+                        TypeVariable<? extends Class<? extends Chart<?>>> dataFilterType = clz.getTypeParameters()[1];
+                        ParameterizedType chartAwareColumnDescriptor = ((ParameterizedType) ((WildcardType) ((ParameterizedType) dataFilterType.getBounds()[0]).getActualTypeArguments()[1]).getUpperBounds()[0]);
+                        dataFilters.forEach(dataFilter -> {
+                            Type fieldsEnum = ((ParameterizedType) dataFilter.getGenericSuperclass()).getActualTypeArguments()[0];
+                            consumer.accept(typeContext.resolve(clz, fieldsEnum, typeContext.resolve(dataFilter, typeContext.resolve(chartAwareColumnDescriptor, fieldsEnum))));
+                        });
+                    } else {
+                        consumer.accept(typeContext.resolve(clz));
+                    }
+                }).toList();
         }
 
         return null;

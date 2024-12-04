@@ -23,6 +23,8 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -162,20 +164,30 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         }
     }
 
-    // Note: this is a naive basic implementation that may bot cover all possible use cases.
+    // Note: this is a basic implementation that should cover all possible use cases.
     // If this is not enough, we should find some helper method somewhere to cover all possible rules of the Content-Disposition header.
     private String filenameFromHeader(RunContext runContext, String contentDisposition) {
         try {
-            String[] parts = contentDisposition.split(" ");
+            // Content-Disposition parts are separated by ';'
+            String[] parts = contentDisposition.split(";");
             String filename = null;
             for (String part : parts) {
-                if (part.startsWith("filename")) {
-                    filename = part.substring(part.lastIndexOf('=') + 1);
+                String stripped = part.strip();
+                if (stripped.startsWith("filename")) {
+                    filename = stripped.substring(stripped.lastIndexOf('=') + 1);
                 }
-                if (part.startsWith("filename*")) {
+                if (stripped.startsWith("filename*")) {
                     // following https://datatracker.ietf.org/doc/html/rfc5987 the filename* should be <ENCODING>'(lang)'<filename>
-                    filename = part.substring(part.lastIndexOf('\'') + 2, part.length() - 1);
+                    filename = stripped.substring(stripped.lastIndexOf('\'') + 2, stripped.length() - 1);
                 }
+            }
+            // filename may be in double-quotes
+            if (filename != null && filename.charAt(0) == '"') {
+                filename = filename.substring(1, filename.length() - 1);
+            }
+            // if filename contains a path: use only the last part to avoid security issues due to host file overwriting
+            if (filename != null && filename.contains(File.separator)) {
+                filename = filename.substring(filename.lastIndexOf(File.separator) + 1);
             }
             return filename;
         } catch (Exception e) {

@@ -37,8 +37,15 @@ class RandomNumberGeneratorTest {
     assertThat(rendered, Integer.parseInt(rendered) >= 1 && Integer.parseInt(rendered) <= 10);
   }
 
-  @Test
-  void testGenerateNumberUpperLessThanLower() throws IllegalVariableEvaluationException {
+    @Test
+    void testGenerateNumberPositiveString() {
+        assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render("{{ randomNumber(lower, upper) }}", Map.of("lower", "1", "upper", "10")));
+    }
+
+    @Test
+  void testGenerateNumberUpperLessThanLower() {
     assertThrows(
         IllegalVariableEvaluationException.class,
         () ->

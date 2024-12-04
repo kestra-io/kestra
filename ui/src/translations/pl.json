@@ -1001,6 +1001,7 @@
     "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
     "create_custom_dashboard": "Utwórz nowy dashboard",
     "edit_custom_dashboard": "Edytuj Dashboard",
-    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia."
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
+    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?"
   }
 }

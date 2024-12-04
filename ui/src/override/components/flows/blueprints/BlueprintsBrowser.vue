@@ -52,7 +52,7 @@
                     >
                         <div class="left">
                             <div>
-                                <div class="title">
+                                <div class="ps-0 title">
                                     {{ blueprint.title }}
                                 </div>
                                 <div v-if="!system" class="tags text-uppercase">

@@ -1001,6 +1001,7 @@
     "custom_dashboard": "Benutzerdefinierte Dashboards",
     "create_custom_dashboard": "Neues Dashboard erstellen",
     "edit_custom_dashboard": "Dashboard bearbeiten",
-    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen."
+    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen.",
+    "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?"
   }
 }

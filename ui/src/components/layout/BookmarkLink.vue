@@ -1,3 +1,19 @@
+<template>
+    <div class="wrapper">
+        <div v-if="editing" class="inputs">
+            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
+            <CheckCircle @click.stop="renameBookmark" class="save" />
+        </div>
+        <div class="buttons">
+            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
+            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
+        </div>
+        <a :href="href" :title="updatedTitle">
+            {{ updatedTitle }}
+        </a>
+    </div>
+</template>
+
 <script lang="ts" setup>
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
@@ -46,22 +62,6 @@
         editing.value = false
     }
 </script>
-
-<template>
-    <div class="wrapper">
-        <div v-if="editing" class="inputs">
-            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
-            <CheckCircle @click.stop="renameBookmark" class="save" />
-        </div>
-        <div class="buttons">
-            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
-            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
-        </div>
-        <a :href="href" :title="updatedTitle">
-            {{ updatedTitle }}
-        </a>
-    </div>
-</template>
 
 <style scoped>
     .wrapper{

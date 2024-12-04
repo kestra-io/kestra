@@ -86,7 +86,6 @@
     "sass": "^1.82.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.2",
-    "vite-plugin-eslint": "^1.8.1",
     "vitest": "^2.1.8"
   },
   "optionalDependencies": {

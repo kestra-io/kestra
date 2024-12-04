@@ -98,6 +98,7 @@
     import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex";
     import {useVueFlow} from "@vue-flow/core";
+    import {useRouter} from "vue-router";
 
     import TaskEdit from "../flows/TaskEdit.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -117,7 +118,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
     // Vue flow methods to interact with Graph

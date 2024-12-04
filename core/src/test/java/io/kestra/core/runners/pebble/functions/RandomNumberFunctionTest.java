@@ -12,7 +12,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 @KestraTest
-class RandomNumberGeneratorTest {
+class RandomNumberFunctionTest {
   @Inject VariableRenderer variableRenderer;
 
   @Test

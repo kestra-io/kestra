@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "ダッシュボード",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -370,10 +370,10 @@
       "failedExecutions": "FAILED実行",
       "errorLogs": "エラーログ",
       "no executions": "flowを実行してみませんか？",
-      "wel_text": "Welcome!",
-      "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "welcome": "Welcome to Kestra"
+      "wel_text": "ようこそ！",
+      "start": "最初のworkflowを立ち上げて実行しましょう。",
+      "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
+      "welcome": "Kestraへようこそ"
     },
     "executions replayed": "<code>{executionCount}</code>件の実行が再実行されました",
     "executions resumed": "<code>{executionCount}</code>件の実行が再開されました",
@@ -660,7 +660,7 @@
         "title": "ヘルプが必要ですか？"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "チュートリアル"
       }
     },
     "pluginPage": {
@@ -826,7 +826,7 @@
     },
     "curl": {
       "command": "cURLコマンド",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "SECRETおよびFILEのinputタイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
     },
     "logs_view": {
       "raw": "Temporalビュー",

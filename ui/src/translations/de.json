@@ -370,10 +370,10 @@
       "failedExecutions": "Fehlgeschlagene Ausführungen",
       "errorLogs": "Fehler-Logs",
       "no executions": "Bereit, Ihren Flow in Aktion zu sehen?",
-      "wel_text": "Welcome!",
-      "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "welcome": "Welcome to Kestra"
+      "wel_text": "Willkommen!",
+      "start": "Lassen Sie uns Ihren ersten Workflow zum Laufen bringen.",
+      "guide": "Benötigen Sie Hilfe, um Ihren ersten Flow auszuführen?",
+      "welcome": "Willkommen bei Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> Ausführung(en) erneut abgespielt",
     "executions resumed": "<code>{executionCount}</code> Ausführung(en) fortgesetzt",
@@ -826,7 +826,7 @@
     },
     "curl": {
       "command": "cURL-Befehl",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "Beachten Sie, dass bei den Eingabetypen SECRET und FILE der Befehl angepasst werden muss, um den tatsächlichen Werten zu entsprechen."
     },
     "logs_view": {
       "raw": "Temporale Ansicht",

@@ -370,10 +370,10 @@
       "failedExecutions": "Nieudane wykonania",
       "errorLogs": "Logi błędów",
       "no executions": "Gotowy, aby zobaczyć swój flow w akcji?",
-      "wel_text": "Welcome!",
-      "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "welcome": "Welcome to Kestra"
+      "wel_text": "Witamy!",
+      "start": "Zacznijmy uruchamiać Twój pierwszy workflow.",
+      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
+      "welcome": "Witamy w Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> wykonanie(a) odtworzone",
     "executions resumed": "<code>{executionCount}</code> wykonanie(a) wznowione",
@@ -660,7 +660,7 @@
         "title": "Potrzebujesz pomocy?"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Samouczek"
       }
     },
     "pluginPage": {
@@ -826,7 +826,7 @@
     },
     "curl": {
       "command": "Komenda cURL",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "Pamiętaj, że dla typu input SECRET i FILE, polecenie musi być dostosowane do rzeczywistych wartości."
     },
     "logs_view": {
       "raw": "Widok czasowy",

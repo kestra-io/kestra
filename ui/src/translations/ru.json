@@ -360,7 +360,7 @@
     },
     "cancel": "Отмена",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Панель управления",
       "today": "Сегодня",
       "yesterday": "Вчера",
       "last28Days": "Последние 28 дней",
@@ -370,10 +370,10 @@
       "failedExecutions": "Неудачные выполнения",
       "errorLogs": "Логи ошибок",
       "no executions": "Готовы увидеть ваш flow в действии?",
-      "wel_text": "Welcome!",
-      "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "welcome": "Welcome to Kestra"
+      "wel_text": "Добро пожаловать!",
+      "start": "Давайте запустим ваш первый workflow.",
+      "guide": "Нужна помощь в выполнении вашего первого flow?",
+      "welcome": "Добро пожаловать в Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> выполнение(я) воспроизведено",
     "executions resumed": "<code>{executionCount}</code> выполнение(я) возобновлено",
@@ -660,7 +660,7 @@
         "title": "Нужна помощь?"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Учебник"
       }
     },
     "pluginPage": {
@@ -826,7 +826,7 @@
     },
     "curl": {
       "command": "Команда cURL",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "Обратите внимание, что для типов ввода SECRET и FILE команда должна быть адаптирована, чтобы соответствовать реальным значениям."
     },
     "logs_view": {
       "raw": "Временной вид",

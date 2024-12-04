@@ -360,7 +360,7 @@
     },
     "cancel": "Annuler",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Tableau de bord",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "last28Days": "Dernier 28 jours",
@@ -370,10 +370,10 @@
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs",
       "no executions": "Prêt à voir votre flow Kestra en action ?",
-      "wel_text": "Welcome!",
-      "start": "Let's get your first workflow up and running.",
-      "guide": "Need guidance to execute your first flow?",
-      "welcome": "Welcome to Kestra"
+      "wel_text": "Bienvenue !",
+      "start": "Mettons votre premier workflow en marche.",
+      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
+      "welcome": "Bienvenue sur Kestra"
     },
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
@@ -660,7 +660,7 @@
         "title": "Besoin d'aide ?"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Tutoriel"
       }
     },
     "pluginPage": {
@@ -826,7 +826,7 @@
     },
     "curl": {
       "command": "Commande cURL",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "Notez que pour les types d'input SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     },
     "logs_view": {
       "raw": "Vue temporelle",

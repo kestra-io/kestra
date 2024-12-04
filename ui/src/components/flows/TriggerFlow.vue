@@ -50,14 +50,11 @@
 
 
 <script>
-    import {h} from "vue";
-
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
-    import FlowWarningDialog from "./FlowWarningDialog.vue";
 
     export default {
         components: {
@@ -118,7 +115,8 @@
                         () => {
                             this.isOpen = !this.isOpen;
                         },
-                        () => {});                }
+                        () => {});
+                }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;
                 }

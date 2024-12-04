@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 fixed-height">
+    <div class="p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.executions_in_progress") }}
@@ -186,10 +186,4 @@ code {
         }
     }
 }
-
-.fixed-height {
-        height: 370px;
-        overflow: hidden;
-} 
-
 </style>

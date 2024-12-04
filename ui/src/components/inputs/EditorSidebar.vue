@@ -34,10 +34,7 @@
                     :persistent="false"
                     popper-class="text-base"
                 >
-                    <el-button
-                        class="px-2"
-                        @click="toggleDialog(true, 'file')"
-                    >
+                    <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </el-button>
                 </el-tooltip>
@@ -99,10 +96,7 @@
                     :persistent="false"
                     popper-class="text-base"
                 >
-                    <el-button
-                        class="px-2"
-                        @click="exportFiles()"
-                    >
+                    <el-button class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
                     </el-button>
                 </el-tooltip>
@@ -115,7 +109,9 @@
             :load="loadNodes"
             :data="items"
             highlight-current
-            :allow-drop="(_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'"
+            :allow-drop="
+                (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
+            "
             draggable
             node-key="id"
             v-loading="items === undefined"
@@ -132,7 +128,12 @@
                         })
                         : undefined
             "
-            @node-drag-start="nodeBeforeDrag = {parent: $event.parent.data.id, path: getPath($event.data.id)}"
+            @node-drag-start="
+                nodeBeforeDrag = {
+                    parent: $event.parent.data.id,
+                    path: getPath($event.data.id),
+                }
+            "
             @node-drop="nodeMoved"
             @keydown.delete.prevent="deleteKeystroke"
         >
@@ -146,13 +147,19 @@
             <template #default="{data, node}">
                 <el-dropdown
                     :ref="`dropdown__${data.id}`"
-                    @contextmenu.prevent.stop="toggleDropdown(`dropdown__${data.id}`)"
+                    @contextmenu.prevent.stop="
+                        toggleDropdown(`dropdown__${data.id}`)
+                    "
                     trigger="contextmenu"
                     class="w-100"
                 >
                     <el-row justify="space-between" class="w-100">
                         <el-col class="w-100">
-                            <TypeIcon :name="data.fileName" :folder="!data.leaf" class="me-2" />
+                            <TypeIcon
+                                :name="data.fileName"
+                                :folder="!data.leaf"
+                                class="me-2"
+                            />
                             <span class="filename"> {{ data.fileName }}</span>
                         </el-col>
                     </el-row>
@@ -179,7 +186,7 @@
                                         true,
                                         !data.leaf ? 'folder' : 'file',
                                         data.fileName,
-                                        node
+                                        node,
                                     )
                                 "
                             >
@@ -187,18 +194,16 @@
                                     $t(
                                         `namespace files.rename.${
                                             !data.leaf ? "folder" : "file"
-                                        }`
+                                        }`,
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item
-                                @click="confirmRemove(node)"
-                            >
+                            <el-dropdown-item @click="confirmRemove(node)">
                                 {{
                                     $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
-                                        }`
+                                        }`,
                                     )
                                 }}
                             </el-dropdown-item>
@@ -313,7 +318,7 @@
                 {{
                     Array.isArray(confirmation.node?.data?.children)
                         ? $t(
-                            "namespace files.dialog.folder_deletion_description"
+                            "namespace files.dialog.folder_deletion_description",
                         )
                         : $t("namespace files.dialog.file_deletion_description")
                 }}
@@ -332,7 +337,10 @@
 
         <el-menu
             v-if="tabContextMenu.visible"
-            :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
+            :style="{
+                left: `${tabContextMenu.x}px`,
+                top: `${tabContextMenu.y}px`,
+            }"
             class="tabs-context"
         >
             <el-menu-item @click="toggleDialog(true, 'file')">
@@ -350,7 +358,7 @@
 
     import Utils from "../../utils/utils";
 
-    import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
+    import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
@@ -358,7 +366,7 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
 
-    import TypeIcon from "../utils/icons/Type.vue"
+    import TypeIcon from "../utils/icons/Type.vue";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -379,8 +387,8 @@
         props: {
             currentNS: {
                 type: String,
-                default: null
-            }
+                default: null,
+            },
         },
         components: {
             Magnify,
@@ -388,7 +396,7 @@
             FolderPlus,
             PlusBox,
             FolderDownloadOutline,
-            TypeIcon
+            TypeIcon,
         },
         data() {
             return {
@@ -404,11 +412,7 @@
                 items: undefined,
                 nodeBeforeDrag: undefined,
                 searchResults: [],
-                tabContextMenu: {
-                    visible: false,
-                    x: 0,
-                    y: 0,
-                },
+                tabContextMenu: {visible: false, x: 0, y: 0},
             };
         },
         computed: {
@@ -424,7 +428,12 @@
                         if (item.type === "Directory") {
                             const folderPath = `${basePath}${item.fileName}`;
                             paths.push(folderPath);
-                            paths.push(...extractPaths(`${folderPath}/`, item.children ?? []));
+                            paths.push(
+                                ...extractPaths(
+                                    `${folderPath}/`,
+                                    item.children ?? [],
+                                ),
+                            );
                         }
                     });
                     return paths;
@@ -434,7 +443,10 @@
             },
         },
         methods: {
-            ...mapMutations("editor", ["toggleExplorerVisibility", "changeOpenedTabs"]),
+            ...mapMutations("editor", [
+                "toggleExplorerVisibility",
+                "changeOpenedTabs",
+            ]),
             ...mapActions("namespace", [
                 "createDirectory",
                 "readDirectory",
@@ -448,8 +460,7 @@
             ]),
             sorted(items) {
                 return items.sort((a, b) => {
-                    if (a.type === "Directory" && b.type !== "Directory")
-                        return -1;
+                    if (a.type === "Directory" && b.type !== "Directory") return -1;
                     else if (a.type !== "Directory" && b.type === "Directory")
                         return 1;
 
@@ -474,11 +485,13 @@
             },
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
-                    const payload = {namespace: this.currentNS ?? this.$route.params.namespace};
+                    const payload = {
+                        namespace: this.currentNS ?? this.$route.params.namespace,
+                    };
                     const items = await this.readDirectory(payload);
 
                     this.renderNodes(items);
-                    this.items = this.sorted(this.items)
+                    this.items = this.sorted(this.items);
                 }
 
                 if (node.level >= 1) {
@@ -493,7 +506,7 @@
                             ...item,
                             id: Utils.uid(),
                             leaf: item.type === "File",
-                        }))
+                        })),
                     );
 
                     // eslint-disable-next-line no-inner-declarations
@@ -504,34 +517,39 @@
                                 items[index].children = newChildren;
                             } else if (Array.isArray(item.children)) {
                                 // Recursively search in children array
-                                updateChildren(
-                                    item.children,
-                                    path,
-                                    newChildren
-                                );
+                                updateChildren(item.children, path, newChildren);
                             }
                         });
-                    }
+                    };
 
-                    updateChildren(this.items, this.getPath(node.data.id), children);
+                    updateChildren(
+                        this.items,
+                        this.getPath(node.data.id),
+                        children,
+                    );
 
                     resolve(children);
                 }
             },
             async searchFilesList(value) {
-                if(!value) return;
+                if (!value) return;
 
-                const results = await this.searchFiles({namespace: this.currentNS ?? this.$route.params.namespace, query: value});
-                this.searchResults = results.map(result => result.replace(/^\/*/, ""));
+                const results = await this.searchFiles({
+                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    query: value,
+                });
+                this.searchResults = results.map((result) =>
+                    result.replace(/^\/*/, ""),
+                );
                 return this.searchResults;
             },
-            chooseSearchResults(item){
+            chooseSearchResults(item) {
                 this.changeOpenedTabs({
                     action: "open",
                     name: item.split("/").pop(),
                     extension: item.split(".")[1],
                     path: item,
-                })
+                });
 
                 this.filter = "";
             },
@@ -609,7 +627,10 @@
                     });
                 } catch (e) {
                     this.$refs.tree.remove(draggedNode.data.id);
-                    this.$refs.tree.append(draggedNode.data, this.nodeBeforeDrag.parent);
+                    this.$refs.tree.append(
+                        draggedNode.data,
+                        this.nodeBeforeDrag.parent,
+                    );
                 }
             },
             focusCreationInput() {
@@ -651,7 +672,7 @@
                                 const folderIndex = currentFolder.findIndex(
                                     (item) =>
                                         typeof item === "object" &&
-                                        item.fileName === folderName
+                                        item.fileName === folderName,
                                 );
                                 if (folderIndex === -1) {
                                     // If the folder doesn't exist, create it
@@ -659,7 +680,7 @@
                                         id: Utils.uid(),
                                         fileName: folderName,
                                         children: [],
-                                        type: "Directory"
+                                        type: "Directory",
                                     };
                                     currentFolder.push(newFolder);
                                     this.sorted(currentFolder);
@@ -679,7 +700,8 @@
                             const content = await this.readFile(file);
 
                             this.importFileDirectory({
-                                namespace: this.currentNS ?? this.$route.params.namespace,
+                                namespace:
+                                    this.currentNS ?? this.$route.params.namespace,
                                 content,
                                 path: `${folderPath}/${fileName}`,
                             });
@@ -691,7 +713,7 @@
                                     extension ? `.${extension}` : ""
                                 }`,
                                 extension,
-                                type: "File"
+                                type: "File",
                             });
                         } else {
                             // Process files at root level (not in any folder)
@@ -699,7 +721,8 @@
                             const [name, extension] = file.name.split(".");
 
                             this.importFileDirectory({
-                                namespace: this.currentNS ?? this.$route.params.namespace,
+                                namespace:
+                                    this.currentNS ?? this.$route.params.namespace,
                                 content,
                                 path: file.name,
                             });
@@ -711,13 +734,13 @@
                                 }`,
                                 extension,
                                 leaf: !!extension,
-                                type: "File"
+                                type: "File",
                             });
                         }
                     }
 
                     this.$toast().success(
-                        this.$t("namespace files.import.success")
+                        this.$t("namespace files.import.success"),
                     );
                 } catch (error) {
                     this.$toast().error(this.$t("namespace files.import.error"));
@@ -728,7 +751,9 @@
                 }
             },
             exportFiles() {
-                this.exportFileDirectory({namespace: this.currentNS ?? this.$route.params.namespace});
+                this.exportFileDirectory({
+                    namespace: this.currentNS ?? this.$route.params.namespace,
+                });
             },
             async addFile({file, creation, shouldReset = true}) {
                 let FILE;
@@ -756,14 +781,15 @@
                     extension,
                     content,
                     leaf,
-                    type: "File"
+                    type: "File",
                 };
 
                 const path = `${this.dialog.folder ? `${this.dialog.folder}/` : ""}${NAME}`;
                 if (creation) {
-
                     if ((await this.searchFilesList(path)).includes(path)) {
-                        this.$toast().error(this.$t("namespace files.create.already_exists"));
+                        this.$toast().error(
+                            this.$t("namespace files.create.already_exists"),
+                        );
                         return;
                     }
                     await this.createFile({
@@ -778,7 +804,7 @@
                         action: "open",
                         name: NAME,
                         path,
-                        extension: extension
+                        extension: extension,
                     });
 
                     this.dialog.folder = path.substring(0, path.lastIndexOf("/"));
@@ -790,16 +816,28 @@
                 } else {
                     const SELF = this;
                     (function pushItemToFolder(basePath = "", array, pathParts) {
-
                         for (const item of array) {
                             const folderPath = `${basePath}${item.fileName}`;
 
-                            if (folderPath === SELF.dialog.folder && Array.isArray(item.children)) {
-                                item.children = SELF.sorted([...item.children, NEW]);
+                            if (
+                                folderPath === SELF.dialog.folder &&
+                                Array.isArray(item.children)
+                            ) {
+                                item.children = SELF.sorted([
+                                    ...item.children,
+                                    NEW,
+                                ]);
                                 return true; // Return true if the folder is found and item is pushed
                             }
 
-                            if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                            if (
+                                Array.isArray(item.children) &&
+                                pushItemToFolder(
+                                    `${folderPath}/`,
+                                    item.children,
+                                    pathParts.slice(1),
+                                )
+                            ) {
                                 // Return true if the folder is found and item is pushed in recursive call
                                 return true;
                             }
@@ -810,7 +848,9 @@
                             const folderPath = `${basePath}${pathParts[0]}`;
 
                             if (folderPath === SELF.dialog.folder) {
-                                const newFolder = SELF.folderNode(pathParts[0], [NEW]);
+                                const newFolder = SELF.folderNode(pathParts[0], [
+                                    NEW,
+                                ]);
                                 array.push(newFolder);
                                 array = SELF.sorted(array);
 
@@ -820,7 +860,11 @@
                             array.push(newFolder);
                             array = SELF.sorted(array);
 
-                            return pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1));
+                            return pushItemToFolder(
+                                `${basePath}${pathParts[0]}/`,
+                                newFolder.children,
+                                pathParts.slice(1),
+                            );
                         }
 
                         return false;
@@ -835,7 +879,10 @@
                 this.confirmation = {visible: true, node};
             },
             async removeItem() {
-                const {node, node: {data}} = this.confirmation;
+                const {
+                    node,
+                    node: {data},
+                } = this.confirmation;
 
                 await this.deleteFileDirectory({
                     namespace: this.currentNS ?? this.$route.params.namespace,
@@ -855,7 +902,11 @@
             },
             deleteKeystroke() {
                 if (this.$refs.tree.getCurrentNode()) {
-                    this.confirmRemove(this.$refs.tree.getNode(this.$refs.tree.getCurrentNode().id));
+                    this.confirmRemove(
+                        this.$refs.tree.getNode(
+                            this.$refs.tree.getCurrentNode().id,
+                        ),
+                    );
                 }
             },
             async addFolder(folder, creation) {
@@ -865,7 +916,7 @@
                         fileName: this.dialog.name,
                     };
 
-                const NEW = this.folderNode(fileName, folder?.children ?? [])
+                const NEW = this.folderNode(fileName, folder?.children ?? []);
 
                 if (creation) {
                     const path = `${
@@ -896,7 +947,12 @@
                                 item.children = SELF.sorted(item.children);
                                 return true; // Return true if the folder is found and item is pushed
                             } else if (Array.isArray(item.children)) {
-                                if (pushItemToFolder(`${folderPath}/`, item.children)) {
+                                if (
+                                    pushItemToFolder(
+                                        `${folderPath}/`,
+                                        item.children,
+                                    )
+                                ) {
                                     return true; // Return true if the folder is found and item is pushed in recursive call
                                 }
                             }
@@ -913,8 +969,8 @@
                     fileName,
                     leaf: false,
                     children: children ?? [],
-                    type: "Directory"
-                }
+                    type: "Directory",
+                };
             },
             getPath(name) {
                 const nodes = this.$refs.tree.getNodePath(name);
@@ -934,7 +990,7 @@
                 this.tabContextMenu = {
                     visible: true,
                     x: event.clientX,
-                    y: event.clientY
+                    y: event.clientY,
                 };
 
                 document.addEventListener("click", this.hideTabContextMenu);
@@ -965,116 +1021,116 @@
 </script>
 
 <style lang="scss">
-    .filter .el-input__wrapper {
-        padding-right: 0px;
+.filter .el-input__wrapper {
+    padding-right: 0px;
+}
+
+.el-tree {
+    height: calc(100% - 64px);
+    overflow: hidden auto;
+
+    .el-tree__empty-block {
+        height: auto;
     }
 
-    .el-tree {
-        height: calc(100% - 64px);
-        overflow: hidden auto;
+    &::-webkit-scrollbar {
+        width: 2px;
+    }
 
-        .el-tree__empty-block {
-            height: auto;
-        }
+    &::-webkit-scrollbar-track {
+        background: var(--card-bg);
+    }
 
-        &::-webkit-scrollbar {
-            width: 2px;
-        }
+    &::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 0px;
+    }
 
-        &::-webkit-scrollbar-track {
-            background: var(--card-bg);
-        }
+    .node {
+        --el-tree-node-content-height: 36px;
+        --el-tree-node-hover-bg-color: transparent;
+        line-height: 36px;
 
-        &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
-            border-radius: 0px;
-        }
-
-        .node {
-            --el-tree-node-content-height: 36px;
-            --el-tree-node-hover-bg-color: transparent;
-            line-height: 36px;
-
-            .el-tree-node__content {
-                width: 100%;
-            }
+        .el-tree-node__content {
+            width: 100%;
         }
     }
+}
 </style>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
-    .sidebar {
-        background: var(--card-bg);
-        border-right: 1px solid var(--bs-border-color);
+.sidebar {
+    background: var(--card-bg);
+    border-right: 1px solid var(--bs-border-color);
 
-        .empty {
-            position: relative;
-            top: 100px;
-            text-align: center;
-            color: white;
+    .empty {
+        position: relative;
+        top: 100px;
+        text-align: center;
+        color: white;
 
-            html.light & {
-                color: $tertiary;
-            }
-
-            & img {
-                margin-bottom: 2rem;
-            }
-
-            & h3 {
-                font-size: var(--font-size-lg);
-                font-weight: 500;
-                margin-bottom: .5rem;
-            }
-
-            & p {
-                font-size: var(--font-size-sm);
-            }
+        html.light & {
+            color: $tertiary;
         }
 
-        :deep(.el-button):not(.el-dialog .el-button) {
-            border: 0;
-            background: none;
-            outline: none;
-            opacity: 0.5;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-
-            &.el-button--primary {
-                opacity: 1;
-            }
+        & img {
+            margin-bottom: 2rem;
         }
 
-        .hidden {
-            display: none;
+        & h3 {
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
         }
 
-        .filename {
+        & p {
+            font-size: var(--font-size-sm);
+        }
+    }
+
+    :deep(.el-button):not(.el-dialog .el-button) {
+        border: 0;
+        background: none;
+        outline: none;
+        opacity: 0.5;
+        padding-left: calc(var(--spacer) / 2);
+        padding-right: calc(var(--spacer) / 2);
+
+        &.el-button--primary {
+            opacity: 1;
+        }
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .filename {
+        font-size: var(--el-font-size-small);
+        color: var(--el-text-color-regular);
+
+        &:hover {
+            color: var(--el-text-color-primary);
+        }
+    }
+
+    ul.tabs-context {
+        position: fixed;
+        z-index: 9999;
+        border: 1px solid var(--bs-border-color);
+
+        & li {
+            height: 30px;
+            padding: 16px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--bs-gray-900);
 
             &:hover {
-                color: var(--el-text-color-primary);
-            }
-        }
-
-        ul.tabs-context {
-            position: fixed;
-            z-index: 9999;
-            border-right: none;
-
-            & li {
-                height: 30px;
-                padding: 16px;
-                font-size: var(--el-font-size-small);
-                color: var(--bs-gray-700);
-
-                &:hover {
-                    color: var(--bs-secondary);
-                }
+                color: var(--bs-secondary);
             }
         }
     }
+}
 </style>

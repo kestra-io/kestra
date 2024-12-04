@@ -159,15 +159,15 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "_flows", "Hello".getBytes())
             .build();
-        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows", body)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));
-        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows2", body)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));
-        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/abc/_flows2/_flows", body)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));

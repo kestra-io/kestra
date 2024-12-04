@@ -3,6 +3,7 @@ import {
     userEvent,
     within,
     expect,
+    waitFor
 } from "@storybook/test";
 import InputsForm from "./InputsForm.vue";
 
@@ -33,8 +34,19 @@ const Sut = defineComponent((props) => {
 export const InputTypes = {
     async play({canvasElement}) {
         const can = within(canvasElement);
-        await userEvent.type(can.getByLabelText("email input"), "foo@example.com");
-        await expect(can.getByTestId("test-content").textContent).to.include("foo@example.com")
+        const popups = within(window.document)
+        const MonacoEditor = await waitFor(function MonacoEditorReady() {
+            const editor = can.getByLabelText("email input").querySelector(".ks-monaco-editor")
+            expect(editor).to.exist;
+            return editor;
+        }, {timeout: 500, interval: 100});
+        MonacoEditor.__setValueInTests("foo@example.com")
+        await waitFor(function testEmail() {expect(can.getByTestId("test-content").textContent).to.include("foo@example.com")})
+
+        await userEvent.click(can.getByLabelText("Single select input"));
+        await userEvent.click(popups.getByText("Second value"));
+
+        await waitFor(function testSelect() {expect(can.getByTestId("test-content").textContent).to.include("Second value")})
     },
     render() {
         return <Sut inputs={[
@@ -47,24 +59,24 @@ export const InputTypes = {
                 id: "resource_type",
                 type: "SELECT",
                 required: false,
-                displayName: "Resource Type",
+                displayName: "Single select input",
                 values: [
-                    "Access permissions",
-                    "SaaS applications",
-                    "Development tool",
-                    "Cloud VM"
+                    "First value",
+                    "Second value",
+                    "Third value",
+                    "Fourth value"
                 ],
                 allowCustomValue: false
             },
             {
                 id: "resource_type_multi",
                 type: "MULTISELECT",
-                displayName: "Multi select",
+                displayName: "Multi select input",
                 values: [
-                    "Access permissions",
-                    "SaaS applications",
-                    "Development tool",
-                    "Cloud VM"
+                    "Fifth value",
+                    "Sixth value",
+                    "Seventh value",
+                    "Eighth value"
                 ],
             }]}/>
     },

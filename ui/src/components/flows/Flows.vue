@@ -322,9 +322,6 @@
             });
         },
         methods: {
-            stripTags(text) {
-                return text.replace(/<\/?[^>]+(>|$)/g, "");
-            },
             selectionMapper(element) {
                 return {
                     id: element.id,
@@ -343,7 +340,7 @@
             },
             exportFlows() {
                 this.$toast().confirm(
-                    this.stripTags(this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.selection.length})),
+                    this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -368,7 +365,7 @@
             },
             disableFlows() {
                 this.$toast().confirm(
-                    this.stripTags(this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length})),
+                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -403,7 +400,7 @@
             },
             enableFlows() {
                 this.$toast().confirm(
-                    this.stripTags(this.$t("flow enable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length})),
+                    this.$t("flow enable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
@@ -432,7 +429,7 @@
             },
             deleteFlows() {
                 this.$toast().confirm(
-                    this.stripTags(this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.selection.length})),
+                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store

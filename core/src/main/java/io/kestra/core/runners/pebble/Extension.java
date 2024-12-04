@@ -142,7 +142,8 @@ public class Extension extends AbstractExtension {
         functions.put("yaml", new YamlFunction());
         functions.put("printContext", new FetchContextFunction());
         functions.put("fetchContext", new FetchContextFunction());
-        functions.put("generateUUID", new UUIDBase62Function());
+        functions.put("generateUUID", new UUIDFunction());
+        functions.put("generateKestraId", new IDFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
         if (this.errorLogsFunction != null) {

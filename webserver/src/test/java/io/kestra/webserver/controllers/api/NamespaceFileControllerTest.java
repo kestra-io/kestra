@@ -41,6 +41,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class NamespaceFileControllerTest extends JdbcH2ControllerTest {
@@ -151,6 +152,25 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
         assertNamespaceFileContent(URI.create("/test.txt"), "Hello");
+    }
+
+    @Test
+    void createFileFlowException() {
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "_flows", "Hello".getBytes())
+            .build();
+        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows2", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        assertThrows(IllegalArgumentException.class, () -> client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/abc/_flows2/_flows", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
     }
 
     @Test

@@ -78,6 +78,7 @@
     "eslint": "^8.57.1",
     "eslint-plugin-vue": "^9.32.0",
     "jsdom": "^25.0.1",
+    "lint-staged": "^15.2.10",
     "monaco-editor": "^0.52.0",
     "monaco-yaml": "^5.2.3",
     "prettier": "^3.4.2",
@@ -87,11 +88,22 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.2",
     "vite-plugin-eslint": "^1.8.1",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "yorkie": "^2.0.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.28.0",
     "@rollup/rollup-linux-x64-gnu": "^4.28.0"
+  },
+  "lint-staged": {
+    "(*.js|*.ts|*.tsx|*.jsx|*.vue)": [
+      "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "gitHooks": {
+    "pre-commit": "lint-staged"
   },
   "overrides": {
     "bootstrap": {

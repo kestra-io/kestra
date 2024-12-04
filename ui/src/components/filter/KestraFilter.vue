@@ -456,14 +456,20 @@
     // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
 
-    if (route.name === "flows/update" && route.params.namespace) {
+    const addNamespaceFilter = (namespace) => {
+        if (!namespace) return;
         current.value.push({
             label: "namespace",
-            value: [route.params.namespace],
+            value: [namespace],
             comparator: COMPARATORS.STARTS_WITH,
             persistent: true,
         });
-    }
+    };
+
+    const {name, params} = route;
+
+    if (name === "flows/update") addNamespaceFilter(params?.namespace);
+    else if (name === "namespaces/update") addNamespaceFilter(params.id);
 </script>
 
 <style lang="scss">

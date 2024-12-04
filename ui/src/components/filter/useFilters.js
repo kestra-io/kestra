@@ -196,6 +196,7 @@ export function useFilters(prefix) {
             });
         }
 
+        // TODO: Will need tweaking once we introduce multiple comparators for filters
         return params.map((p) => {
             const comparator = OPTIONS.find((o) => o.value.label === p.label);
             return {...p, comparator: comparator?.comparators?.[0]};

@@ -12,28 +12,28 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 @KestraTest
-class RandomNumberFunctionTest {
+class RandomIntFunctionTest {
   @Inject VariableRenderer variableRenderer;
 
   @Test
   void missingParameter() {
     assertThrows(
         IllegalVariableEvaluationException.class,
-        () -> variableRenderer.render("{{randomNumber(lower)}}", Map.of("lower", 10)));
+        () -> variableRenderer.render("{{randomInt(lower)}}", Map.of("lower", 10)));
 
     assertThrows(
         IllegalVariableEvaluationException.class,
-        () -> variableRenderer.render("{{randomNumber(upper)}}", Map.of("upper", 1)));
+        () -> variableRenderer.render("{{randomInt(upper)}}", Map.of("upper", 1)));
     assertThrows(
         IllegalVariableEvaluationException.class,
-        () -> variableRenderer.render("{{randomNumber()}}", Collections.emptyMap()));
+        () -> variableRenderer.render("{{randomInt()}}", Collections.emptyMap()));
   }
 
   @Test
   void testGenerateNumberPositive() throws IllegalVariableEvaluationException {
     String rendered =
         variableRenderer.render(
-            "{{ randomNumber(lower, upper) }}", Map.of("lower", 1, "upper", 10));
+            "{{ randomInt(lower, upper) }}", Map.of("lower", 1, "upper", 10));
     assertThat(rendered, Integer.parseInt(rendered) >= 1 && Integer.parseInt(rendered) <= 10);
   }
 
@@ -41,7 +41,7 @@ class RandomNumberFunctionTest {
     void testGenerateNumberPositiveString() {
         assertThrows(
             IllegalVariableEvaluationException.class,
-            () -> variableRenderer.render("{{ randomNumber(lower, upper) }}", Map.of("lower", "1", "upper", "10")));
+            () -> variableRenderer.render("{{ randomInt(lower, upper) }}", Map.of("lower", "1", "upper", "10")));
     }
 
     @Test
@@ -50,14 +50,14 @@ class RandomNumberFunctionTest {
         IllegalVariableEvaluationException.class,
         () ->
             variableRenderer.render(
-                "{{ randomNumber(lower, upper) }}", Map.of("lower", 10, "upper", 1)));
+                "{{ randomInt(lower, upper) }}", Map.of("lower", 10, "upper", 1)));
   }
 
   @Test
   void testGenerateNumberNegative() throws IllegalVariableEvaluationException {
     String rendered =
         variableRenderer.render(
-            "{{ randomNumber(lower, upper) }}", Map.of("lower", -10, "upper", -1));
+            "{{ randomInt(lower, upper) }}", Map.of("lower", -10, "upper", -1));
     assertThat(rendered, Integer.parseInt(rendered) >= -10 && Integer.parseInt(rendered) <= -1);
   }
 
@@ -65,7 +65,7 @@ class RandomNumberFunctionTest {
     void testGenerateNumberSame() throws IllegalVariableEvaluationException {
         String rendered =
             variableRenderer.render(
-                "{{ randomNumber(lower, upper) }}", Map.of("lower", 10, "upper", 10));
+                "{{ randomInt(lower, upper) }}", Map.of("lower", 10, "upper", 10));
         assertThat(rendered, Integer.parseInt(rendered) == 10);
     }
 }

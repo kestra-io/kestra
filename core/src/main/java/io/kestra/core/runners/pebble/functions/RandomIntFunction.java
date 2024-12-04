@@ -8,7 +8,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import java.util.List;
 import java.util.Map;
 
-public class RandomNumberFunction implements Function {
+public class RandomIntFunction implements Function {
 
   @Override
   public Object execute(

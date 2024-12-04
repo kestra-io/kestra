@@ -43,7 +43,7 @@
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
                     :refresh="{shown: true, callback: refresh}"
-                    :charts="{shown: true, value: showChart, callback: onShowChartChange}"
+                    :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
                 />
             </template>
 
@@ -58,7 +58,6 @@
                     ref="selectTable"
                     :data="executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    stripe
                     table-layout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"

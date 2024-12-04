@@ -165,6 +165,6 @@ public class FileSizeFunctionTest {
     }
 
     private URI getInternalStorageFile(URI internalStorageURI) throws IOException {
-        return storageInterface.put(null, internalStorageURI, new ByteArrayInputStream(FILE_TEXT.getBytes()));
+        return storageInterface.put(null, null, internalStorageURI, new ByteArrayInputStream(FILE_TEXT.getBytes()));
     }
 }

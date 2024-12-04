@@ -3,16 +3,16 @@ namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: io.kestra.plugin.core.flow.EachSequential
-    value: '["s1"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["s1"]'
     tasks:
     - id: 1-1_each
-      type: io.kestra.plugin.core.flow.EachSequential
-      value: '["s2"]'
+      type: io.kestra.plugin.core.flow.ForEach
+      values: '["s2"]'
       tasks:
         - id: 1-1-1_each
-          type: io.kestra.plugin.core.flow.EachSequential
-          value: '["s3"]'
+          type: io.kestra.plugin.core.flow.ForEach
+          values: '["s3"]'
           tasks:
             - id: 1-1-1-1_return
               type: io.kestra.plugin.core.debug.Return

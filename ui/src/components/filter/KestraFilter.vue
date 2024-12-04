@@ -1,22 +1,28 @@
 <template>
-    <section class="d-inline-flex pb-3 global-filters">
+    <section class="d-inline-flex pb-3 filters">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
             ref="select"
             :model-value="current"
+            value-key="label"
             :placeholder="t('filters.label')"
             allow-create
+            default-first-option
             filterable
             multiple
-            popper-class="global-filters-select"
-            :class="{charts: charts.shown}"
+            placement="bottom"
+            :show-arrow="false"
+            fit-input-width
+            popper-class="filters-select"
+            :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
         >
             <template #label="{value}">
-                <span>{{ formatLabel(value) }} </span>
+                <Label :option="value" />
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -32,7 +38,14 @@
                     :value="option.value"
                     :label="option.label"
                     @click="() => filterCallback(option)"
-                />
+                >
+                    <component
+                        v-if="option.icon"
+                        :is="option.icon"
+                        class="me-2"
+                    />
+                    <span>{{ option.label }}</span>
+                </el-option>
             </template>
             <template v-else-if="dropdowns.second.shown">
                 <el-option
@@ -40,6 +53,11 @@
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
+                    :class="{
+                        selected: current.some(
+                            (c) => c.comparator === comparator,
+                        ),
+                    }"
                     @click="() => comparatorCallback(comparator)"
                 />
             </template>
@@ -49,6 +67,11 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
+                    :class="{
+                        selected: current.some((c) =>
+                            c.value.includes(filter.value),
+                        ),
+                    }"
                     @click="() => valueCallback(filter)"
                 />
             </template>
@@ -58,8 +81,13 @@
             <el-button :icon="Magnify" @click="triggerSearch" />
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings :charts />
+            <Settings v-if="settings.shown" :settings />
         </el-button-group>
+
+        <Dashboards
+            v-if="dashboards.shown"
+            @dashboard="(value) => emits('dashboard', value)"
+        />
     </section>
 </template>
 
@@ -80,14 +108,17 @@
     import Refresh from "../layout/RefreshButton.vue";
 
     import History from "./components/history/History.vue";
+    import Label from "./components/Label.vue";
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
+    import Dashboards from "./components/Dashboards.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
+    const emits = defineEmits(["dashboard"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -95,17 +126,33 @@
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
         },
-        charts: {
+        settings: {
             type: Object,
-            default: () => ({shown: false, value: false, callback: () => {}}),
+            default: () => ({
+                shown: false,
+                charts: {shown: false, value: false, callback: () => {}},
+            }),
+        },
+        dashboards: {
+            type: Object,
+            default: () => ({shown: false}),
         },
     });
 
-    import {formatLabel, useFilters} from "./useFilters.js";
-    const {getRecentItems, setRecentItems, OPTIONS, encodeParams, decodeParams} =
-        useFilters(props.prefix);
+    import {useFilters, compare} from "./useFilters.js";
+    const {
+        getRecentItems,
+        setRecentItems,
+        COMPARATORS,
+        OPTIONS,
+        encodeParams,
+        decodeParams,
+    } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const updateHoveringIndex = (index) => {
+        select.value.states.hoveringIndex = index >= 0 ? index : 0;
+    };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
@@ -114,7 +161,40 @@
     };
     const dropdowns = ref({...INITIAL_DROPDOWNS});
     const closeDropdown = () => (select.value.dropdownMenuVisible = false);
+
+    const triggerEnter = ref(true);
+    const handleEnterKey = (option) => {
+        if (!option) return;
+
+        if (!triggerEnter.value) {
+            triggerEnter.value = true;
+            return;
+        }
+
+        if (dropdowns.value.first.shown) {
+            const value = includedOptions.value.filter((o) => {
+                let comparator = o.key;
+
+                if (o.key === "timeRange") comparator = "relative_date";
+                if (o.key === "date") comparator = "absolute_date";
+
+                return comparator === option.label;
+            })[0];
+
+            filterCallback(value);
+        } else if (dropdowns.value.second.shown) {
+            comparatorCallback(option);
+        } else if (dropdowns.value.third.shown) {
+            valueCallback(option);
+        }
+    };
+
     const filterCallback = (option) => {
+        if (!option.value) {
+            triggerEnter.value = false;
+            return;
+        }
+
         option.value = {
             label: option.value?.label ?? "Unknown",
             comparator: undefined,
@@ -124,6 +204,11 @@
         dropdowns.value.second = {shown: true, index: current.value.length};
 
         current.value.push(option.value);
+
+        // If only one comparator option, automate selection of it
+        if (option.comparators.length === 1) {
+            comparatorCallback(option.comparators[0]);
+        }
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
@@ -135,6 +220,10 @@
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
+
+        // Set hover index to the selected comparator for highlighting
+        const index = valueOptions.value.findIndex((o) => o.value === value.value);
+        updateHoveringIndex(index);
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -142,6 +231,12 @@
 
             // If last filter item selection was not completed, remove it from array
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+        } else {
+            // Highlight all selected items by setting hoveringIndex to match the first selected item
+            const index = valueOptions.value.findIndex((o) => {
+                return current.value.some((c) => c.value.includes(o.value));
+            });
+            updateHoveringIndex(index);
         }
     };
     const valueCallback = (filter, isDate = false) => {
@@ -151,6 +246,12 @@
 
             if (index === -1) values.push(filter.value);
             else values.splice(index, 1);
+
+            // Update the hover index for better UX
+            const hoverIndex = valueOptions.value.findIndex(
+                (o) => o.value === filter.value,
+            );
+            updateHoveringIndex(hoverIndex);
         } else {
             const match = current.value.find((v) => v.label === "absolute_date");
             if (match) match.value = [filter];
@@ -160,6 +261,8 @@
             // If selection is not multiple, close the dropdown
             closeDropdown();
         }
+
+        triggerSearch();
     };
 
     import action from "../../models/action.js";
@@ -222,6 +325,14 @@
         },
     ];
 
+    const levelOptions = [
+        {label: "TRACE", value: "TRACE"},
+        {label: "DEBUG", value: "DEBUG"},
+        {label: "INFO", value: "INFO"},
+        {label: "WARN", value: "WARN"},
+        {label: "ERROR", value: "ERROR"},
+    ];
+
     const relativeDateOptions = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
         {label: t("datepicker.last15minutes"), value: "PT15M"},
@@ -258,6 +369,9 @@
         case "child":
             return childOptions;
 
+        case "level":
+            return levelOptions;
+
         case "relative_date":
             return relativeDateOptions;
 
@@ -271,12 +385,21 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
-        return OPTIONS.filter((o) => props.include.includes(o.value?.label));
+        const dates = ["relative_date", "absolute_date"];
+
+        const found = current.value?.find((v) => dates.includes(v?.label));
+        const exclude = found ? dates.find((date) => date !== found.label) : null;
+
+        return OPTIONS.filter((o) => {
+            const label = o.value?.label;
+            return props.include.includes(label) && label !== exclude;
+        });
     });
 
     const changeCallback = (v) => {
@@ -287,6 +410,7 @@
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();
+                triggerSearch();
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
@@ -294,7 +418,11 @@
 
                 if (index !== -1) current.value[index].value = [v.at(-1)];
                 else current.value.push({label, value: [v.at(-1)]});
+
+                triggerSearch();
             }
+
+            triggerEnter.value = false;
         }
 
         // Clearing the input field after value is being submitted
@@ -305,6 +433,8 @@
         current.value = current.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
+
+        triggerSearch();
     };
 
     const handleHistoryItems = (value) => {
@@ -314,7 +444,9 @@
 
     const triggerSearch = () => {
         if (current.value.length) {
-            const r = getRecentItems().filter((i) => i.value !== current.value);
+            const r = getRecentItems().filter((i) =>
+                compare(i.value, current.value),
+            );
             setRecentItems([...r, {value: current.value}]);
         }
 
@@ -323,19 +455,42 @@
 
     // Include paramters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
+
+    if (route.name === "flows/update" && route.params.namespace) {
+        current.value.push({
+            label: "namespace",
+            value: [route.params.namespace],
+            comparator: COMPARATORS.STARTS_WITH,
+            persistent: true,
+        });
+    }
 </script>
 
 <style lang="scss">
-.global-filters {
+@mixin width-available {
+    width: -moz-available;
     width: -webkit-fill-available;
+    // https://caniuse.com/?search=fill-available
+    width: fill-available;
+}
+
+.filters {
+    @include width-available;
 
     & .el-select {
-        // Combined width of buttons on the sides of select
-        width: calc(100% - 237px);
+        max-width: calc(100% - 237px);
 
-        &.charts {
-            width: calc(100% - 285px);
+        &.settings {
+            max-width: calc(100% - 285px);
         }
+
+        &:not(.refresh) {
+            max-width: calc(100% - 189px);
+        }
+    }
+
+    & .el-select__placeholder {
+        color: var(--bs-gray-700);
     }
 
     & .el-select__wrapper {
@@ -383,10 +538,22 @@
     border-left-color: transparent;
 }
 
-.global-filters-select {
+.filters-select {
+    & .el-select-dropdown {
+        width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
+    }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
+    }
+
+    & .el-select-dropdown__item .material-design-icon {
+        bottom: -0.15rem;
     }
 }
 </style>

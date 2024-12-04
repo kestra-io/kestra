@@ -58,9 +58,6 @@ public class TaskRun implements TenantInterface {
     Integer iteration;
 
     @With
-    ExecutionError error;
-
-    @With
     Boolean dynamic;
 
     @Deprecated
@@ -82,7 +79,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(state),
             this.iteration,
-            this.error,
             this.dynamic
         );
     }
@@ -101,7 +97,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             newState,
             this.iteration,
-            this.error,
             this.dynamic
         );
     }
@@ -124,7 +119,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(State.Type.FAILED),
             this.iteration,
-            this.error,
             this.dynamic
         );
     }

@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Ausführungsfehler pro Namespace",
       "failedExecutions": "Fehlgeschlagene Ausführungen",
       "errorLogs": "Fehler-Logs",
-      "no executions": "Bereit, Ihren Flow in Aktion zu sehen?"
+      "no executions": "Bereit, Ihren Flow in Aktion zu sehen?",
+      "wel_text": "Willkommen!",
+      "start": "Lassen Sie uns Ihren ersten Workflow zum Laufen bringen.",
+      "guide": "Benötigen Sie Hilfe, um Ihren ersten Flow auszuführen?",
+      "welcome": "Willkommen bei Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> Ausführung(en) erneut abgespielt",
     "executions resumed": "<code>{executionCount}</code> Ausführung(en) fortgesetzt",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "Brauchen Sie Hilfe?"
+      },
+      "tutorial": {
+        "title": "Tutorial"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "cURL-Befehl",
-      "note": "Die Inputs vom Typ SECRET und FILE müssen immer bei der Ausführung angegeben werden."
+      "note": "Beachten Sie, dass bei den Eingabetypen SECRET und FILE der Befehl angepasst werden muss, um den tatsächlichen Werten zu entsprechen."
     },
     "logs_view": {
       "raw": "Temporale Ansicht",
@@ -850,7 +857,7 @@
     "webhook link copied": "Webhook-Link kopiert.",
     "copy url": "URL kopieren",
     "scheduleDate": "Geplantes Datum",
-    "trigger_check_warning": "Warnung: Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den '??' Coalesce-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von 'trigger.date' 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(pro Namespace)",
       "id": "ID",
@@ -907,7 +914,6 @@
       "desc_no_deps": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation."
     },
     "create_flow": "Flow erstellen",
-    "starred": "Markiert",
     "invalid bulk unqueue": "Konnte Ausführungen nicht aus der Warteschlange entfernen",
     "unqueue done": "Ausführung ist nicht in der Warteschlange",
     "bulk unqueue": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) aus der Warteschlange entfernen möchten?",
@@ -956,7 +962,8 @@
         "state": "Zustand",
         "child": "Kind",
         "absolute_date": "Absolutes Datum",
-        "relative_date": "Relatives Datum"
+        "relative_date": "Relatives Datum",
+        "level": "Log-Ebene"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen",
@@ -973,6 +980,35 @@
     "bulk force run": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) erzwingen möchten?<br/><br/>WARNUNG: Das Erzwingen einer Ausführung ist nicht garantiert und kann doppelte Task-Ausführungen erzeugen.<br/><br/>Die folgenden Übergänge werden durchgeführt:<br/><ul><li>CREATED Tasks werden in den RUNNING Zustand versetzt.</li><li>RUNNING Tasks werden erneut eingereicht.</li><li>QUEUED Tasks werden aus der Warteschlange entfernt.</li><li>PAUSED Tasks werden fortgesetzt.</li></ul>",
     "force run tooltip": "Erzwingen Sie die Ausführung. Es kann zu doppelten Task-Ausführungen führen; verwenden Sie nach Möglichkeit eine andere Aktion.",
     "item": "Element",
-    "items": "Elemente"
+    "items": "Elemente",
+    "warning": "Warnung",
+    "cron": "Cron",
+    "showMore": "Mehr anzeigen",
+    "showLess": "Es scheint, dass der Text, den Sie übersetzen möchten, nicht bereitgestellt wurde. Bitte geben Sie den Text nach der Linie \"----------\" ein, damit ich Ihnen bei der Übersetzung ins Deutsche helfen kann.",
+    "documentationMenu": "Dokumentationsmenü",
+    "task run id": "TaskRun-ID",
+    "optional": "Optional",
+    "active": "Aktiv",
+    "contextBar": {
+      "news": "Nachrichten",
+      "issue": "Ein Issue öffnen",
+      "docs": "Dokumentation",
+      "demo": "Demo anfordern",
+      "help": "Hilfe"
+    },
+    "execution failed header": "Ausführung fehlgeschlagen!",
+    "execution failed message": "Mit letztem Fehler: <code>{message}</code>",
+    "flow not imported": "Einige Flows konnten nicht importiert werden",
+    "flows imported": "Flows importiert",
+    "is required": "{field} ist erforderlich",
+    "bookmark": "Lesezeichen",
+    "dashboards": "Dashboards",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Standard-Dashboard",
+    "custom_dashboard": "Benutzerdefinierte Dashboards",
+    "create_custom_dashboard": "Neues Dashboard erstellen",
+    "edit_custom_dashboard": "Dashboard bearbeiten",
+    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen.",
+    "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?"
   }
 }

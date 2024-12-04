@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
             code = """
                 id: kv_store_delete
                 namespace: company.team
-                
+
                 tasks:
                   - id: kv_delete
                     type: io.kestra.plugin.core.kv.Delete
@@ -70,7 +70,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         String renderedNamespace = runContext.render(this.namespace);
 
         FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.tenantId(), renderedNamespace, runContext.tenantId(), runContext.flowInfo().namespace());
+        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
 
         String renderedKey = runContext.render(this.key);
 

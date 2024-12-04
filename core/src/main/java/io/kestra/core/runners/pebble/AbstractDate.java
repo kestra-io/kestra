@@ -79,28 +79,28 @@ public abstract class AbstractDate {
     }
 
     protected static ZonedDateTime convert(Object value, ZoneId zoneId, String existingFormat) {
-        if (value instanceof Date) {
-            return ZonedDateTime.ofInstant(((Date) value).toInstant(), zoneId);
+        if (value instanceof Date dateValue) {
+            return ZonedDateTime.ofInstant(dateValue.toInstant(), zoneId);
         }
 
-        if (value instanceof Instant) {
-            return ((Instant) value).atZone(zoneId);
+        if (value instanceof Instant instantValue) {
+            return instantValue.atZone(zoneId);
         }
 
-        if (value instanceof LocalDateTime) {
-            return ZonedDateTime.of((LocalDateTime) value, zoneId);
+        if (value instanceof LocalDateTime localDateTimeValue) {
+            return ZonedDateTime.of(localDateTimeValue, zoneId);
         }
 
-        if (value instanceof LocalDate) {
-            return ZonedDateTime.of((LocalDate) value, LocalTime.NOON, zoneId);
+        if (value instanceof LocalDate localDateValue) {
+            return ZonedDateTime.of(localDateValue, LocalTime.NOON, zoneId);
         }
 
-        if (value instanceof ZonedDateTime) {
-            return (ZonedDateTime) value;
+        if (value instanceof ZonedDateTime zonedDateTimeValue) {
+            return zonedDateTimeValue;
         }
 
-        if (value instanceof Long) {
-            return Instant.ofEpochSecond((Long) value).atZone(zoneId);
+        if (value instanceof Long longValue) {
+            return Instant.ofEpochSecond(longValue).atZone(zoneId);
         }
 
         try {

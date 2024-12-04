@@ -4,10 +4,10 @@
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 settings-dropdown">
-                <template v-if="charts.shown">
+                <template v-if="settings.charts.shown">
                     <el-switch
-                        :model-value="charts.value"
-                        @update:model-value="charts.callback"
+                        :model-value="settings.charts.value"
+                        @update:model-value="settings.charts.callback"
                         :active-text="t('filters.settings.show_chart')"
                         class="p-3"
                     />
@@ -24,9 +24,11 @@
     const {t} = useI18n({useScope: "global"});
 
     defineProps({
-        charts: {
+        settings: {
             type: Object,
-            default: () => ({shown: false, value: false, callback: () => {}}),
+            default: () => ({
+                charts: {shown: false, value: false, callback: () => {}},
+            }),
         },
     });
 </script>

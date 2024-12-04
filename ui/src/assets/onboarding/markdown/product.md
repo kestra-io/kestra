@@ -1,3 +1,1 @@
-Follow each step one by one with this advanced tutorial.
-
-[Follow the tutorial](/ui/flows/new?reset=true)
+Chhose your use case and follow a step-by-step guide to learn Kestra 's features and capabilities. ❤️

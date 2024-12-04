@@ -186,6 +186,19 @@ public class RunContextInitializer {
         return runContext;
     }
 
+    public DefaultRunContext forExecutor(final DefaultRunContext runContext,
+                                         final Task task,
+                                         final TaskRun taskRun) {
+        // build new variables
+        Map<String, Object> enrichedVariables = new HashMap<>(runContext.getVariables());
+        enrichedVariables.put("taskrun", RunVariables.of(taskRun));
+        enrichedVariables.put("task", RunVariables.of(task));
+
+        runContext.setVariables(enrichedVariables);
+
+        return runContext;
+    }
+
     /**
      * Initializes the given {@link RunContext} for the given {@link TriggerContext} and {@link AbstractTrigger}.
      *

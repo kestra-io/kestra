@@ -44,6 +44,9 @@ public class ExecutorService {
     private RunContextFactory runContextFactory;
 
     @Inject
+    private RunContextInitializer runContextInitializer;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     @Inject
@@ -217,12 +220,12 @@ public class ExecutorService {
         return newExecution;
     }
 
-    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
+    private Optional<WorkerTaskResult> childWorkerTaskResult(DefaultRunContext executionRunContext, Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask<?> flowableParent) {
 
-            RunContext runContext = runContextFactory.of(flow, parent, execution, parentTaskRun);
+            RunContext runContext = runContextInitializer.forExecutor(executionRunContext, parent, parentTaskRun);
 
             // first find the normal ended child tasks and send result
             Optional<State.Type> state;
@@ -305,19 +308,14 @@ public class ExecutorService {
             .findFirst();
     }
 
-    private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
+    private List<TaskRun> childNextsTaskRun(DefaultRunContext executionRunContext, Executor executor, TaskRun parentTaskRun) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask<?> flowableParent) {
 
             try {
                 List<NextTaskRun> nexts = flowableParent.resolveNexts(
-                    runContextFactory.of(
-                        executor.getFlow(),
-                        parent,
-                        executor.getExecution(),
-                        parentTaskRun
-                    ),
+                    runContextInitializer.forExecutor(executionRunContext, parent, parentTaskRun),
                     executor.getExecution(),
                     parentTaskRun
                 );
@@ -339,6 +337,11 @@ public class ExecutorService {
         List<NextTaskRun> nextTaskRuns,
         Executor executor
     ) {
+        RunContext executionRunContext = runContextFactory.of(
+            executor.getFlow(),
+            executor.getExecution()
+        );
+
         return nextTaskRuns
             .stream()
             .map(throwFunction(t -> {
@@ -350,13 +353,7 @@ public class ExecutorService {
                 FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
 
                 try {
-                    RunContext runContext = runContextFactory.of(
-                        executor.getFlow(),
-                        t.getTask(),
-                        executor.getExecution(),
-                        t.getTaskRun()
-                    );
-
+                    RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) executionRunContext, t.getTask(), taskRun);
                     Output outputs = flowableTask.outputs(runContext);
                     taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
                 } catch (Exception e) {
@@ -452,8 +449,9 @@ public class ExecutorService {
         // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
         ArrayList<TaskRun> result = new ArrayList<>();
 
+        DefaultRunContext executionRunContext = (DefaultRunContext) runContextFactory.of(executor.getFlow(), executor.getExecution());
         for (TaskRun taskRun : running) {
-            result.addAll(this.childNextsTaskRun(executor, taskRun));
+            result.addAll(this.childNextsTaskRun(executionRunContext, executor, taskRun));
         }
 
         if (result.isEmpty()) {
@@ -471,9 +469,11 @@ public class ExecutorService {
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
 
+        DefaultRunContext executionRunContext = (DefaultRunContext) runContextFactory.of(executor.getFlow(), executor.getExecution());
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
                 Optional<WorkerTaskResult> workerTaskResult = this.childWorkerTaskResult(
+                    executionRunContext,
                     executor.getFlow(),
                     executor.getExecution(),
                     taskRun
@@ -556,7 +556,7 @@ public class ExecutorService {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
                     TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
-                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
+                    RunContext runContext = runContextInitializer.forExecutor(executionRunContext, task, taskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
                     if (next.isEmpty()) {
@@ -729,6 +729,7 @@ public class ExecutorService {
             return executor;
         }
 
+        DefaultRunContext executionRunContext = (DefaultRunContext) runContextFactory.of(executor.getFlow(), executor.getExecution());
         // submit TaskRun when receiving created, must be done after the state execution store
         Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
@@ -736,7 +737,7 @@ public class ExecutorService {
             .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(taskRun -> {
                     Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
-                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                    RunContext runContext = runContextInitializer.forExecutor(executionRunContext, task, taskRun);
                     WorkerTask workerTask = WorkerTask.builder()
                         .runContext(runContext)
                         .taskRun(taskRun)
@@ -814,6 +815,7 @@ public class ExecutorService {
         List<SubflowExecution<?>> executions = new ArrayList<>();
         List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>();
 
+        DefaultRunContext executionRunContext = (DefaultRunContext) runContextFactory.of(executor.getFlow(), executor.getExecution());
         boolean haveFlows = executor.getWorkerTasks()
             .removeIf(workerTask -> {
                 if (!(workerTask.getTask() instanceof ExecutableTask)) {
@@ -832,12 +834,7 @@ public class ExecutorService {
                         "handleExecutableTaskRunning"
                     );
 
-                    RunContext runContext = runContextFactory.of(
-                        executor.getFlow(),
-                        executableTask,
-                        executor.getExecution(),
-                        executableTaskRun
-                    );
+                    RunContext runContext = runContextInitializer.forExecutor(executionRunContext, executableTask, executableTaskRun);
                     List<SubflowExecution<?>> subflowExecutions = executableTask.createSubflowExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
                     if (subflowExecutions.isEmpty()) {
                         // if no executions we move the task to SUCCESS immediately

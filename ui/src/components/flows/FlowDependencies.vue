@@ -1,3 +1,34 @@
+<template>
+    <el-card shadow="never" v-loading="isLoading">
+        <VueFlow
+            :default-marker-color="cssVariable('--bs-cyan')"
+            :fit-view-on-init="true"
+            :nodes-connectable="false"
+            :nodes-draggable="false"
+            :elevate-nodes-on-select="false"
+        >
+            <Background />
+            <template #node-flow="props">
+                <DependenciesNode
+                    v-bind="props"
+                    @expand-dependencies="expand"
+                    @mouseover="onMouseOver"
+                    @mouseleave="onMouseLeave"
+                    @open-link="openFlow"
+                />
+            </template>
+
+            <Controls :show-interactive="false">
+                <ControlButton>
+                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
+                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
+                    </el-tooltip>
+                </ControlButton>
+            </Controls>
+        </VueFlow>
+    </el-card>
+</template>
+
 <script setup>
     import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router";
@@ -172,37 +203,6 @@
         });
     }
 </script>
-
-<template>
-    <el-card shadow="never" v-loading="isLoading">
-        <VueFlow
-            :default-marker-color="cssVariable('--bs-cyan')"
-            :fit-view-on-init="true"
-            :nodes-connectable="false"
-            :nodes-draggable="false"
-            :elevate-nodes-on-select="false"
-        >
-            <Background />
-            <template #node-flow="props">
-                <DependenciesNode
-                    v-bind="props"
-                    @expand-dependencies="expand"
-                    @mouseover="onMouseOver"
-                    @mouseleave="onMouseLeave"
-                    @open-link="openFlow"
-                />
-            </template>
-
-            <Controls :show-interactive="false">
-                <ControlButton>
-                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
-                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
-                    </el-tooltip>
-                </ControlButton>
-            </Controls>
-        </VueFlow>
-    </el-card>
-</template>
 
 <style lang="scss" scoped>
     .el-card {

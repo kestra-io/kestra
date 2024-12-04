@@ -1,3 +1,10 @@
+<template>
+    <div class="tag">
+        <component :is="props.icon" class="icon" />
+        <span>{{ props.label }}</span>
+    </div>
+</template>
+
 <script setup>
     const props = defineProps({
         icon: {
@@ -10,13 +17,6 @@
         }
     });
 </script>
-
-<template>
-    <div class="tag">
-        <component :is="props.icon" class="icon" />
-        <span>{{ props.label }}</span>
-    </div>
-</template>
 
 <style scoped lang="scss">
     .tag {

@@ -1001,6 +1001,7 @@
     "custom_dashboard": "कस्टम डैशबोर्ड्स",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
     "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
-    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?"
   }
 }

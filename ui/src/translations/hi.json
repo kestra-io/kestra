@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "सारांश",
+      "title": "डैशबोर्ड",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
       "failedExecutions": "असफल निष्पादन",
       "errorLogs": "त्रुटि Logs",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?"
+      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
+      "wel_text": "स्वागत है!",
+      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "welcome": "केस्ट्रा में आपका स्वागत है"
     },
     "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
     "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "मदद चाहिए?"
+      },
+      "tutorial": {
+        "title": "ट्यूटोरियल"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "ध्यान दें की SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित करना होगा।"
+      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
@@ -1001,6 +1008,7 @@
     "custom_dashboard": "कस्टम डैशबोर्ड्स",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
     "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
-    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?"
   }
 }

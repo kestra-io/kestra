@@ -360,7 +360,7 @@
     },
     "cancel": "Annuler",
     "homeDashboard": {
-      "title": "Vue d'ensemble",
+      "title": "Tableau de bord",
       "today": "Aujourd'hui",
       "yesterday": "Hier",
       "last28Days": "Dernier 28 jours",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs",
-      "no executions": "Prêt à voir votre flow Kestra en action ?"
+      "no executions": "Prêt à voir votre flow Kestra en action ?",
+      "wel_text": "Bienvenue !",
+      "start": "Mettons votre premier workflow en marche.",
+      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
+      "welcome": "Bienvenue sur Kestra"
     },
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "Besoin d'aide ?"
+      },
+      "tutorial": {
+        "title": "Tutoriel"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "Commande cURL",
-      "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
+      "note": "Notez que pour les types d'input SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     },
     "logs_view": {
       "raw": "Vue temporelle",
@@ -1001,6 +1008,7 @@
     "custom_dashboard": "Tableaux de bord personnalisés",
     "create_custom_dashboard": "Créer un nouveau tableau de bord",
     "edit_custom_dashboard": "Modifier le tableau de bord",
-    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher."
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
+    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?"
   }
 }

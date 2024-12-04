@@ -225,11 +225,18 @@
         if (!task) return;
 
         selected.value = [task.value];
+        expandedValue.value = task.value;
         
         const child = task.children?.[1];
         if (child) {
             selected.value.push(child.value);
-            expandedValue.value = child.path
+            expandedValue.value = child.path;
+
+            const grandChild = child.children?.[1];
+            if (grandChild) {
+                selected.value.push(grandChild.value);
+                expandedValue.value = grandChild.path;
+            }
         }
 
         debugCollapse.value = "debug";

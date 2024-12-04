@@ -410,7 +410,11 @@
     },
     "cancel": "Cancel",
     "homeDashboard": {
-      "title": "Overview",
+      "title": "Dashboard",
+      "welcome": "Welcome to Kestra",
+      "wel_text": "Welcome!",
+      "start": "Let's get your first workflow up and running.",
+      "guide": "Need guidance to execute your first flow?",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -719,6 +723,9 @@
       "doc": {
         "title": "Docs"
       },
+      "tutorial": {
+        "title": "Tutorial"
+      },
       "need-help": {
         "title": "Need help?"
       }
@@ -888,7 +895,7 @@
     },
     "curl": {
       "command": "cURL command",
-      "note": "For SECRET and FILE-type inputs, adjust the command to match the actual value."
+      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
     },
     "logs_view": {
       "raw": "Temporal view",

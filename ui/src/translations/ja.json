@@ -1001,6 +1001,7 @@
     "custom_dashboard": "カスタムダッシュボード",
     "create_custom_dashboard": "新しいダッシュボードを作成",
     "edit_custom_dashboard": "ダッシュボードを編集",
-    "custom_dashboard_empty": "表示する結果がありません。"
+    "custom_dashboard_empty": "表示する結果がありません。",
+    "remove_bookmark": "このブックマークを削除してもよろしいですか？"
   }
 }

@@ -850,7 +850,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .where(this.defaultFilter(tenantId));
 
                 select = select.and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()));
-                select = select.and(field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
+                select = select.and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
 
                 if (states != null) {
                     select = select.and(this.statesFilter(states));
@@ -1088,7 +1088,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         throw new NotImplementedException();
     }
 }

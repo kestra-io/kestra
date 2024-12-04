@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.validations.ModelValidator;
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class YamlParserTest {
-    private static ObjectMapper mapper = JacksonMapper.ofJson();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Inject
     private YamlParser yamlParser;
@@ -49,7 +50,7 @@ class YamlParserTest {
 
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
-        assertThat(optionals.getTimeout(), is(Duration.ofMinutes(60)));
+        assertThat(optionals.getTimeout(), is(Property.builder().expression("PT60M").build()));
         assertThat(optionals.getRetry().getType(), is("constant"));
         assertThat(optionals.getRetry().getMaxAttempt(), is(5));
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));
@@ -65,7 +66,7 @@ class YamlParserTest {
 
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
-        assertThat(optionals.getTimeout(), is(Duration.ofMinutes(60)));
+        assertThat(optionals.getTimeout(), is(Property.builder().expression("PT60M").build()));
         assertThat(optionals.getRetry().getType(), is("constant"));
         assertThat(optionals.getRetry().getMaxAttempt(), is(5));
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));
@@ -127,7 +128,7 @@ class YamlParserTest {
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(11L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(18L));
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(3L));
-        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput && ((StringInput)r).getValidator() != null).count(), is(1L));
+        assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput stringInput && stringInput.getValidator() != null).count(), is(1L));
     }
 
 
@@ -166,7 +167,7 @@ class YamlParserTest {
     void serialization() throws IOException {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
-        String s = mapper.writeValueAsString(flow);
+        String s = MAPPER.writeValueAsString(flow);
         assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"io.kestra.tests\",\"revision\":2,\"disabled\":false,\"deleted\":false,\"labels\":[{\"key\":\"system.readOnly\",\"value\":\"true\"}],\"tasks\":[{\"id\":\"date\",\"type\":\"io.kestra.plugin.core.debug.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 
@@ -174,7 +175,7 @@ class YamlParserTest {
     void noDefault() throws IOException {
         Flow flow = this.parse("flows/valids/parallel.yaml");
 
-        String s = mapper.writeValueAsString(flow);
+        String s = MAPPER.writeValueAsString(flow);
         assertThat(s, not(containsString("\"-c\"")));
         assertThat(s, containsString("\"deleted\":false"));
     }

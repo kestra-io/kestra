@@ -45,6 +45,7 @@ public class UploadFilesTest {
 
         URI fileStorage = storageInterface.put(
             null,
+            null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)
         );
@@ -168,6 +169,7 @@ public class UploadFilesTest {
         File file = new File(Objects.requireNonNull(UploadFilesTest.class.getClassLoader().getResource(fileToLoad)).toURI());
 
         return storageInterface.put(
+            null,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)

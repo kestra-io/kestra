@@ -5,7 +5,6 @@
                 :data="flows"
                 ref="table"
                 :default-sort="{prop: 'id', order: 'ascending'}"
-                stripe
                 table-layout="auto"
                 fixed
                 @sort-change="onSort"

@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Ошибки выполнения по namespace",
       "failedExecutions": "Неудачные выполнения",
       "errorLogs": "Логи ошибок",
-      "no executions": "Готовы увидеть ваш flow в действии?"
+      "no executions": "Готовы увидеть ваш flow в действии?",
+      "wel_text": "Добро пожаловать!",
+      "start": "Давайте запустим ваш первый workflow.",
+      "guide": "Нужна помощь в выполнении вашего первого flow?",
+      "welcome": "Добро пожаловать в Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> выполнение(я) воспроизведено",
     "executions resumed": "<code>{executionCount}</code> выполнение(я) возобновлено",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "Нужна помощь?"
+      },
+      "tutorial": {
+        "title": "Учебник"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "Команда cURL",
-      "note": "Обратите внимание, что для типов input SECRET и FILE команда должна быть адаптирована для соответствия реальным значениям."
+      "note": "Обратите внимание, что для типов ввода SECRET и FILE команда должна быть адаптирована, чтобы соответствовать реальным значениям."
     },
     "logs_view": {
       "raw": "Временной вид",
@@ -850,7 +857,7 @@
     "webhook link copied": "Ссылка на Webhook скопирована.",
     "copy url": "Скопировать URL",
     "scheduleDate": "Дата расписания",
-    "trigger_check_warning": "Предупреждение: Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения '??', чтобы решить проблему. Например, вместо 'trigger.date' используйте 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(на namespace)",
       "id": "ID",
@@ -907,7 +914,6 @@
       "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации."
     },
     "create_flow": "Создать Flow",
-    "starred": "Избранное",
     "invalid bulk unqueue": "Не удалось удалить выполнения из очереди",
     "unqueue done": "Выполнение находится вне очереди",
     "bulk unqueue": "Вы уверены, что хотите удалить из очереди выполнение(я) <code>{executionCount}</code>?",
@@ -956,7 +962,8 @@
         "state": "Состояние",
         "child": "Ребенок",
         "absolute_date": "Абсолютная дата",
-        "relative_date": "Относительная дата"
+        "relative_date": "Относительная дата",
+        "level": "Уровень Log"
       },
       "empty": "Нет данных.",
       "label": "Выберите фильтры",
@@ -973,6 +980,35 @@
     "bulk force run": "Вы уверены, что хотите принудительно запустить выполнение <code>{executionCount}</code>?<br/><br/>WARNING: принудительный запуск выполнения не гарантирован и может создать дублирующие выполнения задач.<br/><br/>Будут выполнены следующие переходы:<br/><ul><li>CREATED задачи будут переведены в состояние RUNNING.</li><li>RUNNING задачи будут повторно отправлены.</li><li>QUEUED задачи будут извлечены из очереди.</li><li>PAUSED задачи будут возобновлены.</li></ul>",
     "force run tooltip": "Принудительно запустить выполнение. Это может создать дублирующие выполнения задач, если возможно, используйте другое действие.",
     "item": "элемент",
-    "items": "элементы"
+    "items": "элементы",
+    "warning": "Предупреждение",
+    "cron": "Крон",
+    "showMore": "Показать больше",
+    "showLess": "Показать меньше",
+    "documentationMenu": "Меню документации",
+    "task run id": "ID выполнения задачи",
+    "optional": "Опционально",
+    "active": "Активно",
+    "contextBar": {
+      "news": "Новости",
+      "issue": "Открыть Issue",
+      "docs": "Документация",
+      "demo": "Получить демонстрацию",
+      "help": "Помощь"
+    },
+    "execution failed header": "Выполнение FAILED!",
+    "execution failed message": "С последней ошибкой: <code>{message}</code>",
+    "flow not imported": "Некоторые flow не удалось импортировать",
+    "flows imported": "Потоки импортированы",
+    "is required": "{field} обязателен для заполнения",
+    "bookmark": "Закладки",
+    "dashboards": "Панели мониторинга",
+    "dashboard_label": "Панель управления",
+    "default_dashboard": "Панель по умолчанию",
+    "custom_dashboard": "Пользовательские панели мониторинга",
+    "create_custom_dashboard": "Создать новую панель управления",
+    "edit_custom_dashboard": "Редактировать Dashboard",
+    "custom_dashboard_empty": "Нет результатов для отображения.",
+    "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?"
   }
 }

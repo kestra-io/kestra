@@ -33,7 +33,7 @@ public class FlattenFilter implements Filter {
         try {
             List<?> list = (List<?>) input;
             List<Object> flattened = list.stream()
-                .flatMap(o -> o instanceof List ? ((List<?>) o).stream() : Stream.of(o))
+                .flatMap(o -> o instanceof List<?> listValue ? listValue.stream() : Stream.of(o))
                 .toList();
             return flattened;
         } catch (Exception e) {

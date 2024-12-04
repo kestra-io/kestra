@@ -1,0 +1,7 @@
+id: flow-trigger-preconditions-flow-b
+namespace: io.kestra.tests.trigger.preconditions
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

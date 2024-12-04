@@ -14,7 +14,7 @@ import java.util.Map;
 abstract class ShaBaseFilter implements Filter {
     private final String algorithm;
 
-    public ShaBaseFilter(String algorithm) {
+    ShaBaseFilter(String algorithm) {
         this.algorithm = algorithm;
     }
 

@@ -88,7 +88,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public boolean isFileExist(URI uri) {
-        return this.storage.exists(context.getTenantId(), uri);
+        return this.storage.exists(context.getTenantId(), context.getNamespace(), uri);
     }
 
     /**
@@ -98,7 +98,7 @@ public class InternalStorage implements Storage {
     public InputStream getFile(final URI uri) throws IOException {
         uriGuard(uri);
 
-        return this.storage.get(context.getTenantId(), uri);
+        return this.storage.get(context.getTenantId(), context.getNamespace(), uri);
 
     }
 
@@ -109,7 +109,7 @@ public class InternalStorage implements Storage {
     public boolean deleteFile(final URI uri) throws IOException {
         uriGuard(uri);
 
-        return this.storage.delete(context.getTenantId(), uri);
+        return this.storage.delete(context.getTenantId(), context.getNamespace(), uri);
 
     }
 
@@ -133,7 +133,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public List<URI> deleteExecutionFiles() throws IOException {
-        return this.storage.deleteByPrefix(context.getTenantId(), context.getExecutionStorageURI());
+        return this.storage.deleteByPrefix(context.getTenantId(), context.getNamespace(), context.getExecutionStorageURI());
     }
 
     /**
@@ -151,7 +151,7 @@ public class InternalStorage implements Storage {
     public URI putFile(InputStream inputStream, String name) throws IOException {
         URI uri = context.getContextStorageURI();
         URI resolved = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.put(context.getTenantId(), resolved, new BufferedInputStream(inputStream));
+        return this.storage.put(context.getTenantId(), context.getNamespace(), resolved, new BufferedInputStream(inputStream));
     }
 
     /**
@@ -159,7 +159,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public URI putFile(InputStream inputStream, URI uri) throws IOException {
-        return this.storage.put(context.getTenantId(), uri, new BufferedInputStream(inputStream));
+        return this.storage.put(context.getTenantId(), context.getNamespace(), uri, new BufferedInputStream(inputStream));
     }
 
     /**
@@ -211,14 +211,14 @@ public class InternalStorage implements Storage {
         }
         URI uri = context.getCacheURI(cacheId, objectId);
         return isFileExist(uri) ?
-            Optional.of(storage.get(context.getTenantId(), uri)) :
+            Optional.of(storage.get(context.getTenantId(), context.getNamespace(), uri)) :
             Optional.empty();
     }
 
     private Optional<Long> getCacheFileLastModifiedTime(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
         return isFileExist(uri) ?
-            Optional.of(this.storage.getAttributes(context.getTenantId(), uri).getLastModifiedTime()) :
+            Optional.of(this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri).getLastModifiedTime()) :
             Optional.empty();
     }
 
@@ -238,7 +238,7 @@ public class InternalStorage implements Storage {
     public Optional<Boolean> deleteCacheFile(String cacheId, @Nullable String objectId) throws IOException {
         URI uri = context.getCacheURI(cacheId, objectId);
         return isFileExist(uri) ?
-            Optional.of(this.storage.delete(context.getTenantId(), uri)) :
+            Optional.of(this.storage.delete(context.getTenantId(), context.getNamespace(), uri)) :
             Optional.empty();
     }
 
@@ -263,7 +263,7 @@ public class InternalStorage implements Storage {
     private URI putFile(InputStream inputStream, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
         URI resolve = uri.resolve(uri.getPath() + PATH_SEPARATOR + name);
-        return this.storage.put(context.getTenantId(), resolve, new BufferedInputStream(inputStream));
+        return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
     }
 
     public Optional<StorageContext.Task> getTaskStorageContext() {

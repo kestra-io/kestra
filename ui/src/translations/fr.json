@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs",
-      "no executions": "Prêt à voir votre flow Kestra en action ?"
+      "no executions": "Prêt à voir votre flow Kestra en action ?",
+      "wel_text": "Bienvenue !",
+      "start": "Mettons votre premier workflow en marche.",
+      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
+      "welcome": "Bienvenue sur Kestra"
     },
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "Besoin d'aide ?"
+      },
+      "tutorial": {
+        "title": "Tutoriel"
       }
     },
     "pluginPage": {
@@ -819,7 +826,7 @@
     },
     "curl": {
       "command": "Commande cURL",
-      "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
+      "note": "Notez que pour les types d'input SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     },
     "logs_view": {
       "raw": "Vue temporelle",
@@ -850,7 +857,7 @@
     "webhook link copied": "Lien du webhook copié.",
     "copy url": "Copier l'URL",
     "scheduleDate": "Date de planification",
-    "trigger_check_warning": "Avertissement : L'utilisation de variables trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence '??' pour résoudre le problème. Par exemple, au lieu de 'trigger.date', utilisez 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(par namespace)",
       "id": "ID",
@@ -907,7 +914,6 @@
       "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation."
     },
     "create_flow": "Créer Flow",
-    "starred": "Étoilé",
     "invalid bulk unqueue": "Impossible de retirer les exécutions de la file d'attente",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "bulk unqueue": "Êtes-vous sûr de vouloir retirer de la file d'attente <code>{executionCount}</code> exécution(s) ?",
@@ -956,7 +962,8 @@
         "state": "État",
         "child": "Enfant",
         "absolute_date": "Date absolue",
-        "relative_date": "Date relative"
+        "relative_date": "Date relative",
+        "level": "Niveau de log"
       },
       "empty": "Aucune donnée.",
       "label": "Choisir des filtres",
@@ -973,6 +980,35 @@
     "bulk force run": "Êtes-vous sûr de vouloir forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâches en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront désenfilées.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
     "force run tooltip": "Forcer l'exécution à s'exécuter. Cela peut créer des exécutions de tâche en double, si possible utilisez une autre action.",
     "item": "élément",
-    "items": "éléments"
+    "items": "éléments",
+    "warning": "Avertissement",
+    "cron": "Cron",
+    "showMore": "Afficher plus",
+    "showLess": "Afficher moins",
+    "documentationMenu": "Menu de documentation",
+    "task run id": "ID d'exécution de tâche",
+    "optional": "Optionnel",
+    "active": "Actif",
+    "contextBar": {
+      "news": "Nouvelles",
+      "issue": "Ouvrir un Issue",
+      "docs": "Docs",
+      "demo": "Obtenez une démo",
+      "help": "Aide"
+    },
+    "execution failed header": "Échec de l'exécution !",
+    "execution failed message": "Avec la dernière erreur : <code>{message}</code>",
+    "flow not imported": "Certains flow n'ont pas pu être importés",
+    "flows imported": "Flux importés",
+    "is required": "{field} est requis",
+    "bookmark": "Favoris",
+    "dashboards": "Tableaux de bord",
+    "dashboard_label": "Tableau de bord",
+    "default_dashboard": "Tableau de bord par défaut",
+    "custom_dashboard": "Tableaux de bord personnalisés",
+    "create_custom_dashboard": "Créer un nouveau tableau de bord",
+    "edit_custom_dashboard": "Modifier le tableau de bord",
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
+    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?"
   }
 }

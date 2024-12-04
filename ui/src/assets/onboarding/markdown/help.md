@@ -1,3 +1,1 @@
-Our community of data engineers and developers are here to help.
-
-[Join our Slack](https://kestra.io/slack)
+Ask any question in our Slack community. If you are stuck, we are help to help you. ✋

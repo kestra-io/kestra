@@ -1,5 +1,6 @@
 package io.kestra.core.validations;
 
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.plugin.core.flow.Pause;
@@ -57,7 +58,7 @@ public class WorkingDirectoryTest {
                 List.of(Pause.builder()
                     .id("pause")
                     .type(Pause.class.getName())
-                    .delay(Duration.ofSeconds(1L))
+                    .delay(Property.of(Duration.ofSeconds(1L)))
                     .build()
                 )
             )

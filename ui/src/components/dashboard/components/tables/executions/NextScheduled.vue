@@ -236,5 +236,5 @@ code {
 
 .next-toggle {
     padding: 8px 0 0 0 !important;
-}   
+}
 </style>

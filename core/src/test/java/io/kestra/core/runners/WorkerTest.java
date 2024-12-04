@@ -166,7 +166,11 @@ class WorkerTest {
         executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
         Await.until(
-            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5,
+            () -> {
+                // copy the list to avoid concurrent modification exception if a WorkerTaskResult arrives in the queue
+                var copy = new ArrayList<>(workerTaskResult);
+                return copy.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5;
+            },
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

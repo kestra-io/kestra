@@ -118,6 +118,13 @@
     "next execution date": "Next execution date",
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
+    "contextBar": {
+      "news": "News",
+      "docs": "Docs",
+      "help": "Help",
+      "issue": "Open an Issue",
+      "demo": "Get a demo"
+    },
     "source": "Source",
     "home": "Home",
     "create": "Create",
@@ -149,6 +156,7 @@
     "select datetime": "Select a date",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
+    "is required": "{field} is required",
     "error": "Error",
     "form": "Form",
     "form error": "Form error",
@@ -403,6 +411,10 @@
     "cancel": "Cancel",
     "homeDashboard": {
       "title": "Dashboard",
+      "welcome": "Welcome to Kestra",
+      "wel_text": "Welcome!",
+      "start": "Let's get your first workflow up and running.",
+      "guide": "Need guidance to execute your first flow?",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -413,6 +425,7 @@
       "errorLogs": "Errors logs",
       "no executions": "Ready to see your flow in action?"
     },
+    "dashboards": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -710,6 +723,9 @@
       "doc": {
         "title": "Docs"
       },
+      "tutorial": {
+        "title": "Tutorial"
+      },
       "need-help": {
         "title": "Need help?"
       }
@@ -730,7 +746,8 @@
             "default_namespace": "Default Namespace",
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
-            "execute_flow": "Execute the Flow"
+            "execute_flow": "Execute the Flow",
+            "execute_default_tab": "Default Execution Tab"
           }
         },
         "theme": {
@@ -868,6 +885,12 @@
       "empty": {
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      },
+      "close": {
+        "tab": "Close tab",
+        "all": "Close all tabs",
+        "other": "Close other tabs",
+        "right": "Close to the right"
       }
     },
     "curl": {
@@ -894,7 +917,8 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "warning": "Warning",
+    "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
@@ -933,8 +957,13 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "Looks like there's nothing here… yet! Adjust your filters, or give it another go!",
-    "starred": "Starred",
+    "optional": "Optional",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
+    "bookmark": "Bookmarks",
+    "remove_bookmark": "Are you sure you want to remove this bookmark?",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "documentationMenu": "Documentation menu",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -944,6 +973,9 @@
         "scope": "Scope",
         "labels": "Labels",
         "child": "Child",
+        "level": "Log level",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
         "text": "text"
       },
       "comparators": {
@@ -952,7 +984,10 @@
         "is_not": "is not",
         "is_not_one_off": "is not one of",
         "contains": "contains",
-        "not_contains": "not_contains"
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
       },
       "recent": {
         "label": "Recent searches",
@@ -960,6 +995,7 @@
       },
       "save": {
         "label": "Saved searches",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -967,9 +1003,27 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
+      "settings": {
+        "show_chart": "Show main chart"
+      },
       "labels": {
         "placeholder": "Type label as 'key:value'"
       }
-    }
+    },
+    "item": "item",
+    "items": "items",
+    "cron": "Cron",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
+    "task run id": "TaskRun ID",
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboards",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown."
   }
 }

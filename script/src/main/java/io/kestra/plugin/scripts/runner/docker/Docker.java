@@ -369,6 +369,7 @@ public class Docker extends TaskRunner {
                 try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
                      TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
                     out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
+                    out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
 
                     for (Path file: relativeWorkingDirectoryFilesPaths) {
                         Path resolvedFile = runContext.workingDir().resolve(file);

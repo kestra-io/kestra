@@ -5,6 +5,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {ElMessageBox} from "element-plus";
 
     const {t} = useI18n();
 
@@ -20,9 +21,13 @@
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
     function deleteBookmark() {
-        $store.dispatch("starred/remove", {
-            path: props.href
-        })
+        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            $store.dispatch("bookmarks/remove", {path: props.href});
+        });
     }
 
     function startEditBookmark() {
@@ -34,7 +39,7 @@
     }
 
     function renameBookmark() {
-        $store.dispatch("starred/rename", {
+        $store.dispatch("bookmarks/rename", {
             path: props.href,
             label: updatedTitle.value
         })
@@ -65,10 +70,12 @@
             color: var(--el-text-color-regular);
             position: absolute;
             z-index: 1;
-            top: calc(.35 * var(--spacer));
-            right: calc(.5 * var(--spacer));
+            top: 0;
+            right: calc(.15 * var(--spacer));
             display: none;
             gap: calc(.5 * var(--spacer));
+            background-color: var(--el-bg-color);
+            padding: calc(.35 * var(--spacer));
             > span{
                 cursor: pointer;
             }

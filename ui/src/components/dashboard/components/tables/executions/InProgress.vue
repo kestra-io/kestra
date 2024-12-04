@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="props.flow">
+        <div class="pt-4" v-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="inprogress"
@@ -89,9 +89,9 @@
                         }}s
                     </template>
                 </el-table-column>
-                <el-table-column :label="$t('state')" width="100">
+                <el-table-column :label="$t('state')">
                     <template #default="scope">
-                        <States :label="scope.row.state.current" />
+                        <Status size="small" :status="scope.row.state.current" />
                     </template>
                 </el-table-column>
             </el-table>
@@ -107,7 +107,8 @@
                 />
             </div>
         </div>
-        <el-empty v-else :description="$t('no_data')" />
+
+        <NoData v-else />
     </div>
 </template>
 
@@ -118,7 +119,8 @@
 
     import moment from "moment";
 
-    import States from "../../States.vue";
+    import Status from "../../../../Status.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
 
@@ -159,6 +161,8 @@
             })
             .then((response) => {
                 if (!response) return;
+
+                console.log
                 executions.value = response;
             });
     };
@@ -173,7 +177,6 @@ code {
 }
 
 .inprogress {
-    --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
     & a {
         color: #8e71f7;
@@ -183,5 +186,4 @@ code {
         }
     }
 }
-
 </style>

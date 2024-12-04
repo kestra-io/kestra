@@ -36,6 +36,7 @@ public class FlowWithSource extends Flow {
             .deleted(this.deleted)
             .concurrency(this.concurrency)
             .retry(this.retry)
+            .sla(this.sla)
             .build();
     }
 
@@ -89,6 +90,7 @@ public class FlowWithSource extends Flow {
             .source(source)
             .concurrency(flow.concurrency)
             .retry(flow.retry)
+            .sla(flow.sla)
             .build();
     }
 }

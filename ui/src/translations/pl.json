@@ -360,7 +360,7 @@
     },
     "cancel": "Anuluj",
     "homeDashboard": {
-      "title": "Panel",
+      "title": "Dashboard",
       "today": "Dzisiaj",
       "yesterday": "Wczoraj",
       "last28Days": "Ostatnie 28 dni",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Błędy wykonania na namespace",
       "failedExecutions": "Nieudane wykonania",
       "errorLogs": "Logi błędów",
-      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?"
+      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?",
+      "wel_text": "Witamy!",
+      "start": "Zacznijmy uruchamiać Twój pierwszy workflow.",
+      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
+      "welcome": "Witamy w Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> wykonanie(a) odtworzone",
     "executions resumed": "<code>{executionCount}</code> wykonanie(a) wznowione",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "Potrzebujesz pomocy?"
+      },
+      "tutorial": {
+        "title": "Samouczek"
       }
     },
     "pluginPage": {
@@ -672,7 +679,8 @@
             "default_namespace": "Domyślny Namespace",
             "log_level": "Domyślna Poziom Logs",
             "log_display": "Domyślne Wyświetlanie Log",
-            "execute_flow": "Wykonaj Flow"
+            "execute_flow": "Wykonaj Flow",
+            "execute_default_tab": "Domyślna karta Execution"
           }
         },
         "theme": {
@@ -808,11 +816,17 @@
       "empty": {
         "title": "Obecnie brak otwartych zakładek",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora."
+      },
+      "close": {
+        "other": "Zamknij inne karty",
+        "tab": "Zamknij kartę",
+        "right": "Zamknij po prawej",
+        "all": "Zamknij wszystkie karty"
       }
     },
     "curl": {
       "command": "Komenda cURL",
-      "note": "Zauważ, że dla typu input SECRET i FILE, komenda musi być dostosowana do rzeczywistych wartości."
+      "note": "Pamiętaj, że dla typu input SECRET i FILE, polecenie musi być dostosowane do rzeczywistych wartości."
     },
     "logs_view": {
       "raw": "Widok czasowy",
@@ -843,7 +857,7 @@
     "webhook link copied": "Link Webhook skopiowany.",
     "copy url": "Kopiuj URL",
     "scheduleDate": "Data harmonogramu",
-    "trigger_check_warning": "Ostrzeżenie: Użycie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji '??', aby rozwiązać problem. Na przykład, zamiast 'trigger.date', użyj 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -889,7 +903,7 @@
     "invalid bulk pause": "Nie można wstrzymać wykonania",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze! Dostosuj swoje filtry lub spróbuj ponownie!",
+    "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "informative notice": "Notatka(i)",
     "triggers-view": {
       "desc_no_triggers": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggerach</a> w naszej dokumentacji.",
@@ -900,7 +914,6 @@
       "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
     },
     "create_flow": "Utwórz Flow",
-    "starred": "Oznaczone gwiazdką",
     "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
     "unqueue done": "Wykonanie jest odkolejkowane",
     "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
@@ -914,12 +927,15 @@
     "worker group fallback": "Grupa Workerów awaryjna",
     "filters": {
       "comparators": {
-        "contains": "zawiera",
         "is": "jest",
         "is_one_of": "jest jednym z",
-        "not_contains": "nie_zawiera",
         "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest"
+        "is_not": "nie jest",
+        "between": "pomiędzy",
+        "in": "w",
+        "not_contains": "nie zawiera",
+        "starts_with": "zaczyna się od",
+        "contains": "zawiera"
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
@@ -935,7 +951,8 @@
           "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
           "placeholder": "Etykieta"
         },
-        "label": "Zapisane wyszukiwania"
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +960,16 @@
         "text": "tekst",
         "labels": "Etykiety",
         "state": "Stan",
-        "child": "Dziecko"
+        "child": "Dziecko",
+        "absolute_date": "Data bezwzględna",
+        "relative_date": "Data względna",
+        "level": "Poziom logowania"
       },
       "empty": "Brak danych.",
-      "label": "Wybierz filtry"
+      "label": "Wybierz filtry",
+      "settings": {
+        "show_chart": "Pokaż główny wykres"
+      }
     },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
@@ -955,6 +978,37 @@
     "force run": "Wymuś uruchomienie",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie <code>{executionCount}</code> wykonania/ń?<br/><br/>WARNING: wymuszenie uruchomienia wykonania nie jest gwarantowane i może spowodować duplikaty wykonania tasków.<br/><br/>Zostaną wykonane następujące przejścia:<br/><ul><li>Taski w stanie CREATED zostaną przeniesione do stanu RUNNING.</li><li>Taski w stanie RUNNING zostaną ponownie przesłane.</li><li>Taski w stanie QUEUED zostaną odkolejkowane.</li><li>Taski w stanie PAUSED zostaną wznowione.</li></ul>",
-    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji."
+    "force run tooltip": "Wymuś wykonanie. Może to spowodować duplikaty wykonania task, jeśli to możliwe, użyj innej akcji.",
+    "item": "element",
+    "items": "elementy",
+    "warning": "Ostrzeżenie",
+    "cron": "Kron",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "documentationMenu": "Menu dokumentacji",
+    "task run id": "ID TaskRun",
+    "optional": "Opcjonalne",
+    "active": "Aktywny",
+    "contextBar": {
+      "news": "Wiadomości",
+      "issue": "Otwórz Issue",
+      "docs": "Dokumentacja",
+      "demo": "Uzyskaj demo",
+      "help": "Pomoc"
+    },
+    "execution failed header": "Wykonanie nie powiodło się!",
+    "execution failed message": "Z ostatnim błędem: <code>{message}</code>",
+    "flow not imported": "Niektóre flow nie mogły zostać zaimportowane",
+    "flows imported": "Zaimportowane flows",
+    "is required": "Pole {field} jest wymagane",
+    "bookmark": "Zakładki",
+    "dashboards": "Panele sterowania",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Domyślny Dashboard",
+    "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
+    "create_custom_dashboard": "Utwórz nowy dashboard",
+    "edit_custom_dashboard": "Edytuj Dashboard",
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
+    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?"
   }
 }

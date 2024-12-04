@@ -1,7 +1,0 @@
-id: flow-trigger-advanced-flow-a
-namespace: io.kestra.tests.trigger.advanced
-
-tasks:
-  - id: only
-    type: io.kestra.plugin.core.debug.Return
-    format: "from parents: {{execution.id}}"

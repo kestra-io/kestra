@@ -1,13 +1,5 @@
 <script setup>
-    import {
-        computed,
-        getCurrentInstance,
-        h, nextTick,
-        onBeforeUnmount,
-        onMounted,
-        ref,
-        watch,
-    } from "vue";
+    import {computed, getCurrentInstance, h, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
 
     // Icons
@@ -259,9 +251,6 @@
             action: "open",
         });
     };
-    const closeTab = (tab, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
-    };
 
     const persistViewType = (value) => {
         viewType.value = value;
@@ -395,6 +384,8 @@
         persistEditorWidth();
 
         store.commit("editor/closeAllTabs");
+
+        document.removeEventListener("click", hideTabContextMenu);
     });
 
     const stopTour = () => {
@@ -926,6 +917,57 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    const tabContextMenu = ref({
+        visible: false,
+        x: 0,
+        y: 0,
+        tab: null,
+        index: null,
+    });
+
+    const onTabContextMenu = (event, tab, index) => {
+        tabContextMenu.value = {
+            visible: true,
+            x: event.clientX,
+            y: event.clientY,
+            tab: tab,
+            index: index,
+        };
+
+        document.addEventListener("click", hideTabContextMenu);
+    };
+
+    const hideTabContextMenu = () => {
+        tabContextMenu.value.visible = false;
+        document.removeEventListener("click", hideTabContextMenu);
+    };
+
+    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+
+    const closeTab = (tab, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
+    };
+
+    const closeTabs = (tabsToClose, openTab) => {
+        tabsToClose.forEach(tab => {
+            store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
+        });
+        store.commit("editor/changeOpenedTabs", {action: "open", ...openTab});
+        hideTabContextMenu();
+    };
+
+    const closeAllTabs = () => {
+        closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+    };
+
+    const closeOtherTabs = (tab) => {
+        closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
+    };
+
+    const closeTabsToRight = (index) => {
+        closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
+    };
 </script>
 
 <template>
@@ -955,6 +997,7 @@
                 :class="{'tab-active': isActiveTab(tab)}"
                 @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
+                @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
             >
                 <TypeIcon :name="tab.name" />
                 <el-tooltip
@@ -976,6 +1019,25 @@
                 />
             </el-button>
         </el-scrollbar>
+
+        <el-menu
+            v-if="tabContextMenu.visible"
+            :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
+            class="tabs-context"
+        >
+            <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+                {{ $t("namespace_editor.close.tab") }}
+            </el-menu-item>
+            <el-menu-item @click="closeAllTabs">
+                {{ $t("namespace_editor.close.all") }}
+            </el-menu-item>
+            <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
+                {{ $t("namespace_editor.close.other") }}
+            </el-menu-item>
+            <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
+                {{ $t("namespace_editor.close.right") }}
+            </el-menu-item>
+        </el-menu>
 
         <div class="d-inline-flex">
             <switch-view
@@ -1207,29 +1269,6 @@
     @use "element-plus/theme-chalk/src/mixins/mixins" as *;
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
-    .button-top {
-        background: var(--card-bg);
-        border-bottom: 1px solid var(--bs-border-color);
-        padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
-        padding-left: calc(var(--spacer) / 2);
-        display: flex;
-        align-items: center;
-        justify-content: end;
-        max-height: 49.5px;
-
-        :deep(.validation) {
-            border: 0;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-        }
-
-        :deep(.el-button) {
-            border: 0;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-        }
-    }
-
     .main-editor {
         padding: calc(var(--spacer) / 2) 0px;
         background: var(--bs-body-bg);
@@ -1367,6 +1406,23 @@
         p {
             line-height: 22px;
             font-size: 14px;
+        }
+    }
+
+    ul.tabs-context {
+        position: fixed;
+        z-index: 9999;
+        border-right: none;
+        
+        & li {
+            height: 30px;
+            padding: 16px;
+            font-size: var(--el-font-size-small);
+            color: var(--bs-gray-700);
+
+            &:hover {
+                color: var(--bs-secondary);            
+            }
         }
     }
 </style>

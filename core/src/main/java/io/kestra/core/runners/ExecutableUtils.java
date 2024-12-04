@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+
 @Slf4j
 public final class ExecutableUtils {
 
@@ -59,7 +61,7 @@ public final class ExecutableUtils {
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
-        Map<String, String> labels,
+        List<Label> labels,
         boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate
     ) throws IllegalVariableEvaluationException {
@@ -88,9 +90,7 @@ public final class ExecutableUtils {
 
         List<Label> newLabels = inheritLabels ? new ArrayList<>(currentExecution.getLabels()) : new ArrayList<>(systemLabels(currentExecution));
         if (labels != null) {
-            for (Map.Entry<String, String> entry : labels.entrySet()) {
-                newLabels.add(new Label(entry.getKey(), runContext.render(entry.getValue())));
-            }
+            labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
         }
 
         Map<String, Object> variables = ImmutableMap.of(

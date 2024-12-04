@@ -50,8 +50,8 @@ public class JqFilter implements Filter {
             JsonQuery q = JsonQuery.compile(pattern, Versions.JQ_1_6);
 
             JsonNode in;
-            if (input instanceof String) {
-                in = JacksonMapper.ofJson().readTree((String) input);
+            if (input instanceof String stringValue) {
+                in = JacksonMapper.ofJson().readTree(stringValue);
             } else {
                 in = JacksonMapper.ofJson().valueToTree(input);
             }

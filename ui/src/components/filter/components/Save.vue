@@ -1,11 +1,16 @@
 <template>
-    <el-button :disabled :icon="Save" @click="toggle(true)" />
+    <el-tooltip v-if="disabled" :content="t('filters.save.tooltip')">
+        <el-button disabled :icon="Save" @click="toggle(true)" />
+    </el-tooltip>
+
+    <el-button v-else :icon="Save" @click="toggle(true)" />
 
     <el-dialog
         v-model="visible"
         :title="t('filters.save.dialog.heading')"
         :width="400"
         align-center
+        append-to-body
         @opened="input?.focus"
     >
         <section class="pb-3">
@@ -19,6 +24,11 @@
                 class="pt-1"
                 @keydown.enter.prevent="save()"
             />
+        </section>
+        <section class="current-tags">
+            <el-tag v-for="(item, index) in current" :key="index" class="m-1">
+                <Label :option="item" />
+            </el-tag>
         </section>
         <template #footer>
             <div class="dialog-footer">
@@ -42,6 +52,8 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import Label from "./Label.vue";
+
     import Save from "vue-material-design-icons/ContentSaveOutline.vue";
 
     const props = defineProps({
@@ -50,7 +62,7 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../filters.js";
+    import {useFilters} from "../useFilters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
@@ -73,3 +85,10 @@
         toast.saved(t("filters.save.dialog.confirmation", {name: label.value}));
     };
 </script>
+
+<style lang="scss">
+.current-tags .el-tag {
+    background: var(--bs-border-color) !important;
+    color: var(--bs-gray-900);
+}
+</style>

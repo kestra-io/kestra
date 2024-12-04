@@ -133,6 +133,7 @@ export default (app, routes, stores, translations) => {
     // others plugins
     app.use(VueSidebarMenu);
     app.use(Toast)
+    app.provide("Toast", Toast)
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 

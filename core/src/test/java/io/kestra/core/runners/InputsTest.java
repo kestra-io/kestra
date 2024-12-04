@@ -18,6 +18,7 @@ import org.jcodings.util.Hash;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.ConstraintViolationException;
+import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.io.FileInputStream;
@@ -133,7 +134,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
         assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml")));
         assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get(null, (URI) typeds.get("file")))),
+            CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, (URI) typeds.get("file")))),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
         );
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
@@ -361,7 +362,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value"), is("{}"));
     }
 
-    @Test
+    @RetryingTest(5) // it can happen that a log from another execution arrives first, so we enable retry
     void shouldNotLogSecretInput() throws TimeoutException, QueueException {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {});
 

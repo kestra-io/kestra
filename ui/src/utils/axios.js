@@ -81,7 +81,6 @@ export default (callback, store, router) => {
                     content: errorResponse,
                     variant: "error"
                 })
-
                 return Promise.reject(errorResponse);
             }
 
@@ -150,7 +149,7 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse.response.data)
             }
 
-            if (errorResponse.response.data) {
+            if (errorResponse.response.data && errorResponse?.config.showMessageOnError !== false) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse.response,
                     content: errorResponse.response.data,

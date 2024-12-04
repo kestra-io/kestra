@@ -4,8 +4,8 @@ namespace: io.kestra.tests
 tasks:
   # Each
   - id: 1-each
-    type: io.kestra.plugin.core.flow.EachSequential
-    value: '["value 1", "value 2", "value 3"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-each-1
         type: io.kestra.plugin.core.debug.Return

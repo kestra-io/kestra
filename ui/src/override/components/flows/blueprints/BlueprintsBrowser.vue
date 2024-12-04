@@ -51,12 +51,16 @@
                         :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab}}"
                     >
                         <div class="left">
-                            <div>
-                                <div class="title">
+                            <div class="blueprint">
+                                <div class="ps-0 title">
                                     {{ blueprint.title }}
                                 </div>
                                 <div v-if="!system" class="tags text-uppercase">
-                                    {{ tagsToString(blueprint.tags) }}
+                                    <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
+                                        <el-tag type="info" size="small">
+                                            {{ tag }}
+                                        </el-tag>
+                                    </div>
                                 </div>
                             </div>
                             <div class="tasks-container">
@@ -81,7 +85,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="large" text bg @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else size="medium" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -166,9 +170,6 @@
                     },
                     query: {blueprintId: blueprintId, blueprintSource: this.embedFriendlyBlueprintBaseUri.includes("community") ? "community" : "custom"}
                 });
-            },
-            tagsToString(blueprintTags) {
-                return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
             },
             goToDetail(blueprintId) {
                 if (this.embed) {
@@ -318,6 +319,16 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
+    .blueprint {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+
+        @media (max-width: 1024px) {
+            margin-bottom: 10px;
+        }
+}
+
     .sub-nav {
         margin: 0 0 $spacer;
 
@@ -362,34 +373,59 @@
             margin: 0 0 1px 0;
             border-radius: 0;
             border: 0;
+            border-bottom: 1px solid var(--el-border-color-darker);
+            
+            html.dark &.blueprint-card{
+                border-bottom: solid var(--el-border-color-darker);
+            }
 
             .blueprint-link {
                 display: flex;
                 color: inherit;
                 text-decoration: inherit;
+                align-items: center;
                 width: 100%;
 
                 .left {
+                    align-items: center;
                     .title {
+                        width: 400px;
                         font-weight: bold;
                         font-size: $small-font-size;
+                        padding-left: 0;
+                        margin-right: 15px;
+
+                        @media (max-width: 780px) {
+                            margin-bottom: 10px;
+                        }
                     }
 
                     .tags {
-                        font-family: $font-family-monospace;
-                        font-weight: bold;
-                        font-size: $sub-sup-font-size;
-                        margin-bottom: calc(var(--spacer) / 2);
-                        color: $primary;
+                        margin: 10px 0;
+                        display: flex;
+                        
 
-                        html.dark & {
-                            color: $pink;
+                        .el-tag.el-tag--info {
+                            background-color: #FEFEFE;
+                            padding: 15px 10px;
+                            color: var(--el-text-color-regular);
+                            text-transform: capitalize;
+                            font-size: var(--el-font-size-small);
+                            border: 1px solid var(--bs-border-color);
+
+                            html.dark &.el-tag.el-tag--info {
+                                background-color: var(--bs-gray-600);
+                            }
+                        }
+
+                        .tag-box {
+                            margin-right: calc($spacer / 3);
                         }
                     }
 
 
                     .tasks-container {
-                        $plugin-icon-size: calc(var(--font-size-base) + 0.4rem);
+                        $plugin-icon-size: calc(var(--font-size-base) + 0.3rem);
                         display: flex;
                         gap: calc(var(--spacer) / 4);
                         width: fit-content;
@@ -407,11 +443,10 @@
                         white-space: nowrap;
                     }
 
-
-                    html.dark & :deep(.el-button) {
-                        background-color: var(--bs-gray-300);
+                    :deep(.el-button){
+                        background-color:  var(--el-color-primary);
+                        color:  var(--el-color-white);
                     }
-
                 }
             }
 
@@ -439,7 +474,6 @@
                     }
                 }
             }
-
 
             html.dark &.embed {
                 background-color: var(--bs-gray-600);

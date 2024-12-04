@@ -5,7 +5,6 @@ import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.storage.local.LocalStorage;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Assertions;

@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
       "failedExecutions": "असफल निष्पादन",
       "errorLogs": "त्रुटि Logs",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?"
+      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
+      "wel_text": "स्वागत है!",
+      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "welcome": "केस्ट्रा में आपका स्वागत है"
     },
     "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
     "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
@@ -654,6 +658,9 @@
       },
       "need-help": {
         "title": "मदद चाहिए?"
+      },
+      "tutorial": {
+        "title": "ट्यूटोरियल"
       }
     },
     "pluginPage": {
@@ -672,7 +679,8 @@
             "default_namespace": "पूर्व-निर्धारित Namespace",
             "log_level": "Log स्तर",
             "log_display": "Log प्रदर्शन",
-            "execute_flow": "Flow निष्पादित करें"
+            "execute_flow": "Flow निष्पादित करें",
+            "execute_default_tab": "डिफ़ॉल्ट Execution टैब"
           }
         },
         "theme": {
@@ -808,11 +816,17 @@
       "empty": {
         "title": "वर्तमान में कोई टैब्स खुले नहीं हैं",
         "message": "आप साइडबार से namespace फाइलें बना या आयात कर सकते हैं और हमारे Editor के लिए परिचय वीडियो देख सकते हैं।"
+      },
+      "close": {
+        "other": "अन्य टैब्स बंद करें",
+        "tab": "टैब बंद करें",
+        "right": "दाईं ओर बंद करें",
+        "all": "सभी टैब बंद करें"
       }
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "ध्यान दें की SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित करना होगा।"
+      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
@@ -843,7 +857,7 @@
     "webhook link copied": "Webhook लिंक कॉपी किया गया।",
     "copy url": "URL कॉपी करें",
     "scheduleDate": "अनुसूची तिथि",
-    "trigger_check_warning": "चेतावनी: ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए '??' कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, 'trigger.date' के बजाय 'trigger.date ?? execution.startDate' का उपयोग करें।",
+    "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "dashboard": {
       "per_namespace": "(प्रति namespace)",
       "id": "आईडी",
@@ -889,7 +903,7 @@
     "invalid bulk pause": "निष्पादन को PAUSE नहीं किया जा सका",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "no_data": "ऐसा लगता है कि यहाँ कुछ भी नहीं है... अभी तक! अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएं!",
+    "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "informative notice": "नोट(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> के बारे में हमारे दस्तावेज़ में और पढ़ें।",
@@ -900,7 +914,6 @@
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
     "create_flow": "फ़्लो बनाएं",
-    "starred": "सितारे लगे",
     "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं किया जा सका",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
@@ -914,12 +927,15 @@
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "filters": {
       "comparators": {
-        "contains": "शामिल है",
         "is": "है",
         "is_one_of": "में से एक है",
-        "not_contains": "not_contains",
         "is_not_one_off": "नहीं है उनमें से एक",
-        "is_not": "नहीं है"
+        "is_not": "नहीं है",
+        "between": "के बीच",
+        "in": "में",
+        "not_contains": "नहीं शामिल है",
+        "starts_with": "शुरू होता है",
+        "contains": "शामिल करता है"
       },
       "recent": {
         "label": "हाल की खोजें",
@@ -935,7 +951,8 @@
           "confirmation": "खोज मानदंड <code>{name}</code>",
           "placeholder": "लेबल"
         },
-        "label": "सहेजे गए खोजें"
+        "label": "सहेजे गए खोजें",
+        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।"
       },
       "options": {
         "namespace": "Namespace",
@@ -943,10 +960,16 @@
         "text": "मुझे अनुवाद के लिए कोई पाठ प्रदान नहीं किया गया है। कृपया अनुवाद के लिए पाठ प्रदान करें।",
         "labels": "लेबल्स",
         "state": "स्थिति",
-        "child": "बच्चा"
+        "child": "बच्चा",
+        "absolute_date": "सटीक तिथि",
+        "relative_date": "सापेक्ष तिथि",
+        "level": "Log स्तर"
       },
       "empty": "कोई डेटा नहीं।",
-      "label": "फिल्टर चुनें"
+      "label": "फिल्टर चुनें",
+      "settings": {
+        "show_chart": "मुख्य चार्ट दिखाएं"
+      }
     },
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",
@@ -955,6 +978,37 @@
     "force run": "फोर्स रन",
     "invalid bulk force run": "निष्पादन को जबरन चलाने में असमर्थ",
     "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: किसी execution को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task executions बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
-    "force run tooltip": "प्रवर्तन को चलाने के लिए मजबूर करें। यह डुप्लिकेट task executions बना सकता है, यदि संभव हो तो कोई अन्य क्रिया का उपयोग करें।"
+    "force run tooltip": "प्रवर्तन को चलाने के लिए मजबूर करें। यह डुप्लिकेट task executions बना सकता है, यदि संभव हो तो कोई अन्य क्रिया का उपयोग करें।",
+    "item": "आइटम",
+    "items": "आइटम्स",
+    "warning": "चेतावनी",
+    "cron": "क्रॉन",
+    "showMore": "और दिखाएँ",
+    "showLess": "कम दिखाएं",
+    "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "task run id": "टास्करन ID",
+    "optional": "वैकल्पिक",
+    "active": "सक्रिय",
+    "contextBar": {
+      "news": "समाचार",
+      "issue": "समस्या खोलें",
+      "docs": "डॉक्स",
+      "demo": "डेमो प्राप्त करें",
+      "help": "मदद"
+    },
+    "execution failed header": "निष्पादन FAILED!",
+    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
+    "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flows imported": "फ़्लोज़ आयात किए गए",
+    "is required": "{field} आवश्यक है",
+    "bookmark": "बुकमार्क्स",
+    "dashboards": "डैशबोर्ड्स",
+    "dashboard_label": "डैशबोर्ड",
+    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
+    "custom_dashboard": "कस्टम डैशबोर्ड्स",
+    "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
+    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?"
   }
 }

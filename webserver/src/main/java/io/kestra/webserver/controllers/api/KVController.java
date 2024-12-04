@@ -56,8 +56,8 @@ public class KVController {
             .getValue(key)
             .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
         Object value = wrapper.value();
-        if (value instanceof byte[]) {
-            value = new String((byte[]) value);
+        if (value instanceof byte[] bytesValue) {
+            value = new String(bytesValue);
         }
         return new TypedValue(KVType.from(value), value);
     }

@@ -113,8 +113,12 @@
                     return;
                 }
                 else if (this.checkForTrigger) {
-                    this.$toast().confirm(h(FlowWarningDialog), () => (this.isOpen = !this.isOpen), true, null);
-                }
+                    this.$toast().confirm(
+                        this.$t("trigger_check_warning"),
+                        () => {
+                            this.isOpen = !this.isOpen;
+                        },
+                        () => {});                }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
                     this.isOpen = !this.isOpen;
                 }

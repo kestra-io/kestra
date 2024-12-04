@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class UUIDGeneratorBase62 implements Function {
+public class UUIDBase62Function implements Function {
 
   private static final String BASE62 =
       "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";

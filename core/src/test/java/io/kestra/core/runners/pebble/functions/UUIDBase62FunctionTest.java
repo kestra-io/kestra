@@ -8,11 +8,11 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
 import java.util.Collections;
-import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 @KestraTest
-class UUIDGeneratorBase62Test {
+class UUIDBase62FunctionTest {
     @Inject VariableRenderer variableRenderer;
 
     @Test

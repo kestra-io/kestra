@@ -233,7 +233,7 @@
 
     .plugin-card {
         display: flex;
-        width: 232px;
+        width: 100%;
         min-width: 130px;
         padding: 8px 16px;
         align-items: center;

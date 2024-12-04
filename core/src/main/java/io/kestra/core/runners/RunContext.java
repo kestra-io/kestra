@@ -51,24 +51,6 @@ public abstract class RunContext {
 
     public abstract <T> RunContextProperty<T> render(Property<T> inline);
 
-    @Deprecated(forRemoval = true)
-    public abstract <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T> T  render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, I> T renderList(Property<T> inline, Class<I> itemClazz) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, I> T  renderList(Property<T> inline, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, K, V> T renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, K, V> T  renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException;
-
     public abstract List<String> render(List<String> inline) throws IllegalVariableEvaluationException;
 
     public abstract List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;

@@ -67,6 +67,7 @@ install-plugins:
 		[[ $$plugin =~ ^#.* ]] && continue; \
 		PLUGINS_PATH="${KESTRA_INSTALL_DIR}/plugins"; \
 		CURRENT_PLUGIN=$${plugin/LATEST/"${VERSION}"}; \
+		CURRENT_PLUGIN=$$(echo $$CURRENT_PLUGIN | cut -d':' -f2-); \
 		PLUGIN_FILE="$$PLUGINS_PATH/$$(echo $$CURRENT_PLUGIN | awk -F':' '{print $$2"-"$$3}').jar"; \
 		echo "Installing Kestra plugin $$CURRENT_PLUGIN > ${KESTRA_INSTALL_DIR}/plugins"; \
 		if [ -f "$$PLUGIN_FILE" ]; then \

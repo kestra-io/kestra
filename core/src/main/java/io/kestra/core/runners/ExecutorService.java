@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -380,15 +379,7 @@ public class ExecutorService {
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             try {
-                Map<String, Object> outputs = flow.getOutputs()
-                    .stream()
-                    .collect(HashMap::new, (map, entry) -> {
-                        final ObjectMapper mapper = new ObjectMapper();
-                        final HashMap<String, Object> entryInfo = new HashMap<>();
-                        entryInfo.put("value", entry.getValue());
-                        entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
-                        map.put(entry.getId(), entryInfo);
-                    }, Map::putAll);
+                Map<String, Object> outputs = flowInputOutput.flowOutputsToMap(flow.getOutputs());
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
@@ -1055,7 +1046,7 @@ public class ExecutorService {
      * WARNING: ATM, only the first violation will update the execution.
      */
     public Executor handleExecutionChangedSLA(Executor executor) throws QueueException {
-        if (ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
+        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 

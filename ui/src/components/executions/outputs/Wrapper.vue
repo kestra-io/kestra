@@ -389,6 +389,7 @@
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {
+        //TODO: https://github.com/kestra-io/kestra/issues/5643
         const getTaskIcons = (tasks, mapped) => {
             tasks.forEach((task) => {
                 mapped[task.id] = task.type;

@@ -203,6 +203,12 @@ jobs:
           python-enabled: true
           caches-enabled: true
 
+      - uses: sibiraj-s/action-eslint@v3
+        id: lint
+        with:
+          extensions: 'js,jsx,ts,tsx,vue'
+          annotations: true
+
       # Services
       - name: Build the docker-compose stack
         run: docker compose -f docker-compose-ci.yml up -d

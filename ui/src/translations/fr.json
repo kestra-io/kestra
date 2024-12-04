@@ -1001,6 +1001,7 @@
     "custom_dashboard": "Tableaux de bord personnalisés",
     "create_custom_dashboard": "Créer un nouveau tableau de bord",
     "edit_custom_dashboard": "Modifier le tableau de bord",
-    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher."
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
+    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?"
   }
 }

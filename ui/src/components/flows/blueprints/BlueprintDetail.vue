@@ -171,10 +171,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
-            tagsToString() {
-                return this.blueprint?.tags?.join(" ") ?? "";
-            },
+            ...mapState("plugin", ["icons"]),         
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },

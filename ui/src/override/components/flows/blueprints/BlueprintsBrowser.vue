@@ -171,9 +171,6 @@
                     query: {blueprintId: blueprintId, blueprintSource: this.embedFriendlyBlueprintBaseUri.includes("community") ? "community" : "custom"}
                 });
             },
-            tagsToString(blueprintTags) {
-                return blueprintTags?.map(id => this.tags?.[id]?.name).join(" ")
-            },
             goToDetail(blueprintId) {
                 if (this.embed) {
                     this.$emit("goToDetail", blueprintId);

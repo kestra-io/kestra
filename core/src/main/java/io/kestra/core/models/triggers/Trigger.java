@@ -27,9 +27,6 @@ public class Trigger extends TriggerContext {
     private String executionId;
 
     @Nullable
-    private State.Type executionCurrentState;
-
-    @Nullable
     private Instant updatedDate;
 
     @Nullable
@@ -38,7 +35,6 @@ public class Trigger extends TriggerContext {
     protected Trigger(TriggerBuilder<?, ?> b) {
         super(b);
         this.executionId = b.executionId;
-        this.executionCurrentState = b.executionCurrentState;
         this.updatedDate = b.updatedDate;
         this.evaluateRunningDate = b.evaluateRunningDate;
     }
@@ -138,7 +134,6 @@ public class Trigger extends TriggerContext {
             .date(trigger.getDate())
             .nextExecutionDate(trigger.getNextExecutionDate())
             .executionId(execution.getId())
-            .executionCurrentState(execution.getState().getCurrent())
             .updatedDate(Instant.now())
             .backfill(trigger.getBackfill())
             .stopAfter(trigger.getStopAfter())

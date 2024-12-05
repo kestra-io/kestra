@@ -647,18 +647,6 @@
     "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
-      "started": {
-        "title": "Comienza en 3 sencillos pasos"
-      },
-      "product-tour": {
-        "title": "Realiza un recorrido por el producto"
-      },
-      "doc": {
-        "title": "Documentación"
-      },
-      "need-help": {
-        "title": "¿Necesitas ayuda?"
-      },
       "tutorial": {
         "title": "Tutorial",
         "text": "* [Tutoriales en Video](https://kestra.io/tutorial-videos/all)\n* [Documentación](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"

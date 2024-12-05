@@ -647,18 +647,6 @@
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
-      "started": {
-        "title": "簡単な3ステップで始めましょう"
-      },
-      "product-tour": {
-        "title": "プロダクトツアーを受ける"
-      },
-      "doc": {
-        "title": "ドキュメント"
-      },
-      "need-help": {
-        "title": "ヘルプが必要ですか？"
-      },
       "tutorial": {
         "title": "チュートリアル",
         "text": "```\n* [ビデオチュートリアル](https://kestra.io/tutorial-videos/all)\n* [ドキュメント](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"

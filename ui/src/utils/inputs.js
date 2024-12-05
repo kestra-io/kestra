@@ -5,7 +5,9 @@ export default class Inputs {
     static normalize(type, value) {
         let res = value;
 
-        if (value === null || value === undefined) {
+        if (type === "BOOLEAN" && value === undefined){
+            res = "undefined";
+        } else if (value === null || value === undefined) {
             res = undefined;
         } else if (type === "DATE" || type === "DATETIME") {
             res = moment(res).toISOString()
@@ -19,8 +21,6 @@ export default class Inputs {
             if(typeof res !== "string") {
                 res = YamlUtils.stringify(res).toString();
             }
-        } else if (type === "BOOLEAN" && type === undefined){
-            res = "undefined";
         } else if (type === "STRING" && Array.isArray(res)){
             res = res.toString();
         }

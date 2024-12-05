@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "每个命名空间的执行错误",
       "failedExecutions": "失败的执行",
       "errorLogs": "错误日志",
-      "no executions": "准备好看到你的流程在行动了吗？"
+      "no executions": "准备好看到你的流程在行动了吗？",
+      "wel_text": "欢迎！",
+      "start": "让我们启动并运行您的第一个workflow。",
+      "guide": "需要指导来执行您的第一个flow吗？",
+      "welcome": "欢迎使用 Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> 个执行已重放",
     "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
@@ -654,6 +658,18 @@
       },
       "need-help": {
         "title": "需要帮助？"
+      },
+      "tutorial": {
+        "title": "教程",
+        "text": "* [视频教程](https://kestra.io/tutorial-videos/all)\n* [文档](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "开始产品导览",
+        "text": "选择您的用例，并按照分步指南学习 Kestra 的功能和能力。❤️"
+      },
+      "help": {
+        "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
+        "title": "需要帮助吗？"
       }
     },
     "pluginPage": {
@@ -819,7 +835,7 @@
     },
     "curl": {
       "command": "cURL命令",
-      "note": "请注意，对于SECRET和FILE输入类型，命令必须适应以匹配实际值。"
+      "note": "请注意，对于SECRET和FILE类型的input，命令必须调整以匹配实际值。"
     },
     "logs_view": {
       "raw": "时间视图",
@@ -907,7 +923,6 @@
       "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。"
     },
     "create_flow": "创建Flow",
-    "starred": "已加星标",
     "invalid bulk unqueue": "无法取消排队的执行",
     "unqueue done": "执行已出队列",
     "bulk unqueue": "您确定要取消排队 <code>{executionCount}</code> 个执行吗？",
@@ -981,7 +996,6 @@
     "showLess": "显示较少",
     "documentationMenu": "文档菜单",
     "task run id": "任务运行 ID",
-    "execution failed": "执行FAILED，点击此处查看详细信息。",
     "optional": "可选",
     "active": "活动",
     "contextBar": {
@@ -990,6 +1004,20 @@
       "docs": "文档",
       "demo": "获取演示",
       "help": "帮助"
-    }
+    },
+    "execution failed header": "执行失败！",
+    "execution failed message": "最后错误：<code>{message}</code>",
+    "flow not imported": "某些flow无法导入",
+    "flows imported": "Flow已导入",
+    "is required": "{field}是必需的",
+    "bookmark": "书签",
+    "dashboards": "仪表板",
+    "dashboard_label": "仪表板",
+    "default_dashboard": "默认仪表板",
+    "custom_dashboard": "自定义仪表板",
+    "create_custom_dashboard": "创建新仪表板",
+    "edit_custom_dashboard": "编辑仪表板",
+    "custom_dashboard_empty": "没有结果显示。",
+    "remove_bookmark": "您确定要删除此书签吗？"
   }
 }

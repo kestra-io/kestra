@@ -61,12 +61,7 @@ public class ExecutionLogService {
                     }
                 }));
             }, FluxSink.OverflowStrategy.BUFFER)
-            .doOnCancel(() -> {
-                if (disposable.get() != null) {
-                    disposable.get().run();
-                }
-            })
-            .doOnComplete(() -> {
+            .doFinally(ignored -> {
                 if (disposable.get() != null) {
                     disposable.get().run();
                 }

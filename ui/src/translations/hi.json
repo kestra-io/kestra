@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
       "failedExecutions": "असफल निष्पादन",
       "errorLogs": "त्रुटि Logs",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?"
+      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
+      "wel_text": "स्वागत है!",
+      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "welcome": "केस्ट्रा में आपका स्वागत है"
     },
     "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
     "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
@@ -654,6 +658,18 @@
       },
       "need-help": {
         "title": "मदद चाहिए?"
+      },
+      "tutorial": {
+        "title": "ट्यूटोरियल",
+        "text": "* [वीडियो ट्यूटोरियल्स](https://kestra.io/tutorial-videos/all)\n* [दस्तावेज़ीकरण](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "उत्पाद टूर लें",
+        "text": "अपना उपयोग मामला चुनें और Kestra की विशेषताओं और क्षमताओं को सीखने के लिए चरण-दर-चरण गाइड का पालन करें। ❤️"
+      },
+      "help": {
+        "text": "हमारे Slack समुदाय में कोई भी प्रश्न पूछें। यदि आप अटके हुए हैं, तो हम आपकी सहायता के लिए यहाँ हैं। ✋",
+        "title": "मदद चाहिए?"
       }
     },
     "pluginPage": {
@@ -819,7 +835,7 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "ध्यान दें की SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित करना होगा।"
+      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
@@ -907,7 +923,6 @@
       "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।"
     },
     "create_flow": "फ़्लो बनाएं",
-    "starred": "सितारे लगे",
     "invalid bulk unqueue": "निष्पादन को अनक्यू नहीं किया जा सका",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "bulk unqueue": "क्या आप वाकई <code>{executionCount}</code> execution(s) को अनक्यू करना चाहते हैं?",
@@ -981,7 +996,6 @@
     "showLess": "कम दिखाएं",
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
     "task run id": "टास्करन ID",
-    "execution failed": "निष्पादन FAILED हो गया, अधिक विवरण के लिए यहां क्लिक करें।",
     "optional": "वैकल्पिक",
     "active": "सक्रिय",
     "contextBar": {
@@ -990,6 +1004,20 @@
       "docs": "डॉक्स",
       "demo": "डेमो प्राप्त करें",
       "help": "मदद"
-    }
+    },
+    "execution failed header": "निष्पादन FAILED!",
+    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
+    "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flows imported": "फ़्लोज़ आयात किए गए",
+    "is required": "{field} आवश्यक है",
+    "bookmark": "बुकमार्क्स",
+    "dashboards": "डैशबोर्ड्स",
+    "dashboard_label": "डैशबोर्ड",
+    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
+    "custom_dashboard": "कस्टम डैशबोर्ड्स",
+    "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
+    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?"
   }
 }

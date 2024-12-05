@@ -1,7 +1,10 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -17,12 +20,15 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -269,10 +275,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow to be executed"
+        title = "The labels to pass to the subflow to be executed.",
+        implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
-    private Map<String, String> labels;
+    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
+    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    private List<@NoSystemLabelValidation Label> labels;
 
     @Builder.Default
     @Schema(
@@ -410,13 +419,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         private Map<String, Object> inputs;
         private Boolean inheritLabels;
-        private Map<String, String> labels;
+        private List<Label> labels;
         private Boolean wait;
         private Boolean transmitFailed;
         private Property<ZonedDateTime> scheduleOn;
         private SubflowId subflowId;
 
-        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, Map<String, String> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId) {
+        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, List<Label> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId) {
             this.inputs = inputs;
             this.inheritLabels = inheritLabels;
             this.labels = labels;

@@ -116,13 +116,13 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         File tempFile = runContext.workingDir().createTempFile(extension).toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
-            if (this.files instanceof List) {
-                finalFiles = (List<String>) this.files;
-            } else if (this.files instanceof String) {
+            if (this.files instanceof List<?> listValue) {
+                finalFiles = (List<String>) listValue;
+            } else if (this.files instanceof String stringValue) {
                 final TypeReference<List<String>> reference = new TypeReference<>() {};
 
                 finalFiles = JacksonMapper.ofJson(false).readValue(
-                    runContext.render((String) this.files),
+                    runContext.render(stringValue),
                     reference
                 );
             } else {

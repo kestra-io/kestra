@@ -306,8 +306,8 @@ class FlowServiceTest {
 
     @Test
     void findByNamespacePrefix() {
-        Flow flow = create("findByTest", "test", 1);
-        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
-        assertThat(flowService.findByNamespacePrefix(null, "io.kestra").size(), is(1));
+        Flow flow = create("findByTest", "test", 1).toBuilder().namespace("some.namespace").build();
+        flowRepository.create(flow, flow.generateSource(), flow);
+        assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size(), is(1));
     }
 }

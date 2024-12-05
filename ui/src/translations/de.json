@@ -647,18 +647,6 @@
     "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Nebenläufigkeitsproblemen, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit dem Löschen fortfahren.",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
     "welcome": {
-      "started": {
-        "title": "In 3 einfachen Schritten loslegen"
-      },
-      "product-tour": {
-        "title": "Produkt-Tour machen"
-      },
-      "doc": {
-        "title": "Dokumentation"
-      },
-      "need-help": {
-        "title": "Brauchen Sie Hilfe?"
-      },
       "tutorial": {
         "title": "Tutorial",
         "text": "* [Video-Tutorials](https://kestra.io/tutorial-videos/all)\n* [Dokumentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"

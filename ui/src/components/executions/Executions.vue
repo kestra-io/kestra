@@ -73,7 +73,10 @@
                             @update:select-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
-                            <!-- Directly visible buttons -->
+                            <!-- Always visible buttons -->
+                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                                {{ $t("change state") }}
+                            </el-button>
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
                             </el-button>
@@ -87,8 +90,7 @@
                                 {{ $t("delete") }}
                             </el-button>
 
-
-                            <!-- Dropdown for additional actions -->
+                            <!-- Dropdown with additional actions -->
                             <el-dropdown>
                                 <el-button>
                                     <DotsVertical />
@@ -98,20 +100,17 @@
                                         <el-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
                                             {{ $t("Set labels") }}
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                            {{ $t("change state") }}
-                                        </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
-                                            {{ $t("force run") }}
+                                        <el-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                            {{ $t("resume") }}
                                         </el-dropdown-item>
                                         <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                             {{ $t("pause") }}
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                            {{ $t("resume") }}
-                                        </el-dropdown-item>
                                         <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
                                             {{ $t("unqueue") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                            {{ $t("force run") }}
                                         </el-dropdown-item>
                                     </el-dropdown-menu>
                                 </template>

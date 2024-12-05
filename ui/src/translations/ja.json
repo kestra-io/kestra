@@ -1006,6 +1006,8 @@
     "create_custom_dashboard": "新しいダッシュボードを作成",
     "edit_custom_dashboard": "ダッシュボードを編集",
     "custom_dashboard_empty": "表示する結果がありません。",
-    "remove_bookmark": "このブックマークを削除してもよろしいですか？"
+    "remove_bookmark": "このブックマークを削除してもよろしいですか？",
+    "duplicate filter message": "Duplicate filter `{filterName}` found, please remove it and choose another one.",
+    "duplicate filter": "Duplicate filter not allowed"
   }
 }

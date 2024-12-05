@@ -1006,6 +1006,8 @@
     "create_custom_dashboard": "Neues Dashboard erstellen",
     "edit_custom_dashboard": "Dashboard bearbeiten",
     "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen.",
-    "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?"
+    "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?",
+    "duplicate filter message": "Duplicate filter `{filterName}` found, please remove it and choose another one.",
+    "duplicate filter": "Duplicate filter not allowed"
   }
 }

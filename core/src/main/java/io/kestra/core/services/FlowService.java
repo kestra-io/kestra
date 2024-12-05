@@ -291,20 +291,20 @@ public class FlowService {
         return source + String.format("\ndisabled: %s", disabled);
     }
 
-    public static String generateSource(Flow flow, @Nullable String source) {
+    public static String generateSource(Flow flow) {
         try {
-            if (source == null) {
-                return toYamlWithoutDefault(flow);
-            }
+            String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(flow);
 
-            if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
-                source = toYamlWithoutDefault(flow);
-            }
+            Object map = fixSnakeYaml(JacksonMapper.toMap(json));
+
+            String source = JacksonMapper.ofYaml().writeValueAsString(map);
+
+            // remove the revision from the generated source
+            return source.replaceFirst("(?m)^revision: \\d+\n?","");
         } catch (JsonProcessingException e) {
             log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
+            return null;
         }
-
-        return source;
     }
 
     // Used in Git plugin
@@ -323,15 +323,6 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
-    }
-
-    @SneakyThrows
-    private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
-        String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(object);
-
-        Object map = fixSnakeYaml(JacksonMapper.toMap(json));
-
-        return JacksonMapper.ofYaml().writeValueAsString(map);
     }
 
     /**

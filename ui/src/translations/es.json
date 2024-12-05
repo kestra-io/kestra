@@ -660,7 +660,16 @@
         "title": "¿Necesitas ayuda?"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Tutorial",
+        "text": "* [Tutoriales en Video](https://kestra.io/tutorial-videos/all)\n* [Documentación](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "Realiza un recorrido por el producto",
+        "text": "Elige tu caso de uso y sigue una guía paso a paso para aprender las características y capacidades de Kestra. ❤️"
+      },
+      "help": {
+        "text": "Haz cualquier pregunta en nuestra comunidad de Slack. Si estás atascado, estamos aquí para ayudarte. ✋",
+        "title": "¿Necesitas ayuda?"
       }
     },
     "pluginPage": {

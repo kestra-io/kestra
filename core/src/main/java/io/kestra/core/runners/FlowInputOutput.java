@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -9,7 +7,12 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.Data;
+import io.kestra.core.models.flows.DependsOn;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.RenderableInput;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
@@ -28,7 +31,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
-
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,8 +45,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,21 +83,6 @@ public class FlowInputOutput {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = Optional.ofNullable(secretKey);
-    }
-
-    /**
-     * Transform a list of flow outputs to a Map of output id -> output value map.
-     * An Output value map is a map with value and displayName.
-     */
-    public Map<String, Object> flowOutputsToMap(List<Output> flowOutputs) {
-        return ListUtils.emptyOnNull(flowOutputs)
-            .stream()
-            .collect(HashMap::new, (map, entry) -> {
-                final HashMap<String, Object> entryInfo = new HashMap<>();
-                entryInfo.put("value", entry.getValue());
-                entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
-                map.put(entry.getId(), entryInfo);
-            }, Map::putAll);
     }
 
     /**
@@ -370,21 +355,9 @@ public class FlowInputOutput {
             .getOutputs()
             .stream()
             .map(output -> {
-                final HashMap<String, Object> current;
-                final Object currentValue;
+                Object current = in == null ? null : in.get(output.getId());
                 try {
-                    current = in == null ? null : JSON_MAPPER.readValue(
-                        JSON_MAPPER.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-                if (current == null) {
-                    currentValue = null;
-                } else {
-                    currentValue = current.get("value");
-                }
-                try {
-                    return parseData(execution, output, currentValue)
+                    return parseData(execution, output, current)
                         .map(entry -> {
                             if (output.getType().equals(Type.SECRET)) {
                                 return new AbstractMap.SimpleEntry<>(
@@ -395,26 +368,12 @@ public class FlowInputOutput {
                             return entry;
                         });
                 } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), currentValue);
+                    throw output.toConstraintViolationException(e.getMessage(), current);
                 }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(HashMap::new,
-                     (map, entry) -> {
-                         map.compute(entry.getKey(), (key, existingValue) -> {
-                             if (existingValue == null) {
-                                 return entry.getValue();
-                             }
-                             if (existingValue instanceof List) {
-                                 ((List<Object>) existingValue).add(entry.getValue());
-                                 return existingValue;
-                             }
-                             return new ArrayList<>(Arrays.asList(existingValue, entry.getValue()));
-                         });
-                     },
-                     Map::putAll
-            );
+            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
 
         // Ensure outputs are compliant with tasks outputs.
         return JacksonMapper.toMap(results);
@@ -432,7 +391,7 @@ public class FlowInputOutput {
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
-            Optional.ofNullable(data.getDisplayName()).orElse(data.getId()),
+            data.getId(),
             parseType(execution, data.getType(), data.getId(), elementType, current)
         ));
     }

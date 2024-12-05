@@ -10,7 +10,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="triggers"
-                        :include="['search', 'namespace', 'state']"
+                        :include="['namespace', 'state']"
                         :refresh="{shown: true, callback: load}"
                     />
                 </template>

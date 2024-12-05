@@ -96,11 +96,11 @@
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                class="w-100"
+                class="boolean-inputs w-100"
             >
-                <el-radio-button :label="$t('true')" :value="true" />
-                <el-radio-button :label="$t('false')" :value="false" />
-                <el-radio-button :label="$t('undefined')" value="undefined" />
+                <el-radio-button :label="$t('true')" :value="true" border />
+                <el-radio-button :label="$t('false')" :value="false" border />
+                <el-radio-button :label="$t('undefined')" value="undefined" border />
             </el-radio-group>
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
@@ -433,58 +433,33 @@
 }
 </style>
 
-<!-- STYLING FOR el-radio-button -->
 <style lang="scss">
-.el-radio-button__inner {
-    display: inline-block;
-    line-height: 1;
-    white-space: nowrap;
-    vertical-align: middle;
-    background: var(--el-button-bg-color, var(--el-fill-color-blank));
-    border: 2px solid var(--el-text-color-disabled);
-    font-weight: var(--el-button-font-weight, var(--el-font-weight-primary));
-    -webkit-appearance: none;
-    text-align: center;
-    box-sizing: border-box;
-    margin: 0;
-    position: relative;
-    cursor: pointer;
-    transition: var(--el-transition-all);
-    user-select: none;
-    padding: 8px 15px;
-    font-size: var(--el-font-size-base);
-    outline: none;
-
-    &:hover {
-        color: var(--bs-gray-900);
-        border-color: var(--el-color-primary);
-        background-color: var(--bs-gray-300, var(--bs-gray-300));
-        transition: 0.5s ease-in-out;
-    }
-}
-
-.el-radio-button {
-    &.is-active {
-        .el-radio-button__original-radio:not(:disabled) {
-            color: var(--el-text-color-regular, var(--el-color-white));
-            background-color: var(--bs-gray-300-darken-2, var(--bs-gray-300-darken-2));
-        }
-    }
-
-    &:first-child {
-        .el-radio-button__inner {
-            border-left: 2px solid var(--el-text-color-disabled);
-            border-radius: var(--el-border-radius-base) 0 0 var(--el-border-radius-base);
-
-            &:hover {
-                border-left: 2px solid var(--el-color-primary);
+.boolean-inputs {
+    .el-radio-button {
+        &.is-active {
+            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                color: var(--el-text-color-regular);
+                background-color: var(--bs-gray-100);
+                box-shadow: 0 0 0 0 var(--el-color-primary);
             }
         }
-    }
 
-    &:last-child {
         .el-radio-button__inner {
-            border-radius: 0 var(--el-border-radius-base) var(--el-border-radius-base) 0;
+            border: var(--el-border);
+            transition: 0.3s ease-in-out;
+
+            &:hover {
+                color: var(--bs-secondary);
+                border-color: var(--el-color-primary);
+            }
+
+            &:first-child {
+                border-left: var(--el-border);
+
+                &:hover {
+                    background-color: var(--bs-card-bg);
+                }
+            }
         }
     }
 }

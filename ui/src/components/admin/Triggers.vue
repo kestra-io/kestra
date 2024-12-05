@@ -8,29 +8,11 @@
                 :total="total"
             >
                 <template #navbar>
-                    <el-form-item>
-                        <search-field />
-                    </el-form-item>
-                    <el-form-item>
-                        <namespace-select
-                            data-type="flow"
-                            :value="$route.query.namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-select v-model="state" clearable :placeholder="$t('triggers_state.state')">
-                            <el-option
-                                v-for="(s, index) in states"
-                                :key="index"
-                                :label="s.label"
-                                :value="s.value"
-                            />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item>
-                        <refresh-button @refresh="load(onDataLoaded)" />
-                    </el-form-item>
+                    <KestraFilter
+                        prefix="triggers"
+                        :include="['search', 'namespace', 'state']"
+                        :refresh="{shown: true, callback: load}"
+                    />
                 </template>
                 <template #table>
                     <select-table
@@ -145,13 +127,7 @@
                                 <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column
-                            v-if="visibleColumns.nextExecutionDate"
-                            prop="nextExecutionDate"
-                            sortable="custom"
-                            :sort-orders="['ascending', 'descending']"
-                            :label="$t('next execution date')"
-                        >
+                        <el-table-column v-if="visibleColumns.nextExecutionDate" :label="$t('next execution date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
@@ -169,7 +145,13 @@
                                 />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
+                        <el-table-column
+                            v-if="visibleColumns.nextExecutionDate"
+                            prop="nextExecutionDate"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('next execution date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
                             </template>
@@ -272,29 +254,25 @@
     import TriggerAvatar from "../flows/TriggerAvatar.vue"
 </script>
 <script>
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
-    import SearchField from "../layout/SearchField.vue";
     import DataTable from "../layout/DataTable.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            RefreshButton,
+            KestraFilter,
             MarkdownTooltip,
             DataTable,
-            SearchField,
-            NamespaceSelect,
             DateAgo,
             Id,
             LogsWrapper

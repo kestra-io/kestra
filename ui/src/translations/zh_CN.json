@@ -660,7 +660,16 @@
         "title": "需要帮助？"
       },
       "tutorial": {
-        "title": "教程"
+        "title": "教程",
+        "text": "* [视频教程](https://kestra.io/tutorial-videos/all)\n* [文档](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "参加产品导览",
+        "text": "选择您的使用案例，并按照分步指南学习 Kestra 的功能和能力。❤️"
+      },
+      "help": {
+        "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
+        "title": "需要帮助吗？"
       }
     },
     "pluginPage": {

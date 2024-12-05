@@ -714,20 +714,17 @@
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
     "originalCreatedDate": "Original creation date",
     "welcome": {
-      "started": {
-        "title": "Get started in 3 easy steps"
-      },
-      "product-tour": {
-        "title": "Take a product tour"
-      },
-      "doc": {
-        "title": "Docs"
+      "tour": {
+        "title": "Take a product tour",
+        "text": "Chose your use case and follow a step-by-step guide to learn Kestra 's features and capabilities. ❤️"
       },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Tutorial",
+        "text": "* [Video Tutorials](https://kestra.io/tutorial-videos/all)\n* [Documentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "need-help": {
-        "title": "Need help?"
+      "help": {
+        "title": "Need help?",
+        "text": "Ask any question in our Slack community. If you are stuck, we are help to help you. ✋"
       }
     },
     "pluginPage": {

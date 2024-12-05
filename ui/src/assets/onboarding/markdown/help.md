@@ -1,1 +1,0 @@
-Ask any question in our Slack community. If you are stuck, we are help to help you. ✋

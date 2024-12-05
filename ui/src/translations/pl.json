@@ -660,7 +660,16 @@
         "title": "Potrzebujesz pomocy?"
       },
       "tutorial": {
-        "title": "Samouczek"
+        "title": "Samouczek",
+        "text": "* [Samouczki wideo](https://kestra.io/tutorial-videos/all)\n* [Dokumentacja](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "Rozpocznij wycieczkę po produkcie",
+        "text": "Wybierz swój przypadek użycia i postępuj zgodnie z przewodnikiem krok po kroku, aby poznać funkcje i możliwości Kestra. ❤️"
+      },
+      "help": {
+        "text": "Zadaj dowolne pytanie w naszej społeczności Slack. Jeśli utkniesz, jesteśmy tutaj, aby Ci pomóc. ✋",
+        "title": "Potrzebujesz pomocy?"
       }
     },
     "pluginPage": {

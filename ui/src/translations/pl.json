@@ -647,18 +647,6 @@
     "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
-      "started": {
-        "title": "Rozpocznij w 3 prostych krokach"
-      },
-      "product-tour": {
-        "title": "Weź udział w wycieczce po produkcie"
-      },
-      "doc": {
-        "title": "Dokumentacja"
-      },
-      "need-help": {
-        "title": "Potrzebujesz pomocy?"
-      },
       "tutorial": {
         "title": "Samouczek",
         "text": "* [Samouczki wideo](https://kestra.io/tutorial-videos/all)\n* [Dokumentacja](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"

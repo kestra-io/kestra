@@ -1,22 +1,25 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.SubflowExecutionResult;
-import io.micronaut.context.annotation.Property;
-import jakarta.inject.Inject;
+import io.micronaut.context.ApplicationContext;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -29,14 +32,26 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@KestraTest
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SubflowTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SubflowTest.class);
+
     private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
     public static final String EXECUTION_ID = "executionId";
 
-    @Inject
-    private RunContextFactory runContextFactory;
+    @Mock
+    private DefaultRunContext runContext;
 
+    @Mock
+    private ApplicationContext applicationContext;
+
+    @BeforeEach
+    void beforeEach() {
+        Mockito.when(runContext.logger()).thenReturn(LOG);
+        Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
+    }
 
     @Test
     void shouldNotReturnResultForExecutionNotTerminated() {
@@ -44,7 +59,6 @@ class SubflowTest {
             .builder()
             .state(State.of(State.Type.CREATED, Collections.emptyList()))
             .build();
-        RunContext runContext = runContextFactory.of();
 
         Optional<SubflowExecutionResult> result = new Subflow().createSubflowExecutionResult(
             runContext,
@@ -59,14 +73,14 @@ class SubflowTest {
     @SuppressWarnings("deprecation")
     @Test
     void shouldNotReturnOutputsForSubflowOutputsDisabled() {
+        // Given
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
+            .thenReturn(Optional.of(false));
+
         Map<String, Object> outputs = Map.of("key", "value");
         Subflow subflow = Subflow.builder()
             .outputs(outputs)
             .build();
-        DefaultRunContext defaultRunContext = (DefaultRunContext) runContextFactory.of();
-        DefaultRunContext runContext = Mockito.mock(DefaultRunContext.class);
-        Mockito.when(runContext.pluginConfiguration(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED)).thenReturn(Optional.of(false));
-        Mockito.when(runContext.getApplicationContext()).thenReturn(defaultRunContext.getApplicationContext());
 
         // When
         Optional<SubflowExecutionResult> result = subflow.createSubflowExecutionResult(
@@ -81,6 +95,7 @@ class SubflowTest {
         Map<String, Object> expected = Subflow.Output.builder()
             .executionId(EXECUTION_ID)
             .state(DEFAULT_SUCCESS_STATE.getCurrent())
+            .outputs(Collections.emptyMap())
             .build()
             .toMap();
         assertThat(result.get().getParentTaskRun().getOutputs(), is(expected));
@@ -94,10 +109,14 @@ class SubflowTest {
 
     @SuppressWarnings("deprecation")
     @Test
-    void shouldReturnOutputsForSubflowOutputsEnabled() {
+    void shouldReturnOutputsForSubflowOutputsEnabled() throws IllegalVariableEvaluationException {
         // Given
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
+            .thenReturn(Optional.of(true));
+
         Map<String, Object> outputs = Map.of("key", "value");
-        RunContext runContext = runContextFactory.of(outputs);
+        Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(outputs);
+
 
         Subflow subflow = Subflow.builder()
             .outputs(outputs)
@@ -129,10 +148,13 @@ class SubflowTest {
     }
 
     @Test
-    void shouldOnlyReturnOutputsFromFlowOutputs() {
+    void shouldOnlyReturnOutputsFromFlowOutputs() throws IllegalVariableEvaluationException {
         // Given
-        Output output = Output.builder().id("key").value("value").type(Type.STRING).build();
-        RunContext runContext = runContextFactory.of(Map.of(output.getId(), output.getValue()));
+        Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
+            .thenReturn(Optional.of(true));
+
+        Output output = Output.builder().id("key").value("value").build();
+        Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(Map.of(output.getId(), output.getValue()));
         Flow flow = Flow.builder()
             .outputs(List.of(output))
             .build();

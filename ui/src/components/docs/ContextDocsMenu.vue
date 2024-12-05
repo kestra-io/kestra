@@ -1,3 +1,30 @@
+<template>
+    <div class="docsMenuWrapper">
+        <el-button @click="menuOpen = !menuOpen" class="menuOpener">
+            {{ t("documentationMenu") }} <MenuDown class="expandIcon" />
+        </el-button>
+        <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
+            <template v-if="rawStructure">
+                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
+                    <span class="text-secondary">
+                        {{ sectionName.toUpperCase() }}
+                    </span>
+                    <recursive-toc :parent="{children}">
+                        <template #default="{path, title}">
+                            <context-docs-link @click="menuOpen = false" :href="path.slice(5)" use-raw>
+                                {{ title.capitalize() }}
+                            </context-docs-link>
+                        </template>
+                    </recursive-toc>
+                </li>
+            </template>
+            <li v-else>
+                Loading Menu...
+            </li>
+        </ul>
+    </div>
+</template>
+
 <script setup>
     import {ref, computed, watch} from "vue";
     import {useStore} from "vuex";
@@ -93,33 +120,6 @@
         return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))]);
     });
 </script>
-
-<template>
-    <div class="docsMenuWrapper">
-        <el-button @click="menuOpen = !menuOpen" class="menuOpener">
-            {{ t("documentationMenu") }} <MenuDown class="expandIcon" />
-        </el-button>
-        <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
-            <template v-if="rawStructure">
-                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
-                    <span class="text-secondary">
-                        {{ sectionName.toUpperCase() }}
-                    </span>
-                    <recursive-toc :parent="{children}">
-                        <template #default="{path, title}">
-                            <context-docs-link @click="menuOpen = false" :href="path.slice(5)" use-raw>
-                                {{ title.capitalize() }}
-                            </context-docs-link>
-                        </template>
-                    </recursive-toc>
-                </li>
-            </template>
-            <li v-else>
-                Loading Menu...
-            </li>
-        </ul>
-    </div>
-</template>
 
 <style lang="scss" scoped>
     ul > li > span:first-child {

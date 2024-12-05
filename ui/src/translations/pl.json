@@ -360,7 +360,7 @@
     },
     "cancel": "Anuluj",
     "homeDashboard": {
-      "title": "Przegląd",
+      "title": "Dashboard",
       "today": "Dzisiaj",
       "yesterday": "Wczoraj",
       "last28Days": "Ostatnie 28 dni",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Błędy wykonania na namespace",
       "failedExecutions": "Nieudane wykonania",
       "errorLogs": "Logi błędów",
-      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?"
+      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?",
+      "wel_text": "Witamy!",
+      "start": "Zacznijmy uruchamiać Twój pierwszy workflow.",
+      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
+      "welcome": "Witamy w Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> wykonanie(a) odtworzone",
     "executions resumed": "<code>{executionCount}</code> wykonanie(a) wznowione",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
-      "started": {
-        "title": "Rozpocznij w 3 prostych krokach"
+      "tutorial": {
+        "title": "Samouczek",
+        "text": "* [Samouczki wideo](https://kestra.io/tutorial-videos/all)\n* [Dokumentacja](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Weź udział w wycieczce po produkcie"
+      "tour": {
+        "title": "Rozpocznij wycieczkę po produkcie",
+        "text": "Wybierz swój przypadek użycia i postępuj zgodnie z przewodnikiem krok po kroku, aby poznać funkcje i możliwości Kestra. ❤️"
       },
-      "doc": {
-        "title": "Dokumentacja"
-      },
-      "need-help": {
+      "help": {
+        "text": "Zadaj dowolne pytanie w naszej społeczności Slack. Jeśli utkniesz, jesteśmy tutaj, aby Ci pomóc. ✋",
         "title": "Potrzebujesz pomocy?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Komenda cURL",
-      "note": "Zauważ, że dla typu input SECRET i FILE, komenda musi być dostosowana do rzeczywistych wartości."
+      "note": "Pamiętaj, że dla typu input SECRET i FILE, polecenie musi być dostosowane do rzeczywistych wartości."
     },
     "logs_view": {
       "raw": "Widok czasowy",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
     "create_custom_dashboard": "Utwórz nowy dashboard",
     "edit_custom_dashboard": "Edytuj Dashboard",
-    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia."
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
+    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?"
   }
 }

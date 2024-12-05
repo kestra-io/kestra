@@ -134,13 +134,15 @@ import java.util.stream.Stream;
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(
         title = "Duration of the pause — useful if you want to pause the execution for a fixed amount of time.",
-        description = "The delay is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
+        description = "The delay is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        implementation = Duration.class
     )
     private Property<Duration> delay;
 
     @Schema(
         title = "Timeout of the pause — useful to avoid never-ending workflows in a human-in-the-loop scenario. For example, if you want to pause the execution until a human validates some data generated in a previous task, you can set a timeout of e.g. 24 hours. If no manual approval happens within 24 hours, the execution will automatically resume without a prior data validation.",
-        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API."
+        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        implementation = Duration.class
     )
     private Property<Duration> timeout;
 

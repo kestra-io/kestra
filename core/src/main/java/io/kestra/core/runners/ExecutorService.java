@@ -379,7 +379,9 @@ public class ExecutorService {
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             try {
-                Map<String, Object> outputs = flowInputOutput.flowOutputsToMap(flow.getOutputs());
+                Map<String, Object> outputs = flow.getOutputs()
+                    .stream()
+                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
@@ -1046,7 +1048,7 @@ public class ExecutorService {
      * WARNING: ATM, only the first violation will update the execution.
      */
     public Executor handleExecutionChangedSLA(Executor executor) throws QueueException {
-        if (ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
+        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 

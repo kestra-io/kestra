@@ -15,10 +15,7 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Introspected;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
@@ -44,24 +41,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Introspected
 public class DefaultRunContext extends RunContext {
-    // Injected
-    @Inject
+    // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
-
-    @Inject
     private VariableRenderer variableRenderer;
-
-    @Inject
     private MetricRegistry meterRegistry;
-
-    @Inject
-    private Provider<VersionProvider> version;
-
-    @Inject
+    private VersionProvider version;
     private KVStoreService kvStoreService;
-
-    @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
+    private WorkingDir workingDir;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -74,7 +61,6 @@ public class DefaultRunContext extends RunContext {
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private WorkingDir workingDir;
 
     /**
      * Creates a new {@link DefaultRunContext} instance.
@@ -119,10 +105,17 @@ public class DefaultRunContext extends RunContext {
     void init(final ApplicationContext applicationContext) {
         if (isInitialized.compareAndSet(false, true)) {
             this.applicationContext = applicationContext;
-            this.applicationContext.inject(this);
+
+            // init beans
             if (this.workingDir == null) {
+                // we only init the workingDir if not already init for the WorkingDirectory task to keep the same working directory
                 this.workingDir = applicationContext.getBean(WorkingDirFactory.class).createWorkingDirectory();
             }
+            this.variableRenderer = applicationContext.getBean(VariableRenderer.class);
+            this.meterRegistry = applicationContext.getBean(MetricRegistry.class);
+            this.version = applicationContext.getBean(VersionProvider.class);
+            this.kvStoreService = applicationContext.getBean(KVStoreService.class);
+            this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
         }
     }
 
@@ -155,10 +148,6 @@ public class DefaultRunContext extends RunContext {
 
     void setTriggerExecutionId(final String triggerExecutionId) {
         this.triggerExecutionId = triggerExecutionId;
-    }
-
-    void setWorkingDir(final WorkingDir workingDir) {
-        this.workingDir = workingDir;
     }
 
     /**
@@ -210,36 +199,6 @@ public class DefaultRunContext extends RunContext {
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
-    }
-
-    @Override
-    public <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.as(this, clazz);
-    }
-
-    @Override
-    public <T> T render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.as(this, clazz, variables);
-    }
-
-    @Override
-    public <T, I> T renderList(Property<T> inline, Class<I> clazz) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asList(this, clazz);
-    }
-
-    @Override
-    public <T, I> T  renderList(Property<T> inline, Class<I> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asList(this, clazz, variables);
-    }
-
-    @Override
-    public <T, K, V> T renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asMap(this, keyClass, valueClass);
-    }
-
-    @Override
-    public <T, K, V> T  renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asMap(this, keyClass, valueClass, variables);
     }
 
     /**
@@ -528,7 +487,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String version() {
-        return this.isInitialized() ? version.get().getVersion() : null;
+        return this.isInitialized() ? version.getVersion() : null;
     }
 
     @Override

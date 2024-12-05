@@ -94,6 +94,25 @@ export default (app, routes, stores, translations) => {
         routes
     });
 
+    /**
+     * Manage appId initialization for Contextual docs
+     */
+    router.beforeEach((to, from, next) => {
+        // set the appId from the path
+        // so it has a default
+        const pathArray = to.path.split("/");
+        const appId = pathArray[pathArray.length-1];
+        store.commit("doc/setAppId", appId);
+
+        // propagate showAppId query param
+        // to the next page to facilitate docs binding
+        if(to.query["showAppId"] === undefined && from.query["showAppId"] !== undefined){
+            next({path: to.path, query: {...to.query, showAppId: from.query["showAppId"]}})
+        }else{
+            next()
+        }
+    })
+
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
     })

@@ -8,7 +8,8 @@ export default {
     state: {
         pageMetadata: undefined,
         resourceUrlTemplate: undefined,
-        docPath: undefined
+        docPath: undefined,
+        appId: undefined
     },
     actions: {
         async children({getters}, prefix) {
@@ -45,6 +46,9 @@ export default {
         },
         setDocPath(state, newPath) {
             state.docPath = newPath;
+        },
+        setAppId(state, appId) {
+            state.appId = appId;
         }
     },
     getters: {

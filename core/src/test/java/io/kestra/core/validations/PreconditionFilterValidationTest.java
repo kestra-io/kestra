@@ -2,7 +2,7 @@ package io.kestra.core.validations;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.plugin.core.condition.AdvancedExecutionsCondition;
+import io.kestra.plugin.core.trigger.Flow;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,10 +21,10 @@ class PreconditionFilterValidationTest {
     private ModelValidator modelValidator;
 
     @ParameterizedTest
-    @EnumSource(value = AdvancedExecutionsCondition.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
-    void shouldValidateConditionWithAValue(AdvancedExecutionsCondition.Type type) {
-        var condition = AdvancedExecutionsCondition.Filter.builder()
-            .field(AdvancedExecutionsCondition.Field.FLOW_ID)
+    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    void shouldValidateConditionWithAValue(Flow.Type type) {
+        var condition = Flow.Filter.builder()
+            .field(Flow.Field.FLOW_ID)
             .type(type)
             .value("myFlow")
             .build();
@@ -34,10 +34,10 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = AdvancedExecutionsCondition.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
-    void shouldNotValidateConditionWithValues(AdvancedExecutionsCondition.Type type) {
-        var condition = AdvancedExecutionsCondition.Filter.builder()
-            .field(AdvancedExecutionsCondition.Field.FLOW_ID)
+    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    void shouldNotValidateConditionWithValues(Flow.Type type) {
+        var condition = Flow.Filter.builder()
+            .field(Flow.Field.FLOW_ID)
             .type(type)
             .values(List.of("myFlow1", "myFlow2"))
             .build();
@@ -49,10 +49,10 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = AdvancedExecutionsCondition.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
-    void shouldNotValidateConditionWithAValueAndValues(AdvancedExecutionsCondition.Type type) {
-        var condition = AdvancedExecutionsCondition.Filter.builder()
-            .field(AdvancedExecutionsCondition.Field.FLOW_ID)
+    @EnumSource(value = Flow.Type.class, names = {"EQUAL_TO", "NOT_EQUAL_TO", "IS_NULL", "IS_NOT_NULL", "IS_TRUE", "IS_FALSE", "STARTS_WITH", "ENDS_WITH", "REGEX", "CONTAINS"})
+    void shouldNotValidateConditionWithAValueAndValues(Flow.Type type) {
+        var condition = Flow.Filter.builder()
+            .field(Flow.Field.FLOW_ID)
             .type(type)
             .value("myFlow")
             .values(List.of("myFlow1", "myFlow2"))
@@ -65,10 +65,10 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = AdvancedExecutionsCondition.Type.class, names = {"IN", "NOT_IN"})
-    void shouldValidateConditionWithValues(AdvancedExecutionsCondition.Type type) {
-        var condition = AdvancedExecutionsCondition.Filter.builder()
-            .field(AdvancedExecutionsCondition.Field.FLOW_ID)
+    @EnumSource(value = Flow.Type.class, names = {"IN", "NOT_IN"})
+    void shouldValidateConditionWithValues(Flow.Type type) {
+        var condition = Flow.Filter.builder()
+            .field(Flow.Field.FLOW_ID)
             .type(type)
             .values(List.of("myFlow1", "myFlow2"))
             .build();
@@ -78,10 +78,10 @@ class PreconditionFilterValidationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = AdvancedExecutionsCondition.Type.class, names = {"IN", "NOT_IN"})
-    void shouldNotValidateConditionWithAValue(AdvancedExecutionsCondition.Type type) {
-        var condition = AdvancedExecutionsCondition.Filter.builder()
-            .field(AdvancedExecutionsCondition.Field.FLOW_ID)
+    @EnumSource(value = Flow.Type.class, names = {"IN", "NOT_IN"})
+    void shouldNotValidateConditionWithAValue(Flow.Type type) {
+        var condition = Flow.Filter.builder()
+            .field(Flow.Field.FLOW_ID)
             .type(type)
             .value("myFlow1")
             .build();

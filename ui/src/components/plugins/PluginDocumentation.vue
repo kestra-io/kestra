@@ -13,10 +13,16 @@
     export default {
         name: "PluginDocumentation",
         components: {Markdown},
+        props: {
+            overrideIntro: {
+                type: String,
+                default: null
+            }
+        },
         computed: {
             ...mapState("plugin", ["editorPlugin"]),
             introContent () {
-                return intro
+                return this.overrideIntro ?? intro
             }
         },
         created() {

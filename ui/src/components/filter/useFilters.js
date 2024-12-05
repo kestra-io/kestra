@@ -1,4 +1,12 @@
 import {useI18n} from "vue-i18n";
+import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import TagOutline from "vue-material-design-icons/TagOutline.vue";
+import MathLog from "vue-material-design-icons/MathLog.vue";
+import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
+import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
+import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
+import StateMachine from "vue-material-design-icons/StateMachine.vue";
+import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
 
 const getItem = (key) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -8,22 +16,9 @@ const setItem = (key, value) => {
     return localStorage.setItem(key, JSON.stringify(value));
 };
 
-const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
+export const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
 const filterItems = (items, element) => {
     return items.filter((item) => compare(item, element));
-};
-
-export const formatLabel = (option) => {
-    let {label, comparator, value} = option;
-
-    if (comparator?.label) label += `:${comparator.label}`;
-
-    if (value.length) {
-        if (label !== "absolute_date:between") label += `:${value.join(", ")}`;
-        else label += `:${value[0]?.startDate}:and:${value[0]?.endDate}`;
-    }
-
-    return label;
 };
 
 export function useFilters(prefix) {
@@ -82,42 +77,56 @@ export function useFilters(prefix) {
     const OPTIONS = [
         {
             key: "namespace",
+            icon: DotsSquare,
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
             comparators: [COMPARATORS.STARTS_WITH],
         },
         {
             key: "state",
+            icon: StateMachine,
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "scope",
+            icon: FilterSettingsOutline,
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "labels",
+            icon: TagOutline,
             label: t("filters.options.labels"),
             value: {label: "labels", comparator: undefined, value: []},
             comparators: [COMPARATORS.CONTAINS],
         },
         {
             key: "childFilter",
+            icon: FilterVariantMinus,
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "level",
+            icon: MathLog,
+            label: t("filters.options.level"),
+            value: {label: "level", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "timeRange",
+            icon: CalendarRangeOutline,
             label: t("filters.options.relative_date"),
             value: {label: "relative_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.IN],
         },
         {
             key: "date",
+            icon: CalendarEndOutline,
             label: t("filters.options.absolute_date"),
             value: {label: "absolute_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.BETWEEN],
@@ -157,7 +166,7 @@ export function useFilters(prefix) {
     };
 
     const decodeParams = (query, include) => {
-        const params = Object.entries(query)
+        let params = Object.entries(query)
             .filter(
                 ([key]) =>
                     key === "q" ||
@@ -182,12 +191,16 @@ export function useFilters(prefix) {
         // Handle the date functionality by grouping startDate and endDate if they exist
         if (query.startDate && query.endDate) {
             params.push({
-                label: "absolute_date:between",
+                label: "absolute_date",
                 value: [{startDate: query.startDate, endDate: query.endDate}],
             });
         }
 
-        return params;
+        // TODO: Will need tweaking once we introduce multiple comparators for filters
+        return params.map((p) => {
+            const comparator = OPTIONS.find((o) => o.value.label === p.label);
+            return {...p, comparator: comparator?.comparators?.[0]};
+        });
     };
 
     return {
@@ -213,6 +226,7 @@ export function useFilters(prefix) {
             return setItem(keys.saved, filtered);
         },
 
+        COMPARATORS,
         OPTIONS,
         encodeParams,
         decodeParams,

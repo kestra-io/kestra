@@ -37,6 +37,7 @@ class LocalFilesTest {
 
         return storageInterface.put(
             null,
+            null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
@@ -64,14 +65,14 @@ class LocalFilesTest {
         assertThat(outputs.getUris(), notNullValue());
         assertThat(outputs.getUris().size(), is(1));
         assertThat(
-            new String(storageInterface.get(null, outputs.getUris().get("hello-input.txt")).readAllBytes()),
+            new String(storageInterface.get(null, null, outputs.getUris().get("hello-input.txt")).readAllBytes()),
             is("Hello Input")
         );
         assertThat(runContext.workingDir().path().toFile().list().length, is(2));
         assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt")), is("tata"));
         assertThat(
             Files.readString(runContext.workingDir().path().resolve("application-test.yml")),
-            is(new String(storageInterface.get(null, storageFile).readAllBytes()))
+            is(new String(storageInterface.get(null, null, storageFile).readAllBytes()))
         );
 
         runContext.cleanup();
@@ -98,18 +99,18 @@ class LocalFilesTest {
         assertThat(outputs.getUris(), notNullValue());
         assertThat(outputs.getUris().size(), is(3));
         assertThat(
-            new String(storageInterface.get(null, outputs.getUris().get("test/hello-input.txt")).readAllBytes()),
+            new String(storageInterface.get(null, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes()),
             is("Hello Input")
         );
         assertThat(
-            new String(storageInterface.get(null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
+            new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
                 .readAllBytes()),
             is("tata")
         );
         assertThat(
-            new String(storageInterface.get(null, outputs.getUris().get( "test/sub/dir/3/application-test.yml"))
+            new String(storageInterface.get(null, null, outputs.getUris().get( "test/sub/dir/3/application-test.yml"))
                 .readAllBytes()),
-            is(new String(storageInterface.get(null, storageFile).readAllBytes()))
+            is(new String(storageInterface.get(null, null, storageFile).readAllBytes()))
         );
         runContext.cleanup();
     }

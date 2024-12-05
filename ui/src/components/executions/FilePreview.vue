@@ -102,8 +102,8 @@
             }
         },
         mounted() {
-            this.maxPreview = this.configs.preview.initial;
-            this.encoding = this.encodingOptions[0];
+            this.maxPreview = this.configPreviewInitialRows();
+            this.encoding = this.encodingOptions[0].value;
         },
         computed: {
             ...mapState("execution", ["filePreview"]),
@@ -131,16 +131,22 @@
                 return "data:image/" + this.extension + ";base64," + this.preview.content;
             },
             maxPreviewOptions() {
-                return [10, 25, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configs.preview.max)
+                return [10, 25, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(value => value <= this.configPreviewMaxRows())
             }
         },
         emits: ["preview"],
         methods: {
+            configPreviewInitialRows() {
+                return this.configs?.preview.initial || 100
+            },
+            configPreviewMaxRows() {
+                return this.configs?.preview.max || 5000
+            },
             getFilePreview() {
-                let data = {
+                const data = {
                     path: this.value,
                     maxRows: this.maxPreview,
-                    encoding: this.encoding.value
+                    encoding: this.encoding
                 };
                 this.selectedPreview = this.value;
                 if (this.executionId !== undefined) {

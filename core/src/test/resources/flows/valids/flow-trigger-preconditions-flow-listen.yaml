@@ -1,0 +1,40 @@
+id: flow-trigger-preconditions-flow-listen
+namespace: io.kestra.tests.trigger.preconditions
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow
+      flows:
+        - namespace: io.kestra.tests.trigger.preconditions
+          flowId: flow-trigger-preconditions-flow-a
+          states: [SUCCESS, WARNING, FAILED]
+        - namespace: io.kestra.tests.trigger.preconditions
+          flowId: flow-trigger-preconditions-flow-b
+          states: [SUCCESS]
+      where:
+        - id: flow1
+          filters:
+            - field: NAMESPACE
+              type: STARTS_WITH
+              value: io.kestra.tests.trigger
+            - field: FLOW_ID
+              type: EQUAL_TO
+              value: flow-trigger-preconditions-flow-a
+            - field: EXPRESSION
+              type: IS_TRUE
+              value: "{{labels.some == 'label'}}"
+        - id: flow2
+          filters:
+            - field: NAMESPACE
+              type: ENDS_WITH
+              value: trigger.preconditions
+            - field: FLOW_ID
+              type: EQUAL_TO
+              value: flow-trigger-preconditions-flow-b
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

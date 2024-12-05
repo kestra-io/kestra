@@ -401,7 +401,7 @@ public class ExecutionService {
 
                 if (purgeStorage) {
                     URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
-                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), uri).size());
+                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
                 }
 
                 return (PurgeResult) builder.build();
@@ -441,7 +441,7 @@ public class ExecutionService {
 
         if (deleteStorage) {
             URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
-            storageInterface.deleteByPrefix(execution.getTenantId(), uri);
+            storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri);
         }
     }
 

@@ -9,9 +9,6 @@
             :flow-graph="flowGraph"
             :is-read-only="false"
             :is-dirty="true"
-            :total="total"
-            :guided-properties="guidedProperties"
-            :flow-validation="flowValidation"
             :flow="sourceWrapper"
             :next-revision="1"
         />
@@ -20,7 +17,7 @@
 
 <script>
     import EditorView from "../inputs/EditorView.vue";
-    import {mapGetters, mapState, mapMutations} from "vuex";
+    import {mapGetters, mapMutations, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import {apiUrl} from "override/utils/route";

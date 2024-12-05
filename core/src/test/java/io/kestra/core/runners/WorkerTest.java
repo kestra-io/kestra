@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -97,7 +98,7 @@ class WorkerTest {
 
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
-            .delay(Duration.ofSeconds(1))
+            .delay(Property.of(Duration.ofSeconds(1)))
             .id("unit-test")
             .build();
 
@@ -165,7 +166,11 @@ class WorkerTest {
         executionKilledQueue.emit(ExecutionKilledExecution.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
         Await.until(
-            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5,
+            () -> {
+                // copy the list to avoid concurrent modification exception if a WorkerTaskResult arrives in the queue
+                var copy = new ArrayList<>(workerTaskResult);
+                return copy.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5;
+            },
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

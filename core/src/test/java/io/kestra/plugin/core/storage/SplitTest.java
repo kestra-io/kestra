@@ -93,7 +93,7 @@ class SplitTest {
     private String readAll(List<URI> uris) throws IOException {
         return uris
             .stream()
-            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(null, uri)))))
+            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, uri)))))
             .collect(Collectors.joining());
     }
 
@@ -104,6 +104,7 @@ class SplitTest {
         Files.write(tempFile.toPath(), content(count));
 
         return storageInterface.put(
+            null,
             null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(tempFile)

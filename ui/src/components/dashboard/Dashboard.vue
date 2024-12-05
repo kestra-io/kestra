@@ -648,4 +648,20 @@ $spacing: 20px;
         }
     }
 }
+
+:deep(.legend) {
+    &::-webkit-scrollbar {
+        height: 5px;
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--card-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 0px;
+    }
+}
 </style>

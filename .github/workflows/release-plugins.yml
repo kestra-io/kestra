@@ -1,0 +1,58 @@
+name: Run Gradle Release for Kestra Plugins
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'The release version'
+        required: true
+        type: string
+      nextVersion:
+        description: 'The next version'
+        required: true
+        type: string
+      dryRun:
+        description: 'Use DRY_RUN mode'
+        required: false
+        default: 'false'
+jobs:
+  release:
+    name: Release plugins
+    runs-on: kestra-private-standard
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Get Plugins List
+      - name: Get Plugins List
+        uses: ./.github/actions/plugins-list
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        id: plugins-list
+        with:
+          plugin-version: 'LATEST'
+
+      # Execute
+      - name: Run Gradle Release
+        if: ${{ github.event.inputs.dryRun == 'false' }}
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: |
+          ./release-plugins.sh \
+          --release-version=${{github.event.inputs.releaseVersion}} \
+          --next-version=${{github.event.inputs.nextVersion}} \
+          --yes \
+           ${{ steps.plugins-list.outputs.repositories }}
+
+      - name: Run Gradle Release (DRY_RUN)
+        if: ${{ github.event.inputs.dryRun == 'true' }}
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: |
+          ./release-plugins.sh \
+          --release-version=${{github.event.inputs.releaseVersion}} \
+          --next-version=${{github.event.inputs.nextVersion}} \
+          --dry-run \
+          --yes \
+          ${{ steps.plugins-list.outputs.repositories }}

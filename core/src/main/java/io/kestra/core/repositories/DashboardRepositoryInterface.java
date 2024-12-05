@@ -9,7 +9,6 @@ import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,5 +27,5 @@ public interface DashboardRepositoryInterface {
 
     Dashboard delete(String tenantId, String id);
 
-    <F extends Enum<F>> List<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException;
+    <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException;
 }

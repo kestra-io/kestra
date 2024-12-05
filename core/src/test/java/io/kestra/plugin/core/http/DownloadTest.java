@@ -134,7 +134,26 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), containsString("filename.jpg"));
+        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+    }
+
+    @Test
+    void contentDispositionWithPath() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(embeddedServer.getURI() + "/content-disposition")
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        assertThat(output.getUri().toString(), not(containsString("/secure-path/")));
+        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
     }
 
     @Test
@@ -176,6 +195,12 @@ class DownloadTest {
         public HttpResponse<byte[]> contentDisposition() {
             return HttpResponse.ok("Hello World".getBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"filename.jpg\"");
+        }
+
+        @Get("content-disposition-path")
+        public HttpResponse<byte[]> contentDispositionWithPath() {
+            return HttpResponse.ok("Hello World".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"/secure-path/filename.jpg\"");
         }
     }
 }

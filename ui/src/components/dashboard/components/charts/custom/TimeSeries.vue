@@ -1,11 +1,12 @@
 <template>
     <div :id="containerID" />
     <Bar
-        v-if="generated.length"
+        v-if="generated !== undefined"
         :data="parsedData"
         :options
         :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
         class="chart"
+        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -18,19 +19,18 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {
-        defaultConfig,
-        getConsistentHEXColor,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
+    import moment from "moment";
+
+    import {useRoute} from "vue-router";
+    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+
     const store = useStore();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
-    import moment from "moment";
-
-    import {useRoute} from "vue-router";
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
@@ -76,7 +76,7 @@
                     callbacks: {
                         label: (value) => {
                             if (!value.dataset.tooltip) return "";
-                            return `${value.dataset.tooltip} : ${value.raw}`;
+                            return `${value.dataset.tooltip}`;
                         },
                     },
                 },
@@ -85,33 +85,45 @@
                 x: {
                     title: {
                         display: true,
-                        text: data.columns[chartOptions.column].displayName,
+                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
-                    ...DEFAULTS,
+                    ...DEFAULTS
                 },
                 y: {
                     title: {
                         display: true,
-                        text: aggregator[0][1].displayName,
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     position: "left",
                     ...DEFAULTS,
+                    ticks: {
+                        ...DEFAULTS.ticks,
+                        callback: value => isDuration(aggregator[0][1].field) ? Utils.humanDuration(value) : value
+                    }
                 },
                 ...(yBShown && {
                     yB: {
                         title: {
                             display: true,
-                            text: aggregator[1][1].displayName,
+                            text: aggregator[1][1].displayName ?? aggregator[1][0],
                         },
                         position: "right",
                         ...DEFAULTS,
                         display: true,
+                        ticks: {
+                            ...DEFAULTS.ticks,
+                            callback: value => isDuration(aggregator[1][1].field) ? Utils.humanDuration(value) : value
+                        }
                     },
                 }),
             },
         });
     });
+
+    function isDuration(field) {
+        return field === "DURATION";
+    }
 
     const parsedData = computed(() => {
         const parseValue = (value) => {
@@ -119,13 +131,16 @@
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
 
+        const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = generated.value.map((v) => {
+            const values = rawData.map((v) => {
                 return parseValue(v[chartOptions.column]);
             });
 
             return Array.from(new Set(values)).sort();
         })();
+
+        const aggregatorKeys = aggregator.map(([key]) => key);
 
         const reducer = (array, field, yAxisID) => {
             if (!array.length) return;
@@ -134,12 +149,12 @@
             const {column, colorByColumn} = chartOptions;
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
-            const fields = Object.entries(columns)
-                .filter(([k, _v]) => k !== aggregator[0][0] && k !== column)
-                .map(([k]) => k);
+            const fields = Object.keys(columns)
+                .filter(key => !aggregatorKeys.includes(key))
+                .filter(key => key !== column);
 
             return array.reduce((acc, {...params}) => {
-                const stack = fields.map((f) => `${f}: ${params[f]}`).join(", ");
+                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -186,7 +201,7 @@
             });
         };
 
-        const yDataset = reducer(generated.value, aggregator[0][0], "y");
+        const yDataset = reducer(rawData, aggregator[0][0], "y");
         const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
         const label =
@@ -199,7 +214,7 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: generated.value.map((v) => v[aggregator[1][0]]),
+                        data: rawData.map((v) => v[aggregator[1][0]]),
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
@@ -211,7 +226,7 @@
         };
     });
 
-    const generated = ref([]);
+    const generated = ref();
     const generate = async () => {
         const params = {
             id: dashboard.value.id,
@@ -243,10 +258,15 @@
 </script>
 
 <style lang="scss" scoped>
-$height: 200px;
-
 .chart {
-    max-height: $height;
+    #{--chart-height}: 200px;
+
+    &:not(.with-legend) {
+        #{--chart-height}: 231px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
 }
 </style>
-ss
+

@@ -8,8 +8,8 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -47,9 +47,11 @@ import org.jooq.Configuration;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -294,7 +296,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             flowTopologyService
                                 .topology(
                                     flow,
-                                    this.allFlows
+                                    this.allFlows.stream().filter(f -> Objects.equals(f.getTenantId(), flow.getTenantId())).toList()
                                 )
                         )
                             .distinct()

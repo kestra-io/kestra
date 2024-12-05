@@ -4,9 +4,9 @@
         placement="bottom-start"
         @visible-change="loadAll"
     >
-        <kicon :tooltip="$t('filters.recent.label')" placement="bottom">
+        <KestraIcon :tooltip="$t('filters.recent.label')" placement="bottom">
             <el-button :icon="History" class="rounded-0 rounded-start" />
-        </kicon>
+        </KestraIcon>
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 history-dropdown">
@@ -68,8 +68,8 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import KestraIcon from "../../../Kicon.vue";
     import HistoryItem from "./HistoryItem.vue";
-    import Kicon from "../../../Kicon.vue";
 
     import History from "vue-material-design-icons/History.vue";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";

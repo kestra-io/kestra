@@ -78,9 +78,9 @@
         </el-select>
 
         <el-button-group class="d-inline-flex">
-            <kicon :tooltip="$t('search')" placement="bottom">
+            <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button :icon="Magnify" @click="triggerSearch" />
-            </kicon>
+            </KestraIcon>
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
@@ -114,7 +114,7 @@
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
     import Dashboards from "./components/Dashboards.vue";
-    import Kicon from "../Kicon.vue";
+    import KestraIcon from "../Kicon.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -528,11 +528,12 @@
     }
 
     & .el-button-group {
-        > .el-button {
+        .el-button {
             border-radius: 0;
         }
 
-        > .el-button:last-child {
+        span.kicon:last-child .el-button,
+        > button.el-button:last-child {
             border-top-right-radius: var(--bs-border-radius);
             border-bottom-right-radius: var(--bs-border-radius);
         }

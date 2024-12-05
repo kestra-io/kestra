@@ -661,14 +661,14 @@
       },
       "tutorial": {
         "title": "チュートリアル",
-        "text": "* [ビデオチュートリアル](https://kestra.io/tutorial-videos/all)\n* [ドキュメント](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+        "text": "```\n* [ビデオチュートリアル](https://kestra.io/tutorial-videos/all)\n* [ドキュメント](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"
       },
       "tour": {
         "title": "製品ツアーを体験する",
-        "text": "利用ケースを選択し、ステップバイステップガイドに従ってKestraの機能と能力を学びましょう。❤️"
+        "text": "ユースケースを選択し、ステップバイステップのガイドに従ってKestraの機能と能力を学びましょう。❤️"
       },
       "help": {
-        "text": "質問がある場合は、私たちのSlackコミュニティでお尋ねください。行き詰まった場合は、私たちがサポートします。✋",
+        "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
         "title": "お困りですか？"
       }
     },

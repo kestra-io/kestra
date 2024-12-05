@@ -360,7 +360,7 @@
     },
     "cancel": "取消",
     "homeDashboard": {
-      "title": "概览",
+      "title": "仪表板",
       "today": "今天",
       "yesterday": "昨天",
       "last28Days": "最近28天",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "每个命名空间的执行错误",
       "failedExecutions": "失败的执行",
       "errorLogs": "错误日志",
-      "no executions": "准备好看到你的流程在行动了吗？"
+      "no executions": "准备好看到你的流程在行动了吗？",
+      "wel_text": "欢迎！",
+      "start": "让我们启动并运行您的第一个workflow。",
+      "guide": "需要指导来执行您的第一个flow吗？",
+      "welcome": "欢迎使用 Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> 个执行已重放",
     "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
     "originalCreatedDate": "原始创建日期",
     "welcome": {
-      "started": {
-        "title": "轻松开始的3个步骤"
+      "tutorial": {
+        "title": "教程",
+        "text": "* [视频教程](https://kestra.io/tutorial-videos/all)\n* [文档](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "参加产品巡演"
+      "tour": {
+        "title": "开始产品导览",
+        "text": "选择您的用例，并按照分步指南学习 Kestra 的功能和能力。❤️"
       },
-      "doc": {
-        "title": "文档"
-      },
-      "need-help": {
-        "title": "需要帮助？"
+      "help": {
+        "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
+        "title": "需要帮助吗？"
       }
     },
     "pluginPage": {
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL命令",
-      "note": "请注意，对于SECRET和FILE输入类型，命令必须适应以匹配实际值。"
+      "note": "请注意，对于SECRET和FILE类型的input，命令必须调整以匹配实际值。"
     },
     "logs_view": {
       "raw": "时间视图",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "自定义仪表板",
     "create_custom_dashboard": "创建新仪表板",
     "edit_custom_dashboard": "编辑仪表板",
-    "custom_dashboard_empty": "没有结果显示。"
+    "custom_dashboard_empty": "没有结果显示。",
+    "remove_bookmark": "您确定要删除此书签吗？"
   }
 }

@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.*;
 class FlowWithSourceTest {
     @Test
     void source() throws JsonProcessingException {
-        FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
+        var flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .tasks(List.of(
@@ -33,13 +33,13 @@ class FlowWithSourceTest {
                         "123456789 \n" +
                         "123456789     \n")
                     .build()
-            ));
-
-        FlowWithSource flow = builder
-            .source(JacksonMapper.ofYaml().writeValueAsString(builder.build().toFlow()))
+            ))
             .build();
 
-        String source = flow.getSource();
+        FlowWithSource flowWithSource = FlowWithSource.of(flow, flow.generateSource());
+
+        String source = flowWithSource.getSource();
+        System.out.println(source);
 
         assertThat(source, not(containsString("deleted: false")));
         assertThat(source, containsString("format: |\n"));

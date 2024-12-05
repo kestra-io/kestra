@@ -587,6 +587,7 @@ public class ExecutionController {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
         List<Label> parsedLabels = parseLabels(labels);
         Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate);
+        final AtomicReference<Runnable> disposable = new AtomicReference<>();
         Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
             .handle((executionInputs, sink) -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
@@ -598,7 +599,6 @@ public class ExecutionController {
                     if (!wait) {
                         future.complete(ExecutionResponse.fromExecution(executionWithInputs, executionUrl(executionWithInputs)));
                     } else {
-                        final AtomicReference<Runnable> disposable = new AtomicReference<>();
                         disposable.set(this.executionQueue.receive(either -> {
                             if (either.isRight()) {
                                 log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
@@ -607,7 +607,6 @@ public class ExecutionController {
 
                             Execution item = either.getLeft();
                             if (item.getId().equals(executionWithInputs.getId()) && this.isStopFollow(flow, item)) {
-                                disposable.get().run();
                                 future.complete(ExecutionResponse.fromExecution(item, executionUrl(item)));
                             }
                         }));
@@ -617,7 +616,11 @@ public class ExecutionController {
                     sink.error(e);
                 }
             });
-        return handle.flatMap(Mono::fromFuture);
+        return handle.flatMap(Mono::fromFuture).doFinally(ignored -> {
+            if (disposable.get() != null) {
+                disposable.get().run();
+            }
+        });
     }
 
     private URI executionUrl(Execution execution) {
@@ -1511,12 +1514,7 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, FluxSink.OverflowStrategy.BUFFER)
-            .doOnCancel(() -> {
-                if (cancel.get() != null) {
-                    cancel.get().run();
-                }
-            })
-            .doOnComplete(() -> {
+            .doFinally(ignored -> {
                 if (cancel.get() != null) {
                     cancel.get().run();
                 }

@@ -2,6 +2,8 @@ import {ElNotification, ElMessageBox, ElTable, ElTableColumn} from "element-plus
 import {h} from "vue"
 import {useI18n} from "vue-i18n"
 
+import Markdown from "../components/layout/Markdown.vue"
+
 // eslint-disable-next-line no-unused-vars
 const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
     _wrap: function(message) {
@@ -21,12 +23,15 @@ const makeToast = (t: (t:string, options?: Record<string, string>) => string) =>
                 ]
             )
         } else {
-            return h("span", {innerHTML: message});
+            return h(Markdown, {source: message});
         }
     },
-    confirm: function(message, callback, renderVNode = false, type = "warning" as const) {
+    _MarkdownWrap: function(message) {    
+        return h(Markdown, {source: message})
+    },
+    confirm: function(message, callback, type = "warning" as const) {
         ElMessageBox
-            .confirm(renderVNode ? message : this._wrap(message || t("toast confirm")), t("confirmation"), {type})
+            .confirm(typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type})
             .then(() => callback())
     },
     saved: function(name, title, options) {

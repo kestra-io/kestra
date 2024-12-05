@@ -15,7 +15,7 @@ public class UriProvider {
     @Value("${kestra.url:}")
     String uri;
 
-    private URI build(String url) {
+    protected URI build(String url) {
         if (uri == null || uri.isEmpty()) {
             return null;
         }
@@ -50,9 +50,5 @@ public class UriProvider {
             "flows/" +
             flow.getNamespace() + "/" +
             flow.getId());
-    }
-
-    public URI resetPasswordUrl(String token) {
-        return this.build("/ui/login/reset-password?token=" + token);
     }
 }

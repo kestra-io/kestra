@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
@@ -18,12 +20,15 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -34,12 +39,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.stream.Streams;
 
 import java.io.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +50,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -81,7 +83,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 tasks:
                   - id: read_file
                     type: io.kestra.plugin.scripts.shell.Commands
-                    taskRunner: 
+                    taskRunner:
                       type: io.kestra.plugin.core.runner.Process
                     commands:
                       - cat "{{ inputs.order }}"
@@ -273,10 +275,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     private Map<String, Object> inputs;
 
     @Schema(
-        title = "The labels to pass to the subflow to be executed"
+        title = "The labels to pass to the subflow to be executed.",
+        implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @PluginProperty(dynamic = true)
-    private Map<String, String> labels;
+    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
+    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    private List<@NoSystemLabelValidation Label> labels;
 
     @Builder.Default
     @Schema(
@@ -414,13 +419,13 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         private Map<String, Object> inputs;
         private Boolean inheritLabels;
-        private Map<String, String> labels;
+        private List<Label> labels;
         private Boolean wait;
         private Boolean transmitFailed;
         private Property<ZonedDateTime> scheduleOn;
         private SubflowId subflowId;
 
-        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, Map<String, String> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId) {
+        private ForEachItemExecutable(String parentId, Map<String, Object> inputs, Boolean inheritLabels, List<Label> labels, Boolean wait, Boolean transmitFailed, Property<ZonedDateTime> scheduleOn, SubflowId subflowId) {
             this.inputs = inputs;
             this.inheritLabels = inheritLabels;
             this.labels = labels;
@@ -579,8 +584,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             URI subflowOutputsBaseUri = URI.create(StorageContext.KESTRA_PROTOCOL + subflowOutputsBase + "/");
 
             StorageInterface storage = ((DefaultRunContext) runContext).getApplicationContext().getBean(StorageInterface.class);
-            if (storage.exists(runContext.tenantId(), subflowOutputsBaseUri)) {
-                List<FileAttributes> list = storage.list(runContext.tenantId(), subflowOutputsBaseUri);
+            if (storage.exists(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri)) {
+                List<FileAttributes> list = storage.list(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri);
 
                 if (!list.isEmpty()) {
                     // Merge outputs from each sub-flow into a single stored in the internal storage.

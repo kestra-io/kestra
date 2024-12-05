@@ -4,6 +4,7 @@ import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.Plugin;
 
+import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,8 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * @implNote Most methods (except lifecycle on) took a namespace as parameter, this namespace parameter MUST NOT BE USED to denote the path of the storage URI in any sort,
+ *           the URI must never be modified by a storage implementation.
+ *           This is only used by storage implementation that must enforce namespace isolation.
+ */
 public interface StorageInterface extends AutoCloseable, Plugin {
 
     /**
@@ -34,10 +39,10 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     }
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    InputStream get(String tenantId, URI uri) throws IOException;
+    InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    StorageObject getWithMetadata(String tenantId, URI uri) throws IOException;
+    StorageObject getWithMetadata(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
      * Returns all objects that start with the given prefix
@@ -46,10 +51,10 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return Kestra's internal storage uris of the found objects
      */
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    List<URI> allByPrefix(String tenantId, URI prefix, boolean includeDirectories) throws IOException;
+    List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    List<FileAttributes> list(String tenantId, URI uri) throws IOException;
+    List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
      * Whether the uri points to a file/object that exist in the internal storage.
@@ -59,8 +64,8 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return true if the uri points to a file/object that exist in the internal storage.
      */
     @SuppressWarnings("try")
-    default boolean exists(String tenantId, URI uri) {
-        try (InputStream ignored = get(tenantId, uri)) {
+    default boolean exists(String tenantId, @Nullable String namespace, URI uri) {
+        try (InputStream ignored = get(tenantId, namespace, uri)) {
             return true;
         } catch (IOException ieo) {
             return false;
@@ -68,31 +73,31 @@ public interface StorageInterface extends AutoCloseable, Plugin {
     }
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    FileAttributes getAttributes(String tenantId, URI uri) throws IOException;
+    FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    default URI put(String tenantId, URI uri, InputStream data) throws IOException {
-        return this.put(tenantId, uri, new StorageObject(null, data));
+    default URI put(String tenantId, @Nullable String namespace, URI uri, InputStream data) throws IOException {
+        return this.put(tenantId, namespace, uri, new StorageObject(null, data));
     }
 
     @Retryable(includes = {IOException.class})
-    URI put(String tenantId, URI uri, StorageObject storageObject) throws IOException;
+    URI put(String tenantId, @Nullable String namespace, URI uri, StorageObject storageObject) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    boolean delete(String tenantId, URI uri) throws IOException;
+    boolean delete(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    URI createDirectory(String tenantId, URI uri) throws IOException;
+    URI createDirectory(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
-    URI move(String tenantId, URI from, URI to) throws IOException;
+    URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException;
 
     @Retryable(includes = {IOException.class})
-    List<URI> deleteByPrefix(String tenantId, URI storagePrefix) throws IOException;
+    List<URI> deleteByPrefix(String tenantId, @Nullable String namespace, URI storagePrefix) throws IOException;
 
     @Retryable(includes = {IOException.class})
     default URI from(Execution execution, String input, File file) throws IOException {
         URI uri = StorageContext.forInput(execution, input, file.getName()).getContextStorageURI();
-        return this.put(execution.getTenantId(), uri, new BufferedInputStream(new FileInputStream(file)));
+        return this.put(execution.getTenantId(), execution.getNamespace(), uri, new BufferedInputStream(new FileInputStream(file)));
     }
 }

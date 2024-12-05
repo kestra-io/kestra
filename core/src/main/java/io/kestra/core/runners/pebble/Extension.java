@@ -34,6 +34,9 @@ public class Extension extends AbstractExtension {
     private ReadFileFunction readFileFunction;
 
     @Inject
+    private FileURIFunction fileURIFunction;
+
+    @Inject
     @Nullable
     private RenderFunction renderFunction;
 
@@ -43,6 +46,10 @@ public class Extension extends AbstractExtension {
 
     @Inject
     private FileSizeFunction fileSizeFunction;
+
+    @Inject
+    @Nullable
+    private ErrorLogsFunction errorLogsFunction;
 
     @Override
     public List<TokenParser> getTokenParsers() {
@@ -123,6 +130,7 @@ public class Extension extends AbstractExtension {
         functions.put("secret", secretFunction);
         functions.put("kv", kvFunction);
         functions.put("read", readFileFunction);
+        functions.put("fileURI", fileURIFunction);
         if (this.renderFunction != null) {
             functions.put("render", renderFunction);
         }
@@ -132,9 +140,16 @@ public class Extension extends AbstractExtension {
         functions.put("encrypt", new EncryptFunction());
         functions.put("decrypt", new DecryptFunction());
         functions.put("yaml", new YamlFunction());
-        functions.put("printContext", new PrintContextFunction());
+        functions.put("printContext", new FetchContextFunction());
+        functions.put("fetchContext", new FetchContextFunction());
+        functions.put("uuid", new UUIDFunction());
+        functions.put("id", new IDFunction());
         functions.put("fromIon", new FromIonFunction());
         functions.put("fileSize", fileSizeFunction);
+        if (this.errorLogsFunction != null) {
+            functions.put("errorLogs", errorLogsFunction);
+        }
+        functions.put("randomInt", new RandomIntFunction());
         return functions;
     }
 

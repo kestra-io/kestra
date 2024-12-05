@@ -3,10 +3,7 @@ package io.kestra.core.models.property;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -24,6 +21,7 @@ import java.io.IOException;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Define a plugin properties that will be rendered and converted to a target type at use time.
@@ -36,7 +34,12 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Property<T> {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    // By default, durations are stored as numbers.
+    // We cannot change that globally, as in JDBC/Elastic 'execution.state.duration' must be a number to be able to aggregate them.
+    // So we only change it here to be used for Property.of().
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson()
+        .copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
     private String expression;
     private T value;
@@ -62,8 +65,18 @@ public class Property<T> {
                 throw new IllegalArgumentException(e);
             }
         } else {
-            expression = MAPPER.convertValue(value, String.class);
+            try {
+                expression = MAPPER.convertValue(value, String.class);
+            } catch (IllegalArgumentException e) {
+                // if it fails, try with writeValueAsString instead
+                try {
+                    expression = MAPPER.writeValueAsString(value);
+                } catch (JsonProcessingException e2) {
+                    throw new IllegalArgumentException(e2);
+                }
+            }
         }
+
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
@@ -79,6 +92,7 @@ public class Property<T> {
     public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             String rendered =  runContext.render(property.expression);
+            // special case for duration as they should be serialized as double but are not always
             property.value = MAPPER.convertValue(rendered, clazz);
         }
 
@@ -317,6 +331,18 @@ public class Property<T> {
     @Override
     public String toString() {
         return value != null ? value.toString() : expression;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Property<?> property = (Property<?>) o;
+        return Objects.equals(expression, property.expression);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(expression);
     }
 
     // used only by the serializer

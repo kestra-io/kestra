@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import io.kestra.plugin.core.condition.ExecutionFlowCondition;
+import io.kestra.plugin.core.condition.ExecutionFlow;
 import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TimeWindow;
@@ -182,6 +182,23 @@ public abstract class AbstractMultipleConditionStorageTest {
     }
 
     @Test
+    void dailyTimeDeadline_Expired() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(TimeWindow.builder().type(Type.DAILY_TIME_DEADLINE).deadline(LocalTime.now().minusSeconds(1)).build());
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults(), anEmptyMap());
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
+        assertThat(expired.size(), is(1));
+    }
+
+    @Test
     void dailyTimeWindow() throws Exception {
         MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
 
@@ -220,11 +237,11 @@ public abstract class AbstractMultipleConditionStorageTest {
         var multipleCondition = MultipleCondition.builder()
             .id("condition-multiple")
             .conditions(ImmutableMap.of(
-                "flow-a", ExecutionFlowCondition.builder()
+                "flow-a", ExecutionFlow.builder()
                     .flowId("flow-a")
                     .namespace(NAMESPACE)
                     .build(),
-                "flow-b", ExecutionFlowCondition.builder()
+                "flow-b", ExecutionFlow.builder()
                     .flowId("flow-b")
                     .namespace(NAMESPACE)
                     .build()

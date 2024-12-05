@@ -5,8 +5,8 @@
                 <VarValue :value="data.value" :execution="execution" />
             </div>
             <div v-else class="w-100 d-flex justify-content-between">
-                <div class="pe-5 d-flex task">
-                    <span>{{ trim(data.label) }}</span>
+                <div class="pe-5 d-flex task label-container" :title="data.label">
+                    {{ data.label }}
                 </div>
                 <div v-if="data.value && data.children">
                     <code>
@@ -19,15 +19,12 @@
 </template>
 
 <script setup lang="ts">
-    import {type PropType} from "vue";
-
     import VarValue from "../executions/VarValue.vue";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     const isFile = (data) => typeof(data) === "string" && data.startsWith("kestra:///");
-    const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
 
     interface Options {
         label: string;
@@ -35,15 +32,13 @@
         children?: Options[];
     }
 
-    defineProps({
-        options: {
-            type: Object as PropType<Options>,
-            required: true,
-        },
-        execution: {
-            type: Object,
-            required: false,
-            default: undefined
-        }
-    });
+    defineProps<{options: Options, execution: any}>();
 </script>
+
+<style lang="scss" scoped>
+.label-container{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>

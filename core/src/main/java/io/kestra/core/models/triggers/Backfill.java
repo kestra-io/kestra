@@ -7,6 +7,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -59,7 +60,7 @@ public class Backfill {
     @Schema(
         title = "The labels to pass to the backfilled executions."
     )
-    List<Label> labels;
+    List<@NoSystemLabelValidation Label> labels;
 
     @Schema(
         title = "The nextExecutionDate before the backfill was created."

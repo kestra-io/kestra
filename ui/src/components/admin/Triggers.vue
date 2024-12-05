@@ -151,7 +151,13 @@
                                 <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.nextExecutionDate" :label="$t('next execution date')">
+                        <el-table-column
+                            v-if="visibleColumns.nextExecutionDate"
+                            prop="nextExecutionDate"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('next execution date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>

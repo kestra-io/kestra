@@ -77,12 +77,6 @@
                                 </router-link>
                             </template>
                         </el-table-column>
-
-                        <el-table-column :label="$t('state')">
-                            <template #default="scope">
-                                <status v-if="scope.row.executionCurrentState" :status="scope.row.executionCurrentState" size="small" />
-                            </template>
-                        </el-table-column>
                         <el-table-column :label="$t('date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.date" />
@@ -171,7 +165,6 @@
     import RefreshButton from "../layout/RefreshButton.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import Status from "../Status.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -183,7 +176,6 @@
             SearchField,
             NamespaceSelect,
             DateAgo,
-            Status,
             Id,
         },
         data() {

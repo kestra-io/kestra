@@ -2,7 +2,7 @@
     <template v-if="data !== undefined">
         <el-table :id="containerID" :data="data.results" :height="240">
             <el-table-column
-                v-for="(column, index) in Object.entries(props.chart.data.columns)"
+                v-for="(column, index) of props.chart.data.columns"
                 :key="index"
                 :label="column[0]"
             >
@@ -49,10 +49,20 @@
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
-    const props = defineProps({
-        identifier: {type: Number, required: true},
-        chart: {type: Object, required: true},
-    });
+    const props = defineProps<{
+        identifier: number,
+        chart: {
+            id: number,
+            data: {
+                columns: Array<[string, {field: string}]>
+            },
+            chartOptions?: {
+                pagination?: {
+                    enabled: boolean
+                }
+            }
+        }
+    }>();
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
@@ -61,12 +71,12 @@
     const currentPage = ref(1);
     const pageSize = ref(5);
 
-    const handlePageChange = (page) => {
+    const handlePageChange = (page:number) => {
         currentPage.value = page;
         generate();
     };
 
-    const handlePageSizeChange = (size) => {
+    const handlePageSizeChange = (size:number) => {
         currentPage.value = 1;
         pageSize.value = size;
         generate();
@@ -80,7 +90,7 @@
             startDate: route.query.timeRange
                 ? moment()
                     .subtract(
-                        moment.duration(route.query.timeRange).as("milliseconds"),
+                        moment.duration(route.query.timeRange as string).as("milliseconds"),
                     )
                     .toISOString(true)
                 : route.query.startDate ||
@@ -90,6 +100,8 @@
             endDate: route.query.timeRange
                 ? moment().toISOString(true)
                 : route.query.endDate || moment().toISOString(true),
+            pageNumber: undefined as number | undefined,
+            pageSize: undefined as number | undefined,
         };
 
         if (props.chart.chartOptions?.pagination?.enabled) {
@@ -101,9 +113,11 @@
     };
 
     watch(route, async () => await generate());
+
     watch(
         () => props.identifier,
         () => generate(),
     );
+
     onMounted(() => generate());
 </script>

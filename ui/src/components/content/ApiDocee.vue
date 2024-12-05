@@ -1,6 +1,6 @@
 <template>
     <rapi-doc
-        :spec-url="$store.getters['doc/resourceUrl']('kestra-ee.yml')"
+        :spec-url="store.getters['doc/resourceUrl']('kestra-ee.yml')"
         :theme="theme"
         render-style="view"
         show-header="false"
@@ -15,16 +15,11 @@
 
 <script setup lang="ts">
     import "rapidoc";
-</script>
+    import {useStore} from "vuex";
+    import {useStorage} from "@vueuse/core";
 
-<script lang="ts">
-    export default {
-        data() {
-            return {
-                theme: localStorage.getItem("theme") === "dark" ? "dark" : "light"
-            }
-        }
-    }
+    const store = useStore();
+    const theme = useStorage("theme", "light");
 </script>
 
 <style lang="scss" scoped>

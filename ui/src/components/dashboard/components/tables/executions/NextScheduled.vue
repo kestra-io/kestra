@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 fixed-height">
+    <div class="p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
@@ -236,10 +236,5 @@ code {
 
 .next-toggle {
     padding: 8px 0 0 0 !important;
-}
-
-.fixed-height {
-        height: 370px;
-        overflow: hidden;
-}        
+}    
 </style>

@@ -186,7 +186,7 @@ public class NamespaceFileController {
         }
         String[] filePaths = filePath.split(DELIMITER_SLASH);
         if (filePaths.length != 0 && filePaths[0].startsWith(FLOWS_FOLDER)) {
-            if(filePaths.length != 3) {
+            if(filePaths.length != 2) {
                 throw new IllegalArgumentException("Invalid flow file path: " + filePath);
             }
 

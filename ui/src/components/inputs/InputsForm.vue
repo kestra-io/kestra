@@ -451,14 +451,11 @@
             &:hover {
                 color: var(--bs-secondary);
                 border-color: var(--el-color-primary);
+                background-color: var(--bs-card-bg);
             }
 
             &:first-child {
                 border-left: var(--el-border);
-
-                &:hover {
-                    background-color: var(--bs-card-bg);
-                }
             }
         }
     }

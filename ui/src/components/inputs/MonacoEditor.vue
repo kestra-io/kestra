@@ -720,6 +720,10 @@
         height: 100%;
         outline: none;
     }
+
+    .main-editor > #editorWrapper .monaco-editor {
+        padding: 1rem 0 0 1rem;
+    }
 </style>
 
 <style lang="scss">

@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Visão Geral",
+      "title": "Painel de Controle",
       "today": "Hoje",
       "yesterday": "Ontem",
       "last28Days": "Últimos 28 dias",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Erros de execuções por namespace",
       "failedExecutions": "Execuções FAILED",
       "errorLogs": "Logs de erros",
-      "no executions": "Pronto para ver seu flow em ação?"
+      "no executions": "Pronto para ver seu flow em ação?",
+      "wel_text": "Bem-vindo!",
+      "start": "Vamos colocar seu primeiro fluxo de trabalho em execução.",
+      "guide": "Precisa de orientação para executar seu primeiro flow?",
+      "welcome": "Bem-vindo ao Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de entender completamente esses riscos antes de prosseguir com a exclusão.",
     "originalCreatedDate": "Data de criação original",
     "welcome": {
-      "started": {
-        "title": "Comece em 3 passos fáceis"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Tutoriais em Vídeo](https://kestra.io/tutorial-videos/all)\n* [Documentação](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Faça um tour pelo produto"
+      "tour": {
+        "title": "Faça um tour pelo produto",
+        "text": "Escolha seu caso de uso e siga um guia passo a passo para aprender os recursos e capacidades do Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentação"
-      },
-      "need-help": {
+      "help": {
+        "text": "Faça qualquer pergunta em nossa comunidade no Slack. Se você estiver com dificuldades, estamos aqui para ajudar você. ✋",
         "title": "Precisa de ajuda?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Note que para os tipos de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
+      "note": "Observe que, para o tipo de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
     },
     "logs_view": {
       "raw": "Visualização temporal",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "Painéis Personalizados",
     "create_custom_dashboard": "Criar novo dashboard",
     "edit_custom_dashboard": "Editar Dashboard",
-    "custom_dashboard_empty": "Não há resultados para serem exibidos."
+    "custom_dashboard_empty": "Não há resultados para serem exibidos.",
+    "remove_bookmark": "Tem certeza de que deseja remover este marcador?"
   }
 }

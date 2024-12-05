@@ -1,5 +1,42 @@
+<template>
+    <el-card shadow="never" v-loading="isLoading">
+        <el-alert v-if="!hasNodes" type="info" :closable="false">
+            {{ $t('no result') }}
+        </el-alert>
+        <VueFlow
+            v-else
+            :default-marker-color="cssVariable('--bs-cyan')"
+            :fit-view-on-init="true"
+            :nodes-connectable="false"
+            :nodes-draggable="false"
+            :elevate-nodes-on-select="false"
+        >
+            <Background />
+            <template #node-flow="nodeProps">
+                <DependenciesNode
+                    v-bind="nodeProps"
+                    @expand-dependencies="expand"
+                    @mouseover="onMouseOver"
+                    @mouseleave="onMouseLeave"
+                    @open-link="openFlow($route.params.tenant, $event)"
+                />
+            </template>
+
+            <Controls :show-interactive="false">
+                <ControlButton>
+                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
+                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
+                    </el-tooltip>
+                </ControlButton>
+            </Controls>
+        </VueFlow>
+    </el-card>
+</template>
+
 <script setup>
-    import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
+    import {ref, onMounted, inject, nextTick} from "vue";
+    import {useStore} from "vuex";
+    import {useRouter} from "vue-router"
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background";
@@ -11,12 +48,12 @@
 
     import {linkedElements} from "../../utils/vueFlow"
     import {apiUrl} from "override/utils/route";
-    import {useStore} from "vuex";
+
 
     const {id: vueFlowId, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow();
 
     const axios = inject("axios")
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
     const store = useStore();
 
     const loaded = ref([]);
@@ -192,41 +229,6 @@
         });
     }
 </script>
-
-<template>
-    <el-card shadow="never" v-loading="isLoading">
-        <el-alert v-if="!hasNodes" type="info" :closable="false">
-            {{ $t('no result') }}
-        </el-alert>
-        <VueFlow
-            v-else
-            :default-marker-color="cssVariable('--bs-cyan')"
-            :fit-view-on-init="true"
-            :nodes-connectable="false"
-            :nodes-draggable="false"
-            :elevate-nodes-on-select="false"
-        >
-            <Background />
-            <template #node-flow="nodeProps">
-                <DependenciesNode
-                    v-bind="nodeProps"
-                    @expand-dependencies="expand"
-                    @mouseover="onMouseOver"
-                    @mouseleave="onMouseLeave"
-                    @open-link="openFlow($route.params.tenant, $event)"
-                />
-            </template>
-
-            <Controls :show-interactive="false">
-                <ControlButton>
-                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
-                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
-                    </el-tooltip>
-                </ControlButton>
-            </Controls>
-        </VueFlow>
-    </el-card>
-</template>
 
 <style lang="scss" scoped>
     .el-card {

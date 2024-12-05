@@ -43,7 +43,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>

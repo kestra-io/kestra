@@ -23,10 +23,10 @@ public class Debug {
     public static <T> String toJson(T arg) {
         String output;
 
-        if (arg instanceof String) {
-            output = (String) arg;
-        } else if (arg instanceof byte[]) {
-            output = new String((byte[]) arg);
+        if (arg instanceof String stringValue) {
+            output = stringValue;
+        } else if (arg instanceof byte[] bytesValue) {
+            output = new String(bytesValue);
         } else {
             try {
                 output = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(arg);

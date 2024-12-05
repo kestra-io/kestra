@@ -17,7 +17,7 @@
             }
     }
 
-      &:hover {
+    &--default:hover {
         border-color: #890fff !important;
         background-color: #f5f5ff !important;
         color:  black !important;
@@ -69,6 +69,15 @@
         * {
             width: 1.5rem;
             height: 1.5rem;
+        }
+    }
+
+    &--success {
+        #{--el-button-bg-color}: $green-500;
+        #{--el-button-hover-bg-color}: $green-400;
+        html.dark & {
+            #{--el-button-bg-color}: $green-400;
+            #{--el-button-hover-bg-color}: $green-300;
         }
     }
 }
@@ -218,6 +227,10 @@
 
 .el-input-number__increase, .el-input-number__decrease {
     background: var(--bs-white);
+
+    html.dark & {
+        background: var(--bs-card-bg);
+    }
 }
 
 .el-input-number__increase:hover, .el-input-number__decrease:hover {
@@ -292,13 +305,13 @@ form.ks-horizontal {
     --el-table-border: 1px solid var(--bs-border-color);
 
     --el-table-header-text-color: var(--bs-body-color);
-    --el-table-row-hover-bg-color: var(--bs-gray-100-darken-5);
-    --el-table-header-bg-color: var(--bs-gray-100-darken-3);
-    --el-table-tr-bg-color: var(--bs-body-bg);
+    --el-table-row-hover-bg-color: var(--bs-gray-200);
+    --el-table-header-bg-color: #f5f5ff;
+    --el-table-tr-bg-color: var(--bs-white);
 
     html.dark & {
         --el-table-tr-bg-color: var(--card-bg);
-        --el-table-header-bg-color: var(--bs-card-bg);
+        --el-table-header-bg-color: var(--input-bg);
     }
 
     outline: 1px solid var(--bs-border-color);
@@ -877,7 +890,12 @@ form.ks-horizontal {
 
     @each $type in $types {
         &.el-alert--#{$type} {
-            border: 1px solid var(--el-color-#{$type}-light-5);
+            border: 1px solid var(--el-color-alert-#{$type});
+            color: var(--el-color-alert-#{$type});
+            @if $type == 'info' {
+                background-color: rgba(14, 59, 154, 0.2);
+                border-color: rgba(23, 97, 253, 1);
+            }
         }
     }
 }

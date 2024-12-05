@@ -31,6 +31,8 @@ public class Plugin {
     private List<String> taskRunners;
     private List<String> guides;
     private List<String> aliases;
+    private List<String> apps;
+    private List<String> appBlocks;
     private List<PluginSubGroup.PluginCategory> categories;
     private String subGroup;
 
@@ -81,7 +83,8 @@ public class Plugin {
         plugin.storages = filterAndGetClassName(registeredPlugin.getStorages()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
         plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
         plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-
+        plugin.apps = filterAndGetClassName(registeredPlugin.getApps()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks()).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
 
         return plugin;
     }

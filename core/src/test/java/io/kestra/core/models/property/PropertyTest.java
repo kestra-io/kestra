@@ -6,6 +6,8 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
+import lombok.Builder;
+import lombok.Getter;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -221,5 +223,18 @@ class PropertyTest {
         var runContext = runContextFactory.of();
 
         assertThrows(IllegalVariableEvaluationException.class, () -> task.run(runContext));
+    }
+
+    @Test
+    void of() {
+        var prop = Property.of(TestObj.builder().key("key").value("value").build());
+        assertThat(prop, notNullValue());
+    }
+
+    @Builder
+    @Getter
+    private static class TestObj {
+        private String key;
+        private String value;
     }
 }

@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs",
-      "no executions": "Prêt à voir votre flow Kestra en action ?"
+      "no executions": "Prêt à voir votre flow Kestra en action ?",
+      "wel_text": "Bienvenue !",
+      "start": "Mettons votre premier workflow en marche.",
+      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
+      "welcome": "Bienvenue sur Kestra"
     },
     "executions resumed": "<code>{executionCount}</code> exécution(s) reprise(s)",
     "executions replayed": "<code>{executionCount}</code> exécution(s) rejouée(s)",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Nous vous recommandons fortement d'annuler cette action et de terminer toute exécution en cours d'abord. Supprimer des exécutions non terminées peut entraîner des problèmes de concurrence, des incohérences dans la gestion des dépendances de flow, et des processus zombies sur votre instance, ce qui peut dégrader les performances du système. Assurez-vous de bien comprendre ces risques avant de procéder à la suppression.",
     "originalCreatedDate": "Date de création originale",
     "welcome": {
-      "started": {
-        "title": "Démarrez en 3 étapes faciles"
+      "tutorial": {
+        "title": "Tutoriel",
+        "text": "* [Tutoriels Vidéo](https://kestra.io/tutorial-videos/all)\n* [Documentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Faites un tour du produit"
+      "tour": {
+        "title": "Faire une visite guidée du produit",
+        "text": "Choisissez votre cas d'utilisation et suivez un guide étape par étape pour découvrir les fonctionnalités et capacités de Kestra. ❤️"
       },
-      "doc": {
-        "title": "Docs"
-      },
-      "need-help": {
+      "help": {
+        "text": "Posez n'importe quelle question dans notre communauté Slack. Si vous êtes bloqué, nous sommes là pour vous aider. ✋",
         "title": "Besoin d'aide ?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Commande cURL",
-      "note": "Notez que pour les types d'entrée SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
+      "note": "Notez que pour les types d'input SECRET et FILE, la commande doit être adaptée pour correspondre aux valeurs réelles."
     },
     "logs_view": {
       "raw": "Vue temporelle",
@@ -907,7 +911,6 @@
       "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation."
     },
     "create_flow": "Créer Flow",
-    "starred": "Étoilé",
     "invalid bulk unqueue": "Impossible de retirer les exécutions de la file d'attente",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "bulk unqueue": "Êtes-vous sûr de vouloir retirer de la file d'attente <code>{executionCount}</code> exécution(s) ?",
@@ -981,7 +984,6 @@
     "showLess": "Afficher moins",
     "documentationMenu": "Menu de documentation",
     "task run id": "ID d'exécution de tâche",
-    "execution failed": "L'exécution a échoué, cliquez ici pour plus de détails.",
     "optional": "Optionnel",
     "active": "Actif",
     "contextBar": {
@@ -990,6 +992,20 @@
       "docs": "Docs",
       "demo": "Obtenez une démo",
       "help": "Aide"
-    }
+    },
+    "execution failed header": "Échec de l'exécution !",
+    "execution failed message": "Avec la dernière erreur : <code>{message}</code>",
+    "flow not imported": "Certains flow n'ont pas pu être importés",
+    "flows imported": "Flux importés",
+    "is required": "{field} est requis",
+    "bookmark": "Favoris",
+    "dashboards": "Tableaux de bord",
+    "dashboard_label": "Tableau de bord",
+    "default_dashboard": "Tableau de bord par défaut",
+    "custom_dashboard": "Tableaux de bord personnalisés",
+    "create_custom_dashboard": "Créer un nouveau tableau de bord",
+    "edit_custom_dashboard": "Modifier le tableau de bord",
+    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
+    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?"
   }
 }

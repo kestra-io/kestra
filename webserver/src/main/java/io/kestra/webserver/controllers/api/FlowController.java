@@ -481,6 +481,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a single task on a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @SuppressWarnings("deprecated")
     public HttpResponse<Flow> updateTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
@@ -831,18 +832,29 @@ public class FlowController {
     @Post(uri = "/import", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         tags = {"Flows"},
-        summary = "Import flows as a ZIP archive of yaml sources or a multi-objects YAML file."
+        summary = """
+            Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
+            When sending a Yaml that contains one or more flows, a list of index is returned.
+            When sending a ZIP archive, a list of files that couldn't be imported is returned.
+        """
     )
     @ApiResponse(responseCode = "204", description = "On success")
-    public HttpResponse<Void> importFlows(
+    public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload
     ) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
         String tenantId = tenantService.resolveTenant();
+        List<String> wrongFiles = new ArrayList<>();
+
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
+                try {
+                    this.importFlow(tenantId, source.trim());
+                } catch (Exception e) {
+                    wrongFiles.add(String.valueOf(sources.indexOf(source)));
+                }
                 this.importFlow(tenantId, source.trim());
             }
         } else if (fileName.endsWith(".zip")) {
@@ -854,7 +866,11 @@ public class FlowController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    this.importFlow(tenantId, source);
+                    try {
+                        this.importFlow(tenantId, source);
+                    } catch (Exception e) {
+                        wrongFiles.add(entry.getName());
+                    }
                 }
             }
         } else {
@@ -862,7 +878,7 @@ public class FlowController {
             throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
         }
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(wrongFiles);
     }
 
     protected void importFlow(String tenantId, String source) {

@@ -572,7 +572,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             .build();
         var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
 
-        assertThat(response.getStatus(), is(NO_CONTENT));
+        assertThat(response.getStatus(), is(OK));
         temp.delete();
     }
 
@@ -589,7 +589,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
             .build();
         var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
 
-        assertThat(response.getStatus(), is(NO_CONTENT));
+        assertThat(response.getStatus(), is(OK));
         temp.delete();
     }
 

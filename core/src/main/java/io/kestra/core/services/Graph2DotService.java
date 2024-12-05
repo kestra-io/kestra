@@ -33,9 +33,7 @@ public class Graph2DotService {
         StringBuilder sb = new StringBuilder();
 
         for(AbstractGraph node : graph.nodes()) {
-            if (node instanceof GraphCluster) {
-                GraphCluster subGraph = (GraphCluster) node;
-
+            if (node instanceof GraphCluster subGraph) {
                 if (uid == null || !uid.equals(subGraph.getUid())) {
                     sb.append(subgraph(subGraph, level + 1));
                 }

@@ -3,7 +3,13 @@
         <el-button disabled :icon="Save" @click="toggle(true)" />
     </el-tooltip>
 
-    <el-button v-else :icon="Save" @click="toggle(true)" />
+    <KestraIcon
+        v-else
+        :tooltip="$t('filters.save.dialog.heading')"
+        placement="bottom"
+    >
+        <el-button :icon="Save" @click="toggle(true)" />
+    </KestraIcon>
 
     <el-dialog
         v-model="visible"
@@ -52,6 +58,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    import KestraIcon from "../../Kicon.vue";
     import Label from "./Label.vue";
 
     import Save from "vue-material-design-icons/ContentSaveOutline.vue";

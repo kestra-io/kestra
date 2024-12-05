@@ -98,9 +98,9 @@
                 @update:model-value="onChange(input)"
                 class="boolean-inputs w-100"
             >
-                <el-radio-button :label="$t('true')" :value="true" border />
-                <el-radio-button :label="$t('false')" :value="false" border />
-                <el-radio-button :label="$t('undefined')" value="undefined" border />
+                <el-radio-button :label="$t('true')" :value="true" />
+                <el-radio-button :label="$t('false')" :value="false" />
+                <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"

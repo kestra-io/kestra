@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
+public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution>, QueryBuilderInterface<Executions.Fields> {
     Boolean isTaskRunEnabled();
 
     default Optional<Execution> findById(String tenantId, String id) {

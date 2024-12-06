@@ -31,7 +31,7 @@ public class LogToFileTest extends AbstractMemoryRunnerTest {
         TaskRunAttempt attempt = taskRun.getAttempts().getFirst();
         assertThat(attempt.getLogFile(), notNullValue());
 
-        InputStream inputStream = storage.get(null, attempt.getLogFile());
+        InputStream inputStream = storage.get(null, "io.kestra.tests", attempt.getLogFile());
         List<String> strings = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
         assertThat(strings, notNullValue());
         assertThat(strings.size(), is(1));

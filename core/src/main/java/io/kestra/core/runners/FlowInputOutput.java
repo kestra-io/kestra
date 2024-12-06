@@ -32,8 +32,6 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -68,10 +66,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-    private static final Logger log = LoggerFactory.getLogger(FlowInputOutput.class);
+    private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
+    private static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
 
-    public static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
-    public static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;

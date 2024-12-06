@@ -48,7 +48,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
             code = {
                 "tasks:",
                 "  - id: each",
-                "    type: io.kestra.plugin.core.flow.EachSequential",
+                "    type: io.kestra.plugin.core.flow.ForEach",
                 "    tasks:",
                 "      - id: start_api_call",
                 "        type: io.kestra.plugin.scripts.shell.Commands",
@@ -56,7 +56,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                 "          - echo {{ taskrun.value }} > {{ temp.generated }}",
                 "        files:",
                 "          - generated",
-                "    value: '[\"value1\", \"value2\", \"value3\"]'",
+                "    values: '[\"value1\", \"value2\", \"value3\"]'",
+                "",
                 "  - id: concat",
                 "    type: io.kestra.plugin.core.storage.Concat",
                 "    files:",
@@ -115,13 +116,13 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         File tempFile = runContext.workingDir().createTempFile(extension).toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
-            if (this.files instanceof List) {
-                finalFiles = (List<String>) this.files;
-            } else if (this.files instanceof String) {
+            if (this.files instanceof List<?> listValue) {
+                finalFiles = (List<String>) listValue;
+            } else if (this.files instanceof String stringValue) {
                 final TypeReference<List<String>> reference = new TypeReference<>() {};
 
                 finalFiles = JacksonMapper.ofJson(false).readValue(
-                    runContext.render((String) this.files),
+                    runContext.render(stringValue),
                     reference
                 );
             } else {

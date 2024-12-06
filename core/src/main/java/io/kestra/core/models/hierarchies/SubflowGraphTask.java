@@ -27,8 +27,8 @@ public class SubflowGraphTask extends AbstractGraphTask {
 
     public ExecutableTask<?> executableTask() {
         TaskInterface task = super.getTask();
-        if (task instanceof ExecutableTask) {
-            return (ExecutableTask<?>) task;
+        if (task instanceof ExecutableTask<?> executableTask) {
+            return executableTask;
         } else {
             return null;
         }

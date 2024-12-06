@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Painel de Controle",
       "today": "Hoje",
       "yesterday": "Ontem",
       "last28Days": "Últimos 28 dias",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Erros de execuções por namespace",
       "failedExecutions": "Execuções FAILED",
       "errorLogs": "Logs de erros",
-      "no executions": "Pronto para ver seu flow em ação?"
+      "no executions": "Pronto para ver seu flow em ação?",
+      "wel_text": "Bem-vindo!",
+      "start": "Vamos colocar seu primeiro fluxo de trabalho em execução.",
+      "guide": "Precisa de orientação para executar seu primeiro flow?",
+      "welcome": "Bem-vindo ao Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> execução(ões) reproduzida(s)",
     "executions resumed": "<code>{executionCount}</code> execução(ões) retomada(s)",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de entender completamente esses riscos antes de prosseguir com a exclusão.",
     "originalCreatedDate": "Data de criação original",
     "welcome": {
-      "started": {
-        "title": "Comece em 3 passos fáceis"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Tutoriais em Vídeo](https://kestra.io/tutorial-videos/all)\n* [Documentação](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Faça um tour pelo produto"
+      "tour": {
+        "title": "Faça um tour pelo produto",
+        "text": "Escolha seu caso de uso e siga um guia passo a passo para aprender os recursos e capacidades do Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentação"
-      },
-      "need-help": {
+      "help": {
+        "text": "Faça qualquer pergunta em nossa comunidade no Slack. Se você estiver com dificuldades, estamos aqui para ajudar você. ✋",
         "title": "Precisa de ajuda?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Note que para os tipos de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
+      "note": "Observe que, para o tipo de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
     },
     "logs_view": {
       "raw": "Visualização temporal",
@@ -850,7 +854,7 @@
     "webhook link copied": "Link do Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Data de agendamento",
-    "trigger_check_warning": "Aviso: Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência '??' para resolver o problema. Por exemplo, em vez de 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Usar variáveis de trigger não funcionará com a execução manual de flow. Adicione o operador de coalescência `??` para resolver o problema. Por exemplo, em vez de `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -907,7 +911,6 @@
       "desc_no_deps": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação."
     },
     "create_flow": "Criar Flow",
-    "starred": "Favoritos",
     "invalid bulk unqueue": "Não foi possível remover as execuções da fila",
     "unqueue done": "A execução está fora da fila",
     "bulk unqueue": "Tem certeza de que deseja remover da fila <code>{executionCount}</code> execução(ões)?",
@@ -926,7 +929,10 @@
         "is_not_one_off": "não é um dos",
         "is_not": "não é",
         "between": "entre",
-        "in": "em"
+        "in": "em",
+        "not_contains": "não contém",
+        "starts_with": "começa com",
+        "contains": "contém"
       },
       "recent": {
         "label": "Pesquisas recentes",
@@ -953,7 +959,8 @@
         "state": "Estado",
         "child": "Filho",
         "absolute_date": "Data absoluta",
-        "relative_date": "Data relativa"
+        "relative_date": "Data relativa",
+        "level": "Nível de Log"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",
@@ -968,6 +975,37 @@
     "force run": "Executar forçadamente",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
-    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação."
+    "force run tooltip": "Forçar a execução a correr. Pode criar execuções de task duplicadas; se possível, use outra ação.",
+    "item": "item",
+    "items": "itens",
+    "warning": "Aviso",
+    "cron": "Cron",
+    "showMore": "Mostrar mais",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menu de documentação",
+    "task run id": "ID do TaskRun",
+    "optional": "Opcional",
+    "active": "Ativo",
+    "contextBar": {
+      "news": "Notícias",
+      "issue": "Abrir um Issue",
+      "docs": "Documentos",
+      "demo": "Obter uma demonstração",
+      "help": "Ajuda"
+    },
+    "execution failed header": "Falha na execução!",
+    "execution failed message": "Com o último erro: <code>{message}</code>",
+    "flow not imported": "Algum flow não pôde ser importado",
+    "flows imported": "Fluxos importados",
+    "is required": "{field} é obrigatório",
+    "bookmark": "Favoritos",
+    "dashboards": "Dashboards",
+    "dashboard_label": "Painel de Controle",
+    "default_dashboard": "Painel Padrão",
+    "custom_dashboard": "Painéis Personalizados",
+    "create_custom_dashboard": "Criar novo dashboard",
+    "edit_custom_dashboard": "Editar Dashboard",
+    "custom_dashboard_empty": "Não há resultados para serem exibidos.",
+    "remove_bookmark": "Tem certeza de que deseja remover este marcador?"
   }
 }

@@ -12,7 +12,6 @@
             <el-table
                 :data="metrics"
                 :default-sort="{prop: 'name', order: 'ascending'}"
-                stripe
                 table-layout="auto"
                 fixed
                 @row-dblclick="onRowDoubleClick"

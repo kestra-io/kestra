@@ -23,11 +23,10 @@ import jakarta.validation.constraints.Min;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
@@ -76,16 +75,15 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        if (taskId != null) {
-            return logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
-        } else if (taskRunId != null) {
-            if (attempt != null) {
-                return logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
-            }
-            return logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
-        } else {
-            return logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
-        }
+        return logService.getExecutionLogs(
+            tenantService.resolveTenant(),
+            executionId,
+            minLevel,
+            taskRunId,
+            Optional.ofNullable(taskId).map(List::of).orElse(null),
+            attempt,
+            true
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -98,19 +96,15 @@ public class LogController {
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId,
         @Parameter(description = "The attempt number") @Nullable @QueryValue Integer attempt
     ) {
-        List<LogEntry> logEntries;
-        if (taskId != null) {
-            logEntries = logRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, minLevel);
-        } else if (taskRunId != null) {
-            if (attempt != null) {
-                logEntries = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenantService.resolveTenant(), executionId, taskRunId, minLevel, attempt);
-            } else {
-                logEntries = logRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, minLevel);
-            }
-        } else {
-            logEntries = logRepository.findByExecutionId(tenantService.resolveTenant(), executionId, minLevel);
-        }
-        InputStream inputStream = new ByteArrayInputStream(logEntries.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n")).getBytes());
+        InputStream inputStream = logService.getExecutionLogsAsStream(
+            tenantService.resolveTenant(),
+            executionId,
+            minLevel,
+            taskRunId,
+            Optional.ofNullable(taskId).map(List::of).orElse(null),
+            attempt,
+            true
+        );
         return new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log");
     }
 
@@ -121,7 +115,7 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
-        return logService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel);
+        return logService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, true);
     }
 
     @ExecuteOn(TaskExecutors.IO)

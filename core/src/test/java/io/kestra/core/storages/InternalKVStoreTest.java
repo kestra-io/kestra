@@ -94,7 +94,7 @@ class InternalKVStoreTest {
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
 
         // Then
-        StorageObject withMetadata = storageInterface.getWithMetadata(null, URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
+        StorageObject withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
         String valueFile = new String(withMetadata.inputStream().readAllBytes());
         Instant expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
         assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(4))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(6))), is(true));
@@ -104,7 +104,7 @@ class InternalKVStoreTest {
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), "some-value"));
 
         // Then
-        withMetadata = storageInterface.getWithMetadata(null, URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
+        withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
         valueFile = new String(withMetadata.inputStream().readAllBytes());
         expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
         assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(9))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(11))), is(true));

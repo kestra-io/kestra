@@ -72,6 +72,7 @@ public class TaskWithAllowWarningTest extends AbstractMemoryRunnerTest {
 
         return storageInterface.put(
             null,
+            null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)
         );

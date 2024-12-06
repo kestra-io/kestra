@@ -41,10 +41,8 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {
-        if (e.getConversionError().getCause() instanceof InvalidTypeIdException) {
+        if (e.getConversionError().getCause() instanceof InvalidTypeIdException invalidTypeIdException) {
             try {
-                InvalidTypeIdException invalidTypeIdException = ((InvalidTypeIdException) e.getConversionError().getCause());
-
                 String path = path(invalidTypeIdException);
 
                 Field typeField = InvalidTypeIdException.class.getDeclaredField("_typeId");
@@ -66,10 +64,8 @@ public class ErrorController {
                 return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
             } catch (Exception ignored) {
             }
-        } else if (e.getConversionError().getCause() instanceof JsonMappingException) {
+        } else if (e.getConversionError().getCause() instanceof JsonMappingException jsonMappingException) {
             try {
-                JsonMappingException jsonMappingException = ((JsonMappingException) e.getConversionError().getCause());
-
                 String path = path(jsonMappingException);
 
                 JsonError error = new JsonError("Invalid json mapping")

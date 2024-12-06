@@ -58,6 +58,13 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>About this blueprint</h4>
+                    <div v-if="!system" class="tags text-uppercase">
+                        <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
+                            <el-tag type="info" size="small">
+                                {{ tag }}
+                            </el-tag>
+                        </div>
+                    </div>
                     <markdown :source="blueprint.description" />
                 </template>
             </el-col>
@@ -164,7 +171,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),
+            ...mapState("plugin", ["icons"]),         
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
@@ -229,6 +236,7 @@
 
         h4 {
             margin-top: calc($spacer * 2);
+            margin-bottom: 0;
             font-weight: bold;
         }
 
@@ -271,4 +279,22 @@
             }
         }
     }
+    
+        .tags {
+            margin: 10px 0;
+            display: flex;
+                        
+            .el-tag.el-tag--info {
+                background-color: var(--card-bg);
+                padding: 15px 10px;
+                color: var(--el-text-color-regular);
+                text-transform: capitalize;
+                font-size: var(--el-font-size-small);
+                border: 1px solid var(--bs-border-color);
+            }
+
+            .tag-box {
+                margin-right: calc($spacer / 3);
+            }
+        }
 </style>

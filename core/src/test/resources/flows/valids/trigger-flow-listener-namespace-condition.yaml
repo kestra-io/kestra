@@ -14,8 +14,8 @@ triggers:
   - id: listen-flow
     type: io.kestra.plugin.core.trigger.Flow
     conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition
+      - type: io.kestra.plugin.core.condition.ExecutionNamespace
         namespace: io.kestra.tests.trigger
-      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+      - type: io.kestra.plugin.core.condition.ExecutionStatus
         in:
           - SUCCESS

@@ -30,6 +30,7 @@ class ReverseTest {
 
         URI put = storageInterface.put(
             null,
+            null,
             new URI("/file/storage/get.yml"),
             new ByteArrayInputStream("1\n2\n3\n".getBytes())
         );
@@ -42,6 +43,6 @@ class ReverseTest {
         Reverse.Output run = result.run(runContext);
 
         assertThat(run.getUri().getPath(), endsWith(".yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, run.getUri()))), is("3\n2\n1\n"));
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri()))), is("3\n2\n1\n"));
     }
 }

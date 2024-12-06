@@ -37,7 +37,10 @@
                 this.$emit("selection-change", selection);
             },
             computeHeaderSize() {
-                const tableElement = this.$refs.table.$el;
+                const tableElement = this.$refs.table?.$el;
+
+                if(!tableElement) return;
+
                 this.$el.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
                 this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
             }

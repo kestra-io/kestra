@@ -576,9 +576,7 @@
         min-width: 200px;
     }
 
-    .flows-table {
-        .el-table__cell {
-            vertical-align: middle;
-        }
+    .flows-table  .el-table__cell {
+        vertical-align: middle;        
     }
 </style>

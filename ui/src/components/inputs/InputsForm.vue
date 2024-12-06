@@ -96,7 +96,7 @@
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                class="boolean-inputs w-100"
+                class="w-100 boolean-inputs"
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
@@ -433,8 +433,8 @@
 }
 </style>
 
-<style lang="scss">
-.boolean-inputs {
+<style scoped lang="scss">
+:deep(.boolean-inputs) {
     .el-radio-button {
         &.is-active {
             .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {

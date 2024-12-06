@@ -1,9 +1,15 @@
 import Utils from "../../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 import {getConsistentHEXColor} from "../../../../utils/charts";
+import {type LegendItem} from "chart.js";
+import {Bar} from "vue-chartjs";
 
-const getOrCreateLegendList = (chart, id, direction = "row") => {
+const getOrCreateLegendList = (chart: any, id: string, direction = "row") => {
     const legendContainer = document.getElementById(id);
+
+    if(!legendContainer) {
+        return;
+    }
 
     legendContainer.style.width = "100%";
     legendContainer.style.justifyItems = "end";
@@ -15,8 +21,8 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
         listContainer.classList.add("fw-light", "small");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
-        listContainer.style.margin = 0;
-        listContainer.style.padding = 0;
+        listContainer.style.margin = "0";
+        listContainer.style.padding = "0";
 
         listContainer.style.maxHeight = "200px";
         listContainer.style.flexWrap = "wrap";
@@ -27,19 +33,21 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
     return listContainer;
 };
 
-export const barLegend = {
+type BarPlugin = NonNullable<InstanceType<typeof Bar>["$props"]["plugins"]>[number]
+
+export const barLegend: BarPlugin = {
     id: "barLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
-        while (ul.firstChild) {
+        while (ul?.firstChild) {
             ul.firstChild.remove();
         }
 
-        const items = chart.options.plugins.legend.labels.generateLabels(chart);
+        const items:LegendItem[] = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) ?? [];
 
         items.forEach((item) => {
-            const dataset = chart.data.datasets[item.datasetIndex];
+            const dataset = chart.data.datasets[item.datasetIndex!];
 
             if (
                 !dataset?.data ||
@@ -102,7 +110,7 @@ export const barLegend = {
     },
 };
 
-export const customBarLegend = {
+export const customBarLegend: BarPlugin = {
     id: "customBarLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);

@@ -43,8 +43,12 @@
 
     const {data, chartOptions} = props.chart;
 
-    const aggregator = Object.entries(data.columns)
-        .filter(([_, v]) => v.agg)
+    const aggregator = (Object.entries(data.columns)
+        .filter(([_, v]) => (v as any).agg ) as [string, {
+            graphStyle: "PIE" | "DOUGHNOUT",
+            displayName: string
+            field: string
+        }][])
         .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
     const yBShown = aggregator.length === 2;
 
@@ -72,9 +76,9 @@
                     : {}),
                 tooltip: {
                     enabled: true,
-                    filter: (value) => value.raw,
+                    filter: (value:any) => value.raw,
                     callbacks: {
-                        label: (value) => {
+                        label: (value:any) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
@@ -93,7 +97,7 @@
                 y: {
                     title: {
                         display: true,
-                        text: aggregator[0][1].displayName ?? aggregator[0][0],
+                        text: aggregator[0][1]?.displayName ?? aggregator[0][0],
                     },
                     position: "left",
                     ...DEFAULTS,
@@ -121,19 +125,19 @@
         });
     });
 
-    function isDuration(field) {
+    function isDuration(field: string) {
         return field === "DURATION";
     }
 
     const parsedData = computed(() => {
-        const parseValue = (value) => {
+        const parseValue = (value: string) => {
             const date = moment(value, moment.ISO_8601, true);
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
 
         const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = rawData.map((v) => {
+            const values = rawData.map((v: Record<string, any>) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -234,7 +238,7 @@
             startDate: route.query.timeRange
                 ? moment()
                     .subtract(
-                        moment.duration(route.query.timeRange).as("milliseconds"),
+                        moment.duration(route.query.timeRange as any).as("milliseconds"),
                     )
                     .toISOString(true)
                 : route.query.startDate ||

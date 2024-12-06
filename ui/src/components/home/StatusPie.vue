@@ -19,7 +19,7 @@
 <script>
     import {defineComponent, computed, ref} from "vue";
     import {Doughnut} from "vue-chartjs"
-    import {tooltip, defaultConfig, backgroundFromState} from "../../utils/charts.js";
+    import {tooltip, defaultConfig, backgroundFromState} from "../../utils/charts";
     import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
     export default defineComponent({

@@ -21,7 +21,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {Bar} from "vue-chartjs";
     import Utils from "../../utils/utils";
-    import {defaultConfig, tooltip, chartClick, backgroundFromState, getFormat} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick, backgroundFromState, getFormat} from "../../utils/charts";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({

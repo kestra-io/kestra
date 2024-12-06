@@ -26,10 +26,10 @@
 
     import {Doughnut} from "vue-chartjs";
 
-    import {totalsLegend} from "../legend.js";
+    import {totalsLegend} from "../legend";
 
     import Utils from "../../../../../utils/utils";
-    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {defaultConfig} from "../../../../../utils/charts";
     import {getScheme} from "../../../../../utils/scheme.js";
 
     import NoData from "../../../../layout/NoData.vue";

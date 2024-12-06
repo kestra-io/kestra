@@ -139,7 +139,7 @@ const STATE = Object.freeze({
         isKillable: false,
         isFailed: false,
     },
-});
+} as const) ;
 
 export default class State {
     static get CREATED() {
@@ -194,23 +194,23 @@ export default class State {
         return STATE.RETRIED.name;
     }
 
-    static isRunning(state) {
+    static isRunning(state: keyof typeof STATE) {
         return STATE[state] && STATE[state].isRunning;
     }
 
-    static isKillable(state) {
+    static isKillable(state: keyof typeof STATE) {
         return STATE[state] && STATE[state].isKillable;
     }
 
-    static isPaused(state) {
+    static isPaused(state: keyof typeof STATE) {
         return STATE[state] && STATE[state] === STATE.PAUSED;
     }
 
-    static isFailed(state) {
+    static isFailed(state: keyof typeof STATE) {
         return STATE[state] && STATE[state].isFailed;
     }
 
-    static isQueued(state) {
+    static isQueued(state: keyof typeof STATE) {
         return STATE[state] && STATE[state] === STATE.QUEUED;
     }
 
@@ -239,7 +239,7 @@ export default class State {
         );
     }
 
-    static getStateColor(state) {
+    static getStateColor(state: keyof typeof STATE) {
         return STATE[state].color;
     }
 

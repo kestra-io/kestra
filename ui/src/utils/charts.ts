@@ -3,7 +3,10 @@ import State from "./state";
 import Utils from "./utils";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
-export function tooltip(tooltipModel) {
+export function tooltip(tooltipModel: { title: string[]; body: any[]; labelColors: {
+    backgroundColor:string,
+    borderColor:string
+}[] }) {
     const titleLines = tooltipModel.title || [];
     const bodyLines = (tooltipModel.body || []).map((r) => r.lines);
 
@@ -30,7 +33,7 @@ export function tooltip(tooltipModel) {
     return undefined;
 }
 
-export function defaultConfig(override) {
+export function defaultConfig(override: any) {
     const color =
         Utils.getTheme() === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 

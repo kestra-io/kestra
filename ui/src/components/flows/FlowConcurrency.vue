@@ -38,13 +38,13 @@
     import Executions from "../executions/Executions.vue";
     import EmptyState from "../layout/EmptyState.vue";
     import {mapState} from "vuex";
-    import State from "../../utils/state.js";
+    import State from "../../utils/state";
     import Status from "../Status.vue";
     import noConcurrencyImage from "../../assets/no_concurrency.svg";
 
     export default {
         components: {
-            Status, 
+            Status,
             Executions,
             EmptyState
         },

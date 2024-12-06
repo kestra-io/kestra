@@ -24,7 +24,7 @@
         defaultConfig,
         tooltip,
         getFormat,
-    } from "../../utils/charts.js";
+    } from "../../utils/charts";
     import Logs from "../../utils/logs.js";
 
     export default defineComponent({

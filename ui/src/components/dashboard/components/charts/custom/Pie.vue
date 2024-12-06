@@ -29,8 +29,8 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
-    import {totalsDurationLegend, totalsLegend} from "../legend.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts";
+    import {totalsDurationLegend, totalsLegend} from "../legend";
 
     import moment from "moment";
 

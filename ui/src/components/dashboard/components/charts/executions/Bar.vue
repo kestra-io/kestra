@@ -49,10 +49,10 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {barLegend} from "../legend.js";
+    import {barLegend} from "../legend";
 
     import Utils from "../../../../../utils/utils";
-    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
+    import {defaultConfig, getFormat} from "../../../../../utils/charts";
     import {getScheme} from "../../../../../utils/scheme.js";
 
     import NoData from "../../../../layout/NoData.vue";

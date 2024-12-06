@@ -17,8 +17,8 @@
 
     import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../legend.js";
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {customBarLegend} from "../legend";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts";
 
     import {useStore} from "vuex";
     import moment from "moment";

@@ -115,7 +115,7 @@
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    import State from "../../utils/state.js";
+    import State from "../../utils/state";
     import DateRange from "../layout/DateRange.vue";
 
     const emits = defineEmits(["dashboard"]);

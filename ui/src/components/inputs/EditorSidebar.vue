@@ -1033,10 +1033,9 @@
         height: auto;
     }
 
-        &::-webkit-scrollbar {
-            width: 2px;
-            height: 4px;
-        }
+    &::-webkit-scrollbar {
+        width: 2px;
+    }
 
     &::-webkit-scrollbar-track {
         background: var(--card-bg);
@@ -1062,10 +1061,9 @@
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
-    .sidebar {
-        background: var(--card-bg);
-        border-right: 1px solid var(--bs-border-color);
-        max-width: 33%;
+.sidebar {
+    background: var(--card-bg);
+    border-right: 1px solid var(--bs-border-color);
 
     .empty {
         position: relative;

@@ -140,7 +140,8 @@
                 markerEnd: {
                     id: "marker-custom",
                     type: MarkerType.ArrowClosed,
-                }
+                },
+                type: "smoothstep"
             }]);
         }
 

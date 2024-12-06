@@ -12,7 +12,7 @@ import Refresh from "vue-material-design-icons/Refresh.vue";
 import Cancel from "vue-material-design-icons/Cancel.vue";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
-const STATE = Object.freeze({
+export const STATE = Object.freeze({
     CREATED: {
         name: "CREATED",
         color: "#1761FD",

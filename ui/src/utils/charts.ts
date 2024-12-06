@@ -1,5 +1,6 @@
+import {Bar, Pie} from "vue-chartjs";
 import _merge from "lodash/merge";
-import State from "./state";
+import State, {STATE} from "./state";
 import Utils from "./utils";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
@@ -33,7 +34,9 @@ export function tooltip(tooltipModel: { title: string[]; body: any[]; labelColor
     return undefined;
 }
 
-export function defaultConfig(override: any) {
+type ChartOptions = InstanceType<typeof Bar>["$props"]["options"] | InstanceType<typeof Pie>["$props"]["options"]
+
+export function defaultConfig<T extends ChartOptions>(override: T): T {
     const color =
         Utils.getTheme() === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 
@@ -93,8 +96,15 @@ export function defaultConfig(override: any) {
     );
 }
 
-export function chartClick(moment, router, route, event) {
-    const query = {};
+export function chartClick(moment: any, router: any, route: any, event: any) {
+    const query: {
+        startDate?: string;
+        endDate?: string;
+        status?: string;
+        state?: string;
+        namespace?: string;
+        q?: string;
+    } = {};
 
     if (event.date) {
         const formattedDate = moment(
@@ -155,17 +165,17 @@ export function chartClick(moment, router, route, event) {
     }
 }
 
-export function backgroundFromState(state, alpha = 1) {
+export function backgroundFromState(state: keyof typeof STATE, alpha = 1) {
     const hex = State.color()[state];
     if (!hex) {
         return null;
     }
 
-    const [r, g, b] = hex.match(/\w\w/g).map((x) => parseInt(x, 16));
+    const [r, g, b] = hex.match(/\w\w/g)?.map((x) => parseInt(x, 16)) ?? [];
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function getConsistentHEXColor(value) {
+export function getConsistentHEXColor(value: keyof typeof STATE) {
     const hex = State.color()[value];
 
     if (hex) return hex;
@@ -190,11 +200,11 @@ export function getConsistentHEXColor(value) {
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`;
 }
 
-export function getStateColor(state) {
+export function getStateColor(state: keyof typeof STATE) {
     return State.getStateColor(state);
 }
 
-export function getFormat(groupBy) {
+export function getFormat(groupBy: "minute" | "hour" | "day" | "week" | "month") {
     switch (groupBy) {
         case "minute":
             return "LT";

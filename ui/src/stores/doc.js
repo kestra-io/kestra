@@ -32,7 +32,7 @@ export default {
         },
         async fetchAppId({getters}, docId) {
             const url = getters["resourceUrl"]()
-            const response = await axios.get(`${url}/app/${docId}`)
+            const response = await axios.get(`${url}/doc/${docId}`)
 
             let metadata = response.headers["x-kestra-metadata"];
             if (metadata !== undefined) {

@@ -16,6 +16,6 @@ triggers:
     inputs:
       from-parent: '{{ outputs.invalid.value }}'
     conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
         namespace: io.kestra.tests.trigger
         flowId: trigger-flow

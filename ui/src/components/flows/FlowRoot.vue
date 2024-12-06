@@ -314,7 +314,7 @@
                 return this.getTabs();
             },
             ready() {
-                return this.user !== undefined && this.flow !== undefined;
+                return this.user && this.flow;
             },
             isAllowedEdit() {
                 if (!this.flow || !this.user) {

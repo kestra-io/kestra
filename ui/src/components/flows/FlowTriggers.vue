@@ -3,7 +3,6 @@
         v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
-        stripe
         table-layout="auto"
         @row-dblclick="triggerId = $event.id; isOpen = true"
         default-expand-all

@@ -129,9 +129,9 @@ public abstract class AbstractTaskRunnerTest {
         assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue(), is(false));
 
         // Verify outputFiles
-        assertThat(IOUtils.toString(storage.get(null, outputFiles.get("output.txt")), StandardCharsets.UTF_8), is("Hello World"));
-        assertThat(IOUtils.toString(storage.get(null, outputFiles.get("file.txt")), StandardCharsets.UTF_8), is("file from output dir"));
-        assertThat(IOUtils.toString(storage.get(null, outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8), is("nested file from output dir"));
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8), is("Hello World"));
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8), is("file from output dir"));
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8), is("nested file from output dir"));
 
         assertThat(defaultLogConsumer.getOutputs().get("logOutput"), is("Hello World"));
     }

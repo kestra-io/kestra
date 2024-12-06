@@ -81,7 +81,6 @@ export default (callback, store, router) => {
                     content: errorResponse,
                     variant: "error"
                 })
-
                 return Promise.reject(errorResponse);
             }
 
@@ -118,7 +117,7 @@ export default (callback, store, router) => {
                 if (!refreshing) {
                     refreshing = true;
                     try {
-                        await instance.post("/oauth/access_token?grant_type=refresh_token");
+                        await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
                         toRefreshQueue.forEach(({config, resolve, reject}) => {
                             instance.request(config).then(response => { resolve(response) }).catch(error => { reject(error) })
                         })
@@ -150,7 +149,7 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse.response.data)
             }
 
-            if (errorResponse.response.data) {
+            if (errorResponse.response.data && errorResponse?.config.showMessageOnError !== false) {
                 store.dispatch("core/showMessage", {
                     response: errorResponse.response,
                     content: errorResponse.response.data,

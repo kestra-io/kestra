@@ -20,5 +20,9 @@ export const yamlSchemas = (store) => [
     {
         fileMatch: ["plugindefault-*.yaml"],
         uri: [`${apiUrl(store)}/plugins/schemas/plugindefault?arrayOf=true`]
+    },
+    {
+        fileMatch: ["dashboard-*.yaml"],
+        uri: [`${apiUrl(store)}/plugins/schemas/dashboard`]
     }
 ]

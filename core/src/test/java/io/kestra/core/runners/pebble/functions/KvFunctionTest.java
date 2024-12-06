@@ -41,7 +41,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
 
     @BeforeEach
     void reset() throws IOException {
-        storageInterface.deleteByPrefix(null, URI.create(StorageContext.kvPrefix("io.kestra.tests")));
+        storageInterface.deleteByPrefix(null, null, URI.create(StorageContext.kvPrefix("io.kestra.tests")));
     }
 
     @Test

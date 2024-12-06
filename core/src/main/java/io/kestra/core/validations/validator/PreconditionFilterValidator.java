@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.validations.PreconditionFilterValidation;
-import io.kestra.plugin.core.condition.AdvancedExecutionsCondition;
+import io.kestra.plugin.core.trigger.Flow;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -12,14 +12,14 @@ import jakarta.inject.Singleton;
 import java.util.List;
 
 @Singleton
-public class PreconditionFilterValidator implements ConstraintValidator<PreconditionFilterValidation, AdvancedExecutionsCondition.Filter> {
+public class PreconditionFilterValidator implements ConstraintValidator<PreconditionFilterValidation, Flow.Filter> {
     @Override
-    public boolean isValid(@Nullable AdvancedExecutionsCondition.Filter value, @NonNull AnnotationValue<PreconditionFilterValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
+    public boolean isValid(@Nullable Flow.Filter value, @NonNull AnnotationValue<PreconditionFilterValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
         if (value == null) {
             return true; // nulls are allowed according to spec
         }
 
-        List<AdvancedExecutionsCondition.Type> needsValue = List.of(AdvancedExecutionsCondition.Type.EQUAL_TO, AdvancedExecutionsCondition.Type.NOT_EQUAL_TO, AdvancedExecutionsCondition.Type.IS_NULL, AdvancedExecutionsCondition.Type.IS_NOT_NULL, AdvancedExecutionsCondition.Type.IS_TRUE, AdvancedExecutionsCondition.Type.IS_FALSE, AdvancedExecutionsCondition.Type.STARTS_WITH, AdvancedExecutionsCondition.Type.ENDS_WITH, AdvancedExecutionsCondition.Type.REGEX, AdvancedExecutionsCondition.Type.CONTAINS);
+        List<Flow.Type> needsValue = List.of(Flow.Type.EQUAL_TO, Flow.Type.NOT_EQUAL_TO, Flow.Type.IS_NULL, Flow.Type.IS_NOT_NULL, Flow.Type.IS_TRUE, Flow.Type.IS_FALSE, Flow.Type.STARTS_WITH, Flow.Type.ENDS_WITH, Flow.Type.REGEX, Flow.Type.CONTAINS);
         if (needsValue.contains(value.getType()) && value.getValue() == null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("`value` cannot be null for type " + value.getType())
@@ -32,7 +32,7 @@ public class PreconditionFilterValidator implements ConstraintValidator<Precondi
             return false;
         }
 
-        List<AdvancedExecutionsCondition.Type> needsValues = List.of(AdvancedExecutionsCondition.Type.IN, AdvancedExecutionsCondition.Type.NOT_IN);
+        List<Flow.Type> needsValues = List.of(Flow.Type.IN, Flow.Type.NOT_IN);
         if (needsValues.contains(value.getType()) && value.getValues() == null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("`values` cannot be null for type " + value.getType())

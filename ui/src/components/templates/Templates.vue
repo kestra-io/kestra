@@ -55,7 +55,6 @@
                         ref="selectTable"
                         :data="templates"
                         :default-sort="{prop: 'id', order: 'ascending'}"
-                        stripe
                         table-layout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"

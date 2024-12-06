@@ -3,8 +3,9 @@ namespace: io.kestra.tests
 
 tasks:
   - id: parallel
-    type: io.kestra.plugin.core.flow.EachParallel
-    value: ["1"]
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 0
+    values: ["1"]
     tasks:
       - id: workingDir
         type: io.kestra.plugin.core.flow.WorkingDirectory

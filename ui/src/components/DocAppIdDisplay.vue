@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showAppId" class="app-id-display-box">
+    <div v-if="showDocId" class="app-id-display-box">
         {{ text }}
         <ContentCopy
             class="copy-button"
@@ -18,9 +18,9 @@
     const store = useStore();
     const route = useRoute();
 
-    const showAppId = computed(() => route.query["showAppId"] !== undefined);
+    const showDocId = computed(() => route.query["showDocId"] !== undefined);
 
-    const text = computed(() => `appId: ${ store.state.doc.appId }`);
+    const text = computed(() => `docId: ${ store.state.doc.docId }`);
 </script>
 
 <style lang="scss" scoped>

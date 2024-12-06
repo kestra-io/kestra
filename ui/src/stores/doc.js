@@ -10,7 +10,7 @@ export default {
         resourceUrlTemplate: undefined,
         appResourceUrlTemplate: undefined,
         docPath: undefined,
-        appId: undefined
+        docId: undefined
     },
     actions: {
         async children({getters}, prefix) {
@@ -30,9 +30,9 @@ export default {
                     }
                 });
         },
-        async fetchAppId({getters}, appId) {
+        async fetchAppId({getters}, docId) {
             const url = getters["resourceUrl"]()
-            const response = await axios.get(`${url}/app/${appId}`)
+            const response = await axios.get(`${url}/app/${docId}`)
 
             let metadata = response.headers["x-kestra-metadata"];
             if (metadata !== undefined) {
@@ -62,8 +62,8 @@ export default {
         setDocPath(state, newPath) {
             state.docPath = newPath;
         },
-        setAppId(state, appId) {
-            state.appId = appId;
+        setDocId(state, docId) {
+            state.docId = docId;
         }
     },
     getters: {

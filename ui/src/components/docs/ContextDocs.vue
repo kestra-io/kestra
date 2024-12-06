@@ -78,12 +78,12 @@
 
     async function refreshPage(val) {
         let response: {metadata: any, content:string} | undefined = undefined;
-        const appId = store.state.doc.appId;
+        const docId = store.state.doc.docId;
 
-        // if there is a contextual doc configured for this appId, fetch it
-        if(val === undefined && appId !== undefined){
+        // if there is a contextual doc configured for this docId, fetch it
+        if(val === undefined && docId !== undefined){
             try {
-                response = await store.dispatch("doc/fetchAppId", appId)
+                response = await store.dispatch("doc/fetchAppId", docId)
             } catch (e) {
                 // eat the error
             }

@@ -39,7 +39,7 @@
             ...mapGetters("flow", ["flowValidation"]),
         },
         mounted() {
-            this.$store.commit("doc/setAppId", "flowEditor");
+            this.$store.commit("doc/setDocId", "flowEditor");
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);

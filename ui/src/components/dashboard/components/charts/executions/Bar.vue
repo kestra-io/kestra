@@ -51,7 +51,7 @@
 
     import {barLegend} from "../legend.js";
 
-    import Utils from "../../../../../utils/utils.js";
+    import Utils from "../../../../../utils/utils";
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 

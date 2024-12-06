@@ -28,7 +28,7 @@
 
     import {totalsLegend} from "../legend.js";
 
-    import Utils from "../../../../../utils/utils.js";
+    import Utils from "../../../../../utils/utils";
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 

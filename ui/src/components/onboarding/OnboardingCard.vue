@@ -31,7 +31,7 @@
 <script>
 
     import Markdown from "../layout/Markdown.vue";
-    import Utils from "../../utils/utils.js";
+    import Utils from "../../utils/utils";
 
     export default {
         name: "OnboardingCard",

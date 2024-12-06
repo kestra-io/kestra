@@ -119,7 +119,7 @@
     import throttle from "lodash/throttle";
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route.js";
-    import Utils from "../../utils/utils.js";
+    import Utils from "../../utils/utils";
     import LogUtils from "../../utils/logs.js";
 
     export default {

@@ -20,7 +20,7 @@
 
 <script>
     import Slack from "vue-material-design-icons/Slack.vue";
-    import Markdown from "../utils/markdown";
+    import * as Markdown from "../utils/markdown";
 
     export default {
         props: {

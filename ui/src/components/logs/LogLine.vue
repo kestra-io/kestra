@@ -29,7 +29,7 @@
 <script>
     import Convert from "ansi-to-html"
     import xss from "xss";
-    import Markdown from "../../utils/markdown";
+    import * as Markdown from "../../utils/markdown";
     import VRuntimeTemplate from "vue3-runtime-template";
 
     let convert = new Convert();

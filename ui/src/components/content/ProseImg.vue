@@ -3,35 +3,30 @@
         <img
             v-bind="$attrs"
             :alt="alt"
-            :src="$store.getters['doc/resourceUrl'](src)"
+            :src="store.getters['doc/resourceUrl'](src)"
             loading="lazy"
         >
     </span>
 </template>
 
 <script setup lang="ts">
-    defineProps({
-        src: {
-            type: String,
-            default: ""
-        },
-        alt: {
-            type: String,
-            default: ""
-        },
-        width: {
-            type: [String, Number],
-            default: undefined
-        },
-        height: {
-            type: [String, Number],
-            default: undefined
-        },
-        class: {
-            type: String,
-            default: ""
-        }
-    })
+    import {useStore} from "vuex";
+
+    const store = useStore();
+
+    withDefaults(defineProps<{
+        src?: string,
+        alt?: string,
+        width?: string | number,
+        height?: string | number,
+        class?: string
+    }>(), {
+        src: "",
+        alt: "",
+        width: "100%",
+        height: "auto",
+        class: ""
+    });
 </script>
 
 <style lang="scss" scoped>

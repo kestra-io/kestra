@@ -8,6 +8,7 @@ export default {
     state: {
         pageMetadata: undefined,
         resourceUrlTemplate: undefined,
+        appResourceUrlTemplate: undefined,
         docPath: undefined,
         appId: undefined
     },
@@ -29,6 +30,20 @@ export default {
                     }
                 });
         },
+        async fetchAppId({getters}, appId) {
+            const url = getters["resourceUrl"](`/app/${appId}`)
+            const response = await axios.get(url)
+
+            let metadata = response.headers["x-kestra-metadata"];
+            if (metadata !== undefined) {
+                metadata = JSON.parse(metadata);
+            }
+
+            return {
+                content: response.data,
+                metadata
+            }
+    },
         async search({getters}, q) {
             return axios.get(getters["resourceUrl"]() + "/search?q=" + q)
                 .then(response => response.data);

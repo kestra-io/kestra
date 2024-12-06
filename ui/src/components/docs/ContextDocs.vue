@@ -77,7 +77,26 @@
     }, {immediate: true});
 
     async function refreshPage(val) {
-        const response = await store.dispatch("doc/fetchResource", `docs${val === undefined ? "" : val}`);
+        let response: {metadata: any, content:string} | undefined = undefined;
+        const appId = store.state.doc.appId;
+
+        // if there is a contextual doc configured for this appId, fetch it
+        if(val === undefined && appId !== undefined){
+            try {
+                response = await store.dispatch("doc/fetchAppId", appId)
+            } catch (e) {
+                // eat the error
+            }
+        }
+
+        // if this fails to return a value, fetch the default doc
+        // if nothing, fetch the home page
+        if(response === undefined){
+            response = await store.dispatch("doc/fetchResource", `docs${val ?? ""}`)
+        }
+        if(response === undefined){
+            return;
+        }
         await store.commit("doc/setPageMetadata", response.metadata);
         let content = response.content;
         if (!("canShare" in navigator)) {

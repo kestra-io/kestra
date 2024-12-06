@@ -132,6 +132,7 @@
         }
 
         for (const edge of dependencies.value.edges) {
+            // TODO: https://github.com/kestra-io/kestra/issues/5350
             addEdges([{
                 id: edge.source + "|" + edge.target,
                 source: edge.source,
@@ -139,11 +140,6 @@
                 markerEnd: {
                     id: "marker-custom",
                     type: MarkerType.ArrowClosed,
-                },
-                type: "bezier",
-                pathOptions: {
-                    curvature: 0.7,  // Mid-range curve
-                    offset: 40,      // Moves the curve away from the nodes
                 }
             }]);
         }

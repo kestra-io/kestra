@@ -31,8 +31,8 @@ export default {
                 });
         },
         async fetchAppId({getters}, appId) {
-            const url = getters["resourceUrl"](`/app/${appId}`)
-            const response = await axios.get(url)
+            const url = getters["resourceUrl"]()
+            const response = await axios.get(`${url}/app/${appId}`)
 
             let metadata = response.headers["x-kestra-metadata"];
             if (metadata !== undefined) {

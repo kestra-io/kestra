@@ -48,9 +48,6 @@
             isOSS(){
                 return true;
             },
-            showAppId() {
-                return this.$route.query["showAppId"] !== undefined;
-            },
         },
         async created() {
             if (this.created === false) {

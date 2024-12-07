@@ -425,7 +425,7 @@
     :deep(.vue-recycle-scroller__item-view) {
         border-bottom: 2px solid var(--bs-border-color);
         margin-bottom: 10px;
-        
+
         &:last-child {
             border-bottom: none;
         }
@@ -449,11 +449,11 @@
             }
 
             .attempt-header {
-                padding: calc(var(--spacer) / 2) var(--spacer);
+                padding: calc(var(--spacer) / 2);
             }
 
             .line {
-                padding: calc(var(--spacer) / 2) var(--spacer);
+                padding: calc(var(--spacer) / 2);
             }
         }
     }

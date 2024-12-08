@@ -79,7 +79,7 @@
 #plugin-script:io.kestra.plugin:plugin-script-nashorn:LATEST
 #plugin-script:io.kestra.plugin:plugin-script-node:LATEST
 #plugin-script:io.kestra.plugin:plugin-script-powershell:LATEST
-plugin-script:io.kestra.plugin:plugin-script-python:LATEST
+#plugin-script:io.kestra.plugin:plugin-script-python:LATEST
 #plugin-script:io.kestra.plugin:plugin-script-r:LATEST
 #plugin-script:io.kestra.plugin:plugin-script-ruby:LATEST
 #plugin-script:io.kestra.plugin:plugin-script-shell:LATEST

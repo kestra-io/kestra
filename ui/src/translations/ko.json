@@ -1006,6 +1006,8 @@
     "create_custom_dashboard": "새 대시보드 생성",
     "edit_custom_dashboard": "대시보드 편집",
     "custom_dashboard_empty": "결과가 표시되지 않습니다.",
-    "remove_bookmark": "이 북마크를 제거하시겠습니까?"
+    "remove_bookmark": "이 북마크를 제거하시겠습니까?",
+    "duplicate filter message": "Duplicate filter `{filterName}` found, please remove it and choose another one.",
+    "duplicate filter": "Duplicate filter not allowed"
   }
 }

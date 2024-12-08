@@ -244,7 +244,23 @@
     };
     const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
-            const values = current.value[dropdowns.value.third.index].value;
+            const currentFilter = current.value[dropdowns.value.third.index];
+            const values = currentFilter.value;
+            const isDuplicateInOtherFilters = current.value.some((item, index) => {
+                return index !== dropdowns.value.third.index &&
+                    item.label === currentFilter.label &&
+                    item.value.includes(filter.value);
+            });
+
+            if (isDuplicateInOtherFilters) {
+                store.dispatch("core/showMessage", {
+                    variant: "error",
+                    title: t("duplicate filter"),
+                    message: t("duplicate filter message", {filterName: currentFilter.label}),
+                });
+                return;
+            }
+
             const index = values.indexOf(filter.value);
 
             if (index === -1) values.push(filter.value);
@@ -410,6 +426,22 @@
 
         if (typeof v.at(-1) === "string") {
             if (v.at(-2)?.label === "labels") {
+                const labelValue = v.at(-1);
+                const isDuplicateInOtherFilters = current.value.some((item) => {
+                    return item.label === "labels" &&
+                        item !== v.at(-2) &&
+                        item.value.includes(labelValue);
+                });
+
+                if (isDuplicateInOtherFilters) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("duplicate filter"),
+                        message: t("duplicate filter message", {filterName: labelValue}),
+                    });
+                    return;
+                }
+
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();
@@ -417,10 +449,26 @@
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = current.value.findIndex((i) => i.label === label);
+                const newValue = v.at(-1);
 
-                if (index !== -1) current.value[index].value = [v.at(-1)];
-                else current.value.push({label, value: [v.at(-1)]});
+                // Check if this text already exists in any other filter
+                const isDuplicateInOtherFilters = current.value.some(item =>
+                    item.label === label &&
+                    item.value.includes(newValue)
+                );
+
+                if (isDuplicateInOtherFilters) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("duplicate filter"),
+                        message: t("duplicate filter message", {filterName: label}),
+                    });
+                    return;
+                }
+
+                const index = current.value.findIndex((i) => i.label === label);
+                if (index !== -1) current.value[index].value = [newValue];
+                else current.value.push({label, value: [newValue]});
 
                 triggerSearch();
             }

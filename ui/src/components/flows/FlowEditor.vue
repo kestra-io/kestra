@@ -12,6 +12,7 @@
         :next-revision="flow.revision + 1"
     />
 </template>
+
 <script>
     import {mapGetters, mapState} from "vuex";
     import EditorView from "../inputs/EditorView.vue";
@@ -36,6 +37,9 @@
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),
             ...mapGetters("flow", ["flowValidation"]),
+        },
+        mounted() {
+            this.$store.commit("doc/setDocId", "flowEditor");
         },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);

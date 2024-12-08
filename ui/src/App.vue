@@ -1,4 +1,5 @@
 <template>
+    <doc-id-display />
     <el-config-provider>
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
@@ -16,6 +17,7 @@
     import Utils from "./utils/utils";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "./components/layout/DefaultLayout.vue";
+    import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
 
     export default {
@@ -23,6 +25,7 @@
         components: {
             ErrorToast,
             VueTour,
+            DocIdDisplay
         },
         data() {
             return {
@@ -44,7 +47,7 @@
             },
             isOSS(){
                 return true;
-            }
+            },
         },
         async created() {
             if (this.created === false) {
@@ -220,4 +223,3 @@
     overflow: auto;
 }
 </style>
-

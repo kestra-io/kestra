@@ -27,13 +27,11 @@ public class KeysFilter implements Filter {
             return null;
         }
 
-        if (input instanceof Map) {
-            Map inputMap = (Map) input;
+        if (input instanceof Map inputMap) {
             return inputMap.keySet();
         }
 
-        if (input instanceof List) {
-            List inputList = (List) input;
+        if (input instanceof List inputList) {
             return IntStream
                 .rangeClosed(0, inputList.size() - 1)
                 .boxed()

@@ -105,6 +105,14 @@ class MapUtilsTest {
     }
 
     @Test
+    void isEmpty() {
+        assertThat(MapUtils.isEmpty(null), is(true));
+        assertThat(MapUtils.isEmpty(Collections.emptyMap()), is(true));
+        assertThat(MapUtils.isEmpty(Map.of("key", "value")), is(false));
+    }
+
+
+    @Test
     void shouldReturnMapWhenNestingMapGivenFlattenMap() {
         Map<String, Object> results = MapUtils.flattenToNestedMap(Map.of(
             "k1.k2.k3", "v1",

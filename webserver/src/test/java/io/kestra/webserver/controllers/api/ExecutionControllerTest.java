@@ -200,7 +200,7 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
     void invalidInputs() {
         MultipartBody.Builder builder = MultipartBody.builder()
             .addPart("validatedString", "B-failed");
-        inputs.forEach((s, o) -> builder.addPart(s, o instanceof String ? (String) o : null));
+        inputs.forEach((s, o) -> builder.addPart(s, o instanceof String str ? str : null));
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,

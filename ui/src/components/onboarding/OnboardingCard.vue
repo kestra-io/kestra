@@ -1,24 +1,40 @@
 <template>
-    <el-card>
-        <template #header>
-            <img :src="img" alt="">
-        </template>
-        <div class="content row">
-            <p class="fw-bold text-uppercase smaller-text">
-                {{ title }}
-            </p>
-            <markdown :source="mdContent" class="mt-4" />
+    <el-card class="box-card">
+        <div class="card-content">
+            <div class="card-header">
+                <el-link
+                    v-if="isOpenInNewCategory"
+                    :underline="false"
+                    :icon="OpenInNew"
+                    :href="getLink()"
+                    target="_blank"
+                />
+            </div>
+            <div class="icon-title">
+                <el-icon size="25px">
+                    <component :is="getIcon()" />
+                </el-icon>
+                <div class="card">
+                    <h5 class="cat_title">
+                        {{ title }}
+                    </h5>
+                    <div class="cat_description">
+                        <markdown :source="$t(`welcome.${category}.text`)" />
+                    </div>
+                </div>
+            </div>
         </div>
     </el-card>
 </template>
 
+<script setup>
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import Monitor from "vue-material-design-icons/Monitor.vue";
+    import Slack from "vue-material-design-icons/Slack.vue";
+    import PlayBox from "vue-material-design-icons/PlayBoxMultiple.vue";
+</script>
 <script>
-    import imageStarted from "../../assets/onboarding/onboarding-started-dark.svg"
-    import imageHelp from "../../assets/onboarding/onboarding-help-dark.svg"
-    import imageDoc from "../../assets/onboarding/onboarding-docs-dark.svg"
-    import imageProduct from "../../assets/onboarding/onboarding-product-dark.svg"
     import Markdown from "../layout/Markdown.vue";
-    import Utils from "../../utils/utils.js";
 
     export default {
         name: "OnboardingCard",
@@ -26,79 +42,94 @@
         props: {
             title: {
                 type: String,
-                required: true
+                required: true,
             },
             category: {
                 type: String,
-                required: true
-            }
+                required: true,
+            },
         },
-        created() {
-            this.loadMarkdown();
-        },
-        data() {
-            return {
-                markdownContent: "",
-            }
-        },
+
         methods: {
-            loadMarkdown() {
-                import(`../../assets/onboarding/markdown/${this.category}${this.lang}.md?raw`)
-                    .then((module) => {
-                        this.markdownContent = module.default;
-                    })
-            }
+            getIcon() {
+                switch (this.category) {
+                case "help":
+                    return Slack;
+                case "tutorial":
+                    return PlayBox;
+                case "tour":
+                    return Monitor;
+                default:
+                    return Monitor;
+                }
+            },
+            getLink() {
+                // Define links for the specific categories
+                const links = {
+                    help: "https://kestra.io/slack",
+                };
+                return links[this.category] || "#"; // Default to "#" if no link is found
+            },
         },
         computed: {
-            lang() {
-                const lang = Utils.getLang();
-                if (lang === "fr") {
-                    return "_fr"
-                }
-                return ""
+            isOpenInNewCategory() {
+                // Define which categories should show the OpenInNew icon
+                return this.category === "help" || this.category === "docs";
             },
-            img() {
-                switch (this.category) {
-                case "started":
-                    return imageStarted;
-                case "help":
-                    return imageHelp;
-                case "docs":
-                    return imageDoc;
-                case "product":
-                    return imageProduct;
-                }
-                return imageStarted
-            },
-            mdContent() {
-                return this.markdownContent;
-            }
-        }
-    }
+        },
+    };
 </script>
 
 <style scoped lang="scss">
-    .el-card {
+a:hover {
+    text-decoration: none;
+}
 
-        &:deep(.el-card__header) {
-            padding: 0;
-        }
+.el-card {
+    background-color: var(--card-bg);
+    border-color: var(--el-border-color);
+    box-shadow: var(--el-box-shadow);
+    position: relative;
+    min-width: 250px;
+    flex: 1;
+    cursor: pointer;
 
-        position: relative;
-        height: 100%;
-        cursor: pointer;
+    &:deep(.el-card__header) {
+        padding: 0;
+    }
+}
+
+.box-card {
+    .card-header {
+        position: absolute;
+        top: 5px;
+        right: 5px;
     }
 
-    .smaller-text {
-        font-size: 0.86em;
-    }
-
-    p {
-        margin-bottom: 0;
-    }
-
-    img {
+    .cat_title {
         width: 100%;
-        height: 100%;
+        margin: 3px 0 10px;
+        padding-left: 20px;
+        font-weight: 600;
+        font-size: var(--el-font-size-small);
     }
+
+    .cat_description {
+        width: 100%;
+        margin: 0;
+        padding-left: 20px;
+    }
+}
+
+.icon-title {
+    display: inline-flex;
+
+    &.icon-title-left {
+        margin-right: 10px;
+    }
+}
+
+.el-link {
+    font-size: 20px;
+}
 </style>

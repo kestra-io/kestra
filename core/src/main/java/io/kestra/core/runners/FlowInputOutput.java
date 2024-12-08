@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -33,10 +31,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
-
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -50,8 +45,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,10 +66,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class FlowInputOutput {
-    private static final Logger log = LoggerFactory.getLogger(FlowInputOutput.class);
+    private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
+    private static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
 
-    public static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
-    public static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;
@@ -358,26 +351,13 @@ public class FlowInputOutput {
         if (flow.getOutputs() == null) {
             return ImmutableMap.of();
         }
-        final ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> results = flow
             .getOutputs()
             .stream()
             .map(output -> {
-                final HashMap<String, Object> current;
-                final Object currentValue;
+                Object current = in == null ? null : in.get(output.getId());
                 try {
-                    current = in == null ? null : mapper.readValue(
-                        mapper.writeValueAsString(in.get(output.getId())), new TypeReference<>() {});
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-                if (current == null) {
-                    currentValue = null;
-                } else {
-                    currentValue = current.get("value");
-                }
-                try {
-                    return parseData(execution, output, currentValue)
+                    return parseData(execution, output, current)
                         .map(entry -> {
                             if (output.getType().equals(Type.SECRET)) {
                                 return new AbstractMap.SimpleEntry<>(
@@ -388,26 +368,12 @@ public class FlowInputOutput {
                             return entry;
                         });
                 } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), currentValue);
+                    throw output.toConstraintViolationException(e.getMessage(), current);
                 }
             })
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(HashMap::new,
-                     (map, entry) -> {
-                         map.compute(entry.getKey(), (key, existingValue) -> {
-                             if (existingValue == null) {
-                                 return entry.getValue();
-                             }
-                             if (existingValue instanceof List) {
-                                 ((List<Object>) existingValue).add(entry.getValue());
-                                 return existingValue;
-                             }
-                             return new ArrayList<>(Arrays.asList(existingValue, entry.getValue()));
-                         });
-                     },
-                     Map::putAll
-            );
+            .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
 
         // Ensure outputs are compliant with tasks outputs.
         return JacksonMapper.toMap(results);
@@ -425,7 +391,7 @@ public class FlowInputOutput {
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
-            Optional.ofNullable(data.getDisplayName()).orElse(data.getId()),
+            data.getId(),
             parseType(execution, data.getType(), data.getId(), elementType, current)
         ));
     }

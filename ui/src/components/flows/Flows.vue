@@ -70,6 +70,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        class="flows-table"
                     >
                         <template #select-actions>
                             <bulk-select
@@ -461,8 +462,12 @@
                 formData.append("fileUpload", this.$refs.file.files[0]);
                 this.$store
                     .dispatch("flow/importFlows", formData)
-                    .then(_ => {
-                        this.$toast().success(this.$t("flows imported"));
+                    .then(res => {
+                        if (res.data.length > 0) {
+                            this.$toast().warning(this.$t("flows not imported") + ": " + res.data.join(", "));
+                        } else {
+                            this.$toast().success(this.$t("flows imported"));
+                        }
                         this.loadData(() => {
                         })
                     })
@@ -493,6 +498,8 @@
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
+                this.namespace && (queryFilter.namespace = this.namespace);
+                
                 return _merge(base, queryFilter)
             },
             loadStats() {
@@ -567,5 +574,9 @@
 
     .flow-id {
         min-width: 200px;
+    }
+
+    .flows-table  .el-table__cell {
+        vertical-align: middle;        
     }
 </style>

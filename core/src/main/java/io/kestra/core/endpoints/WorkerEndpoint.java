@@ -37,9 +37,9 @@ public class WorkerEndpoint {
                     .stream()
                     .map(workerTask -> new WorkerEndpointWorkerTask(
                         workerTask.getType(),
-                        (workerTask instanceof WorkerTask) ? ((WorkerTask) workerTask).getTaskRun() : null,
-                        (workerTask instanceof WorkerTask) ? ((WorkerTask) workerTask).getTask() : null,
-                        (workerTask instanceof WorkerTrigger) ? ((WorkerTrigger) workerTask).getTrigger() : null
+                        workerTask instanceof WorkerTask wt ? wt.getTaskRun() : null,
+                        workerTask instanceof WorkerTask wt ? wt.getTask() : null,
+                        workerTask instanceof WorkerTrigger wt ? wt.getTrigger() : null
                     ))
                     .toList()
             )

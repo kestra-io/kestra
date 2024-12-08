@@ -258,9 +258,11 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {
         URI encodedPath = null;
-        if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        if (!path.startsWith("/")) {
+            path = "/" + path;
         }
+        encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+
         ensureWritableNamespaceFile(encodedPath);
 
         String pathWithoutScheme = encodedPath.getPath();

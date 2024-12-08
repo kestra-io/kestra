@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="h-100 p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.executions_in_progress") }}
@@ -89,9 +89,9 @@
                         }}s
                     </template>
                 </el-table-column>
-                <el-table-column :label="$t('state')" width="100">
+                <el-table-column :label="$t('state')">
                     <template #default="scope">
-                        <States :label="scope.row.state.current" />
+                        <Status size="small" :status="scope.row.state.current" />
                     </template>
                 </el-table-column>
             </el-table>
@@ -119,7 +119,7 @@
 
     import moment from "moment";
 
-    import States from "../../States.vue";
+    import Status from "../../../../Status.vue";
     import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
@@ -177,7 +177,6 @@ code {
 }
 
 .inprogress {
-    --el-table-tr-bg-color: var(--bs-body-bg) !important;
     background: var(--bs-body-bg);
     & a {
         color: #8e71f7;
@@ -187,5 +186,4 @@ code {
         }
     }
 }
-
 </style>

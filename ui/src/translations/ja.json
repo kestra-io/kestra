@@ -360,7 +360,7 @@
     },
     "cancel": "キャンセル",
     "homeDashboard": {
-      "title": "概要",
+      "title": "ダッシュボード",
       "today": "今日",
       "yesterday": "昨日",
       "last28Days": "過去28日間",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "namespaceごとの実行エラー",
       "failedExecutions": "FAILED実行",
       "errorLogs": "エラーログ",
-      "no executions": "flowを実行してみませんか？"
+      "no executions": "flowを実行してみませんか？",
+      "wel_text": "ようこそ！",
+      "start": "最初のworkflowを立ち上げて実行しましょう。",
+      "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
+      "welcome": "Kestraへようこそ"
     },
     "executions replayed": "<code>{executionCount}</code>件の実行が再実行されました",
     "executions resumed": "<code>{executionCount}</code>件の実行が再開されました",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
-      "started": {
-        "title": "簡単な3ステップで始めましょう"
+      "tutorial": {
+        "title": "チュートリアル",
+        "text": "```\n* [ビデオチュートリアル](https://kestra.io/tutorial-videos/all)\n* [ドキュメント](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"
       },
-      "product-tour": {
-        "title": "プロダクトツアーを受ける"
+      "tour": {
+        "title": "製品ツアーを体験する",
+        "text": "ユースケースを選択し、ステップバイステップのガイドに従ってKestraの機能と能力を学びましょう。❤️"
       },
-      "doc": {
-        "title": "ドキュメント"
-      },
-      "need-help": {
-        "title": "ヘルプが必要ですか？"
+      "help": {
+        "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
+        "title": "お困りですか？"
       }
     },
     "pluginPage": {
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURLコマンド",
-      "note": "SECRETおよびFILE入力タイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
+      "note": "SECRETおよびFILEのinputタイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
     },
     "logs_view": {
       "raw": "Temporalビュー",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "カスタムダッシュボード",
     "create_custom_dashboard": "新しいダッシュボードを作成",
     "edit_custom_dashboard": "ダッシュボードを編集",
-    "custom_dashboard_empty": "表示する結果がありません。"
+    "custom_dashboard_empty": "表示する結果がありません。",
+    "remove_bookmark": "このブックマークを削除してもよろしいですか？"
   }
 }

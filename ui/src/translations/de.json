@@ -360,7 +360,7 @@
     },
     "cancel": "Abbrechen",
     "homeDashboard": {
-      "title": "Übersicht",
+      "title": "Dashboard",
       "today": "Heute",
       "yesterday": "Gestern",
       "last28Days": "Letzte 28 Tage",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Ausführungsfehler pro Namespace",
       "failedExecutions": "Fehlgeschlagene Ausführungen",
       "errorLogs": "Fehler-Logs",
-      "no executions": "Bereit, Ihren Flow in Aktion zu sehen?"
+      "no executions": "Bereit, Ihren Flow in Aktion zu sehen?",
+      "wel_text": "Willkommen!",
+      "start": "Lassen Sie uns Ihren ersten Workflow zum Laufen bringen.",
+      "guide": "Benötigen Sie Hilfe, um Ihren ersten Flow auszuführen?",
+      "welcome": "Willkommen bei Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> Ausführung(en) erneut abgespielt",
     "executions resumed": "<code>{executionCount}</code> Ausführung(en) fortgesetzt",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Wir empfehlen dringend, diese Aktion abzubrechen und alle laufenden Ausführungen zuerst zu beenden. Das Löschen nicht beendeter Ausführungen kann zu Nebenläufigkeitsproblemen, Inkonsistenzen im Flow-Abhängigkeitsmanagement und Zombie-Prozessen auf Ihrer Instanz führen, was die Systemleistung beeinträchtigen kann. Stellen Sie sicher, dass Sie diese Risiken vollständig verstehen, bevor Sie mit dem Löschen fortfahren.",
     "originalCreatedDate": "Ursprüngliches Erstellungsdatum",
     "welcome": {
-      "started": {
-        "title": "In 3 einfachen Schritten loslegen"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Video-Tutorials](https://kestra.io/tutorial-videos/all)\n* [Dokumentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Produkt-Tour machen"
+      "tour": {
+        "title": "Produkt-Tour starten",
+        "text": "Wählen Sie Ihren Anwendungsfall und folgen Sie einer Schritt-für-Schritt-Anleitung, um die Funktionen und Möglichkeiten von Kestra kennenzulernen. ❤️"
       },
-      "doc": {
-        "title": "Dokumentation"
-      },
-      "need-help": {
+      "help": {
+        "text": "Stellen Sie jede Frage in unserer Slack-Community. Wenn Sie feststecken, sind wir hier, um Ihnen zu helfen. ✋",
         "title": "Brauchen Sie Hilfe?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL-Befehl",
-      "note": "Die Inputs vom Typ SECRET und FILE müssen immer bei der Ausführung angegeben werden."
+      "note": "Beachten Sie, dass bei den Eingabetypen SECRET und FILE der Befehl angepasst werden muss, um den tatsächlichen Werten zu entsprechen."
     },
     "logs_view": {
       "raw": "Temporale Ansicht",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "Benutzerdefinierte Dashboards",
     "create_custom_dashboard": "Neues Dashboard erstellen",
     "edit_custom_dashboard": "Dashboard bearbeiten",
-    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen."
+    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen.",
+    "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?"
   }
 }

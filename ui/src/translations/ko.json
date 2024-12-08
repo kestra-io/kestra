@@ -360,7 +360,7 @@
     },
     "cancel": "취소",
     "homeDashboard": {
-      "title": "개요",
+      "title": "대시보드",
       "today": "오늘",
       "yesterday": "어제",
       "last28Days": "지난 28일",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "namespace별 실행 오류",
       "failedExecutions": "실패한 실행",
       "errorLogs": "오류 로그",
-      "no executions": "flow를 실행해 보시겠습니까?"
+      "no executions": "flow를 실행해 보시겠습니까?",
+      "wel_text": "환영합니다!",
+      "start": "첫 번째 workflow를 시작하고 실행해 봅시다.",
+      "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
+      "welcome": "Kestra에 오신 것을 환영합니다"
     },
     "executions replayed": "<code>{executionCount}</code> 개의 실행이 재실행되었습니다",
     "executions resumed": "<code>{executionCount}</code> 개의 실행이 재개되었습니다",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
     "originalCreatedDate": "원래 생성 날짜",
     "welcome": {
-      "started": {
-        "title": "3단계로 시작하기"
+      "tutorial": {
+        "title": "튜토리얼",
+        "text": "```\n* [비디오 튜토리얼](https://kestra.io/tutorial-videos/all)\n* [문서](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"
       },
-      "product-tour": {
-        "title": "제품 투어하기"
+      "tour": {
+        "title": "제품 투어 시작하기",
+        "text": "사용 사례를 선택하고 단계별 가이드를 따라 Kestra의 기능과 역량을 배워보세요. ❤️"
       },
-      "doc": {
-        "title": "문서"
-      },
-      "need-help": {
-        "title": "도움이 필요하십니까?"
+      "help": {
+        "text": "Slack 커뮤니티에서 질문을 하세요. 문제가 생기면 저희가 도와드리겠습니다. ✋",
+        "title": "도움이 필요하신가요?"
       }
     },
     "pluginPage": {
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL 명령어",
-      "note": "SECRET 및 FILE input 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
+      "note": "SECRET 및 FILE 입력 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
     },
     "logs_view": {
       "raw": "Temporal 보기",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "맞춤 대시보드",
     "create_custom_dashboard": "새 대시보드 생성",
     "edit_custom_dashboard": "대시보드 편집",
-    "custom_dashboard_empty": "결과가 표시되지 않습니다."
+    "custom_dashboard_empty": "결과가 표시되지 않습니다.",
+    "remove_bookmark": "이 북마크를 제거하시겠습니까?"
   }
 }

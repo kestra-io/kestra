@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Resumen",
+      "title": "Tablero de control",
       "today": "Hoy",
       "yesterday": "Ayer",
       "last28Days": "Últimos 28 días",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Errores de ejecuciones por namespace",
       "failedExecutions": "Ejecuciones FAILED",
       "errorLogs": "Logs de errores",
-      "no executions": "¿Listo para ver tu flow en acción?"
+      "no executions": "¿Listo para ver tu flow en acción?",
+      "wel_text": "¡Bienvenido!",
+      "start": "Vamos a poner en marcha tu primer flujo de trabajo.",
+      "guide": "¿Necesitas orientación para ejecutar tu primer flow?",
+      "welcome": "Bienvenido a Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducidas",
     "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudadas",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
-      "started": {
-        "title": "Comienza en 3 sencillos pasos"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Tutoriales en Video](https://kestra.io/tutorial-videos/all)\n* [Documentación](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Realiza un recorrido por el producto"
+      "tour": {
+        "title": "Realiza un recorrido por el producto",
+        "text": "Elige tu caso de uso y sigue una guía paso a paso para aprender las características y capacidades de Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentación"
-      },
-      "need-help": {
+      "help": {
+        "text": "Haz cualquier pregunta en nuestra comunidad de Slack. Si estás atascado, estamos aquí para ayudarte. ✋",
         "title": "¿Necesitas ayuda?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Ten en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
+      "note": "Tenga en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
     },
     "logs_view": {
       "raw": "Vista temporal",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "Tableros Personalizados",
     "create_custom_dashboard": "Crear nuevo dashboard",
     "edit_custom_dashboard": "Editar Panel de Control",
-    "custom_dashboard_empty": "No hay resultados para mostrar."
+    "custom_dashboard_empty": "No hay resultados para mostrar.",
+    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?"
   }
 }

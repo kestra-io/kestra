@@ -8,7 +8,6 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -37,13 +36,16 @@ import lombok.ToString;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.stream.Streams;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -160,7 +162,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
                                                              FlowExecutorInterface flowExecutorInterface,
-                                                             Flow currentFlow,
+                                                             io.kestra.core.models.flows.Flow currentFlow,
                                                              Execution currentExecution,
                                                              TaskRun currentTaskRun) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();
@@ -186,7 +188,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
-        Flow flow,
+        io.kestra.core.models.flows.Flow flow,
         Execution execution
     ) {
         // we only create a worker task result when the execution is terminated
@@ -202,24 +204,21 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
 
-        FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
         final Map<String, Object> subflowOutputs = Optional
             .ofNullable(flow.getOutputs())
-            .map(outputs -> flowInputOutput.flowOutputsToMap(flow.getOutputs()))
-            .orElseGet(() -> isOutputsAllowed ? transformOutputs(this.getOutputs()) : null);
+            .map(outputs -> outputs
+                .stream()
+                .collect(Collectors.toMap(
+                    io.kestra.core.models.flows.Output::getId,
+                    io.kestra.core.models.flows.Output::getValue)
+                )
+            )
+            .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
 
         if (subflowOutputs != null) {
             try {
-                Map<String, Object> outputs = flow.getOutputs()
-                    .stream()
-                    .collect(HashMap::new, (map, entry) -> {
-                        final HashMap<String, Object> entryInfo = new HashMap<>();
-                        entryInfo.put("value", entry.getValue());
-                        entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
-                        map.put(entry.getId(), entryInfo);
-                    }, Map::putAll);
-                outputs = runContext.render(outputs);
-
+                Map<String, Object> outputs = runContext.render(subflowOutputs);
+                FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
                 if (flow.getOutputs() != null && flowInputOutput != null) {
                     outputs = flowInputOutput.typedOutputs(flow, execution, outputs);
                 }
@@ -248,16 +247,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         }
 
         return Optional.of(ExecutableUtils.subflowExecutionResult(taskRun, execution));
-    }
-
-    private Map<String, Object> transformOutputs(Map<String, Object> outputs) {
-        return outputs == null ? null : outputs.entrySet()
-            .stream()
-            .collect(HashMap::new, (map, entry) -> {
-                final HashMap<String, Object> entryInfo = new HashMap<>();
-                entryInfo.put("value", entry.getValue());
-                map.put(entry.getKey(), entryInfo);
-            }, Map::putAll);
     }
 
     @Override

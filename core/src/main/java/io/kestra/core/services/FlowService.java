@@ -223,32 +223,28 @@ public class FlowService {
     }
 
     public Collection<FlowWithSource> keepLastVersion(List<FlowWithSource> flows) {
-        return keepLastVersionCollector(flows.stream())
-            .toList();
+        return keepLastVersionCollector(flows.stream()).toList();
     }
 
-    private Stream<FlowWithSource> keepLastVersionCollector(Stream<FlowWithSource> stream) {
-        return stream
-            .sorted((left, right) -> left.getRevision() > right.getRevision() ? -1 : (left.getRevision().equals(right.getRevision()) ? 0 : 1))
-            .collect(Collectors.groupingBy(Flow::uidWithoutRevision))
-            .values()
-            .stream()
-            .map(flows -> {
-                FlowWithSource flow = flows.stream().findFirst().orElseThrow();
+    public Stream<FlowWithSource> keepLastVersionCollector(Stream<FlowWithSource> stream) {
+        // Use a Map to track the latest version of each flow
+        Map<String, FlowWithSource> latestFlows = new HashMap<>();
 
-                // edge case, 2 flows with same revision, we keep the deleted
-                final FlowWithSource finalFlow = flow;
-                Optional<FlowWithSource> deleted = flows.stream()
-                    .filter(f -> f.getRevision().equals(finalFlow.getRevision()) && f.isDeleted())
-                    .findFirst();
+        stream.forEach(flow -> {
+            String uid = flow.uidWithoutRevision();
+            FlowWithSource existing = latestFlows.get(uid);
 
-                if (deleted.isPresent()) {
-                    return null;
-                }
+            // Update only if the current flow has a higher revision
+            if (existing == null || flow.getRevision() > existing.getRevision()) {
+                latestFlows.put(uid, flow);
+            } else if (flow.getRevision().equals(existing.getRevision()) && flow.isDeleted()) {
+                // Edge case: prefer deleted flow with the same revision
+                latestFlows.put(uid, flow);
+            }
+        });
 
-                return flow.isDeleted() ? null : flow;
-            })
-            .filter(Objects::nonNull);
+        // Return the non-deleted flows
+        return latestFlows.values().stream().filter(flow -> !flow.isDeleted());
     }
 
     protected boolean removeUnwanted(Flow f, Execution execution) {
@@ -291,20 +287,20 @@ public class FlowService {
         return source + String.format("\ndisabled: %s", disabled);
     }
 
-    public static String generateSource(Flow flow, @Nullable String source) {
+    public static String generateSource(Flow flow) {
         try {
-            if (source == null) {
-                return toYamlWithoutDefault(flow);
-            }
+            String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(flow);
 
-            if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
-                source = toYamlWithoutDefault(flow);
-            }
+            Object map = fixSnakeYaml(JacksonMapper.toMap(json));
+
+            String source = JacksonMapper.ofYaml().writeValueAsString(map);
+
+            // remove the revision from the generated source
+            return source.replaceFirst("(?m)^revision: \\d+\n?","");
         } catch (JsonProcessingException e) {
             log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
+            return null;
         }
-
-        return source;
     }
 
     // Used in Git plugin
@@ -323,15 +319,6 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
-    }
-
-    @SneakyThrows
-    private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
-        String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(object);
-
-        Object map = fixSnakeYaml(JacksonMapper.toMap(json));
-
-        return JacksonMapper.ofYaml().writeValueAsString(map);
     }
 
     /**

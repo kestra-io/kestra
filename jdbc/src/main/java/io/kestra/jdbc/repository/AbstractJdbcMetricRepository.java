@@ -317,7 +317,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         throw new NotImplementedException();
     }
 }

@@ -25,15 +25,14 @@ public interface SchedulerTriggerStateInterface {
 
     Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception;
 
+
+    /**
+     * Used by the JDBC implementation: find triggers in all tenants.
+     */
     List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContext);
 
     /**
-     * Required for Kafka
+     * Used by the Kafka implementation: find triggers in the scheduler assigned flow (as in Kafka partition assignment).
      */
     List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<FlowWithSource> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext);
-
-    /**
-     * Required for Kafka
-     */
-    void unlock(Trigger trigger);
 }

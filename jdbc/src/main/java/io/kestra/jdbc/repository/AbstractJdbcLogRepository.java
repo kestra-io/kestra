@@ -555,7 +555,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     @Override
-    public List<Map<String, Object>> fetchData(String tenantId, DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         throw new NotImplementedException();
     }
 }

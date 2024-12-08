@@ -153,7 +153,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}")
     @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard chart data")
-    public List<Map<String, Object>> dashboardChart(
+    public PagedResults<Map<String, Object>> dashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
         @Parameter(description = "The filters to apply") @Body Map<String, Object> filters
@@ -185,7 +185,9 @@ public class DashboardController {
         }
 
         if (chart instanceof DataChart dataChart) {
-            return this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate);
+            Integer pageNumber = (Integer) filters.get("pageNumber");
+            Integer pageSize = (Integer) filters.get("pageSize");
+            return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");

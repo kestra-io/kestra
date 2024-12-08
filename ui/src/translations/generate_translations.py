@@ -120,7 +120,7 @@ def flatten_dict(d, parent_key="", sep="|"):
     return dict(items)
 
 
-def load_en_changes_from_last_commits(input_file, commit_range=10):
+def load_en_changes_from_last_commits(input_file, commit_range=50):
     repo = git.Repo(".")
     commits = list(repo.iter_commits('HEAD', max_count=commit_range))
     

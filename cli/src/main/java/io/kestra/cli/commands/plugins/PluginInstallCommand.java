@@ -1,98 +1,103 @@
 package io.kestra.cli.commands.plugins;
 
-import org.apache.commons.io.FilenameUtils;
+import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.plugins.LocalPluginManager;
+import io.kestra.core.plugins.MavenPluginDownloader;
+import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginManager;
+import io.micronaut.http.uri.UriBuilder;
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.plugins.PluginDownloader;
-import io.kestra.cli.plugins.RepositoryConfig;
 import io.kestra.core.utils.IdUtils;
-import org.apache.http.client.utils.URIBuilder;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 
 import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import jakarta.inject.Inject;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
-
-@CommandLine.Command(
+@Command(
     name = "install",
     description = "Install plugins"
 )
 public class PluginInstallCommand extends AbstractCommand {
-    @CommandLine.Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates.")
+
+    @Option(names = {"--locally"}, description = "Specifies if plugins must be installed locally. If set to false the installation depends on your Kestra configuration.")
+    boolean locally = true;
+
+    @Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates.")
     List<String> dependencies = new ArrayList<>();
 
-    @CommandLine.Option(names = {"--repositories"}, description = "URL to additional Maven repositories")
+    @Option(names = {"--repositories"}, description = "URL to additional Maven repositories")
     private URI[] repositories;
 
-    @CommandLine.Spec
+    @Spec
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private PluginDownloader pluginDownloader;
+    Provider<MavenPluginDownloader> mavenPluginRepositoryProvider;
 
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        if (this.pluginsPath == null) {
+        if (this.locally && this.pluginsPath == null) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
                 "or environment variable 'KESTRA_PLUGINS_PATH"
             );
         }
 
-        if (!pluginsPath.toFile().exists()) {
-            if (!pluginsPath.toFile().mkdir()) {
-                throw new RuntimeException("Cannot create directory: " + pluginsPath.toFile().getAbsolutePath());
-            }
-        }
-
+        List<MavenPluginRepositoryConfig> repositoryConfigs = List.of();
         if (repositories != null) {
-            Arrays.stream(repositories)
-                .forEach(throwConsumer(s -> {
-                    URIBuilder uriBuilder = new URIBuilder(s);
-
-                    RepositoryConfig.RepositoryConfigBuilder builder = RepositoryConfig.builder()
+            repositoryConfigs = Arrays.stream(repositories)
+                .map(uri -> {
+                    MavenPluginRepositoryConfig.MavenPluginRepositoryConfigBuilder builder = MavenPluginRepositoryConfig
+                        .builder()
                         .id(IdUtils.create());
 
-                    if (uriBuilder.getUserInfo() != null) {
-                        int index = uriBuilder.getUserInfo().indexOf(":");
-
-                        builder.basicAuth(new RepositoryConfig.BasicAuth(
-                            uriBuilder.getUserInfo().substring(0, index),
-                            uriBuilder.getUserInfo().substring(index + 1)
+                    String userInfo = uri.getUserInfo();
+                    if (userInfo != null) {
+                        String[] userInfoParts = userInfo.split(":");
+                        builder = builder.basicAuth(new MavenPluginRepositoryConfig.BasicAuth(
+                            userInfoParts[0],
+                            userInfoParts[1]
                         ));
-
-                        uriBuilder.setUserInfo(null);
                     }
-
-                    builder.url(uriBuilder.build().toString());
-
-                    pluginDownloader.addRepository(builder.build());
-                }));
+                    builder.url(UriBuilder.of(uri).userInfo(null).build().toString());
+                    return builder.build();
+                }).toList();
         }
 
-        List<URL> resolveUrl = pluginDownloader.resolve(dependencies);
-        stdOut("Resolved Plugin(s) with {0}", resolveUrl);
+        final List<PluginArtifact> pluginArtifacts;
+        try {
+           pluginArtifacts = dependencies.stream().map(PluginArtifact::fromCoordinates).toList();
+        } catch (IllegalArgumentException e) {
+            stdErr(e.getMessage());
+            return CommandLine.ExitCode.USAGE;
+        }
 
-        for (URL url: resolveUrl) {
-            Files.copy(
-                Paths.get(url.toURI()),
-                Paths.get(pluginsPath.toString(), FilenameUtils.getName(url.toString())),
-                StandardCopyOption.REPLACE_EXISTING
+        try (final PluginManager pluginManager = getPluginManager()) {
+            List<PluginArtifact> installed = pluginManager.install(
+                pluginArtifacts,
+                repositoryConfigs,
+                false,
+                pluginsPath
             );
+
+            List<URI> uris = installed.stream().map(PluginArtifact::uri).toList();
+            stdOut("Successfully installed plugins {0} into {1}", dependencies, uris);
+            return CommandLine.ExitCode.OK;
         }
+    }
 
-        stdOut("Successfully installed plugins {0} into {1}", dependencies, pluginsPath);
-
-        return 0;
+    private PluginManager getPluginManager() {
+        return locally ? new LocalPluginManager(mavenPluginRepositoryProvider.get()) : this.pluginManagerProvider.get();
     }
 
     @Override

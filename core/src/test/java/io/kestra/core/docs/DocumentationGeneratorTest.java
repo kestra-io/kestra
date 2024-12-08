@@ -1,6 +1,6 @@
 package io.kestra.core.docs;
 
-import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
@@ -41,7 +41,8 @@ class DocumentationGeneratorTest {
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -59,7 +60,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class dag = scan.findClass(Dag.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, dag, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan,dag, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -95,7 +97,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class returnTask = scan.findClass(Return.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, returnTask, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, returnTask, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -113,7 +116,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Subflow.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, bash, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -127,7 +131,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, bash, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -142,7 +147,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Set> set = scan.findClass(Set.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, set, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, set, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -180,7 +186,8 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, Process.class);
+        PluginClassAndMetadata<Process> metadata = PluginClassAndMetadata.create(scan, processTaskRunner, Process.class, null);
+        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 

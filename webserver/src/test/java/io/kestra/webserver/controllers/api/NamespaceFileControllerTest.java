@@ -41,6 +41,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class NamespaceFileControllerTest extends JdbcH2ControllerTest {
@@ -142,6 +143,28 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    void createDirectoryException() {
+    assertThrows(
+        HttpClientResponseException.class,
+        () ->
+            client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.POST(
+                        "/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows",
+                        null)));
+    assertThrows(
+        HttpClientResponseException.class,
+        () ->
+            client
+                .toBlocking()
+                .exchange(
+                    HttpRequest.POST(
+                        "/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows2",
+                        null)));
+    }
+
+    @Test
     void createFile() throws IOException {
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "test.txt", "Hello".getBytes())
@@ -151,6 +174,24 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
         assertNamespaceFileContent(URI.create("/test.txt"), "Hello");
+    }
+
+    @Test
+    void createFileFlowException() {
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "_flows", "Hello".getBytes())
+            .build();
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
+        MultipartBody body2 = MultipartBody.builder()
+            .addPart("fileContent", "_flows2", "Hello".getBytes())
+            .build();
+        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows2", body2)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        ));
     }
 
     @Test

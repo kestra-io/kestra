@@ -48,9 +48,7 @@ public class NamespaceFileController {
     @Inject
     private FlowService flowService;
 
-    private final List<Pattern> forbiddenPathPatterns = List.of(
-        Pattern.compile("/" + FLOWS_FOLDER + ".*")
-    );
+    private static final String DELIMITER_SLASH = "/";
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -183,8 +181,12 @@ public class NamespaceFileController {
 
     private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws IOException {
         String filePath = path.getPath();
-        if(filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
-            if(filePath.split("/").length != 3) {
+        if (filePath.startsWith(DELIMITER_SLASH)) {
+            filePath = filePath.substring(1);
+        }
+        String[] filePaths = filePath.split(DELIMITER_SLASH);
+        if (filePaths.length != 0 && filePaths[0].startsWith(FLOWS_FOLDER)) {
+            if(filePaths.length != 2) {
                 throw new IllegalArgumentException("Invalid flow file path: " + filePath);
             }
 
@@ -193,7 +195,6 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return;
         }
-
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
@@ -297,8 +298,15 @@ public class NamespaceFileController {
         if (path == null) {
             return;
         }
-
-        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
+        String filePath = path.getPath();
+        if (filePath.startsWith(DELIMITER_SLASH)) {
+            filePath = filePath.substring(1);
+        }
+        String[] splitPath = filePath.split(DELIMITER_SLASH);
+        if(splitPath.length == 0) {
+            return;
+        }
+        if (splitPath[0].startsWith(FLOWS_FOLDER)) {
             throw new IllegalArgumentException("Forbidden path: " + path.getPath());
         }
     }

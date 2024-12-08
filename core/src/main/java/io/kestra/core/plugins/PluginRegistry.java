@@ -27,6 +27,8 @@ public interface PluginRegistry {
      */
     void register(final Path pluginPath);
 
+    void unregister(List<RegisteredPlugin> plugin);
+
     /**
      * Finds the Java class corresponding to the given plugin identifier.
      *

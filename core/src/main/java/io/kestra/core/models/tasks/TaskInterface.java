@@ -15,6 +15,6 @@ public interface TaskInterface extends Plugin {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*(?::\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?)?")
     String getType();
 }

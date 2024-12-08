@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import picocli.CommandLine;
 
@@ -16,7 +17,7 @@ public class PluginListCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks plugins")
     private boolean core = false;
-    
+
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -26,8 +27,9 @@ public class PluginListCommand extends AbstractCommand {
                 "or environment variable 'KESTRA_PLUGINS_PATH"
             );
         }
-        
-        List<RegisteredPlugin> plugins = core ?  pluginRegistry().plugins() :  pluginRegistry().externalPlugins();
+
+        PluginRegistry registry = pluginRegistryProvider.get();
+        List<RegisteredPlugin> plugins = core ?  registry.plugins() : registry.externalPlugins();
         plugins.forEach(registeredPlugin -> stdOut(registeredPlugin.toString()));
 
         return 0;

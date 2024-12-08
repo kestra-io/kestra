@@ -28,6 +28,24 @@ public interface PluginRegistry {
     void register(final Path pluginPath);
 
     /**
+     * Unregisters the given plugin bundle.
+     *
+     * @param plugin the plugin bundle to un-register.
+     */
+    void unregister(List<RegisteredPlugin> plugin);
+
+    /**
+     * Registers a plugin class with the given identifier.
+     * <p>
+     * Any plugin class registered through this method will be then accessible from
+     * the method {@link #findClassByIdentifier(PluginIdentifier)}.
+     *
+     * @param identifier  The plugin identifier.
+     * @param pluginClass The class for the register.
+     */
+    void registerClassForIdentifier(PluginIdentifier identifier, Class<? extends Plugin> pluginClass);
+
+    /**
      * Finds the Java class corresponding to the given plugin identifier.
      *
      * @param identifier The plugin identifier - must not be {@code null}.

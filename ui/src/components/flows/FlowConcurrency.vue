@@ -14,6 +14,11 @@
             </div>
         </el-card>
         <el-card>
+            <KestraFilter
+                prefix="is-concurrency"
+                :include="['state']"
+                :refresh="{shown: true, callback: refresh}"
+            />
             <executions
                 :restore-url="false"
                 :topbar="false"
@@ -41,17 +46,19 @@
     import State from "../../utils/state.js";
     import Status from "../Status.vue";
     import noConcurrencyImage from "../../assets/no_concurrency.svg";
+    import KestraFilter from "../filter/KestraFilter.vue";
 
     export default {
         components: {
             Status, 
             Executions,
-            EmptyState
+            EmptyState,
+            KestraFilter
         },
         data() {
             return {
                 runningCount: 0,
-                noConcurrencyImage
+                noConcurrencyImage,
             }
         },
         methods: {

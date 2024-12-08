@@ -702,7 +702,7 @@
 
                             // Extract file details
                             const fileName = pathParts[pathParts.length - 1];
-                            const [name, extension] = fileName.split(".");
+                            const [name, extension] = this.getFileNameWithExtension(fileName);
 
                             // Read file content
                             const content = await this.readFile(file);
@@ -726,7 +726,7 @@
                         } else {
                             // Process files at root level (not in any folder)
                             const content = await this.readFile(file);
-                            const [name, extension] = file.name.split(".");
+                            const [name, extension] = this.getFileNameWithExtension(file.name);
 
                             this.importFileDirectory({
                                 namespace:

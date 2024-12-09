@@ -66,7 +66,6 @@
         data: {
             type: Object,
             required: true,
-            flowId: String
         },
         total: {
             type: Number,

@@ -49,7 +49,7 @@
 
             <template #top>
                 <el-card v-if="showStatChart()" shadow="never" class="mb-4">
-                    <NoExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
                 </el-card>
             </template>
 
@@ -388,7 +388,7 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
-    import NoExecutionsBar from "../../components/dashboard/components/charts/executions/NoExecutionsBar.vue"
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
     import DateAgo from "../layout/DateAgo.vue";
 
     import {filterLabels} from "./utils"
@@ -405,7 +405,7 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            NoExecutionsBar,
+            ExecutionsBar,
             DateAgo
         },
         emits: ["state-count"],

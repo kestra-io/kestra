@@ -18,8 +18,8 @@
 
     import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../legend";
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts";
+    import {customBarLegend} from "../legend.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
@@ -43,12 +43,8 @@
 
     const {data, chartOptions} = props.chart;
 
-    const aggregator = (Object.entries(data.columns)
-        .filter(([_, v]) => (v as any).agg ) as [string, {
-            graphStyle: "PIE" | "DOUGHNOUT",
-            displayName: string
-            field: string
-        }][])
+    const aggregator = Object.entries(data.columns)
+        .filter(([_, v]) => v.agg)
         .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
     const yBShown = aggregator.length === 2;
 
@@ -76,9 +72,9 @@
                     : {}),
                 tooltip: {
                     enabled: true,
-                    filter: (value:any) => value.raw,
+                    filter: (value) => value.raw,
                     callbacks: {
-                        label: (value:any) => {
+                        label: (value) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
@@ -97,7 +93,7 @@
                 y: {
                     title: {
                         display: true,
-                        text: aggregator[0][1]?.displayName ?? aggregator[0][0],
+                        text: aggregator[0][1].displayName ?? aggregator[0][0],
                     },
                     position: "left",
                     ...DEFAULTS,
@@ -125,19 +121,19 @@
         });
     });
 
-    function isDuration(field: string) {
+    function isDuration(field) {
         return field === "DURATION";
     }
 
     const parsedData = computed(() => {
-        const parseValue = (value: string) => {
+        const parseValue = (value) => {
             const date = moment(value, moment.ISO_8601, true);
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
 
         const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = rawData.map((v: Record<string, any>) => {
+            const values = rawData.map((v) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -238,7 +234,7 @@
             startDate: route.query.timeRange
                 ? moment()
                     .subtract(
-                        moment.duration(route.query.timeRange as any).as("milliseconds"),
+                        moment.duration(route.query.timeRange).as("milliseconds"),
                     )
                     .toISOString(true)
                 : route.query.startDate ||

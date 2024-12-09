@@ -19,12 +19,12 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
-    import Utils from "../../utils/utils";
+    import Utils from "../../utils/utils.js";
     import {
         defaultConfig,
         tooltip,
         getFormat,
-    } from "../../utils/charts";
+    } from "../../utils/charts.js";
     import Logs from "../../utils/logs.js";
 
     export default defineComponent({

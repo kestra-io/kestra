@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {h, defineComponent, VNode} from "vue";
+    import {h, defineComponent} from "vue";
     import {useStore} from "vuex";
     import {RouterLink, useRoute} from "vue-router";
 
@@ -32,7 +32,7 @@
                 currentPage = route.params.path;
             }
 
-            currentPage = typeof currentPage === "string" && currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
+            currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
             let childrenWithMetadata = await store.dispatch("doc/children", currentPage) as Record<string, any>;
             childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata).map(([url, metadata]) => [url, {...metadata, path: url}]));
@@ -48,16 +48,11 @@
 
             const dir = Object.entries(childrenWithMetadata)[0]?.[1]?.children;
 
-            interface Child {
-                children?: Child[];
-                path?: string;
-            }
-
-            const renderLinks = (data: Child[], level: number): VNode => {
+            const renderLinks = (data, level) => {
                 return h(
                     "ul",
                     level ? {"data-level": level} : null,
-                    (data || []).map((link: Child) => {
+                    (data || []).map((link) => {
                         if (link.children &&
                             (props.max === undefined || props.max <= level) &&
                             (link.children.length > 1 || link.children.length === 1 && link.children[0].path !== link.path)
@@ -70,7 +65,7 @@
                 );
             };
 
-            const defaultNode = (data:Child[]) => renderLinks(data, 0);
+            const defaultNode = (data) => renderLinks(data, 0);
 
             return () => ctx.slots?.default ? ctx.slots.default({dir, ...ctx.attrs}) : defaultNode(dir);
         },

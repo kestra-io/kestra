@@ -38,7 +38,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import State from "../../utils/state";
+    import State from "../../utils/state.js";
 
     export default {
         props: {

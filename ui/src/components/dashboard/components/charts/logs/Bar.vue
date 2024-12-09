@@ -30,9 +30,9 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {barLegend} from "../legend";
+    import {barLegend} from "../legend.js";
 
-    import {defaultConfig, getFormat} from "../../../../../utils/charts";
+    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 

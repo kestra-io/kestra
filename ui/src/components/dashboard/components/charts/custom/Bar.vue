@@ -15,10 +15,10 @@
 
     import NoData from "../../../../layout/NoData.vue";
 
-    import {Bar} from "vue-chartjs"
+    import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../legend";
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts";
+    import {customBarLegend} from "../legend.js";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
@@ -33,21 +33,10 @@
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
-    const props = defineProps<{
-        identifier: number,
-        chart: {
-            id: number,
-            data: {
-                columns: Record<string, { displayName: string, agg: boolean, field: string }>,
-            },
-            chartOptions: {
-                column: string,
-                legend: {
-                    enabled: boolean,
-                },
-            },
-        },
-    }>();
+    const props = defineProps({
+        identifier: {type: Number, required: true},
+        chart: {type: Object, required: true},
+    });
 
     const {data, chartOptions} = props.chart;
 
@@ -80,9 +69,9 @@
                     : {}),
                 tooltip: {
                     enabled: true,
-                    filter: (value: any) => Boolean(value.raw),
+                    filter: (value) => value.raw,
                     callbacks: {
-                        label: (value: any) => {
+                        label: (value) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
@@ -108,7 +97,7 @@
                     ...DEFAULTS,
                     ticks: {
                         ...DEFAULTS.ticks,
-                        callback: (value: any) => isDurationAgg() ? Utils.humanDuration(value) : value
+                        callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
                     }
                 },
             },
@@ -129,9 +118,9 @@
             .filter(c => c[0] !== column)// Exclude columns with `agg`
             .map(([key]) => key);
 
-        const grouped: Record<string, Record<string, number>> = {};
+        const grouped = {};
 
-        const rawData: Record<string, number>[] = generated.value.results;
+        const rawData = generated.value.results;
         rawData.forEach((item) => {
             const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
 
@@ -152,7 +141,7 @@
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
-                backgroundColor: getConsistentHEXColor(subSectionsEntry[0] as any),
+                backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
@@ -168,7 +157,7 @@
             startDate: route.query.timeRange
                 ? moment()
                     .subtract(
-                        moment.duration(route.query.timeRange as any).as("milliseconds"),
+                        moment.duration(route.query.timeRange).as("milliseconds"),
                     )
                     .toISOString(true)
                 : route.query.startDate ||

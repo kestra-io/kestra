@@ -26,7 +26,7 @@ export function useLeftMenu() {
     const $router = useRouter()
     const store = useStore()
 
-    function routeStartWith(route: string) {
+    function routeStartWith(route) {
         return $router?.getRoutes().filter(r => typeof r.name === "string" && r.name.startsWith(route)).map(r => r.name);
     }
 

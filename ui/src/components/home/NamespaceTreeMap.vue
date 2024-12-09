@@ -18,7 +18,7 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
-    import Utils from "../../utils/utils";
+    import Utils from "../../utils/utils.js";
     import TreeMapChart from "../../charts/TreeMapChart"
     import {defaultConfig, chartClick, backgroundFromState} from "../../utils/charts";
     import {color} from "chart.js/helpers";

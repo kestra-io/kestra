@@ -5,7 +5,7 @@
 </template>
 
 <script>
-    import Utils from "../../utils/utils";
+    import Utils from "../../utils/utils.js";
     import cronstrue from "cronstrue";
     import "cronstrue/locales/fr";
 

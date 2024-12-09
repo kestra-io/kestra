@@ -24,7 +24,7 @@ function isRemoteLink(href:string) {
  * This function adds kestra.io
  * @returns normalized href
  */
-function normalizeRemoteHref(href:string) {
+function normalizeRemoteHref(href) {
     return href.startsWith("/") ? "https://kestra.io" + href : href
 }
 

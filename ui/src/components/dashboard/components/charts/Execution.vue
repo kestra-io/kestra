@@ -34,7 +34,7 @@
         defaultConfig,
         backgroundFromState,
         getFormat,
-    } from "../../../../utils/charts";
+    } from "../../../../utils/charts.js";
 
     const {t} = useI18n({useScope: "global"});
 

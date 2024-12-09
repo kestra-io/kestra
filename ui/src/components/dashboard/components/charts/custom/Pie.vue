@@ -25,13 +25,12 @@
     import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
-    import Utils from "../../../../../utils/utils";
-    import {type STATE} from "../../../../../utils/state";
+    import Utils from "../../../../../utils/utils.js";
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts";
-    import {totalsDurationLegend, totalsLegend} from "../legend";
+    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {totalsDurationLegend, totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
@@ -45,28 +44,16 @@
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
     defineOptions({inheritAttrs: false});
-    const props = defineProps<{
-        identifier: number,
-        chart: {
-            id: number,
-            data: {
-                columns: Record<string, { displayName: string, agg: boolean, field: string }>,
-            },
-            chartOptions: {
-                graphStyle: "PIE" | "DOUGHNUT",
-                column: string,
-                legend: {
-                    enabled: boolean,
-                },
-            },
-        },
-    }>();
+    const props = defineProps({
+        identifier: {type: Number, required: true},
+        chart: {type: Object, required: true},
+    });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
     const {chartOptions} = props.chart;
 
-    const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined)?.field === "DURATION";
+    const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
 
     const options = computed(() => {
         return defaultConfig({
@@ -81,9 +68,9 @@
                 tooltip: {
                     enabled: true,
                     intersect: true,
-                    filter: (value:any) => value.raw,
+                    filter: (value) => value.raw,
                     callbacks: {
-                        label: (value:any) => {
+                        label: (value) => {
                             return `${isDuration ? Utils.humanDuration(value.raw) : value.raw}`;
                         },
                     }
@@ -92,9 +79,7 @@
         });
     });
 
-    type ChartPlugin = NonNullable<InstanceType<typeof Pie>["$props"]["plugins"]>[number]
-
-    const centerPlugin: ChartPlugin  = {
+    const centerPlugin = {
         id: "centerPlugin",
         beforeDraw(chart) {
             const darkTheme = Utils.getTheme() === "dark";
@@ -102,7 +87,7 @@
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
 
-            let total: string | number = dataset.data.reduce((acc, val) => acc + val, 0);
+            let total = dataset.data.reduce((acc, val) => acc + val, 0);
             if (isDuration) {
                 total = Utils.humanDuration(total);
             }
@@ -116,35 +101,34 @@
             ctx.textBaseline = "middle";
             ctx.fillStyle = darkTheme ? "#FFFFFF" : "#000000";
 
-            ctx.fillText(total.toString(), centerX, centerY);
+            ctx.fillText(total, centerX, centerY);
 
             ctx.restore();
         },
     };
 
-    const thicknessPlugin: ChartPlugin = {
+    const thicknessPlugin = {
         id: "thicknessPlugin",
         beforeDatasetsDraw(chart) {
             const {ctx} = chart;
-            const dataset = chart.data.datasets[0] as any;
+            const dataset = chart.data.datasets[0];
             const meta = chart.getDatasetMeta(0);
 
             const thicknessScale = dataset.thicknessScale;
 
-            let index = 0;
-            for(const arc of meta.data as any[]) {
+            meta.data.forEach((arc, index) => {
                 const baseRadius = arc.innerRadius;
-                const additionalThickness = thicknessScale[index++];
+                const additionalThickness = thicknessScale[index];
                 arc.outerRadius = baseRadius + additionalThickness;
                 arc.innerRadius = baseRadius;
 
                 arc.draw(ctx);
-            }
+            });
         },
     };
 
     const parsedData = computed(() => {
-        const parseValue = (value: string) => {
+        const parseValue = (value) => {
             const date = moment(value, moment.ISO_8601, true);
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
@@ -157,22 +141,22 @@
                 };
                 return result;
             },
-            {} as Record<"field" | "value", { label: string; key: string }>,
+            {},
         );
 
         let results = Object.create(null);
 
-        for(const value of generated.value.results) {
+        generated.value.results.forEach((value) => {
             const field = parseValue(value[aggregator.field.key]);
             const aggregated = value[aggregator.value.key];
 
             results[field] = (results[field] || 0) + aggregated;
-        }
+        });
 
         const labels = Object.keys(results);
         const dataElements = labels.map((label) => results[label]);
 
-        const backgroundColor = labels.map((label) => getConsistentHEXColor(label as keyof typeof STATE));
+        const backgroundColor = labels.map((label) => getConsistentHEXColor(label));
 
         const maxDataValue = Math.max(...dataElements);
         const thicknessScale = dataElements.map(
@@ -200,7 +184,7 @@
             startDate: route.query.timeRange
                 ? moment()
                     .subtract(
-                        moment.duration(route.query.timeRange as any).as("milliseconds"),
+                        moment.duration(route.query.timeRange).as("milliseconds"),
                     )
                     .toISOString(true)
                 : route.query.startDate ||

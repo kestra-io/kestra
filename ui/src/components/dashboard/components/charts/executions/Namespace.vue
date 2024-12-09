@@ -34,9 +34,9 @@
 
     import {Bar} from "vue-chartjs";
 
-    import {barLegend} from "../legend";
+    import {barLegend} from "../legend.js";
 
-    import {defaultConfig} from "../../../../../utils/charts";
+    import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 
     import NoData from "../../../../layout/NoData.vue";

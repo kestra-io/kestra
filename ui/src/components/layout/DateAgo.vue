@@ -12,7 +12,7 @@
         <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
 </template>
-<script lang="ts">
+<script>
     import Utils from "../../utils/utils";
 
     export default {
@@ -35,16 +35,16 @@
             }
         },
         methods: {
-            uid(key: string) {
+            uid(key) {
                 return key + "-" + Utils.uid();
             }
         },
         computed: {
             from() {
-                return (this as any).$moment(this.date).fromNow();
+                return this.$moment(this.date).fromNow();
             },
             full() {
-                return (this as any).$filters.date(this.date, this.format);
+                return this.$filters.date(this.date, this.format);
             },
 
         }

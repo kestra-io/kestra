@@ -303,17 +303,17 @@ form.ks-horizontal {
 .el-table {
     --el-table-border-color: var(--bs-border-color);
     --el-table-border: 1px solid var(--bs-border-color);
-    
+
     --el-table-header-text-color: var(--bs-body-color);
     --el-table-row-hover-bg-color: var(--bs-gray-200);
     --el-table-header-bg-color: #f5f5ff;
     --el-table-tr-bg-color: var(--bs-white);
-    
+
     html.dark & {
         --el-table-tr-bg-color: var(--card-bg);
         --el-table-header-bg-color: var(--input-bg);
     }
-    
+
     outline: 1px solid var(--bs-border-color);
     border-radius: var(--bs-border-radius-lg);
     background-color: var(--bs-gray-100-lighten-2);

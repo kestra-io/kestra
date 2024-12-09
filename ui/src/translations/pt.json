@@ -1006,6 +1006,8 @@
     "create_custom_dashboard": "Criar novo dashboard",
     "edit_custom_dashboard": "Editar Dashboard",
     "custom_dashboard_empty": "Não há resultados para serem exibidos.",
-    "remove_bookmark": "Tem certeza de que deseja remover este marcador?"
+    "remove_bookmark": "Tem certeza de que deseja remover este marcador?",
+    "duplicate filter message": "Duplicate filter `{filterName}` found, please remove it and choose another one.",
+    "duplicate filter": "Duplicate filter not allowed"
   }
 }

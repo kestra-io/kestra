@@ -137,9 +137,13 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     @Test
     void createDirectory() throws IOException {
         client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/test", null));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows2", null));
         FileAttributes res = storageInterface.getAttributes(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
         assertThat(res.getFileName(), is("test"));
         assertThat(res.getType(), is(FileAttributes.FileType.Directory));
+        FileAttributes flows = storageInterface.getAttributes(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/_flows2")));
+        assertThat(flows.getFileName(), is("_flows2"));
+        assertThat(flows.getType(), is(FileAttributes.FileType.Directory));
     }
 
     @Test
@@ -153,15 +157,6 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
                     HttpRequest.POST(
                         "/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows",
                         null)));
-    assertThrows(
-        HttpClientResponseException.class,
-        () ->
-            client
-                .toBlocking()
-                .exchange(
-                    HttpRequest.POST(
-                        "/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows2",
-                        null)));
     }
 
     @Test
@@ -174,6 +169,14 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
         assertNamespaceFileContent(URI.create("/test.txt"), "Hello");
+        MultipartBody flowBody = MultipartBody.builder()
+            .addPart("fileContent", "_flowsFile", "Hello".getBytes())
+            .build();
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flowsFile", flowBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        assertNamespaceFileContent(URI.create("/_flowsFile"), "Hello");
     }
 
     @Test
@@ -183,13 +186,6 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
             .build();
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows", body)
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
-        ));
-        MultipartBody body2 = MultipartBody.builder()
-            .addPart("fileContent", "_flows2", "Hello".getBytes())
-            .build();
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
-            HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files?path=/_flows2", body2)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));
     }

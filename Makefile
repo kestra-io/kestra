@@ -173,3 +173,4 @@ start-standalone-postgres: kill --private-start-standalone-postgres health
 	--flow-path "${KESTRA_BASEDIR}/flows" 2>${KESTRA_BASEDIR}/logs/err.log 1>${KESTRA_BASEDIR}/logs/out.log &
 
 start-standalone-local: kill --private-start-standalone-local health
+

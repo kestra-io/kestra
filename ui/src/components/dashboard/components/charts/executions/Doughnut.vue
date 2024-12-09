@@ -107,7 +107,7 @@
             const centerY = chart.height / 2;
 
             ctx.save();
-            ctx.font = "700 14px Public Sans";
+            ctx.font = "700 16px Public Sans";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillStyle = darkTheme ? "#FFFFFF" : "#000000";

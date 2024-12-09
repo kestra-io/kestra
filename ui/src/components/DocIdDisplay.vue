@@ -1,19 +1,23 @@
 <template>
-    <div v-if="showDocId" class="app-id-display-box">
+    <button v-if="showDocId" @click="Utils.copy(text);clipboardSuccess()" class="app-id-display-box">
         {{ text }}
-        <ContentCopy
-            class="copy-button"
-            @click="Utils.copy(text)"
+        <CheckCircle
+            v-if="copied"
         />
-    </div>
+        <ContentCopy
+            v-else
+            class="copy-button"
+        />
+    </button>
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue";
+    import {computed, ref} from "vue";
     import {useStore} from "vuex";
     import {useRoute} from "vue-router";
     import Utils from "../utils/utils";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
 
     const store = useStore();
     const route = useRoute();
@@ -21,6 +25,15 @@
     const showDocId = computed(() => route.query["showDocId"] !== undefined);
 
     const text = computed(() => `docId: ${ store.state.doc.docId }`);
+
+    const copied = ref(false);
+
+    function clipboardSuccess() {
+        copied.value = true;
+        setTimeout(() => {
+            copied.value = false;
+        }, 2000);
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -35,9 +48,10 @@
     display: flex;
     gap: .5rem;
     align-items: center;
-}
-
-.copy-button {
-    cursor: pointer;
+    border: none;
+    border-bottom-right-radius: .5rem;
+    &:hover {
+        background-color: pink;
+    }
 }
 </style>

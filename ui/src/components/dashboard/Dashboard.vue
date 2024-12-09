@@ -138,7 +138,7 @@
                     :data="graphData"
                     :total="stats.total"
                     :class="{'me-2': !props.flow}"
-                />                
+                />
             </el-col>
             <el-col v-if="!props.flow" :xs="24" :lg="8">
                 <ExecutionsDoughnut

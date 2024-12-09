@@ -374,7 +374,7 @@
                 }
 
                 > * {
-                    padding: 1rem calc(var(--spacer) / 2);
+                    padding: 1rem .5rem;
                 }
 
                 .el-tooltip__trigger {

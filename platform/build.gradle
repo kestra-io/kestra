@@ -30,11 +30,16 @@ dependencies {
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
     api platform("io.micronaut.platform:micronaut-platform:4.7.0")
     api platform("io.qameta.allure:allure-bom:2.29.0")
+    // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
+    api platform('com.google.cloud:libraries-bom:26.50.0')
+    api platform("com.azure:azure-sdk-bom:1.2.29")
+    api platform('software.amazon.awssdk:bom:2.29.29')
+
 
     constraints {
         // Forced dependencies
         api("org.slf4j:slf4j-api:$slf4jVersion")
-        // ugly hack on google cloud plugins
+        // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")
         // ugly hack for elastic plugins
@@ -60,6 +65,8 @@ dependencies {
         // Kafka
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
+        // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
+        api 'software.amazon.awssdk.crt:aws-crt:0.31.1'
 
         // Other libs
         api("org.projectlombok:lombok:1.18.36")

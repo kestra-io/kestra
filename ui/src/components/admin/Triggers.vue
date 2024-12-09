@@ -42,11 +42,12 @@
                         @sort-change="onSort"
                         @selection-change="onSelectionChange"
                         expandable
+                        :row-class-name="getClasses"
                     >
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" :charts="false" embed />
+                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :charts="false" embed />
                                 </template>
                             </el-table-column>
                         </template>
@@ -319,6 +320,12 @@
             };
         },
         methods: {
+            hasLogsContent(row) {
+                return row.logs && row.logs.length > 0;
+            },
+            getClasses(row) {
+                return this.hasLogsContent(row) ? "expandable" : "no-expand"; // Return class based on logs
+            },
             onSelectionChange(selection) {
                 this.selection = selection;
             },
@@ -518,5 +525,15 @@
     .trigger-issue-icon {
         color: var(--bs-warning);
         font-size: 1.4em;
+    }
+    .el-table__expanded-cell[class*=cell]{
+        padding: 0;
+    }
+    .no-expand .el-icon {
+        display: none; /* Hide the expand icon */
+    }
+
+    .no-expand .el-table__expand-icon {
+        pointer-events: none; /* Disable pointer events */
     }
 </style>

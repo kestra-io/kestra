@@ -318,6 +318,7 @@ form.ks-horizontal {
     border-radius: var(--bs-border-radius-lg);
     background-color: var(--bs-gray-100-lighten-2);
     border-bottom-width: 0;
+    font-size: var(--el-font-size-small);
 
     &--striped {
         .el-table__body tr.el-table__row--striped:not(:hover) td.el-table__cell {

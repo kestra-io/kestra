@@ -60,7 +60,7 @@
         </el-select>
 
         <el-dropdown trigger="click">
-            <el-button type="default" class="more-dropdown-button">
+            <el-button type="default" class="task-run-buttons">
                 <DotsHorizontal title="" />
             </el-button>
             <template #dropdown>
@@ -125,18 +125,19 @@
             </template>
         </el-dropdown>
 
-        <el-button
-            v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-            class="border-0 expand-collapse"
-            type="default"
-            text
-            @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
-        >
-            <ChevronUp
-                v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-            />
-            <ChevronDown v-else />
-        </el-button>
+        <div>
+            <el-button
+                v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
+                class="task-run-buttons"
+                type="default"
+                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+            >
+                <ChevronUp
+                    v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                />
+                <ChevronDown v-else />
+            </el-button>
+        </div>
     </div>
 </template>
 <script>
@@ -378,18 +379,14 @@
             color: var(--bs-gray-800);
         }
 
-        .more-dropdown-button {
+        .task-run-buttons {
             padding: .5rem;
-            height: 100%; 
+            height: 100%;
             border: 1px solid rgba($white, .05);
-
+            background-color: var(--bs-gray-400) !important;
             &:not(:hover) {
                 background: rgba($white, .10);
             }
-        }
-
-        .expand-collapse {
-            background-color: transparent !important;
         }
     }
 </style>

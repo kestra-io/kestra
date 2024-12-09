@@ -178,13 +178,28 @@
     const debugEditor = ref(null);
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
-        const task = selectedTask()?.taskId;
+        const formatTask = (task) => {
+            if (!task) return "";
+            return task.includes("-") ? `["${task}"]` : `.${task}`;
+        };
+
+        const formatPath = (path) => {
+            if (!path.includes("-")) return `.${path}`;
+
+            const bracketIndex = path.indexOf("[");
+            const task = path.substring(0, bracketIndex);
+            const rest = path.substring(bracketIndex);
+
+            return `["${task}"]${rest}`;
+        }
+
+        let task = selectedTask()?.taskId;
         if (!task) return "";
 
-        const path = expandedValue.value;
-        if (!path) return `{{ outputs.${task} }}`;
+        let path = expandedValue.value;
+        if (!path) return `{{ outputs${formatTask(task)} }}`;
 
-        return `{{ outputs.${path} }}`;
+        return `{{ outputs${formatPath(path)} }}`;
     });
 
     // TODO: To be implemented properly

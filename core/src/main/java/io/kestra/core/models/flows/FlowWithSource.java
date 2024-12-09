@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.services.FlowService;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,18 +37,6 @@ public class FlowWithSource extends Flow {
             .retry(this.retry)
             .sla(this.sla)
             .build();
-    }
-
-    public String getSource() {
-        String source = this.source;
-
-        // previously, we insert source on database keeping default value (like deleted, ...)
-        // if the previous serialization is the same as actual one, we use a clean version removing them
-        Flow flow = toFlow();
-        source = FlowService.generateSource(flow, source);
-
-        // same here but with version that don't make any sense on the source code, so removing it
-        return cleanupSource(source);
     }
 
     private static String cleanupSource(String source) {

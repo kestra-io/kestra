@@ -22,16 +22,16 @@
             return {
                 cards: [
                     {
-                        title: this.$t("welcome.product-tour.title"),
-                        category: "product",
+                        title: this.$t("welcome.tour.title"),
+                        category: "tour",
 
                     },
                     {
                         title: this.$t("welcome.tutorial.title"),
-                        category: "docs",
+                        category: "tutorial",
                     },
                     {
-                        title: this.$t("welcome.need-help.title"),
+                        title: this.$t("welcome.help.title"),
                         category: "help",
                     }
                 ]

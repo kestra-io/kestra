@@ -647,20 +647,17 @@
     "execution-warn-deleting-still-running": "Recomendamos fortemente que você cancele esta ação e encerre qualquer execução em andamento primeiro. Excluir execuções não terminadas pode levar a problemas de concorrência, inconsistências na gestão de dependências de flow e processos zumbis na sua instância, o que pode degradar o desempenho do sistema. Certifique-se de entender completamente esses riscos antes de prosseguir com a exclusão.",
     "originalCreatedDate": "Data de criação original",
     "welcome": {
-      "started": {
-        "title": "Comece em 3 passos fáceis"
-      },
-      "product-tour": {
-        "title": "Faça um tour pelo produto"
-      },
-      "doc": {
-        "title": "Documentação"
-      },
-      "need-help": {
-        "title": "Precisa de ajuda?"
-      },
       "tutorial": {
-        "title": "Tutorial"
+        "title": "Tutorial",
+        "text": "* [Tutoriais em Vídeo](https://kestra.io/tutorial-videos/all)\n* [Documentação](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+      },
+      "tour": {
+        "title": "Faça um tour pelo produto",
+        "text": "Escolha seu caso de uso e siga um guia passo a passo para aprender os recursos e capacidades do Kestra. ❤️"
+      },
+      "help": {
+        "text": "Faça qualquer pergunta em nossa comunidade no Slack. Se você estiver com dificuldades, estamos aqui para ajudar você. ✋",
+        "title": "Precisa de ajuda?"
       }
     },
     "pluginPage": {

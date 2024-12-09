@@ -9,9 +9,9 @@
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
     "test:unit": "vitest run",
-    "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
-    "translations:check": "node ./src/translations/check.js"
+    "test:lint": "eslint",
+    "translations:check": "node ./src/translations/check.js",
+    "lint": "eslint --fix"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",
@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@eslint/js": "^9.16.0",
     "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^1.24.0",
     "@typescript-eslint/parser": "^8.17.0",
@@ -75,8 +76,9 @@
     "@vue/eslint-config-prettier": "^10.1.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
-    "eslint": "^8.57.1",
+    "eslint": "^9.16.0",
     "eslint-plugin-vue": "^9.32.0",
+    "globals": "^15.13.0",
     "jsdom": "^25.0.1",
     "monaco-editor": "^0.52.0",
     "monaco-yaml": "^5.2.3",
@@ -85,6 +87,7 @@
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.82.0",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0",
     "vite": "^6.0.2",
     "vitest": "^2.1.8"
   },

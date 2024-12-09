@@ -224,6 +224,8 @@
                 return undefined;
             },
             startDate() {
+                // probable hack to trigger cache invalidation without date change
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 this.refreshDates;
                 if (this.$route.query.startDate) {
                     return this.$route.query.startDate;

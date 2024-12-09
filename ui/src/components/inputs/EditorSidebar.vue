@@ -521,7 +521,7 @@
                         })),
                     );
 
-                    // eslint-disable-next-line no-inner-declarations
+                     
                     const updateChildren = (items, path, newChildren) => {
                         items.forEach((item, index) => {
                             if (this.getPath(item.id) === path) {

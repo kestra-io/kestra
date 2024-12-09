@@ -125,6 +125,7 @@ export default (callback, store, router) => {
                         refreshing = false;
 
                         return instance(originalRequest)
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (refreshError) {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
@@ -140,7 +141,7 @@ export default (callback, store, router) => {
                     }
                 } else {
                     toRefreshQueue.push(originalRequest);
-                    
+
                     return;
                 }
             }

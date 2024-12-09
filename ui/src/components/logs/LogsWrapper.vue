@@ -177,7 +177,7 @@
                 this.load();
             },
             loadQuery(base) {
-                // eslint-disable-next-line no-unused-vars
+                 
                 const {triggerId, ...rest} = this.filters || {};
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
@@ -200,7 +200,7 @@
             load() {
                 this.isLoading = true
 
-                // eslint-disable-next-line no-unused-vars
+                 
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,

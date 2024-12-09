@@ -10,6 +10,7 @@
             allow-create
             default-first-option
             filterable
+            clearable
             multiple
             placement="bottom"
             :show-arrow="false"
@@ -20,6 +21,7 @@
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @clear="handleClear"
         >
             <template #label="{value}">
                 <Label :option="value" />
@@ -190,6 +192,12 @@
         } else if (dropdowns.value.third.shown) {
             valueCallback(option);
         }
+    };
+
+    const handleClear = () => {
+        // Clear the current value
+        current.value = [];
+        triggerSearch(); // To trigger a search after clearing
     };
 
     const filterCallback = (option) => {

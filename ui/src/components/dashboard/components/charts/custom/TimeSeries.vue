@@ -26,6 +26,7 @@
 
     import {useRoute} from "vue-router";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+    import {STATE} from "src/utils/state";
 
     const store = useStore();
 
@@ -58,6 +59,7 @@
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
+
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -135,7 +137,11 @@
             return date.isValid() ? date.format("YYYY-MM-DD") : value;
         };
 
-        const rawData = generated.value.results;
+        const rawData = generated.value.results as Array<{
+            [index:string]: any
+            data:{x:string, y:string}[]
+        }>;
+
         const xAxis = (() => {
             const values = rawData.map((v: Record<string, any>) => {
                 return parseValue(v[chartOptions.column]);
@@ -146,7 +152,10 @@
 
         const aggregatorKeys = aggregator.map(([key]) => key);
 
-        const reducer = (array, field, yAxisID) => {
+        const reducer = (array: Array<{
+            [index:string]: any
+            data:{x:string, y:string}[]
+        }>, field: string, yAxisID: string) => {
             if (!array.length) return;
 
             const {columns} = data;
@@ -168,7 +177,7 @@
                         tooltip: stack,
                         label: params[colorByColumn],
                         backgroundColor: getConsistentHEXColor(
-                            params[colorByColumn],
+                            params[colorByColumn] as keyof typeof STATE,
                         ),
                         unique: new Set(),
                     };
@@ -191,14 +200,17 @@
                 }
 
                 return acc;
-            }, {});
+            }, {} as Record<string, {
+                data: {x:string, y:string}[]
+                [index:string]: any
+            }>);
         };
 
-        const getData = (field, object = {}) => {
-            return Object.values(object).map((dataset) => {
+        const getData = (_:any, object = {}) => {
+            return (Object.values(object) as Array<{data:{x:string, y:string}[]}>).map((dataset) => {
                 const data = xAxis.map((xAxisLabel) => {
                     const temp = dataset.data.find((v) => v.x === xAxisLabel);
-                    return temp ? temp.y : 0;
+                    return temp ? temp.y : "0";
                 });
 
                 return {...dataset, data};
@@ -222,7 +234,7 @@
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
-                        borderColor: getConsistentHEXColor(label),
+                        borderColor: getConsistentHEXColor(label as keyof typeof STATE),
                     },
                     ...yDatasetData,
                 ]

@@ -163,6 +163,7 @@
         }
 
         for (const edge of dependencies.value.edges) {
+            // TODO: https://github.com/kestra-io/kestra/issues/5350
             addEdges([{
                 id: edge.source + "|" + edge.target,
                 source: edge.source,

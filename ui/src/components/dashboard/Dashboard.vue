@@ -5,8 +5,8 @@
         :breadcrumb="[
             {
                 label: t(custom.shown ? 'custom_dashboard' : 'dashboard_label'),
-                link: {}
-            }
+                link: {},
+            },
         ]"
         :id="custom.dashboard.id ?? undefined"
     />
@@ -297,7 +297,7 @@
     });
 
     const customDashboardsEnabled = computed(
-        () => store.state.misc.configs.isCustomDashboardsEnabled,
+        () => store.state.misc?.configs?.isCustomDashboardsEnabled,
     );
 
     // Custom Dashboards
@@ -646,6 +646,22 @@ $spacing: 20px;
                 }
             }
         }
+    }
+}
+
+:deep(.legend) {
+    &::-webkit-scrollbar {
+        height: 5px;
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--card-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 0px;
     }
 }
 </style>

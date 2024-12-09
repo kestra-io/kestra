@@ -360,7 +360,7 @@
     },
     "cancel": "Annulla",
     "homeDashboard": {
-      "title": "Panoramica",
+      "title": "Dashboard",
       "today": "Oggi",
       "yesterday": "Ieri",
       "last28Days": "Ultimi 28 giorni",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Errori di esecuzione per namespace",
       "failedExecutions": "Esecuzioni FAILED",
       "errorLogs": "Error logs",
-      "no executions": "Pronto a vedere il tuo flow in azione?"
+      "no executions": "Pronto a vedere il tuo flow in azione?",
+      "wel_text": "Benvenuto!",
+      "start": "Iniziamo a far funzionare il tuo primo workflow.",
+      "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?",
+      "welcome": "Benvenuto in Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> esecuzione/i ripetute",
     "executions resumed": "<code>{executionCount}</code> esecuzione/i riprese",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concorrenza, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
     "originalCreatedDate": "Data di creazione originale",
     "welcome": {
-      "started": {
-        "title": "Inizia in 3 semplici passaggi"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Video Tutorial](https://kestra.io/tutorial-videos/all)\n* [Documentazione](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Fai un tour del prodotto"
+      "tour": {
+        "title": "Fai un tour del prodotto",
+        "text": "Scegli il tuo caso d'uso e segui una guida passo-passo per imparare le funzionalità e le capacità di Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentazione"
-      },
-      "need-help": {
+      "help": {
+        "text": "Fai qualsiasi domanda nella nostra community su Slack. Se sei bloccato, siamo qui per aiutarti. ✋",
         "title": "Hai bisogno di aiuto?"
       }
     },
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "Dashboard Personalizzati",
     "create_custom_dashboard": "Crea nuovo dashboard",
     "edit_custom_dashboard": "Modifica Dashboard",
-    "custom_dashboard_empty": "Non ci sono risultati da mostrare."
+    "custom_dashboard_empty": "Non ci sono risultati da mostrare.",
+    "remove_bookmark": "Sei sicuro di voler rimuovere questo segnalibro?"
   }
 }

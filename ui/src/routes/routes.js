@@ -1,3 +1,4 @@
+import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import ExecutionRoot from "../components/executions/ExecutionRoot.vue"
 import Executions from "../components/executions/Executions.vue"
 import TaskRuns from "../components/taskruns/TaskRuns.vue"
@@ -67,7 +68,7 @@ export default [
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: Namespace},
 
     //Docs
-    {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: Docs, meta: {layout: "main"}},
+    {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: Docs, meta: {layout: OnlyLeftMenuLayout}},
 
     //Settings
     {name: "settings", path: "/:tenant?/settings", component: Settings},

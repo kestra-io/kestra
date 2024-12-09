@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "सारांश",
+      "title": "डैशबोर्ड",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
       "failedExecutions": "असफल निष्पादन",
       "errorLogs": "त्रुटि Logs",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?"
+      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
+      "wel_text": "स्वागत है!",
+      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "welcome": "केस्ट्रा में आपका स्वागत है"
     },
     "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
     "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
     "originalCreatedDate": "मूल निर्माण तिथि",
     "welcome": {
-      "started": {
-        "title": "3 आसान चरणों में आरंभ करें"
+      "tutorial": {
+        "title": "ट्यूटोरियल",
+        "text": "* [वीडियो ट्यूटोरियल्स](https://kestra.io/tutorial-videos/all)\n* [दस्तावेज़ीकरण](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "उत्पाद टूर लें"
+      "tour": {
+        "title": "उत्पाद टूर लें",
+        "text": "अपना उपयोग मामला चुनें और Kestra की विशेषताओं और क्षमताओं को सीखने के लिए चरण-दर-चरण गाइड का पालन करें। ❤️"
       },
-      "doc": {
-        "title": "दस्तावेज़"
-      },
-      "need-help": {
+      "help": {
+        "text": "हमारे Slack समुदाय में कोई भी प्रश्न पूछें। यदि आप अटके हुए हैं, तो हम आपकी सहायता के लिए यहाँ हैं। ✋",
         "title": "मदद चाहिए?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "ध्यान दें की SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित करना होगा।"
+      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
@@ -1001,6 +1005,7 @@
     "custom_dashboard": "कस्टम डैशबोर्ड्स",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
     "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
-    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?"
   }
 }

@@ -11,6 +11,9 @@
             default-first-option
             filterable
             multiple
+            placement="bottom"
+            :show-arrow="false"
+            fit-input-width
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
@@ -50,6 +53,11 @@
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
+                    :class="{
+                        selected: current.some(
+                            (c) => c.comparator === comparator,
+                        ),
+                    }"
                     @click="() => comparatorCallback(comparator)"
                 />
             </template>
@@ -59,13 +67,20 @@
                     :key="filter.value"
                     :value="filter"
                     :label="filter.label"
+                    :class="{
+                        selected: current.some((c) =>
+                            c.value.includes(filter.value),
+                        ),
+                    }"
                     @click="() => valueCallback(filter)"
                 />
             </template>
         </el-select>
 
         <el-button-group class="d-inline-flex">
-            <el-button :icon="Magnify" @click="triggerSearch" />
+            <KestraIcon :tooltip="$t('search')" placement="bottom">
+                <el-button :icon="Magnify" @click="triggerSearch" />
+            </KestraIcon>
             <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
             <Settings v-if="settings.shown" :settings />
@@ -99,6 +114,7 @@
     import Save from "./components/Save.vue";
     import Settings from "./components/Settings.vue";
     import Dashboards from "./components/Dashboards.vue";
+    import KestraIcon from "../Kicon.vue";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -137,6 +153,9 @@
     } = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const updateHoveringIndex = (index) => {
+        select.value.states.hoveringIndex = index >= 0 ? index : 0;
+    };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
         first: {shown: true, value: {}},
@@ -205,7 +224,9 @@
         dropdowns.value.second = {shown: false, index: -1};
         dropdowns.value.third = {shown: true, index: current.value.length - 1};
 
-        select.value.states.hoveringIndex = 0;
+        // Set hover index to the selected comparator for highlighting
+        const index = valueOptions.value.findIndex((o) => o.value === value.value);
+        updateHoveringIndex(index);
     };
     const dropdownClosedCallback = (visible) => {
         if (!visible) {
@@ -213,6 +234,12 @@
 
             // If last filter item selection was not completed, remove it from array
             if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+        } else {
+            // Highlight all selected items by setting hoveringIndex to match the first selected item
+            const index = valueOptions.value.findIndex((o) => {
+                return current.value.some((c) => c.value.includes(o.value));
+            });
+            updateHoveringIndex(index);
         }
     };
     const valueCallback = (filter, isDate = false) => {
@@ -222,6 +249,12 @@
 
             if (index === -1) values.push(filter.value);
             else values.splice(index, 1);
+
+            // Update the hover index for better UX
+            const hoverIndex = valueOptions.value.findIndex(
+                (o) => o.value === filter.value,
+            );
+            updateHoveringIndex(hoverIndex);
         } else {
             const match = current.value.find((v) => v.label === "absolute_date");
             if (match) match.value = [filter];
@@ -355,8 +388,9 @@
 
     type CurrentItem = {
         label: string;
-        value: Array<any>;
-        comparator?: string;
+        value: string[];
+        comparator?: Record<string, any>;
+        persistent?: boolean;
     };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
@@ -422,22 +456,35 @@
         router.push({query: encodeParams(current.value)});
     };
 
-    // Include paramters from URL directly to filter
+    // Include parameters from URL directly to filter
     current.value = decodeParams(route.query, props.include);
 
-    if (route.name === "flows/update" && route.params.namespace) {
+    const addNamespaceFilter = (namespace) => {
+        if (!namespace) return;
         current.value.push({
             label: "namespace",
-            value: [route.params.namespace],
+            value: [namespace],
             comparator: COMPARATORS.STARTS_WITH,
             persistent: true,
         });
-    }
+    };
+
+    const {name, params} = route;
+
+    if (name === "flows/update") addNamespaceFilter(params?.namespace);
+    else if (name === "namespaces/update") addNamespaceFilter(params.id);
 </script>
 
 <style lang="scss">
-.filters {
+@mixin width-available {
+    width: -moz-available;
     width: -webkit-fill-available;
+    // https://caniuse.com/?search=fill-available
+    width: fill-available;
+}
+
+.filters {
+    @include width-available;
 
     & .el-select {
         max-width: calc(100% - 237px);
@@ -481,11 +528,12 @@
     }
 
     & .el-button-group {
-        > .el-button {
+        .el-button {
             border-radius: 0;
         }
 
-        > .el-button:last-child {
+        span.kicon:last-child .el-button,
+        > button.el-button:last-child {
             border-top-right-radius: var(--bs-border-radius);
             border-bottom-right-radius: var(--bs-border-radius);
         }
@@ -501,6 +549,14 @@
 }
 
 .filters-select {
+    & .el-select-dropdown {
+        width: 300px !important;
+
+        &:has(.el-select-dropdown__empty) {
+            width: 500px !important;
+        }
+    }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;

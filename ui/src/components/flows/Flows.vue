@@ -70,6 +70,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        class="flows-table"
                     >
                         <template #select-actions>
                             <bulk-select
@@ -497,6 +498,8 @@
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
+                this.namespace && (queryFilter.namespace = this.namespace);
+                
                 return _merge(base, queryFilter)
             },
             loadStats() {
@@ -571,5 +574,9 @@
 
     .flow-id {
         min-width: 200px;
+    }
+
+    .flows-table  .el-table__cell {
+        vertical-align: middle;        
     }
 </style>

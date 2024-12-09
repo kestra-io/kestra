@@ -54,6 +54,8 @@ public abstract class AbstractClassDocumentation<T> {
             // Remove the Task entry as it only contains a reference that is filtered in the doc template,
             // which prevent the Definitions section to be empty if no other def exist.
             .filter(entry -> !entry.getKey().equals("io.kestra.core.models.tasks.Task"))
+            // Remove definitions of all Input subtypes if base class is null
+            .filter(entry -> (baseCls == null) || !entry.getKey().startsWith("io.kestra.core.models.flows.input."))
             .map(entry -> {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
                 value.put("properties", flatten(properties(value), required(value), isTypeToKeep(entry.getKey())));

@@ -1,3 +1,19 @@
+<template>
+    <div class="wrapper">
+        <div v-if="editing" class="inputs">
+            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
+            <CheckCircle @click.stop="renameBookmark" class="save" />
+        </div>
+        <div class="buttons">
+            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
+            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
+        </div>
+        <a :href="href" :title="updatedTitle">
+            {{ updatedTitle }}
+        </a>
+    </div>
+</template>
+
 <script lang="ts" setup>
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
@@ -5,6 +21,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {ElMessageBox} from "element-plus";
 
     const {t} = useI18n();
 
@@ -20,9 +37,13 @@
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
     function deleteBookmark() {
-        $store.dispatch("bookmarks/remove", {
-            path: props.href
-        })
+        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            $store.dispatch("bookmarks/remove", {path: props.href});
+        });
     }
 
     function startEditBookmark() {
@@ -41,22 +62,6 @@
         editing.value = false
     }
 </script>
-
-<template>
-    <div class="wrapper">
-        <div v-if="editing" class="inputs">
-            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
-            <CheckCircle @click.stop="renameBookmark" class="save" />
-        </div>
-        <div class="buttons">
-            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
-            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
-        </div>
-        <a :href="href" :title="updatedTitle">
-            {{ updatedTitle }}
-        </a>
-    </div>
-</template>
 
 <style scoped>
     .wrapper{

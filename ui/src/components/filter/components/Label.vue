@@ -1,7 +1,6 @@
 <template>
-    <span v-if="label">{{ $t("filters.options." + label) }}</span>
+    <span v-if="label">{{ $t(`filters.options.${label}`) }}</span>
     <span v-if="comparator" class="comparator">{{ comparator }}</span>
-    <!-- TODO: Amend line below after merging issue: https://github.com/kestra-io/kestra/issues/5955 -->
     <span v-if="value">{{ !comparator ? ":" : "" }}{{ value }}</span>
 </template>
 
@@ -10,8 +9,10 @@
 
     const props = defineProps({option: {type: Object, required: true}});
 
-    const DATE_FORMATS: Intl.DateTimeFormatOptions = {timeStyle: "short", dateStyle: "short"};
-    const formatter = new Intl.DateTimeFormat("en-US", DATE_FORMATS);
+    import moment from "moment";
+    const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
+
+    const formatter = (date) => moment(date).format(DATE_FORMAT);
 
     const label = computed(() => props.option?.label);
     const comparator = computed(() => props.option?.comparator?.label);
@@ -25,15 +26,15 @@
         }
 
         const {startDate, endDate} = value[0];
-        return `${startDate ? formatter.format(new Date(startDate)) : "unknown"}:and:${endDate ? formatter.format(new Date(endDate)) : "unknown"}`;
+        return `${startDate ? formatter(new Date(startDate)) : "unknown"}:and:${endDate ? formatter(new Date(endDate)) : "unknown"}`;
     });
 </script>
 
 <style lang="scss" scoped>
-    .comparator {
-        background: var(--bs-gray-500);
-        padding: 0.30rem 0.35rem;
-        margin: 0 0.5rem;
-        display: inline-block;
-    }
+.comparator {
+    background: var(--bs-gray-500);
+    padding: 0.3rem 0.35rem;
+    margin: 0 0.5rem;
+    display: inline-block;
+}
 </style>

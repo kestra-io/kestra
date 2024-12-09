@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -14,6 +15,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class IfTest  extends AbstractMemoryRunnerTest {
+    @Test
+    void multipleIf() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
+            (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
+
+        assertThat(execution.getTaskRunList(), hasSize(12));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
     @Test
     void ifTruthy() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,

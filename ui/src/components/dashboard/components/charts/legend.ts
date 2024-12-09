@@ -1,8 +1,9 @@
+import {type LegendItem} from "chart.js";
 import Utils from "../../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 import {getConsistentHEXColor} from "../../../../utils/charts";
-import {type LegendItem} from "chart.js";
-import {Bar} from "vue-chartjs";
+import {type STATE} from "../../../../utils/state";
+import {Plugin} from "chart.js";
 
 const getOrCreateLegendList = (chart: any, id: string, direction = "row") => {
     const legendContainer = document.getElementById(id);
@@ -33,9 +34,7 @@ const getOrCreateLegendList = (chart: any, id: string, direction = "row") => {
     return listContainer;
 };
 
-type BarPlugin = NonNullable<InstanceType<typeof Bar>["$props"]["plugins"]>[number]
-
-export const barLegend: BarPlugin = {
+export const barLegend: Plugin = {
     id: "barLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
@@ -47,12 +46,12 @@ export const barLegend: BarPlugin = {
         const items:LegendItem[] = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) ?? [];
 
         items.forEach((item) => {
-            const dataset = chart.data.datasets[item.datasetIndex!];
+            const dataset = chart.data.datasets[item.datasetIndex!] as any;
 
             if (
                 !dataset?.data ||
                 dataset.yAxisID === "yB" ||
-                dataset.data.every((val) => val === 0)
+                dataset.data.every((val:number) => val === 0)
             ) {
                 return;
             }
@@ -65,21 +64,21 @@ export const barLegend: BarPlugin = {
             li.style.marginTop = "10px";
 
             li.onclick = () => {
-                const {type} = chart.config;
+                const {type} = chart.config as any;
                 if (type === "pie" || type === "doughnut") {
-                    chart.toggleDataVisibility(item.index);
+                    chart.toggleDataVisibility(item.index ?? -1);
                 } else {
                     chart.setDatasetVisibility(
-                        item.datasetIndex,
-                        !chart.isDatasetVisible(item.datasetIndex),
+                        item.datasetIndex ?? -1,
+                        !chart.isDatasetVisible(item.datasetIndex ?? -1),
                     );
                 }
                 chart.update();
             };
 
             const boxSpan = document.createElement("span");
-            boxSpan.style.background = item.fillStyle;
-            boxSpan.style.borderColor = item.strokeStyle;
+            boxSpan.style.background = item.fillStyle?.toString() ?? "transparent";
+            boxSpan.style.borderColor = item.strokeStyle?.toString() ?? "transparent";
             boxSpan.style.borderWidth = `${item.lineWidth}px`;
             boxSpan.style.height = "5px";
             boxSpan.style.width = "5px";
@@ -92,7 +91,7 @@ export const barLegend: BarPlugin = {
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            textContainer.style.margin = 0;
+            textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
@@ -105,29 +104,29 @@ export const barLegend: BarPlugin = {
 
             li.appendChild(boxSpan);
             li.appendChild(textContainer);
-            ul.appendChild(li);
+            ul?.appendChild(li);
         });
     },
 };
 
-export const customBarLegend: BarPlugin = {
+export const customBarLegend: Plugin = {
     id: "customBarLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
-        while (ul.firstChild) {
+        while (ul?.firstChild) {
             ul.firstChild.remove();
         }
 
-        const seenLegendLabels = [];
-        const items = chart.options.plugins.legend.labels.generateLabels(chart).filter(l => {
+        const seenLegendLabels: string[] = [];
+        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart).filter(l => {
             if (seenLegendLabels.includes(l.text)) {
                 return false;
             }
 
             seenLegendLabels.push(l.text);
             return true;
-        });
+        }) ?? [];
 
         items.forEach((item) => {
             const li = document.createElement("li");
@@ -150,7 +149,7 @@ export const customBarLegend: BarPlugin = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(item.text);
+            const color = getConsistentHEXColor(item.text as keyof typeof STATE);
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";
@@ -164,7 +163,7 @@ export const customBarLegend: BarPlugin = {
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            textContainer.style.margin = 0;
+            textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
@@ -175,34 +174,37 @@ export const customBarLegend: BarPlugin = {
 
             li.appendChild(boxSpan);
             li.appendChild(textContainer);
-            ul.appendChild(li);
+            ul?.appendChild(li);
         });
     },
 };
 
-const generateTotalsLegend = (isDuration) => ({
+const generateTotalsLegend = (isDuration:boolean):Plugin => ({
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
 
-        while (ul.firstChild) {
+        while (ul?.firstChild) {
             ul.firstChild.remove();
         }
 
-        const items = chart.options.plugins.legend.labels.generateLabels(chart);
+        const items = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) ?? [];
 
         items.sort((a, b) => {
+            if(a.index === undefined || b.index === undefined) return 0;
+
             const dataset = chart.data.datasets[0];
 
-            const valueA = dataset.data[a.index];
-            const valueB = dataset.data[b.index];
+            const valueA = dataset.data[a.index] as number;
+            const valueB = dataset.data[b.index] as number;
 
             return valueB - valueA;
         });
 
         items.forEach((item) => {
             const dataset = chart.data.datasets[0];
-            if (!dataset?.data || dataset.data[item.index] === 0) return;
+            if(item.index === undefined) return;
+            if (!dataset?.data || (dataset.data[item.index] === 0)) return;
 
             const li = document.createElement("li");
             li.style.alignItems = "center";
@@ -213,21 +215,22 @@ const generateTotalsLegend = (isDuration) => ({
             li.style.flexDirection = "row";
 
             li.onclick = () => {
-                const {type} = chart.config;
+                const {type} = chart.config as any;
+                if(item.index === undefined) return;
                 if (type === "pie" || type === "doughnut") {
                     chart.toggleDataVisibility(item.index);
                 } else {
                     chart.setDatasetVisibility(
-                        item.datasetIndex,
-                        !chart.isDatasetVisible(item.datasetIndex),
+                        item.datasetIndex ?? -1,
+                        !chart.isDatasetVisible(item.datasetIndex ?? -1),
                     );
                 }
                 chart.update();
             };
 
             const boxSpan = document.createElement("span");
-            boxSpan.style.background = item.fillStyle;
-            boxSpan.style.borderColor = item.strokeStyle;
+            boxSpan.style.background = item.fillStyle?.toString() ?? "transparent";
+            boxSpan.style.borderColor = item.strokeStyle?.toString() ?? "transparent";
             boxSpan.style.borderWidth = `${item.lineWidth}px`;
             boxSpan.style.height = "10px";
             boxSpan.style.width = "10px";
@@ -240,7 +243,7 @@ const generateTotalsLegend = (isDuration) => ({
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            textContainer.style.margin = 0;
+            textContainer.style.margin = "0";
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
@@ -256,7 +259,7 @@ const generateTotalsLegend = (isDuration) => ({
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index]) : dataset.data[item.index];
+            executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index] as number) : dataset.data[item.index]?.toString() ?? null;
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
@@ -267,7 +270,7 @@ const generateTotalsLegend = (isDuration) => ({
 
             li.appendChild(boxSpan);
             li.appendChild(textContainer);
-            ul.appendChild(li);
+            ul?.appendChild(li);
         });
     }
 });

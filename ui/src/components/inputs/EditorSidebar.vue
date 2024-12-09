@@ -467,12 +467,14 @@
                     return a.fileName.localeCompare(b.fileName);
                 });
             },
-            getFileNameWithExtension(fileNameWithExtension){
-                // Extract fileName and extension. A file can have multiple dots
+            getFileNameWithExtension(fileNameWithExtension) {
                 const lastDotIdx = fileNameWithExtension.lastIndexOf(".");
 
-                return lastDotIdx !== -1 
-                    ? [fileNameWithExtension.slice(0, lastDotIdx), fileNameWithExtension.slice(lastDotIdx + 1)] 
+                return lastDotIdx !== -1
+                    ? [
+                        fileNameWithExtension.slice(0, lastDotIdx),
+                        fileNameWithExtension.slice(lastDotIdx + 1),
+                    ]
                     : [fileNameWithExtension, ""];
             },
             renderNodes(items) {
@@ -485,7 +487,9 @@
                     if (type === "Directory") {
                         this.addFolder({fileName});
                     } else if (type === "File") {
-                        const [fileName, extension] = this.getFileNameWithExtension(items[i].fileName)
+                        const [fileName, extension] = this.getFileNameWithExtension(
+                            items[i].fileName,
+                        );
                         const file = {fileName, extension, leaf: true};
                         this.addFile({file});
                     }
@@ -702,7 +706,8 @@
 
                             // Extract file details
                             const fileName = pathParts[pathParts.length - 1];
-                            const [name, extension] = this.getFileNameWithExtension(fileName);
+                            const [name, extension] =
+                                this.getFileNameWithExtension(fileName);
 
                             // Read file content
                             const content = await this.readFile(file);
@@ -726,7 +731,9 @@
                         } else {
                             // Process files at root level (not in any folder)
                             const content = await this.readFile(file);
-                            const [name, extension] = this.getFileNameWithExtension(file.name);
+                            const [name, extension] = this.getFileNameWithExtension(
+                                file.name,
+                            );
 
                             this.importFileDirectory({
                                 namespace:
@@ -767,9 +774,11 @@
                 let FILE;
 
                 if (creation) {
-                    const [fileName, extension] = this.getFileNameWithExtension(this.dialog.name);
+                    const [fileName, extension] = this.getFileNameWithExtension(
+                        this.dialog.name,
+                    );
 
-                    FILE = {fileName, extension, content: "", leaf: true};      
+                    FILE = {fileName, extension, content: "", leaf: true};
                 } else {
                     FILE = file;
                 }

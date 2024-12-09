@@ -521,7 +521,7 @@
                         })),
                     );
 
-                     
+
                     const updateChildren = (items, path, newChildren) => {
                         items.forEach((item, index) => {
                             if (this.getPath(item.id) === path) {
@@ -574,9 +574,11 @@
                 this.$refs[reference].handleOpen();
             },
             dialogHandler() {
-                this.dialog.type === "file"
-                    ? this.addFile({creation: true})
-                    : this.addFolder(undefined, true);
+                if(this.dialog.type === "file"){
+                    this.addFile({creation: true})
+                } else {
+                    this.addFolder(undefined, true)
+                }
             },
             toggleDialog(isShown, type, node) {
                 if (isShown) {
@@ -637,7 +639,7 @@
                         new: this.getPath(draggedNode.data.id),
                         type: draggedNode.data.type,
                     });
-                } catch (e) {
+                } catch {
                     this.$refs.tree.remove(draggedNode.data.id);
                     this.$refs.tree.append(
                         draggedNode.data,
@@ -757,7 +759,7 @@
                     this.$toast().success(
                         this.$t("namespace files.import.success"),
                     );
-                } catch (error) {
+                } catch {
                     this.$toast().error(this.$t("namespace files.import.error"));
                 } finally {
                     event.target.value = "";
@@ -992,7 +994,7 @@
                 try {
                     Utils.copy(path);
                     this.$toast().success(this.$t("namespace files.path.success"));
-                } catch (_error) {
+                } catch {
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
             },

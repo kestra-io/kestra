@@ -11,26 +11,7 @@ export default [
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
-    {
-        rules: {
-            quotes: ["error", "double"],
-            "object-curly-spacing": ["error", "never"],
-            "no-unused-vars": [
-                "off"
-            ],
-            "@typescript-eslint/no-unused-vars": [
-                "error",
-                {
-                    // vars prefixed with '_' are ignored
-                    argsIgnorePattern: "^_",
-                },
-            ],
-            "@typescript-eslint/no-this-alias": [
-                "off"
-            ]
-        }
-    },
-    {
+     {
         files: ["**/*.spec.js", "**/*.spec.ts", "vite.config.js", "vitest.config.js"],
         languageOptions: {globals: globals.node},
     },
@@ -71,4 +52,20 @@ export default [
             ],
         },
     },
+    {
+        rules: {
+            quotes: ["error", "double"],
+            "object-curly-spacing": ["error", "never"],
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    // vars prefixed with '_' are ignored
+                    argsIgnorePattern: "^_",
+                },
+            ],
+            "@typescript-eslint/no-this-alias": "off",
+            "@typescript-eslint/no-explicit-any": "off"
+        }
+    }
 ];

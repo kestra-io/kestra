@@ -84,8 +84,8 @@ export default {
 
             return property.type || "expression";
         },
-         
-        onShow(key) {
+
+        onShow() {
         },
 
         onInput(value) {

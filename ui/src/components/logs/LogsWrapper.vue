@@ -122,6 +122,8 @@
                 return undefined;
             },
             startDate() {
+                // hack to trick the reactivity in vue and revalidate computed property
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 this.refreshDates;
                 if (this.$route.query.startDate) {
                     return this.$route.query.startDate;
@@ -152,7 +154,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             }
             next(vm => {
                 vm.$router?.replace({query});
@@ -177,8 +179,6 @@
                 this.load();
             },
             loadQuery(base) {
-                 
-                const {triggerId, ...rest} = this.filters || {};
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
@@ -200,7 +200,7 @@
             load() {
                 this.isLoading = true
 
-                 
+
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,

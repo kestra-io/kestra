@@ -125,8 +125,8 @@ export default (callback, store, router) => {
                         refreshing = false;
 
                         return instance(originalRequest)
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    } catch (refreshError) {
+
+                    } catch {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
                         store.commit("layout/setTopNavbar", undefined);

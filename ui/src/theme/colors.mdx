@@ -1,0 +1,10 @@
+# Colors
+
+<div>
+    {['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#000', '#fff'].map((color, index) => (
+        <div key={index} style={{ backgroundColor: color, color: color === '#fff' ? '#000' : '#fff' }}>
+            {color}
+        </div>
+    ))}
+</div>
+

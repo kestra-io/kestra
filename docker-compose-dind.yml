@@ -22,6 +22,13 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+  # Docker registry acting as a proxy cache
+  docker-registry:
+    image: registry:2
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
+    ports:
+      - "5000:5000"  # expose the registry on port 5000 for internal use
 
   dind:
     image: docker:dind-rootless
@@ -29,12 +36,15 @@ services:
     user: "1000"
     environment:
       DOCKER_HOST: unix://dind/docker.sock
+      DOCKER_REGISTRY: http://docker-registry:5000  # specify the registry proxy
     command:
       - --log-level=fatal
       - --group=1000
     volumes:
       - dind-socket:/dind
       - tmp-data:/tmp/kestra-wd
+    depends_on:
+      - docker-registry  # ensure the proxy is ready before dind starts
 
   kestra:
     image: kestra/kestra:latest

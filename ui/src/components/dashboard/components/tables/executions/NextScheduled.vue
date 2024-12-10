@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, watch, ref} from "vue";
+    import {onBeforeMount, ref, watch} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
@@ -188,7 +188,7 @@
                     results: response.results?.map(
                         ({abstractTrigger, triggerContext, ...rest}) => {
                             const disabled =
-                                abstractTrigger.disabled || triggerContext.disabled;
+                                abstractTrigger?.disabled ?? triggerContext.disabled;
                             const tooltip = !!abstractTrigger.disabled;
 
                             return {

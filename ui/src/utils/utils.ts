@@ -242,8 +242,8 @@ export default {
         localStorage.setItem("theme", theme);
     },
 
-    getTheme() {
-        let theme = localStorage.getItem("theme") || "light";
+    getTheme(which = "theme") {
+        let theme = localStorage.getItem(which) || "light";
 
         if (theme === "syncWithSystem") {
             theme =

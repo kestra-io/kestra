@@ -88,7 +88,7 @@
                 isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false,
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 statsReady: false,
                 statsData: [],
                 canAutoRefresh: false,
@@ -122,10 +122,10 @@
                 return undefined;
             },
             startDate() {
-                // hack to trick the reactivity in vue and revalidate computed property
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                // we mention the last refresh date here to trick
+                // VueJs fine grained reactivity system and invalidate
+                // computed property startDate
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -175,7 +175,7 @@
                 }
             },
             refresh() {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 this.load();
             },
             loadQuery(base) {

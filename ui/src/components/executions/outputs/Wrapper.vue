@@ -232,7 +232,7 @@
                     selected.value.push(debugOutput);
 
                     isJSON.value = true;
-                } catch (e) {
+                } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
@@ -272,7 +272,7 @@
         try {
             new URL(url);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }

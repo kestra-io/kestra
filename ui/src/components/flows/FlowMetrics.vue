@@ -200,8 +200,7 @@
             },
             startDate() {
                 // This allow to force refresh this computed property especially when using timeRange
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -217,7 +216,7 @@
                 tooltipContent: undefined,
                 isLoading: false,
                 canAutoRefresh: false,
-                refreshDates: false
+                lastRefreshDate: new Date()
             }
         },
         methods: {
@@ -283,7 +282,7 @@
                 if (!this.$route.query.metric) {
                     this.loadMetrics();
                 } else {
-                    this.refreshDates = !this.refreshDates;
+                    this.lastRefreshDate = new Date();
                     this.loadAggregatedMetrics();
                 }
             }

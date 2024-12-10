@@ -203,7 +203,7 @@
                 dailyReady: false,
                 isDefaultNamespaceAllow: true,
                 canAutoRefresh: false,
-                refreshDates: false
+                lastRefreshDate: new Date()
             };
         },
         computed: {
@@ -225,9 +225,7 @@
             },
             startDate() {
                 // probable hack to trigger cache invalidation without date change
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -271,7 +269,7 @@
                 return _merge(base, queryFilter)
             },
             loadData(callback) {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 this.$store
                     .dispatch("stat/taskRunDaily", this.loadQuery({
                         startDate: this.startDate,

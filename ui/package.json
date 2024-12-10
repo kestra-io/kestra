@@ -12,7 +12,7 @@
     "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
     "translations:check": "node ./src/translations/check.js",
-    "tsc": "tsc --noEmit"
+    "tsc": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",

@@ -414,7 +414,7 @@
             });
         };
 
-        const mapped = {};
+        const mapped: Record<string,string> = {};
 
         getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
 

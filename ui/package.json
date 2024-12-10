@@ -70,6 +70,7 @@
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^1.24.0",
+    "@types/path-browserify": "^1.0.3",
     "@typescript-eslint/parser": "^8.17.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/eslint-config-prettier": "^10.1.0",

@@ -293,7 +293,7 @@
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
                                 <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}"
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />

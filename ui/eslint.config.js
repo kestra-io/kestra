@@ -61,7 +61,7 @@ export default [
             "@typescript-eslint/no-unused-vars": [
                 "error",
                 {
-                    // vars prefixed with '_' are ignored
+                    // args prefixed with '_' are ignored
                     argsIgnorePattern: "^_",
                 },
             ],

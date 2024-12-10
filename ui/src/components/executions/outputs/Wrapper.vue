@@ -226,13 +226,13 @@
             .then((response) => {
                 try {
                     const parsedResult = JSON.parse(response.data.result);
-                    const debugOutput = JSON.stringify(parsedResult, "  ", 2);
+                    const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
                     selected.value.push(debugOutput);
 
                     isJSON.value = true;
-                } catch (e) {
+                } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
@@ -272,7 +272,7 @@
         try {
             new URL(url);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }

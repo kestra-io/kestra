@@ -6,7 +6,7 @@
                 :placeholder="$t('search')"
                 :prefix-icon="Magnify"
                 clearable
-            /> 
+            />
         </div>
     </div>
 
@@ -30,9 +30,9 @@
                     {{ $t("delete") }}
                 </el-button>
             </bulk-select>
-        </template>    
+        </template>
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
-            <template #default="scope"> 
+            <template #default="scope">
                 <id :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
@@ -258,7 +258,7 @@
                     } else {
                         callback();
                     }
-                } catch (error) {
+                } catch {
                     callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
                 }
             },

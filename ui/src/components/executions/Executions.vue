@@ -520,7 +520,7 @@
                 isOpenLabelsModal: false,
                 executionLabels: [],
                 actionOptions: {},
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 changeStatusDialogVisible: false,
                 selectedStatus: undefined
             };
@@ -555,8 +555,7 @@
                 return undefined;
             },
             startDate() {
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -707,7 +706,7 @@
                     });
             },
             loadData(callback) {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 if (this.showStatChart()) {
                     this.loadStats();
                 }

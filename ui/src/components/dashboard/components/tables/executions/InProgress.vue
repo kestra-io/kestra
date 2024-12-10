@@ -161,8 +161,6 @@
             })
             .then((response) => {
                 if (!response) return;
-
-                console.log
                 executions.value = response;
             });
     };

@@ -84,7 +84,7 @@
         if(val === undefined && docId !== undefined){
             try {
                 response = await store.dispatch("doc/fetchAppId", docId)
-            } catch (e) {
+            } catch {
                 // eat the error
             }
         }

@@ -925,7 +925,7 @@
     const flowParsed = computed(() => {
         try {
             return YamlUtils.parse(flowYaml.value);
-        } catch (e) {
+        } catch {
             return undefined;
         }
     });

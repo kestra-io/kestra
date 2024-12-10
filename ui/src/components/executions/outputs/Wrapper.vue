@@ -226,7 +226,7 @@
             .then((response) => {
                 try {
                     const parsedResult = JSON.parse(response.data.result);
-                    const debugOutput = JSON.stringify(parsedResult, "  ", 2);
+                    const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
                     selected.value.push(debugOutput);

@@ -481,6 +481,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a single task on a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @SuppressWarnings("deprecated")
     public HttpResponse<Flow> updateTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,

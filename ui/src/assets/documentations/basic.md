@@ -217,7 +217,7 @@ The table below lists common Pebble expressions and functions.
 The table below lists Pebble functions and filter expressions:
 
 | Filter           | Example and Description                                                                                                          |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------|                                                       |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `abs`            | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                            |
 | `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                           |
 | `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                 |

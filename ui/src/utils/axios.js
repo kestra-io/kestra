@@ -117,7 +117,7 @@ export default (callback, store, router) => {
                 if (!refreshing) {
                     refreshing = true;
                     try {
-                        await instance.post("/oauth/access_token?grant_type=refresh_token");
+                        await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
                         toRefreshQueue.forEach(({config, resolve, reject}) => {
                             instance.request(config).then(response => { resolve(response) }).catch(error => { reject(error) })
                         })

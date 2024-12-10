@@ -3,7 +3,7 @@
   "version": "0.20.0",
   "private": true,
   "type": "module",
-  "packageManager": "npm@9.9.3",
+  "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --emptyOutDir",
@@ -101,7 +101,6 @@
     "storybook": "^8.4.6",
     "typescript": "^5.7.2",
     "vite": "^6.0.2",
-    "vite-plugin-eslint": "^1.8.1",
     "vitest": "^2.1.8"
   },
   "optionalDependencies": {

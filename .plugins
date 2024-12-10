@@ -97,6 +97,7 @@
 #plugin-tika:io.kestra.plugin:plugin-tika:LATEST
 #plugin-weaviate:io.kestra.plugin:plugin-weaviate:LATEST
 #plugin-zendesk:io.kestra.plugin:plugin-zendesk:LATEST
+#plugin-typesense:io.kestra.plugin:plugin-typesense:LATEST
 #storage-azure:io.kestra.storage:storage-azure:LATEST
 #storage-gcs:io.kestra.storage:storage-gcs:LATEST
 #storage-minio:io.kestra.storage:storage-minio:LATEST

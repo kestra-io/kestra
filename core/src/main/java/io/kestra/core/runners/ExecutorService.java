@@ -379,7 +379,9 @@ public class ExecutorService {
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             try {
-                Map<String, Object> outputs = flowInputOutput.flowOutputsToMap(flow.getOutputs());
+                Map<String, Object> outputs = flow.getOutputs()
+                    .stream()
+                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);

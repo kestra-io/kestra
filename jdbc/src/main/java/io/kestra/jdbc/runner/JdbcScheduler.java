@@ -97,7 +97,7 @@ public class JdbcScheduler extends AbstractScheduler {
     public void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer) {
         JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(this.dslContextWrapper);
 
-        schedulerContext.startTransaction(scheduleContextInterface -> {
+        schedulerContext.doInTransaction(scheduleContextInterface -> {
             List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyForAllTenants(now, scheduleContextInterface);
 
             consumer.accept(triggers, scheduleContextInterface);

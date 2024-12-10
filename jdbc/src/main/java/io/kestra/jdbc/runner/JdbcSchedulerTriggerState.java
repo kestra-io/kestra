@@ -57,19 +57,12 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     @Override
     public Trigger create(Trigger trigger) {
-
         return this.triggerRepository.create(trigger);
     }
 
     @Override
     public Trigger update(Trigger trigger) {
-
         return this.triggerRepository.update(trigger);
-    }
-
-    public Trigger updateExecution(Trigger trigger) {
-
-        return this.triggerRepository.updateExecution(trigger);
     }
 
     public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
@@ -85,7 +78,4 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     public List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<FlowWithSource> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         throw new NotImplementedException();
     }
-
-    @Override
-    public void unlock(Trigger trigger) {}
 }

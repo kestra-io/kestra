@@ -132,7 +132,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.getExecutionLabels();
+                this.executionLabels = this.getExecutionLabels().filter(item => !item.key.startsWith("system."));
 
                 if (!this.flow.inputs) {
                     return;

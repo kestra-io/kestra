@@ -1,5 +1,8 @@
 <template>
     <div class="py-2 line font-monospace" :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined}" v-if="filtered">
+        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="25">
+            <MenuRight />
+        </el-icon>
         <span :class="levelClasses" class="border header-badge log-level el-tag noselect">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ (log.taskId ?? log.flowId ?? "") }}</span>
@@ -31,12 +34,15 @@
     import xss from "xss";
     import Markdown from "../../utils/markdown";
     import VRuntimeTemplate from "vue3-runtime-template";
+    import MenuRight from "vue-material-design-icons/MenuRight.vue";
+
 
     let convert = new Convert();
 
     export default {
         components:{
-            VRuntimeTemplate
+            VRuntimeTemplate,
+            MenuRight
         },
         props: {
             cursor: {
@@ -127,6 +133,10 @@
                     )
                 );
             },
+            iconColor() {
+                const logLevel = this.log.level?.toLowerCase();
+                return `var(--log-content-${logLevel}) !important`; // Use CSS variable for icon color
+            },
             message() {
                 let logMessage = !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
                     allowList: {"span": ["style"]}
@@ -159,14 +169,17 @@
         white-space: pre-wrap;
         word-break: break-all;
         display: flex;
-        align-items: baseline;
+        align-items: center;
         gap: $spacer;
 
         border-left-width: 2px !important;
         border-left-style: solid;
         border-left-color: transparent;
 
-
+        .icon_container{
+            margin-left: -0.90rem;
+        }
+        
         .log-level {
             padding: calc(var(--spacer) / 4);
         }

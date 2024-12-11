@@ -963,7 +963,10 @@
         "child": "子",
         "absolute_date": "絶対日付",
         "relative_date": "相対日付",
-        "level": "ログレベル"
+        "level": "ログレベル",
+        "task": "タスク",
+        "aggregation": "集計",
+        "metric": "メトリック"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",

@@ -963,7 +963,10 @@
         "child": "Niño",
         "absolute_date": "Fecha absoluta",
         "relative_date": "Fecha relativa",
-        "level": "Nivel de log"
+        "level": "Nivel de log",
+        "task": "Tarea",
+        "aggregation": "Agregación",
+        "metric": "Métrica"
       },
       "empty": "Sin datos.",
       "label": "Elegir filtros",

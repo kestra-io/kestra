@@ -44,6 +44,11 @@ public class Property<T> {
     private String expression;
     private T value;
 
+    //TODO: Temporary to make the ValueExtractor work, but it's not supposed to say here
+    public T getValue(){
+        return this.value;
+    }
+
     // used only by the deserializer and in tests
     @VisibleForTesting
     public Property(String expression) {

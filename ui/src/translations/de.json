@@ -963,7 +963,8 @@
         "level": "Log-Ebene",
         "task": "Aufgabe",
         "aggregation": "Aggregation",
-        "metric": "Metrik"
+        "metric": "Metrik",
+        "trigger_state": "Zustand"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen",

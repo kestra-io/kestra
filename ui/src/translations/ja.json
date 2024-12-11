@@ -963,7 +963,8 @@
         "level": "ログレベル",
         "task": "タスク",
         "aggregation": "集計",
-        "metric": "メトリック"
+        "metric": "メトリック",
+        "trigger_state": "状態"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",

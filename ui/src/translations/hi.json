@@ -963,7 +963,8 @@
         "level": "Log स्तर",
         "task": "कार्य",
         "aggregation": "एग्रीगेशन",
-        "metric": "मेट्रिक"
+        "metric": "मेट्रिक",
+        "trigger_state": "स्थिति"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें",

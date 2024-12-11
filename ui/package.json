@@ -48,7 +48,7 @@
     "pdfjs-dist": "^4.9.124",
     "posthog-js": "^1.194.3",
     "rapidoc": "^9.3.8",
-    "shiki": "^1.24.0",
+    "shiki": "^1.24.2",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.5.13",
     "vue-axios": "^3.5.2",

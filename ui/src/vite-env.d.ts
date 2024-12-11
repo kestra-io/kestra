@@ -7,3 +7,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
     readonly env: ImportMetaEnv
 }
+
+interface Window {
+    KESTRA_BASE_PATH: string
+    KESTRA_GOOGLE_ANALYTICS: string
+    KESTRA_UI_PATH: string
+}

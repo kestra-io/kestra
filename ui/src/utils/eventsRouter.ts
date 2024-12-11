@@ -1,7 +1,8 @@
 import {nextTick} from "vue";
 import _isEqual from "lodash/isEqual";
+import { RouteLocation, Router } from "vue-router";
 
-export const pageFromRoute = (route) => {
+export const pageFromRoute = (route: RouteLocation) => {
     return {
         origin: window.location.origin,
         path: route.path,
@@ -16,7 +17,7 @@ export const pageFromRoute = (route) => {
     }
 }
 
-export default (app, store, router) => {
+export default (app: any, store: any, router:Router) => {
     router.afterEach((to, from) => {
         nextTick().then(() => {
             if (_isEqual(from, to)) {

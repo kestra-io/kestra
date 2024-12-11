@@ -146,6 +146,7 @@
 
     import {pageFromRoute} from "../../utils/eventsRouter";
 
+    // @ts-ignore
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Animation from "../../assets/onboarding/animation.gif";
 
@@ -162,7 +163,7 @@
     const {t} = useI18n({useScope: "global"});
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
-    const dispatchEvent = (step, action) =>
+    const dispatchEvent = (step:string, action:string) =>
         store.dispatch("api/events", {
             type: "ONBOARDING",
             onboarding: {
@@ -206,12 +207,12 @@
     const activeFlow = ref(0);
     const flows = computed(() => store.state.core.tutorialFlows);
 
-    const allTasks = (tasks) => {
+    const allTasks = (tasks: any[]) => {
         const uniqueTypes = new Set();
         const dockerBuild = "io.kestra.plugin.docker.Build";
         const dockerRun = "io.kestra.plugin.docker.Run";
 
-        const collectTypes = (task) => {
+        const collectTypes = (task: any) => {
             if (task && typeof task === "object") {
                 const {type} = task;
                 if (type) {
@@ -255,13 +256,13 @@
         });
     });
 
-    const properties = (step, c = true, p = true, s = false) => ({
+    const properties = (step:number, c = true, p = true, s = false) => ({
         title: t(`onboarding.steps.${step}.title`),
         ...(c ? {content: t(`onboarding.steps.${step}.content`)} : {}),
         ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
         ...(s ? {secondary: t(`onboarding.steps.${step}.secondary`)} : {}),
     });
-    const wait = (time) =>
+    const wait = (time:number) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
 
     const toggleScroll = (enabled = true) => {
@@ -377,18 +378,36 @@
         },
     ];
 
-    const currentStep = (tour) => tour.steps[tour.currentStep];
-    const nextStep = (tour) => {
+    interface Step{
+        nextStep: () => void
+        title: string
+        primary: string
+        secondary: string
+        content: string
+        fullscreen: boolean
+        condensed: boolean
+        keepDark: boolean
+        icon: string
+        jump: boolean
+    }
+
+    interface TourType {
+        steps: Record<string, Step>,
+        currentStep: string
+    }
+
+    const currentStep = (tour: TourType) => tour.steps[tour.currentStep];
+    const nextStep = (tour: TourType) => {
         dispatchEvent(tour.currentStep, "next");
 
         const nextStep = currentStep(tour).nextStep;
         !nextStep ? TOURS[TOUR_NAME].nextStep() : nextStep();
     };
-    const previousStep = (current) => {
+    const previousStep = (current:string) => {
         dispatchEvent(current, "previous");
         TOURS[TOUR_NAME].previousStep();
     };
-    const skipTour = (current) => {
+    const skipTour = (current: string) => {
         toggleScroll();
 
         updateStatus();
@@ -398,7 +417,7 @@
 
         TOURS[TOUR_NAME].stop();
     };
-    const finishTour = (current, push = true) => {
+    const finishTour = (current: string, push = true) => {
         toggleScroll();
 
         updateStatus();
@@ -411,7 +430,7 @@
 
         if (push) router.push({name: "flows/create"});
     };
-    const exploreOther = (current) => {
+    const exploreOther = (current: string) => {
         finishTour(current);
         dispatchEvent(current, "explore");
         router.push({name: "flows/list", query: {namespace: "tutorial"}});

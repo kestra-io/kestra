@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex pb-3 filters">
+    <section :class="['d-inline-flex mb-3 filters', {'is-focused': isFocused}]">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -20,6 +20,8 @@
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @focus="handleFocus"
+            @blur="handleBlur"
         >
             <template #label="{value}">
                 <Label :option="value" />
@@ -95,6 +97,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
+    const isFocused = ref(false);
     import {ElSelect} from "element-plus";
 
     import {useI18n} from "vue-i18n";
@@ -190,6 +193,14 @@
         } else if (dropdowns.value.third.shown) {
             valueCallback(option);
         }
+    };
+
+    const handleFocus = () => {
+        isFocused.value = true; // Set focus state to true
+    };
+
+    const handleBlur = () => {
+        isFocused.value = false; // Set focus state to false
     };
 
     const filterCallback = (option) => {
@@ -479,55 +490,60 @@
 @mixin width-available {
     width: -moz-available;
     width: -webkit-fill-available;
-    // https://caniuse.com/?search=fill-available
     width: fill-available;
 }
 
 .filters {
     @include width-available;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    & .el-select {
-        max-width: calc(100% - 237px);
+    &.is-focused {
+        border-radius: 5px;
+        border: solid 1.5px #8405FF;
+        transition: border-color 0.5s;
+    }
 
-        &.settings {
-            max-width: calc(100% - 285px);
-        }
+    .el-select {
+        flex-grow: 1;
 
+        &.settings,
         &:not(.refresh) {
-            max-width: calc(100% - 189px);
+            max-width: 100%;
         }
     }
 
-    & .el-select__placeholder {
+    .el-select__placeholder {
         color: var(--bs-gray-700);
     }
 
-    & .el-select__wrapper {
+    .el-select__wrapper {
         border-radius: 0;
-        box-shadow:
+        box-shadow: 
             0 -1px 0 0 var(--el-border-color) inset,
             0 1px 0 0 var(--el-border-color) inset;
 
-        & .el-tag {
+        .el-tag {
             background: var(--bs-border-color) !important;
             color: var(--bs-gray-900);
 
-            & .el-tag__close {
+            .el-tag__close {
                 color: var(--bs-gray-900);
             }
         }
     }
 
-    & .el-select__selection {
+    .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
 
         &::-webkit-scrollbar {
-            height: 0px;
+            height: 0;
         }
     }
 
-    & .el-button-group {
+    .el-button-group {
         .el-button {
             border-radius: 0;
         }
@@ -549,7 +565,7 @@
 }
 
 .filters-select {
-    & .el-select-dropdown {
+    .el-select-dropdown {
         width: 300px !important;
 
         &:has(.el-select-dropdown__empty) {
@@ -557,12 +573,12 @@
         }
     }
 
-    & .el-date-editor.el-input__wrapper {
+    .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
 
-    & .el-select-dropdown__item .material-design-icon {
+    .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }
 }

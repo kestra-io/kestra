@@ -10,6 +10,7 @@
             allow-create
             default-first-option
             filterable
+            clearable
             multiple
             placement="bottom"
             :show-arrow="false"
@@ -20,6 +21,7 @@
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @clear="handleClear"
             @focus="handleFocus"
             @blur="handleBlur"
         >
@@ -192,6 +194,11 @@
         } else if (dropdowns.value.third.shown) {
             valueCallback(option);
         }
+    };
+
+    const handleClear = () => {
+        current.value = [];
+        triggerSearch();
     };
 
     const isFocused = ref(false);
@@ -494,9 +501,11 @@
     align-items: center;
     justify-content: space-between;
 
+    border-radius: var(--bs-border-radius);
+    border: solid 1px var(--el-border-color);
+
     &.focused {
-        border-radius: 5px;
-        border: solid 1.5px #8405ff;
+        border-color: var(--bs-primary);
         transition: border-color 0.5s;
     }
 

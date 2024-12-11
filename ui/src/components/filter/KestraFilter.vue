@@ -501,12 +501,11 @@
     align-items: center;
     justify-content: space-between;
 
-    border-radius: var(--bs-border-radius);
-    border: solid 1px var(--el-border-color);
+    // border-radius: var(--bs-border-radius);
+    // outline: 1px solid var(--el-border-color);
 
     &.focused {
-        border-color: var(--bs-primary);
-        transition: border-color 0.5s;
+        // outline: 1px solid var(--bs-primary);
     }
 
     .el-select {

@@ -40,6 +40,10 @@ export function useValues(label?: string) {
             label: value,
             value,
         })),
+        TRIGGER_STATE: ["enabled", "disabled"].map((value) => ({
+            label: `${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+            value,
+        })),
     };
 
     return {VALUES};

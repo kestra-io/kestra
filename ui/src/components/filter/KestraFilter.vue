@@ -333,6 +333,9 @@
         case "state":
             return VALUES.EXECUTION_STATE;
 
+        case "trigger_state":
+            return VALUES.TRIGGER_STATE;
+
         case "scope":
             return VALUES.SCOPE;
 

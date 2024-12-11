@@ -75,7 +75,7 @@ tasks:
             sourceWrapper() {
                 return {source: this.source};
             },
-            ...mapState("flow", ["flowGraph", "total"]),
+            ...mapState("flow", ["flowGraph"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),

@@ -1,5 +1,17 @@
 <template>
     <div class="attempt-header">
+        <div>
+            <el-icon
+                v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
+                type="default"
+                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+            >
+                <ChevronDown
+                    v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                />
+                <ChevronRight v-else />
+            </el-icon>
+        </div>
         <div class="task-icon d-none d-md-inline-block me-1">
             <task-icon
                 :cls="taskType(currentTaskRun)"
@@ -124,25 +136,11 @@
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-
-        <div>
-            <el-button
-                v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-                class="task-run-buttons"
-                type="default"
-                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
-            >
-                <ChevronUp
-                    v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-                />
-                <ChevronDown v-else />
-            </el-button>
-        </div>
     </div>
 </template>
 <script>
     import Restart from "./Restart.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Metrics from "./Metrics.vue";
     import Status from "../Status.vue";
     import ChangeStatus from "./ChangeStatus.vue";
@@ -177,7 +175,7 @@
             ChangeStatus,
             Status,
             Metrics,
-            ChevronUp,
+            ChevronRight,
             Restart,
             Duration
         },
@@ -354,7 +352,8 @@
             text-overflow: ellipsis;
 
             span span {
-                color: var(--bs-tertiary-color);
+                color: var(--el-text-color-regular);
+                font-size: 14px;
 
                 html:not(.dark) & {
                     color: $black;
@@ -383,7 +382,7 @@
             padding: .5rem;
             height: 100%;
             border: 1px solid rgba($white, .05);
-            background-color: var(--bs-gray-400) !important;
+            background-color: var(--el-button-bg-color) !important;
             &:not(:hover) {
                 background: rgba($white, .10);
             }

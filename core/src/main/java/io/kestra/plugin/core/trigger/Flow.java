@@ -213,7 +213,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         title = "List of execution states that will be evaluated by the trigger",
         description = """
             By default, only executions in a terminal state will be evaluated.
-            Any `ExecutionStatusCondition`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
+            Any `ExecutionStatus`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::alert{type="info"}
             The trigger will be evaluated for each state change of matching executions. If a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. In this case, a Flow trigger listening to a `PAUSED` state will be evaluated twice.
             ::"""

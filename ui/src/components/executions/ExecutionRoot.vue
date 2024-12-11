@@ -48,6 +48,7 @@
                             "execution/loadFlowForExecutionByExecutionId",
                             {
                                 id: execution.id,
+                                revision: this.$route.query.revision
                             }
                         );
                     }

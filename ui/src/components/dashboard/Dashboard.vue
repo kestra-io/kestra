@@ -5,8 +5,8 @@
         :breadcrumb="[
             {
                 label: t(custom.shown ? 'custom_dashboard' : 'dashboard_label'),
-                link: {}
-            }
+                link: {},
+            },
         ]"
         :id="custom.dashboard.id ?? undefined"
     />
@@ -297,7 +297,7 @@
     });
 
     const customDashboardsEnabled = computed(
-        () => store.state.misc.configs.isCustomDashboardsEnabled,
+        () => store.state.misc?.configs?.isCustomDashboardsEnabled,
     );
 
     // Custom Dashboards

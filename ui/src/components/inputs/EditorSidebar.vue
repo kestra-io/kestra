@@ -123,7 +123,7 @@
                         ? changeOpenedTabs({
                             action: 'open',
                             name: data.fileName,
-                            extension: data.fileName.split('.')[1],
+                            extension: data.fileName.split('.').pop(),
                             path: getPath(node),
                         })
                         : undefined
@@ -467,6 +467,16 @@
                     return a.fileName.localeCompare(b.fileName);
                 });
             },
+            getFileNameWithExtension(fileNameWithExtension) {
+                const lastDotIdx = fileNameWithExtension.lastIndexOf(".");
+
+                return lastDotIdx !== -1
+                    ? [
+                        fileNameWithExtension.slice(0, lastDotIdx),
+                        fileNameWithExtension.slice(lastDotIdx + 1),
+                    ]
+                    : [fileNameWithExtension, ""];
+            },
             renderNodes(items) {
                 if (this.items === undefined) {
                     this.items = [];
@@ -477,7 +487,9 @@
                     if (type === "Directory") {
                         this.addFolder({fileName});
                     } else if (type === "File") {
-                        const [fileName, extension] = items[i].fileName.split(".");
+                        const [fileName, extension] = this.getFileNameWithExtension(
+                            items[i].fileName,
+                        );
                         const file = {fileName, extension, leaf: true};
                         this.addFile({file});
                     }
@@ -547,7 +559,7 @@
                 this.changeOpenedTabs({
                     action: "open",
                     name: item.split("/").pop(),
-                    extension: item.split(".")[1],
+                    extension: item.split(".").pop(),
                     path: item,
                 });
 
@@ -694,7 +706,8 @@
 
                             // Extract file details
                             const fileName = pathParts[pathParts.length - 1];
-                            const [name, extension] = fileName.split(".");
+                            const [name, extension] =
+                                this.getFileNameWithExtension(fileName);
 
                             // Read file content
                             const content = await this.readFile(file);
@@ -718,7 +731,9 @@
                         } else {
                             // Process files at root level (not in any folder)
                             const content = await this.readFile(file);
-                            const [name, extension] = file.name.split(".");
+                            const [name, extension] = this.getFileNameWithExtension(
+                                file.name,
+                            );
 
                             this.importFileDirectory({
                                 namespace:
@@ -759,14 +774,9 @@
                 let FILE;
 
                 if (creation) {
-                    const separateString = (str) => {
-                        const lastIndex = str.lastIndexOf(".");
-                        return lastIndex !== -1
-                            ? [str.slice(0, lastIndex), str.slice(lastIndex + 1)]
-                            : [str, ""];
-                    };
-
-                    const [fileName, extension] = separateString(this.dialog.name);
+                    const [fileName, extension] = this.getFileNameWithExtension(
+                        this.dialog.name,
+                    );
 
                     FILE = {fileName, extension, content: "", leaf: true};
                 } else {

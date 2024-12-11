@@ -70,6 +70,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        class="flows-table"
                     >
                         <template #select-actions>
                             <bulk-select
@@ -573,5 +574,9 @@
 
     .flow-id {
         min-width: 200px;
+    }
+
+    .flows-table  .el-table__cell {
+        vertical-align: middle;        
     }
 </style>

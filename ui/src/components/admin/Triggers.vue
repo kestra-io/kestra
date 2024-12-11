@@ -85,7 +85,13 @@
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
-                        />
+                        >
+                            <template #default="scope">
+                                <div class="text-nowrap">
+                                    {{ scope.row.id }}
+                                </div>
+                            </template>
+                        </el-table-column>
                         <el-table-column
                             v-if="visibleColumns.flowId"
                             prop="flowId"

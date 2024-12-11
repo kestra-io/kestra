@@ -51,6 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -180,11 +182,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
             return Collections.emptySet();
         }
 
-        return Set.of(
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT)),
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT)),
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT))
+        Stream<String> metrics = Stream.of(
+            MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
+            MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT,
+            MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT
         );
+
+        return metrics
+            .flatMap(metric -> Optional.ofNullable(metricRegistry.findGauge(metric)).stream())
+            .map(Metric::of)
+            .collect(Collectors.toSet());
     }
 
     @Override

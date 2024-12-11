@@ -54,7 +54,11 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
         try {
             return doCall();
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catching Throwable is usually a bad idea.
+            // However, here, we want to be sure that the task fails whatever happens,
+            // and some plugins may throw errors, for example, for dependency issues or worst,
+            // bad behavior that throws errors and not exceptions.
             return this.exceptionHandler(e);
         } finally {
             shutdownLatch.countDown();

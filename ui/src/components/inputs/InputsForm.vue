@@ -96,7 +96,7 @@
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                class="w-100"
+                class="w-100 boolean-inputs"
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
@@ -430,5 +430,34 @@
     width: 100%;
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
+}
+</style>
+
+<style scoped lang="scss">
+:deep(.boolean-inputs) {
+    .el-radio-button {
+        &.is-active {
+            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                color: var(--el-text-color-regular);
+                background-color: var(--bs-gray-100);
+                box-shadow: 0 0 0 0 var(--el-color-primary);
+            }
+        }
+
+        .el-radio-button__inner {
+            border: var(--el-border);
+            transition: 0.3s ease-in-out;
+
+            &:hover {
+                color: var(--bs-secondary);
+                border-color: var(--el-color-primary);
+                background-color: var(--bs-card-bg);
+            }
+
+            &:first-child {
+                border-left: var(--el-border);
+            }
+        }
+    }
 }
 </style>

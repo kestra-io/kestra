@@ -279,7 +279,7 @@ public abstract class StorageTestSuite {
 
         list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage"));
         assertThat(list.stream().map(FileAttributes::getFileName).toList(), containsInAnyOrder("root.yml", "level1", "another"));
-        assertThat(list.get(0).getMetadata(), hasEntry("someMetadata", "someValue"));
+        assertThat(list.stream().filter(f -> f.getFileName().equals("root.yml")).findFirst().get().getMetadata(), hasEntry("someMetadata", "someValue"));
     }
     //endregion
 

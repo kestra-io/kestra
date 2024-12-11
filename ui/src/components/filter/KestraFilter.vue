@@ -122,13 +122,13 @@
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
     const emits = defineEmits(["dashboard"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
+        values: {type: Object, required: false, default: undefined},
         refresh: {
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
@@ -315,51 +315,8 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    const scopeOptions = [
-        {
-            label: t("scope_filter.user", {label: props.prefix}),
-            value: "USER",
-        },
-        {
-            label: t("scope_filter.system", {label: props.prefix}),
-            value: "SYSTEM",
-        },
-    ];
-
-    const childOptions = [
-        {
-            label: t("trigger filter.options.ALL"),
-            value: "ALL",
-        },
-        {
-            label: t("trigger filter.options.CHILD"),
-            value: "CHILD",
-        },
-        {
-            label: t("trigger filter.options.MAIN"),
-            value: "MAIN",
-        },
-    ];
-
-    const levelOptions = [
-        {label: "TRACE", value: "TRACE"},
-        {label: "DEBUG", value: "DEBUG"},
-        {label: "INFO", value: "INFO"},
-        {label: "WARN", value: "WARN"},
-        {label: "ERROR", value: "ERROR"},
-    ];
-
-    const relativeDateOptions = [
-        {label: t("datepicker.last5minutes"), value: "PT5M"},
-        {label: t("datepicker.last15minutes"), value: "PT15M"},
-        {label: t("datepicker.last1hour"), value: "PT1H"},
-        {label: t("datepicker.last12hours"), value: "PT12H"},
-        {label: t("datepicker.last24hours"), value: "PT24H"},
-        {label: t("datepicker.last48hours"), value: "PT48H"},
-        {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "PT720H"},
-        {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    import {useValues} from "./useValues.js";
+    const {VALUES} = useValues(props.prefix);
 
     const isDatePickerShown = computed(() => {
         const c = current?.value?.at(-1);
@@ -373,23 +330,29 @@
         case "namespace":
             return namespaceOptions.value;
 
-        case "scope":
-            return scopeOptions;
-
         case "state":
-            return State.arrayAllStates().map((s) => ({
-                label: s.name,
-                value: s.name,
-            }));
+            return VALUES.EXECUTION_STATE;
+
+        case "scope":
+            return VALUES.SCOPE;
 
         case "child":
-            return childOptions;
+            return VALUES.CHILD;
 
         case "level":
-            return levelOptions;
+            return VALUES.LEVEL;
 
         case "relative_date":
-            return relativeDateOptions;
+            return VALUES.RELATIVE_DATE;
+
+        case "task":
+            return props.values?.task || [];
+
+        case "metric":
+            return props.values?.metric || [];
+
+        case "aggregation":
+            return VALUES.AGGREGATION;
 
         case "absolute_date":
             return [];

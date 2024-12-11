@@ -94,6 +94,13 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
+            key: "trigger_state",
+            icon: StateMachine,
+            label: t("filters.options.state"),
+            value: {label: "trigger_state", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "scope",
             icon: FilterSettingsOutline,
             label: t("filters.options.scope"),

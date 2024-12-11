@@ -970,12 +970,15 @@
         "namespace": "Namespace",
         "state": "State",
         "scope": "Scope",
-        "labels": "Labels",
         "child": "Child",
         "level": "Log level",
+        "task": "Task",
+        "metric": "Metric",
+        "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
-        "text": "text"
+        "text": "text",
+        "labels": "Labels"
       },
       "comparators": {
         "is": "is",

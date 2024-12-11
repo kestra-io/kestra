@@ -469,11 +469,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     )
                     .build()
                 )
-                .peek(f -> {
-                    if (f.getTriggerContext().getEvaluateRunningDate() != null || !isExecutionNotRunning(f)) {
-                        this.triggerState.unlock(f.getTriggerContext());
-                    }
-                })
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
                 .filter(this::isExecutionNotRunning)
                 .map(FlowWithWorkerTriggerNextDate::of)

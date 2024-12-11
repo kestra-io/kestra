@@ -201,7 +201,7 @@ abstract public class PluginUtilsService {
             }
         } else {
             if (isStdErr) {
-                runContext.logger().warn(line);
+                runContext.logger().error(line);
             } else {
                 runContext.logger().info(line);
             }

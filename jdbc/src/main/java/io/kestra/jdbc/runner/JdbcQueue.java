@@ -157,12 +157,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void delete(String consumerGroup, T message) throws QueueException {
-        dslContextWrapper.transaction(configuration -> DSL
-            .using(configuration)
-            .delete(table)
-            .where(AbstractJdbcRepository.field("key").eq(queueService.key(message)))
-            .execute()
-        );
+        // Just do nothing!
+        // The message will be removed by the indexer (synchronously if using the queue indexer, async otherwise),
+        // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
     }
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {

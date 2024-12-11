@@ -329,7 +329,8 @@ export default {
             )
         },
         loadFlowForExecution({commit}, options) {
-            return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}`, {params: {revision: options.revision}})
+            const revision = options.revision ? `?revision=${options.revision}` : "";
+            return this.$http.get(`${apiUrl(this)}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
                 .then(response => {
                     commit("setFlow", response.data)
                     return response.data;

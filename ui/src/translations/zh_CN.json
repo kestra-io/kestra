@@ -960,7 +960,10 @@
         "child": "子项",
         "absolute_date": "绝对日期",
         "relative_date": "相对日期",
-        "level": "Log级别"
+        "level": "Log级别",
+        "task": "任务",
+        "aggregation": "聚合",
+        "metric": "指标"
       },
       "empty": "无数据。",
       "label": "选择过滤器",

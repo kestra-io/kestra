@@ -256,15 +256,20 @@
         }
     };
     const valueCallback = (filter, isDate = false) => {
+        console.log(current.value);
         if (!isDate) {
             const currentFilter = current.value[dropdowns.value.third.index];
             const label = currentFilter.label;
             const existingIndex = current.value.findIndex(i => i.label === label);
 
             if (existingIndex !== -1 && existingIndex !== dropdowns.value.third.index) {
-                current.value[existingIndex].value = [filter.value];
-                current.value.splice(dropdowns.value.third.index, 1);
-                dropdowns.value.third.index = existingIndex;
+                if (!currentFilter.comparator?.multiple) {
+                    current.value[existingIndex].value = [filter.value];
+                    current.value.splice(dropdowns.value.third.index, 1);
+                    dropdowns.value.third.index = existingIndex;
+                } else {
+                    current.value[existingIndex].value.push(filter.value);
+                }
             } else {
                 const values = currentFilter.value;
                 const index = values.indexOf(filter.value);

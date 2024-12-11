@@ -10,6 +10,6 @@ public class PropertyValueExtractor implements ValueExtractor<Property<@Extracte
 
     @Override
     public void extractValues(Property<?> originalValue, ValueReceiver receiver) {
-        receiver.value( null, originalValue.getValue());
+        receiver.value( null, originalValue.getExpression());
     }
 }

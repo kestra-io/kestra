@@ -351,7 +351,7 @@ public class Property<T> {
     }
 
     // used only by the serializer
-    String getExpression() {
+    public String getExpression() {
         return this.expression;
     }
 

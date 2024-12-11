@@ -2,6 +2,8 @@ import _merge from "lodash/merge";
 import _cloneDeep from "lodash/cloneDeep";
 import _isEqual from "lodash/isEqual";
 
+const defaultPageSize = 25;
+
 export default {
     created() {
         this.refreshPaging();

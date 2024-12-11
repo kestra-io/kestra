@@ -61,7 +61,7 @@ jobs:
       - name: Npm install
         shell: bash
         working-directory: ui
-        run: npm install
+        run: npm ci
 
       - name: Npm lint
         uses: reviewdog/action-eslint@v1

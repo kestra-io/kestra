@@ -288,8 +288,9 @@
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-            this.pendingSettings.theme = localStorage.getItem("theme") || "light";
-            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
+            
+            this.pendingSettings.theme = Utils.getTheme();
+            this.pendingSettings.editorTheme = Utils.getTheme("editorTheme")
 
             let scheme = localStorage.getItem("scheme") || "classic";
             if(scheme === "default") scheme = "classic";

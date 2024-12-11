@@ -90,7 +90,7 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.2",
     "vitest": "^2.1.8",
-    "vue-tsc": "https://pkg.pr.new/vuejs/language-tools/vue-tsc@3fb59af"
+    "vue-tsc": "^2.1.10"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.28.0",

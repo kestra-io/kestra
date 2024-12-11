@@ -365,7 +365,6 @@
             width: 36px;
             padding: 6px;
             border-radius: $border-radius-lg;
-            background-color: var(--bs-white);
         }
 
         small {

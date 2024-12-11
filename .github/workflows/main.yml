@@ -68,7 +68,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review # Change reporter.
-          eslint_flags: "ui/src/"
+          workdir: "ui"
 
       # Setup build
       - uses: ./actions/.github/actions/setup-build

@@ -1,5 +1,5 @@
 <template>
-    <section :class="['d-inline-flex mb-3 filters', {'is-focused': isFocused}]">
+    <section :class="['d-inline-flex mb-3 filters', {focused: isFocused}]">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -97,7 +97,6 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    const isFocused = ref(false);
     import {ElSelect} from "element-plus";
 
     import {useI18n} from "vue-i18n";
@@ -195,13 +194,9 @@
         }
     };
 
-    const handleFocus = () => {
-        isFocused.value = true; // Set focus state to true
-    };
-
-    const handleBlur = () => {
-        isFocused.value = false; // Set focus state to false
-    };
+    const isFocused = ref(false);
+    const handleFocus = () => (isFocused.value = true);
+    const handleBlur = () => (isFocused.value = false);
 
     const filterCallback = (option) => {
         if (!option.value) {
@@ -499,9 +494,9 @@
     align-items: center;
     justify-content: space-between;
 
-    &.is-focused {
+    &.focused {
         border-radius: 5px;
-        border: solid 1.5px #8405FF;
+        border: solid 1.5px #8405ff;
         transition: border-color 0.5s;
     }
 
@@ -520,7 +515,7 @@
 
     .el-select__wrapper {
         border-radius: 0;
-        box-shadow: 
+        box-shadow:
             0 -1px 0 0 var(--el-border-color) inset,
             0 1px 0 0 var(--el-border-color) inset;
 

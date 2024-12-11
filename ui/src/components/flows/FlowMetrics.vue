@@ -1,70 +1,11 @@
 <template>
     <nav>
         <collapse>
-            <el-form-item>
-                <el-select
-                    :model-value="$route.query.task"
-                    filterable
-                    :persistent="false"
-                    :placeholder="$t('task')"
-                    clearable
-                    @update:model-value="updateQuery({'task': $event})"
-                >
-                    <el-option
-                        v-for="item in tasksWithMetrics"
-                        :key="item"
-                        :label="item"
-                        :value="item"
-                    >
-                        {{ item }}
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item>
-                <el-select
-                    :model-value="$route.query.metric"
-                    filterable
-                    :clearable="true"
-                    :persistent="false"
-                    :placeholder="$t('metric')"
-                    @update:model-value="updateQuery({'metric': $event})"
-                >
-                    <el-option
-                        v-for="item in metrics"
-                        :key="item"
-                        :label="item"
-                        :value="item"
-                    >
-                        {{ item }}
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item>
-                <el-select
-                    :model-value="$route.query.aggregation"
-                    filterable
-                    :clearable="true"
-                    :persistent="false"
-                    :placeholder="$t('aggregation')"
-                    @update:model-value="updateQuery({'aggregation': $event})"
-                >
-                    <el-option
-                        v-for="item in ['sum','avg','min','max']"
-                        :key="item"
-                        :label="$t(item)"
-                        :value="item"
-                    />
-                </el-select>
-            </el-form-item>
-            <el-form-item>
-                <date-filter
-                    @update:is-relative="onDateFilterTypeChange"
-                    @update:filter-value="updateQuery"
-                />
-            </el-form-item>
-            <el-form-item>
-                <refresh-button @refresh="load" :can-auto-refresh="canAutoRefresh" />
-            </el-form-item>
+            <KestraFilter
+                prefix="metrics"
+                :include="['task', 'metric', 'aggregation', 'relative_date', 'absolute_date']"
+                :refresh="{shown: true, callback: load}"
+            />
         </collapse>
     </nav>
 
@@ -102,6 +43,7 @@
     import Collapse from "../layout/Collapse.vue";
     import DateFilter from "../executions/date-select/DateFilter.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         name: "FlowMetrics",
@@ -109,7 +51,8 @@
             Collapse,
             Bar,
             DateFilter,
-            RefreshButton
+            RefreshButton,
+            KestraFilter
         },
         created() {
             this.loadMetrics();

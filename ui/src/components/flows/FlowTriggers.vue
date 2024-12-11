@@ -4,7 +4,6 @@
         v-bind="$attrs"
         :data="triggersWithType"
         table-layout="auto"
-        @row-dblclick="triggerId = $event.id; isOpen = true"
         default-expand-all
     >
         <el-table-column type="expand">

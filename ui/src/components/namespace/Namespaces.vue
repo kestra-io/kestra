@@ -221,8 +221,12 @@ $system: #5BB8FF;
         }
 
         & .system {
-            color: var(--el-text-color-placeholder);
             font-size: var(--font-size-sm);
+            color: #475569;
+
+            html.dark & {
+                color: #E3DBFF;
+            }
         }
     }
 }

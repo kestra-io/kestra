@@ -197,10 +197,10 @@
     };
 
     const handleClear = () => {
-        // Clear the current value
         current.value = [];
-        triggerSearch(); // To trigger a search after clearing
+        triggerSearch();
     };
+
     const isFocused = ref(false);
     const handleFocus = () => (isFocused.value = true);
     const handleBlur = () => (isFocused.value = false);
@@ -501,9 +501,11 @@
     align-items: center;
     justify-content: space-between;
 
+    border-radius: var(--bs-border-radius);
+    border: solid 1px var(--el-border-color);
+
     &.focused {
-        border-radius: 5px;
-        border: solid 1.5px #8405ff;
+        border-color: var(--bs-primary);
         transition: border-color 0.5s;
     }
 

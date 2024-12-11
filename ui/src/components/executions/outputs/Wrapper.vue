@@ -159,9 +159,8 @@
     </el-row>
 </template>
 
-<script setup lang="ts">
+<script setup>
     import {ref, computed, shallowRef, onMounted} from "vue";
-    import {ElTree} from "element-plus";
 
     import {useStore} from "vuex";
     const store = useStore();
@@ -211,7 +210,7 @@
     const selectedTask = () => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
+            : (cascader.value).menuList?.[0]?.panel?.expandingNode?.label;
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find((e) => e.taskId === filter);
     };
@@ -253,17 +252,17 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
 
-    const cascader = ref<InstanceType<typeof ElTree> | null>(null);
+    const cascader = ref(null);
     const scrollRight = () =>
         setTimeout(
             () =>
-                ((cascader.value as any).$el.scrollLeft = (
-                    cascader.value as any
+                ((cascader.value).$el.scrollLeft = (
+                    cascader.value
                 ).$el.offsetWidth),
             10,
         );
     const multipleSelected = computed(
-        () => (cascader.value as any)?.menus?.length > 1,
+        () => (cascader.value)?.menus?.length > 1,
     );
 
     const execution = computed(() => store.state.execution.execution);
@@ -302,7 +301,7 @@
     };
 
     const expandedValue = ref([]);
-    const selected = ref<string[]>([]);
+    const selected = ref([]);
 
     onMounted(() => {
         const task = outputs.value?.[1];
@@ -414,7 +413,7 @@
             });
         };
 
-        const mapped: Record<string,string> = {};
+        const mapped = {};
 
         getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
 

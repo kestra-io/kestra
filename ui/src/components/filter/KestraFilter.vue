@@ -455,65 +455,47 @@
 @mixin width-available {
     width: -moz-available;
     width: -webkit-fill-available;
+    // https://caniuse.com/?search=fill-available
     width: fill-available;
 }
-
 .filters {
     @include width-available;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    // border-radius: var(--bs-border-radius);
-    // outline: 1px solid var(--el-border-color);
-
-    &.focused {
-        // outline: 1px solid var(--bs-primary);
-    }
-
-    .el-select {
-        flex-grow: 1;
-
-        &.settings,
+    & .el-select {
+        max-width: calc(100% - 237px);
+        &.settings {
+            max-width: calc(100% - 285px);
+        }
         &:not(.refresh) {
-            max-width: 100%;
+            max-width: calc(100% - 189px);
         }
     }
-
-    .el-select__placeholder {
+    & .el-select__placeholder {
         color: var(--bs-gray-700);
     }
-
-    .el-select__wrapper {
+    & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
             0 -1px 0 0 var(--el-border-color) inset,
             0 1px 0 0 var(--el-border-color) inset;
-
-        .el-tag {
+        & .el-tag {
             background: var(--bs-border-color) !important;
             color: var(--bs-gray-900);
-
-            .el-tag__close {
+            & .el-tag__close {
                 color: var(--bs-gray-900);
             }
         }
     }
-
-    .el-select__selection {
+    & .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
-
         &::-webkit-scrollbar {
-            height: 0;
+            height: 0px;
         }
     }
-
-    .el-button-group {
+    & .el-button-group {
         .el-button {
             border-radius: 0;
         }
-
         span.kicon:last-child .el-button,
         > button.el-button:last-child {
             border-top-right-radius: var(--bs-border-radius);
@@ -521,30 +503,24 @@
         }
     }
 }
-
 .el-button-group .el-button--primary:last-child {
     border-left: none;
 }
-
 .el-button-group > .el-dropdown > .el-button {
     border-left-color: transparent;
 }
-
 .filters-select {
-    .el-select-dropdown {
+    & .el-select-dropdown {
         width: 300px !important;
-
         &:has(.el-select-dropdown__empty) {
             width: 500px !important;
         }
     }
-
-    .el-date-editor.el-input__wrapper {
+    & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
-
-    .el-select-dropdown__item .material-design-icon {
+    & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }
 }

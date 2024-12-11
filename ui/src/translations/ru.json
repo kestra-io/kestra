@@ -960,7 +960,11 @@
         "child": "Ребенок",
         "absolute_date": "Абсолютная дата",
         "relative_date": "Относительная дата",
-        "level": "Уровень Log"
+        "level": "Уровень Log",
+        "task": "Задача",
+        "aggregation": "Агрегация",
+        "metric": "Метрика",
+        "trigger_state": "Состояние"
       },
       "empty": "Нет данных.",
       "label": "Выберите фильтры",

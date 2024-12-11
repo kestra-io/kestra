@@ -960,7 +960,11 @@
         "child": "Dziecko",
         "absolute_date": "Data bezwzględna",
         "relative_date": "Data względna",
-        "level": "Poziom logowania"
+        "level": "Poziom logowania",
+        "task": "Zadanie",
+        "aggregation": "Agregacja",
+        "metric": "Metryka",
+        "trigger_state": "Stan"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry",

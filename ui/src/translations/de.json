@@ -960,7 +960,11 @@
         "child": "Kind",
         "absolute_date": "Absolutes Datum",
         "relative_date": "Relatives Datum",
-        "level": "Log-Ebene"
+        "level": "Log-Ebene",
+        "task": "Aufgabe",
+        "aggregation": "Aggregation",
+        "metric": "Metrik",
+        "trigger_state": "Zustand"
       },
       "empty": "Keine Daten.",
       "label": "Filter auswählen",

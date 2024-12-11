@@ -966,7 +966,8 @@
         "level": "Log级别",
         "task": "任务",
         "aggregation": "聚合",
-        "metric": "指标"
+        "metric": "指标",
+        "trigger_state": "状态"
       },
       "empty": "无数据。",
       "label": "选择过滤器",

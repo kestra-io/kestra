@@ -966,7 +966,8 @@
         "level": "로그 레벨",
         "task": "작업",
         "aggregation": "집계",
-        "metric": "메트릭"
+        "metric": "메트릭",
+        "trigger_state": "상태"
       },
       "empty": "데이터 없음.",
       "label": "필터 선택",

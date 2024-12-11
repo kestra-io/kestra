@@ -966,7 +966,8 @@
         "level": "Nível de Log",
         "task": "Tarefa",
         "aggregation": "Agregação",
-        "metric": "Métrica"
+        "metric": "Métrica",
+        "trigger_state": "Estado"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",

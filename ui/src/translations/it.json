@@ -966,7 +966,8 @@
         "level": "Livello di Log",
         "task": "Compito",
         "aggregation": "Aggregazione",
-        "metric": "Metrica"
+        "metric": "Metrica",
+        "trigger_state": "Stato"
       },
       "empty": "Nessun dato.",
       "label": "Scegli filtri",

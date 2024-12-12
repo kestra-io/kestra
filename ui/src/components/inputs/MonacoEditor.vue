@@ -445,7 +445,7 @@
                                 deleted: true
                             }
                         )).inputs?.map(input => input.id) ?? [];
-                    } catch (e) {
+                    } catch {
                         return undefined;
                     }
                 }

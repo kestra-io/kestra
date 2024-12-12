@@ -1,5 +1,5 @@
 <template>
-    <section class="d-inline-flex pb-3 filters">
+    <section :class="['d-inline-flex mb-3 filters', {focused: isFocused}]">
         <History :prefix @search="handleHistoryItems" />
 
         <el-select
@@ -7,9 +7,9 @@
             :model-value="current"
             value-key="label"
             :placeholder="t('filters.label')"
-            allow-create
             default-first-option
             filterable
+            clearable
             multiple
             placement="bottom"
             :show-arrow="false"
@@ -17,9 +17,13 @@
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @clear="handleClear"
+            @focus="handleFocus"
+            @blur="handleBlur"
         >
             <template #label="{value}">
                 <Label :option="value" />
@@ -118,13 +122,13 @@
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
-    const emits = defineEmits(["dashboard"]);
+    const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
+        values: {type: Object, required: false, default: undefined},
         refresh: {
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
@@ -142,15 +146,10 @@
         },
     });
 
-    import {useFilters, compare} from "./useFilters.js";
-    const {
-        getRecentItems,
-        setRecentItems,
-        COMPARATORS,
-        OPTIONS,
-        encodeParams,
-        decodeParams,
-    } = useFilters(props.prefix);
+    import {useFilters} from "./useFilters.js";
+    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
+        props.prefix,
+    );
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -192,6 +191,23 @@
         }
     };
 
+    const handleInputChange = (key) => {
+        if (key === "Enter") return;
+
+        if (current.value.at(-1)?.label === "user") {
+            emits("input", select.value.states.inputValue);
+        }
+    };
+
+    const handleClear = () => {
+        current.value = [];
+        triggerSearch();
+    };
+
+    const isFocused = ref(false);
+    const handleFocus = () => (isFocused.value = true);
+    const handleBlur = () => (isFocused.value = false);
+
     const filterCallback = (option) => {
         if (!option.value) {
             triggerEnter.value = false;
@@ -215,10 +231,11 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
-        emptyLabel.value =
-            current.value[dropdowns.value.second.index].label === "labels"
-                ? t("filters.labels.placeholder")
-                : t("filters.empty");
+        emptyLabel.value = ["labels", "details"].includes(
+            current.value[dropdowns.value.second.index].label,
+        )
+            ? t("filters.key_value_type")
+            : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
@@ -244,11 +261,24 @@
     };
     const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
-            const values = current.value[dropdowns.value.third.index].value;
-            const index = values.indexOf(filter.value);
+            const currentFilter = current.value[dropdowns.value.third.index];
+            const label = currentFilter.label;
+            const existingIndex = current.value.findIndex(i => i.label === label);
 
-            if (index === -1) values.push(filter.value);
-            else values.splice(index, 1);
+            if (existingIndex !== -1 && existingIndex !== dropdowns.value.third.index) {
+                if (!currentFilter.comparator?.multiple) {
+                    current.value[existingIndex].value = [filter.value];
+                    current.value.splice(dropdowns.value.third.index, 1);
+                    dropdowns.value.third.index = existingIndex;
+                } else {
+                    current.value[existingIndex].value.push(filter.value);
+                }
+            } else {
+                const values = currentFilter.value;
+                const index = values.indexOf(filter.value);
+                if (index === -1) values.push(filter.value);
+                else values.splice(index, 1);
+            }
 
             // Update the hover index for better UX
             const hoverIndex = valueOptions.value.findIndex(
@@ -302,51 +332,8 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    const scopeOptions = [
-        {
-            label: t("scope_filter.user", {label: props.prefix}),
-            value: "USER",
-        },
-        {
-            label: t("scope_filter.system", {label: props.prefix}),
-            value: "SYSTEM",
-        },
-    ];
-
-    const childOptions = [
-        {
-            label: t("trigger filter.options.ALL"),
-            value: "ALL",
-        },
-        {
-            label: t("trigger filter.options.CHILD"),
-            value: "CHILD",
-        },
-        {
-            label: t("trigger filter.options.MAIN"),
-            value: "MAIN",
-        },
-    ];
-
-    const levelOptions = [
-        {label: "TRACE", value: "TRACE"},
-        {label: "DEBUG", value: "DEBUG"},
-        {label: "INFO", value: "INFO"},
-        {label: "WARN", value: "WARN"},
-        {label: "ERROR", value: "ERROR"},
-    ];
-
-    const relativeDateOptions = [
-        {label: t("datepicker.last5minutes"), value: "PT5M"},
-        {label: t("datepicker.last15minutes"), value: "PT15M"},
-        {label: t("datepicker.last1hour"), value: "PT1H"},
-        {label: t("datepicker.last12hours"), value: "PT12H"},
-        {label: t("datepicker.last24hours"), value: "PT24H"},
-        {label: t("datepicker.last48hours"), value: "PT48H"},
-        {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "PT720H"},
-        {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    import {useValues} from "./useValues.js";
+    const {VALUES} = useValues(props.prefix);
 
     const isDatePickerShown = computed(() => {
         const c = current?.value?.at(-1);
@@ -360,23 +347,41 @@
         case "namespace":
             return namespaceOptions.value;
 
-        case "scope":
-            return scopeOptions;
-
         case "state":
-            return State.arrayAllStates().map((s) => ({
-                label: s.name,
-                value: s.name,
-            }));
+            return VALUES.EXECUTION_STATE;
+
+        case "trigger_state":
+            return VALUES.TRIGGER_STATE;
+
+        case "scope":
+            return VALUES.SCOPE;
+
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
 
         case "child":
-            return childOptions;
+            return VALUES.CHILD;
 
         case "level":
-            return levelOptions;
+            return VALUES.LEVEL;
 
         case "relative_date":
-            return relativeDateOptions;
+            return VALUES.RELATIVE_DATE;
+
+        case "task":
+            return props.values?.task || [];
+
+        case "metric":
+            return props.values?.metric || [];
+
+        case "user":
+            return props.values?.user || [];
+
+        case "aggregation":
+            return VALUES.AGGREGATION;
 
         case "absolute_date":
             return [];
@@ -409,9 +414,14 @@
         if (!Array.isArray(v) || !v.length) return;
 
         if (typeof v.at(-1) === "string") {
-            if (v.at(-2)?.label === "labels") {
+            if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
-                v.at(-2).value?.push(v.at(-1));
+                const existingIndex = current.value.findIndex(i => i.label === "labels");
+                if (existingIndex !== -1) {
+                    current.value[existingIndex].value.push(v.at(-1));
+                } else {
+                    current.value.push({label: "labels", value: [v.at(-1)]});
+                }
                 closeDropdown();
                 triggerSearch();
             } else {
@@ -446,13 +456,6 @@
     };
 
     const triggerSearch = () => {
-        if (current.value.length) {
-            const r = getRecentItems().filter((i) =>
-                compare(i.value, current.value),
-            );
-            setRecentItems([...r, {value: current.value}]);
-        }
-
         router.push({query: encodeParams(current.value)});
     };
 
@@ -482,56 +485,45 @@
     // https://caniuse.com/?search=fill-available
     width: fill-available;
 }
-
 .filters {
     @include width-available;
-
     & .el-select {
-        max-width: calc(100% - 237px);
-
+        flex: 1;
+        width: calc(100% - 237px);
         &.settings {
             max-width: calc(100% - 285px);
         }
-
         &:not(.refresh) {
             max-width: calc(100% - 189px);
         }
     }
-
     & .el-select__placeholder {
         color: var(--bs-gray-700);
     }
-
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
             0 -1px 0 0 var(--el-border-color) inset,
             0 1px 0 0 var(--el-border-color) inset;
-
         & .el-tag {
             background: var(--bs-border-color) !important;
             color: var(--bs-gray-900);
-
             & .el-tag__close {
                 color: var(--bs-gray-900);
             }
         }
     }
-
     & .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
-
         &::-webkit-scrollbar {
             height: 0px;
         }
     }
-
     & .el-button-group {
         .el-button {
             border-radius: 0;
         }
-
         span.kicon:last-child .el-button,
         > button.el-button:last-child {
             border-top-right-radius: var(--bs-border-radius);
@@ -539,29 +531,23 @@
         }
     }
 }
-
 .el-button-group .el-button--primary:last-child {
     border-left: none;
 }
-
 .el-button-group > .el-dropdown > .el-button {
     border-left-color: transparent;
 }
-
 .filters-select {
     & .el-select-dropdown {
         width: 300px !important;
-
         &:has(.el-select-dropdown__empty) {
             width: 500px !important;
         }
     }
-
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
-
     & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }

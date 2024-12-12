@@ -949,7 +949,8 @@
           "placeholder": "Метка"
         },
         "label": "Сохраненные поиски",
-        "tooltip": "Вы не можете сохранить пустые критерии поиска."
+        "tooltip": "Вы не можете сохранить пустые критерии поиска.",
+        "empty": "Вы еще не сохранили ни одного поиска."
       },
       "options": {
         "namespace": "Namespace",
@@ -960,13 +961,22 @@
         "child": "Ребенок",
         "absolute_date": "Абсолютная дата",
         "relative_date": "Относительная дата",
-        "level": "Уровень Log"
+        "level": "Уровень Log",
+        "task": "Задача",
+        "aggregation": "Агрегация",
+        "metric": "Метрика",
+        "trigger_state": "Состояние",
+        "action": "Действие",
+        "permission": "Разрешение",
+        "user": "Пользователь",
+        "details": "Детали"
       },
       "empty": "Нет данных.",
       "label": "Выберите фильтры",
       "settings": {
         "show_chart": "Показать главный график"
-      }
+      },
+      "key_value_type": "Введите параметр в формате 'key:value'"
     },
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",

@@ -125,7 +125,8 @@ export default (callback, store, router) => {
                         refreshing = false;
 
                         return instance(originalRequest)
-                    } catch (refreshError) {
+
+                    } catch {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
                         store.commit("layout/setTopNavbar", undefined);

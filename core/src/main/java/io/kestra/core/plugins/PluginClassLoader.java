@@ -29,14 +29,19 @@ public class PluginClassLoader extends URLClassLoader {
     private static final Pattern EXCLUDES = Pattern.compile("^(?:"
         + "java"
         + "|javax"
+        + "|jakarta"
         + "|io.kestra.core"
         + "|io.kestra.plugin.core"
         + "|org.slf4j"
+        + "|ch.qos.logback"
         + "|com.fasterxml.jackson.core"
+        + "|com.fasterxml.jackson.annotation"
+        + "|com.fasterxml.jackson.module"
         + "|com.fasterxml.jackson.databind"
         + "|com.fasterxml.jackson.dataformat.ion"
         + "|com.fasterxml.jackson.dataformat.yaml"
         + "|com.fasterxml.jackson.dataformat.xml"
+        + "|org.reactivestreams"
         + ")\\..*$");
 
     private final ClassLoader parent;

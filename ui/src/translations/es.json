@@ -964,13 +964,18 @@
         "task": "Tarea",
         "aggregation": "Agregación",
         "metric": "Métrica",
-        "trigger_state": "Estado"
+        "trigger_state": "Estado",
+        "action": "Acción",
+        "permission": "Permiso",
+        "user": "Usuario",
+        "details": "Detalles"
       },
       "empty": "Sin datos.",
       "label": "Elegir filtros",
       "settings": {
         "show_chart": "Mostrar gráfico principal"
-      }
+      },
+      "key_value_type": "Escriba el parámetro como 'key:value'"
     },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",

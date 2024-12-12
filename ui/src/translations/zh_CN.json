@@ -964,13 +964,18 @@
         "task": "任务",
         "aggregation": "聚合",
         "metric": "指标",
-        "trigger_state": "状态"
+        "trigger_state": "状态",
+        "action": "操作",
+        "permission": "权限",
+        "user": "用户",
+        "details": "详情"
       },
       "empty": "无数据。",
       "label": "选择过滤器",
       "settings": {
         "show_chart": "显示主图表"
-      }
+      },
+      "key_value_type": "将参数输入为 'key:value'"
     },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",

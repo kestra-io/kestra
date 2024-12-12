@@ -964,13 +964,18 @@
         "task": "Задача",
         "aggregation": "Агрегация",
         "metric": "Метрика",
-        "trigger_state": "Состояние"
+        "trigger_state": "Состояние",
+        "action": "Действие",
+        "permission": "Разрешение",
+        "user": "Пользователь",
+        "details": "Детали"
       },
       "empty": "Нет данных.",
       "label": "Выберите фильтры",
       "settings": {
         "show_chart": "Показать главный график"
-      }
+      },
+      "key_value_type": "Введите параметр в формате 'key:value'"
     },
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",

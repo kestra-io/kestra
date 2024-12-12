@@ -964,13 +964,18 @@
         "task": "タスク",
         "aggregation": "集計",
         "metric": "メトリック",
-        "trigger_state": "状態"
+        "trigger_state": "状態",
+        "action": "アクション",
+        "permission": "権限",
+        "user": "ユーザー",
+        "details": "詳細情報"
       },
       "empty": "データがありません。",
       "label": "フィルターを選択",
       "settings": {
         "show_chart": "メインチャートを表示"
-      }
+      },
+      "key_value_type": "「key:value」としてパラメータを入力してください"
     },
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
     "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",

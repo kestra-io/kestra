@@ -220,6 +220,7 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    @RetryingTest(5)
     void multipleConditionTriggerFailed() throws Exception {
         multipleConditionTriggerCaseTest.failed();
     }

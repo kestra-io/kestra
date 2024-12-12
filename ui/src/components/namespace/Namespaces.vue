@@ -74,7 +74,7 @@
         id: string;
         label: string;
         disabled: boolean;
-        children?: Node[];
+        children?: Record<string, Node> | Node[];
         system?: boolean;
     }
 
@@ -100,7 +100,7 @@
         const map = {} as Record<string, Node>;
         const roots: Node[] = [];
 
-        data.forEach(item => {
+        for(const item of data) {
             const parts = item.id.split(".");
             let currentLevel = map;
 
@@ -112,20 +112,28 @@
                         id: label,
                         label,
                         disabled: item.disabled,
-                        children: []
+                        children: {}
                     };
                 }
-                currentLevel = currentLevel[label].children;
+
+                // since we set it up in the first place we can trust that it
+                // has a type Record<string, Node> and not an array
+                currentLevel = currentLevel[label].children ?? {} as any;
             });
 
             if (parts.length === 1) {
                 roots.push(map[item.id]);
             }
-        });
+        }
 
-        const build = (nodes: Node[]): Node[] => {
+        const build = (nodes: Record<string, Node> | Node[]): Node[] => {
             return Object.values(nodes).map(node => {
-                const result: Node = {id: node.id, label: node.label, disabled: node.disabled, children: node.children ? build(node.children) : undefined};
+                const result: Node = {
+                    id: node.id,
+                    label: node.label,
+                    disabled: node.disabled,
+                    children: node.children ? build(node.children) : undefined as any
+                };
                 return result;
             });
         };
@@ -142,7 +150,7 @@
         return result;
     };
 
-    const namespaceLabel = (path) => {
+    const namespaceLabel = (path:string) => {
         const segments = path.split(".");
         return segments.length > 1 ? segments[segments.length - 1] : path;
     };

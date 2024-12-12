@@ -53,6 +53,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    // @ts-expect-error will refactor in the future
     import Navbar from "../layout/TopNavBar.vue";
 
     import permission from "../../models/permission";

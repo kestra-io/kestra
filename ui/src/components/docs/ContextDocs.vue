@@ -76,7 +76,7 @@
         });
     }, {immediate: true});
 
-    async function refreshPage(val) {
+    async function refreshPage(val?:string) {
         let response: {metadata: any, content:string} | undefined = undefined;
         const docId = store.state.doc.docId;
 

@@ -10,19 +10,19 @@ on:
     branches:
       - develop
   repository_dispatch:
-    types: [ rebuild ]
+    types: [rebuild]
   workflow_dispatch:
     inputs:
       skip-test:
-        description: 'Skip test'
+        description: "Skip test"
         type: choice
         required: true
-        default: 'false'
+        default: "false"
         options:
           - "true"
           - "false"
       plugin-version:
-        description: 'Plugin version'
+        description: "Plugin version"
         required: false
         type: string
         default: "LATEST"
@@ -31,7 +31,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 env:
-  JAVA_VERSION: '21'
+  JAVA_VERSION: "21"
   DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
   DOCKER_PYTHON_LIBRARIES: kestra
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
@@ -41,8 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
-      docker-tag:  ${{ steps.vars.outputs.tag }}
-      docker-artifact-name:  ${{ steps.vars.outputs.artifact }}
+      docker-tag: ${{ steps.vars.outputs.tag }}
+      docker-artifact-name: ${{ steps.vars.outputs.artifact }}
       plugins: ${{ steps.plugins-list.outputs.plugins }}
     steps:
       # Checkout
@@ -56,6 +56,19 @@ jobs:
           repository: kestra-io/actions
           path: actions
           ref: main
+
+      # Npm
+      - name: Npm install
+        shell: bash
+        working-directory: ui
+        run: npm ci
+
+      - name: Npm lint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review # Change reporter.
+          workdir: "ui"
 
       # Setup build
       - uses: ./actions/.github/actions/setup-build
@@ -85,6 +98,7 @@ jobs:
           else
             echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
           fi
+
       # Build
       - name: Build with Gradle
         run: |
@@ -156,6 +170,7 @@ jobs:
         with:
           name: ${{ steps.vars.outputs.artifact }}
           path: /tmp/${{ steps.vars.outputs.artifact }}.tar
+
   # Run Reusable Workflow from QA repository
   check-e2e:
     name: Check E2E Tests
@@ -230,9 +245,9 @@ jobs:
       - name: Auth to Google Cloud
         id: auth
         if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
-        uses: 'google-github-actions/auth@v2'
+        uses: "google-github-actions/auth@v2"
         with:
-          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT }}'
+          credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
 
       - uses: rlespinasse/github-slug-action@v5
 
@@ -252,11 +267,11 @@ jobs:
           ignoreMissingResults: true
 
       # Jacoco
-      - name: 'Set up Cloud SDK'
+      - name: "Set up Cloud SDK"
         if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
-        uses: 'google-github-actions/setup-gcloud@v2'
+        uses: "google-github-actions/setup-gcloud@v2"
 
-      - name: 'Copy jacoco files'
+      - name: "Copy jacoco files"
         if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
@@ -268,7 +283,7 @@ jobs:
         uses: mikepenz/action-junit-report@v5
         if: success() || failure()
         with:
-          report_paths: '**/build/test-results/**/TEST-*.xml'
+          report_paths: "**/build/test-results/**/TEST-*.xml"
 
       # Codecov
       - uses: codecov/codecov-action@v5
@@ -279,7 +294,7 @@ jobs:
   release:
     name: Github Release
     runs-on: ubuntu-latest
-    needs: [ check, check-e2e ]
+    needs: [check, check-e2e]
     if: |
       always() &&
       startsWith(github.ref, 'refs/tags/v') &&
@@ -296,6 +311,7 @@ jobs:
 
       # GitHub Release
       - name: Create GitHub release
+        id: create_github_release
         uses: "marvinpinto/action-automatic-releases@latest"
         if: startsWith(github.ref, 'refs/tags/v')
         continue-on-error: true
@@ -304,6 +320,21 @@ jobs:
           prerelease: false
           files: |
             build/executable/*
+
+      # Trigger gha workflow to bump helm chart version
+      - name: trigger the Helm chart version bump
+        uses: peter-evans/repository-dispatch@v3
+        if: steps.create_github_release.conclusion == 'success'
+        with:
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          repository: kestra-io/helm-charts
+          event-type: update-helm-chart-version
+          client-payload: |-
+            {
+              "new_version": "${{ github.ref_name }}",
+              "github_repository": "${{ github.repository }}",
+              "github_actor": "${{ github.actor }}"
+            }
 
   docker:
     name: Publish Docker
@@ -443,7 +474,6 @@ jobs:
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
-
       # Update
       - name: Update internal
         uses: benc-uk/workflow-dispatch@v1
@@ -462,5 +492,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           name: GitHub Actions
-          icon_emoji: ':github-actions:'
-          channel: 'C02DQ1A7JLR' # _int_git channel
+          icon_emoji: ":github-actions:"
+          channel: "C02DQ1A7JLR" # _int_git channel

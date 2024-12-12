@@ -949,7 +949,8 @@
           "placeholder": "Etiqueta"
         },
         "label": "Pesquisas salvas",
-        "tooltip": "Você não pode salvar critérios de pesquisa vazios."
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios.",
+        "empty": "Você ainda não salvou nenhuma pesquisa."
       },
       "options": {
         "namespace": "Namespace",
@@ -964,13 +965,18 @@
         "task": "Tarefa",
         "aggregation": "Agregação",
         "metric": "Métrica",
-        "trigger_state": "Estado"
+        "trigger_state": "Estado",
+        "action": "Ação",
+        "permission": "Permissão",
+        "user": "Usuário",
+        "details": "Detalhes"
       },
       "empty": "Sem dados.",
       "label": "Escolher filtros",
       "settings": {
         "show_chart": "Mostrar gráfico principal"
-      }
+      },
+      "key_value_type": "Digite o parâmetro como 'key:value'"
     },
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> execução(ões) forçada(s) em execução",

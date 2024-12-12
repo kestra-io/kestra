@@ -949,7 +949,8 @@
           "placeholder": "लेबल"
         },
         "label": "सहेजे गए खोजें",
-        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।"
+        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।",
+        "empty": "आपने अभी तक कोई खोज सहेजी नहीं है।"
       },
       "options": {
         "namespace": "Namespace",
@@ -964,13 +965,18 @@
         "task": "कार्य",
         "aggregation": "एग्रीगेशन",
         "metric": "मेट्रिक",
-        "trigger_state": "स्थिति"
+        "trigger_state": "स्थिति",
+        "action": "क्रिया",
+        "permission": "अनुमति",
+        "user": "उपयोगकर्ता",
+        "details": "विवरण"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें",
       "settings": {
         "show_chart": "मुख्य चार्ट दिखाएं"
-      }
+      },
+      "key_value_type": "'key:value' के रूप में पैरामीटर टाइप करें"
     },
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",

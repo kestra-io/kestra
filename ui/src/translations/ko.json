@@ -949,7 +949,8 @@
           "placeholder": "레이블"
         },
         "label": "저장된 검색",
-        "tooltip": "빈 검색 기준을 저장할 수 없습니다."
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
+        "empty": "아직 검색을 저장하지 않았습니다."
       },
       "options": {
         "namespace": "네임스페이스",
@@ -964,13 +965,18 @@
         "task": "작업",
         "aggregation": "집계",
         "metric": "메트릭",
-        "trigger_state": "상태"
+        "trigger_state": "상태",
+        "action": "작업",
+        "permission": "권한",
+        "user": "사용자",
+        "details": "세부사항"
       },
       "empty": "데이터 없음.",
       "label": "필터 선택",
       "settings": {
         "show_chart": "주요 차트 표시"
-      }
+      },
+      "key_value_type": "'key:value'로 매개변수 입력"
     },
     "force run title": "실행 <code>{id}</code> 강제 실행.",
     "executions force run": "<code>{executionCount}</code> 실행 강제 실행",

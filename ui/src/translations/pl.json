@@ -949,7 +949,8 @@
           "placeholder": "Etykieta"
         },
         "label": "Zapisane wyszukiwania",
-        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
+        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -964,13 +965,18 @@
         "task": "Zadanie",
         "aggregation": "Agregacja",
         "metric": "Metryka",
-        "trigger_state": "Stan"
+        "trigger_state": "Stan",
+        "action": "Akcja",
+        "permission": "Uprawnienie",
+        "user": "Użytkownik",
+        "details": "Szczegóły"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry",
       "settings": {
         "show_chart": "Pokaż główny wykres"
-      }
+      },
+      "key_value_type": "Wpisz parametr jako 'key:value'"
     },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",

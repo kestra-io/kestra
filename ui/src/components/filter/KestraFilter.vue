@@ -7,7 +7,6 @@
             :model-value="current"
             value-key="label"
             :placeholder="t('filters.label')"
-            allow-create
             default-first-option
             filterable
             clearable
@@ -18,6 +17,7 @@
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -124,7 +124,7 @@
 
     import DateRange from "../layout/DateRange.vue";
 
-    const emits = defineEmits(["dashboard"]);
+    const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -146,15 +146,10 @@
         },
     });
 
-    import {useFilters, compare} from "./useFilters.js";
-    const {
-        getRecentItems,
-        setRecentItems,
-        COMPARATORS,
-        OPTIONS,
-        encodeParams,
-        decodeParams,
-    } = useFilters(props.prefix);
+    import {useFilters} from "./useFilters.js";
+    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
+        props.prefix,
+    );
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -196,6 +191,14 @@
         }
     };
 
+    const handleInputChange = (key) => {
+        if (key === "Enter") return;
+
+        if (current.value.at(-1)?.label === "user") {
+            emits("input", select.value.states.inputValue);
+        }
+    };
+
     const handleClear = () => {
         current.value = [];
         triggerSearch();
@@ -228,10 +231,11 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
-        emptyLabel.value =
-            current.value[dropdowns.value.second.index].label === "labels"
-                ? t("filters.labels.placeholder")
-                : t("filters.empty");
+        emptyLabel.value = ["labels", "details"].includes(
+            current.value[dropdowns.value.second.index].label,
+        )
+            ? t("filters.key_value_type")
+            : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
@@ -257,11 +261,24 @@
     };
     const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
-            const values = current.value[dropdowns.value.third.index].value;
-            const index = values.indexOf(filter.value);
+            const currentFilter = current.value[dropdowns.value.third.index];
+            const label = currentFilter.label;
+            const existingIndex = current.value.findIndex(i => i.label === label);
 
-            if (index === -1) values.push(filter.value);
-            else values.splice(index, 1);
+            if (existingIndex !== -1 && existingIndex !== dropdowns.value.third.index) {
+                if (!currentFilter.comparator?.multiple) {
+                    current.value[existingIndex].value = [filter.value];
+                    current.value.splice(dropdowns.value.third.index, 1);
+                    dropdowns.value.third.index = existingIndex;
+                } else {
+                    current.value[existingIndex].value.push(filter.value);
+                }
+            } else {
+                const values = currentFilter.value;
+                const index = values.indexOf(filter.value);
+                if (index === -1) values.push(filter.value);
+                else values.splice(index, 1);
+            }
 
             // Update the hover index for better UX
             const hoverIndex = valueOptions.value.findIndex(
@@ -339,6 +356,12 @@
         case "scope":
             return VALUES.SCOPE;
 
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
+
         case "child":
             return VALUES.CHILD;
 
@@ -353,6 +376,9 @@
 
         case "metric":
             return props.values?.metric || [];
+
+        case "user":
+            return props.values?.user || [];
 
         case "aggregation":
             return VALUES.AGGREGATION;
@@ -388,9 +414,14 @@
         if (!Array.isArray(v) || !v.length) return;
 
         if (typeof v.at(-1) === "string") {
-            if (v.at(-2)?.label === "labels") {
+            if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
-                v.at(-2).value?.push(v.at(-1));
+                const existingIndex = current.value.findIndex(i => i.label === "labels");
+                if (existingIndex !== -1) {
+                    current.value[existingIndex].value.push(v.at(-1));
+                } else {
+                    current.value.push({label: "labels", value: [v.at(-1)]});
+                }
                 closeDropdown();
                 triggerSearch();
             } else {
@@ -425,13 +456,6 @@
     };
 
     const triggerSearch = () => {
-        if (current.value.length) {
-            const r = getRecentItems().filter((i) =>
-                compare(i.value, current.value),
-            );
-            setRecentItems([...r, {value: current.value}]);
-        }
-
         router.push({query: encodeParams(current.value)});
     };
 
@@ -464,7 +488,8 @@
 .filters {
     @include width-available;
     & .el-select {
-        max-width: calc(100% - 237px);
+        flex: 1;
+        width: calc(100% - 237px);
         &.settings {
             max-width: calc(100% - 285px);
         }

@@ -1,6 +1,8 @@
 import {useI18n} from "vue-i18n";
 
 import State from "../../utils/state.js";
+import permission from "../../models/permission";
+import action from "../../models/action";
 
 export function useValues(label?: string) {
     const {t} = useI18n({useScope: "global"});
@@ -42,6 +44,14 @@ export function useValues(label?: string) {
         })),
         TRIGGER_STATE: ["enabled", "disabled"].map((value) => ({
             label: `${value.charAt(0).toUpperCase()}${value.slice(1)}`,
+            value,
+        })),
+        PERMISSIONS: Object.entries(permission).map(([key, value]) => ({
+            label: key,
+            value,
+        })),
+        ACTIONS: Object.entries(action).map(([key, value]) => ({
+            label: key,
             value,
         })),
     };

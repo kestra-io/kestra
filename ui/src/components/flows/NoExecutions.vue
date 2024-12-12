@@ -105,6 +105,12 @@
     height: auto;
 }
 
+:deep(.el-button) {
+    font-weight: 500;
+    font-size: var(--el-font-size-lg);
+    padding: 1.25rem 3.2rem;
+}
+
 .main .section-1 {
     display: flex;
     flex-grow: 1;

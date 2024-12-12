@@ -77,7 +77,7 @@
             },
         },
         unmounted() {
-            this.searchDebounce && this.searchDebounce.cancel();
+            if(this.searchDebounce) this.searchDebounce.cancel();
         }
     };
 </script>

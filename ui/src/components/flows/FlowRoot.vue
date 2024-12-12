@@ -332,7 +332,7 @@
                     return false;
                 }
 
-                return (this.flow.labels?.["system.readOnly"] === "true" ?? false) || (this.flow.labels?.["system.readOnly"] === true ?? false);
+                return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

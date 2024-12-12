@@ -85,9 +85,9 @@
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button :icon="Magnify" @click="triggerSearch" />
             </KestraIcon>
-            <Save :disabled="!current.length" :prefix :current />
+            <!-- <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings v-if="settings.shown" :settings />
+            <Settings v-if="settings.shown" :settings /> -->
         </el-button-group>
 
         <Dashboards
@@ -464,7 +464,8 @@
 .filters {
     @include width-available;
     & .el-select {
-        max-width: calc(100% - 237px);
+        flex: 1;
+        width: calc(100% - 237px);
         &.settings {
             max-width: calc(100% - 285px);
         }
@@ -498,6 +499,7 @@
     & .el-button-group {
         .el-button {
             border-radius: 0;
+            width: 47px;
         }
         span.kicon:last-child .el-button,
         > button.el-button:last-child {

@@ -960,7 +960,11 @@
         "child": "बच्चा",
         "absolute_date": "सटीक तिथि",
         "relative_date": "सापेक्ष तिथि",
-        "level": "Log स्तर"
+        "level": "Log स्तर",
+        "task": "कार्य",
+        "aggregation": "एग्रीगेशन",
+        "metric": "मेट्रिक",
+        "trigger_state": "स्थिति"
       },
       "empty": "कोई डेटा नहीं।",
       "label": "फिल्टर चुनें",

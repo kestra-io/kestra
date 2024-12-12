@@ -1,7 +1,11 @@
 import {useI18n} from "vue-i18n";
+
 import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
 import TagOutline from "vue-material-design-icons/TagOutline.vue";
 import MathLog from "vue-material-design-icons/MathLog.vue";
+import Sigma from "vue-material-design-icons/Sigma.vue";
+import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
+import ChartBar from "vue-material-design-icons/ChartBar.vue";
 import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
 import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
 import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
@@ -90,18 +94,18 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
+            key: "trigger_state",
+            icon: StateMachine,
+            label: t("filters.options.state"),
+            value: {label: "trigger_state", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "scope",
             icon: FilterSettingsOutline,
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
-        },
-        {
-            key: "labels",
-            icon: TagOutline,
-            label: t("filters.options.labels"),
-            value: {label: "labels", comparator: undefined, value: []},
-            comparators: [COMPARATORS.CONTAINS],
         },
         {
             key: "childFilter",
@@ -118,6 +122,27 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "task",
+            icon: TimelineTextOutline,
+            label: t("filters.options.task"),
+            value: {label: "task", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "metric",
+            icon: ChartBar,
+            label: t("filters.options.metric"),
+            value: {label: "metric", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "aggregation",
+            icon: Sigma,
+            label: t("filters.options.aggregation"),
+            value: {label: "aggregation", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "timeRange",
             icon: CalendarRangeOutline,
             label: t("filters.options.relative_date"),
@@ -130,6 +155,13 @@ export function useFilters(prefix) {
             label: t("filters.options.absolute_date"),
             value: {label: "absolute_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.BETWEEN],
+        },
+        {
+            key: "labels",
+            icon: TagOutline,
+            label: t("filters.options.labels"),
+            value: {label: "labels", comparator: undefined, value: []},
+            comparators: [COMPARATORS.CONTAINS],
         },
     ];
     const encodeParams = (filters) => {

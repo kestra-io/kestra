@@ -75,10 +75,11 @@ tasks:
             sourceWrapper() {
                 return {source: this.source};
             },
+            ...mapState("flow", ["flowGraph"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flow", "flowValidation", "flowGraph", "total"]),
+            ...mapGetters("flow", ["flow", "flowValidation"]),
             routeInfo() {
                 return {
                     title: this.$t("flows")

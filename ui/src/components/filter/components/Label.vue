@@ -1,5 +1,7 @@
 <template>
-    <span v-if="label">{{ $t(`filters.options.${label}`) }}</span>
+    <span v-if="label" class="text-lowercase">
+        {{ $t(`filters.options.${label}`) }}
+    </span>
     <span v-if="comparator" class="comparator">{{ comparator }}</span>
     <span v-if="value">{{ !comparator ? ":" : "" }}{{ value }}</span>
 </template>

@@ -61,7 +61,7 @@
         try {
             new URL(value);
             return true;
-        } catch (e) {
+        } catch  {
             return false;
         }
     }

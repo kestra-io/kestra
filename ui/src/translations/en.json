@@ -727,6 +727,7 @@
         "text": "Ask any question in our Slack community. If you are stuck, we are help to help you. ✋"
       }
     },
+
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
@@ -938,6 +939,26 @@
     "active-slots": "Active slots",
     "behavior": "Behavior",
     "concurrency": "Concurrency",
+    "no-executions-view": {
+        "title": "Start automating with ",
+        "sub_title": "Click on the Execute button to start your first workflow execution.",
+        "guidance_desc": "Need guidance to execute your flow?",
+        "guidance_sub_desc": "Follow the documentation for all the info you need."
+    },    
+    "execution_guide": {
+      "get_started": {
+        "title": "Get Started ⚡",
+        "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
+      },
+      "workflow_components": {
+        "title": "Workflow Components",
+        "text": "Get to know the main orchestration components of a Kestra workflow."
+      },
+      "videos_tutorials": {
+        "title": "Video Tutorials",
+        "text": "Get started with our video tutorials."
+      }
+    },
     "concurrency-view": {
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
@@ -967,17 +988,13 @@
       "options": {
         "namespace": "Namespace",
         "state": "State",
-        "trigger_state": "State",
         "scope": "Scope",
+        "labels": "Labels",
         "child": "Child",
         "level": "Log level",
-        "task": "Task",
-        "metric": "Metric",
-        "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
-        "text": "text",
-        "labels": "Labels"
+        "text": "text"
       },
       "comparators": {
         "is": "is",
@@ -1027,4 +1044,5 @@
     "edit_custom_dashboard": "Edit Dashboard",
     "custom_dashboard_empty": "There are no results to be shown."
   }
+  
 }

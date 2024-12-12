@@ -5,7 +5,7 @@
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
-            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input)] : undefined"
+            :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
@@ -397,15 +397,38 @@
                     });
                 }
             },
-            requiredBooleanRule(input) {
-                return input.required !== false ? {
-                    validator: (_, val, callback) => {
-                        if(val === "undefined"){
-                            return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+            requiredRules(input) {
+                if(input.required === false)
+                    return undefined
+
+                if(input.type === "BOOLEAN"){
+                    return [{
+                        validator: (_, val, callback) => {
+                            if(val === "undefined"){
+                                return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                            }
+                            callback()
+                        },
+                    }]
+                }
+
+                if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
+                    return [
+                        {
+                            required: true,
+                            validator: (_, __, callback) => {
+                                const val = input.type === "MULTISELECT" ? this.multiSelectInputs[input.id] : this.inputsValues[input.id]
+                                if(!val?.length){
+                                    return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                                }
+                                callback()
+                            },
+                            trigger: "change",
                         }
-                        callback()
-                    },
-                } : undefined
+                    ]
+                }
+
+                return undefined
             }
         },
         watch: {

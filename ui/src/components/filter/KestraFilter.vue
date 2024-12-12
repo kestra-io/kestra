@@ -499,7 +499,6 @@
     & .el-button-group {
         .el-button {
             border-radius: 0;
-            width: 47px;
         }
         span.kicon:last-child .el-button,
         > button.el-button:last-child {

@@ -147,14 +147,9 @@
     });
 
     import {useFilters, compare} from "./useFilters.js";
-    const {
-        getRecentItems,
-        setRecentItems,
-        COMPARATORS,
-        OPTIONS,
-        encodeParams,
-        decodeParams,
-    } = useFilters(props.prefix);
+    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
+        props.prefix,
+    );
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -443,13 +438,6 @@
     };
 
     const triggerSearch = () => {
-        if (current.value.length) {
-            const r = getRecentItems().filter((i) =>
-                compare(i.value, current.value),
-            );
-            setRecentItems([...r, {value: current.value}]);
-        }
-
         router.push({query: encodeParams(current.value)});
     };
 

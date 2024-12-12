@@ -949,7 +949,8 @@
           "placeholder": "Etykieta"
         },
         "label": "Zapisane wyszukiwania",
-        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
+        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",

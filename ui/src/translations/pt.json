@@ -949,7 +949,8 @@
           "placeholder": "Etiqueta"
         },
         "label": "Pesquisas salvas",
-        "tooltip": "Você não pode salvar critérios de pesquisa vazios."
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios.",
+        "empty": "Você ainda não salvou nenhuma pesquisa."
       },
       "options": {
         "namespace": "Namespace",

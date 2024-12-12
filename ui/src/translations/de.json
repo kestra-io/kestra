@@ -949,7 +949,8 @@
           "placeholder": "Label"
         },
         "label": "Gespeicherte Suchen",
-        "tooltip": "Sie können keine leeren Suchkriterien speichern."
+        "tooltip": "Sie können keine leeren Suchkriterien speichern.",
+        "empty": "Sie haben noch keine Suche gespeichert."
       },
       "options": {
         "namespace": "Namespace",

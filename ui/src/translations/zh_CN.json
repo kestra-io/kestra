@@ -949,7 +949,8 @@
           "placeholder": "标签"
         },
         "label": "保存的搜索",
-        "tooltip": "您不能保存空的搜索条件。"
+        "tooltip": "您不能保存空的搜索条件。",
+        "empty": "您还没有保存任何搜索。"
       },
       "options": {
         "namespace": "命名空间",

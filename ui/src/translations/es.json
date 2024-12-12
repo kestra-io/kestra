@@ -949,7 +949,8 @@
           "placeholder": "Etiqueta"
         },
         "label": "Búsquedas guardadas",
-        "tooltip": "No puedes guardar criterios de búsqueda vacíos."
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos.",
+        "empty": "Todavía no has guardado ninguna búsqueda."
       },
       "options": {
         "namespace": "Namespace",

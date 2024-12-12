@@ -949,7 +949,8 @@
           "placeholder": "Etichetta"
         },
         "label": "Ricerche salvate",
-        "tooltip": "Non puoi salvare criteri di ricerca vuoti."
+        "tooltip": "Non puoi salvare criteri di ricerca vuoti.",
+        "empty": "Non hai ancora salvato alcuna ricerca."
       },
       "options": {
         "namespace": "Namespace",

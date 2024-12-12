@@ -949,7 +949,8 @@
           "placeholder": "ラベル"
         },
         "label": "保存された検索",
-        "tooltip": "空の検索条件を保存することはできません。"
+        "tooltip": "空の検索条件を保存することはできません。",
+        "empty": "まだ検索を保存していません。"
       },
       "options": {
         "namespace": "Namespace（ネームスペース）",

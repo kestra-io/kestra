@@ -11,6 +11,7 @@ import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
 @Slf4j
@@ -31,6 +32,8 @@ public class DefaultScheduler extends AbstractScheduler {
     private final ConditionService conditionService;
 
     private final FlowRepositoryInterface flowRepository;
+
+    private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
     public DefaultScheduler(
@@ -52,6 +55,34 @@ public class DefaultScheduler extends AbstractScheduler {
     public void run() {
         QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
+
+        super.run();
+
+        ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
+            this::handle,
+            0,
+            1,
+            TimeUnit.SECONDS
+        );
+
+        // look at exception on the main thread
+        Thread thread = new Thread(
+            () -> {
+                Await.until(handle::isDone);
+
+                try {
+                    handle.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    log.error("Scheduler fatal exception", e);
+                    close();
+                    applicationContext.close();
+                }
+            },
+            "scheduler-listener"
+        );
+        thread.start();
 
         executionQueue.receive(either -> {
             if (either.isRight()) {
@@ -92,5 +123,11 @@ public class DefaultScheduler extends AbstractScheduler {
         List<Trigger> triggers =  triggerState.findAllForAllTenants().stream().filter(trigger -> trigger.getNextExecutionDate() == null || trigger.getNextExecutionDate().isBefore(now)).toList();
         DefaultScheduleContext schedulerContext = new DefaultScheduleContext();
         consumer.accept(triggers, schedulerContext);
+    }
+
+    @Override
+    @PreDestroy
+    public void close() {
+        this.scheduleExecutor.shutdown();
     }
 }

@@ -11,18 +11,21 @@ import io.kestra.core.schedulers.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
 @JdbcRunnerEnabled
@@ -37,6 +40,7 @@ public class JdbcScheduler extends AbstractScheduler {
     private final JooqDSLContextWrapper dslContextWrapper;
     private final ConditionService conditionService;
 
+    private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -58,6 +62,32 @@ public class JdbcScheduler extends AbstractScheduler {
     @Override
     public void run() {
         super.run();
+
+        ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
+            this::handle,
+            0,
+            1,
+            TimeUnit.SECONDS
+        );
+
+        // look at exception on the main thread
+        Thread thread = new Thread(
+            () -> {
+                Await.until(handle::isDone);
+
+                try {
+                    handle.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    log.error("Scheduler fatal exception", e);
+                    close();
+                    applicationContext.close();
+                }
+            },
+            "scheduler-listener"
+        );
+        thread.start();
 
         // reset scheduler trigger at end
         executionQueue.receive(
@@ -105,5 +135,11 @@ public class JdbcScheduler extends AbstractScheduler {
 
             consumer.accept(triggers, scheduleContextInterface);
         });
+    }
+
+    @Override
+    @PreDestroy
+    public void close() {
+        this.scheduleExecutor.shutdown();
     }
 }

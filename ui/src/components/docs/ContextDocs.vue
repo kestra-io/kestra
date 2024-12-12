@@ -31,7 +31,9 @@
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
+    // @ts-expect-error will fix in ui-libs
     import useMarkdownParser from "@kestra-io/ui-libs/src/composables/useMarkdownParser";
+    // @ts-expect-error will fix in ui-libs
     import MDCRenderer from "@kestra-io/ui-libs/src/components/content/MDCRenderer.vue";
     import DocsLayout from "./DocsLayout.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";

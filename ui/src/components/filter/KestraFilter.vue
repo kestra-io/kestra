@@ -470,7 +470,8 @@
 .filters {
     @include width-available;
     & .el-select {
-        max-width: calc(100% - 237px);
+        flex: 1;
+        width: calc(100% - 237px);
         &.settings {
             max-width: calc(100% - 285px);
         }

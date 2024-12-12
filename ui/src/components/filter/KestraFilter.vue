@@ -85,9 +85,9 @@
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button :icon="Magnify" @click="triggerSearch" />
             </KestraIcon>
-            <!-- <Save :disabled="!current.length" :prefix :current />
+            <Save :disabled="!current.length" :prefix :current />
             <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings v-if="settings.shown" :settings /> -->
+            <Settings v-if="settings.shown" :settings />
         </el-button-group>
 
         <Dashboards

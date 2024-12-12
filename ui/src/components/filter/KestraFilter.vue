@@ -7,7 +7,6 @@
             :model-value="current"
             value-key="label"
             :placeholder="t('filters.label')"
-            allow-create
             default-first-option
             filterable
             clearable
@@ -18,6 +17,7 @@
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -124,7 +124,7 @@
 
     import DateRange from "../layout/DateRange.vue";
 
-    const emits = defineEmits(["dashboard"]);
+    const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
@@ -196,6 +196,14 @@
         }
     };
 
+    const handleInputChange = (key) => {
+        if (key === "Enter") return;
+
+        if (current.value.at(-1)?.label === "user") {
+            emits("input", select.value.states.inputValue);
+        }
+    };
+
     const handleClear = () => {
         current.value = [];
         triggerSearch();
@@ -228,10 +236,11 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
-        emptyLabel.value =
-            current.value[dropdowns.value.second.index].label === "labels"
-                ? t("filters.labels.placeholder")
-                : t("filters.empty");
+        emptyLabel.value = ["labels", "details"].includes(
+            current.value[dropdowns.value.second.index].label,
+        )
+            ? t("filters.key_value_type")
+            : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
@@ -339,6 +348,12 @@
         case "scope":
             return VALUES.SCOPE;
 
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
+
         case "child":
             return VALUES.CHILD;
 
@@ -353,6 +368,9 @@
 
         case "metric":
             return props.values?.metric || [];
+
+        case "user":
+            return props.values?.user || [];
 
         case "aggregation":
             return VALUES.AGGREGATION;
@@ -388,7 +406,7 @@
         if (!Array.isArray(v) || !v.length) return;
 
         if (typeof v.at(-1) === "string") {
-            if (v.at(-2)?.label === "labels") {
+            if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
                 closeDropdown();

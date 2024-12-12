@@ -95,7 +95,7 @@
     "typescript-eslint": "^8.17.0",
     "vite": "^6.0.3",
     "vitest": "^2.1.8",
-    "vue-tsc": "^2.1.10"
+    "vue-tsc": "https://pkg.pr.new/vuejs/language-tools/vue-tsc@3fb59af"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.28.1",

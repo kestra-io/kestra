@@ -260,8 +260,8 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
     // import {storageKeys} from "../../utils/constants";
 
     const router = useRouter();

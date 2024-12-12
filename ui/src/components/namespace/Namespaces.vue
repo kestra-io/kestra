@@ -27,7 +27,7 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all :props="{class: () => 'tree'}" class="h-auto p-2 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
@@ -97,17 +97,24 @@
     const hierarchy = (data: Namespace[]): Node[] => {
         if (!data) return [];
 
-        const map = {} as Node[];
+        const map = {} as Record<string, Node>;
         const roots: Node[] = [];
 
         data.forEach(item => {
             const parts = item.id.split(".");
             let currentLevel = map;
 
-            parts.forEach((part, index) => {
+            parts.forEach((_, index) => {
                 const label = parts.slice(0, index + 1).join(".");
 
-                if (!currentLevel[label]) currentLevel[label] = {id: label, label, disabled: item.disabled, children: []};
+                if (!currentLevel[label]) {
+                    currentLevel[label] = {
+                        id: label,
+                        label,
+                        disabled: item.disabled,
+                        children: []
+                    };
+                }
                 currentLevel = currentLevel[label].children;
             });
 

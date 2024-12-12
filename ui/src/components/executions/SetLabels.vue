@@ -54,8 +54,8 @@
     import State from "../../utils/state";
 
     import {filterLabels} from "./utils"
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         components: {LabelInput},

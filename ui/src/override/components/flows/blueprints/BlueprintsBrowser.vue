@@ -111,7 +111,7 @@
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
-    import {apiUrl} from "override/utils/route.js";
+    import {apiUrl} from "override/utils/route";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
@@ -374,7 +374,7 @@
             border-radius: 0;
             border: 0;
             border-bottom: 1px solid var(--el-border-color-darker);
-            
+
             html.dark &.blueprint-card{
                 border-bottom: solid var(--el-border-color-darker);
             }
@@ -403,7 +403,7 @@
                     .tags {
                         margin: 10px 0;
                         display: flex;
-                        
+
 
                         .el-tag.el-tag--info {
                             background-color: #FEFEFE;

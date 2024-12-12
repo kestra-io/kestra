@@ -298,8 +298,8 @@
         triggerSearch();
     };
 
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
 
     const user = computed(() => store.state.auth.user);
 

@@ -55,7 +55,7 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../../useFilters.js";
+    import {useFilters} from "../../useFilters";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
     let saved = ref([]);

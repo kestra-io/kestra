@@ -5,4 +5,4 @@ export default {
     NAMESPACE: "NAMESPACE",
     KVSTORE: "KVSTORE",
     DASHBOARD: "DASHBOARD",
-}
+} as const

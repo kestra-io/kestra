@@ -3,4 +3,4 @@ export default {
     CREATE : "CREATE",
     UPDATE : "UPDATE",
     DELETE : "DELETE",
-}
+} as const

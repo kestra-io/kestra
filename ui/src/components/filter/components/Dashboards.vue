@@ -76,16 +76,21 @@
     import {useStore} from "vuex";
     const store = useStore();
 
+    interface Dashboard {
+        id: string;
+        title: string;
+    }
+
     const emits = defineEmits(["dashboard"]);
 
-    const remove = (id) => {
+    const remove = (id:string) => {
         store.dispatch("dashboard/delete", id).then(() => {
-            dashboards.value = dashboards.value.filter((d) => d.id !== id);
+            dashboards.value = dashboards.value.filter((d: Dashboard) => d.id !== id);
         });
     };
 
     const search = ref("");
-    const dashboards = ref([]);
+    const dashboards = ref<Dashboard[]>([]);
     const filtered = computed(() => {
         return dashboards.value.filter(
             (d) =>

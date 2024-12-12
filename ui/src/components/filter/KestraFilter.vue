@@ -146,7 +146,7 @@
         },
     });
 
-    import {useFilters, compare} from "./useFilters.js";
+    import {useFilters} from "./useFilters.js";
     const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
         props.prefix,
     );

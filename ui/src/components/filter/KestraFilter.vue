@@ -260,7 +260,6 @@
         }
     };
     const valueCallback = (filter, isDate = false) => {
-        console.log(current.value);
         if (!isDate) {
             const currentFilter = current.value[dropdowns.value.third.index];
             const label = currentFilter.label;

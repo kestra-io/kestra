@@ -3,6 +3,7 @@ volumes:
     driver: local
   kestra-data:
     driver: local
+
 services:
   postgres:
     image: postgres

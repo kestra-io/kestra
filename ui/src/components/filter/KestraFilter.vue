@@ -7,7 +7,6 @@
             :model-value="current"
             value-key="label"
             :placeholder="t('filters.label')"
-            allow-create
             default-first-option
             filterable
             clearable
@@ -18,6 +17,7 @@
             popper-class="filters-select"
             :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
@@ -122,13 +122,13 @@
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    import State from "../../utils/state.js";
     import DateRange from "../layout/DateRange.vue";
 
-    const emits = defineEmits(["dashboard"]);
+    const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
+        values: {type: Object, required: false, default: undefined},
         refresh: {
             type: Object,
             default: () => ({shown: false, callback: () => {}}),
@@ -147,14 +147,9 @@
     });
 
     import {useFilters, compare} from "./useFilters.js";
-    const {
-        getRecentItems,
-        setRecentItems,
-        COMPARATORS,
-        OPTIONS,
-        encodeParams,
-        decodeParams,
-    } = useFilters(props.prefix);
+    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
+        props.prefix,
+    );
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -196,6 +191,14 @@
         }
     };
 
+    const handleInputChange = (key) => {
+        if (key === "Enter") return;
+
+        if (current.value.at(-1)?.label === "user") {
+            emits("input", select.value.states.inputValue);
+        }
+    };
+
     const handleClear = () => {
         current.value = [];
         triggerSearch();
@@ -228,10 +231,11 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
-        emptyLabel.value =
-            current.value[dropdowns.value.second.index].label === "labels"
-                ? t("filters.labels.placeholder")
-                : t("filters.empty");
+        emptyLabel.value = ["labels", "details"].includes(
+            current.value[dropdowns.value.second.index].label,
+        )
+            ? t("filters.key_value_type")
+            : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
@@ -329,51 +333,8 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    const scopeOptions = [
-        {
-            label: t("scope_filter.user", {label: props.prefix}),
-            value: "USER",
-        },
-        {
-            label: t("scope_filter.system", {label: props.prefix}),
-            value: "SYSTEM",
-        },
-    ];
-
-    const childOptions = [
-        {
-            label: t("trigger filter.options.ALL"),
-            value: "ALL",
-        },
-        {
-            label: t("trigger filter.options.CHILD"),
-            value: "CHILD",
-        },
-        {
-            label: t("trigger filter.options.MAIN"),
-            value: "MAIN",
-        },
-    ];
-
-    const levelOptions = [
-        {label: "TRACE", value: "TRACE"},
-        {label: "DEBUG", value: "DEBUG"},
-        {label: "INFO", value: "INFO"},
-        {label: "WARN", value: "WARN"},
-        {label: "ERROR", value: "ERROR"},
-    ];
-
-    const relativeDateOptions = [
-        {label: t("datepicker.last5minutes"), value: "PT5M"},
-        {label: t("datepicker.last15minutes"), value: "PT15M"},
-        {label: t("datepicker.last1hour"), value: "PT1H"},
-        {label: t("datepicker.last12hours"), value: "PT12H"},
-        {label: t("datepicker.last24hours"), value: "PT24H"},
-        {label: t("datepicker.last48hours"), value: "PT48H"},
-        {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "PT720H"},
-        {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    import {useValues} from "./useValues.js";
+    const {VALUES} = useValues(props.prefix);
 
     const isDatePickerShown = computed(() => {
         const c = current?.value?.at(-1);
@@ -387,23 +348,41 @@
         case "namespace":
             return namespaceOptions.value;
 
-        case "scope":
-            return scopeOptions;
-
         case "state":
-            return State.arrayAllStates().map((s) => ({
-                label: s.name,
-                value: s.name,
-            }));
+            return VALUES.EXECUTION_STATE;
+
+        case "trigger_state":
+            return VALUES.TRIGGER_STATE;
+
+        case "scope":
+            return VALUES.SCOPE;
+
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
 
         case "child":
-            return childOptions;
+            return VALUES.CHILD;
 
         case "level":
-            return levelOptions;
+            return VALUES.LEVEL;
 
         case "relative_date":
-            return relativeDateOptions;
+            return VALUES.RELATIVE_DATE;
+
+        case "task":
+            return props.values?.task || [];
+
+        case "metric":
+            return props.values?.metric || [];
+
+        case "user":
+            return props.values?.user || [];
+
+        case "aggregation":
+            return VALUES.AGGREGATION;
 
         case "absolute_date":
             return [];
@@ -436,7 +415,7 @@
         if (!Array.isArray(v) || !v.length) return;
 
         if (typeof v.at(-1) === "string") {
-            if (v.at(-2)?.label === "labels") {
+            if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
                 const existingIndex = current.value.findIndex(i => i.label === "labels");
                 if (existingIndex !== -1) {
@@ -478,13 +457,6 @@
     };
 
     const triggerSearch = () => {
-        if (current.value.length) {
-            const r = getRecentItems().filter((i) =>
-                compare(i.value, current.value),
-            );
-            setRecentItems([...r, {value: current.value}]);
-        }
-
         router.push({query: encodeParams(current.value)});
     };
 
@@ -511,65 +483,48 @@
 @mixin width-available {
     width: -moz-available;
     width: -webkit-fill-available;
+    // https://caniuse.com/?search=fill-available
     width: fill-available;
 }
-
 .filters {
     @include width-available;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    // border-radius: var(--bs-border-radius);
-    // outline: 1px solid var(--el-border-color);
-
-    &.focused {
-        // outline: 1px solid var(--bs-primary);
-    }
-
-    .el-select {
-        flex-grow: 1;
-
-        &.settings,
+    & .el-select {
+        flex: 1;
+        width: calc(100% - 237px);
+        &.settings {
+            max-width: calc(100% - 285px);
+        }
         &:not(.refresh) {
-            max-width: 100%;
+            max-width: calc(100% - 189px);
         }
     }
-
-    .el-select__placeholder {
+    & .el-select__placeholder {
         color: var(--bs-gray-700);
     }
-
-    .el-select__wrapper {
+    & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
             0 -1px 0 0 var(--el-border-color) inset,
             0 1px 0 0 var(--el-border-color) inset;
-
-        .el-tag {
+        & .el-tag {
             background: var(--bs-border-color) !important;
             color: var(--bs-gray-900);
-
-            .el-tag__close {
+            & .el-tag__close {
                 color: var(--bs-gray-900);
             }
         }
     }
-
-    .el-select__selection {
+    & .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
-
         &::-webkit-scrollbar {
-            height: 0;
+            height: 0px;
         }
     }
-
-    .el-button-group {
+    & .el-button-group {
         .el-button {
             border-radius: 0;
         }
-
         span.kicon:last-child .el-button,
         > button.el-button:last-child {
             border-top-right-radius: var(--bs-border-radius);
@@ -577,30 +532,24 @@
         }
     }
 }
-
 .el-button-group .el-button--primary:last-child {
     border-left: none;
 }
-
 .el-button-group > .el-dropdown > .el-button {
     border-left-color: transparent;
 }
-
 .filters-select {
-    .el-select-dropdown {
+    & .el-select-dropdown {
         width: 300px !important;
-
         &:has(.el-select-dropdown__empty) {
             width: 500px !important;
         }
     }
-
-    .el-date-editor.el-input__wrapper {
+    & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
-
-    .el-select-dropdown__item .material-design-icon {
+    & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }
 }

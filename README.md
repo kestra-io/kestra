@@ -74,6 +74,27 @@ docker run --pull=always --rm -it -p 8080:8080 --user=root \
   -v /tmp:/tmp kestra/kestra:latest server local
 ```
 
+If you're on Windows and use PowerShell:
+```powershell
+docker run --pull=always --rm -it -p 8080:8080 --user=root `
+    -v "/var/run/docker.sock:/var/run/docker.sock" `
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use Command Prompt (CMD):
+```cmd
+docker run --pull=always --rm -it -p 8080:8080 --user=root ^
+    -v "/var/run/docker.sock:/var/run/docker.sock" ^
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use WSL (Linux-based environment in Windows):
+```bash
+docker run --pull=always --rm -it -p 8080:8080 --user=root \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
 
 Access the Kestra UI at [http://localhost:8080](http://localhost:8080) and start building your first flow!

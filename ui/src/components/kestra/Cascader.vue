@@ -24,7 +24,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const isFile = (data) => typeof(data) === "string" && data.startsWith("kestra:///");
+    const isFile = (data: any) => typeof data === "string" && data.startsWith("kestra:///");
 
     interface Options {
         label: string;

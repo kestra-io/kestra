@@ -25,64 +25,64 @@
     </span>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, watch, onMounted} from "vue";
+    import axios from "axios";
+    import {apiUrl} from "override/utils/route";
+    import {useStore} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import FilePreview from "./FilePreview.vue";
-</script>
-
-<script>
-    import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
+    // @ts-expect-error will refactor later
+    import FilePreview from "./FilePreview.vue";
 
-    export default {
-        data () {
-            return {
-                humanSize: ""
-            }
+    const store = useStore();
+
+    const props = defineProps({
+        value: {
+            type: [String, Object, Boolean, Number],
+            required: false,
+            default: undefined
         },
-        methods: {
-            isFile(value) {
-                return typeof(value) === "string" && value.startsWith("kestra:///")
-            },
-            isURI(value) {
-                try {
-                    new URL(value);
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            },
-            itemUrl(value) {
-                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
-            },
-            getFileSize(){
-                if (this.isFile(this.value)) {
-                    this.$http(`${apiUrl(this.$store)}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
-                        validateStatus: (status) => status === 200 || status === 404 || status === 422
-                    }).then(r => this.humanSize = Utils.humanFileSize(r.data.size))
-                }
-            }
-        },
-        watch: {
-            value(newValue) {
-                if(newValue) this.getFileSize()
-            }
-        },
-        mounted() {
-            this.getFileSize()
-        },
-        props: {
-            value: {
-                type: [String, Object, Boolean, Number],
-                required: false,
-                default: undefined
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            }
+        execution: {
+            type: Object,
+            required: false,
+            default: undefined
         }
-    };
+    });
+
+    const humanSize = ref<string | null>(null);
+
+    function isFile(value: unknown): value is string {
+        return typeof value === "string" && value.startsWith("kestra:///")
+    }
+
+    function isURI(value: any): value is string {
+        try {
+            new URL(value);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function itemUrl(value:string) {
+        return `${apiUrl(store)}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
+    }
+
+    function getFileSize(){
+        if (isFile(props.value)) {
+            axios.get(`${apiUrl(store)}/executions/${props.execution?.id}/file/metas?path=${props.value}`, {
+                validateStatus: (status: number) => status === 200 || status === 404 || status === 422
+            }).then((r:any) => humanSize.value = Utils.humanFileSize(r.data.size))
+        }
+    }
+
+    watch(() => props.value, (newValue) => {
+        if (newValue) getFileSize();
+    });
+
+    onMounted(() => {
+        getFileSize();
+    });
 </script>

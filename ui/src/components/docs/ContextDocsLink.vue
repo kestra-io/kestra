@@ -18,7 +18,7 @@
     </RouterLink>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {computed, toRef} from "vue";
     import {useStore} from "vuex";
     import {useDocsLink} from "./useDocsLink";
@@ -30,7 +30,7 @@
     const props = defineProps({
         href: {
             type: String,
-            default: undefined
+            required: true
         },
         useRaw: {
             type: Boolean,

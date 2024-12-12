@@ -11,7 +11,7 @@
                 <div class="card-body d-flex align-items-center">
                     <span class="card-icon">
                         <img
-                            :src="$store.getters['doc/resourceUrl'](item.icon)"
+                            :src="store.getters['doc/resourceUrl'](item.icon)"
                             :alt="item.title"
                             width="50px"
                             height="50px"
@@ -31,7 +31,7 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {computed, ref, onMounted} from "vue";
     import {useStore} from "vuex";
 
@@ -56,13 +56,13 @@
     })
 
 
-    const resourcesWithMetadata = ref({});
+    const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {
         resourcesWithMetadata.value = await store.dispatch("doc/children", currentPage.value);
     })
 
     const navigation = computed(() => {
-        let parentMetadata;
+        let parentMetadata: any = {};
         if (props.pageUrl) {
             parentMetadata = {...resourcesWithMetadata.value[currentPage.value]};
             delete parentMetadata.description;

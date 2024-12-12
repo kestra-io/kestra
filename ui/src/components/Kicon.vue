@@ -15,19 +15,17 @@
         <slot v-else />
     </span>
 </template>
-<script>
-    export default {
-        props:{
-            tooltip: {
-                type: String,
-                default: ""
-            },
-            placement:{
-                type: String,
-                default: "top"
-            },
+<script setup lang="ts">
+    defineProps({
+        tooltip: {
+            type: String,
+            default: ""
         },
-    }
+        placement:{
+            type: String,
+            default: "top"
+        },
+    })
 </script>
 
 <style lang="scss" scoped>

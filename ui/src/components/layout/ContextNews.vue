@@ -56,7 +56,7 @@
 
     const feeds = computed(() => store.state.api.feeds);
 
-    const expanded = reactive({});
+    const expanded = reactive<Record<string,boolean>>({});
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     onMounted(() => {

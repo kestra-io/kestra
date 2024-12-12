@@ -69,7 +69,7 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../useFilters.js";
+    import {useFilters} from "../useFilters";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);

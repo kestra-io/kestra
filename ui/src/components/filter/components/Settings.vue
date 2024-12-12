@@ -20,11 +20,11 @@
 </template>
 
 <script setup lang="ts">
+    import {useI18n} from "vue-i18n";
     import KestraIcon from "../../Kicon.vue";
 
     import TableCog from "vue-material-design-icons/TableCog.vue";
 
-    import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     defineProps({

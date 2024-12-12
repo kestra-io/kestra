@@ -5,7 +5,7 @@ import {getConsistentHEXColor} from "../../../../utils/charts";
 import {type STATE} from "../../../../utils/state";
 import {Plugin} from "chart.js";
 
-const getOrCreateLegendList = (chart: any, id: string, direction = "row") => {
+const getOrCreateLegendList = (_: any, id: string, direction = "row") => {
     const legendContainer = document.getElementById(id);
 
     if(!legendContainer) {
@@ -36,7 +36,7 @@ const getOrCreateLegendList = (chart: any, id: string, direction = "row") => {
 
 export const barLegend: Plugin = {
     id: "barLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, _, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul?.firstChild) {
@@ -111,7 +111,7 @@ export const barLegend: Plugin = {
 
 export const customBarLegend: Plugin = {
     id: "customBarLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, _, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
         while (ul?.firstChild) {
@@ -181,7 +181,7 @@ export const customBarLegend: Plugin = {
 
 const generateTotalsLegend = (isDuration:boolean):Plugin => ({
     id: "totalsLegend",
-    afterUpdate(chart, args, options) {
+    afterUpdate(chart, _, options) {
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
 
         while (ul?.firstChild) {

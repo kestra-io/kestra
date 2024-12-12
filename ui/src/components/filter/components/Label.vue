@@ -12,7 +12,7 @@
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
 
-    const formatter = (date) => moment(date).format(DATE_FORMAT);
+    const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
 
     const label = computed(() => props.option?.label);
     const comparator = computed(() => props.option?.comparator?.label);

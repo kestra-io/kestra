@@ -131,7 +131,7 @@
         return field === "DURATION";
     }
 
-    const parsedData = computed(() => {
+    const parsedData = computed<any>(() => {
         const parseValue = (value: string) => {
             const date = moment(value, moment.ISO_8601, true);
             return date.isValid() ? date.format("YYYY-MM-DD") : value;

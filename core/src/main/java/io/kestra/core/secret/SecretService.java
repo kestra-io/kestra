@@ -17,6 +17,10 @@ public class SecretService {
 
     @PostConstruct
     private void postConstruct() {
+        this.decode();
+    }
+
+    public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
             .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
             .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {

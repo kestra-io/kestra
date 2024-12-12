@@ -949,7 +949,8 @@
           "placeholder": "Etichetta"
         },
         "label": "Ricerche salvate",
-        "tooltip": "Non puoi salvare criteri di ricerca vuoti."
+        "tooltip": "Non puoi salvare criteri di ricerca vuoti.",
+        "empty": "Non hai ancora salvato alcuna ricerca."
       },
       "options": {
         "namespace": "Namespace",
@@ -964,13 +965,18 @@
         "task": "Compito",
         "aggregation": "Aggregazione",
         "metric": "Metrica",
-        "trigger_state": "Stato"
+        "trigger_state": "Stato",
+        "action": "Azione",
+        "permission": "Permesso",
+        "user": "Utente",
+        "details": "Dettagli"
       },
       "empty": "Nessun dato.",
       "label": "Scegli filtri",
       "settings": {
         "show_chart": "Mostra grafico principale"
-      }
+      },
+      "key_value_type": "Digita il parametro come 'key:value'"
     },
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",

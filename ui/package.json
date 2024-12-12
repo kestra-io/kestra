@@ -9,8 +9,8 @@
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
     "test:unit": "vitest run",
-    "test:lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
+    "test:lint": "eslint",
+    "lint": "eslint --fix",
     "translations:check": "node ./src/translations/check.js",
     "tsc": "vue-tsc --noEmit"
   },
@@ -69,6 +69,7 @@
   },
   "devDependencies": {
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@eslint/js": "^9.16.0",
     "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^1.24.2",
     "@types/humanize-duration": "^3.27.4",
@@ -78,9 +79,12 @@
     "@vue/eslint-config-prettier": "^10.1.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
-    "eslint": "^8.57.1",
+    "eslint": "^9.16.0",
     "eslint-plugin-vue": "^9.32.0",
+    "ghooks": "^2.0.4",
+    "globals": "^15.13.0",
     "jsdom": "^25.0.1",
+    "lint-staged": "^15.2.11",
     "monaco-editor": "^0.52.2",
     "monaco-yaml": "^5.2.3",
     "prettier": "^3.4.2",
@@ -88,6 +92,7 @@
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.82.0",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0",
     "vite": "^6.0.3",
     "vitest": "^2.1.8",
     "vue-tsc": "^2.1.10"
@@ -99,6 +104,14 @@
   "overrides": {
     "bootstrap": {
       "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
+    }
+  },
+  "lint-staged": {
+    "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"
+  },
+  "config": {
+    "ghooks": {
+      "pre-commit": "cd ui && npx lint-staged"
     }
   }
 }

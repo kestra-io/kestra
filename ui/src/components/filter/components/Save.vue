@@ -14,7 +14,7 @@
     <el-dialog
         v-model="visible"
         :title="t('filters.save.dialog.heading')"
-        :width="400"
+        :width="540"
         align-center
         append-to-body
         @opened="input?.focus"
@@ -27,7 +27,7 @@
                 ref="input"
                 v-model="label"
                 :placeholder="t('filters.save.dialog.placeholder')"
-                class="pt-1"
+                class="pt-2 bg-transparent"
                 @keydown.enter.prevent="save()"
             />
         </section>

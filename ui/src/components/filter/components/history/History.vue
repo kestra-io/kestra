@@ -4,59 +4,37 @@
         placement="bottom-start"
         @visible-change="loadAll"
     >
-        <KestraIcon :tooltip="$t('filters.recent.label')" placement="bottom">
+        <KestraIcon :tooltip="$t('filters.save.label')" placement="bottom">
             <el-button :icon="History" class="rounded-0 rounded-start" />
         </KestraIcon>
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 history-dropdown">
-                <p class="title">
-                    {{ t("filters.recent.label") }}
+                <p class="pt-3 title">
+                    {{ t("filters.save.label") }}
                 </p>
-                <el-dropdown-item
-                    v-if="!recents.length"
-                    @click="emits('search', {})"
-                >
-                    <small class="text-secondary label">
-                        {{ t("filters.recent.empty") }}
-                    </small>
-                </el-dropdown-item>
-                <template v-else>
+                <div class="overflow-x-auto saved scroller">
                     <el-dropdown-item
-                        v-for="(recent, rIdx) in recents.slice(0, 5)"
-                        :key="rIdx"
-                        @click="emits('search', recent.value)"
+                        v-if="!saved.length"
+                        @click="emits('search', {})"
+                        class="pe-none"
                     >
-                        <HistoryItem :item="recent">
+                        <small class="text-secondary label">
+                            {{ t("filters.save.empty") }}
+                        </small>
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                        v-for="(save, index) in saved"
+                        :key="index"
+                        @click="emits('search', save.value)"
+                    >
+                        <HistoryItem :item="save">
                             <template #delete>
-                                <DeleteOutline
-                                    @click.stop="remove('recents', rIdx)"
-                                />
+                                <DeleteOutline @click.stop="remove(index)" />
                             </template>
                         </HistoryItem>
                     </el-dropdown-item>
-                </template>
-
-                <template v-if="saved.length">
-                    <p class="pt-3 title">
-                        {{ t("filters.save.label") }}
-                    </p>
-                    <div class="overflow-x-auto saved scroller">
-                        <el-dropdown-item
-                            v-for="(save, sIdx) in saved"
-                            :key="sIdx"
-                            @click="emits('search', save.value)"
-                        >
-                            <HistoryItem :item="save">
-                                <template #delete>
-                                    <DeleteOutline
-                                        @click.stop="remove('saved', sIdx)"
-                                    />
-                                </template>
-                            </HistoryItem>
-                        </el-dropdown-item>
-                    </div>
-                </template>
+                </div>
             </el-dropdown-menu>
         </template>
     </el-dropdown>
@@ -78,25 +56,19 @@
     const props = defineProps({prefix: {type: String, required: true}});
 
     import {useFilters} from "../../useFilters.js";
-    const {getRecentItems, removeRecentItem, getSavedItems, removeSavedItem} =
-        useFilters(props.prefix);
+    const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
-    let recents = ref([]);
     let saved = ref([]);
 
     const loadAll = () => {
-        recents.value = getRecentItems().reverse();
         saved.value = getSavedItems().reverse();
     };
 
     loadAll();
 
-    const remove = (prefix, index) => {
-        const list = prefix === "recents" ? recents : saved;
-        const action = prefix === "recents" ? removeRecentItem : removeSavedItem;
-
-        action(list.value[index]);
-        list.value.splice(index, 1);
+    const remove = (index) => {
+        removeSavedItem(saved.value[index]);
+        saved.value.splice(index, 1);
     };
 </script>
 

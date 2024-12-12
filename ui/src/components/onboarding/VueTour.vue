@@ -146,7 +146,7 @@
 
     import {pageFromRoute} from "../../utils/eventsRouter";
 
-    // @ts-ignore
+    // @ts-expect-error will refactor later
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import Animation from "../../assets/onboarding/animation.gif";
 
@@ -267,9 +267,11 @@
 
     const toggleScroll = (enabled = true) => {
         const wrapper = document.getElementById("app");
-        enabled
-            ? wrapper?.classList.remove("no-scroll")
-            : wrapper?.classList.add("no-scroll");
+        if(enabled){
+            wrapper?.classList.remove("no-scroll")
+        }else{
+            wrapper?.classList.add("no-scroll");
+        }
     };
 
     const steps = [
@@ -306,7 +308,8 @@
                 });
             },
             before: () => {
-                store.commit("editor/updateOnboarding"),
+                store.commit("editor/updateOnboarding");
+
                 store.commit("core/setGuidedProperties", {
                     tourStarted: true,
                     template: flows.value[activeFlow.value]?.id,
@@ -401,7 +404,11 @@
         dispatchEvent(tour.currentStep, "next");
 
         const nextStep = currentStep(tour).nextStep;
-        !nextStep ? TOURS[TOUR_NAME].nextStep() : nextStep();
+        if(nextStep) {
+            nextStep()
+        } else {
+            TOURS[TOUR_NAME].nextStep()
+        }
     };
     const previousStep = (current:string) => {
         dispatchEvent(current, "previous");

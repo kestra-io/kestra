@@ -965,6 +965,7 @@
       "label": "Choose filters",
       "empty": "No data.",
       "options": {
+        "user": "User",
         "namespace": "Namespace",
         "state": "State",
         "trigger_state": "State",
@@ -973,6 +974,9 @@
         "level": "Log level",
         "task": "Task",
         "metric": "Metric",
+        "permission": "Permission",
+        "action": "Action",
+        "details": "Details",
         "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
@@ -990,12 +994,9 @@
         "between": "between",
         "starts_with": "starts with"
       },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
-      },
       "save": {
         "label": "Saved searches",
+        "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
@@ -1007,9 +1008,7 @@
       "settings": {
         "show_chart": "Show main chart"
       },
-      "labels": {
-        "placeholder": "Type label as 'key:value'"
-      }
+      "key_value_type": "Type parameter as 'key:value'"
     },
     "item": "item",
     "items": "items",

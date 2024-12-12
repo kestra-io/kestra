@@ -4,7 +4,7 @@ import {ElNotification, ElMessageBox, ElTable, ElTableColumn, NotificationOption
 
 import Markdown from "../components/layout/Markdown.vue"
 
-// eslint-disable-next-line no-unused-vars
+ 
 const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
     _wrap: function(message:string) {
         if(Array.isArray(message) && message.length > 0){

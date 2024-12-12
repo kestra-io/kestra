@@ -441,7 +441,11 @@
                 }
             },
             toggleExpandCollapseAll() {
-                this.shownAttemptsUid.length === 0 ? this.expandAll() : this.collapseAll();
+                if(this.shownAttemptsUid.length === 0){
+                    this.expandAll()
+                } else {
+                    this.collapseAll()
+                }
             },
             autoExpandBasedOnSettings() {
                 if (this.autoExpandTaskrunStates.length === 0) {

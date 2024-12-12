@@ -31,7 +31,7 @@ const filterItems = (items, element) => {
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 
-    const keys = {recent: `recent__${prefix}`, saved: `saved__${prefix}`};
+    const keys = {saved: `saved__${prefix}`};
 
     const COMPARATORS = {
         IS: {
@@ -295,17 +295,6 @@ export function useFilters(prefix) {
     };
 
     return {
-        getRecentItems: () => {
-            return getItem(keys.recent);
-        },
-        setRecentItems: (value) => {
-            return setItem(keys.recent, value);
-        },
-        removeRecentItem: (element) => {
-            const filtered = filterItems(getItem(keys.recent), element);
-            return setItem(keys.recent, filtered);
-        },
-
         getSavedItems: () => {
             return getItem(keys.saved);
         },

@@ -994,12 +994,9 @@
         "between": "between",
         "starts_with": "starts with"
       },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
-      },
       "save": {
         "label": "Saved searches",
+        "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",

@@ -79,6 +79,7 @@
     "decompress": "^4.2.1",
     "eslint": "^9.16.0",
     "eslint-plugin-vue": "^9.32.0",
+    "ghooks": "^2.0.4",
     "globals": "^15.13.0",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.2.11",
@@ -88,7 +89,6 @@
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-visualizer": "^5.12.0",
     "sass": "^1.82.0",
-    "simple-git-hooks": "^2.11.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.17.0",
     "vite": "^6.0.3",
@@ -106,7 +106,9 @@
   "lint-staged": {
     "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"
   },
-  "simple-git-hooks": {
-    "pre-commit": "npm run lint-staged"
+  "config": {
+    "ghooks": {
+      "pre-commit": "cd ui && npx lint-staged"
+    }
   }
 }

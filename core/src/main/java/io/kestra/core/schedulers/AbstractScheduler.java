@@ -42,8 +42,10 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -293,10 +295,16 @@ public abstract class AbstractScheduler implements Scheduler {
 
     abstract public void handleNext(List<Flow> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
 
+    private final AtomicInteger counter = new AtomicInteger(0);
     private void handle() {
         if (!isReady()) {
             log.warn("Scheduler is not ready, waiting");
             return;
+        }
+
+        int loopConcurrency = counter.incrementAndGet();
+        if (loopConcurrency > 1) {
+            log.warn("!!! Scheduler has exceeded {} concurrent loops, backing off (you may want to start additional schedulers) !!!", loopConcurrency);
         }
 
         ZonedDateTime now = now();
@@ -313,6 +321,11 @@ public abstract class AbstractScheduler implements Scheduler {
                 .toList();
 
             List<FlowWithTriggers> schedulable = this.computeSchedulable(flowListeners.flows(), triggerContextsToEvaluate, scheduleContext);
+            schedulable.stream().collect(Collectors.groupingBy(it -> it.uid())).forEach((key, value) -> {
+                if (value.size() > 1) {
+                    throw new RuntimeException("!!! " + key + " -> " + value.size());
+                }
+            });
 
             metricRegistry
                 .counter(MetricRegistry.SCHEDULER_LOOP_COUNT)
@@ -342,6 +355,12 @@ public abstract class AbstractScheduler implements Scheduler {
                 .map(FlowWithPollingTriggerNextDate::of)
                 .filter(Objects::nonNull)
                 .toList();
+
+            readyForEvaluate.stream().collect(Collectors.groupingBy(it -> it.getTriggerContext().uid())).forEach((key, value) -> {
+                if (value.size() > 1) {
+                    throw new RuntimeException("!!! " + key + " -> " + value.size());
+                }
+            });
 
             if (log.isTraceEnabled()) {
                 log.trace(
@@ -438,6 +457,8 @@ public abstract class AbstractScheduler implements Scheduler {
                     }
                 });
         });
+
+        counter.decrementAndGet();
     }
 
     private void handleEvaluatePollingTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
@@ -538,7 +559,7 @@ public abstract class AbstractScheduler implements Scheduler {
             );
         }
 
-        return false;
+        return execution.get().getState().isTerminated();
     }
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {

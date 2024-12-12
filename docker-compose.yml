@@ -18,6 +18,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+
   kestra:
     image: kestra/kestra:latest
     pull_policy: always

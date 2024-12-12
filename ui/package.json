@@ -46,7 +46,7 @@
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
     "pdfjs-dist": "^4.9.155",
-    "posthog-js": "^1.195.0",
+    "posthog-js": "^1.197.0",
     "rapidoc": "^9.3.8",
     "shiki": "^1.24.2",
     "throttle-debounce": "^5.0.2",

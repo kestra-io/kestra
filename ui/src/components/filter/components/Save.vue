@@ -69,6 +69,7 @@
         current: {type: Object, required: true},
     });
 
+    // @ts-expect-error will fix with Milos
     import {useFilters} from "../useFilters";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 

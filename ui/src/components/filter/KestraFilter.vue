@@ -97,7 +97,7 @@
     </section>
 </template>
 
-<script setup lang="ts">
+<script setup>
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
@@ -146,12 +146,12 @@
         },
     });
 
-    import {useFilters} from "./useFilters.js";
+    import {useFilters} from "./useFilters";
     const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
         props.prefix,
     );
 
-    const select = ref<InstanceType<typeof ElSelect> | null>(null);
+    const select = ref(null);
     const updateHoveringIndex = (index) => {
         select.value.states.hoveringIndex = index >= 0 ? index : 0;
     };
@@ -391,13 +391,7 @@
         }
     });
 
-    type CurrentItem = {
-        label: string;
-        value: string[];
-        comparator?: Record<string, any>;
-        persistent?: boolean;
-    };
-    const current = ref<CurrentItem[]>([]);
+    const current = ref([]);
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
 

@@ -55,6 +55,7 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
+    // @ts-expect-error will fix with Milos
     import {useFilters} from "../../useFilters";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
@@ -66,7 +67,7 @@
 
     loadAll();
 
-    const remove = (index) => {
+    const remove = (index:number) => {
         removeSavedItem(saved.value[index]);
         saved.value.splice(index, 1);
     };

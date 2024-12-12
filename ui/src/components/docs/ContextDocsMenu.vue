@@ -7,7 +7,7 @@
             <template v-if="rawStructure">
                 <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
                     <span class="text-secondary">
-                        {{ sectionName.toUpperCase() }}
+                        {{ sectionName?.toUpperCase() }}
                     </span>
                     <recursive-toc :parent="{children}">
                         <template #default="{path, title}">
@@ -25,7 +25,7 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {ref, computed, watch} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
@@ -34,6 +34,7 @@
 
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
+    // @ts-expect-error will fix in the future
     import RecursiveToc from "./RecursiveToc.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
 
@@ -80,13 +81,20 @@
         rawStructure.value = await store.dispatch("doc/children");
     });
 
-    const toc = computed(() => {
+    interface TocItem {
+        title: string;
+        hideSidebar?: boolean;
+        path:string,
+        children?: TocItem[]
+    }
+
+    const toc = computed<TocItem[] | undefined>(() => {
         if (rawStructure.value === undefined) {
             return undefined;
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
-            .reduce((acc, [url, metadata]) => {
+            .reduce((acc:Record<string, TocItem>, [url, metadata]:[string, any]) => {
                 if(!metadata || metadata.hideSidebar){
                     return acc;
                 }
@@ -112,12 +120,15 @@
         return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
     })
 
-    const sectionsWithChildren = computed(() => {
+    const sectionsWithChildren = computed<[string, TocItem[] | undefined][] | undefined>(() => {
         if (toc.value === undefined) {
             return undefined;
         }
 
-        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))]);
+        return Object.entries(SECTIONS)
+            .map(([section, childrenTitles]) =>
+                [section, toc.value?.filter(({title}) => childrenTitles.includes(title))]
+            );
     });
 </script>
 

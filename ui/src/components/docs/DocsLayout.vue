@@ -22,18 +22,10 @@
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {ref} from "vue";
 
-</script>
-
-<script>
-    export default {
-        data() {
-            return {
-                collapsed: false,
-            }
-        }
-    };
+    const collapsed = ref(false);
 </script>
 
 <style lang="scss" scoped>

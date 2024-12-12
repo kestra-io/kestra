@@ -81,12 +81,20 @@
         if (!isVisible) label.value = "";
     };
 
-    const input = ref<InstanceType<typeof ElInput> | null>(null);
-    const label = ref("");
-    const save = () => {
-        const items = getSavedItems();
+    interface Item {
+        name: string;
+        value: Record<string, any>;
+    }
 
-        setSavedItems([...items, {name: label.value, value: props.current}]);
+    const input = ref<InstanceType<typeof ElInput> | null>(null);
+    const label = ref<string>("");
+    const save = () => {
+        const items: Item[] = getSavedItems();
+
+        setSavedItems([...items, {
+            name: label.value,
+            value: props.current
+        }]);
 
         toggle();
 

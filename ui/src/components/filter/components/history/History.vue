@@ -59,7 +59,7 @@
     import {useFilters} from "../../useFilters";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
-    let saved = ref([]);
+    let saved = ref<{label:string, value:any}[]>([]);
 
     const loadAll = () => {
         saved.value = getSavedItems().reverse();

@@ -2,16 +2,18 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
+import io.kestra.core.utils.Rethrow.RunnableChecked;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.jdbc.loader.FlowLoader;
 import io.kestra.plugin.core.flow.*;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -41,6 +43,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     protected RunnerUtils runnerUtils;
@@ -94,9 +99,6 @@ public abstract class JdbcRunnerTest {
     @Inject
     private SLATestCase slaTestCase;
 
-    @Inject
-    private FlowLoader flowLoader;
-
     @BeforeAll
     void init() {
         jdbcTestUtils.drop();
@@ -108,7 +110,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void full() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/full.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/full.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "full", null, null,
                 Duration.ofSeconds(60));
 
@@ -122,7 +124,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void logs() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/logs.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/logs.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs", null, null,
                 Duration.ofSeconds(60));
 
@@ -132,7 +134,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void errors() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/errors.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/errors.yaml"), () -> {
             List<LogEntry> logs = new CopyOnWriteArrayList<>();
             Flux<LogEntry> receive = TestsUtils.receive(logsQueue,
                 either -> logs.add(either.getLeft()));
@@ -152,7 +154,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void sequential() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sequential.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/sequential.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sequential", null,
                 null, Duration.ofSeconds(60));
 
@@ -162,7 +164,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void parallel() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/parallel.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/parallel.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel", null,
                 null, Duration.ofSeconds(60));
 
@@ -172,7 +174,7 @@ public abstract class JdbcRunnerTest {
 
     @RetryingTest(5)
     void parallelNested() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/parallel-nested.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/parallel-nested.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel-nested",
                 null, null, Duration.ofSeconds(60));
 
@@ -182,7 +184,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachParallelWithSubflowMissing() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-parallel-subflow-notfound.yml"), () -> {
+        executeWithFlow(List.of("flows/valids/each-parallel-subflow-notfound.yml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests",
                 "each-parallel-subflow-notfound");
 
@@ -199,7 +201,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachSequentialNested() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-sequential-nested.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/each-sequential-nested.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests",
                 "each-sequential-nested", null, null, Duration.ofSeconds(60));
 
@@ -209,7 +211,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachParallel() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-parallel.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/each-parallel.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel", null,
                 null, Duration.ofSeconds(60));
 
@@ -219,7 +221,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void eachParallelNested() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-parallel-nested.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/each-parallel-nested.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests",
                 "each-parallel-nested", null, null, Duration.ofSeconds(60));
 
@@ -229,25 +231,25 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void restartFailed() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/restart_last_failed.yaml"),
+        executeWithFlow(List.of("flows/valids/restart_last_failed.yaml"),
             () -> restartCaseTest.restartFailedThenSuccess());
     }
 
     @RetryingTest(5)
     void replay() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/restart-each.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/restart-each.yaml"), () ->
             restartCaseTest.replay());
     }
 
     @RetryingTest(5)
     void restartMultiple() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/failed-first.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/failed-first.yaml"), () ->
             restartCaseTest.restartMultiple());
     }
 
     @RetryingTest(5)
     void flowTrigger() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/trigger-flow-listener-no-inputs.yaml",
+        executeWithFlow(List.of("flows/valids/trigger-flow-listener-no-inputs.yaml",
             "flows/valids/trigger-flow-listener.yaml",
             "flows/valids/trigger-flow-listener-namespace-condition.yaml",
             "flows/valids/trigger-flow.yaml"), () ->
@@ -256,14 +258,14 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void flowTriggerWithPause() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/trigger-flow-listener-with-pause.yaml",
+        executeWithFlow(List.of("flows/valids/trigger-flow-listener-with-pause.yaml",
             "flows/valids/trigger-flow-with-pause.yaml"), () ->
             flowTriggerCaseTest.triggerWithPause());
     }
 
     @Test
     void multipleConditionTrigger() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/trigger-multiplecondition-listener.yaml",
+        executeWithFlow(List.of("flows/valids/trigger-multiplecondition-listener.yaml",
             "flows/valids/trigger-multiplecondition-flow-a.yaml",
             "flows/valids/trigger-multiplecondition-flow-b.yaml"), () ->
             multipleConditionTriggerCaseTest.trigger());
@@ -271,8 +273,8 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void multipleConditionTriggerFailed() throws Exception {
-        flowLoader.executeWithFlow(
-            List.of("flows/valids/trigger-flow-listener-namespace-condition.yaml",
+        executeWithFlow(
+            List.of("flows/valids/trigger-flow-listener-namespace-condition-fail.yaml",
                 "flows/valids/trigger-multiplecondition-flow-c.yaml",
                 "flows/valids/trigger-multiplecondition-flow-d.yaml"), () ->
                 multipleConditionTriggerCaseTest.failed());
@@ -280,7 +282,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void flowTriggerPreconditions() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-trigger-preconditions-flow-listen.yaml",
+        executeWithFlow(List.of("flows/valids/flow-trigger-preconditions-flow-listen.yaml",
             "flows/valids/flow-trigger-preconditions-flow-a.yaml",
             "flows/valids/flow-trigger-preconditions-flow-b.yaml"), () ->
             multipleConditionTriggerCaseTest.flowTriggerPreconditions());
@@ -288,19 +290,19 @@ public abstract class JdbcRunnerTest {
 
     @RetryingTest(5)
     void eachWithNull() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-null.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/each-null.yaml"), () ->
             EachSequentialTest.eachNullTest(runnerUtils, logsQueue));
     }
 
     @Test
     void taskDefaults() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/tests/plugin-defaults.yaml"), () ->
+        executeWithFlow(List.of("flows/tests/plugin-defaults.yaml"), () ->
             pluginDefaultsCaseTest.taskDefaults());
     }
 
     @RetryingTest(5)
     void flowWaitSuccess() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/switch.yaml",
+        executeWithFlow(List.of("flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",
             "flows/valids/task-flow-inherited-labels.yaml"), () ->
             flowCaseTest.waitSuccess());
@@ -308,7 +310,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void flowWaitFailed() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/switch.yaml",
+        executeWithFlow(List.of("flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",
             "flows/valids/task-flow-inherited-labels.yaml"), () ->
             flowCaseTest.waitFailed());
@@ -316,7 +318,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     public void invalidOutputs() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/switch.yaml",
+        executeWithFlow(List.of("flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",
             "flows/valids/task-flow-inherited-labels.yaml"), () ->
             flowCaseTest.invalidOutputs());
@@ -324,55 +326,55 @@ public abstract class JdbcRunnerTest {
 
     @Test
     public void workerSuccess() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/working-directory.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/working-directory.yaml"), () ->
             workingDirectoryTest.success(runnerUtils));
     }
 
     @Test
     public void workerFailed() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/working-directory.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/working-directory.yaml"), () ->
             workingDirectoryTest.failed(runnerUtils));
     }
 
     @Test
     public void workerEach() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/working-directory-each.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/working-directory-each.yaml"), () ->
             workingDirectoryTest.each(runnerUtils));
     }
 
     @RetryingTest(5) // flaky on MySQL
     public void pauseRun() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/pause.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/pause.yaml"), () ->
             pauseTest.run(runnerUtils));
     }
 
     @Test
     public void pauseRunDelay() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/pause-delay.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/pause-delay.yaml"), () ->
             pauseTest.runDelay(runnerUtils));
     }
 
     @Test
     public void pauseRunDelayFromInput() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/pause-delay-from-input.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/pause-delay-from-input.yaml"), () ->
             pauseTest.runDelayFromInput(runnerUtils));
     }
 
     @Test
     public void pauseRunParallelDelay() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/each-parallel-pause.yml"), () ->
+        executeWithFlow(List.of("flows/valids/each-parallel-pause.yml"), () ->
             pauseTest.runParallelDelay(runnerUtils));
     }
 
     @Test
     public void pauseRunTimeout() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/pause-timeout.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/pause-timeout.yaml"), () ->
             pauseTest.runTimeout(runnerUtils));
     }
 
     @RetryingTest(5)
     void executionDate() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/execution.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/execution.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests",
                 "execution-start-date", null, null, Duration.ofSeconds(60));
 
@@ -383,27 +385,27 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void skipExecution() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/minimal.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/minimal.yaml"), () ->
             skipExecutionCaseTest.skipExecution());
     }
 
     @RetryingTest(5)
     protected void forEachItem() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/for-each-item-subflow.yaml",
+        executeWithFlow(List.of("flows/valids/for-each-item-subflow.yaml",
             "flows/valids/for-each-item.yaml"), () ->
             forEachItemCaseTest.forEachItem());
     }
 
     @RetryingTest(5)
     protected void forEachItemEmptyItems() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/for-each-item.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/for-each-item.yaml"), () ->
             forEachItemCaseTest.forEachItemEmptyItems());
     }
 
     @RetryingTest(5)
     protected void forEachItemNoWait()
         throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/for-each-item-subflow.yaml",
+        executeWithFlow(List.of("flows/valids/for-each-item-subflow.yaml",
             "flows/valids/for-each-item-no-wait.yaml"), () ->
             forEachItemCaseTest.forEachItemNoWait()
         );
@@ -412,7 +414,7 @@ public abstract class JdbcRunnerTest {
     @RetryingTest(5)
     protected void forEachItemFailed()
         throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/for-each-item-subflow-failed.yaml",
+        executeWithFlow(List.of("flows/valids/for-each-item-subflow-failed.yaml",
             "flows/valids/for-each-item-failed.yaml"), () ->
             forEachItemCaseTest.forEachItemFailed()
         );
@@ -421,7 +423,7 @@ public abstract class JdbcRunnerTest {
     @RetryingTest(5)
     protected void forEachItemSubflowOutputs()
         throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/for-each-item-outputs-subflow.yaml",
+        executeWithFlow(List.of("flows/valids/for-each-item-outputs-subflow.yaml",
             "flows/valids/for-each-item-outputs.yaml"), () ->
             forEachItemCaseTest.forEachItemWithSubflowOutputs()
         );
@@ -429,42 +431,42 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void concurrencyCancel() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-concurrency-cancel.yml"), () ->
+        executeWithFlow(List.of("flows/valids/flow-concurrency-cancel.yml"), () ->
             flowConcurrencyCaseTest.flowConcurrencyCancel()
         );
     }
 
     @Test
     void concurrencyFail() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-concurrency-fail.yml"), () ->
+        executeWithFlow(List.of("flows/valids/flow-concurrency-fail.yml"), () ->
             flowConcurrencyCaseTest.flowConcurrencyFail()
         );
     }
 
     @Test
     void concurrencyQueue() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-concurrency-queue.yml"), () ->
+        executeWithFlow(List.of("flows/valids/flow-concurrency-queue.yml"), () ->
             flowConcurrencyCaseTest.flowConcurrencyQueue()
         );
     }
 
     @Test
     void concurrencyQueuePause() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-concurrency-queue-pause.yml"), () ->
+        executeWithFlow(List.of("flows/valids/flow-concurrency-queue-pause.yml"), () ->
             flowConcurrencyCaseTest.flowConcurrencyQueuePause()
         );
     }
 
     @Test
     void concurrencyCancelPause() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/flow-concurrency-cancel-pause.yml"), () ->
+        executeWithFlow(List.of("flows/valids/flow-concurrency-cancel-pause.yml"), () ->
             flowConcurrencyCaseTest.flowConcurrencyCancelPause()
         );
     }
 
     @Test
     void badExecutable() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/executable-fail.yml"), () -> {
+        executeWithFlow(List.of("flows/valids/executable-fail.yml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "executable-fail");
 
             assertThat(execution.getTaskRunList().size(), is(1));
@@ -476,7 +478,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void dynamicTask() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/dynamic-task.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/dynamic-task.yaml"), () -> {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "dynamic-task");
 
             assertThat(execution.getTaskRunList().size(), is(3));
@@ -486,49 +488,49 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void waitFor() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor.yaml"), () ->
             waitForTestCaseTest.waitfor()
         );
     }
 
     @Test
     void waitforMaxIterations() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor-max-iterations.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor-max-iterations.yaml"), () ->
             waitForTestCaseTest.waitforMaxIterations()
         );
     }
 
     @Test
     void waitforMaxDuration() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor-max-duration.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor-max-duration.yaml"), () ->
             waitForTestCaseTest.waitforMaxDuration()
         );
     }
 
     @Test
     void waitforNoSuccess() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor-no-success.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor-no-success.yaml"), () ->
             waitForTestCaseTest.waitforNoSuccess()
         );
     }
 
     @Test
     void waitforMultipleTasks() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor-multiple-tasks.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor-multiple-tasks.yaml"), () ->
             waitForTestCaseTest.waitforMultipleTasks()
         );
     }
 
     @Test
     void waitforMultipleTasksFailed() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/waitfor-multiple-tasks-failed.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/waitfor-multiple-tasks-failed.yaml"), () ->
             waitForTestCaseTest.waitforMultipleTasksFailed()
         );
     }
 
     @Test
     void flowTooLarge() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/inputs-large.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/inputs-large.yaml"), () -> {
             char[] chars = new char[200000];
             Arrays.fill(chars, 'a');
 
@@ -555,7 +557,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void queueMessageTooLarge() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/inputs-large.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/inputs-large.yaml"), () -> {
             char[] chars = new char[1100000];
             Arrays.fill(chars, 'a');
 
@@ -581,7 +583,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void workerTaskResultTooLarge() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/workertask-result-too-large.yaml"), () -> {
+        executeWithFlow(List.of("flows/valids/workertask-result-too-large.yaml"), () -> {
             List<LogEntry> logs = new CopyOnWriteArrayList<>();
             Flux<LogEntry> receive = TestsUtils.receive(logsQueue,
                 either -> logs.add(either.getLeft()));
@@ -611,43 +613,60 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void shouldScheduleOnDate() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/minimal.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/minimal.yaml"), () ->
             scheduleDateCaseTest.shouldScheduleOnDate()
         );
     }
 
     @Test
     void maxDurationSLAShouldFail() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sla-max-duration-fail.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/sla-max-duration-fail.yaml"), () ->
             slaTestCase.maxDurationSLAShouldFail()
         );
     }
 
     @Test
     void maxDurationSLAShouldPass() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sla-max-duration-ok.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/sla-max-duration-ok.yaml"), () ->
             slaTestCase.maxDurationSLAShouldPass()
         );
     }
 
     @Test
     void executionConditionSLAShouldPass() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
             slaTestCase.executionConditionSLAShouldPass()
         );
     }
 
     @Test
     void executionConditionSLAShouldCancel() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
             slaTestCase.executionConditionSLAShouldCancel()
         );
     }
 
     @Test
     void executionConditionSLAShouldLabel() throws Exception {
-        flowLoader.executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
+        executeWithFlow(List.of("flows/valids/sla-execution-condition.yaml"), () ->
             slaTestCase.executionConditionSLAShouldLabel()
         );
+    }
+
+    private void executeWithFlow(List<String> flowPaths, RunnableChecked runnableChecked)
+        throws Exception {
+
+        for (String path : flowPaths) {
+            TestsUtils.loads(repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource(path)));
+        }
+
+        try {
+            runnableChecked.run();
+        } catch (Exception e){
+            throw e;
+        } finally {
+            flowRepository.findAllForAllTenants().forEach(flow -> flowRepository.delete(
+                FlowWithSource.of(flow, "unused")));
+        }
     }
 }

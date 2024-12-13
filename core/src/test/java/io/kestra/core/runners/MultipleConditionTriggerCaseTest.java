@@ -98,7 +98,7 @@ public class MultipleConditionTriggerCaseTest {
         AtomicReference<Execution> listener = new AtomicReference<>();
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
-            if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
+            if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition-fail") && execution.getState().getCurrent().isTerminated() ) {
                 countDownLatch.countDown();
                 listener.set(execution);
             }

@@ -6,6 +6,7 @@ import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
@@ -44,8 +45,9 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
      */
     @Inject
     public JdbcServiceLivenessCoordinator(final AbstractJdbcServiceInstanceRepository serviceInstanceRepository,
+                                          final ServiceRegistry serviceRegistry,
                                           final ServerConfig serverConfig) {
-        super(serviceInstanceRepository, serverConfig);
+        super(serviceInstanceRepository, serviceRegistry, serverConfig);
         this.serviceInstanceRepository = serviceInstanceRepository;
     }
 

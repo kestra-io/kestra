@@ -7,6 +7,8 @@ let requestsTotal = 0
 let requestsCompleted = 0
 let latencyThreshold = 0
 
+const JWT_REFRESHED_QUERY = "__jwt_refreshed__";
+
 const progressComplete = () => {
     requestsTotal = 0
     requestsCompleted = 0
@@ -115,6 +117,14 @@ export default (callback, store, router) => {
                 const originalRequest = errorResponse.config
 
                 if (!refreshing) {
+                    const originalRequestData = JSON.parse(originalRequest.data ?? "{}");
+
+                    // if we already tried refreshing the token,
+                    // the user simply does not have access to this feature
+                    if(originalRequestData[JWT_REFRESHED_QUERY] === 1) {
+                        return Promise.reject(errorResponse)
+                    }
+
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
@@ -124,8 +134,10 @@ export default (callback, store, router) => {
                         toRefreshQueue = [];
                         refreshing = false;
 
+                        originalRequestData[JWT_REFRESHED_QUERY] = 1;
+                        originalRequest.data = JSON.stringify(originalRequestData);
                         return instance(originalRequest)
-                    } catch (refreshError) {
+                    } catch {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
                         store.commit("layout/setTopNavbar", undefined);
@@ -140,7 +152,7 @@ export default (callback, store, router) => {
                     }
                 } else {
                     toRefreshQueue.push(originalRequest);
-                    
+
                     return;
                 }
             }

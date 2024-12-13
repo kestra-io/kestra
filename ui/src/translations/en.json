@@ -1005,6 +1005,10 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
+      "recent": {
+        "label": "Recent searches",
+        "empty": "You still haven't searched for anything."
+      },
       "settings": {
         "show_chart": "Show main chart"
       },

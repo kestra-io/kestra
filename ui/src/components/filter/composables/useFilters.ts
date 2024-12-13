@@ -2,70 +2,44 @@ import {useI18n} from "vue-i18n";
 
 import * as ICONS from "../utils/icons";
 
-const getItem = (key) => {
+const getItem = (key: string) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
 };
 
-const setItem = (key, value) => {
+const setItem = (key: string, value: object) => {
     return localStorage.setItem(key, JSON.stringify(value));
 };
 
-export const compare = (i, e) => JSON.stringify(i) !== JSON.stringify(e);
-const filterItems = (items, element) => {
+export const compare = (item: object, element: object) => {
+    return JSON.stringify(item) !== JSON.stringify(element);
+};
+
+const filterItems = (items: object[], element: object) => {
     return items.filter((item) => compare(item, element));
 };
 
-export function useFilters(prefix) {
+const buildComparator = (value: string, multiple = false) => {
+    return {label: value, value, multiple};
+};
+
+export function useFilters(prefix: string) {
     const {t} = useI18n({useScope: "global"});
 
-    const keys = {saved: `saved__${prefix}`};
+    const comparator = (which: string) => `filters.comparators.${which}`;
 
     const COMPARATORS = {
-        IS: {
-            label: t("filters.comparators.is"),
-            value: t("filters.comparators.is"),
-            multiple: false,
-        },
-        IS_ONE_OF: {
-            label: t("filters.comparators.is_one_of"),
-            value: t("filters.comparators.is_one_of"),
-            multiple: true,
-        },
-        IS_NOT: {
-            label: t("filters.comparators.is_not"),
-            value: t("filters.comparators.is_not"),
-            multiple: false,
-        },
-        IS_NOT_ONE_OF: {
-            label: t("filters.comparators.is_not_one_off"),
-            value: t("filters.comparators.is_not_one_off"),
-            multiple: true,
-        },
-        CONTAINS: {
-            label: t("filters.comparators.contains"),
-            value: t("filters.comparators.contains"),
-            multiple: true,
-        },
-        NOT_CONTAINS: {
-            label: t("filters.comparators.not_contains"),
-            value: t("filters.comparators.not_contains"),
-            multiple: true,
-        },
-        IN: {
-            label: t("filters.comparators.in"),
-            value: t("filters.comparators.in"),
-            multiple: false,
-        },
-        BETWEEN: {
-            label: t("filters.comparators.between"),
-            value: t("filters.comparators.between"),
-            multiple: false,
-        },
-        STARTS_WITH: {
-            label: t("filters.comparators.starts_with"),
-            value: t("filters.comparators.starts_with"),
-            multiple: false,
-        },
+        IS: buildComparator(t(comparator("is"))),
+        IS_ONE_OF: buildComparator(t(comparator("is_one_of")), true),
+
+        IS_NOT: buildComparator(t(comparator("is_not"))),
+        IS_NOT_ONE_OF: buildComparator(t(comparator("is_not_one_off")), true),
+
+        CONTAINS: buildComparator(t(comparator("contains")), true),
+        NOT_CONTAINS: buildComparator(t(comparator("not_contains")), true),
+
+        IN: buildComparator(t(comparator("in"))),
+        BETWEEN: buildComparator(t(comparator("between"))),
+        STARTS_WITH: buildComparator(t(comparator("starts_with"))),
     };
 
     const OPTIONS = [
@@ -182,124 +156,22 @@ export function useFilters(prefix) {
             comparators: [COMPARATORS.CONTAINS],
         },
     ];
-    const encodeParams = (filters) => {
-        const encode = (values, key) => {
-            return values
-                .map((v) => {
-                    if (key === "childFilter" && v === "ALL") {
-                        return null;
-                    }
-                    const encoded = encodeURIComponent(v);
-                    return key === "labels"
-                        ? encoded.replace(/%3A/g, ":")
-                        : encoded;
-                })
-                .filter((v) => v !== null);
-        };
 
-        return filters.reduce((query, filter) => {
-            const match = OPTIONS.find((o) => o.value.label === filter.label);
-            const key = match
-                ? match.key
-                : filter.label === "text"
-                  ? "q"
-                  : null;
-
-            if (key) {
-                if (key === "details") {
-                    match.value.value.forEach((item) => {
-                        const value = item.split(":");
-                        if (value.length === 2) {
-                            console.log(value);
-                            query[`details.${value[0]}`] = value[1];
-                        }
-                    });
-                }
-                if (key !== "date") query[key] = encode(filter.value, key);
-                else {
-                    const {startDate, endDate} = filter.value[0];
-
-                    query.startDate = startDate;
-                    query.endDate = endDate;
-                }
-            }
-
-            delete query.details;
-
-            return query;
-        }, {});
-    };
-
-    const decodeParams = (query, include) => {
-        let params = Object.entries(query)
-            .filter(
-                ([key]) =>
-                    key === "q" ||
-                    OPTIONS.some(
-                        (o) => o.key === key && include.includes(o.value.label),
-                    ),
-            )
-            .map(([key, value]) => {
-                if (key.startsWith("details.")) {
-                    // Handle details.* keys
-                    const detailKey = key.replace("details.", ""); // Extract key after 'details.'
-                    return {label: "details", value: `${detailKey}:${value}`};
-                }
-
-                const label =
-                    key === "q"
-                        ? "text"
-                        : OPTIONS.find((o) => o.key === key)?.value.label ||
-                          key;
-
-                const decodedValue = Array.isArray(value)
-                    ? value.map(decodeURIComponent)
-                    : [decodeURIComponent(value)];
-
-                return {label, value: decodedValue};
-            });
-
-        // Group all details into a single entry
-        const details = params
-            .filter((p) => p.label === "details")
-            .map((p) => p.value); // Collect all `details` values
-
-        if (details.length > 0) {
-            // Replace multiple details with a single object
-            params = params.filter((p) => p.label !== "details"); // Remove individual details
-            params.push({label: "details", value: details});
-        }
-
-        // Handle the date functionality by grouping startDate and endDate if they exist
-        if (query.startDate && query.endDate) {
-            params.push({
-                label: "absolute_date",
-                value: [{startDate: query.startDate, endDate: query.endDate}],
-            });
-        }
-
-        // TODO: Will need tweaking once we introduce multiple comparators for filters
-        return params.map((p) => {
-            const comparator = OPTIONS.find((o) => o.value.label === p.label);
-            return {...p, comparator: comparator?.comparators?.[0]};
-        });
-    };
+    const keys = {saved: `saved__${prefix}`};
 
     return {
         getSavedItems: () => {
             return getItem(keys.saved);
         },
-        setSavedItems: (value) => {
+        setSavedItems: (value: object) => {
             return setItem(keys.saved, value);
         },
-        removeSavedItem: (element) => {
+        removeSavedItem: (element: object) => {
             const filtered = filterItems(getItem(keys.saved), element);
             return setItem(keys.saved, filtered);
         },
 
         COMPARATORS,
         OPTIONS,
-        encodeParams,
-        decodeParams,
     };
 }

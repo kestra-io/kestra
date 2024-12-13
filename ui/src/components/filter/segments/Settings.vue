@@ -1,7 +1,10 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon :tooltip="$t('settings.label')" placement="bottom">
-            <el-button :icon="ChartBar" class="settings" />
+            <el-button
+                :icon="ChartBar"
+                :class="{settings: true, 'rounded-0 rounded-end': refresh}"
+            />
         </KestraIcon>
 
         <template #dropdown>
@@ -37,10 +40,14 @@
                 charts: {shown: false, value: false, callback: () => {}},
             }),
         },
+        refresh: {
+            type: Boolean,
+            default: true,
+        },
     });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .settings-dropdown {
     width: 200px;
 }

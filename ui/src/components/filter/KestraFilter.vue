@@ -1,6 +1,6 @@
 <template>
     <section class="d-inline-flex mb-3 filters">
-        <Saved :prefix @search="handleHistoryItems" />
+        <Items :prefix @search="handleClickedItems" />
 
         <el-select
             ref="select"
@@ -86,7 +86,11 @@
 
         <el-button-group class="d-inline-flex me-1">
             <KestraIcon :tooltip="$t('search')" placement="bottom">
-                <el-button :icon="Magnify" @click="triggerSearch" />
+                <el-button
+                    :icon="Magnify"
+                    @click="triggerSearch"
+                    class="rounded-0"
+                />
             </KestraIcon>
             <Save :disabled="!current.length" :prefix :current />
         </el-button-group>
@@ -102,6 +106,7 @@
             <Settings
                 v-if="buttons.settings.shown"
                 :settings="buttons.settings"
+                :refresh="buttons.refresh.shown"
             />
         </el-button-group>
 
@@ -117,6 +122,17 @@
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
+    import Refresh from "../layout/RefreshButton.vue";
+    import Items from "./segments/Items.vue";
+    import Label from "./components/Label.vue";
+    import Save from "./segments/Save.vue";
+    import Settings from "./segments/Settings.vue";
+    import Dashboards from "./segments/Dashboards.vue";
+    import KestraIcon from "../Kicon.vue";
+    import DateRange from "../layout/DateRange.vue";
+
+    import {Magnify} from "./utils/icons.js";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -127,24 +143,11 @@
     const router = useRouter();
     const route = useRoute();
 
-    import Refresh from "../layout/RefreshButton.vue";
-
-    import Saved from "./components/Saved.vue";
-    import Label from "./components/Label.vue";
-    import Save from "./components/Save.vue";
-    import Settings from "./components/Settings.vue";
-    import Dashboards from "./components/Dashboards.vue";
-    import KestraIcon from "../Kicon.vue";
-
-    import {Magnify} from "./utils/icons.js";
-
-    import DateRange from "../layout/DateRange.vue";
-
     const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
-        values: {type: Object, required: false, default: undefined},
+        values: {type: Object, default: undefined},
         buttons: {
             type: Object,
             default: () => ({
@@ -162,9 +165,7 @@
     });
 
     import {useFilters} from "./composables/useFilters.js";
-    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
-        props.prefix,
-    );
+    const {COMPARATORS, OPTIONS} = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -245,7 +246,7 @@
         emptyLabel.value = ["labels", "details"].includes(
             current.value[dropdowns.value.second.index].label,
         )
-            ? t("filters.key_value_type")
+            ? t("filters.format")
             : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
@@ -466,17 +467,19 @@
         triggerSearch();
     };
 
-    const handleHistoryItems = (value) => {
+    const handleClickedItems = (value) => {
         if (value) current.value = value;
         select.value?.focus();
     };
 
+    import {encodeParams, decodeParams} from "./utils/helpers.js";
+
     const triggerSearch = () => {
-        router.push({query: encodeParams(current.value)});
+        router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter
-    current.value = decodeParams(route.query, props.include);
+    current.value = decodeParams(route.query, props.include, OPTIONS);
 
     const addNamespaceFilter = (namespace) => {
         if (!namespace) return;
@@ -565,23 +568,6 @@ $dashboards: 52px;
         overflow-x: auto;
         &::-webkit-scrollbar {
             height: 0px;
-        }
-    }
-    & .el-button-group {
-        .el-button {
-            border-radius: 0;
-        }
-
-        span.kicon:last-child .el-button,
-        > button.el-button:first-child:not(.settings) {
-            border-top-left-radius: var(--bs-border-radius);
-            border-bottom-left-radius: var(--bs-border-radius);
-        }
-
-        span.kicon:last-child .el-button,
-        > button.el-button:last-child {
-            border-top-right-radius: var(--bs-border-radius);
-            border-bottom-right-radius: var(--bs-border-radius);
         }
     }
 }

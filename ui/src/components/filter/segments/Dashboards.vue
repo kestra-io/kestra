@@ -34,7 +34,7 @@
 
                 <hr class="my-2">
 
-                <div class="overflow-x-auto saved scroller">
+                <div class="overflow-x-auto scroller">
                     <el-dropdown-item
                         v-for="(dashboard, index) in filtered"
                         :key="index"
@@ -84,14 +84,14 @@
 
     const emits = defineEmits(["dashboard"]);
 
-    const remove = (id) => {
+    const remove = (id: string) => {
         store.dispatch("dashboard/delete", id).then(() => {
             dashboards.value = dashboards.value.filter((d) => d.id !== id);
         });
     };
 
     const search = ref("");
-    const dashboards = ref([]);
+    const dashboards = ref<{ id: string; title: string }[]>([]);
     const filtered = computed(() => {
         return dashboards.value.filter(
             (d) =>
@@ -100,13 +100,15 @@
         );
     });
     onBeforeMount(() => {
-    // store.dispatch("dashboard/list", {}).then((response) => {
-    //     dashboards.value = response.results;
-    // });
+        store
+            .dispatch("dashboard/list", {})
+            .then((response: { results: { id: string; title: string }[] }) => {
+                dashboards.value = response.results;
+            });
     });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .dashboard-dropdown {
     width: 300px;
 }
@@ -115,11 +117,9 @@
     color: var(--bs-gray-900);
 }
 
-.saved {
-    max-height: 160px !important; // 5 visible items
-}
-
 .scroller {
+    max-height: 160px !important; // 5 visible items
+
     &::-webkit-scrollbar {
         height: 5px;
         width: 5px;

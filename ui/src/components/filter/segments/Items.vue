@@ -9,11 +9,11 @@
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 saved-dropdown">
+            <el-dropdown-menu class="py-2 items-dropdown">
                 <p class="py-1 title">
                     {{ t("filters.save.label") }}
                 </p>
-                <div class="overflow-x-auto saved scroller">
+                <div class="overflow-x-auto items scroller">
                     <el-dropdown-item
                         v-if="!saved.length"
                         @click="emits('search', {})"
@@ -63,13 +63,13 @@
 <script setup lang="ts">
     import {ref} from "vue";
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     import KestraIcon from "../../Kicon.vue";
-    import Label from "./Label.vue";
+    import Label from "../components/Label.vue";
 
     import {History, DeleteOutline} from "../utils/icons.js";
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
@@ -77,7 +77,7 @@
     import {useFilters} from "../composables/useFilters.js";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
-    let saved = ref([]);
+    let saved = ref<{ value: string; name: string }[]>([]);
 
     const loadAll = () => {
         saved.value = getSavedItems().reverse();
@@ -85,14 +85,14 @@
 
     loadAll();
 
-    const remove = (index) => {
+    const remove = (index: number) => {
         removeSavedItem(saved.value[index]);
         saved.value.splice(index, 1);
     };
 </script>
 
-<style lang="scss">
-.saved-dropdown {
+<style scoped lang="scss">
+.items-dropdown {
     width: 400px;
 }
 
@@ -103,7 +103,7 @@
     color: var(--bs-grey-700);
 }
 
-.saved {
+.items {
     max-height: 170px !important; // 5 visible items
 }
 

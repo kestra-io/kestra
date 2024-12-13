@@ -984,8 +984,8 @@
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
+      "format": "Type parameter as 'key:value'",
       "options": {
-        "user": "User",
         "namespace": "Namespace",
         "state": "State",
         "trigger_state": "State",
@@ -994,14 +994,15 @@
         "level": "Log level",
         "task": "Task",
         "metric": "Metric",
+        "user": "User",
         "permission": "Permission",
         "action": "Action",
         "details": "Details",
         "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
-        "text": "text",
-        "labels": "Labels"
+        "labels": "Labels",
+        "text": "text"
       },
       "comparators": {
         "is": "is",
@@ -1025,15 +1026,10 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
-      },
       "settings": {
         "label": "Page settings",
         "show_chart": "Show main chart"
-      },
-      "key_value_type": "Type parameter as 'key:value'"
+      }
     },
     "item": "item",
     "items": "items",

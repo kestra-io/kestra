@@ -14,7 +14,7 @@
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
 
-    const formatter = (date) => moment(date).format(DATE_FORMAT);
+    const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
 
     const label = computed(() => props.option?.label);
     const comparator = computed(() => props.option?.comparator?.label);
@@ -32,11 +32,11 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .comparator {
+    display: inline-block;
     background: var(--bs-gray-500);
     padding: 0.3rem 0.35rem;
     margin: 0 0.5rem;
-    display: inline-block;
 }
 </style>

@@ -7,6 +7,8 @@ let requestsTotal = 0
 let requestsCompleted = 0
 let latencyThreshold = 0
 
+const JWT_REFRESHED_QUERY = "__jwt_refreshed__";
+
 const progressComplete = () => {
     requestsTotal = 0
     requestsCompleted = 0
@@ -115,6 +117,11 @@ export default (callback, store, router) => {
                 const originalRequest = errorResponse.config
 
                 if (!refreshing) {
+                    // if we already tried refreshing the token,
+                    // the user simply does not have access to this feature
+                    if(originalRequest.data[JWT_REFRESHED_QUERY] !== 1) {
+                        return Promise.reject(errorResponse)
+                    }
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
@@ -125,7 +132,6 @@ export default (callback, store, router) => {
                         refreshing = false;
 
                         return instance(originalRequest)
-
                     } catch {
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);

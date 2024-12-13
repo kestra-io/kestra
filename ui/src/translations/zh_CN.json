@@ -935,7 +935,7 @@
         "contains": "包含"
       },
       "recent": {
-        "label": "最近的搜索",
+        "label": "最近搜索",
         "empty": "您还没有搜索任何内容。"
       },
       "labels": {

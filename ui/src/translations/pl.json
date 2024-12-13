@@ -936,7 +936,7 @@
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
-        "empty": "Nie wyszukałeś jeszcze niczego."
+        "empty": "Nie wyszukiwałeś jeszcze niczego."
       },
       "labels": {
         "placeholder": "Wpisz label jako 'key:value'"

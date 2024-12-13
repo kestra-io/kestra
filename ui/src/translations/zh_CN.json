@@ -980,9 +980,6 @@
       "guidance_desc": "需要指导来执行您的flow吗？",
       "guidance_sub_desc": "请查阅文档以获取您所需的所有信息。",
       "title": "开始自动化使用"
-    },
-    "filters": {
-      "empty": "无数据。"
     }
   }
 }

@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,6 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class MultipleConditionTriggerCaseTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MultipleConditionTriggerCaseTest.class);
+
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
@@ -99,28 +104,38 @@ public class MultipleConditionTriggerCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
+                LOG.info("------------------> success trigger triggered with success: {}", execution);
                 countDownLatch.countDown();
                 listener.set(execution);
             }
         });
 
         // first one
+        LOG.info("------------------> Starting the failing flow");
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
+        LOG.info("------------------> Flow successfully failed");
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         // wait a little to be sure that the trigger is not launching execution
+        LOG.info("------------------> Wait before getting the listener");
         Thread.sleep(1000);
         assertThat(listener.get(), nullValue());
+        LOG.info("------------------> The listener is null");
 
         // second one
+        LOG.info("------------------> Starting the success flow");
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
+        LOG.info("------------------> Flow success");
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         // trigger was not done
+        LOG.info("------------------> Waiting for the success trigger to happened");
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        LOG.info("------------------> Trigger thread release");
         receive.blockLast();
+        LOG.info("------------------> Checking listener value, it should not be null: {}", listener.get());
         assertThat(listener.get(), notNullValue());
         assertThat(listener.get().getState().getCurrent(), is(State.Type.SUCCESS));
     }

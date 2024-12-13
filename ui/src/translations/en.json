@@ -983,7 +983,7 @@
     "documentationMenu": "Documentation menu",
     "filters": {
       "label": "Choose filters",
-      "empty": "No data.",
+      "empty": "No data",
       "format": "Type parameter as 'key:value'",
       "options": {
         "namespace": "Namespace",

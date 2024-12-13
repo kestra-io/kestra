@@ -274,7 +274,7 @@ public abstract class JdbcRunnerTest {
     @Test
     void multipleConditionTriggerFailed() throws Exception {
         executeWithFlow(
-            List.of("flows/valids/trigger-flow-listener-namespace-condition-fail.yaml",
+            List.of("flows/valids/trigger-flow-listener-namespace-condition.yaml",
                 "flows/valids/trigger-multiplecondition-flow-c.yaml",
                 "flows/valids/trigger-multiplecondition-flow-d.yaml"), () ->
                 multipleConditionTriggerCaseTest.failed());

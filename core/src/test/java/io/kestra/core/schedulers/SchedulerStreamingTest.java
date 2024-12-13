@@ -42,6 +42,9 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
 
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
+
     private static Flow createFlow(Boolean failed) {
         RealtimeUnitTest schedule = RealtimeUnitTest.builder()
             .id("stream")
@@ -75,6 +78,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
             AbstractScheduler scheduler = new DefaultScheduler(
                 applicationContext,
                 flowListenersServiceSpy,
+                executionState,
                 triggerState
             );
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)

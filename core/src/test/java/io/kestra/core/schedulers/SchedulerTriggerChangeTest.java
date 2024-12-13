@@ -52,6 +52,9 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
 
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
+
     public static Flow createFlow(Duration sleep) {
         SleepTriggerTest schedule = SleepTriggerTest.builder()
             .id("sleep")
@@ -101,6 +104,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             AbstractScheduler scheduler = new DefaultScheduler(
                 applicationContext,
                 flowListenersService,
+                executionState,
                 triggerState
             );
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)

@@ -7,6 +7,7 @@ import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.DefaultScheduler;
+import io.kestra.core.schedulers.SchedulerExecutionStateInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
@@ -32,6 +33,9 @@ class TriggerTest {
     private SchedulerTriggerStateInterface triggerState;
 
     @Inject
+    protected SchedulerExecutionStateInterface executionState;
+
+    @Inject
     private FlowListenersInterface flowListenersService;
 
     @Inject
@@ -51,6 +55,7 @@ class TriggerTest {
                 AbstractScheduler scheduler = new DefaultScheduler(
                         this.applicationContext,
                         this.flowListenersService,
+                        this.executionState,
                         this.triggerState
                 );
                 Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
@@ -89,6 +94,7 @@ class TriggerTest {
                 AbstractScheduler scheduler = new DefaultScheduler(
                         this.applicationContext,
                         this.flowListenersService,
+                        this.executionState,
                         this.triggerState
                 );
         ) {

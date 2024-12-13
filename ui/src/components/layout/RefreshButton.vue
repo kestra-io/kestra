@@ -1,5 +1,5 @@
 <template>
-    <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh" data-test-id="toggle-aut-refresh-button">
+    <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh" data-test-id="toggle-aut-refresh-button" class="rounded-0 rounded-start">
         <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
             <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
         </kicon>

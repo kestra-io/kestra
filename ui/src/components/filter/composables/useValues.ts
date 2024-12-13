@@ -1,8 +1,8 @@
 import {useI18n} from "vue-i18n";
 
-import State from "../../utils/state.js";
-import permission from "../../models/permission";
-import action from "../../models/action";
+import State from "../../../utils/state.js";
+import permission from "../../../models/permission.js";
+import action from "../../../models/action.js";
 
 export function useValues(label?: string) {
     const {t} = useI18n({useScope: "global"});

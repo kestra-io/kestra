@@ -9,8 +9,8 @@
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 history-dropdown">
-                <p class="pt-3 title">
+            <el-dropdown-menu class="py-2 saved-dropdown">
+                <p class="py-1 title">
                     {{ t("filters.save.label") }}
                 </p>
                 <div class="overflow-x-auto saved scroller">
@@ -66,16 +66,15 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import KestraIcon from "../../../Kicon.vue";
-    import Label from "../Label.vue";
+    import KestraIcon from "../../Kicon.vue";
+    import Label from "./Label.vue";
 
-    import History from "vue-material-design-icons/History.vue";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
+    import {History, DeleteOutline} from "../utils/icons.js";
 
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../../useFilters.js";
+    import {useFilters} from "../composables/useFilters.js";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
     let saved = ref([]);
@@ -93,7 +92,7 @@
 </script>
 
 <style lang="scss">
-.history-dropdown {
+.saved-dropdown {
     width: 400px;
 }
 

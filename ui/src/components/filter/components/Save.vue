@@ -61,7 +61,7 @@
     import KestraIcon from "../../Kicon.vue";
     import Label from "./Label.vue";
 
-    import Save from "vue-material-design-icons/ContentSaveOutline.vue";
+    import {Save} from "../utils/icons.js";
 
     const props = defineProps({
         disabled: {type: Boolean, default: true},
@@ -69,7 +69,7 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../useFilters.js";
+    import {useFilters} from "../composables/useFilters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);

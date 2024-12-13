@@ -1,19 +1,6 @@
 import {useI18n} from "vue-i18n";
 
-import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
-import TagOutline from "vue-material-design-icons/TagOutline.vue";
-import AccountCheck from "vue-material-design-icons/AccountCheck.vue";
-import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
-import MathLog from "vue-material-design-icons/MathLog.vue";
-import Sigma from "vue-material-design-icons/Sigma.vue";
-import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-import ChartBar from "vue-material-design-icons/ChartBar.vue";
-import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
-import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
-import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
-import StateMachine from "vue-material-design-icons/StateMachine.vue";
-import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
-import GestureTapButton from "vue-material-design-icons/GestureTapButton.vue";
+import * as ICONS from "../utils/icons";
 
 const getItem = (key) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -84,112 +71,112 @@ export function useFilters(prefix) {
     const OPTIONS = [
         {
             key: "namespace",
-            icon: DotsSquare,
+            icon: ICONS.DotsSquare,
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
             comparators: [COMPARATORS.STARTS_WITH],
         },
         {
             key: "state",
-            icon: StateMachine,
+            icon: ICONS.StateMachine,
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "trigger_state",
-            icon: StateMachine,
+            icon: ICONS.StateMachine,
             label: t("filters.options.state"),
             value: {label: "trigger_state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "scope",
-            icon: FilterSettingsOutline,
+            icon: ICONS.FilterSettingsOutline,
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
             key: "childFilter",
-            icon: FilterVariantMinus,
+            icon: ICONS.FilterVariantMinus,
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "level",
-            icon: MathLog,
+            icon: ICONS.MathLog,
             label: t("filters.options.level"),
             value: {label: "level", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "task",
-            icon: TimelineTextOutline,
+            icon: ICONS.TimelineTextOutline,
             label: t("filters.options.task"),
             value: {label: "task", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "metric",
-            icon: ChartBar,
+            icon: ICONS.ChartBar,
             label: t("filters.options.metric"),
             value: {label: "metric", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "user",
-            icon: AccountOutline,
+            icon: ICONS.AccountOutline,
             label: t("filters.options.user"),
             value: {label: "user", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "permission",
-            icon: AccountCheck,
+            icon: ICONS.AccountCheck,
             label: t("filters.options.permission"),
             value: {label: "permission", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "action",
-            icon: GestureTapButton,
+            icon: ICONS.GestureTapButton,
             label: t("filters.options.action"),
             value: {label: "action", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "details",
-            icon: TagOutline,
+            icon: ICONS.TagOutline,
             label: t("filters.options.details"),
             value: {label: "details", comparator: undefined, value: []},
             comparators: [COMPARATORS.CONTAINS],
         },
         {
             key: "aggregation",
-            icon: Sigma,
+            icon: ICONS.Sigma,
             label: t("filters.options.aggregation"),
             value: {label: "aggregation", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "timeRange",
-            icon: CalendarRangeOutline,
+            icon: ICONS.CalendarRangeOutline,
             label: t("filters.options.relative_date"),
             value: {label: "relative_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.IN],
         },
         {
             key: "date",
-            icon: CalendarEndOutline,
+            icon: ICONS.CalendarEndOutline,
             label: t("filters.options.absolute_date"),
             value: {label: "absolute_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.BETWEEN],
         },
         {
             key: "labels",
-            icon: TagOutline,
+            icon: ICONS.TagOutline,
             label: t("filters.options.labels"),
             value: {label: "labels", comparator: undefined, value: []},
             comparators: [COMPARATORS.CONTAINS],
@@ -212,7 +199,11 @@ export function useFilters(prefix) {
 
         return filters.reduce((query, filter) => {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
-            let key = match ? match.key : filter.label === "text" ? "q" : null;
+            const key = match
+                ? match.key
+                : filter.label === "text"
+                  ? "q"
+                  : null;
 
             if (key) {
                 if (key === "details") {

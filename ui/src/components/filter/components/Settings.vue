@@ -1,11 +1,14 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon :tooltip="$t('settings.label')" placement="bottom">
-            <el-button :icon="TableCog" />
+            <el-button :icon="ChartBar" class="settings" />
         </KestraIcon>
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 settings-dropdown">
+                <p class="py-1 title">
+                    {{ t("filters.settings.label") }}
+                </p>
                 <template v-if="settings.charts.shown">
                     <el-switch
                         :model-value="settings.charts.value"
@@ -22,7 +25,7 @@
 <script setup lang="ts">
     import KestraIcon from "../../Kicon.vue";
 
-    import TableCog from "vue-material-design-icons/TableCog.vue";
+    import {ChartBar} from "../utils/icons.js";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});

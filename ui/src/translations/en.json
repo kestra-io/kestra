@@ -1030,6 +1030,7 @@
         "empty": "You still haven't searched for anything."
       },
       "settings": {
+        "label": "Page settings",
         "show_chart": "Show main chart"
       },
       "key_value_type": "Type parameter as 'key:value'"

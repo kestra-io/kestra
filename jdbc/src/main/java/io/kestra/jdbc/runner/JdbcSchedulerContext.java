@@ -18,17 +18,14 @@ public class JdbcSchedulerContext implements ScheduleContextInterface {
         this.dslContextWrapper = dslContextWrapper;
     }
 
-    public void startTransaction(Consumer<ScheduleContextInterface> consumer) {
+    @Override
+    public void doInTransaction(Consumer<ScheduleContextInterface> consumer) {
         this.dslContextWrapper.transaction(configuration -> {
             this.context = DSL.using(configuration);
 
             consumer.accept(this);
 
-            this.commit();
+            this.context.commit();
         });
-    }
-
-    public void commit() {
-        this.context.commit();
     }
 }

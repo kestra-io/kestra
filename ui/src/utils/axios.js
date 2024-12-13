@@ -117,11 +117,14 @@ export default (callback, store, router) => {
                 const originalRequest = errorResponse.config
 
                 if (!refreshing) {
+                    const originalRequestData = JSON.parse(originalRequest.data);
+
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature
-                    if(originalRequest.data[JWT_REFRESHED_QUERY] !== 1) {
+                    if(originalRequestData[JWT_REFRESHED_QUERY] === 1) {
                         return Promise.reject(errorResponse)
                     }
+
                     refreshing = true;
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
@@ -131,6 +134,8 @@ export default (callback, store, router) => {
                         toRefreshQueue = [];
                         refreshing = false;
 
+                        originalRequestData[JWT_REFRESHED_QUERY] = 1;
+                        originalRequest.data = JSON.stringify(originalRequestData);
                         return instance(originalRequest)
                     } catch {
                         document.body.classList.add("login");

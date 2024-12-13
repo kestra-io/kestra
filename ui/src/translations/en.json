@@ -727,7 +727,6 @@
         "text": "Ask any question in our Slack community. If you are stuck, we are help to help you. ✋"
       }
     },
-
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
@@ -989,8 +988,8 @@
         "user": "User",
         "namespace": "Namespace",
         "state": "State",
+        "trigger_state": "State",
         "scope": "Scope",
-        "labels": "Labels",
         "child": "Child",
         "level": "Log level",
         "task": "Task",
@@ -1001,7 +1000,8 @@
         "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
-        "text": "text"
+        "text": "text",
+        "labels": "Labels"
       },
       "comparators": {
         "is": "is",
@@ -1046,5 +1046,4 @@
     "edit_custom_dashboard": "Edit Dashboard",
     "custom_dashboard_empty": "There are no results to be shown."
   }
-  
 }

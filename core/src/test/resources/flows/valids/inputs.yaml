@@ -95,6 +95,11 @@ inputs:
 - name: array
   type: ARRAY
   itemType: INT
+# required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
+- name: empty
+  type: STRING
+  defaults: ''
+  required: true
 
 tasks:
 - id: string

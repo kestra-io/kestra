@@ -10,7 +10,7 @@
                     <p class="section-1-desc">
                         {{ $t("no-executions-view.sub_title") }}
                     </p>
-                    <div v-if="flow && !deleted" class="mt-2">
+                    <div v-if="flow && !flow.deleted" class="mt-2">
                         <trigger-flow
                             type="primary"
                             :disabled="flow.disabled"

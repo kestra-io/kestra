@@ -980,6 +980,9 @@
       "guidance_desc": "Hai bisogno di assistenza per eseguire il tuo flow?",
       "guidance_sub_desc": "Segui la documentazione per tutte le informazioni di cui hai bisogno.",
       "title": "Inizia ad automatizzare con"
+    },
+    "filters": {
+      "empty": "Nessun dato."
     }
   }
 }

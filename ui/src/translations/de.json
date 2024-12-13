@@ -922,62 +922,6 @@
     "execution-warn-title": "Wichtige Warnung!",
     "worker group key": "Worker-Gruppe Schlüssel",
     "worker group fallback": "Arbeitsgruppe Fallback",
-    "filters": {
-      "comparators": {
-        "is": "ist",
-        "is_one_of": "ist einer von",
-        "is_not_one_off": "ist nicht einer von",
-        "is_not": "ist nicht",
-        "between": "zwischen",
-        "in": "im",
-        "not_contains": "nicht enthält",
-        "starts_with": "beginnt mit",
-        "contains": "enthält"
-      },
-      "recent": {
-        "label": "Letzte Suchanfragen",
-        "empty": "Sie haben noch nichts gesucht."
-      },
-      "labels": {
-        "placeholder": "Geben Sie das Label als 'key:value' ein."
-      },
-      "save": {
-        "dialog": {
-          "hint": "Wie möchten Sie dieses Suchkriterium labeln?",
-          "heading": "Aktuelle Suche speichern",
-          "confirmation": "Suchkriterien <code>{name}</code>",
-          "placeholder": "Label"
-        },
-        "label": "Gespeicherte Suchen",
-        "tooltip": "Sie können keine leeren Suchkriterien speichern.",
-        "empty": "Sie haben noch keine Suche gespeichert."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Umfang",
-        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
-        "labels": "Labels",
-        "state": "Zustand",
-        "child": "Kind",
-        "absolute_date": "Absolutes Datum",
-        "relative_date": "Relatives Datum",
-        "level": "Log-Ebene",
-        "task": "Aufgabe",
-        "aggregation": "Aggregation",
-        "metric": "Metrik",
-        "trigger_state": "Zustand",
-        "action": "Aktion",
-        "permission": "Berechtigung",
-        "user": "Benutzer",
-        "details": "Details"
-      },
-      "empty": "Keine Daten.",
-      "label": "Filter auswählen",
-      "settings": {
-        "show_chart": "Hauptdiagramm anzeigen"
-      },
-      "key_value_type": "Geben Sie den Parameter als 'key:value' ein"
-    },
     "force run title": "Erzwinge die Ausführung <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> Ausführung(en) erzwungener Lauf",
     "force run done": "Ausführung ist erzwungener Lauf",

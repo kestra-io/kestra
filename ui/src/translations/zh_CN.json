@@ -922,62 +922,6 @@
     "execution-warn-title": "重要警告！",
     "worker group key": "工作组 key",
     "worker group fallback": "工作组回退",
-    "filters": {
-      "comparators": {
-        "is": "是",
-        "is_one_of": "是其中之一",
-        "is_not_one_off": "不是其中之一",
-        "is_not": "不是",
-        "between": "之间",
-        "in": "在",
-        "not_contains": "不包含",
-        "starts_with": "以...开始",
-        "contains": "包含"
-      },
-      "recent": {
-        "label": "最近搜索",
-        "empty": "您还没有搜索任何内容。"
-      },
-      "labels": {
-        "placeholder": "输入label为'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "您想如何标记此搜索条件？",
-          "heading": "保存当前搜索",
-          "confirmation": "搜索条件 <code>{name}</code>",
-          "placeholder": "标签"
-        },
-        "label": "保存的搜索",
-        "tooltip": "您不能保存空的搜索条件。",
-        "empty": "您还没有保存任何搜索。"
-      },
-      "options": {
-        "namespace": "命名空间",
-        "scope": "范围",
-        "text": "文本",
-        "labels": "标签",
-        "state": "状态",
-        "child": "子项",
-        "absolute_date": "绝对日期",
-        "relative_date": "相对日期",
-        "level": "Log级别",
-        "task": "任务",
-        "aggregation": "聚合",
-        "metric": "指标",
-        "trigger_state": "状态",
-        "action": "操作",
-        "permission": "权限",
-        "user": "用户",
-        "details": "详情"
-      },
-      "empty": "无数据。",
-      "label": "选择过滤器",
-      "settings": {
-        "show_chart": "显示主图表"
-      },
-      "key_value_type": "将参数输入为 'key:value'"
-    },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
     "force run done": "执行被强制运行",

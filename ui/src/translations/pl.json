@@ -922,62 +922,6 @@
     "execution-warn-title": "Ważne Ostrzeżenie!",
     "worker group key": "Klucz grupy Worker",
     "worker group fallback": "Grupa Workerów awaryjna",
-    "filters": {
-      "comparators": {
-        "is": "jest",
-        "is_one_of": "jest jednym z",
-        "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest",
-        "between": "pomiędzy",
-        "in": "w",
-        "not_contains": "nie zawiera",
-        "starts_with": "zaczyna się od",
-        "contains": "zawiera"
-      },
-      "recent": {
-        "label": "Ostatnie wyszukiwania",
-        "empty": "Nie wyszukiwałeś jeszcze niczego."
-      },
-      "labels": {
-        "placeholder": "Wpisz label jako 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?",
-          "heading": "Zapisz bieżące wyszukiwanie",
-          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
-          "placeholder": "Etykieta"
-        },
-        "label": "Zapisane wyszukiwania",
-        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
-        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Zakres",
-        "text": "tekst",
-        "labels": "Etykiety",
-        "state": "Stan",
-        "child": "Dziecko",
-        "absolute_date": "Data bezwzględna",
-        "relative_date": "Data względna",
-        "level": "Poziom logowania",
-        "task": "Zadanie",
-        "aggregation": "Agregacja",
-        "metric": "Metryka",
-        "trigger_state": "Stan",
-        "action": "Akcja",
-        "permission": "Uprawnienie",
-        "user": "Użytkownik",
-        "details": "Szczegóły"
-      },
-      "empty": "Brak danych.",
-      "label": "Wybierz filtry",
-      "settings": {
-        "show_chart": "Pokaż główny wykres"
-      },
-      "key_value_type": "Wpisz parametr jako 'key:value'"
-    },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
     "force run done": "Wymuszone uruchomienie Execution",

@@ -24,15 +24,35 @@
                         </small>
                     </el-dropdown-item>
                     <el-dropdown-item
-                        v-for="(save, index) in saved"
+                        v-for="(item, index) in saved"
                         :key="index"
-                        @click="emits('search', save.value)"
+                        @click="emits('search', item.value)"
                     >
-                        <HistoryItem :item="save">
-                            <template #delete>
+                        <div class="d-flex align-items-center w-100 item">
+                            <div v-if="item.name" class="col-3 text-truncate">
+                                <span class="small">{{ item.name }}</span>
+                            </div>
+
+                            <div
+                                class="col flex-grow-1 overflow-auto text-nowrap"
+                            >
+                                <div class="me-3 overflow-x-auto scroller">
+                                    <el-tag
+                                        v-for="value in item.value"
+                                        :key="value"
+                                        class="me-2"
+                                    >
+                                        <span class="small">
+                                            <Label :option="value" />
+                                        </span>
+                                    </el-tag>
+                                </div>
+                            </div>
+
+                            <div class="col-auto">
                                 <DeleteOutline @click.stop="remove(index)" />
-                            </template>
-                        </HistoryItem>
+                            </div>
+                        </div>
                     </el-dropdown-item>
                 </div>
             </el-dropdown-menu>
@@ -47,7 +67,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import KestraIcon from "../../../Kicon.vue";
-    import HistoryItem from "./HistoryItem.vue";
+    import Label from "../Label.vue";
 
     import History from "vue-material-design-icons/History.vue";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
@@ -101,6 +121,17 @@
     &::-webkit-scrollbar-thumb {
         background: var(--bs-border-color);
         border-radius: 0px;
+    }
+}
+
+.item {
+    .el-tag {
+        background: var(--bs-border-color);
+        color: var(--bs-gray-900);
+    }
+
+    .small {
+        font-size: var(--el-font-size-extra-small);
     }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
     <section :class="['d-inline-flex mb-3 filters', {focused: isFocused}]">
-        <History :prefix @search="handleHistoryItems" />
+        <History :prefix @search="handleHistoryItems" class="brd" />
 
         <el-select
             ref="select"
@@ -487,15 +487,51 @@
     width: fill-available;
 }
 .filters {
+    border-radius: var(--bs-border-radius);
+    &.focused {
+	border-color: var(--bs-primary);
+	transition: border-color 0.5s;
+	border: 1px solid var(--bs-primary);
+
+	& .brd .el-button {
+		border: 0;
+		outline: none !important;
+		border-right: 1px solid var(--bs-border-color);
+
+		&:hover {
+			border-color: #8008f6 !important;
+		}
+	}
+
+	& .el-select__wrapper {
+		box-shadow:
+			0 0 0 0 var(--el-border-color),
+			0 0 0 0 var(--el-border-color);
+	}
+
+	& .el-button-group .el-button {
+		border: none;
+		border-left: 1px solid var(--el-border-color) !important;
+
+		&:hover {
+			border-left: 1px solid #8008f6 !important;
+			border-right: 1px solid #8008f6 !important;
+		}
+
+		&:last-child:hover {
+			border-right: 0 !important;
+		}
+	}
+}
     @include width-available;
     & .el-select {
         flex: 1;
         width: calc(100% - 237px);
         &.settings {
-            max-width: calc(100% - 285px);
+            width: calc(100% - 285px);
         }
         &:not(.refresh) {
-            max-width: calc(100% - 189px);
+            width: calc(100% - 189px);
         }
     }
     & .el-select__placeholder {

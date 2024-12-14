@@ -36,6 +36,7 @@
 <style lang="scss">
 .settings-dropdown {
     width: 200px;
+    background-color: var(--bs-grey-300) !important;
 }
 
 .title {

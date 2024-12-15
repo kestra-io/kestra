@@ -1,5 +1,20 @@
 import {useI18n} from "vue-i18n";
 
+import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import TagOutline from "vue-material-design-icons/TagOutline.vue";
+import AccountCheck from "vue-material-design-icons/AccountCheck.vue";
+import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
+import MathLog from "vue-material-design-icons/MathLog.vue";
+import Sigma from "vue-material-design-icons/Sigma.vue";
+import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
+import ChartBar from "vue-material-design-icons/ChartBar.vue";
+import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
+import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
+import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
+import StateMachine from "vue-material-design-icons/StateMachine.vue";
+import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
+import GestureTapButton from "vue-material-design-icons/GestureTapButton.vue";
+
 const getItem = (key) => {
     return JSON.parse(localStorage.getItem(key) || "[]");
 };
@@ -16,7 +31,7 @@ const filterItems = (items, element) => {
 export function useFilters(prefix) {
     const {t} = useI18n({useScope: "global"});
 
-    const keys = {recent: `recent__${prefix}`, saved: `saved__${prefix}`};
+    const keys = {saved: `saved__${prefix}`};
 
     const COMPARATORS = {
         IS: {
@@ -69,51 +84,115 @@ export function useFilters(prefix) {
     const OPTIONS = [
         {
             key: "namespace",
+            icon: DotsSquare,
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
             comparators: [COMPARATORS.STARTS_WITH],
         },
         {
             key: "state",
+            icon: StateMachine,
             label: t("filters.options.state"),
             value: {label: "state", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
+            key: "trigger_state",
+            icon: StateMachine,
+            label: t("filters.options.state"),
+            value: {label: "trigger_state", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "scope",
+            icon: FilterSettingsOutline,
             label: t("filters.options.scope"),
             value: {label: "scope", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS_ONE_OF],
         },
         {
-            key: "labels",
-            label: t("filters.options.labels"),
-            value: {label: "labels", comparator: undefined, value: []},
-            comparators: [COMPARATORS.CONTAINS],
-        },
-        {
             key: "childFilter",
+            icon: FilterVariantMinus,
             label: t("filters.options.child"),
             value: {label: "child", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
             key: "level",
+            icon: MathLog,
             label: t("filters.options.level"),
             value: {label: "level", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "task",
+            icon: TimelineTextOutline,
+            label: t("filters.options.task"),
+            value: {label: "task", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "metric",
+            icon: ChartBar,
+            label: t("filters.options.metric"),
+            value: {label: "metric", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "user",
+            icon: AccountOutline,
+            label: t("filters.options.user"),
+            value: {label: "user", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "permission",
+            icon: AccountCheck,
+            label: t("filters.options.permission"),
+            value: {label: "permission", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "action",
+            icon: GestureTapButton,
+            label: t("filters.options.action"),
+            value: {label: "action", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "details",
+            icon: TagOutline,
+            label: t("filters.options.details"),
+            value: {label: "details", comparator: undefined, value: []},
+            comparators: [COMPARATORS.CONTAINS],
+        },
+        {
+            key: "aggregation",
+            icon: Sigma,
+            label: t("filters.options.aggregation"),
+            value: {label: "aggregation", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "timeRange",
+            icon: CalendarRangeOutline,
             label: t("filters.options.relative_date"),
             value: {label: "relative_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.IN],
         },
         {
             key: "date",
+            icon: CalendarEndOutline,
             label: t("filters.options.absolute_date"),
             value: {label: "absolute_date", comparator: undefined, value: []},
             comparators: [COMPARATORS.BETWEEN],
+        },
+        {
+            key: "labels",
+            icon: TagOutline,
+            label: t("filters.options.labels"),
+            value: {label: "labels", comparator: undefined, value: []},
+            comparators: [COMPARATORS.CONTAINS],
         },
     ];
     const encodeParams = (filters) => {
@@ -136,6 +215,15 @@ export function useFilters(prefix) {
             let key = match ? match.key : filter.label === "text" ? "q" : null;
 
             if (key) {
+                if (key === "details") {
+                    match.value.value.forEach((item) => {
+                        const value = item.split(":");
+                        if (value.length === 2) {
+                            console.log(value);
+                            query[`details.${value[0]}`] = value[1];
+                        }
+                    });
+                }
                 if (key !== "date") query[key] = encode(filter.value, key);
                 else {
                     const {startDate, endDate} = filter.value[0];
@@ -145,12 +233,14 @@ export function useFilters(prefix) {
                 }
             }
 
+            delete query.details;
+
             return query;
         }, {});
     };
 
     const decodeParams = (query, include) => {
-        const params = Object.entries(query)
+        let params = Object.entries(query)
             .filter(
                 ([key]) =>
                     key === "q" ||
@@ -159,6 +249,12 @@ export function useFilters(prefix) {
                     ),
             )
             .map(([key, value]) => {
+                if (key.startsWith("details.")) {
+                    // Handle details.* keys
+                    const detailKey = key.replace("details.", ""); // Extract key after 'details.'
+                    return {label: "details", value: `${detailKey}:${value}`};
+                }
+
                 const label =
                     key === "q"
                         ? "text"
@@ -172,6 +268,17 @@ export function useFilters(prefix) {
                 return {label, value: decodedValue};
             });
 
+        // Group all details into a single entry
+        const details = params
+            .filter((p) => p.label === "details")
+            .map((p) => p.value); // Collect all `details` values
+
+        if (details.length > 0) {
+            // Replace multiple details with a single object
+            params = params.filter((p) => p.label !== "details"); // Remove individual details
+            params.push({label: "details", value: details});
+        }
+
         // Handle the date functionality by grouping startDate and endDate if they exist
         if (query.startDate && query.endDate) {
             params.push({
@@ -180,21 +287,14 @@ export function useFilters(prefix) {
             });
         }
 
-        return params;
+        // TODO: Will need tweaking once we introduce multiple comparators for filters
+        return params.map((p) => {
+            const comparator = OPTIONS.find((o) => o.value.label === p.label);
+            return {...p, comparator: comparator?.comparators?.[0]};
+        });
     };
 
     return {
-        getRecentItems: () => {
-            return getItem(keys.recent);
-        },
-        setRecentItems: (value) => {
-            return setItem(keys.recent, value);
-        },
-        removeRecentItem: (element) => {
-            const filtered = filterItems(getItem(keys.recent), element);
-            return setItem(keys.recent, filtered);
-        },
-
         getSavedItems: () => {
             return getItem(keys.saved);
         },

@@ -1,7 +1,7 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :icon="icon" :size="size" :class="cls">
+    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :size="size" :style="style">
         <template v-if="label">
-            {{ title || $filters.cap($filters.lower(status)) }}
+            {{ title || $filters.cap(status) }}
         </template>
     </el-button>
 </template>
@@ -30,11 +30,11 @@
         },
         emits: ["click"],
         computed: {
-            cls() {
-                const bg = "status-" + State.colorClass()[this.status];
+            style() {
                 return {
-                    "no-label": !this.label,
-                    [bg]: true,
+                    color: `var(--content-color-${this.status.toLowerCase()}) !important`,
+                    "border-color": `var(--border-color-${this.status.toLowerCase()}) !important`,
+                    "background-color": `var(--background-color-${this.status.toLowerCase()}) !important`
                 }
             },
             icon() {
@@ -46,14 +46,13 @@
 <style scoped lang="scss">
     .el-button {
         white-space: nowrap;
+        border-radius: var(--el-border-radius-base);
+        width: 7rem;
+        cursor: default;
 
         &.no-label {
-            padding: 8px;
+            padding: 0.5rem;
             line-height: 1;
-        }
-
-        &:not(.no-label) {
-            border-radius: var(--bs-border-radius-pill);
         }
     }
 </style>

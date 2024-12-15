@@ -7,8 +7,8 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 public final class LabelService {
     private LabelService() {}
@@ -52,5 +52,11 @@ public final class LabelService {
             runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
             return null;
         }
+    }
+
+    public static boolean containsAll(List<Label> labelsContainer, List<Label> labelsThatMustBeIncluded) {
+        Map<String, String> labelsContainerMap = labelsContainer.stream().collect(HashMap::new, (m, label)-> m.put(label.key(), label.value()), HashMap::putAll);
+
+        return labelsThatMustBeIncluded.stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
     }
 }

@@ -51,8 +51,6 @@
 
 
 <script>
-    import {h} from "vue";
-
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import Flash from "vue-material-design-icons/Flash.vue";
@@ -110,19 +108,26 @@
                         },
                         page: pageFromRoute(this.$router.currentRoute.value)
                     });
-                    this.isOpen = !this.isOpen;
+                    this.toggleModal()
                     return;
                 }
                 else if (this.checkForTrigger) {
-                    this.$toast().confirm(h(FlowWarningDialog), () => (this.isOpen = !this.isOpen), true, null);
+                    this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
-                    this.isOpen = !this.isOpen;
+                    this.toggleModal()
                 }
                 else {
                     this.$store.dispatch("execution/loadNamespaces");
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
+            },
+            async toggleModal() {
+                if (!this.isOpen && this.flowId && this.namespace) {
+                    // wait for flow to be set before opening the dialog
+                    await this.loadDefinition();
+                }
+                this.isOpen = !this.isOpen;
             },
             closeModal() {
                 this.isOpen = false;
@@ -130,8 +135,8 @@
             isDisabled() {
                 return this.disabled || this.flow?.deleted;
             },
-            loadDefinition() {
-                this.$store.dispatch("execution/loadFlowForExecution", {
+            async loadDefinition() {
+                await this.$store.dispatch("execution/loadFlowForExecution", {
                     flowId: this.flowId,
                     namespace: this.namespace
                 });
@@ -214,13 +219,6 @@
                     this.$store.commit("execution/setFlow", this.localFlow);
                 },
                 immediate: true
-            },
-            isOpen: {
-                handler() {
-                    if (this.isOpen && this.flowId && this.namespace) {
-                        this.loadDefinition();
-                    }
-                }
             }
         }
     };

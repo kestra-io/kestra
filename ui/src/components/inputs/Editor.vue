@@ -466,6 +466,10 @@
                 box-shadow: 0 0 0 1px var(--bs-border-color) inset;
                 padding-top: 7px;
 
+                &.custom-dark-vs-theme {
+                    background-color: $input-bg;
+                }
+
                 html.dark & {
                     background-color: var(--bs-gray-100);
                 }
@@ -524,6 +528,7 @@
 
     .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
+            outline: none;
             background-color: $input-bg;
             --vscode-editor-background: $input-bg;
             --vscode-breadcrumb-background: $input-bg;

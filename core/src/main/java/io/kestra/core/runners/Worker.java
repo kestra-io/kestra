@@ -51,6 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.State.Type.*;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
@@ -61,6 +63,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Introspected
 public class Worker implements Service, Runnable, AutoCloseable {
+    public static final String EXECUTOR_NAME = "worker";
+
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
@@ -133,6 +137,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
+    @Getter
     private final Integer numThreads;
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);
@@ -157,7 +162,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.numThreads = numThreads;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
-        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, "worker");
+        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
         this.setState(ServiceState.CREATED);
     }
 
@@ -177,11 +182,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
             return Collections.emptySet();
         }
 
-        return Set.of(
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT)),
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT)),
-            Metric.of(this.metricRegistry.findGauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT))
+        Stream<String> metrics = Stream.of(
+            MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
+            MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT,
+            MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT
         );
+
+        return metrics
+            .flatMap(metric -> Optional.ofNullable(metricRegistry.findGauge(metric)).stream())
+            .map(Metric::of)
+            .collect(Collectors.toSet());
     }
 
     @Override

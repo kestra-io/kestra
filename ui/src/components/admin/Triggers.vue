@@ -8,29 +8,11 @@
                 :total="total"
             >
                 <template #navbar>
-                    <el-form-item>
-                        <search-field />
-                    </el-form-item>
-                    <el-form-item>
-                        <namespace-select
-                            data-type="flow"
-                            :value="$route.query.namespace"
-                            @update:model-value="onDataTableValue('namespace', $event)"
-                        />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-select v-model="state" clearable :placeholder="$t('triggers_state.state')">
-                            <el-option
-                                v-for="(s, index) in states"
-                                :key="index"
-                                :label="s.label"
-                                :value="s.value"
-                            />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item>
-                        <refresh-button @refresh="load(onDataLoaded)" />
-                    </el-form-item>
+                    <KestraFilter
+                        prefix="triggers"
+                        :include="['namespace', 'trigger_state']"
+                        :refresh="{shown: true, callback: load}"
+                    />
                 </template>
                 <template #table>
                     <select-table
@@ -42,11 +24,12 @@
                         @sort-change="onSort"
                         @selection-change="onSelectionChange"
                         expandable
+                        :row-class-name="getClasses"
                     >
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" :charts="false" embed />
+                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :charts="false" embed />
                                 </template>
                             </el-table-column>
                         </template>
@@ -84,7 +67,13 @@
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
-                        />
+                        >
+                            <template #default="scope">
+                                <div class="text-nowrap">
+                                    {{ scope.row.id }}
+                                </div>
+                            </template>
+                        </el-table-column>
                         <el-table-column
                             v-if="visibleColumns.flowId"
                             prop="flowId"
@@ -127,16 +116,6 @@
                                 </router-link>
                             </template>
                         </el-table-column>
-
-                        <el-table-column v-if="visibleColumns.executionCurrentState" :label="$t('state')">
-                            <template #default="scope">
-                                <status
-                                    v-if="scope.row.executionCurrentState"
-                                    :status="scope.row.executionCurrentState"
-                                    size="small"
-                                />
-                            </template>
-                        </el-table-column>
                         <el-table-column v-if="visibleColumns.workerId" prop="workerId" :label="$t('workerId')">
                             <template #default="scope">
                                 <id
@@ -155,7 +134,13 @@
                                 <date-ago :inverted="true" :date="scope.row.updatedDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column v-if="visibleColumns.nextExecutionDate" :label="$t('next execution date')">
+                        <el-table-column
+                            v-if="visibleColumns.nextExecutionDate"
+                            prop="nextExecutionDate"
+                            sortable="custom"
+                            :sort-orders="['ascending', 'descending']"
+                            :label="$t('next execution date')"
+                        >
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
@@ -172,7 +157,7 @@
                                     :trigger-id="scope.row.id"
                                 />
                             </template>
-                        </el-table-column>                      
+                        </el-table-column>
                         <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
                             <template #default="scope">
                                 <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
@@ -184,7 +169,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                     <kicon
                                         :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
                                         placement="left"
@@ -201,7 +186,7 @@
                             class-name="row-action"
                         >
                             <template #default="scope">
-                                <el-button size="small" v-if=" scope.row.evaluateRunningDate">
+                                <el-button>
                                     <kicon
                                         :tooltip="$t(`restart trigger.tooltip`)"
                                         placement="left"
@@ -230,7 +215,6 @@
                             <template #default="scope">
                                 <el-switch
                                     v-if="!scope.row.missingSource"
-                                    size="small"
                                     :active-text="$t('enabled')"
                                     :model-value="!scope.row.disabled"
                                     @change="setDisabled(scope.row, $event)"
@@ -277,32 +261,26 @@
     import TriggerAvatar from "../flows/TriggerAvatar.vue"
 </script>
 <script>
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
-    import SearchField from "../layout/SearchField.vue";
     import DataTable from "../layout/DataTable.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import Status from "../Status.vue";
     import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
-            RefreshButton,
+            KestraFilter,
             MarkdownTooltip,
             DataTable,
-            SearchField,
-            NamespaceSelect,
             DateAgo,
-            Status,
             Id,
             LogsWrapper
         },
@@ -320,6 +298,12 @@
             };
         },
         methods: {
+            hasLogsContent(row) {
+                return row.logs && row.logs.length > 0;
+            },
+            getClasses(row) {
+                return this.hasLogsContent(row) ? "expandable" : "no-expand"; // Return class based on logs
+            },
             onSelectionChange(selection) {
                 this.selection = selection;
             },
@@ -488,9 +472,8 @@
                     }
                 })
 
-                if (!this.state) return all;
 
-                const disabled = this.state === "DISABLED" ? true : false;
+                const disabled = this.$route.query?.trigger_state?.[0] === "disabled" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
             },
             visibleColumns() {
@@ -519,5 +502,15 @@
     .trigger-issue-icon {
         color: var(--bs-warning);
         font-size: 1.4em;
+    }
+    .el-table__expanded-cell[class*=cell]{
+        padding: 0;
+    }
+    .no-expand .el-icon {
+        display: none; /* Hide the expand icon */
+    }
+
+    .no-expand .el-table__expand-icon {
+        pointer-events: none; /* Disable pointer events */
     }
 </style>

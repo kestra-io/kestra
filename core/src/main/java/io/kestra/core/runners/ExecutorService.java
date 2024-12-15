@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -10,21 +8,13 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
-import io.kestra.core.models.tasks.ExecutableTask;
-import io.kestra.core.models.tasks.ExecutionUpdatableTask;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WaitFor;
@@ -37,14 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -396,13 +381,7 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = flow.getOutputs()
                     .stream()
-                    .collect(HashMap::new, (map, entry) -> {
-                        final ObjectMapper mapper = new ObjectMapper();
-                        final HashMap<String, Object> entryInfo = new HashMap<>();
-                        entryInfo.put("value", entry.getValue());
-                        entryInfo.put("displayName", Optional.ofNullable(entry.getDisplayName()).orElse(entry.getId()));
-                        map.put(entry.getId(), entryInfo);
-                    }, Map::putAll);
+                    .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
                 outputs = runContext.render(outputs);
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
@@ -633,13 +612,18 @@ public class ExecutorService {
 
                 if (task instanceof Pause pauseTask) {
                     if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
-                        return ExecutionDelay.builder()
-                            .taskRunId(workerTaskResult.getTaskRun().getId())
-                            .executionId(executor.getExecution().getId())
-                            .date(workerTaskResult.getTaskRun().getState().maxDate().plus(pauseTask.getDelay() != null ? pauseTask.getDelay() : pauseTask.getTimeout()))
-                            .state(pauseTask.getDelay() != null ? State.Type.RUNNING : State.Type.FAILED)
-                            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                            .build();
+                        RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                        Duration delay = runContext.render(pauseTask.getDelay()).as(Duration.class).orElse(null);
+                        Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
+                        if (delay != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                            return ExecutionDelay.builder()
+                                .taskRunId(workerTaskResult.getTaskRun().getId())
+                                .executionId(executor.getExecution().getId())
+                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(delay != null ? delay : timeout))
+                                .state(delay != null ? State.Type.RUNNING : State.Type.FAILED)
+                                .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+                                .build();
+                        }
                     }
                 }
 
@@ -1064,7 +1048,7 @@ public class ExecutorService {
      * WARNING: ATM, only the first violation will update the execution.
      */
     public Executor handleExecutionChangedSLA(Executor executor) throws QueueException {
-        if (ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
+        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 
@@ -1088,22 +1072,31 @@ public class ExecutorService {
      * Then, if there are labels, they are added to the SLA (modifying the executor)
      */
     public Executor processViolation(RunContext runContext, Executor executor, Violation violation) throws QueueException {
+        boolean hasChanged = false;
         Execution newExecution = switch (violation.behavior()) {
             case FAIL -> {
-                runContext.logger().error("Flow fail due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                runContext.logger().error("Execution failed due to SLA '{}' violated: {}", violation.slaId(), violation.reason());
+                hasChanged = true;
                 yield markAs(executor.getExecution(), State.Type.FAILED);
             }
-            case CANCEL -> markAs(executor.getExecution(), State.Type.CANCELLED);
+            case CANCEL -> {
+                hasChanged = true;
+                yield markAs(executor.getExecution(), State.Type.CANCELLED);
+            }
             case NONE -> executor.getExecution();
         };
 
-        if (!MapUtils.isEmpty(violation.labels())) {
+        if (!ListUtils.isEmpty(violation.labels()) && !LabelService.containsAll(executor.getExecution().getLabels(), violation.labels())) {
             List<Label> labels = new ArrayList<>(newExecution.getLabels());
-            violation.labels().forEach((key, value) -> labels.add(new Label(key, String.valueOf(value))));
+            labels.addAll(violation.labels());
+            hasChanged = true;
             newExecution = newExecution.withLabels(labels);
         }
 
-        return executor.withExecution(newExecution, "SLAViolation");
+        if (hasChanged) {
+            return executor.withExecution(newExecution, "SLAViolation");
+        }
+        return executor;
     }
 
     private Execution markAs(Execution execution, State.Type state) throws QueueException {

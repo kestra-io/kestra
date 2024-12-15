@@ -6,5 +6,6 @@ public enum SchemaType {
     task,
     trigger,
     plugindefault,
-    apps
+    apps,
+    dashboard
 }

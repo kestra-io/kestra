@@ -1,3 +1,10 @@
+<template>
+    <div class="tag">
+        <component :is="props.icon" class="icon" />
+        <span>{{ props.label }}</span>
+    </div>
+</template>
+
 <script setup>
     const props = defineProps({
         icon: {
@@ -11,13 +18,6 @@
     });
 </script>
 
-<template>
-    <div class="tag">
-        <component :is="props.icon" class="icon" />
-        <span>{{ props.label }}</span>
-    </div>
-</template>
-
 <style scoped lang="scss">
     .tag {
         display: inline-flex;
@@ -26,15 +26,14 @@
         border-radius: 4px;
         border: 1px solid #5BB8FF;
         background-color: #5BB8FF33;
-
-        color: #5BB8FF;
+        color: var(--el-color-alert-info);
 
         html.dark & {
             color: #A2EFFF;
         }
 
         .icon {
-            margin-right: 1px !important;
+            margin-right: 5px !important;
         }
     }
 </style>

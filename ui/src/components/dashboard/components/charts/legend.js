@@ -1,19 +1,27 @@
 import Utils from "../../../../utils/utils.js";
 import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
     const legendContainer = document.getElementById(id);
-    let listContainer = legendContainer.querySelector("ul");
+
+    legendContainer.style.width = "100%";
+    legendContainer.style.justifyItems = "end";
+
+    let listContainer = legendContainer?.querySelector("ul");
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("fw-light", "small");
+        listContainer.classList.add("w-100", "fw-light", "small", "legend");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
         listContainer.style.padding = 0;
 
-        legendContainer.appendChild(listContainer);
+        listContainer.style.maxHeight = "196px"; // 4 visible items
+        listContainer.style.overflow = "auto";
+
+        legendContainer?.appendChild(listContainer);
     }
 
     return listContainer;
@@ -82,7 +90,9 @@ export const barLegend = {
                 : "";
             textContainer.style.textTransform = "capitalize";
 
-            const text = document.createTextNode(item.text.toLowerCase());
+            if (!options.uppercase) item.text = item.text.toLowerCase();
+
+            const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
 
             li.appendChild(boxSpan);
@@ -92,7 +102,77 @@ export const barLegend = {
     },
 };
 
-export const totalsLegend = {
+export const customBarLegend = {
+    id: "customBarLegend",
+    afterUpdate(chart, args, options) {
+        const ul = getOrCreateLegendList(chart, options.containerID);
+
+        while (ul.firstChild) {
+            ul.firstChild.remove();
+        }
+
+        const seenLegendLabels = [];
+        const items = chart.options.plugins.legend.labels.generateLabels(chart).filter(l => {
+            if (seenLegendLabels.includes(l.text)) {
+                return false;
+            }
+
+            seenLegendLabels.push(l.text);
+            return true;
+        });
+
+        items.forEach((item) => {
+            const li = document.createElement("li");
+            li.style.alignItems = "center";
+            li.style.cursor = "pointer";
+            li.style.display = "flex";
+            li.style.marginLeft = "20px";
+            li.style.marginTop = "10px";
+
+            li.onclick = () => {
+                chart.data.datasets.forEach((dataset, index) => {
+                    if (dataset.label === item.text) {
+                        chart.setDatasetVisibility(
+                            index,
+                            !chart.isDatasetVisible(index),
+                        );
+                    }
+                });
+                chart.update();
+            };
+
+            const boxSpan = document.createElement("span");
+            const color = getConsistentHEXColor(item.text);
+            boxSpan.style.background = color;
+            boxSpan.style.borderColor = "transparent";
+            boxSpan.style.height = "5px";
+            boxSpan.style.width = "5px";
+            boxSpan.style.borderRadius = "50%";
+            boxSpan.style.display = "inline-block";
+            boxSpan.style.marginRight = "10px";
+
+            const textContainer = document.createElement("p");
+            textContainer.style.color =
+                Utils.getTheme() === "dark"
+                    ? "#FFFFFF"
+                    : cssVariable("--bs-gray-700");
+            textContainer.style.margin = 0;
+            textContainer.style.textDecoration = item.hidden
+                ? "line-through"
+                : "";
+            textContainer.style.textTransform = "capitalize";
+
+            const text = document.createTextNode(item.text);
+            textContainer.appendChild(text);
+
+            li.appendChild(boxSpan);
+            li.appendChild(textContainer);
+            ul.appendChild(li);
+        });
+    },
+};
+
+const generateTotalsLegend = (isDuration) => ({
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID, "column");
@@ -168,7 +248,7 @@ export const totalsLegend = {
                 Utils.getTheme() === "dark"
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
-            executionsText.textContent = dataset.data[item.index];
+            executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index]) : dataset.data[item.index];
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
@@ -181,5 +261,9 @@ export const totalsLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
-    },
-};
+    }
+});
+
+export const totalsDurationLegend = generateTotalsLegend(true)
+
+export const totalsLegend = generateTotalsLegend(false);

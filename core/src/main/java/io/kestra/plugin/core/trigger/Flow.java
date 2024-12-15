@@ -65,9 +65,10 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             full = true,
             title = """
-                Trigger the `transform` flow after the `extract` flow finishes successfully. \
-                The `extract` flow generates a `last_ingested_date` output that is passed to the \
-                `transform` flow as an input. Here is the `extract` flow:
+                1) Trigger the `transform` flow after the `extract` flow finishes successfully. \
+                The `extract` flow generates a `date` output that is passed to the \
+                `transform` flow as an input. \
+
                 ```yaml
                 id: extract
                 namespace: company.team
@@ -78,24 +79,25 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     format: "{{ execution.startDate | dateAdd(-2, 'DAYS') | date('yyyy-MM-dd') }}"
 
                 outputs:
-                  - id: last_ingested_date
+                  - id: date
                     type: STRING
                     value: "{{ outputs.final_date.value }}"
                 ```
-                Below is the `transform` flow triggered in response to the `extract` flow's successful completion.""",
+
+                The `transform` flow is triggered after the `extract` flow finishes successfully.""",
             code = """
                 id: transform
                 namespace: company.team
 
                 inputs:
-                  - id: last_ingested_date
+                  - id: date
                     type: STRING
                     defaults: "2025-01-01"
 
                 variables:
                   result: |
                     Ingestion done in {{ trigger.executionId }}.
-                    Now transforming data up to {{ inputs.last_ingested_date }}
+                    Now transforming data up to {{ inputs.date }}
 
                 tasks:
                   - id: run_transform
@@ -110,13 +112,82 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                   - id: run_after_extract
                     type: io.kestra.plugin.core.trigger.Flow
                     inputs:
-                      last_ingested_date: "{{ trigger.outputs.last_ingested_date }}"
+                      date: "{{ trigger.outputs.date }}"
                     preconditions:
+                      id: flows
                       flows:
                         - namespace: company.team
                           flowId: extract
                           states: [SUCCESS]"""
         ),
+        @Example(
+            full = true,
+            title = """
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+
+                ```yaml
+                id: bronze_layer
+                namespace: company.team
+
+                tasks:
+                  - id: raw_data
+                    type: io.kestra.plugin.core.log.Log
+                    message: Ingesting raw data
+                ```""",
+            code = """
+                id: silver_layer
+                namespace: company.team
+
+                tasks:
+                  - id: transform_data
+                    type: io.kestra.plugin.core.log.Log
+                    message: deduplication, cleaning, and minor aggregations
+
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    preconditions:
+                      id: bronze_layer
+                      timeWindow:
+                        type: DAILY_TIME_DEADLINE
+                        deadline: "09:00:00"
+                      flows:
+                        - namespace: company.team
+                          flowId: bronze_layer
+                          states: [SUCCESS]"""
+        ),
+        @Example(
+            full = true,
+            title = """
+                3) Create a `System Flow` to send a Slack alert on any failure or warning state \
+                within the `company` namespace. This example uses the Slack webhook secret to \
+                notify the `#general` channel about the failed flow.""",
+            code = """
+                id: alert
+                namespace: system
+
+                tasks:
+                  - id: send_alert
+                    type: io.kestra.plugin.notifications.slack.SlackExecution
+                    url: "{{secret('SLACK_WEBHOOK')}}" # format: https://hooks.slack.com/services/xzy/xyz/xyz
+                    channel: "#general"
+                    executionId: "{{trigger.executionId}}"
+
+                triggers:
+                  - id: alert_on_failure
+                    type: io.kestra.plugin.core.trigger.Flow
+                    states:
+                      - FAILED
+                      - WARNING
+                    preconditions:
+                      id: company_namespace
+                      where:
+                        - id: company
+                          filters:
+                            - field: NAMESPACE
+                              type: STARTS_WITH
+                              value: company"""
+        )
     },
     aliases = "io.kestra.core.models.triggers.types.Flow"
 )
@@ -142,17 +213,15 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         title = "List of execution states that will be evaluated by the trigger",
         description = """
             By default, only executions in a terminal state will be evaluated.
-            Any `ExecutionStatusCondition`-type condition will be evaluated after the list of `states`.
+            Any `ExecutionStatus`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::alert{type="info"}
-            The trigger will be evaluated for each state change of matching executions. Keep in mind that if a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. The Flow trigger listening to a `PAUSED` state will be evaluated twice in this case.
-            ::
-            ::alert{type="warning"}
-            Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
+            The trigger will be evaluated for each state change of matching executions. If a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. In this case, a Flow trigger listening to a `PAUSED` state will be evaluated twice.
             ::"""
     )
     @Builder.Default
     private List<State.Type> states = State.Type.terminatedTypes();
 
+    @Valid
     @Schema(
         title = "Preconditions on upstream flow executions",
         description = "Express preconditions to be met, on a time window, for the flow trigger to be evaluated."
@@ -217,13 +286,13 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         private String id;
 
         @Schema(
-            title = "Define the time period (or window) for evaluating preconditions.",
+            title = "Define the time window for evaluating preconditions.",
             description = """
-                You can set the `type` of `sla` to one of the following values:
-                1. `DURATION_WINDOW`: this is the default `type`. It uses a start time (`windowAdvance`) and end time (`window`) that are moving forward to the next interval whenever the evaluation time reaches the end time, based on the defined duration `window`. For example, with a 1-day window (the default option: `window: PT1D`), the SLA conditions are always evaluated during 24h starting at midnight (i.e. at time 00:00:00) each day. If you set `windowAdvance: PT6H`, the window will start at 6 AM each day. If you set `windowAdvance: PT6H` and you also override the `window` property to `PT6H`, the window will start at 6 AM and last for 6 hours — as a result, Kestra will check the SLA conditions during the following time periods: 06:00 to 12:00, 12:00 to 18:00, 18:00 to 00:00, and 00:00 to 06:00, and so on.
-                2. `SLIDING_WINDOW`: this option also evaluates SLA conditions over a fixed time `window`, but it always goes backward from the current time. For example, a sliding window of 1 hour (`window: PT1H`) will evaluate executions for the past hour (so between now and one hour before now). It uses a default window of 1 day.
-                3. `DAILY_TIME_DEADLINE`: this option declares that some SLA conditions should be met "before a specific time in a day". With the string property `deadline`, you can configure a daily cutoff for checking conditions. For example, `deadline: "09:00:00"` means that the defined SLA conditions should be met from midnight until 9 AM each day; otherwise, the flow will not be triggered.
-                4. `DAILY_TIME_WINDOW`: this option declares that some SLA conditions should be met "within a given time range in a day". For example, a window from `startTime: "06:00:00"` to `endTime: "09:00:00"` evaluates executions within that interval each day. This option is particularly useful for declarative definition of freshness conditions when building data pipelines. For example, if you only need one successful execution within a given time range to guarantee that some data has been successfully refreshed in order for you to proceed with the next steps of your pipeline, this option can be more useful than a strict DAG-based approach. Usually, each failure in your flow would block the entire pipeline, whereas with this option, you can proceed with the next steps of the pipeline as soon as the data is successfully refreshed at least once within the given time range."""
+                You can set the `type` of `timeWindow` to one of the following values:
+                1. `DURATION_WINDOW`: this is the default `type`. It uses a start time (`windowAdvance`) and end time (`window`) that advance to the next interval whenever the evaluation time reaches the end time, based on the defined duration `window`. For example, with a 1-day window (the default option: `window: PT1D`), the preconditions are evaluated during a 24-hour period starting at midnight (i.e., at "00:00:00+00:00") each day. If you set `windowAdvance: PT6H`, the window will start at 6 AM each day. If you set `windowAdvance: PT6H` and also override the `window` property to `PT6H`, the window will start at 6 AM and last for 6 hours. In this configuration, the preconditions will be evaluated during the following intervals: 06:00 to 12:00, 12:00 to 18:00, 18:00 to 00:00, and 00:00 to 06:00.
+                2. `SLIDING_WINDOW`: this option evaluates preconditions over a fixed time `window` but always goes backward from the current time. For example, a sliding window of 1 hour (`window: PT1H`) evaluates executions within the past hour (from one hour ago up to now). It uses a default window of 1 day.
+                3. `DAILY_TIME_DEADLINE`: this option declares that preconditions should be met "before a specific time in a day." Using the string property `deadline`, you can configure a daily cutoff for evaluating preconditions. For example, `deadline: "09:00:00"` specifies that preconditions must be met from midnight until 9 AM UTC time each day; otherwise, the flow will not be triggered.
+                4. `DAILY_TIME_WINDOW`: this option declares that preconditions should be met "within a specific time range in a day". For example, a window from `startTime: "06:00:00"` to `endTime: "09:00:00"` evaluates executions within that interval each day. This option is particularly useful for defining freshness conditions declaratively when building data pipelines that span multiple teams and namespaces. Normally, a failure in any task in your flow will block the entire pipeline, but with this decoupled flow trigger alternative, you can proceed as soon as the data is successfully refreshed within the specified time window."""
         )
         @PluginProperty
         @Builder.Default
@@ -231,14 +300,13 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         protected TimeWindow timeWindow = TimeWindow.builder().build();
 
         @Schema(
-            title = "Whether to reset the evaluation results of SLA conditions after a first successful evaluation within the given time period.",
+            title = "Whether to reset the evaluation results of preconditions after a first successful evaluation within the given time window.",
             description = """
-            By default, after a successful evaluation of the set of SLA conditions, the evaluation result is reset, so, the same set of conditions needs to be successfully evaluated again in the same time period to trigger a new execution.
-            This means that to create multiple executions, the same set of conditions needs to be evaluated to `true` multiple times.
-            You can disable this by setting this property to `false` so that, within the same period, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
+            By default, after a successful evaluation of the set of preconditions, the evaluation result is reset. This means the same set of conditions needs to be successfully evaluated again within the same time window to trigger a new execution.
+            In this setup, to create multiple executions, the same set of conditions must be evaluated to `true` multiple times within the defined window.
+            You can disable this by setting this property to `false`, so that within the same window, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
         )
         @PluginProperty
-        @NotNull
         @Builder.Default
         private Boolean resetOnSuccess = Boolean.TRUE;
 
@@ -347,7 +415,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(title = "A unique identifier for the filter.")
         private String id;
 
-        @NotNull
         @Builder.Default
         @PluginProperty
         @Schema(title = "The operand to apply between all filters of the precondition.")

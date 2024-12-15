@@ -1,6 +1,8 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
-        <el-button :icon="TableCog" />
+        <KestraIcon :tooltip="$t('settings.label')" placement="bottom">
+            <el-button :icon="TableCog" />
+        </KestraIcon>
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 settings-dropdown">
@@ -18,6 +20,8 @@
 </template>
 
 <script setup lang="ts">
+    import KestraIcon from "../../Kicon.vue";
+
     import TableCog from "vue-material-design-icons/TableCog.vue";
 
     import {useI18n} from "vue-i18n";

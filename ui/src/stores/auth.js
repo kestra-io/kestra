@@ -1,25 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 class Me {
-    // eslint-disable-next-line no-unused-vars
+
     hasAny(permission, namespace) {
         return true;
     }
 
-    // eslint-disable-next-line no-unused-vars
+
     hasAnyAction(permission, action, namespace) {
         return true;
     }
 
-    // eslint-disable-next-line no-unused-vars
+
     isAllowed(permission, action, namespace) {
         return true;
     }
 
-    // eslint-disable-next-line no-unused-vars
+
     isAllowedGlobal(permission, action) {
         return true;
     }
 
-    // eslint-disable-next-line no-unused-vars
+
     hasAnyActionOnAnyNamespace(permission, action) {
         return true;
     }

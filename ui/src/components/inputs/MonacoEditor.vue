@@ -445,7 +445,7 @@
                                 deleted: true
                             }
                         )).inputs?.map(input => input.id) ?? [];
-                    } catch (e) {
+                    } catch {
                         return undefined;
                     }
                 }
@@ -719,6 +719,10 @@
         width: 100%;
         height: 100%;
         outline: none;
+    }
+
+    .main-editor > #editorWrapper .monaco-editor {
+        padding: 1rem 0 0 1rem;
     }
 </style>
 

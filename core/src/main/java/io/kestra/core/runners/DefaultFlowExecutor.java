@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import jakarta.inject.Singleton;
+import java.util.Objects;
 import lombok.Setter;
 
 import java.util.Collection;
@@ -32,7 +33,7 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
     public Optional<FlowWithSource> findById(String tenantId, String namespace, String id, Optional<Integer> revision) {
         Optional<FlowWithSource> find = this.allFlows
             .stream()
-            .filter(flow -> ((flow.getTenantId() == null && tenantId == null) || flow.getTenantId().equals(tenantId)) &&
+            .filter(flow -> ((flow.getTenantId() == null && tenantId == null) || Objects.equals(flow.getTenantId(), tenantId)) &&
                 flow.getNamespace().equals(namespace) &&
                 flow.getId().equals(id) &&
                 (revision.isEmpty() || revision.get().equals(flow.getRevision()))

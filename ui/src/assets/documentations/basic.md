@@ -20,23 +20,24 @@ The table below describes all these properties in detail.
 |------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `id`                         | The [flow identifier](https://kestra.io/docs/workflow-components/flow) which represents the name of the flow. This ID must be unique within a namespace and is immutable (you cannot rename the flow ID later, but you can recreate it with a new name).                                                                                                                                                                                                                                                                                                                               |
 | `namespace`                  | Each flow lives in one [namespace](https://kestra.io/docs/workflow-components/namespace). Namespaces are used to group flows and provide structure. Some concepts in Kestra, such as [Namespace Files](https://kestra.io/docs/concepts/namespace-files) or [KV Store](https://kestra.io/docs/concepts/kv-store) are tied to a namespace — e.g. to retrieve a KV pair from a different namespace, use the `{{ kv('MYKEY', 'mynamespace') }}` expression.  Once a flow is created, you cannot change its namespace. If you need to change the namespace of a flow, create a new flow with the desired namespace and delete the old flow.                                                                                                                                                                                                    |
-| `revision`                   | The [flow version](https://kestra.io/docs/concepts/revision), managed internally by Kestra, and incremented upon each modification. You should **not** manually set it.                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `description`                | The [description](https://kestra.io/docs/workflow-components/descriptions) of the flow.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `labels`                     | Key-value pairs that you can use to organize your flows based on your project, maintainers, or any other criteria. You can use [labels](https://kestra.io/docs/workflow-components/labels) to filter Executions in the UI.                                                                                                                                                                                                                                                                                                                                                             |
-| `inputs`                     | The list of strongly-typed [inputs](https://kestra.io/docs/workflow-components/inputs) that allow you to make your flows more dynamic and reusable. Instead of hardcoding values in your flow, you can use inputs to trigger multiple Executions of your flow with different values determined at runtime. Use the syntax `{{ inputs.your_input_name }}` to access specific input values in your tasks.                                                                                                                                                                                |
-| `variables`                  | The list of [variables](https://kestra.io/docs/workflow-components/variables) (such as an API endpoint, table name, download URL, etc.) that you can access within tasks using the syntax `{{ vars.your_variable_name }}`. Variables help reuse some values across tasks.                                                                                                                                                                                                                                                                                                              |
 | `tasks`                      | The list of [tasks](https://kestra.io/docs/workflow-components/tasks) to be executed. Tasks are atomic actions in your flows. By default, they will run sequentially one after the other. However, you can use additional [Flowable tasks](https://kestra.io/docs/tutorial/flowable) to run some tasks in parallel.                                                                                                                                                                                                                                                                    |
+| `inputs`                     | The list of strongly-typed [inputs](https://kestra.io/docs/workflow-components/inputs) that allow you to make your flows more dynamic and reusable. Instead of hardcoding values in your flow, you can use inputs to trigger multiple Executions of your flow with different values determined at runtime. Use the syntax `{{ inputs.your_input_name }}` to access specific input values in your tasks.                                                                                                                                                                                |
+| `outputs`                    | Each flow can [produce outputs](https://kestra.io/docs/workflow-components/outputs) that can be consumed by other flows. This is a list property, so that your flow can produce as many [outputs](https://kestra.io/docs/workflow-components/outputs) as you need. Each output needs to have an `id` (the name of the output), a `type` (the same types you know from `inputs` e.g. `STRING`, `URI` or `JSON`) and `value` which is the actual output value that will be stored in internal storage and passed to other flows when needed.                                             |
+| `labels`                     | Key-value pairs that you can use to organize your flows based on your project, maintainers, or any other criteria. You can use [labels](https://kestra.io/docs/workflow-components/labels) to filter Executions in the UI.                                                                                                                                                                                                                                                                                                                                                             |
+| `description`                | The [description](https://kestra.io/docs/workflow-components/descriptions) of the flow.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `variables`                  | The list of [variables](https://kestra.io/docs/workflow-components/variables) (such as an API endpoint, table name, download URL, etc.) that you can access within tasks using the syntax `{{ vars.your_variable_name }}`. Variables help reuse some values across tasks.                                                                                                                                                                                                                                                                                                              |
+| `sla`                     | The list of [SLA conditions](https://kestra.io/docs/workflow-components/sla) specifying an execution `behavior` if the workflow doesn't satisfy the assertion defined in the SLA. This feature is currently in Beta so some properties might change in the next releases.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `errors`                     | The list of [error tasks](https://kestra.io/docs/workflow-components/errors) that will run if there is an error in the current execution.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `listeners`                  | The list of listeners (deprecated).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `disabled`                   | Set it to `true` to temporarily [disable](https://kestra.io/docs/workflow-components/disabled) any new executions of the flow. This is useful when you want to stop a flow from running (even manually) without deleting it. Once you set this property to true, nobody will be able to trigger any execution of that flow, whether from the UI or via an API call, until the flow is reenabled by setting this property back to `false` (default behavior) or by deleting this property.                                                                                              |
+| `revision`                   | The [flow version](https://kestra.io/docs/concepts/revision), managed internally by Kestra, and incremented upon each modification. You should **not** manually set it.                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `triggers`                   | The list of [triggers](https://kestra.io/docs/workflow-components/triggers) which automatically start a flow execution based on events, such as a scheduled date, a new file arrival, a new message in a queue, or the completion event of another flow's execution.                                                                                                                                                                                                                                                                                                                   |
 | `pluginDefaults`               | The list of [default task values](https://kestra.io/docs/workflow-components/task-defaults), allowing you to avoid repeating the same properties on each task.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `pluginDefaults.[].type`       | The task type is a full qualified Java class name, i.e. the task name such as `io.kestra.plugin.core.log.Log`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `pluginDefaults.[].forced`     | If set to `forced: true`, the `pluginDefault` will take precedence over properties defined in the task (the default behavior is `forced: false`).                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `pluginDefaults.[].values.xxx` | The task property that you want to be set as default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `disabled`                   | Set it to `true` to temporarily [disable](https://kestra.io/docs/workflow-components/disabled) any new executions of the flow. This is useful when you want to stop a flow from running (even manually) without deleting it. Once you set this property to true, nobody will be able to trigger any execution of that flow, whether from the UI or via an API call, until the flow is reenabled by setting this property back to `false` (default behavior) or by deleting this property.                                                                                              |
-| `outputs`                    | Each flow can [produce outputs](https://kestra.io/docs/workflow-components/outputs) that can be consumed by other flows. This is a list property, so that your flow can produce as many [outputs](https://kestra.io/docs/workflow-components/outputs) as you need. Each output needs to have an `id` (the name of the output), a `type` (the same types you know from `inputs` e.g. `STRING`, `URI` or `JSON`) and `value` which is the actual output value that will be stored in internal storage and passed to other flows when needed.                                             |
 | `concurrency`                | This property allows you to control the number of [concurrent executions](https://kestra.io/docs/workflow-components/concurrency) of a given flow by setting the `limit` key. Executions beyond that limit will be queued by default — you can customize that by configuring the `behavior` property which can be set to `QUEUE` (default), `CANCEL` or `FAIL`.                                                                                                                                                                                                                        |
 | `retry`                    | This property allows you set a flow-level `retry` policy to restart the execution if any task fails. The retry `behavior` is customizable — you can choose to `CREATE_NEW_EXECUTION` or `RETRY_FAILED_TASK` (default). Only with the `CREATE_NEW_EXECUTION` behavior, the `attempt` of the execution is incremented. Otherwise, only the failed task run is restarted (incrementing the attempt of the task run rather than the execution). Apart from the `behavior` property, the `retry` policy is identical to [task retries](https://kestra.io/docs/workflow-components/retries). |
+| `listeners`                  | The list of listeners (deprecated).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ### Task documentation
 
@@ -57,9 +58,11 @@ The following core properties are available in all tasks.
 | `description`  | Your custom [documentation](https://kestra.io/docs/workflow-components/descriptions) of what the task does                                                                                                                                                                                                                                                    |
 | `retry`        | How often should the task be retried in case of a failure, and the [type of retry strategy](https://kestra.io/docs/workflow-components/retries)                                                                                                                                                                                                               |
 | `timeout`      | The [maximum time allowed](https://kestra.io/docs/workflow-components/timeout) for the task to complete                                                                                                                                                                                                                                                       |
+| `runIf`      | Skip a task if the provided condition evaluates to false                                                                                                                                                                                                                                                       |
 | `disabled`     | A boolean flag indicating whether the task is [disabled or not](https://kestra.io/docs/workflow-components/disabled); if set to `true`, the task will be skipped during the execution                                                                                                                                                                         |
 | `workerGroup`  | The [group of workers](https://kestra.io/docs/enterprise/worker-group) that are eligible to execute the task; you can specify a `workerGroup.key` and a `workerGroup.fallback` (by default WAIT)                                                                                                                                                              |
 | `allowFailure` | A boolean flag allowing to continue the execution even if this task fails                                                                                                                                                                                                                                                                                     |
+| `allowWarning` | A boolean flag allowing to mark a task run as Success despite Warnings                                                                                                                                                                                                                                                                                     |
 | `logLevel`     | The level of log detail to be stored.                                                                                                                                                                                                                                                                                                                         |
 | `logToFile`     | A boolean that lets you store logs as a file in internal storage. That file can be previewed and downloaded from the Logs and Gantt Execution tabs. When set to true, logs aren’t saved in the database, which is useful for tasks that produce a large amount of logs that would otherwise take up too much space. The same property can be set on triggers. |
 
@@ -71,13 +74,13 @@ Here is an example flow. It uses a `Log` task available in Kestra core for testi
 
 ```yaml
 id: getting_started
-namespace: dev
-
-description: Let's `write` some **markdown** - [first flow](https://t.ly/Vemr0) 🚀
+namespace: company.team
+description: Let's `write` some **markdown**
 
 labels:
-  owner: rick.astley
-  project: never-gonna-give-you-up
+  team: data
+  owner: kestrel
+  project: falco
   environment: dev
   country: US
 
@@ -85,8 +88,42 @@ inputs:
   - id: user
     type: STRING
     required: false
-    defaults: Rick Astley
-    description: This is an optional input. If not set at runtime, it will use the default value "Rick Astley".
+    defaults: Kestrel
+    description: This is an optional input — if not set at runtime, it will use the default value Kestrel
+    
+  - id: run_task
+    type: BOOLEAN
+    defaults: true
+
+  - id: pokemon
+    type: MULTISELECT
+    displayName: Choose your favorite Pokemon
+    description: You can pick more than one!
+    values:
+      - Pikachu
+      - Charizard
+      - Bulbasaur
+      - Psyduck
+      - Squirtle
+      - Mewtwo
+      - Snorlax
+    dependsOn:
+      inputs:
+        - run_task
+      condition: "{{ inputs.run_task }}"      
+
+  - id: bird
+    type: SELECT
+    displayName: Choose your favorite Falco bird
+    values:
+      - Kestrel
+      - Merlin
+      - Peregrine Falcon
+      - American Kestrel
+    dependsOn:
+      inputs:
+        - user
+      condition: "{{ inputs.user == 'Kestrel' }}" 
 
 variables:
   first: 1
@@ -100,6 +137,20 @@ tasks:
       The variables we used are {{ vars.first }} and {{ render(vars.second) }}.
       The input is {{ inputs.user }} and the task was started at {{ taskrun.startDate }} from flow {{ flow.id }}.
 
+  - id: run_if_true
+    type: io.kestra.plugin.core.debug.Return
+    format: Hello World!
+    runIf: "{{ inputs.run_task }}"
+  
+  - id: fallback
+    type: io.kestra.plugin.core.debug.Return
+    format: fallback output
+
+outputs:
+  - id: flow_output
+    type: STRING
+    value: "{{ tasks.run_if_true.state != 'SKIPPED' ? outputs.run_if_true.value : outputs.fallback.value }}"
+
 pluginDefaults:
   - type: io.kestra.plugin.core.log.Log
     values:
@@ -108,7 +159,7 @@ pluginDefaults:
 triggers:
   - id: monthly
     type: io.kestra.plugin.core.trigger.Schedule
-    cron: "0 9 1 * *" # every first day of the month at 9am
+    cron: "0 9 1 * *" # 1st of each month at 9am
 ```
 
 You can add documentation to flows, tasks, inputs or triggers using the `description` property in which you can use the [Markdown](https://en.wikipedia.org/wiki/Markdown) syntax. All markdown descriptions will be rendered in the UI.
@@ -122,7 +173,8 @@ The table below lists common Pebble expressions and functions.
 | Expression                                                                                         | Description                                                                                                                     |
 |----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | `{{ printContext() }}`                                                                             | Fetch the entire execution context as a JSON object.                                                                            |
-| `{{ errorLogs() }}`                                                                                | Fetch error logs of the execution context.                                                                                      |
+| `{{ errorLogs() }}`            | Enrich your alert notifications with context about why Execution failed incl. information about failed task runs and their error stacktraces.                                                            |
+| `{{ appLink('appId') }}`            | Fetch the URL of the App linked to the current Execution. To get the base URL of the app allowing to create new Executions, add `baseUrl=true` e.g. `{{ appLink('yourAppId', baseUrl=true) }}`. If there is only one App linked to the flow, you can skip the App ID argument e.g. `{{ appLink() }}`.                                                                                          |
 | `{{ flow.id }}`                                                                                    | The identifier of the flow.                                                                                                     |
 | `{{ flow.namespace }}`                                                                             | The name of the flow namespace.                                                                                                 |
 | `{{ flow.tenantId }}`                                                                              | The identifier of the tenant (EE only).                                                                                         |
@@ -209,9 +261,8 @@ The table below lists common Pebble expressions and functions.
 | `{% if user.email is null %} ... {% endif %}`                                                      | Checks if a variable is null.                                                                                                   |
 | `{% if 3 is odd %} ... {% endif %}`                                                                | Checks if an integer is odd.                                                                                                    |
 
----
 
-The table below lists Pebble filter expressions:
+The table below lists Pebble functions and filter expressions:
 
 | Filter           | Example and Description                                                                                                          |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------|

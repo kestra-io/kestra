@@ -119,6 +119,8 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     AbstractRetry retry;
 
+    @Valid
+    @PluginProperty(beta = true)
     List<SLA> sla;
 
 
@@ -266,6 +268,10 @@ public class Flow extends AbstractFlow implements HasUID {
             .orElse(null);
     }
 
+    /**
+     * @deprecated should not be used
+     */
+    @Deprecated(forRemoval = true, since = "0.21.0")
     public Flow updateTask(String taskId, Task newValue) throws InternalException {
         Task task = this.findTaskByTaskId(taskId);
         Flow flow = this instanceof FlowWithSource flowWithSource ? flowWithSource.toFlow() : this;
@@ -355,8 +361,12 @@ public class Flow extends AbstractFlow implements HasUID {
         }
     }
 
+    /**
+     * Convenience method to generate the source of a flow.
+     * Equivalent to <code>FlowService.generateSource(this);</code>
+     */
     public String generateSource() {
-        return FlowService.generateSource(this, null);
+        return FlowService.generateSource(this);
     }
 
     public Flow toDeleted() {

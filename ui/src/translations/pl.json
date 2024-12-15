@@ -360,7 +360,7 @@
     },
     "cancel": "Anuluj",
     "homeDashboard": {
-      "title": "Panel",
+      "title": "Dashboard",
       "today": "Dzisiaj",
       "yesterday": "Wczoraj",
       "last28Days": "Ostatnie 28 dni",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Błędy wykonania na namespace",
       "failedExecutions": "Nieudane wykonania",
       "errorLogs": "Logi błędów",
-      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?"
+      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?",
+      "wel_text": "Witamy!",
+      "start": "Zacznijmy uruchamiać Twój pierwszy workflow.",
+      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
+      "welcome": "Witamy w Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> wykonanie(a) odtworzone",
     "executions resumed": "<code>{executionCount}</code> wykonanie(a) wznowione",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
     "originalCreatedDate": "Oryginalna data utworzenia",
     "welcome": {
-      "started": {
-        "title": "Rozpocznij w 3 prostych krokach"
+      "tutorial": {
+        "title": "Samouczek",
+        "text": "* [Samouczki wideo](https://kestra.io/tutorial-videos/all)\n* [Dokumentacja](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Weź udział w wycieczce po produkcie"
+      "tour": {
+        "title": "Rozpocznij wycieczkę po produkcie",
+        "text": "Wybierz swój przypadek użycia i postępuj zgodnie z przewodnikiem krok po kroku, aby poznać funkcje i możliwości Kestra. ❤️"
       },
-      "doc": {
-        "title": "Dokumentacja"
-      },
-      "need-help": {
+      "help": {
+        "text": "Zadaj dowolne pytanie w naszej społeczności Slack. Jeśli utkniesz, jesteśmy tutaj, aby Ci pomóc. ✋",
         "title": "Potrzebujesz pomocy?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Komenda cURL",
-      "note": "Zauważ, że dla typu input SECRET i FILE, komenda musi być dostosowana do rzeczywistych wartości."
+      "note": "Pamiętaj, że dla typu input SECRET i FILE, polecenie musi być dostosowane do rzeczywistych wartości."
     },
     "logs_view": {
       "raw": "Widok czasowy",
@@ -907,7 +911,6 @@
       "desc_no_deps": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji."
     },
     "create_flow": "Utwórz Flow",
-    "starred": "Oznaczone gwiazdką",
     "invalid bulk unqueue": "Nie można usunąć z kolejki wykonania",
     "unqueue done": "Wykonanie jest odkolejkowane",
     "bulk unqueue": "Czy na pewno chcesz usunąć z kolejki <code>{executionCount}</code> wykonanie(a)?",
@@ -933,7 +936,7 @@
       },
       "recent": {
         "label": "Ostatnie wyszukiwania",
-        "empty": "Nie wyszukałeś jeszcze niczego."
+        "empty": "Nie wyszukiwałeś jeszcze niczego."
       },
       "labels": {
         "placeholder": "Wpisz label jako 'key:value'"
@@ -946,7 +949,8 @@
           "placeholder": "Etykieta"
         },
         "label": "Zapisane wyszukiwania",
-        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
+        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
       },
       "options": {
         "namespace": "Namespace",
@@ -957,13 +961,22 @@
         "child": "Dziecko",
         "absolute_date": "Data bezwzględna",
         "relative_date": "Data względna",
-        "level": "Poziom logowania"
+        "level": "Poziom logowania",
+        "task": "Zadanie",
+        "aggregation": "Agregacja",
+        "metric": "Metryka",
+        "trigger_state": "Stan",
+        "action": "Akcja",
+        "permission": "Uprawnienie",
+        "user": "Użytkownik",
+        "details": "Szczegóły"
       },
       "empty": "Brak danych.",
       "label": "Wybierz filtry",
       "settings": {
         "show_chart": "Pokaż główny wykres"
-      }
+      },
+      "key_value_type": "Wpisz parametr jako 'key:value'"
     },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
@@ -981,7 +994,6 @@
     "showLess": "Pokaż mniej",
     "documentationMenu": "Menu dokumentacji",
     "task run id": "ID TaskRun",
-    "execution failed": "Wykonanie FAILED, kliknij tutaj, aby uzyskać więcej szczegółów.",
     "optional": "Opcjonalne",
     "active": "Aktywny",
     "contextBar": {
@@ -990,6 +1002,40 @@
       "docs": "Dokumentacja",
       "demo": "Uzyskaj demo",
       "help": "Pomoc"
+    },
+    "execution failed header": "Wykonanie nie powiodło się!",
+    "execution failed message": "Z ostatnim błędem: <code>{message}</code>",
+    "flow not imported": "Niektóre flow nie mogły zostać zaimportowane",
+    "flows imported": "Zaimportowane flows",
+    "is required": "Pole {field} jest wymagane",
+    "bookmark": "Zakładki",
+    "dashboards": "Panele sterowania",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Domyślny Dashboard",
+    "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
+    "create_custom_dashboard": "Utwórz nowy dashboard",
+    "edit_custom_dashboard": "Edytuj Dashboard",
+    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
+    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Zacznij ⚡",
+        "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów."
+      },
+      "workflow_components": {
+        "text": "Poznaj główne komponenty orkiestracji w workflow Kestra.",
+        "title": "Komponenty Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Rozpocznij korzystanie z naszych samouczków wideo.",
+        "title": "Samouczki wideo"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Kliknij przycisk Wykonaj, aby rozpocząć pierwsze wykonanie workflow.",
+      "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
+      "guidance_sub_desc": "Postępuj zgodnie z dokumentacją, aby uzyskać wszystkie potrzebne informacje.",
+      "title": "Zacznij automatyzację z"
     }
   }
 }

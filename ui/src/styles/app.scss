@@ -14,6 +14,9 @@
 @use "layout/root-dark";
 @use "layout/html-tag" as *;
 
+@use "layout/theme-light";
+@use "layout/theme-dark";
+
 // components
 @use "layout/charts";
 @use "components/vue-material-design-icon";

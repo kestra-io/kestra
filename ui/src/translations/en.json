@@ -1002,6 +1002,7 @@
       "format": "Type parameter as 'key:value'",
       "options": {
         "namespace": "Namespace",
+        "flow": "Flow",
         "state": "State",
         "trigger_state": "State",
         "scope": "Scope",

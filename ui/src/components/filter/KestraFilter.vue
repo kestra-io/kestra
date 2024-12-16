@@ -494,8 +494,22 @@
 
     const {name, params} = route;
 
-    if (name === "flows/update") addNamespaceFilter(params?.namespace);
-    else if (name === "namespaces/update") addNamespaceFilter(params.id);
+    if (name === "flows/update") {
+        // Single flow page
+        addNamespaceFilter(params?.namespace);
+
+        if (params.id) {
+            current.value.push({
+                label: "flow",
+                value: [`${params.id}`],
+                comparator: COMPARATORS.IS,
+                persistent: true,
+            });
+        }
+    } else if (name === "namespaces/update") {
+        // Single namespace page
+        addNamespaceFilter(params.id);
+    }
 </script>
 
 <style lang="scss">
@@ -511,6 +525,7 @@ $dashboards: 52px;
 
     & .el-select {
         width: 100%;
+        max-width: 100%;
 
         &.refresh.settings.dashboards {
             max-width: calc(

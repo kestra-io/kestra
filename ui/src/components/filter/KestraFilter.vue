@@ -35,6 +35,7 @@
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
                 <DateRange
                     v-else
+                    automatic
                     @update:model-value="(v) => valueCallback(v, true)"
                 />
             </template>

@@ -9,10 +9,14 @@
 </script>
 
 <style scoped lang="scss">
+@import "../styles/filter.scss";
+
 .title {
     margin: 0;
     padding: calc(1rem / 4) 0 0 1rem;
-    font-size: var(--el-font-size-extra-small);
-    color: var(--bs-grey-700);
+
+    color: $filters-gray-700;
+
+    font-size: $filters-font-xs;
 }
 </style>

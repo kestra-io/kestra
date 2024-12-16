@@ -40,7 +40,7 @@
                 @keydown.enter.prevent="save()"
             />
         </section>
-        <section class="current-tags">
+        <section class="items">
             <el-tag v-for="(item, index) in current" :key="index" class="m-1">
                 <Label :option="item" />
             </el-tag>
@@ -103,8 +103,5 @@
 </script>
 
 <style scoped lang="scss">
-.current-tags .el-tag {
-    background: var(--bs-border-color) !important;
-    color: var(--bs-gray-900);
-}
+@import "../styles/filter.scss";
 </style>

@@ -33,10 +33,14 @@
 </script>
 
 <style scoped lang="scss">
+@import "../styles/filter.scss";
+
 .comparator {
     display: inline-block;
-    background: var(--bs-gray-500);
-    padding: 0.3rem 0.35rem;
+
     margin: 0 0.5rem;
+    padding: 0.3rem 0.35rem;
+
+    background: $filters-gray-500;
 }
 </style>

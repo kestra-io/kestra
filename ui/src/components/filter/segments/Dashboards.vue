@@ -5,7 +5,7 @@
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="p-4 dashboard-dropdown">
+            <el-dropdown-menu class="p-4 dropdown">
                 <el-button
                     type="primary"
                     :icon="Plus"
@@ -34,7 +34,7 @@
 
                 <hr class="my-2">
 
-                <div class="overflow-x-auto scroller">
+                <div class="overflow-x-auto scroller items">
                     <el-dropdown-item
                         v-for="(dashboard, index) in filtered"
                         :key="index"
@@ -109,29 +109,13 @@
 </script>
 
 <style scoped lang="scss">
-.dashboard-dropdown {
+@import "../styles/filter.scss";
+
+.dropdown {
     width: 300px;
 }
 
-.empty {
-    color: var(--bs-gray-900);
-}
-
-.scroller {
+.items {
     max-height: 160px !important; // 5 visible items
-
-    &::-webkit-scrollbar {
-        height: 5px;
-        width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--card-bg);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
-        border-radius: 0px;
-    }
 }
 </style>

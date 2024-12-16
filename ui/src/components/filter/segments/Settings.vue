@@ -8,7 +8,7 @@
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 settings-dropdown">
+            <el-dropdown-menu class="py-2 dropdown">
                 <Title :text="t('filters.settings.label')" />
                 <template v-if="settings.charts.shown">
                     <el-switch
@@ -47,7 +47,7 @@
 </script>
 
 <style scoped lang="scss">
-.settings-dropdown {
+.dropdown {
     width: 200px;
 }
 </style>

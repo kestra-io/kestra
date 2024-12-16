@@ -9,15 +9,15 @@
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 items-dropdown">
+            <el-dropdown-menu class="py-2 dropdown">
                 <Title :text="t('filters.save.label')" />
-                <div class="overflow-x-auto items scroller">
+                <div class="overflow-x-auto scroller items">
                     <el-dropdown-item
                         v-if="!saved.length"
                         @click="emits('search', {})"
                         class="pe-none"
                     >
-                        <small class="text-secondary label">
+                        <small class="empty">
                             {{ t("filters.save.empty") }}
                         </small>
                     </el-dropdown-item>
@@ -26,7 +26,7 @@
                         :key="index"
                         @click="emits('search', item.value)"
                     >
-                        <div class="d-flex align-items-center w-100 item">
+                        <div class="d-flex align-items-center w-100">
                             <div v-if="item.name" class="col-3 text-truncate">
                                 <span class="small">{{ item.name }}</span>
                             </div>
@@ -91,38 +91,13 @@
 </script>
 
 <style scoped lang="scss">
-.items-dropdown {
+@import "../styles/filter.scss";
+
+.dropdown {
     width: 400px;
 }
 
 .items {
     max-height: 170px !important; // 5 visible items
-}
-
-.scroller {
-    &::-webkit-scrollbar {
-        height: 5px;
-        width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--card-bg);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--bs-border-color);
-        border-radius: 0px;
-    }
-}
-
-.item {
-    .el-tag {
-        background: var(--bs-border-color);
-        color: var(--bs-gray-900);
-    }
-
-    .small {
-        font-size: var(--el-font-size-extra-small);
-    }
 }
 </style>

@@ -275,27 +275,11 @@
     };
     const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
-            const currentFilter = current.value[dropdowns.value.third.index];
-            const label = currentFilter.label;
-            const existingIndex = current.value.findIndex((i) => i.label === label);
+            const values = current.value[dropdowns.value.third.index].value;
+            const index = values.indexOf(filter.value);
 
-            if (
-                existingIndex !== -1 &&
-                existingIndex !== dropdowns.value.third.index
-            ) {
-                if (!currentFilter.comparator?.multiple) {
-                    current.value[existingIndex].value = [filter.value];
-                    current.value.splice(dropdowns.value.third.index, 1);
-                    dropdowns.value.third.index = existingIndex;
-                } else {
-                    current.value[existingIndex].value.push(filter.value);
-                }
-            } else {
-                const values = currentFilter.value;
-                const index = values.indexOf(filter.value);
-                if (index === -1) values.push(filter.value);
-                else values.splice(index, 1);
-            }
+            if (index === -1) values.push(filter.value);
+            else values.splice(index, 1);
 
             // Update the hover index for better UX
             const hoverIndex = valueOptions.value.findIndex(
@@ -433,14 +417,8 @@
         if (typeof v.at(-1) === "string") {
             if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
-                const existingIndex = current.value.findIndex(
-                    (i) => i.label === "labels",
-                );
-                if (existingIndex !== -1) {
-                    current.value[existingIndex].value.push(v.at(-1));
-                } else {
-                    current.value.push({label: "labels", value: [v.at(-1)]});
-                }
+                v.at(-2).value?.push(v.at(-1));
+
                 closeDropdown();
                 triggerSearch();
             } else {

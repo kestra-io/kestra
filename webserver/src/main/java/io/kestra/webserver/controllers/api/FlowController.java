@@ -43,8 +43,11 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.extensions.Extension;
+import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
@@ -260,6 +263,7 @@ public class FlowController {
     @Post(consumes = MediaType.ALL)
     @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
@@ -310,6 +314,7 @@ public class FlowController {
         deprecated = true
     )
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
     public List<Flow> updateNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
@@ -431,6 +436,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the JSON one.
     public HttpResponse<Flow> update(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,

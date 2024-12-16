@@ -7,8 +7,10 @@
                     <KestraFilter
                         prefix="logs"
                         :include="['namespace', 'level', 'absolute_date', 'relative_date']"
-                        :refresh="{shown: true, callback: refresh}"
-                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                        :buttons="{
+                            refresh: {shown: true, callback: refresh},
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                        }"
                     />
                 </template>
 

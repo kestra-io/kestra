@@ -47,7 +47,10 @@
                     <KestraFilter
                         prefix="flows"
                         :include="['namespace', 'scope', 'labels']"
-                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                        :buttons="{
+                            refresh: {shown: false},
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                        }"
                     />
                 </template>
 

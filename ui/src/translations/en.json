@@ -982,7 +982,6 @@
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",
     "filters": {
-
       "label": "Choose filters",
       "empty": "No data.",
       "format": "Type parameter as 'key:value'",

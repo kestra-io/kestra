@@ -2,17 +2,19 @@ import fs from "fs"
 import path from "path"
 import palette from "./palette-light.json" with {type: "json"}
 
+const paletteLight = palette["Sytem color/Default_LIGHT"]
+
 function normalizeKey(key) {
     return key.replace(/ /g, "-").toLowerCase()
 }
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname)
 
-const baseColorNames = Object.keys(palette["Base Color Palette"])
+const baseColorNames = Object.keys(paletteLight["Base Color Palette"])
 const colorIndex = {}
 
 const scss = baseColorNames.map(colorName => {
-    const colorTheme = palette["Base Color Palette"][colorName]
+    const colorTheme = paletteLight["Base Color Palette"][colorName]
     return Object.entries(colorTheme).map(([key, value]) => {
         colorIndex[value] = normalizeKey(key)
         return `$base-${normalizeKey(key)}: ${value};`
@@ -22,7 +24,7 @@ const scss = baseColorNames.map(colorName => {
 // write the scss file containing colors in the base palette
 fs.writeFileSync(path.resolve(__dirname, "../src/styles/color-palette.scss"), scss, {encoding: "utf-8"})
 
-const tokens = palette["Tokens"]
+const tokens = paletteLight["Tokens"]
 
 const cssVariableNames = {}
 

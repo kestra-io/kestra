@@ -135,7 +135,7 @@
 
             &:not(.shiki code) {
                 font-weight: 700;
-                background: var(--bs-body-bg);
+                background: var(--backgrounds-background-body);
                 color: var(--bs-body-color);
                 border: 1px solid var(--border-killing)
             }

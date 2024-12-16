@@ -6,24 +6,24 @@
 
 // use bootstrap for main style
 :root {
-    #{--bs-body-bg}: #fafaff;
+    #{--bs-body-bg}: var(--backgrounds-background-body);
 
-    --el-bg-color: var(--bs-body-bg);
-    --el-bg-color-page: var(--bs-body-bg);
+    --el-bg-color: var(--backgrounds-background-body);
+    --el-bg-color-page: var(--backgrounds-background-body);
     --el-bg-color-overlay: var(--bs-white);
 
-    --el-text-color-primary: var(--bs-primary);
-    --el-text-color-regular: var(--bs-body-color);
-    --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-body-color);
-    --el-text-color-disabled: var(--bs-gray-300-darken-5);
+    --el-text-color-primary: var(--content-content-link);
+    --el-text-color-regular: var(--content-content-primary);
+    --el-text-color-secondary: var(--content-content-secondary);
+    --el-text-color-placeholder: var(--content-content-inactive);
+    --el-text-color-disabled: var(--content-content-inactive);
 
-    --el-border-color: var(--bs-border-color);
-    --el-border-color-light: var(--bs-border-color);
-    --el-border-color-lighter: var(--bs-border-color);
-    --el-border-color-extra-light: var(--bs-border-color);
-    --el-border-color-dark: var(--bs-border-color);
-    --el-border-color-darker: var(--bs-border-color);
+    --el-border-color: var(--border-border);
+    --el-border-color-light: var(--border-border);
+    --el-border-color-lighter: var(--border-border);
+    --el-border-color-extra-light: var(--border-border);
+    --el-border-color-dark: var(--border-border-secondary);
+    --el-border-color-darker: var(--border-border-secondary);
 
     --el-fill-color: var(--bs-gray-300);
     --el-fill-color-light: var(--bs-gray-200);

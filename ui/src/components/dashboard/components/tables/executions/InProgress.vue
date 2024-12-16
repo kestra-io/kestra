@@ -175,7 +175,7 @@ code {
 }
 
 .inprogress {
-    background: var(--bs-body-bg);
+    background: var(--backgrounds-background-body);
     & a {
         color: #8e71f7;
 

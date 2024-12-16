@@ -31,20 +31,21 @@
 
 .sample-wrapper {
     padding:.5rem 1rem;
-    display:flex;
-    align-items:center;
+    display: flex;
+    align-items: center;
     gap:.5rem;
+    color: black;
 }
 
 .sample-label{
     background-color: rgba(255, 255, 255, 0.5);
     padding: 0 .5rem;
-    color: black;
+    border-radius: 4px;
 }
 
 .sample-block{
-    width:16px;
-    height:16px;
+    width:24px;
+    height:24px;
     display:block
 }
 </style>

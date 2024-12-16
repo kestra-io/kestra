@@ -980,6 +980,56 @@
       "guidance_desc": "Нужна помощь для выполнения вашего flow?",
       "guidance_sub_desc": "Следуйте документации для получения всей необходимой информации.",
       "title": "Начните автоматизацию с"
+    },
+    "filters": {
+      "options": {
+        "child": "Дочерний элемент",
+        "metric": "Метрика",
+        "labels": "Метки",
+        "details": "Детали",
+        "absolute_date": "Абсолютная дата",
+        "scope": "Область применения",
+        "trigger_state": "Состояние",
+        "state": "Состояние",
+        "action": "Действие",
+        "text": "I'm sorry, but it seems that the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+        "relative_date": "Относительная дата",
+        "level": "Уровень Log",
+        "aggregation": "Агрегация",
+        "permission": "Разрешение",
+        "namespace": "Namespace",
+        "user": "Пользователь",
+        "task": "Задача"
+      },
+      "settings": {
+        "label": "Настройки страницы",
+        "show_chart": "Показать основную диаграмму"
+      },
+      "comparators": {
+        "contains": "содержит",
+        "is": "является",
+        "is_not": "не является",
+        "in": "в",
+        "starts_with": "начинается с",
+        "not_contains": "не содержит",
+        "is_not_one_off": "не является одним из",
+        "is_one_of": "является одним из",
+        "between": "между"
+      },
+      "save": {
+        "label": "Сохранённые поиски",
+        "tooltip": "Вы не можете сохранить пустые критерии поиска.",
+        "dialog": {
+          "heading": "Сохранить текущий поиск",
+          "confirmation": "Критерии поиска <code>{name}</code>",
+          "placeholder": "Ярлык",
+          "hint": "Как вы хотите обозначить этот критерий поиска?"
+        },
+        "empty": "Вы еще не сохранили ни одного поиска."
+      },
+      "empty": "Нет данных.",
+      "format": "Введите параметр в формате 'key:value'",
+      "label": "Выберите фильтры"
     }
   }
 }

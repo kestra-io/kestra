@@ -980,6 +980,56 @@
       "guidance_desc": "Precisa de orientação para executar o seu flow?",
       "guidance_sub_desc": "Siga a documentação para todas as informações que você precisa.",
       "title": "Comece a automatizar com"
+    },
+    "filters": {
+      "options": {
+        "child": "Filho",
+        "metric": "Métrica",
+        "labels": "Etiquetas",
+        "details": "Detalhes",
+        "absolute_date": "Data absoluta",
+        "scope": "Escopo",
+        "trigger_state": "Estado",
+        "state": "Estado",
+        "action": "Ação",
+        "text": "Parece que você não forneceu nenhum texto para tradução. Por favor, forneça o texto que deseja que eu traduza para o português.",
+        "relative_date": "Data relativa",
+        "level": "Nível de Log",
+        "aggregation": "Agregação",
+        "permission": "Permissão",
+        "namespace": "Namespace",
+        "user": "Usuário",
+        "task": "Tarefa"
+      },
+      "settings": {
+        "label": "Configurações da página",
+        "show_chart": "Exibir gráfico principal"
+      },
+      "comparators": {
+        "contains": "contém",
+        "is": "é",
+        "is_not": "não é",
+        "in": "em",
+        "starts_with": "começa com",
+        "not_contains": "não contém",
+        "is_not_one_off": "não é um dos",
+        "is_one_of": "é um dos",
+        "between": "entre"
+      },
+      "save": {
+        "label": "Pesquisas salvas",
+        "tooltip": "Você não pode salvar critérios de pesquisa vazios.",
+        "dialog": {
+          "heading": "Salvar pesquisa atual",
+          "confirmation": "Critérios de pesquisa <code>{name}</code>",
+          "placeholder": "Etiqueta",
+          "hint": "Como você deseja rotular este critério de busca?"
+        },
+        "empty": "Você ainda não salvou nenhuma pesquisa."
+      },
+      "empty": "Sem dados.",
+      "format": "Digite o parâmetro como 'key:value'",
+      "label": "Escolher filtros"
     }
   }
 }

@@ -980,6 +980,56 @@
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
       "guidance_sub_desc": "Sigue la documentación para toda la información que necesitas.",
       "title": "Comienza a automatizar con"
+    },
+    "filters": {
+      "options": {
+        "child": "Niño",
+        "metric": "Métrica",
+        "labels": "Etiquetas",
+        "details": "Detalles",
+        "absolute_date": "Fecha absoluta",
+        "scope": "Ámbito",
+        "trigger_state": "Estado",
+        "state": "Estado",
+        "action": "Acción",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text again?",
+        "relative_date": "Fecha relativa",
+        "level": "Nivel de log",
+        "aggregation": "Agregación",
+        "permission": "Permiso",
+        "namespace": "Namespace",
+        "user": "Usuario",
+        "task": "Tarea"
+      },
+      "settings": {
+        "label": "Configuración de la página",
+        "show_chart": "Mostrar gráfico principal"
+      },
+      "comparators": {
+        "contains": "contiene",
+        "is": "es",
+        "is_not": "no es",
+        "in": "en",
+        "starts_with": "comienza con",
+        "not_contains": "no contiene",
+        "is_not_one_off": "no es uno de",
+        "is_one_of": "es uno de",
+        "between": "entre"
+      },
+      "save": {
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos.",
+        "dialog": {
+          "heading": "Guardar búsqueda actual",
+          "confirmation": "Criterios de búsqueda <code>{name}</code>",
+          "placeholder": "Etiqueta",
+          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?"
+        },
+        "empty": "Todavía no has guardado ninguna búsqueda."
+      },
+      "empty": "Sin datos.",
+      "format": "Escriba el parámetro como 'key:value'",
+      "label": "Elegir filtros"
     }
   }
 }

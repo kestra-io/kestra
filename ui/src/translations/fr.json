@@ -980,6 +980,56 @@
       "guidance_desc": "Besoin d'aide pour exécuter votre flow ?",
       "guidance_sub_desc": "Suivez la documentation pour toutes les informations dont vous avez besoin.",
       "title": "Commencez à automatiser avec"
+    },
+    "filters": {
+      "options": {
+        "child": "Enfant",
+        "metric": "Métrique",
+        "labels": "Étiquettes",
+        "details": "Détails",
+        "absolute_date": "Date absolue",
+        "scope": "Portée",
+        "trigger_state": "État",
+        "state": "État",
+        "action": "Action",
+        "text": "I'm sorry, but it seems like there is no text provided for translation. Could you please provide the text you would like to have translated into French?",
+        "relative_date": "Date relative",
+        "level": "Niveau de log",
+        "aggregation": "Agrégation",
+        "permission": "Permission",
+        "namespace": "Namespace",
+        "user": "Utilisateur",
+        "task": "Tâche"
+      },
+      "settings": {
+        "label": "Paramètres de la page",
+        "show_chart": "Afficher le graphique principal"
+      },
+      "comparators": {
+        "contains": "contient",
+        "is": "est",
+        "is_not": "n'est pas",
+        "in": "dans",
+        "starts_with": "commence par",
+        "not_contains": "ne contient pas",
+        "is_not_one_off": "n'est pas l'un de",
+        "is_one_of": "est l'un de",
+        "between": "entre"
+      },
+      "save": {
+        "label": "Recherches enregistrées",
+        "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides.",
+        "dialog": {
+          "heading": "Enregistrer la recherche actuelle",
+          "confirmation": "Critères de recherche <code>{name}</code>",
+          "placeholder": "Étiquette",
+          "hint": "Comment souhaitez-vous étiqueter ce critère de recherche ?"
+        },
+        "empty": "Vous n'avez pas encore enregistré de recherche."
+      },
+      "empty": "Aucune donnée.",
+      "format": "Tapez le paramètre comme 'key:value'",
+      "label": "Choisir des filtres"
     }
   }
 }

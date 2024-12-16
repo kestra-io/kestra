@@ -980,6 +980,56 @@
       "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
       "guidance_sub_desc": "Postępuj zgodnie z dokumentacją, aby uzyskać wszystkie potrzebne informacje.",
       "title": "Zacznij automatyzację z"
+    },
+    "filters": {
+      "options": {
+        "child": "Dziecko",
+        "metric": "Metryka",
+        "labels": "Etykiety",
+        "details": "Szczegóły",
+        "absolute_date": "Data bezwzględna",
+        "scope": "Zakres",
+        "trigger_state": "Stan",
+        "state": "Stan",
+        "action": "Akcja",
+        "text": "tekst",
+        "relative_date": "Data względna",
+        "level": "Poziom logowania",
+        "aggregation": "Agregacja",
+        "permission": "Uprawnienie",
+        "namespace": "Namespace",
+        "user": "Użytkownik",
+        "task": "Zadanie"
+      },
+      "settings": {
+        "label": "Ustawienia strony",
+        "show_chart": "Pokaż główny wykres"
+      },
+      "comparators": {
+        "contains": "zawiera",
+        "is": "jest",
+        "is_not": "nie jest",
+        "in": "w",
+        "starts_with": "zaczyna się od",
+        "not_contains": "nie zawiera",
+        "is_not_one_off": "nie jest jednym z",
+        "is_one_of": "jest jednym z",
+        "between": "pomiędzy"
+      },
+      "save": {
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
+        "dialog": {
+          "heading": "Zapisz bieżące wyszukiwanie",
+          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
+          "placeholder": "Etykieta",
+          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?"
+        },
+        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
+      },
+      "empty": "Brak danych.",
+      "format": "Wpisz parametr jako 'key:value'",
+      "label": "Wybierz filtry"
     }
   }
 }

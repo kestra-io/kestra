@@ -922,62 +922,6 @@
     "execution-warn-title": "Avviso Importante!",
     "worker group key": "Chiave del gruppo Worker",
     "worker group fallback": "Gruppo di Worker di riserva",
-    "filters": {
-      "comparators": {
-        "is": "è",
-        "is_one_of": "è uno di",
-        "is_not_one_off": "non è uno di",
-        "is_not": "non è",
-        "between": "tra",
-        "in": "nel",
-        "not_contains": "non contiene",
-        "starts_with": "inizia con",
-        "contains": "contiene"
-      },
-      "recent": {
-        "label": "Ricerche recenti",
-        "empty": "Non hai ancora cercato nulla."
-      },
-      "labels": {
-        "placeholder": "Digita l'etichetta come 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Come vuoi etichettare questo criterio di ricerca?",
-          "heading": "Salva ricerca corrente",
-          "confirmation": "Criteri di ricerca <code>{name}</code>",
-          "placeholder": "Etichetta"
-        },
-        "label": "Ricerche salvate",
-        "tooltip": "Non puoi salvare criteri di ricerca vuoti.",
-        "empty": "Non hai ancora salvato alcuna ricerca."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Ambito",
-        "text": "I'm sorry, but it seems like there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate into Italian?",
-        "labels": "Etichette",
-        "state": "Stato",
-        "child": "Bambino",
-        "absolute_date": "Data assoluta",
-        "relative_date": "Data relativa",
-        "level": "Livello di Log",
-        "task": "Compito",
-        "aggregation": "Aggregazione",
-        "metric": "Metrica",
-        "trigger_state": "Stato",
-        "action": "Azione",
-        "permission": "Permesso",
-        "user": "Utente",
-        "details": "Dettagli"
-      },
-      "empty": "Nessun dato.",
-      "label": "Scegli filtri",
-      "settings": {
-        "show_chart": "Mostra grafico principale"
-      },
-      "key_value_type": "Digita il parametro come 'key:value'"
-    },
     "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
     "force run done": "L'esecuzione è forzata a RUNNING",

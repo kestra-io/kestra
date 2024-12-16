@@ -23,7 +23,7 @@
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import {ElMessageBox} from "element-plus";
 
-    const {t} = useI18n();
+    const {t} = useI18n({useScope: "global"});
 
     const $store = useStore()
 

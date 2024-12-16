@@ -103,7 +103,7 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.current-tags .el-tag) {
+.current-tags .el-tag {
     background: var(--bs-border-color) !important;
     color: var(--bs-gray-900);
 }

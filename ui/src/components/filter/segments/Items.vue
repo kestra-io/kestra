@@ -10,9 +10,7 @@
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 items-dropdown">
-                <p class="py-1 title">
-                    {{ t("filters.save.label") }}
-                </p>
+                <Title :text="t('filters.save.label')" />
                 <div class="overflow-x-auto items scroller">
                     <el-dropdown-item
                         v-if="!saved.length"
@@ -65,6 +63,7 @@
 
     import KestraIcon from "../../Kicon.vue";
     import Label from "../components/Label.vue";
+    import Title from "../components/Title.vue";
 
     import {History, DeleteOutline} from "../utils/icons.js";
 
@@ -94,13 +93,6 @@
 <style scoped lang="scss">
 .items-dropdown {
     width: 400px;
-}
-
-.title {
-    margin: 0;
-    padding: calc(1rem / 4) 0 0 1rem;
-    font-size: var(--el-font-size-extra-small);
-    color: var(--bs-grey-700);
 }
 
 .items {

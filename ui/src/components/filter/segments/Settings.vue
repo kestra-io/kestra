@@ -9,9 +9,7 @@
 
         <template #dropdown>
             <el-dropdown-menu class="py-2 settings-dropdown">
-                <p class="py-1 title">
-                    {{ t("filters.settings.label") }}
-                </p>
+                <Title :text="t('filters.settings.label')" />
                 <template v-if="settings.charts.shown">
                     <el-switch
                         :model-value="settings.charts.value"
@@ -27,6 +25,7 @@
 
 <script setup lang="ts">
     import KestraIcon from "../../Kicon.vue";
+    import Title from "../components/Title.vue";
 
     import {ChartBar} from "../utils/icons.js";
 
@@ -50,12 +49,5 @@
 <style scoped lang="scss">
 .settings-dropdown {
     width: 200px;
-}
-
-.title {
-    margin: 0;
-    padding: calc(1rem / 4) 0 0 1rem;
-    font-size: var(--el-font-size-extra-small);
-    color: var(--bs-grey-700);
 }
 </style>

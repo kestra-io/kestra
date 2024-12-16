@@ -97,7 +97,8 @@
 
         <el-button-group
             v-if="buttons.refresh.shown || buttons.settings.shown"
-            class="d-inline-flex mx-1"
+            class="d-inline-flex ms-1"
+            :class="{'me-1': dashboards.shown}"
         >
             <Refresh
                 v-if="buttons.refresh.shown"
@@ -524,7 +525,7 @@ $dashboards: 52px;
         }
 
         &.refresh.settings {
-            max-width: calc(100% - $included - $refresh - $settins);
+            max-width: calc(100% - $included - $refresh - $settins + 0.25rem);
         }
 
         &.settings.dashboards {

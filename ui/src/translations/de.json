@@ -999,7 +999,8 @@
         "permission": "Berechtigung",
         "namespace": "Namespace",
         "user": "Benutzer",
-        "task": "Aufgabe"
+        "task": "Aufgabe",
+        "flow": "Flow"
       },
       "settings": {
         "label": "Seiteneinstellungen",

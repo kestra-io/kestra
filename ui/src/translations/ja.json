@@ -999,7 +999,8 @@
         "permission": "許可",
         "namespace": "Namespace（ネームスペース）",
         "user": "ユーザー",
-        "task": "タスク"
+        "task": "タスク",
+        "flow": "フロー"
       },
       "settings": {
         "label": "ページ設定",

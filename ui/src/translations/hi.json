@@ -999,7 +999,8 @@
         "permission": "अनुमति",
         "namespace": "Namespace",
         "user": "उपयोगकर्ता",
-        "task": "कार्य"
+        "task": "कार्य",
+        "flow": "फ्लो"
       },
       "settings": {
         "label": "पृष्ठ सेटिंग्स",

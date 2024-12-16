@@ -999,7 +999,8 @@
         "permission": "권한",
         "namespace": "네임스페이스",
         "user": "사용자",
-        "task": "작업"
+        "task": "작업",
+        "flow": "플로우"
       },
       "settings": {
         "label": "페이지 설정",

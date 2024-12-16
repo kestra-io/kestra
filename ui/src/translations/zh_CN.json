@@ -999,7 +999,8 @@
         "permission": "权限",
         "namespace": "命名空间",
         "user": "用户",
-        "task": "任务"
+        "task": "任务",
+        "flow": "流程"
       },
       "settings": {
         "label": "页面设置",

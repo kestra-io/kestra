@@ -999,7 +999,8 @@
         "permission": "Разрешение",
         "namespace": "Namespace",
         "user": "Пользователь",
-        "task": "Задача"
+        "task": "Задача",
+        "flow": "Поток"
       },
       "settings": {
         "label": "Настройки страницы",

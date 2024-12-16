@@ -980,6 +980,12 @@
       "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",
       "guidance_sub_desc": "문서를 참조하여 필요한 모든 정보를 확인하세요.",
       "title": "자동화를 시작하세요"
+    },
+    "filters": {
+      "format": "'key:value'로 매개변수 입력",
+      "settings": {
+        "label": "페이지 설정"
+      }
     }
   }
 }

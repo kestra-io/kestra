@@ -980,6 +980,12 @@
       "guidance_desc": "Benötigen Sie Unterstützung, um Ihren Flow auszuführen?",
       "guidance_sub_desc": "Folgen Sie der Dokumentation für alle Informationen, die Sie benötigen.",
       "title": "Beginnen Sie mit der Automatisierung mit"
+    },
+    "filters": {
+      "format": "Geben Sie den Parameter als 'key:value' ein",
+      "settings": {
+        "label": "Seiteneinstellungen"
+      }
     }
   }
 }

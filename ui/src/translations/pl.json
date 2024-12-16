@@ -980,6 +980,12 @@
       "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
       "guidance_sub_desc": "Postępuj zgodnie z dokumentacją, aby uzyskać wszystkie potrzebne informacje.",
       "title": "Zacznij automatyzację z"
+    },
+    "filters": {
+      "format": "Wpisz parametr jako 'key:value'",
+      "settings": {
+        "label": "Ustawienia strony"
+      }
     }
   }
 }

@@ -25,8 +25,12 @@ const bulidFromObject = (object: object): Option[] =>
         value,
     }));
 
-export function useValues(label?: string) {
+export function useValues(label: string) {
     const {t} = useI18n({useScope: "global"});
+
+    // Override for the scope labels on the dashboard
+    const DASHBOARDS = ["dashboard", "custom_dashboard"];
+    const SCOPE_LABEL = DASHBOARDS.includes(label) ? t("executions") : label;
 
     const VALUES = {
         EXECUTION_STATE: buildFromArray(
@@ -34,8 +38,14 @@ export function useValues(label?: string) {
         ),
         TRIGGER_STATE: buildFromArray(["enabled", "disabled"], true),
         SCOPE: [
-            {label: t("scope_filter.user", {label}), value: "USER"},
-            {label: t("scope_filter.system", {label}), value: "SYSTEM"},
+            {
+                label: t("scope_filter.user", {label: SCOPE_LABEL}),
+                value: "USER",
+            },
+            {
+                label: t("scope_filter.system", {label: SCOPE_LABEL}),
+                value: "SYSTEM",
+            },
         ],
         CHILD: [
             {label: t("trigger filter.options.ALL"), value: "ALL"},

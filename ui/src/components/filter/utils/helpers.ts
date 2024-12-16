@@ -22,7 +22,6 @@ export const encodeParams = (filters, OPTIONS) => {
                 match.value.value.forEach((item) => {
                     const value = item.split(":");
                     if (value.length === 2) {
-                        console.log(value);
                         query[`details.${value[0]}`] = value[1];
                     }
                 });

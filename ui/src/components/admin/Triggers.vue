@@ -11,7 +11,10 @@
                     <KestraFilter
                         prefix="triggers"
                         :include="['namespace', 'trigger_state']"
-                        :refresh="{shown: true, callback: load}"
+                        :buttons="{
+                            refresh: {shown: true, callback: load},
+                            settings: {shown: false}
+                        }"
                     />
                 </template>
                 <template #table>

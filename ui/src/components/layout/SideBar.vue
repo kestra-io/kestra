@@ -62,7 +62,7 @@
     const $emit = defineEmits(["menu-collapse"])
 
     const $route = useRoute()
-    const {locale, t} = useI18n()
+    const {locale, t} = useI18n({useScope: "global"});
     const store = useStore()
 
     function flattenMenu(menu) {

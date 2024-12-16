@@ -108,6 +108,6 @@ export default {
 }
 
 export function useToast(){
-    const {t} = useI18n()
+    const {t} = useI18n({useScope: "global"});
     return makeToast(t)
 }

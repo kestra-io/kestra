@@ -13,9 +13,9 @@ import io.kestra.core.services.FlowService;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
-import org.slf4j.helpers.BasicMarker;
 import org.slf4j.spi.LoggingEventBuilder;
 
 import java.io.*;
@@ -66,7 +66,8 @@ abstract public class PluginUtilsService {
                     if (isDir) {
                         tempFile = Files.createTempDirectory(tempDirectory, s + "_").toFile();
                     } else {
-                        tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
+                        String prefix = StringUtils.leftPad(s + "_", 3, "_");
+                        tempFile = File.createTempFile(prefix, null, tempDirectory.toFile());
                     }
 
                     result.put(s, additionalVars.get("workingDir") + "/" + tempFile.getName());

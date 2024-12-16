@@ -30,6 +30,7 @@
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
+                clearable
             >
                 <el-option
                     v-for="item in input.values"
@@ -50,6 +51,7 @@
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
+                clearable
                 :allow-create="input.allowCustomValue"
             >
                 <el-option

@@ -42,6 +42,7 @@ public class PluginClassLoader extends URLClassLoader {
         + "|com.fasterxml.jackson.dataformat.yaml"
         + "|com.fasterxml.jackson.dataformat.xml"
         + "|org.reactivestreams"
+        + "|dev.failsafe"
         + ")\\..*$");
 
     private final ClassLoader parent;

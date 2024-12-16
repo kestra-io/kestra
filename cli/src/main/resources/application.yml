@@ -37,6 +37,7 @@ micronaut:
         exclusions:
           - /ui/.+
           - /health
+          - /health/.+
           - /prometheus
     http-version: HTTP_1_1
   caches:

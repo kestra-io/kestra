@@ -1016,6 +1016,26 @@
     "create_custom_dashboard": "Criar novo dashboard",
     "edit_custom_dashboard": "Editar Dashboard",
     "custom_dashboard_empty": "Não há resultados para serem exibidos.",
-    "remove_bookmark": "Tem certeza de que deseja remover este marcador?"
+    "remove_bookmark": "Tem certeza de que deseja remover este marcador?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Começar ⚡",
+        "text": "Siga o Guia de Início Rápido para instalar o Kestra e começar a criar seus primeiros workflows."
+      },
+      "workflow_components": {
+        "text": "Conheça os principais componentes de orquestração de um workflow Kestra.",
+        "title": "Componentes do Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Comece com nossos tutoriais em vídeo.",
+        "title": "Tutoriais em Vídeo"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
+      "guidance_desc": "Precisa de orientação para executar o seu flow?",
+      "guidance_sub_desc": "Siga a documentação para todas as informações que você precisa.",
+      "title": "Comece a automatizar com"
+    }
   }
 }

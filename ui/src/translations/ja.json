@@ -1016,6 +1016,26 @@
     "create_custom_dashboard": "新しいダッシュボードを作成",
     "edit_custom_dashboard": "ダッシュボードを編集",
     "custom_dashboard_empty": "表示する結果がありません。",
-    "remove_bookmark": "このブックマークを削除してもよろしいですか？"
+    "remove_bookmark": "このブックマークを削除してもよろしいですか？",
+    "execution_guide": {
+      "get_started": {
+        "title": "はじめに ⚡",
+        "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。"
+      },
+      "workflow_components": {
+        "text": "Kestraワークフローの主なオーケストレーションコンポーネントを知る。",
+        "title": "ワークフローコンポーネント"
+      },
+      "videos_tutorials": {
+        "text": "ビデオチュートリアルで始めましょう。",
+        "title": "ビデオチュートリアル"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
+      "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
+      "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
+      "title": "自動化を開始"
+    }
   }
 }

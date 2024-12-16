@@ -1016,6 +1016,26 @@
     "create_custom_dashboard": "Создать новую панель управления",
     "edit_custom_dashboard": "Редактировать Dashboard",
     "custom_dashboard_empty": "Нет результатов для отображения.",
-    "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?"
+    "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Начать ⚡",
+        "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows."
+      },
+      "workflow_components": {
+        "text": "Познакомьтесь с основными компонентами оркестрации в workflow Kestra.",
+        "title": "Компоненты Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Начните с наших видеоуроков.",
+        "title": "Видеоуроки"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
+      "guidance_desc": "Нужна помощь для выполнения вашего flow?",
+      "guidance_sub_desc": "Следуйте документации для получения всей необходимой информации.",
+      "title": "Начните автоматизацию с"
+    }
   }
 }

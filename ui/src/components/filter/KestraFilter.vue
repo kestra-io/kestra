@@ -8,6 +8,7 @@
             value-key="label"
             :placeholder="t('filters.label')"
             default-first-option
+            allow-create
             filterable
             clearable
             multiple

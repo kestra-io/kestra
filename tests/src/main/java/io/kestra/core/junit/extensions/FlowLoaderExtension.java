@@ -1,14 +1,14 @@
-package io.kestra.plugin.core.extensions;
+package io.kestra.core.junit.extensions;
 
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.extension.*;
-
 import java.util.Objects;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
 

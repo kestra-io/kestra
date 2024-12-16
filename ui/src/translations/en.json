@@ -995,6 +995,56 @@
     "custom_dashboard": "Custom Dashboards",
     "create_custom_dashboard": "Create new dashboard",
     "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_empty": "There are no results to be shown."
+    "custom_dashboard_empty": "There are no results to be shown.",
+    "filters": {
+      "label": "Choose filters",
+      "empty": "No data.",
+      "format": "Type parameter as 'key:value'",
+      "options": {
+        "namespace": "Namespace",
+        "state": "State",
+        "trigger_state": "State",
+        "scope": "Scope",
+        "child": "Child",
+        "level": "Log level",
+        "task": "Task",
+        "metric": "Metric",
+        "user": "User",
+        "permission": "Permission",
+        "action": "Action",
+        "details": "Details",
+        "aggregation": "Aggregation",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
+        "labels": "Labels",
+        "text": "text"
+      },
+      "comparators": {
+        "is": "is",
+        "is_one_of": "is one of",
+        "is_not": "is not",
+        "is_not_one_off": "is not one of",
+        "contains": "contains",
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
+      },
+      "save": {
+        "label": "Saved searches",
+        "empty": "You still haven't saved any search.",
+        "tooltip": "You can't save empty search criteria.",
+        "dialog": {
+          "heading": "Save current search",
+          "placeholder": "Label",
+          "hint": "How do you want to label this search criteria?",
+          "confirmation": "Search criteria <code>{name}</code>"
+        }
+      },
+      "settings": {
+        "label": "Page settings",
+        "show_chart": "Show main chart"
+      }
+    }
   }
 }

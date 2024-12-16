@@ -980,12 +980,6 @@
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
       "guidance_sub_desc": "Sigue la documentación para toda la información que necesitas.",
       "title": "Comienza a automatizar con"
-    },
-    "filters": {
-      "format": "Escriba el parámetro como 'key:value'",
-      "settings": {
-        "label": "Configuración de la página"
-      }
     }
   }
 }

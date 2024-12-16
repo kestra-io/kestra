@@ -982,10 +982,54 @@
       "title": "Inizia ad automatizzare con"
     },
     "filters": {
-      "format": "Digita il parametro come 'key:value'",
+      "options": {
+        "child": "Bambino",
+        "metric": "Metrica",
+        "labels": "Etichette",
+        "details": "Dettagli",
+        "absolute_date": "Data assoluta",
+        "scope": "Ambito",
+        "trigger_state": "Stato",
+        "state": "Stato",
+        "action": "Azione",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you would like translated?",
+        "relative_date": "Data relativa",
+        "level": "Livello di Log",
+        "aggregation": "Aggregazione",
+        "permission": "Permesso",
+        "namespace": "Namespace",
+        "user": "Utente",
+        "task": "Compito"
+      },
       "settings": {
-        "label": "Impostazioni pagina"
-      }
+        "label": "Impostazioni pagina",
+        "show_chart": "Mostra il grafico principale"
+      },
+      "comparators": {
+        "contains": "contiene",
+        "is": "è",
+        "is_not": "non è",
+        "in": "nel",
+        "starts_with": "inizia con",
+        "not_contains": "non contiene",
+        "is_not_one_off": "non è uno di",
+        "is_one_of": "è uno di",
+        "between": "tra"
+      },
+      "save": {
+        "label": "Ricerche salvate",
+        "tooltip": "Non puoi salvare criteri di ricerca vuoti.",
+        "dialog": {
+          "heading": "Salva la ricerca corrente",
+          "confirmation": "Criteri di ricerca <code>{name}</code>",
+          "placeholder": "Etichetta",
+          "hint": "Come vuoi etichettare questo criterio di ricerca?"
+        },
+        "empty": "Non hai ancora salvato alcuna ricerca."
+      },
+      "empty": "Nessun dato.",
+      "format": "Digita il parametro come 'key:value'",
+      "label": "Scegli filtri"
     }
   }
 }

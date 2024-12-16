@@ -982,10 +982,54 @@
       "title": "Beginnen Sie mit der Automatisierung mit"
     },
     "filters": {
-      "format": "Geben Sie den Parameter als 'key:value' ein",
+      "options": {
+        "child": "Kind",
+        "metric": "Metrik",
+        "labels": "Labels",
+        "details": "Details",
+        "absolute_date": "Absolutes Datum",
+        "scope": "Umfang",
+        "trigger_state": "Zustand",
+        "state": "Zustand",
+        "action": "Aktion",
+        "text": "I'm sorry, but it seems that there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate?",
+        "relative_date": "Relatives Datum",
+        "level": "Log-Ebene",
+        "aggregation": "Aggregation",
+        "permission": "Berechtigung",
+        "namespace": "Namespace",
+        "user": "Benutzer",
+        "task": "Aufgabe"
+      },
       "settings": {
-        "label": "Seiteneinstellungen"
-      }
+        "label": "Seiteneinstellungen",
+        "show_chart": "Hauptdiagramm anzeigen"
+      },
+      "comparators": {
+        "contains": "enthält",
+        "is": "ist",
+        "is_not": "ist nicht",
+        "in": "im",
+        "starts_with": "beginnt mit",
+        "not_contains": "nicht enthält",
+        "is_not_one_off": "ist nicht einer von",
+        "is_one_of": "ist eine von",
+        "between": "zwischen"
+      },
+      "save": {
+        "label": "Gespeicherte Suchen",
+        "tooltip": "Sie können keine leeren Suchkriterien speichern.",
+        "dialog": {
+          "heading": "Aktuelle Suche speichern",
+          "confirmation": "Suchkriterien <code>{name}</code>",
+          "placeholder": "Label",
+          "hint": "Wie möchten Sie dieses Suchkriterium labeln?"
+        },
+        "empty": "Sie haben noch keine Suche gespeichert."
+      },
+      "empty": "Keine Daten.",
+      "format": "Geben Sie den Parameter als 'key:value' ein",
+      "label": "Filter auswählen"
     }
   }
 }

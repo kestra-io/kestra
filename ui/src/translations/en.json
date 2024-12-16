@@ -981,6 +981,21 @@
     "showLess": "Show less",
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",
+    "item": "item",
+    "items": "items",
+    "cron": "Cron",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
+    "task run id": "TaskRun ID",
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboards",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -1030,21 +1045,6 @@
         "label": "Page settings",
         "show_chart": "Show main chart"
       }
-    },
-    "item": "item",
-    "items": "items",
-    "cron": "Cron",
-    "execution failed header": "Execution failed!",
-    "execution failed message": "With last error: <code>{message}</code>",
-    "task run id": "TaskRun ID",
-    "active": "Active",
-    "flows imported": "Flows imported",
-    "flow not imported": "Some flow could not be imported",
-    "dashboard_label": "Dashboard",
-    "default_dashboard": "Default Dashboard",
-    "custom_dashboard": "Custom Dashboards",
-    "create_custom_dashboard": "Create new dashboard",
-    "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_empty": "There are no results to be shown."
+    }
   }
 }

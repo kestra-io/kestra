@@ -982,10 +982,54 @@
       "title": "자동화를 시작하세요"
     },
     "filters": {
-      "format": "'key:value'로 매개변수 입력",
+      "options": {
+        "child": "자식",
+        "metric": "메트릭",
+        "labels": "레이블",
+        "details": "세부사항",
+        "absolute_date": "절대 날짜",
+        "scope": "범위",
+        "trigger_state": "상태",
+        "state": "상태",
+        "action": "동작",
+        "text": "텍스트",
+        "relative_date": "상대 날짜",
+        "level": "로그 레벨",
+        "aggregation": "집계",
+        "permission": "권한",
+        "namespace": "네임스페이스",
+        "user": "사용자",
+        "task": "작업"
+      },
       "settings": {
-        "label": "페이지 설정"
-      }
+        "label": "페이지 설정",
+        "show_chart": "주요 차트 표시"
+      },
+      "comparators": {
+        "contains": "포함합니다",
+        "is": "입니다",
+        "is_not": "아님",
+        "in": "안에",
+        "starts_with": "로 시작합니다",
+        "not_contains": "포함하지 않음",
+        "is_not_one_off": "아닌 것 중 하나입니다.",
+        "is_one_of": "중 하나입니다.",
+        "between": "사이에"
+      },
+      "save": {
+        "label": "저장된 검색",
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
+        "dialog": {
+          "heading": "현재 검색 저장",
+          "confirmation": "검색 기준 <code>{name}</code>",
+          "placeholder": "레이블",
+          "hint": "이 검색 기준에 어떤 label을 지정하시겠습니까?"
+        },
+        "empty": "아직 검색을 저장하지 않았습니다."
+      },
+      "empty": "데이터가 없습니다.",
+      "format": "'key:value'로 매개변수 입력",
+      "label": "필터 선택"
     }
   }
 }

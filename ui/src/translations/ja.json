@@ -982,10 +982,54 @@
       "title": "自動化を開始"
     },
     "filters": {
-      "format": "「key:value」としてパラメータを入力してください。",
+      "options": {
+        "child": "子",
+        "metric": "メトリック",
+        "labels": "ラベル",
+        "details": "詳細",
+        "absolute_date": "絶対日付",
+        "scope": "スコープ",
+        "trigger_state": "状態",
+        "state": "状態",
+        "action": "アクション",
+        "text": "申し訳ありませんが、翻訳するためのテキストが提供されていないようです。翻訳が必要なテキストをもう一度送信してください。",
+        "relative_date": "相対日付",
+        "level": "ログレベル",
+        "aggregation": "集計",
+        "permission": "許可",
+        "namespace": "Namespace（ネームスペース）",
+        "user": "ユーザー",
+        "task": "タスク"
+      },
       "settings": {
-        "label": "ページ設定"
-      }
+        "label": "ページ設定",
+        "show_chart": "メインチャートを表示"
+      },
+      "comparators": {
+        "contains": "含む",
+        "is": "です",
+        "is_not": "ではありません",
+        "in": "内",
+        "starts_with": "で始まる",
+        "not_contains": "含まれていない",
+        "is_not_one_off": "のいずれでもありません",
+        "is_one_of": "のいずれか",
+        "between": "間"
+      },
+      "save": {
+        "label": "保存済み検索",
+        "tooltip": "空の検索条件を保存することはできません。",
+        "dialog": {
+          "heading": "現在の検索を保存",
+          "confirmation": "検索条件 <code>{name}</code>",
+          "placeholder": "ラベル",
+          "hint": "この検索条件にどのようなラベルを付けますか？"
+        },
+        "empty": "検索をまだ保存していません。"
+      },
+      "empty": "データがありません。",
+      "format": "「key:value」としてパラメータを入力してください。",
+      "label": "フィルターを選択"
     }
   }
 }

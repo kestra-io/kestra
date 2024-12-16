@@ -525,7 +525,6 @@ $dashboards: 52px;
 
     & .el-select {
         width: 100%;
-        max-width: 100%;
 
         &.refresh.settings.dashboards {
             max-width: calc(

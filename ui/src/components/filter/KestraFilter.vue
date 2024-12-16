@@ -499,15 +499,9 @@
 </script>
 
 <style lang="scss">
-@mixin width-available {
-    width: -moz-available;
-    width: -webkit-fill-available;
-    // https://caniuse.com/?search=fill-available
-    width: fill-available;
-}
+@import "./styles/filter.scss";
 
 $included: 144px;
-
 $refresh: 104px;
 $settins: 52px;
 $dashboards: 52px;
@@ -549,18 +543,20 @@ $dashboards: 52px;
         }
     }
     & .el-select__placeholder {
-        color: var(--bs-gray-700);
+        color: $filters-gray-700;
     }
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
-            0 -1px 0 0 var(--el-border-color) inset,
-            0 1px 0 0 var(--el-border-color) inset;
+            0 -1px 0 0 $filters-border-color inset,
+            0 1px 0 0 $filters-border-color inset;
+
         & .el-tag {
-            background: var(--bs-border-color) !important;
-            color: var(--bs-gray-900);
+            background: $filters-border-color !important;
+            color: $filters-gray-900;
+
             & .el-tag__close {
-                color: var(--bs-gray-900);
+                color: $filters-gray-900;
             }
         }
     }

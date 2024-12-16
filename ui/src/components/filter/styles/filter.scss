@@ -2,15 +2,21 @@
 $filters-gray-500: var(--bs-gray-500);
 $filters-gray-700: var(--bs-gray-700);
 $filters-gray-900: var(--bs-gray-900);
-$filters-card: var(--card-bg);
-$filters-border: var(--bs-border-color);
+$filters-card-color: var(--card-bg);
+$filters-border-color: var(--bs-border-color);
 
 // Typography
 $filters-font-xs: var(--el-font-size-extra-small);
 
+@mixin width-available {
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: fill-available;
+}
+
 .items {
     .el-tag {
-        background: $filters-border;
+        background: $filters-border-color;
         color: $filters-gray-900;
     }
 
@@ -31,18 +37,12 @@ $filters-font-xs: var(--el-font-size-extra-small);
         }
 
         &::-webkit-scrollbar-track {
-            background: $filters-card
+            background: $filters-card-color
         }
 
         &::-webkit-scrollbar-thumb {
-            background: $filters-border;
+            background: $filters-border-color;
             border-radius: 0px;
         }
     }
 }
-
-
-// display
-// margin-padding
-// ocloring
-//typography

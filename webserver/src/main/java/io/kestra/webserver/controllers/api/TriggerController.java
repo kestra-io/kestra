@@ -210,9 +210,13 @@ public class TriggerController {
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
+    /**
+     * @deprecated this operation is not used from the UI, please use the search endpoint instead.
+     */
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{namespace}/{flowId}")
+    @Get
     @Operation(tags = {"Triggers"}, summary = "Get all triggers for a flow")
+    @Deprecated(forRemoval = true, since = "0.21")
     public PagedResults<Trigger> find(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
@@ -330,15 +334,6 @@ public class TriggerController {
         this.triggerQueue.emit(trigger);
 
         return HttpResponse.ok(trigger);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/restart")
-    @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
-    public void restart(
-        @Parameter(description = "The trigger") @Body final Trigger trigger
-    ) throws HttpStatusException {
-
     }
 
     @ExecuteOn(TaskExecutors.IO)

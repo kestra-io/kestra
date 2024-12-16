@@ -542,9 +542,11 @@ $dashboards: 52px;
             max-width: calc(100% - $included - $dashboards);
         }
     }
+
     & .el-select__placeholder {
         color: $filters-gray-700;
     }
+
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
@@ -560,9 +562,11 @@ $dashboards: 52px;
             }
         }
     }
+
     & .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
+
         &::-webkit-scrollbar {
             height: 0px;
         }
@@ -572,14 +576,17 @@ $dashboards: 52px;
 .filters-select {
     & .el-select-dropdown {
         width: 300px !important;
+
         &:has(.el-select-dropdown__empty) {
             width: 500px !important;
         }
     }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
+
     & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }

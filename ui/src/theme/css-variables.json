@@ -119,10 +119,6 @@
     "tooltip-background-information",
     "tooltip-content-alert"
   ],
-  "radius": [
-    "radius-radius-m",
-    "radius-radius-s"
-  ],
   "editor-text-code": [
     "editor-text-code-editor-text1",
     "editor-text-code-editor-text2",

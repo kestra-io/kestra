@@ -9,7 +9,7 @@
 	#{--backgrounds-background-button-secondary-hover}: $base-gray-50;
 	#{--backgrounds-background-button-inactive}: $base-gray-50;
 	#{--backgrounds-background-button-primary-active}: $base-purple-700;
-	#{--backgrounds-background-button-secondary-active}: $base-gray-200;
+	#{--backgrounds-background-button-secondary-active}: $base-gray-50;
 	#{--backgrounds-background-left-menu}: $base-white;
 	#{--backgrounds-background-logo}: #2c0059;
 	#{--backgrounds-background-button-secondary}: $base-white;
@@ -17,17 +17,17 @@
 	#{--backgrounds-shadows}: $base-purple-900;
 	#{--backgrounds-background-tags}: $base-gray-200;
 	#{--backgrounds-background-tags-2}: $base-gray-300;
-	#{--backgrounds-background-table_first_row}: $base-gray-200;
+	#{--backgrounds-background-table_first_row}: $base-gray-50;
 	#{--backgrounds-background-table_row}: $base-white;
 	#{--backgrounds-background-table_first_row-2}: $base-gray-200;
-	#{--content-content-primary}: $base-gray-900;
+	#{--content-content-primary}: $base-gray-950;
 	#{--content-content-secondary}: $base-gray-800;
 	#{--content-content-link}: $base-purple-500;
 	#{--content-content-tertiary}: $base-gray-500;
 	#{--content-content-inactive}: $base-gray-400;
 	#{--content-content-inverse}: $base-white;
 	#{--content-content-link-hover}: $base-purple-300;
-	#{--border-border}: $base-gray-300;
+	#{--border-border}: $base-gray-200;
 	#{--border-border-secondary}: $base-gray-200;
 	#{--border-border-active}: $base-purple-500;
 	#{--border-border-inactive}: $base-gray-200;
@@ -87,8 +87,6 @@
 	#{--tooltip-border-information}: $base-blue-200;
 	#{--tooltip-background-information}: $base-blue-50;
 	#{--tooltip-content-alert}: $base-red-500;
-	#{--radius-radius-m}: 8;
-	#{--radius-radius-s}: 4;
 	#{--editor-text-code-editor-text1}: $base-green-600;
 	#{--editor-text-code-editor-text2}: $base-blue-600;
 	#{--editor-text-code-editor-text3}: $base-orange-600;

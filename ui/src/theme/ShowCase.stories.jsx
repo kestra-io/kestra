@@ -1,4 +1,5 @@
 import ShowCase from "./ShowCase.vue";
+import ShowCaseColors from "./ShowCaseColors.vue";
 
 const meta = {
     title: "theme/ShowCase",
@@ -12,4 +13,8 @@ export default meta;
  */
 export const ElementPlusPlayground = {
     render: () => <ShowCase />,
+}
+
+export const ColorsPlayground = {
+    render: () => <ShowCaseColors />,
 }

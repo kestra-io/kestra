@@ -1,28 +1,8 @@
-import cssVariablesThemes from './css-variables.json';
+import { Story } from '@storybook/blocks';
+import * as ShowCase from './ShowCase.stories';
+
 
 # Color Tokens
-<div>
-    {Object.entries(cssVariablesThemes).map(([theme, cssVariables]) => (
-        <>
-        <h2 style={{marginTop: '3rem'}}>{theme}</h2>
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1rem'}}>
-            {cssVariables.map((color, index) => (
-                <div key={index} style={{
-                    padding: '.5rem 1rem',
-                    backgroundColor: `var(--${color})`
-                }}>
-                    <span style={{
-                        color: '#000000',
-                        isolation: 'isolate',
-                        filter: 'invert(1) grayscale(1)',
-                        mixBlendMode: 'difference'
-                        }}>
-                        var(--{color})
-                    </span>
-                </div>
-            ))}
-        </div>
-        </>
-    ))}
-</div>
+
+<Story of={ShowCase.ColorsPlayground} />
 

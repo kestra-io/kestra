@@ -7,5 +7,5 @@ concurrency:
 
 tasks:
   - id: sleep
-    type: io.kestra.core.tasks.test.Sleep
-    duration: 2000
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT2S

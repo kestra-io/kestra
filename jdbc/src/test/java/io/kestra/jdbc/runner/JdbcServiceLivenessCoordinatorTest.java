@@ -21,12 +21,12 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -208,7 +208,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(sleep.toMillis())
+            .duration(sleep)
             .build();
 
         Execution execution = TestsUtils.mockExecution(flowBuilder(sleep), ImmutableMap.of());
@@ -242,7 +242,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(sleep.toMillis())
+            .duration(sleep)
             .build();
 
         SleepTrigger trigger = SleepTrigger.builder()

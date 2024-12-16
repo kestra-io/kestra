@@ -24,13 +24,23 @@ fs.writeFileSync(path.resolve(__dirname, "../src/styles/color-palette.scss"), sc
 
 const tokens = palette["Tokens"]
 
+const cssVariableNames = {}
+
 function getVariableScss(tokenTheme, tokenName) {
     return Object.entries(tokenTheme).map(([key, value]) => {
         const normalizedKey = normalizeKey(key)
         const prefix = tokenName ? `${tokenName}-${normalizedKey}` : normalizedKey
+
         if(typeof value === "object") {
             return getVariableScss(value, prefix)
         }
+
+        if(tokenName){
+            const cssVariableNamesTheme = cssVariableNames[tokenName] || []
+            cssVariableNamesTheme.push(prefix)
+            cssVariableNames[tokenName] = cssVariableNamesTheme
+        }
+
         const colorVar = colorIndex[value] ? `$base-${colorIndex[value]}` : value
         return `\t#{--${prefix}}: ${colorVar};`
 
@@ -41,3 +51,6 @@ const tokenScss = getVariableScss(tokens)
 
 // write the scss file containing colors in the token palette
 fs.writeFileSync(path.resolve(__dirname, "../src/styles/layout/theme-light.scss"), `@import "../color-palette.scss";\n\n:root{\n${tokenScss}\n}`, {encoding: "utf-8"})
+
+// write the css variables into an index for theme documentation
+fs.writeFileSync(path.resolve(__dirname, "../src/theme/css-variables.json"), JSON.stringify(cssVariableNames, null, 2), {encoding: "utf-8"})

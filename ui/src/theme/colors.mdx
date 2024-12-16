@@ -1,10 +1,28 @@
-# Colors
+import cssVariablesThemes from './css-variables.json';
 
+# Color Tokens
 <div>
-    {['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#000', '#fff'].map((color, index) => (
-        <div key={index} style={{ backgroundColor: color, color: color === '#fff' ? '#000' : '#fff' }}>
-            {color}
+    {Object.entries(cssVariablesThemes).map(([theme, cssVariables]) => (
+        <>
+        <h2 style={{marginTop: '3rem'}}>{theme}</h2>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1rem'}}>
+            {cssVariables.map((color, index) => (
+                <div key={index} style={{
+                    padding: '.5rem 1rem',
+                    backgroundColor: `var(--${color})`
+                }}>
+                    <span style={{
+                        color: '#000000',
+                        isolation: 'isolate',
+                        filter: 'invert(1) grayscale(1)',
+                        mixBlendMode: 'difference'
+                        }}>
+                        var(--{color})
+                    </span>
+                </div>
+            ))}
         </div>
+        </>
     ))}
 </div>
 

@@ -15,6 +15,6 @@ export default defineConfig({
         environment: "jsdom"
     },
     define: {
-        KESTRA_BASE_PATH: "/ui/",
+        "window.KESTRA_BASE_PATH": "/ui/",
     },
 })

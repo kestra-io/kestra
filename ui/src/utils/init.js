@@ -87,7 +87,7 @@ export default (app, routes, stores, translations) => {
     let store = createStore(stores);
     app.use(store);
 
-    /* eslint-disable no-undef */
+
     // router
     let router = createRouter({
         history: createWebHistory(window.KESTRA_UI_PATH),
@@ -133,7 +133,7 @@ export default (app, routes, stores, translations) => {
             router
         );
     }
-    /* eslint-enable no-undef */
+
 
 
     // l18n

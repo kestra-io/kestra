@@ -1000,7 +1000,8 @@
         "namespace": "Namespace",
         "user": "Utilisateur",
         "task": "Tâche",
-        "flow": "Flux"
+        "flow": "Flux",
+        "type": "Type"
       },
       "settings": {
         "label": "Paramètres de la page",

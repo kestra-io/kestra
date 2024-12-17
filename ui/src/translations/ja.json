@@ -1000,7 +1000,8 @@
         "namespace": "Namespace（ネームスペース）",
         "user": "ユーザー",
         "task": "タスク",
-        "flow": "フロー"
+        "flow": "フロー",
+        "type": "タイプ"
       },
       "settings": {
         "label": "ページ設定",

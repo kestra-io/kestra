@@ -1000,7 +1000,8 @@
         "namespace": "네임스페이스",
         "user": "사용자",
         "task": "작업",
-        "flow": "플로우"
+        "flow": "플로우",
+        "type": "유형"
       },
       "settings": {
         "label": "페이지 설정",

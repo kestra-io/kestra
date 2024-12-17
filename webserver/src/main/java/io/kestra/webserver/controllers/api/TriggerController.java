@@ -210,20 +210,16 @@ public class TriggerController {
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
-    /**
-     * @deprecated this operation is not used from the UI, please use the search endpoint instead.
-     */
     @ExecuteOn(TaskExecutors.IO)
-    @Get
+    @Get(uri = "/{namespace}/{flowId}")
     @Operation(tags = {"Triggers"}, summary = "Get all triggers for a flow")
-    @Deprecated(forRemoval = true, since = "0.21")
     public PagedResults<Trigger> find(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A flow id") @Nullable @QueryValue String flowId
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId
     ) throws HttpStatusException {
         return PagedResults.of(triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),

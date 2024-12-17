@@ -95,7 +95,7 @@
 
 .el-input, .el-input-number, .el-select, .el-date-editor.el-input {
 
-    background-color: var(--bs-body-bg);
+    background-color: var(--backgrounds-background-body);
     width: 100%;
 }
 
@@ -325,7 +325,7 @@ form.ks-horizontal {
             background: var(--bs-gray-100-darken-2);
 
             html.dark & {
-                background: var(--bs-body-bg);
+                background: var(--backgrounds-background-body);
             }
         }
     }
@@ -734,7 +734,7 @@ form.ks-horizontal {
     }
 
     .el-input__prefix, .el-input__inner, .el-input__inner::placeholder {
-        background-color: var(--bs-body-bg);
+        background-color: var(--backgrounds-background-body);
     }
 
     .el-input__suffix-inner {

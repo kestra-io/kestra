@@ -173,3 +173,23 @@ html.full-screen {
 
     }
 }
+
+// setup non color CSS variables
+:root{
+    --el-box-shadow: $box-shadow;
+    --el-box-shadow-light: $box-shadow-sm;
+    --el-box-shadow-lighter: $box-shadow-sm;
+    --el-box-shadow-dark: $box-shadow-lg;
+
+    --el-transition-duration: 0.2s;
+    --el-transition-duration-fast: 0.2s;
+    --top-navbar-height: 79px;
+    #{--menu-width}: $menu-width;
+    #{--menu-collapsed-width}: 65px;
+    #{--spacer}: $spacer;
+
+    #{--font-size-xs}: $font-size-xs;
+    #{--font-size-sm}: $font-size-sm;
+    #{--font-size-base}: $font-size-base;
+    #{--font-size-lg}: $font-size-lg;
+}

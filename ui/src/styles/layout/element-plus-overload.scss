@@ -538,8 +538,8 @@ form.ks-horizontal {
             margin-bottom: 1px; // fix tabs overflowing over the bottom line
         }
         & > .el-tabs__header .el-tabs__nav{
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--el-border-color-light);
+            background-color: var(--backgrounds-background-card);
+            border-bottom: 1px solid var(--border-border-inactive);
             gap: 2px;
             .el-tabs__item{
                 padding: 0 !important;
@@ -552,8 +552,8 @@ form.ks-horizontal {
                     border-top-right-radius: 3px;
                 }
                 a{
-                    padding-top: 7px;
-                    padding-bottom: 7px;
+                    padding-top: .5rem;
+                    padding-bottom: .5rem;
                     font-weight: normal!important;
                     color: var(--el-text-color-regular);
                     &:hover{
@@ -561,13 +561,12 @@ form.ks-horizontal {
                     }
                 }
                 &.is-active a{
-                    box-shadow:
-                        0 0 0 1px var(--el-bg-color),
-                        0 0 0 2px var(--bs-primary);
-                    background-color: var(--el-bg-color);
+                    background-color: var(--backgrounds-background-body);
                     color: var(--content-content-link);
                     position: relative;
                     z-index: 1;
+                    // create an outline without cutting the rounded corners
+                    box-shadow: 0 0 0 1px var(--border-border-active);
                 }
             }
         }

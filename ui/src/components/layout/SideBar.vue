@@ -182,7 +182,7 @@
 
             &:hover {
                 background: none !important;
-                color: var(--bs-primary) !important;
+                color: var(--content-content-link) !important;
             }
         }
 

@@ -13,7 +13,7 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <el-icon size="medium" @click="goBack">
+                <el-icon @click="goBack">
                     <ArrowLeft />
                 </el-icon>
             </button>
@@ -171,7 +171,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            ...mapState("plugin", ["icons"]),         
+            ...mapState("plugin", ["icons"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
@@ -279,11 +279,11 @@
             }
         }
     }
-    
+
         .tags {
             margin: 10px 0;
             display: flex;
-                        
+
             .el-tag.el-tag--info {
                 background-color: var(--card-bg);
                 padding: 15px 10px;

@@ -102,7 +102,6 @@ html.dark {
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
-    #{--token-content-link}: #BBBBFF;
 
     .shiki, .shiki span {
         font-style: var(--shiki-dark-font-style) !important;

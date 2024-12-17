@@ -52,7 +52,7 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
 
     const store = useStore();
-    const {t} = useI18n();
+    const {t} = useI18n({useScope: "global"});
 
     const feeds = computed(() => store.state.api.feeds);
 

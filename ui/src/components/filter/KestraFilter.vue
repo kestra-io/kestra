@@ -1,6 +1,6 @@
 <template>
-    <section :class="['d-inline-flex mb-3 filters', {focused: isFocused}]">
-        <History :prefix @search="handleHistoryItems" />
+    <section class="d-inline-flex mb-3 filters">
+        <Items :prefix @search="handleClickedItems" />
 
         <el-select
             ref="select"
@@ -16,15 +16,17 @@
             :show-arrow="false"
             fit-input-width
             popper-class="filters-select"
-            :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
             @clear="handleClear"
-            @focus="handleFocus"
-            @blur="handleBlur"
+            :class="{
+                refresh: buttons.refresh.shown,
+                settings: buttons.settings.shown,
+                dashboards: dashboards.shown,
+            }"
         >
             <template #label="{value}">
                 <Label :option="value" />
@@ -33,6 +35,7 @@
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
                 <DateRange
                     v-else
+                    automatic
                     @update:model-value="(v) => valueCallback(v, true)"
                 />
             </template>
@@ -82,18 +85,37 @@
             </template>
         </el-select>
 
-        <el-button-group class="d-inline-flex">
+        <el-button-group class="d-inline-flex me-1">
             <KestraIcon :tooltip="$t('search')" placement="bottom">
-                <el-button :icon="Magnify" @click="triggerSearch" />
+                <el-button
+                    :icon="Magnify"
+                    @click="triggerSearch"
+                    class="rounded-0"
+                />
             </KestraIcon>
             <Save :disabled="!current.length" :prefix :current />
-            <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings v-if="settings.shown" :settings />
+        </el-button-group>
+
+        <el-button-group
+            v-if="buttons.refresh.shown || buttons.settings.shown"
+            class="d-inline-flex ms-1"
+            :class="{'me-1': dashboards.shown}"
+        >
+            <Refresh
+                v-if="buttons.refresh.shown"
+                @refresh="buttons.refresh.callback"
+            />
+            <Settings
+                v-if="buttons.settings.shown"
+                :settings="buttons.settings"
+                :refresh="buttons.refresh.shown"
+            />
         </el-button-group>
 
         <Dashboards
             v-if="dashboards.shown"
             @dashboard="(value) => emits('dashboard', value)"
+            class="ms-1"
         />
     </section>
 </template>
@@ -101,6 +123,17 @@
 <script setup lang="ts">
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
+
+    import Refresh from "../layout/RefreshButton.vue";
+    import Items from "./segments/Items.vue";
+    import Label from "./components/Label.vue";
+    import Save from "./segments/Save.vue";
+    import Settings from "./segments/Settings.vue";
+    import Dashboards from "./segments/Dashboards.vue";
+    import KestraIcon from "../Kicon.vue";
+    import DateRange from "../layout/DateRange.vue";
+
+    import {Magnify} from "./utils/icons.js";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -112,33 +145,19 @@
     const router = useRouter();
     const route = useRoute();
 
-    import Refresh from "../layout/RefreshButton.vue";
-
-    import History from "./components/history/History.vue";
-    import Label from "./components/Label.vue";
-    import Save from "./components/Save.vue";
-    import Settings from "./components/Settings.vue";
-    import Dashboards from "./components/Dashboards.vue";
-    import KestraIcon from "../Kicon.vue";
-
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-
-    import DateRange from "../layout/DateRange.vue";
-
     const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
         prefix: {type: String, required: true},
         include: {type: Array, required: true},
-        values: {type: Object, required: false, default: undefined},
-        refresh: {
-            type: Object,
-            default: () => ({shown: false, callback: () => {}}),
-        },
-        settings: {
+        values: {type: Object, default: undefined},
+        buttons: {
             type: Object,
             default: () => ({
-                shown: false,
-                charts: {shown: false, value: false, callback: () => {}},
+                refresh: {shown: false, callback: () => {}},
+                settings: {
+                    shown: false,
+                    charts: {shown: false, value: false, callback: () => {}},
+                },
             }),
         },
         dashboards: {
@@ -147,10 +166,8 @@
         },
     });
 
-    import {useFilters} from "./useFilters.js";
-    const {COMPARATORS, OPTIONS, encodeParams, decodeParams} = useFilters(
-        props.prefix,
-    );
+    import {useFilters} from "./composables/useFilters.js";
+    const {COMPARATORS, OPTIONS} = useFilters(props.prefix);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -205,10 +222,6 @@
         triggerSearch();
     };
 
-    const isFocused = ref(false);
-    const handleFocus = () => (isFocused.value = true);
-    const handleBlur = () => (isFocused.value = false);
-
     const filterCallback = (option) => {
         if (!option.value) {
             triggerEnter.value = false;
@@ -235,7 +248,7 @@
         emptyLabel.value = ["labels", "details"].includes(
             current.value[dropdowns.value.second.index].label,
         )
-            ? t("filters.key_value_type")
+            ? t("filters.format")
             : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
@@ -262,24 +275,11 @@
     };
     const valueCallback = (filter, isDate = false) => {
         if (!isDate) {
-            const currentFilter = current.value[dropdowns.value.third.index];
-            const label = currentFilter.label;
-            const existingIndex = current.value.findIndex(i => i.label === label);
+            const values = current.value[dropdowns.value.third.index].value;
+            const index = values.indexOf(filter.value);
 
-            if (existingIndex !== -1 && existingIndex !== dropdowns.value.third.index) {
-                if (!currentFilter.comparator?.multiple) {
-                    current.value[existingIndex].value = [filter.value];
-                    current.value.splice(dropdowns.value.third.index, 1);
-                    dropdowns.value.third.index = existingIndex;
-                } else {
-                    current.value[existingIndex].value.push(filter.value);
-                }
-            } else {
-                const values = currentFilter.value;
-                const index = values.indexOf(filter.value);
-                if (index === -1) values.push(filter.value);
-                else values.splice(index, 1);
-            }
+            if (index === -1) values.push(filter.value);
+            else values.splice(index, 1);
 
             // Update the hover index for better UX
             const hoverIndex = valueOptions.value.findIndex(
@@ -333,7 +333,7 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    import {useValues} from "./useValues.js";
+    import {useValues} from "./composables/useValues";
     const {VALUES} = useValues(props.prefix);
 
     const isDatePickerShown = computed(() => {
@@ -417,12 +417,8 @@
         if (typeof v.at(-1) === "string") {
             if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
-                const existingIndex = current.value.findIndex(i => i.label === "labels");
-                if (existingIndex !== -1) {
-                    current.value[existingIndex].value.push(v.at(-1));
-                } else {
-                    current.value.push({label: "labels", value: [v.at(-1)]});
-                }
+                v.at(-2).value?.push(v.at(-1));
+
                 closeDropdown();
                 triggerSearch();
             } else {
@@ -451,17 +447,19 @@
         triggerSearch();
     };
 
-    const handleHistoryItems = (value) => {
+    const handleClickedItems = (value) => {
         if (value) current.value = value;
         select.value?.focus();
     };
 
+    import {encodeParams, decodeParams} from "./utils/helpers.js";
+
     const triggerSearch = () => {
-        router.push({query: encodeParams(current.value)});
+        router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter
-    current.value = decodeParams(route.query, props.include);
+    current.value = decodeParams(route.query, props.include, OPTIONS);
 
     const addNamespaceFilter = (namespace) => {
         if (!namespace) return;
@@ -475,80 +473,113 @@
 
     const {name, params} = route;
 
-    if (name === "flows/update") addNamespaceFilter(params?.namespace);
-    else if (name === "namespaces/update") addNamespaceFilter(params.id);
+    if (name === "flows/update") {
+        // Single flow page
+        addNamespaceFilter(params?.namespace);
+
+        if (params.id) {
+            current.value.push({
+                label: "flow",
+                value: [`${params.id}`],
+                comparator: COMPARATORS.IS,
+                persistent: true,
+            });
+        }
+    } else if (name === "namespaces/update") {
+        // Single namespace page
+        addNamespaceFilter(params.id);
+    }
 </script>
 
 <style lang="scss">
-@mixin width-available {
-    width: -moz-available;
-    width: -webkit-fill-available;
-    // https://caniuse.com/?search=fill-available
-    width: fill-available;
-}
+@import "./styles/filter.scss";
+
+$included: 144px;
+$refresh: 104px;
+$settins: 52px;
+$dashboards: 52px;
+
 .filters {
     @include width-available;
+
     & .el-select {
-        flex: 1;
-        width: calc(100% - 237px);
+        width: 100%;
+
+        &.refresh.settings.dashboards {
+            max-width: calc(
+                100% - $included - $refresh - $settins - $dashboards
+            );
+        }
+
+        &.refresh.settings {
+            max-width: calc(100% - $included - $refresh - $settins + 0.25rem);
+        }
+
+        &.settings.dashboards {
+            max-width: calc(100% - $included - $settins - $dashboards);
+        }
+
+        &.refresh.dashboards {
+            max-width: calc(100% - $included - $refresh - $dashboards);
+        }
+
+        &.refresh {
+            max-width: calc(100% - $included - $refresh);
+        }
+
         &.settings {
-            max-width: calc(100% - 285px);
+            max-width: calc(100% - $included - $settins);
         }
-        &:not(.refresh) {
-            max-width: calc(100% - 189px);
+
+        &.dashboards {
+            max-width: calc(100% - $included - $dashboards);
         }
     }
+
     & .el-select__placeholder {
-        color: var(--bs-gray-700);
+        color: $filters-gray-700;
     }
+
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
-            0 -1px 0 0 var(--el-border-color) inset,
-            0 1px 0 0 var(--el-border-color) inset;
+            0 -1px 0 0 $filters-border-color inset,
+            0 1px 0 0 $filters-border-color inset;
+
         & .el-tag {
-            background: var(--bs-border-color) !important;
-            color: var(--bs-gray-900);
+            background: $filters-border-color !important;
+            color: $filters-gray-900;
+
             & .el-tag__close {
-                color: var(--bs-gray-900);
+                color: $filters-gray-900;
             }
         }
     }
+
     & .el-select__selection {
         flex-wrap: nowrap;
         overflow-x: auto;
+
         &::-webkit-scrollbar {
             height: 0px;
         }
     }
-    & .el-button-group {
-        .el-button {
-            border-radius: 0;
-        }
-        span.kicon:last-child .el-button,
-        > button.el-button:last-child {
-            border-top-right-radius: var(--bs-border-radius);
-            border-bottom-right-radius: var(--bs-border-radius);
-        }
-    }
 }
-.el-button-group .el-button--primary:last-child {
-    border-left: none;
-}
-.el-button-group > .el-dropdown > .el-button {
-    border-left-color: transparent;
-}
+
 .filters-select {
     & .el-select-dropdown {
         width: 300px !important;
+
         &:has(.el-select-dropdown__empty) {
             width: 500px !important;
         }
     }
+
     & .el-date-editor.el-input__wrapper {
         background-color: initial;
         box-shadow: none;
     }
+
     & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
     }

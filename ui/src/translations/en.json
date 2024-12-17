@@ -981,12 +981,28 @@
     "showLess": "Show less",
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",
+    "item": "item",
+    "items": "items",
+    "cron": "Cron",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
+    "task run id": "TaskRun ID",
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboards",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
+      "format": "Type parameter as 'key:value'",
       "options": {
-        "user": "User",
         "namespace": "Namespace",
+        "flow": "Flow",
         "state": "State",
         "trigger_state": "State",
         "scope": "Scope",
@@ -994,14 +1010,15 @@
         "level": "Log level",
         "task": "Task",
         "metric": "Metric",
+        "user": "User",
         "permission": "Permission",
         "action": "Action",
         "details": "Details",
         "aggregation": "Aggregation",
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
-        "text": "text",
-        "labels": "Labels"
+        "labels": "Labels",
+        "text": "text"
       },
       "comparators": {
         "is": "is",
@@ -1025,29 +1042,10 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
-      },
       "settings": {
+        "label": "Page settings",
         "show_chart": "Show main chart"
-      },
-      "key_value_type": "Type parameter as 'key:value'"
-    },
-    "item": "item",
-    "items": "items",
-    "cron": "Cron",
-    "execution failed header": "Execution failed!",
-    "execution failed message": "With last error: <code>{message}</code>",
-    "task run id": "TaskRun ID",
-    "active": "Active",
-    "flows imported": "Flows imported",
-    "flow not imported": "Some flow could not be imported",
-    "dashboard_label": "Dashboard",
-    "default_dashboard": "Default Dashboard",
-    "custom_dashboard": "Custom Dashboards",
-    "create_custom_dashboard": "Create new dashboard",
-    "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_empty": "There are no results to be shown."
+      }
+    }
   }
 }

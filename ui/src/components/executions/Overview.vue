@@ -4,12 +4,12 @@
             <el-alert type="error" :closable="false" class="mb-4 main-error">
                 <template #title>
                     <div @click="isExpanded = !isExpanded">
-                        <alert-outline class="main-icon" />
+                        <alert class="main-icon" />
                         {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
                         <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
                         <span class="toggle-icon" v-if="errorLogs">
-                            <menu-up v-if="isExpanded" />
-                            <menu-down v-else />
+                            <chevron-up v-if="isExpanded" />
+                            <chevron-down v-else />
                         </span>
                     </div>
                 </template>
@@ -19,7 +19,7 @@
                     </div>
                     <div class="text-end" v-if="errorLogsMore">
                         <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
-                            <el-button type="danger" class="mt-3">
+                            <el-button class="mt-3">
                                 {{ $t('homeDashboard.errorLogs') }}
                             </el-button>
                         </router-link>
@@ -134,9 +134,9 @@
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
     import LogLine from "../../components/logs/LogLine.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
-    import MenuUp from "vue-material-design-icons/MenuUp.vue";
+    import Alert from "vue-material-design-icons/Alert.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
 
     export default {
         components: {
@@ -155,9 +155,9 @@
             Crud,
             KestraCascader,
             LogLine,
-            AlertOutline,
-            MenuDown,
-            MenuUp
+            Alert,
+            ChevronDown,
+            ChevronUp
         },
         emits: ["follow"],
         methods: {
@@ -408,19 +408,28 @@
 }
 
 .el-alert.main-error {
-    background-color: transparent;
+    background-color: var(--background-color-failed) !important;
     padding: 0.5rem;
 
+    .el-button{
+        color: var(--log-content-error);
+        background-color: var(--log-background-error);
+        border-color: var(--log-border-error);
+    }
     .el-alert__title {
         cursor: pointer;
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--bs-body-color);
+        color: var(--content-color-failed) !important;
         font-size: var(--font-size-sm);
 
         span {
             font-weight: normal;
+        }
+
+        code{
+            color: var(--log-content-error) !important;
         }
 
         > div {
@@ -469,7 +478,7 @@
 
     .line {
         padding: calc(var(--spacer) / 2);
-        border-top: 1px solid var(--bs-border-color);
+        border-top: 1px solid var(--log-background-error);
     }
 }
 </style>

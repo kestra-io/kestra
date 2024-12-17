@@ -195,6 +195,21 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
+    @Test
+    void triggerInputSmall() {
+        File applicationFile = new File(Objects.requireNonNull(
+            ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
+        ).getPath());
+
+        MultipartBody requestBody = MultipartBody.builder()
+            .addPart("files", "f", MediaType.TEXT_PLAIN_TYPE, applicationFile)
+            .build();
+
+        Execution execution = triggerExecution(TESTS_FLOW_NS, "inputs-small-files", requestBody, true);
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat((String) execution.getOutputs().get("o"), startsWith("kestra://"));
+    }
 
     @Test
     void invalidInputs() {
@@ -212,7 +227,6 @@ class ExecutionControllerTest extends JdbcH2ControllerTest {
         assertThat(response, containsString("Invalid entity"));
         assertThat(response, containsString("Invalid input for `validatedString`"));
     }
-
 
     @Test
     void triggerAndWait() {

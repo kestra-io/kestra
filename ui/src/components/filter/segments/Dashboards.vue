@@ -1,9 +1,11 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
-        <el-button :icon="ViewDashboardEdit" class="ms-2" />
+        <KestraIcon :tooltip="$t('dashboards')" placement="bottom">
+            <el-button :icon="ViewDashboardEdit" />
+        </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="p-4 dashboard-dropdown">
+            <el-dropdown-menu class="p-4 dropdown">
                 <el-button
                     type="primary"
                     :icon="Plus"
@@ -32,7 +34,7 @@
 
                 <hr class="my-2">
 
-                <div class="overflow-x-auto saved scroller">
+                <div class="overflow-x-auto scroller items">
                     <el-dropdown-item
                         v-for="(dashboard, index) in filtered"
                         :key="index"
@@ -65,10 +67,14 @@
 <script setup lang="ts">
     import {onBeforeMount, ref, computed} from "vue";
 
-    import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import KestraIcon from "../../Kicon.vue";
+
+    import {
+        ViewDashboardEdit,
+        Plus,
+        DeleteOutline,
+        Magnify,
+    } from "../utils/icons.js";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -78,14 +84,14 @@
 
     const emits = defineEmits(["dashboard"]);
 
-    const remove = (id) => {
+    const remove = (id: string) => {
         store.dispatch("dashboard/delete", id).then(() => {
             dashboards.value = dashboards.value.filter((d) => d.id !== id);
         });
     };
 
     const search = ref("");
-    const dashboards = ref([]);
+    const dashboards = ref<{ id: string; title: string }[]>([]);
     const filtered = computed(() => {
         return dashboards.value.filter(
             (d) =>
@@ -94,38 +100,22 @@
         );
     });
     onBeforeMount(() => {
-        store.dispatch("dashboard/list", {}).then((response) => {
-            dashboards.value = response.results;
-        });
+        store
+            .dispatch("dashboard/list", {})
+            .then((response: { results: { id: string; title: string }[] }) => {
+                dashboards.value = response.results;
+            });
     });
 </script>
 
-<style lang="scss">
-.dashboard-dropdown {
+<style scoped lang="scss">
+@import "../styles/filter.scss";
+
+.dropdown {
     width: 300px;
 }
 
-.empty {
-    color: var(--bs-gray-900);
-}
-
-.saved {
+.items {
     max-height: 160px !important; // 5 visible items
-}
-
-.scroller {
-    &::-webkit-scrollbar {
-        height: 5px;
-        width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--card-bg);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
-        border-radius: 0px;
-    }
 }
 </style>

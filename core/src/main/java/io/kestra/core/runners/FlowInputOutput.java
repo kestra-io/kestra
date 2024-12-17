@@ -31,6 +31,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -146,7 +147,8 @@ public class FlowInputOutput {
                         try {
                             final String fileExtension = FileInput.findFileInputExtension(inputs, fileUpload.getFilename());
 
-                            File tempFile = File.createTempFile(fileUpload.getFilename() + "_", fileExtension);
+                            String prefix = StringUtils.leftPad(fileUpload.getFilename() + "_", 3, "_");
+                            File tempFile = File.createTempFile(prefix, fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
                                  var outputStream = new FileOutputStream(tempFile)) {
                                 long transferredBytes = inputStream.transferTo(outputStream);

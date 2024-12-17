@@ -1,6 +1,6 @@
 {
   "name": "kestra",
-  "version": "0.19.11",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "packageManager": "npm@9.9.3",

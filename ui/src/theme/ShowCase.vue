@@ -208,7 +208,6 @@
     const app = getCurrentInstance()?.appContext.config.globalProperties as any
 
     if(app){
-        console.log("init")
         app.$router = {}
         app.$route = {params: {tab: "first"}}
     }

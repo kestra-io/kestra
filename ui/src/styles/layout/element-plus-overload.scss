@@ -659,15 +659,15 @@ form.ks-horizontal {
 .el-pagination {
     --el-pagination-bg-color: transparent;
     --el-pagination-text-color: var(--content-content-primary);
-    --el-pagination-button-color: var(--content-content-primary);
-    --el-pagination-hover-color: var(--bs-purple);
+    --el-pagination-button-color: var(--content-content-link);
+    --el-pagination-hover-color: var(--content-content-link-hover);
 
     li, button {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-border-inactive);
         margin-right: 3px;
 
         &.is-active {
-            border: 1px solid var(--bs-purple);
+            border: 1px solid var(--border-border-active);
         }
     }
 }

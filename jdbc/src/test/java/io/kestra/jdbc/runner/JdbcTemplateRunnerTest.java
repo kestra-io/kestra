@@ -65,6 +65,6 @@ public abstract class JdbcTemplateRunnerTest {
 
     @RetryingTest(5) // flaky on MySQL
     void withFailedTemplate() throws Exception {
-        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
+        TemplateTest.withFailedTemplate(runnerUtils, repositoryLoader, logsQueue);
     }
 }

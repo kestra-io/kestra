@@ -1,14 +1,25 @@
 package io.kestra.plugin.core.flow;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.InternalStorage;
@@ -16,9 +27,6 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -28,65 +36,76 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class WorkingDirectoryTest {
     @Inject
     Suite suite;
 
     @Inject
     RunContextFactory runContextFactory;
 
+    @Inject
+    RunnerUtils runnerUtils;
+
     @Test
+    @LoadFlows({"flows/valids/working-directory.yaml"})
     void success() throws TimeoutException, QueueException {
        suite.success(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory.yaml"})
     void failed() throws TimeoutException, QueueException {
         suite.failed(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-each.yaml"})
     void each() throws TimeoutException, QueueException {
         suite.each(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-cache.yml"})
     void cache() throws TimeoutException, IOException, QueueException {
         suite.cache(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun.yml"})
     void taskrun() throws TimeoutException, InternalException, QueueException {
         suite.taskRun(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun-nested.yml"})
     void taskrunNested() throws TimeoutException, InternalException, QueueException {
         suite.taskRunNested(runnerUtils);
     }
 
     @RetryingTest(5)
+    @LoadFlows({"flows/valids/working-directory-namespace-files.yaml"})
     void namespaceFiles() throws TimeoutException, IOException, QueueException {
         suite.namespaceFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-inputs.yml"})
     void inputFiles() throws Exception {
         suite.inputFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-outputs.yml"})
     void outputFiles() throws Exception {
         suite.outputFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun-encrypted.yml"})
     void encryption() throws Exception {
         suite.encryption(runnerUtils, runContextFactory);
     }

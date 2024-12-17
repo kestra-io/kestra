@@ -1,13 +1,16 @@
 package io.kestra.core.runners.pebble.functions;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -16,20 +19,16 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
-@KestraTest
-public class KvFunctionTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class KvFunctionTest {
     @Inject
     private RunnerUtils runnerUtils;
 
@@ -45,6 +44,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/kv.yaml"})
     void get() throws TimeoutException, IOException, QueueException {
         KVStore kv = new InternalKVStore(null, "io.kestra.tests", storageInterface);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
@@ -55,6 +55,7 @@ public class KvFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/kv.yaml"})
     void getKeyNotFound() throws TimeoutException, QueueException {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue);
 

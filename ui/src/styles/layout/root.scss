@@ -23,14 +23,13 @@
     --el-border-color-dark: var(--border-border-secondary);
     --el-border-color-darker: var(--border-border-secondary);
 
-    // --el-fill-color: var(--bs-gray-300);
-    --el-fill-color: hotpink;
-    --el-fill-color-light: var(--bs-gray-200);
-    --el-fill-color-lighter: var(--bs-gray-100);
-    --el-fill-color-extra-light: var(--bs-white);
-    --el-fill-color-dark: var(--bs-gray-400);
-    --el-fill-color-darker: var(--bs-gray-500);
-    --el-fill-color-blank: var(--bs-white);
+    --el-fill-color: var(--bs-gray-300); // used in buttons .is-text
+    --el-fill-color-light: var(--bs-gray-200); // used in many places autocomplete suggestion highlighted
+    --el-fill-color-lighter: var(--bs-gray-100); // used to be for table stripped but not anymore
+    --el-fill-color-extra-light: var(--bs-white); // not used at all
+    --el-fill-color-dark: var(--bs-gray-400); // used in buttons .is-text when active
+    --el-fill-color-darker: var(--bs-gray-500); // not used at kestra
+    --el-fill-color-blank: var(--bs-white); // used in many places --el-input-background-color
 
     // alert colors
     --el-color-alert-info: var(--tooltip-content-information);

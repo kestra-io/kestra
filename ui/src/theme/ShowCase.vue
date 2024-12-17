@@ -80,6 +80,26 @@
             </div>
         </div>
 
+        <div style="display: flex;gap:1rem;justify-content: center;align-items: center; margin: 1rem;">
+            <el-alert
+                v-for="type in ['Success', 'Info', 'Warning', 'Error']"
+                :key="type"
+                :type="type.toLowerCase()"
+                :title="`${type} Alert`"
+                show-icon
+            />
+        </div>
+
+        <div style="display: flex;gap:1rem;justify-content: center;align-items: center; margin: 1rem;">
+            <el-alert
+                v-for="type in ['Success', 'Info', 'Warning', 'Error']"
+                :key="type"
+                :type="type.toLowerCase()"
+                :title="`Dark ${type} Alert`"
+                effect="dark"
+            />
+        </div>
+
         <div>
             <el-tag type="success" class="m-1">
                 Tag 1
@@ -154,6 +174,19 @@
                     :value="item.value"
                 />
             </el-select>
+            <el-select
+                v-model="valueMultiple"
+                multiple
+                placeholder="Select"
+                style="width: 240px"
+            >
+                <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                />
+            </el-select>
         </div>
     </center>
 </template>
@@ -171,6 +204,7 @@
     const input = ref("")
     const curDate = ref(new Date())
     const value1 = ref(false)
+
 
     function toast() {
         ElMessage.success("Hello")
@@ -200,6 +234,7 @@
     ]
 
     const valueSelect = ref("")
+    const valueMultiple = ref([])
 
     const options = [
         {

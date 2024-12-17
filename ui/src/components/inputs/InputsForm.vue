@@ -476,7 +476,7 @@
             &:hover {
                 color: var(--bs-secondary);
                 border-color: var(--el-color-primary);
-                background-color: var(--bs-card-bg);
+                background-color: var(--backgrounds-background-card);
             }
 
             &:first-child {

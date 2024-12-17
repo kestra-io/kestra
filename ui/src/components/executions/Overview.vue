@@ -416,7 +416,7 @@
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
         font-size: var(--font-size-sm);
 
         span {
@@ -448,7 +448,7 @@
     }
 
     .el-alert__description {
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
     }
 
     .el-alert__content {

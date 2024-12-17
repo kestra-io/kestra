@@ -35,79 +35,55 @@
     "border-border-active",
     "border-border-inactive"
   ],
-  "executions-failed": [
+  "executions": [
     "executions-failed-background-failed",
     "executions-failed-border-failed",
     "executions-failed-chart-failed",
-    "executions-failed-content-failed"
-  ],
-  "executions-success": [
+    "executions-failed-content-failed",
     "executions-success-background-success",
     "executions-success-content-success",
     "executions-success-border-success",
-    "executions-success-chart-success"
-  ],
-  "executions-warning": [
+    "executions-success-chart-success",
     "executions-warning-chart-warning",
     "executions-warning-border-warning",
     "executions-warning-content-warning",
-    "executions-warning-background-warning"
-  ],
-  "executions-created": [
+    "executions-warning-background-warning",
     "executions-created-chart-created",
     "executions-created-background-created",
     "executions-created-content-created",
-    "executions-created-border-created"
-  ],
-  "executions-running": [
+    "executions-created-border-created",
     "executions-running-chart-running",
     "executions-running-background-running",
     "executions-running-content-running",
-    "executions-running-border-running"
-  ],
-  "executions-killed": [
+    "executions-running-border-running",
     "executions-killed-chart-killed",
     "executions-killed-border-killed",
     "executions-killed-content-killed",
-    "executions-killed-background-killed"
-  ],
-  "executions-paused": [
+    "executions-killed-background-killed",
     "executions-paused-chart-paused",
     "executions-paused-content-paused",
     "executions-paused-border-paused",
-    "executions-paused-background-paused"
-  ],
-  "executions-killing": [
+    "executions-paused-background-paused",
     "executions-killing-background-killing",
     "executions-killing-content-killing",
     "executions-killing-border-killing",
-    "executions-killing-chart-killing"
-  ],
-  "executions-restarted": [
+    "executions-killing-chart-killing",
     "executions-restarted-content-restarted",
     "executions-restarted-border-restarted",
     "executions-restarted-chart-restarted",
-    "executions-restarted-background-restarted"
-  ],
-  "executions-queued": [
+    "executions-restarted-background-restarted",
     "executions-queued-content-queued",
     "executions-queued-border-queued",
     "executions-queued-chart-queued",
-    "executions-queued-background-queued"
-  ],
-  "executions-retrying": [
+    "executions-queued-background-queued",
     "executions-retrying-background-retrying",
     "executions-retrying-border-retrying",
     "executions-retrying-content-retrying",
-    "executions-retrying-chart-retrying"
-  ],
-  "executions-retried": [
+    "executions-retrying-chart-retrying",
     "executions-retried-background-retried",
     "executions-retried-border-retried",
     "executions-retried-content-retried",
-    "executions-retried-chart-retried"
-  ],
-  "executions-cancelled": [
+    "executions-retried-chart-retried",
     "executions-cancelled-background-cancelled",
     "executions-cancelled-border-cancelled",
     "executions-cancelled-content-cancelled",
@@ -119,7 +95,7 @@
     "tooltip-background-information",
     "tooltip-content-alert"
   ],
-  "editor-text-code": [
+  "editor": [
     "editor-text-code-editor-text1",
     "editor-text-code-editor-text2",
     "editor-text-code-editor-text3",
@@ -127,31 +103,23 @@
     "editor-text-code-editor-text5",
     "editor-text-code-editor-text6"
   ],
-  "logs-trace": [
+  "logs": [
     "logs-trace-content-trace",
     "logs-trace-border-trace",
     "logs-trace-chart-trace",
-    "logs-trace-background-trace"
-  ],
-  "logs-info": [
+    "logs-trace-background-trace",
     "logs-info-background-info",
     "logs-info-content-info",
     "logs-info-chart-info",
-    "logs-info-border-info"
-  ],
-  "logs-warn": [
+    "logs-info-border-info",
     "logs-warn-background-warn",
     "logs-warn-border-warn",
     "logs-warn-content-warn",
-    "logs-warn-chart-log-warn"
-  ],
-  "logs-error": [
+    "logs-warn-chart-log-warn",
     "logs-error-background-error",
     "logs-error-border-error",
     "logs-error-content-error",
-    "logs-error-chart-error"
-  ],
-  "logs-debug": [
+    "logs-error-chart-error",
     "logs-debug-background-debug",
     "logs-debug-border-debug",
     "logs-debug-content-debug",

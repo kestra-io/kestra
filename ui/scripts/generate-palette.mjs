@@ -42,9 +42,10 @@ function makePalettes(palette, paletteName, selector) {
             }
 
             if(tokenName){
-                const cssVariableNamesTheme = cssVariableNames[tokenName] || []
+                const tokenRoot = tokenName.split("-")[0]
+                const cssVariableNamesTheme = cssVariableNames[tokenRoot] || []
                 cssVariableNamesTheme.push(prefix)
-                cssVariableNames[tokenName] = cssVariableNamesTheme
+                cssVariableNames[tokenRoot] = cssVariableNamesTheme
             }
 
             const colorVar = colorIndex[value] ? `$base-${colorIndex[value]}` : value

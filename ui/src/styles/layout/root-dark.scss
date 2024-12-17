@@ -55,9 +55,9 @@ html.dark {
     --el-disabled-border-color: var(--bs-border-color);
 
     --el-text-color-primary: var(--bs-primary);
-    --el-text-color-regular: var(--bs-body-color);
+    --el-text-color-regular: var(--content-content-primary);
     --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-body-color);
+    --el-text-color-placeholder: var(--content-content-primary);
     --el-text-color-disabled: var(--bs-gray-400);
 
     --el-border-color: var(--bs-border-color);
@@ -87,7 +87,7 @@ html.dark {
     #{--el-box-shadow-lighter}: $box-shadow-sm;
     #{--el-box-shadow-dark}: $box-shadow-lg;
 
-    --el-button-active-text-color: var(--bs-body-color);
+    --el-button-active-text-color: var(--content-content-primary);
 
     --input-suffix-color: #C6C1D9;
     --white-black-font-color: #{$white};

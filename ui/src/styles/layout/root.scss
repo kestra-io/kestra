@@ -13,7 +13,7 @@
     --el-text-color-primary: var(--content-content-link);
     --el-text-color-regular: var(--content-content-primary);
     --el-text-color-secondary: var(--content-content-secondary);
-    --el-text-color-placeholder: var(--content-content-inactive);
+    --el-text-color-placeholder: var(--content-content-secondary);
     --el-text-color-disabled: var(--content-content-inactive);
 
     --el-border-color: var(--border-border);
@@ -23,7 +23,8 @@
     --el-border-color-dark: var(--border-border-secondary);
     --el-border-color-darker: var(--border-border-secondary);
 
-    --el-fill-color: var(--bs-gray-300);
+    // --el-fill-color: var(--bs-gray-300);
+    --el-fill-color: hotpink;
     --el-fill-color-light: var(--bs-gray-200);
     --el-fill-color-lighter: var(--bs-gray-100);
     --el-fill-color-extra-light: var(--bs-white);
@@ -31,17 +32,12 @@
     --el-fill-color-darker: var(--bs-gray-500);
     --el-fill-color-blank: var(--bs-white);
 
-    --el-color-alert-primary: var(--bs-primary);
-    --el-color-alert-info: #134ecc;
-    --el-color-alert-danger: #ab0009;
-    --el-color-alert-error: #ab0009;
-    --el-color-alert-warning: #dd5f00;
-    --el-color-alert-success: #016046;
-
-
-
-    --input-suffix-color: #574F6C;
-    --white-black-font-color: #{$black};
+    // alert colors
+    --el-color-alert-info: var(--tooltip-content-information);
+    --el-color-alert-error: var(--executions-failed-content-failed);
+    @each $type in ("warning", "success", "danger") {
+        #{--el-color-alert-#{$type}}: var(--executions-#{$type}-content-#{$type});
+    }
 
     --bs-code-color: #7400DF;
 

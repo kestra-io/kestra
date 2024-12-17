@@ -1,15 +1,11 @@
 <template>
     <div class="wrapper">
         <template v-for="(cssVariables, theme) in cssVariablesThemes" :key="theme">
-            <h2 style="margin-top: 3rem">
+            <h2>
                 {{ theme }}
             </h2>
             <div
-                style="
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-                gap:1rem
-            "
+                class="var-theme"
             >
                 <ShowCaseColorsSample
                     v-for="(color, index) in cssVariables"
@@ -24,12 +20,17 @@
 <script lang="ts" setup>
     import cssVariablesThemes from "./css-variables.json";
     import ShowCaseColorsSample from "./ShowCaseColorsSample.vue";
-
 </script>
 
 <style scoped>
     .wrapper {
         padding: 1rem;
         background-color: var(--backgrounds-background-body);
+    }
+    .var-theme {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1rem;
+        margin-bottom: 3rem;
     }
 </style>

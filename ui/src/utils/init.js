@@ -85,7 +85,11 @@ export default (app, routes, stores, translations) => {
 
     // store
     let store = createStore(stores);
-    app.use(store);
+    // avoid loading router in storybook
+    // as it conflicts with storybook's
+    if(routes.length){
+        app.use(router)
+    }
 
 
     // router

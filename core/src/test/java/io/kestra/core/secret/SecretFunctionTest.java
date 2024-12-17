@@ -3,7 +3,6 @@ package io.kestra.core.secret;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -16,13 +15,14 @@ import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import reactor.core.publisher.Flux;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
 public class SecretFunctionTest {
@@ -55,9 +55,8 @@ public class SecretFunctionTest {
     }
 
     @Test
-    void getUnknownSecret() throws IOException {
-        String secret = secretService.findSecret(null, null, "unknown_secret_key");
-
-        assertThat(secret, nullValue());
+    void getUnknownSecret() {
+        var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
+        assertThat(exception.getMessage(), is("Cannot find secret for key 'unknown_secret_key'."));
     }
 }

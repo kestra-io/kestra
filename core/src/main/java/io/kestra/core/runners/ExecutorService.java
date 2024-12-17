@@ -323,9 +323,7 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
-                    return nexts.stream()
-                        .map(throwFunction(NextTaskRun::getTaskRun))
-                        .toList();
+                    return saveFlowableOutput(nexts, executor);
                 }
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);

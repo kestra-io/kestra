@@ -38,6 +38,10 @@ public class SecretService {
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
-        return decodedSecrets.get(key.toUpperCase());
+        String secret = decodedSecrets.get(key.toUpperCase());
+        if (secret == null) {
+            throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
+        }
+        return secret;
     }
 }

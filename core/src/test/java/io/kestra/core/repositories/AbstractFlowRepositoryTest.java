@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
@@ -341,6 +342,12 @@ public abstract class AbstractFlowRepositoryTest {
 
         save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests", Map.of("key1", "value2"));
         assertThat((long) save.size(), is(0L));
+    }
+
+    @Test
+    protected void findSpecialChars() {
+        ArrayListTotal<SearchResult<Flow>> save = flowRepository.findSourceCode(Pageable.unpaged(), "https://api.chucknorris.io", null, null);
+        assertThat((long) save.size(), is(2L));
     }
 
     @Test

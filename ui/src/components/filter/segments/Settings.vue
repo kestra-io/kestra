@@ -1,11 +1,15 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon :tooltip="$t('settings.label')" placement="bottom">
-            <el-button :icon="TableCog" />
+            <el-button
+                :icon="ChartBar"
+                :class="{settings: true, 'rounded-0 rounded-end': refresh}"
+            />
         </KestraIcon>
 
         <template #dropdown>
-            <el-dropdown-menu class="py-2 settings-dropdown">
+            <el-dropdown-menu class="py-2 dropdown">
+                <Title :text="t('filters.settings.label')" />
                 <template v-if="settings.charts.shown">
                     <el-switch
                         :model-value="settings.charts.value"
@@ -21,8 +25,9 @@
 
 <script setup lang="ts">
     import KestraIcon from "../../Kicon.vue";
+    import Title from "../components/Title.vue";
 
-    import TableCog from "vue-material-design-icons/TableCog.vue";
+    import {ChartBar} from "../utils/icons.js";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -34,18 +39,15 @@
                 charts: {shown: false, value: false, callback: () => {}},
             }),
         },
+        refresh: {
+            type: Boolean,
+            default: true,
+        },
     });
 </script>
 
-<style lang="scss">
-.settings-dropdown {
+<style scoped lang="scss">
+.dropdown {
     width: 200px;
-}
-
-.title {
-    margin: 0;
-    padding: calc(1rem / 4) 0 0 1rem;
-    font-size: var(--el-font-size-extra-small);
-    color: var(--bs-grey-700);
 }
 </style>

@@ -92,6 +92,11 @@ html.dark {
     --input-suffix-color: #C6C1D9;
     --white-black-font-color: #{$white};
 
+    $content-information: #c7f0ff;
+    $content-running: #bbbbff;
+    $content-alert: #fd7278;
+    $content-warning: #f3c4a1;
+    $content-success: #7cdfc4;
     #{--bs-info-rgb}: to_rgb($content-information);
     #{--bs-running-rgb}: to_rgb($content-running);
     #{--bs-danger-rgb}: to_rgb($content-alert);

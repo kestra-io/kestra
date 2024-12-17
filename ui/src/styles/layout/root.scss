@@ -78,6 +78,11 @@
         }
     }
 
+    $content-information: #134ecc;
+    $content-running: #7400df;
+    $content-alert: #ab0009;
+    $content-warning: #c15300;
+    $content-success: #03DABA;
     #{--bs-info-rgb}: to_rgb($content-information);
     #{--bs-running-rgb}: to_rgb($content-running);
     #{--bs-danger-rgb}: to_rgb($content-alert);

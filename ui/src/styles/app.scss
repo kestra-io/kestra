@@ -184,12 +184,12 @@ html.full-screen {
     --el-transition-duration: 0.2s;
     --el-transition-duration-fast: 0.2s;
     --top-navbar-height: 79px;
-    #{--menu-width}: $menu-width;
+    #{--menu-width}: global-var.$menu-width;
     #{--menu-collapsed-width}: 65px;
-    #{--spacer}: $spacer;
+    #{--spacer}: global-var.$spacer;
 
-    #{--font-size-xs}: $font-size-xs;
-    #{--font-size-sm}: $font-size-sm;
-    #{--font-size-base}: $font-size-base;
-    #{--font-size-lg}: $font-size-lg;
+    #{--font-size-xs}: global-var.$font-size-xs;
+    #{--font-size-sm}: global-var.$font-size-sm;
+    #{--font-size-base}: global-var.$font-size-base;
+    #{--font-size-lg}: global-var.$font-size-lg;
 }

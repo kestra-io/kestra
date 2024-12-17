@@ -44,7 +44,6 @@ html.dark {
     #{--bs-link-hover-color-rgb}: to-rgb(#E0E0FF);
 
     #{--card-bg}: $card-bg;
-    #{--card-bg-hover}: darken($card-bg, 3);
     #{--input-bg}: #262A36;;
 
     --el-bg-color: var(--backgrounds-background-body);

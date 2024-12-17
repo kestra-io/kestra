@@ -41,7 +41,6 @@
     --bs-code-color: #7400DF;
 
     #{--card-bg}: var(--backgrounds-background-card);
-    #{--card-bg-hover}: darken($card-bg, 2);
     #{--input-bg}: $input-bg;
 
     #{--bs-border-color}: #E5E4F7;

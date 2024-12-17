@@ -557,7 +557,8 @@ form.ks-horizontal {
                     font-weight: normal!important;
                     color: var(--el-text-color-regular);
                     &:hover{
-                        background-color: var(--card-bg-hover);
+                        // create an outline without cutting the rounded corners
+                        box-shadow: 0 0 0 1px var(--border-border-active);
                     }
                 }
                 &.is-active a{

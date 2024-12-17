@@ -1,0 +1,46 @@
+<template>
+    <span v-if="label" class="text-lowercase">
+        {{ $t(`filters.options.${label}`) }}
+    </span>
+    <span v-if="comparator" class="comparator">{{ comparator }}</span>
+    <span v-if="value">{{ !comparator ? ":" : "" }}{{ value }}</span>
+</template>
+
+<script setup lang="ts">
+    import {computed} from "vue";
+
+    const props = defineProps({option: {type: Object, required: true}});
+
+    import moment from "moment";
+    const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
+
+    const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
+
+    const label = computed(() => props.option?.label);
+    const comparator = computed(() => props.option?.comparator?.label);
+    const value = computed(() => {
+        const {value, label, comparator} = props.option;
+
+        if (!value.length) return;
+
+        if (label !== "absolute_date" && comparator !== "between") {
+            return `${value.join(", ")}`;
+        }
+
+        const {startDate, endDate} = value[0];
+        return `${startDate ? formatter(new Date(startDate)) : "unknown"}:and:${endDate ? formatter(new Date(endDate)) : "unknown"}`;
+    });
+</script>
+
+<style scoped lang="scss">
+@import "../styles/filter.scss";
+
+.comparator {
+    display: inline-block;
+
+    margin: 0 0.5rem;
+    padding: 0.3rem 0.35rem;
+
+    background: $filters-gray-500;
+}
+</style>

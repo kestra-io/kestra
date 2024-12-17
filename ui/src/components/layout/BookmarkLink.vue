@@ -1,47 +1,3 @@
-<script lang="ts" setup>
-    import {nextTick, ref} from "vue"
-    import {useI18n} from "vue-i18n";
-    import {useStore} from "vuex";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-
-    const {t} = useI18n();
-
-    const $store = useStore()
-
-    const props = defineProps<{
-        href: string
-        title: string
-    }>()
-
-    const editing = ref(false)
-    const updatedTitle = ref(props.title)
-    const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
-
-    function deleteBookmark() {
-        $store.dispatch("starred/remove", {
-            path: props.href
-        })
-    }
-
-    function startEditBookmark() {
-        editing.value = true
-        nextTick(() => {
-            titleInput.value?.focus()
-            titleInput.value?.select()
-        })
-    }
-
-    function renameBookmark() {
-        $store.dispatch("starred/rename", {
-            path: props.href,
-            label: updatedTitle.value
-        })
-        editing.value = false
-    }
-</script>
-
 <template>
     <div class="wrapper">
         <div v-if="editing" class="inputs">
@@ -58,6 +14,55 @@
     </div>
 </template>
 
+<script lang="ts" setup>
+    import {nextTick, ref} from "vue"
+    import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
+    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {ElMessageBox} from "element-plus";
+
+    const {t} = useI18n({useScope: "global"});
+
+    const $store = useStore()
+
+    const props = defineProps<{
+        href: string
+        title: string
+    }>()
+
+    const editing = ref(false)
+    const updatedTitle = ref(props.title)
+    const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
+
+    function deleteBookmark() {
+        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            $store.dispatch("bookmarks/remove", {path: props.href});
+        });
+    }
+
+    function startEditBookmark() {
+        editing.value = true
+        nextTick(() => {
+            titleInput.value?.focus()
+            titleInput.value?.select()
+        })
+    }
+
+    function renameBookmark() {
+        $store.dispatch("bookmarks/rename", {
+            path: props.href,
+            label: updatedTitle.value
+        })
+        editing.value = false
+    }
+</script>
+
 <style scoped>
     .wrapper{
         position: relative;
@@ -65,10 +70,12 @@
             color: var(--el-text-color-regular);
             position: absolute;
             z-index: 1;
-            top: calc(.35 * var(--spacer));
-            right: calc(.5 * var(--spacer));
+            top: 0;
+            right: calc(.15 * var(--spacer));
             display: none;
             gap: calc(.5 * var(--spacer));
+            background-color: var(--el-bg-color);
+            padding: calc(.35 * var(--spacer));
             > span{
                 cursor: pointer;
             }

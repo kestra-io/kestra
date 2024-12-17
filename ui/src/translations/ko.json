@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "namespace별 실행 오류",
       "failedExecutions": "실패한 실행",
       "errorLogs": "오류 로그",
-      "no executions": "flow를 실행해 보시겠습니까?"
+      "no executions": "flow를 실행해 보시겠습니까?",
+      "wel_text": "환영합니다!",
+      "start": "첫 번째 workflow를 시작하고 실행해 봅시다.",
+      "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
+      "welcome": "Kestra에 오신 것을 환영합니다"
     },
     "executions replayed": "<code>{executionCount}</code> 개의 실행이 재실행되었습니다",
     "executions resumed": "<code>{executionCount}</code> 개의 실행이 재개되었습니다",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
     "originalCreatedDate": "원래 생성 날짜",
     "welcome": {
-      "started": {
-        "title": "3단계로 시작하기"
+      "tutorial": {
+        "title": "튜토리얼",
+        "text": "```\n* [비디오 튜토리얼](https://kestra.io/tutorial-videos/all)\n* [문서](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"
       },
-      "product-tour": {
-        "title": "제품 투어하기"
+      "tour": {
+        "title": "제품 투어 시작하기",
+        "text": "사용 사례를 선택하고 단계별 가이드를 따라 Kestra의 기능과 역량을 배워보세요. ❤️"
       },
-      "doc": {
-        "title": "문서"
-      },
-      "need-help": {
-        "title": "도움이 필요하십니까?"
+      "help": {
+        "text": "Slack 커뮤니티에서 질문을 하세요. 문제가 생기면 저희가 도와드리겠습니다. ✋",
+        "title": "도움이 필요하신가요?"
       }
     },
     "pluginPage": {
@@ -672,7 +676,8 @@
             "default_namespace": "기본 Namespace",
             "log_level": "기본 Log 레벨",
             "log_display": "기본 Log 표시",
-            "execute_flow": "Flow 실행"
+            "execute_flow": "Flow 실행",
+            "execute_default_tab": "기본 실행 탭"
           }
         },
         "theme": {
@@ -808,11 +813,17 @@
       "empty": {
         "title": "현재 열린 탭이 없습니다",
         "message": "사이드바에서 namespace 파일을 생성하거나 가져올 수 있으며, Editor에 대한 소개 영상을 확인할 수 있습니다."
+      },
+      "close": {
+        "other": "다른 탭 닫기",
+        "tab": "탭 닫기",
+        "right": "오른쪽 닫기",
+        "all": "모든 탭 닫기"
       }
     },
     "curl": {
       "command": "cURL 명령어",
-      "note": "SECRET 및 FILE input 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
+      "note": "SECRET 및 FILE 입력 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
     },
     "logs_view": {
       "raw": "Temporal 보기",
@@ -843,7 +854,7 @@
     "webhook link copied": "웹훅 링크가 복사되었습니다.",
     "copy url": "URL 복사",
     "scheduleDate": "일정 날짜",
-    "trigger_check_warning": "경고: trigger 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 '??' 병합 연산자를 추가하세요. 예를 들어, 'trigger.date' 대신 'trigger.date ?? execution.startDate'를 사용하세요.",
+    "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "dashboard": {
       "per_namespace": "(네임스페이스별)",
       "id": "ID",
@@ -889,7 +900,7 @@
     "invalid bulk pause": "실행을 PAUSED 상태로 전환할 수 없습니다.",
     "pause done": "실행이 PAUSED 상태입니다.",
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
-    "no_data": "데이터가 없습니다",
+    "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "informative notice": "노트(s)",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a>에 대한 자세한 내용은 문서를 참조하세요.",
@@ -900,7 +911,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요."
     },
     "create_flow": "Flow 생성",
-    "starred": "별표 표시됨",
     "invalid bulk unqueue": "실행을 큐에서 제거할 수 없습니다.",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "bulk unqueue": "<code>{executionCount}</code> 실행을 대기열에서 제거하시겠습니까?",
@@ -912,40 +922,115 @@
     "execution-warn-title": "중요한 WARNING!",
     "worker group key": "워크 그룹 key",
     "worker group fallback": "작업자 그룹 대체",
+    "force run title": "실행 <code>{id}</code> 강제 실행.",
+    "executions force run": "<code>{executionCount}</code> 실행 강제 실행",
+    "force run done": "실행이 강제 실행됩니다.",
+    "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
+    "force run": "강제 실행",
+    "invalid bulk force run": "실행을 강제로 실행할 수 없습니다.",
+    "bulk force run": "<code>{executionCount}</code> 실행을 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동됩니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
+    "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오.",
+    "item": "항목",
+    "items": "항목",
+    "warning": "경고",
+    "cron": "크론",
+    "showMore": "더 보기",
+    "showLess": "덜 보기",
+    "documentationMenu": "문서 메뉴",
+    "task run id": "TaskRun ID",
+    "optional": "선택 사항",
+    "active": "활성화됨",
+    "contextBar": {
+      "news": "뉴스",
+      "issue": "이슈 열기",
+      "docs": "문서",
+      "demo": "데모 받기",
+      "help": "도움말"
+    },
+    "execution failed header": "실행 실패!",
+    "execution failed message": "마지막 오류: <code>{message}</code>",
+    "flow not imported": "일부 flow를 가져올 수 없습니다.",
+    "flows imported": "Flow가 가져왔습니다.",
+    "is required": "{field}는 필수 항목입니다.",
+    "bookmark": "북마크",
+    "dashboards": "대시보드",
+    "dashboard_label": "대시보드",
+    "default_dashboard": "기본 대시보드",
+    "custom_dashboard": "맞춤 대시보드",
+    "create_custom_dashboard": "새 대시보드 생성",
+    "edit_custom_dashboard": "대시보드 편집",
+    "custom_dashboard_empty": "결과가 표시되지 않습니다.",
+    "remove_bookmark": "이 북마크를 제거하시겠습니까?",
+    "execution_guide": {
+      "get_started": {
+        "title": "시작하기 ⚡",
+        "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요."
+      },
+      "workflow_components": {
+        "text": "Kestra workflow의 주요 오케스트레이션 구성 요소를 알아보세요.",
+        "title": "워크플로우 구성 요소"
+      },
+      "videos_tutorials": {
+        "text": "비디오 튜토리얼로 시작하세요.",
+        "title": "비디오 튜토리얼"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "실행 버튼을 클릭하여 첫 번째 workflow 실행을 시작하세요.",
+      "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",
+      "guidance_sub_desc": "문서를 참조하여 필요한 모든 정보를 확인하세요.",
+      "title": "자동화를 시작하세요"
+    },
     "filters": {
+      "options": {
+        "child": "자식",
+        "metric": "메트릭",
+        "labels": "레이블",
+        "details": "세부사항",
+        "absolute_date": "절대 날짜",
+        "scope": "범위",
+        "trigger_state": "상태",
+        "state": "상태",
+        "action": "동작",
+        "text": "텍스트",
+        "relative_date": "상대 날짜",
+        "level": "로그 레벨",
+        "aggregation": "집계",
+        "permission": "권한",
+        "namespace": "네임스페이스",
+        "user": "사용자",
+        "task": "작업",
+        "flow": "플로우",
+        "type": "유형"
+      },
+      "settings": {
+        "label": "페이지 설정",
+        "show_chart": "주요 차트 표시"
+      },
       "comparators": {
         "contains": "포함합니다",
         "is": "입니다",
+        "is_not": "아님",
+        "in": "안에",
+        "starts_with": "로 시작합니다",
+        "not_contains": "포함하지 않음",
+        "is_not_one_off": "아닌 것 중 하나입니다.",
         "is_one_of": "중 하나입니다.",
-        "not_contains": "포함되지 않음",
-        "is_not_one_off": "중 하나가 아닙니다.",
-        "is_not": "아님"
-      },
-      "recent": {
-        "label": "최근 검색",
-        "empty": "아직 아무 것도 검색하지 않았습니다."
-      },
-      "labels": {
-        "placeholder": "'label'을 'key:value'로 입력하세요."
+        "between": "사이에"
       },
       "save": {
+        "label": "저장된 검색",
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
         "dialog": {
-          "hint": "이 검색 기준에 어떤 레이블을 지정하시겠습니까?",
           "heading": "현재 검색 저장",
           "confirmation": "검색 기준 <code>{name}</code>",
-          "placeholder": "레이블"
+          "placeholder": "레이블",
+          "hint": "이 검색 기준에 어떤 label을 지정하시겠습니까?"
         },
-        "label": "저장된 검색"
+        "empty": "아직 검색을 저장하지 않았습니다."
       },
-      "options": {
-        "namespace": "네임스페이스",
-        "scope": "범위",
-        "text": "텍스트",
-        "labels": "레이블",
-        "state": "상태",
-        "child": "자식"
-      },
-      "empty": "데이터 없음.",
+      "empty": "데이터가 없습니다.",
+      "format": "'key:value'로 매개변수 입력",
       "label": "필터 선택"
     }
   }

@@ -17,6 +17,10 @@ public class SecretService {
 
     @PostConstruct
     private void postConstruct() {
+        this.decode();
+    }
+
+    public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
             .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
             .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
@@ -34,6 +38,10 @@ public class SecretService {
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
-        return decodedSecrets.get(key.toUpperCase());
+        String secret = decodedSecrets.get(key.toUpperCase());
+        if (secret == null) {
+            throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
+        }
+        return secret;
     }
 }

@@ -8,7 +8,7 @@
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
             <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
-            <el-collapse class="mt-4" v-model="collapseName">
+            <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item
                         :label="$t('execution labels')"
@@ -132,7 +132,7 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.getExecutionLabels();
+                this.executionLabels = this.getExecutionLabels().filter(item => !item.key.startsWith("system."));
 
                 if (!this.flow.inputs) {
                     return;
@@ -146,14 +146,6 @@
                         this.inputs[input.id] = Inputs.normalize(input.type, value);
                     });
             },
-            purgeInputs(inputs){
-                for (let input in inputs) {
-                    if (inputs[input] === undefined || inputs[input] === "") {
-                        delete inputs[input];
-                    }
-                }
-                return inputs;
-            },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
                     formRef.validate((valid) => {
@@ -161,9 +153,8 @@
                             return false;
                         }
 
-                        const inputs = this.purgeInputs(this.inputs)
 
-                        executeTask(this, this.flow, inputs, {
+                        executeTask(this, this.flow, this.inputs, {
                             redirect: this.redirect,
                             newTab: this.newTab,
                             id: this.flow.id,
@@ -213,11 +204,26 @@
 
 <style scoped lang="scss">
     :deep(.el-collapse) {
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--bs-border-radius-lg);
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-gray-100);
+
         .el-collapse-item__header {
-            border: 0;
-            font-size: var(--el-font-size-extra-small);
             background: transparent;
+            border-bottom: 1px solid var(--bs-border-color);
+            font-size: var(--bs-font-size-sm);
+        }
+
+        .el-collapse-item__content {
+            background: var(--bs-gray-100);
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        .el-collapse-item__header, .el-collapse-item__content {
+            &:last-child {
+                border-bottom-left-radius: var(--bs-border-radius-lg);
+                border-bottom-right-radius: var(--bs-border-radius-lg);
+            }
         }
     }
 

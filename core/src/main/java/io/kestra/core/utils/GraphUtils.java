@@ -84,7 +84,7 @@ public class GraphUtils {
     public static List<AbstractGraph> nodes(GraphCluster graphCluster) {
         return graphCluster.getGraph().nodes()
             .stream()
-            .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
+            .flatMap(t -> t instanceof GraphCluster cluster ? nodes(cluster).stream() : Stream.of(t))
             .distinct()
             .toList();
     }
@@ -96,7 +96,7 @@ public class GraphUtils {
                     .map(r -> Triple.of(r.getSource(), r.getTarget(), r.getValue())),
                 graphCluster.getGraph().nodes()
                     .stream()
-                    .flatMap(t -> t instanceof GraphCluster ? rawEdges((GraphCluster) t).stream() : Stream.of())
+                    .flatMap(t -> t instanceof GraphCluster cluster ? rawEdges(cluster).stream() : Stream.of())
             )
             .toList();
     }
@@ -113,13 +113,13 @@ public class GraphUtils {
             .stream()
             .flatMap(t -> {
 
-                if (t instanceof GraphCluster) {
+                if (t instanceof GraphCluster cluster) {
                     ArrayList<String> currentParents = new ArrayList<>(parents);
-                    currentParents.add(t.getUid());
+                    currentParents.add(cluster.getUid());
 
                     return Stream.concat(
-                        Stream.of(Pair.of((GraphCluster) t, parents)),
-                        clusters((GraphCluster) t, currentParents).stream()
+                        Stream.of(Pair.of(cluster, parents)),
+                        clusters(cluster, currentParents).stream()
                     );
                 }
 
@@ -134,7 +134,7 @@ public class GraphUtils {
 
         List<AbstractGraph> selectedTaskRuns = nodes
             .stream()
-            .filter(task -> task instanceof AbstractGraphTask)
+            .filter(AbstractGraphTask.class::isInstance)
             .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
             .toList();
 

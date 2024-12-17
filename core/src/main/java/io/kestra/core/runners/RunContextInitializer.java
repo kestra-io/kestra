@@ -64,11 +64,23 @@ public class RunContextInitializer {
     }
 
     /**
+     * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.
+     *
+     * @param runContext The runContext to initialize.
+     * @return The initialized runContext
+     */
+    public DefaultRunContext forExecutor(final DefaultRunContext runContext) {
+        runContext.init(applicationContext);
+
+        return runContext;
+    }
+
+    /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask}.
      *
      * @param runContext The runContext to initialize.
      * @param workerTask The {@link WorkerTask}.
-     * @return The runContext to initialize
+     * @return The initialized runContext
      */
     public DefaultRunContext forWorker(final DefaultRunContext runContext,
                                        final WorkerTask workerTask) {

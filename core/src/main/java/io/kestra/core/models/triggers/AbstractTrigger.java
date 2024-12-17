@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.util.List;
+import java.util.Map;
 
 @Plugin
 @SuperBuilder
@@ -51,11 +53,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
     private Level logLevel;
 
     @Schema(
-        title = "The labels to pass to the execution created."
+        title = "The labels to pass to the execution created.",
+        implementation = Object.class, oneOf = {List.class, Map.class}
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    private List<Label> labels;
+    private List<@NoSystemLabelValidation Label> labels;
 
     @PluginProperty
     @Schema(

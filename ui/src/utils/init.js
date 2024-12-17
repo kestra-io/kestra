@@ -87,12 +87,31 @@ export default (app, routes, stores, translations) => {
     let store = createStore(stores);
     app.use(store);
 
-    /* eslint-disable no-undef */
+
     // router
     let router = createRouter({
-        history: createWebHistory(KESTRA_UI_PATH),
+        history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
+
+    /**
+     * Manage docId initialization for Contextual docs
+     */
+    router.beforeEach((to, from, next) => {
+        // set the docId from the path
+        // so it has a default
+        const pathArray = to.path.split("/");
+        const docId = pathArray[pathArray.length-1];
+        store.commit("doc/setDocId", docId);
+
+        // propagate showDocId query param
+        // to the next page to facilitate docs binding
+        if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
+            next({path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}})
+        }else{
+            next()
+        }
+    })
 
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
@@ -101,16 +120,16 @@ export default (app, routes, stores, translations) => {
     app.use(router)
 
     // Google Analytics
-    if (KESTRA_GOOGLE_ANALYTICS !== null) {
+    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
         app.use(
             VueGtag,
             {
-                config: {id: KESTRA_GOOGLE_ANALYTICS}
+                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
             },
             router
         );
     }
-    /* eslint-enable no-undef */
+
 
 
     // l18n
@@ -133,6 +152,7 @@ export default (app, routes, stores, translations) => {
     // others plugins
     app.use(VueSidebarMenu);
     app.use(Toast)
+    app.provide("Toast", Toast)
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 

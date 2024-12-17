@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public class SecretFunctionTest extends AbstractMemoryRunnerTest {
@@ -53,9 +54,9 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void getUnknownSecret() throws IllegalVariableEvaluationException, IOException {
-        String secret = secretService.findSecret(null, null, "unknown_secret_key");
+    void getUnknownSecret() {
+        var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
 
-        assertThat(secret, nullValue());
+        assertThat(exception.getMessage(), is("Cannot find secret for key 'unknown_secret_key'."));
     }
 }

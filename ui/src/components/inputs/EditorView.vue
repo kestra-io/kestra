@@ -1,14 +1,302 @@
+<template>
+    <div class="button-top">
+        <el-tooltip
+            effect="light"
+            v-if="!isCreating"
+            ref="toggleExplorer"
+            :content="
+                $t(
+                    `namespace files.toggle.${
+                        explorerVisible ? 'hide' : 'show'
+                    }`
+                )
+            "
+        >
+            <el-button @click="toggleExplorerVisibility()">
+                <span class="pe-2 toggle-button">{{ t("files") }}</span>
+                <component :is="explorerVisible ? MenuOpen : MenuClose" />
+            </el-button>
+        </el-tooltip>
+
+        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="ms-1 tabs">
+            <el-button
+                v-for="(tab, index) in openedTabs"
+                :key="index"
+                :class="{'tab-active': isActiveTab(tab)}"
+                @click="changeCurrentTab(tab)"
+                :disabled="isActiveTab(tab)"
+                @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
+            >
+                <TypeIcon :name="tab.name" />
+                <el-tooltip
+                    effect="light"
+                    v-if="tab.path && !tab.persistent"
+                    :content="tab.path"
+                    transition=""
+                    :hide-after="0"
+                    :persistent="false"
+                >
+                    <span class="tab-name px-2">{{ tab.name }}</span>
+                </el-tooltip>
+                <span class="tab-name px-2" v-else>{{ tab.name }}</span>
+                <CircleMedium v-show="tab.dirty" />
+                <Close
+                    v-if="!tab.persistent"
+                    @click.prevent.stop="closeTab(tab, index)"
+                    class="cursor-pointer"
+                />
+            </el-button>
+        </el-scrollbar>
+
+        <el-menu
+            v-if="tabContextMenu.visible"
+            :style="{left: `${tabContextMenu.x}px`, top: `${tabContextMenu.y}px`}"
+            class="tabs-context"
+        >
+            <el-menu-item :disabled="tabContextMenu.tab.persistent" @click="closeTab(tabContextMenu.tab, tabContextMenu.index)">
+                {{ $t("namespace_editor.close.tab") }}
+            </el-menu-item>
+            <el-menu-item @click="closeAllTabs">
+                {{ $t("namespace_editor.close.all") }}
+            </el-menu-item>
+            <el-menu-item @click="closeOtherTabs(tabContextMenu.tab)">
+                {{ $t("namespace_editor.close.other") }}
+            </el-menu-item>
+            <el-menu-item @click="closeTabsToRight(tabContextMenu.index)">
+                {{ $t("namespace_editor.close.right") }}
+            </el-menu-item>
+        </el-menu>
+
+        <div class="d-inline-flex">
+            <switch-view
+                v-if="!isNamespace"
+                :type="viewType"
+                class="to-topology-button"
+                @switch-view="switchViewType"
+            />
+
+            <ValidationError
+                v-if="!isNamespace"
+                ref="validationDomElement"
+                class="validation"
+                tooltip-placement="bottom-start"
+                :errors="flowErrors"
+                :warnings="flowWarnings"
+                :infos="flowInfos"
+            />
+
+            <EditorButtons
+                v-if="isCreating || openedTabs.length"
+                :is-creating="props.isCreating"
+                :is-read-only="props.isReadOnly"
+                :can-delete="canDelete()"
+                :is-allowed-edit="isAllowedEdit"
+                :have-change="flowYaml !== flowYamlOrigin"
+                :flow-have-tasks="flowHaveTasks()"
+                :errors="flowErrors"
+                :warnings="flowWarnings"
+                @delete-flow="deleteFlow"
+                @save="save"
+                @copy="
+                    () =>
+                        router.push({
+                            name: 'flows/create',
+                            query: {copy: true},
+                            params: {tenant: routeParams.tenant},
+                        })
+                "
+                @open-new-error="isNewErrorOpen = true"
+                @open-new-trigger="isNewTriggerOpen = true"
+                @open-edit-metadata="isEditMetadataOpen = true"
+                :is-namespace="isNamespace"
+            />
+        </div>
+    </div>
+    <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
+        <div
+            id="editorWrapper"
+            v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
+            :class="combinedEditor ? 'editor-combined' : ''"
+            style="flex: 1;"
+        >
+            <editor
+                v-if="isCreating || openedTabs.length"
+                ref="editorDomElement"
+                @save="save"
+                @execute="execute"
+                v-model="flowYaml"
+                :schema-type="isCurrentTabFlow? 'flow': undefined"
+                :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
+                :extension="currentTab?.extension"
+                @update:model-value="editorUpdate"
+                @cursor="updatePluginDocumentation"
+                :creating="isCreating"
+                @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                :read-only="isReadOnly"
+                :navbar="false"
+            />
+            <section v-else class="no-tabs-opened">
+                <div class="img" />
+
+                <h2>{{ $t("namespace_editor.empty.title") }}</h2>
+                <p><span>{{ $t("namespace_editor.empty.message") }}</span></p>
+
+                <iframe
+                    width="60%"
+                    height="400px"
+                    src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                />
+            </section>
+        </div>
+        <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
+        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">
+            <div
+                v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
+                class="combined-right-view enhance-readability"
+            >
+                <Blueprints @loaded="blueprintsLoaded = true" embed />
+            </div>
+
+            <div
+                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
+                class="topology-display"
+            >
+                <LowCodeEditor
+                    v-if="flowGraph"
+                    ref="lowCodeEditorRef"
+                    @follow="forwardEvent('follow', $event)"
+                    @on-edit="(event, isFlow) => onEdit(event, isFlow)"
+                    @loading="loadingState"
+                    @expand-subflow="onExpandSubflow"
+                    @swapped-task="onSwappedTask"
+                    :flow-graph="flowGraph"
+                    :flow-id="flowId"
+                    :namespace="namespace"
+                    :execution="execution"
+                    :is-read-only="isReadOnly"
+                    :source="flowYaml"
+                    :is-allowed-edit="isAllowedEdit"
+                    :view-type="viewType"
+                    :expanded-subflows="props.expandedSubflows"
+                />
+                <el-alert v-else type="warning" :closable="false">
+                    {{ $t("unable to generate graph") }}
+                </el-alert>
+            </div>
+
+            <PluginDocumentation
+                v-if="viewType === editorViewTypes.SOURCE_DOC"
+                class="plugin-doc combined-right-view enhance-readability"
+            />
+        </div>
+
+        <drawer
+            v-if="isNewErrorOpen"
+            v-model="isNewErrorOpen"
+            title="Add a global error handler"
+        >
+            <el-form label-position="top">
+                <task-editor
+                    :section="SECTIONS.TASKS"
+                    @update:model-value="onUpdateNewError"
+                />
+            </el-form>
+            <template #footer>
+                <ValidationError :errors="taskErrors" />
+                <el-button
+                    :icon="ContentSave"
+                    @click="onSaveNewError()"
+                    type="primary"
+                    :disabled="taskErrors"
+                >
+                    {{ $t("save") }}
+                </el-button>
+            </template>
+        </drawer>
+        <drawer
+            v-if="isNewTriggerOpen"
+            v-model="isNewTriggerOpen"
+            title="Add a trigger"
+        >
+            <el-form label-position="top">
+                <task-editor
+                    :section="SECTIONS.TRIGGERS"
+                    @update:model-value="onUpdateNewTrigger"
+                />
+            </el-form>
+            <template #footer>
+                <ValidationError :errors="taskErrors" />
+                <el-button
+                    :icon="ContentSave"
+                    @click="onSaveNewTrigger()"
+                    type="primary"
+                    :disabled="taskErrors"
+                >
+                    {{ $t("save") }}
+                </el-button>
+            </template>
+        </drawer>
+        <drawer v-if="isEditMetadataOpen" v-model="isEditMetadataOpen">
+            <template #header>
+                <code>flow metadata</code>
+            </template>
+
+            <el-form label-position="top">
+                <metadata-editor
+                    :metadata="getFlowMetadata()"
+                    @update:model-value="onUpdateMetadata"
+                    :editing="!props.isCreating"
+                />
+            </el-form>
+            <template #footer>
+                <el-button
+                    :icon="ContentSave"
+                    @click="onSaveMetadata()"
+                    type="primary"
+                    :disabled="!checkRequiredMetadata()"
+                    class="edit-flow-save-button"
+                >
+                    {{ $t("save") }}
+                </el-button>
+            </template>
+        </drawer>
+    </div>
+    <el-dialog
+        v-if="confirmOutdatedSaveDialog"
+        v-model="confirmOutdatedSaveDialog"
+        destroy-on-close
+        :append-to-body="true"
+    >
+        <template #header>
+            <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
+        </template>
+        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
+        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
+        <template #footer>
+            <el-button @click="confirmOutdatedSaveDialog = false">
+                {{ $t("cancel") }}
+            </el-button>
+            <el-button
+                type="warning"
+                @click="
+                    saveWithoutRevisionGuard();
+                    confirmOutdatedSaveDialog = false;
+                "
+            >
+                {{ $t("ok") }}
+            </el-button>
+        </template>
+    </el-dialog>
+</template>
+
 <script setup>
-    import {
-        computed,
-        getCurrentInstance,
-        h, nextTick,
-        onBeforeUnmount,
-        onMounted,
-        ref,
-        watch,
-    } from "vue";
+    import {computed, getCurrentInstance, h, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
+    import {useRouter} from "vue-router";
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -39,7 +327,7 @@
     import {ElMessageBox} from "element-plus";
 
     const store = useStore();
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
     const emit = defineEmits(["follow", "expand-subflow"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
@@ -259,9 +547,6 @@
             action: "open",
         });
     };
-    const closeTab = (tab, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
-    };
 
     const persistViewType = (value) => {
         viewType.value = value;
@@ -395,6 +680,8 @@
         persistEditorWidth();
 
         store.commit("editor/closeAllTabs");
+
+        document.removeEventListener("click", hideTabContextMenu);
     });
 
     const stopTour = () => {
@@ -638,7 +925,7 @@
     const flowParsed = computed(() => {
         try {
             return YamlUtils.parse(flowYaml.value);
-        } catch (e) {
+        } catch {
             return undefined;
         }
     });
@@ -926,309 +1213,62 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    const tabContextMenu = ref({
+        visible: false,
+        x: 0,
+        y: 0,
+        tab: null,
+        index: null,
+    });
+
+    const onTabContextMenu = (event, tab, index) => {
+        tabContextMenu.value = {
+            visible: true,
+            x: event.clientX,
+            y: event.clientY,
+            tab: tab,
+            index: index,
+        };
+
+        document.addEventListener("click", hideTabContextMenu);
+    };
+
+    const hideTabContextMenu = () => {
+        tabContextMenu.value.visible = false;
+        document.removeEventListener("click", hideTabContextMenu);
+    };
+
+    const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
+
+    const closeTab = (tab, index) => {
+        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
+    };
+
+    const closeTabs = (tabsToClose, openTab) => {
+        tabsToClose.forEach(tab => {
+            store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
+        });
+        store.commit("editor/changeOpenedTabs", {action: "open", ...openTab});
+        hideTabContextMenu();
+    };
+
+    const closeAllTabs = () => {
+        closeTabs(openedTabs.value.filter(tab => tab !== FLOW_TAB.value), FLOW_TAB.value);
+    };
+
+    const closeOtherTabs = (tab) => {
+        closeTabs(openedTabs.value.filter(t => t !== FLOW_TAB.value && t !== tab), tab);
+    };
+
+    const closeTabsToRight = (index) => {
+        closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
+    };
 </script>
-
-<template>
-    <div class="button-top">
-        <el-tooltip
-            effect="light"
-            v-if="!isCreating"
-            ref="toggleExplorer"
-            :content="
-                $t(
-                    `namespace files.toggle.${
-                        explorerVisible ? 'hide' : 'show'
-                    }`
-                )
-            "
-        >
-            <el-button @click="toggleExplorerVisibility()">
-                <span class="pe-2 toggle-button">{{ t("files") }}</span>
-                <component :is="explorerVisible ? MenuOpen : MenuClose" />
-            </el-button>
-        </el-tooltip>
-
-        <el-scrollbar v-if="!isCreating" always ref="tabsScrollRef" class="ms-1 tabs">
-            <el-button
-                v-for="(tab, index) in openedTabs"
-                :key="index"
-                :class="{'tab-active': isActiveTab(tab)}"
-                @click="changeCurrentTab(tab)"
-                :disabled="isActiveTab(tab)"
-            >
-                <TypeIcon :name="tab.name" />
-                <el-tooltip
-                    effect="light"
-                    v-if="tab.path && !tab.persistent"
-                    :content="tab.path"
-                    transition=""
-                    :hide-after="0"
-                    :persistent="false"
-                >
-                    <span class="tab-name px-2">{{ tab.name }}</span>
-                </el-tooltip>
-                <span class="tab-name px-2" v-else>{{ tab.name }}</span>
-                <CircleMedium v-show="tab.dirty" />
-                <Close
-                    v-if="!tab.persistent"
-                    @click.prevent.stop="closeTab(tab, index)"
-                    class="cursor-pointer"
-                />
-            </el-button>
-        </el-scrollbar>
-
-        <div class="d-inline-flex">
-            <switch-view
-                v-if="!isNamespace"
-                :type="viewType"
-                class="to-topology-button"
-                @switch-view="switchViewType"
-            />
-
-            <ValidationError
-                v-if="!isNamespace"
-                ref="validationDomElement"
-                class="validation"
-                tooltip-placement="bottom-start"
-                :errors="flowErrors"
-                :warnings="flowWarnings"
-                :infos="flowInfos"
-            />
-
-            <EditorButtons
-                v-if="isCreating || openedTabs.length"
-                :is-creating="props.isCreating"
-                :is-read-only="props.isReadOnly"
-                :can-delete="canDelete()"
-                :is-allowed-edit="isAllowedEdit"
-                :have-change="flowYaml !== flowYamlOrigin"
-                :flow-have-tasks="flowHaveTasks()"
-                :errors="flowErrors"
-                :warnings="flowWarnings"
-                @delete-flow="deleteFlow"
-                @save="save"
-                @copy="
-                    () =>
-                        router.push({
-                            name: 'flows/create',
-                            query: {copy: true},
-                            params: {tenant: routeParams.tenant},
-                        })
-                "
-                @open-new-error="isNewErrorOpen = true"
-                @open-new-trigger="isNewTriggerOpen = true"
-                @open-edit-metadata="isEditMetadataOpen = true"
-                :is-namespace="isNamespace"
-            />
-        </div>
-    </div>
-    <div v-bind="$attrs" class="main-editor" v-loading="isLoading">
-        <div
-            id="editorWrapper"
-            v-if="combinedEditor || viewType === editorViewTypes.SOURCE"
-            :class="combinedEditor ? 'editor-combined' : ''"
-            style="flex: 1;"
-        >
-            <editor
-                v-if="isCreating || openedTabs.length"
-                ref="editorDomElement"
-                @save="save"
-                @execute="execute"
-                v-model="flowYaml"
-                :schema-type="isCurrentTabFlow? 'flow': undefined"
-                :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-                :extension="currentTab?.extension"
-                @update:model-value="editorUpdate"
-                @cursor="updatePluginDocumentation"
-                :creating="isCreating"
-                @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
-                :read-only="isReadOnly"
-                :navbar="false"
-            />
-            <section v-else class="no-tabs-opened">
-                <div class="img" />
-
-                <h2>{{ $t("namespace_editor.empty.title") }}</h2>
-                <p><span>{{ $t("namespace_editor.empty.message") }}</span></p>
-
-                <iframe
-                    width="60%"
-                    height="400px"
-                    src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
-                />
-            </section>
-        </div>
-        <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
-        <div :class="{'d-flex': combinedEditor}" :style="viewType === editorViewTypes.SOURCE ? `display: none` : combinedEditor ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'">
-            <div
-                v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
-                class="combined-right-view enhance-readability"
-            >
-                <Blueprints @loaded="blueprintsLoaded = true" embed />
-            </div>
-
-            <div
-                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
-                :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
-                class="topology-display"
-            >
-                <LowCodeEditor
-                    v-if="flowGraph"
-                    ref="lowCodeEditorRef"
-                    @follow="forwardEvent('follow', $event)"
-                    @on-edit="(event, isFlow) => onEdit(event, isFlow)"
-                    @loading="loadingState"
-                    @expand-subflow="onExpandSubflow"
-                    @swapped-task="onSwappedTask"
-                    :flow-graph="flowGraph"
-                    :flow-id="flowId"
-                    :namespace="namespace"
-                    :execution="execution"
-                    :is-read-only="isReadOnly"
-                    :source="flowYaml"
-                    :is-allowed-edit="isAllowedEdit"
-                    :view-type="viewType"
-                    :expanded-subflows="props.expandedSubflows"
-                />
-                <el-alert v-else type="warning" :closable="false">
-                    {{ $t("unable to generate graph") }}
-                </el-alert>
-            </div>
-
-            <PluginDocumentation
-                v-if="viewType === editorViewTypes.SOURCE_DOC"
-                class="plugin-doc combined-right-view enhance-readability"
-            />
-        </div>
-
-        <drawer
-            v-if="isNewErrorOpen"
-            v-model="isNewErrorOpen"
-            title="Add a global error handler"
-        >
-            <el-form label-position="top">
-                <task-editor
-                    :section="SECTIONS.TASKS"
-                    @update:model-value="onUpdateNewError"
-                />
-            </el-form>
-            <template #footer>
-                <ValidationError :errors="taskErrors" />
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveNewError()"
-                    type="primary"
-                    :disabled="taskErrors"
-                >
-                    {{ $t("save") }}
-                </el-button>
-            </template>
-        </drawer>
-        <drawer
-            v-if="isNewTriggerOpen"
-            v-model="isNewTriggerOpen"
-            title="Add a trigger"
-        >
-            <el-form label-position="top">
-                <task-editor
-                    :section="SECTIONS.TRIGGERS"
-                    @update:model-value="onUpdateNewTrigger"
-                />
-            </el-form>
-            <template #footer>
-                <ValidationError :errors="taskErrors" />
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveNewTrigger()"
-                    type="primary"
-                    :disabled="taskErrors"
-                >
-                    {{ $t("save") }}
-                </el-button>
-            </template>
-        </drawer>
-        <drawer v-if="isEditMetadataOpen" v-model="isEditMetadataOpen">
-            <template #header>
-                <code>flow metadata</code>
-            </template>
-
-            <el-form label-position="top">
-                <metadata-editor
-                    :metadata="getFlowMetadata()"
-                    @update:model-value="onUpdateMetadata"
-                    :editing="!props.isCreating"
-                />
-            </el-form>
-            <template #footer>
-                <el-button
-                    :icon="ContentSave"
-                    @click="onSaveMetadata()"
-                    type="primary"
-                    :disabled="!checkRequiredMetadata()"
-                    class="edit-flow-save-button"
-                >
-                    {{ $t("save") }}
-                </el-button>
-            </template>
-        </drawer>
-    </div>
-    <el-dialog
-        v-if="confirmOutdatedSaveDialog"
-        v-model="confirmOutdatedSaveDialog"
-        destroy-on-close
-        :append-to-body="true"
-    >
-        <template #header>
-            <h5>{{ $t(`${baseOutdatedTranslationKey}.title`) }}</h5>
-        </template>
-        {{ $t(`${baseOutdatedTranslationKey}.description`) }}
-        {{ $t(`${baseOutdatedTranslationKey}.details`) }}
-        <template #footer>
-            <el-button @click="confirmOutdatedSaveDialog = false">
-                {{ $t("cancel") }}
-            </el-button>
-            <el-button
-                type="warning"
-                @click="
-                    saveWithoutRevisionGuard();
-                    confirmOutdatedSaveDialog = false;
-                "
-            >
-                {{ $t("ok") }}
-            </el-button>
-        </template>
-    </el-dialog>
-</template>
 
 <style lang="scss" scoped>
     @use "element-plus/theme-chalk/src/mixins/mixins" as *;
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
-
-    .button-top {
-        background: var(--card-bg);
-        border-bottom: 1px solid var(--bs-border-color);
-        padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
-        padding-left: calc(var(--spacer) / 2);
-        display: flex;
-        align-items: center;
-        justify-content: end;
-        max-height: 49.5px;
-
-        :deep(.validation) {
-            border: 0;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-        }
-
-        :deep(.el-button) {
-            border: 0;
-            padding-left: calc(var(--spacer) / 2);
-            padding-right: calc(var(--spacer) / 2);
-        }
-    }
 
     .main-editor {
         padding: calc(var(--spacer) / 2) 0px;
@@ -1367,6 +1407,23 @@
         p {
             line-height: 22px;
             font-size: 14px;
+        }
+    }
+
+    ul.tabs-context {
+        position: fixed;
+        z-index: 9999;
+        border-right: none;
+
+        & li {
+            height: 30px;
+            padding: 16px;
+            font-size: var(--el-font-size-small);
+            color: var(--bs-gray-700);
+
+            &:hover {
+                color: var(--bs-secondary);
+            }
         }
     }
 </style>

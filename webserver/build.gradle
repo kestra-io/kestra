@@ -13,7 +13,7 @@ configurations {
 dependencies {
 
     annotationProcessor "io.micronaut.openapi:micronaut-openapi"
-    implementation "io.swagger.core.v3:swagger-annotations"
+    compileOnly "io.micronaut.openapi:micronaut-openapi-annotations"
 
     annotationProcessor project(':processor')
     implementation project(":core")

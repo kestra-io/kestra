@@ -192,7 +192,7 @@
     "resumed done": "実行が再開されました",
     "toggle output": "出力を切り替え",
     "metrics": "メトリクス",
-    "no data current task": "現在のTaskにデータがありません",
+    "no data current task": "現在のタスクに利用可能なデータがありません。",
     "outputs": "出力",
     "output": "Output",
     "eval": {
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "namespaceごとの実行エラー",
       "failedExecutions": "FAILED実行",
       "errorLogs": "エラーログ",
-      "no executions": "flowを実行してみませんか？"
+      "no executions": "flowを実行してみませんか？",
+      "wel_text": "ようこそ！",
+      "start": "最初のworkflowを立ち上げて実行しましょう。",
+      "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
+      "welcome": "Kestraへようこそ"
     },
     "executions replayed": "<code>{executionCount}</code>件の実行が再実行されました",
     "executions resumed": "<code>{executionCount}</code>件の実行が再開されました",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "この操作をキャンセルし、進行中のexecutionをまず停止することを強くお勧めします。未終了のexecutionを削除すると、concurrencyの問題、flow依存関係管理の不整合、インスタンス上のゾンビプロセスを引き起こし、システムパフォーマンスを低下させる可能性があります。削除を進める前に、これらのリスクを十分に理解してください。",
     "originalCreatedDate": "元の作成日",
     "welcome": {
-      "started": {
-        "title": "簡単な3ステップで始めましょう"
+      "tutorial": {
+        "title": "チュートリアル",
+        "text": "```\n* [ビデオチュートリアル](https://kestra.io/tutorial-videos/all)\n* [ドキュメント](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)\n```"
       },
-      "product-tour": {
-        "title": "プロダクトツアーを受ける"
+      "tour": {
+        "title": "製品ツアーを体験する",
+        "text": "ユースケースを選択し、ステップバイステップのガイドに従ってKestraの機能と能力を学びましょう。❤️"
       },
-      "doc": {
-        "title": "ドキュメント"
-      },
-      "need-help": {
-        "title": "ヘルプが必要ですか？"
+      "help": {
+        "text": "Slackコミュニティで質問してください。行き詰まった場合は、私たちがサポートします。✋",
+        "title": "お困りですか？"
       }
     },
     "pluginPage": {
@@ -672,7 +676,8 @@
             "default_namespace": "デフォルトNamespace",
             "log_level": "デフォルトLogレベル",
             "log_display": "デフォルトLog表示",
-            "execute_flow": "Flowを実行"
+            "execute_flow": "Flowを実行",
+            "execute_default_tab": "デフォルト実行タブ"
           }
         },
         "theme": {
@@ -808,11 +813,17 @@
       "empty": {
         "title": "現在開いているタブはありません",
         "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。"
+      },
+      "close": {
+        "other": "他のタブを閉じる",
+        "tab": "タブを閉じる",
+        "right": "右側に閉じる",
+        "all": "すべてのタブを閉じる"
       }
     },
     "curl": {
       "command": "cURLコマンド",
-      "note": "SECRETおよびFILE入力タイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
+      "note": "SECRETおよびFILEのinputタイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
     },
     "logs_view": {
       "raw": "Temporalビュー",
@@ -843,7 +854,7 @@
     "webhook link copied": "Webhookリンクがコピーされました。",
     "copy url": "URLをコピー",
     "scheduleDate": "スケジュール日付",
-    "trigger_check_warning": "警告: トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するには、'??' コアレセ演算子を追加してください。例えば、'trigger.date' の代わりに 'trigger.date ?? execution.startDate' を使用してください。",
+    "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "dashboard": {
       "per_namespace": "（namespaceごと）",
       "id": "ID",
@@ -889,7 +900,7 @@
     "invalid bulk pause": "実行を一時停止できませんでした",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
-    "no_data": "データがありません",
+    "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "informative notice": "注記",
     "triggers-view": {
       "desc_no_triggers": "<a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> についての詳細は、ドキュメントをご覧ください。",
@@ -900,7 +911,6 @@
       "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。"
     },
     "create_flow": "フローを作成",
-    "starred": "スター付き",
     "invalid bulk unqueue": "実行をキューから外すことができませんでした",
     "unqueue done": "実行はキューから外されました",
     "bulk unqueue": "<code>{executionCount}</code> 件の実行をキューから外してもよろしいですか？",
@@ -912,40 +922,115 @@
     "execution-warn-title": "重要なWarning!",
     "worker group key": "ワーカーグループキー",
     "worker group fallback": "ワーカーグループフォールバック",
+    "force run title": "実行 <code>{id}</code> を強制的に実行します。",
+    "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
+    "force run done": "実行は強制的にRUNNINGです。",
+    "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run": "強制実行",
+    "invalid bulk force run": "実行を強制的に開始できませんでした",
+    "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run tooltip": "実行を強制的に開始します。これにより、タスクの実行が重複する可能性があります。可能であれば、別のアクションを使用してください。",
+    "item": "アイテム",
+    "items": "アイテム",
+    "warning": "警告",
+    "cron": "Cron（クーロン）",
+    "showMore": "もっと表示",
+    "showLess": "表示を減らす",
+    "documentationMenu": "ドキュメントメニュー",
+    "task run id": "タスクランID",
+    "optional": "オプション",
+    "active": "アクティブ",
+    "contextBar": {
+      "news": "ニュース",
+      "issue": "問題を開く",
+      "docs": "ドキュメント",
+      "demo": "デモを取得",
+      "help": "ヘルプ"
+    },
+    "execution failed header": "実行がFAILEDしました！",
+    "execution failed message": "最後のエラー: <code>{message}</code>",
+    "flow not imported": "一部のflowをインポートできませんでした",
+    "flows imported": "フローがインポートされました",
+    "is required": "{field} は必須です",
+    "bookmark": "ブックマーク",
+    "dashboards": "ダッシュボード",
+    "dashboard_label": "ダッシュボード",
+    "default_dashboard": "デフォルトダッシュボード",
+    "custom_dashboard": "カスタムダッシュボード",
+    "create_custom_dashboard": "新しいダッシュボードを作成",
+    "edit_custom_dashboard": "ダッシュボードを編集",
+    "custom_dashboard_empty": "表示する結果がありません。",
+    "remove_bookmark": "このブックマークを削除してもよろしいですか？",
+    "execution_guide": {
+      "get_started": {
+        "title": "はじめに ⚡",
+        "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。"
+      },
+      "workflow_components": {
+        "text": "Kestraワークフローの主なオーケストレーションコンポーネントを知る。",
+        "title": "ワークフローコンポーネント"
+      },
+      "videos_tutorials": {
+        "text": "ビデオチュートリアルで始めましょう。",
+        "title": "ビデオチュートリアル"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
+      "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
+      "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
+      "title": "自動化を開始"
+    },
     "filters": {
+      "options": {
+        "child": "子",
+        "metric": "メトリック",
+        "labels": "ラベル",
+        "details": "詳細",
+        "absolute_date": "絶対日付",
+        "scope": "スコープ",
+        "trigger_state": "状態",
+        "state": "状態",
+        "action": "アクション",
+        "text": "申し訳ありませんが、翻訳するためのテキストが提供されていないようです。翻訳が必要なテキストをもう一度送信してください。",
+        "relative_date": "相対日付",
+        "level": "ログレベル",
+        "aggregation": "集計",
+        "permission": "許可",
+        "namespace": "Namespace（ネームスペース）",
+        "user": "ユーザー",
+        "task": "タスク",
+        "flow": "フロー",
+        "type": "タイプ"
+      },
+      "settings": {
+        "label": "ページ設定",
+        "show_chart": "メインチャートを表示"
+      },
       "comparators": {
         "contains": "含む",
         "is": "です",
-        "is_one_of": "のいずれかです",
+        "is_not": "ではありません",
+        "in": "内",
+        "starts_with": "で始まる",
         "not_contains": "含まれていない",
         "is_not_one_off": "のいずれでもありません",
-        "is_not": "ではありません"
-      },
-      "recent": {
-        "label": "最近の検索",
-        "empty": "まだ何も検索していません。"
-      },
-      "labels": {
-        "placeholder": "'label' を 'key:value' と入力してください"
+        "is_one_of": "のいずれか",
+        "between": "間"
       },
       "save": {
+        "label": "保存済み検索",
+        "tooltip": "空の検索条件を保存することはできません。",
         "dialog": {
-          "hint": "この検索条件にどのようなラベルを付けますか？",
           "heading": "現在の検索を保存",
           "confirmation": "検索条件 <code>{name}</code>",
-          "placeholder": "ラベル"
+          "placeholder": "ラベル",
+          "hint": "この検索条件にどのようなラベルを付けますか？"
         },
-        "label": "保存された検索"
-      },
-      "options": {
-        "namespace": "Namespace（ネームスペース）",
-        "scope": "スコープ",
-        "text": "テキスト",
-        "labels": "ラベル",
-        "state": "状態",
-        "child": "子"
+        "empty": "検索をまだ保存していません。"
       },
       "empty": "データがありません。",
+      "format": "「key:value」としてパラメータを入力してください。",
       "label": "フィルターを選択"
     }
   }

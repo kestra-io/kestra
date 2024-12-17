@@ -1,47 +1,52 @@
 <template>
     <div v-if="execution" class="execution-overview">
-        <div v-if="execution.error" class="error-container">
-            <div class="error-header" @click="isExpanded = !isExpanded">
-                <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <span class="error-message">{{ execution.error.message }}</span>
-                <span class="toggle-icon">
-                    <svg v-if="isExpanded" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
-                        <path d="M18 15l-6-6-6 6" />
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="arrow-icon">
-                        <path d="M6 9l6 6 6-6" />
-                    </svg>
-                </span>
-            </div>
-            <div v-if="isExpanded" class="error-stack">
-                <div v-for="(line, index) in execution.error.stacktrace?.split('\n')" :key="index" class="stack-line">
-                    {{ line }}
+        <div v-if="isFailed()">
+            <el-alert type="error" :closable="false" class="mb-4 main-error">
+                <template #title>
+                    <div @click="isExpanded = !isExpanded">
+                        <alert class="main-icon" />
+                        {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
+                        <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
+                        <span class="toggle-icon" v-if="errorLogs">
+                            <chevron-up v-if="isExpanded" />
+                            <chevron-down v-else />
+                        </span>
+                    </div>
+                </template>
+                <div v-if="isExpanded && errorLogs" class="error-stack">
+                    <div v-for="log in errorLogs" :key="log" class="stack-line">
+                        <log-line :level="log.level" :log="log" :exclude-metas="['namespace', 'flowId', 'executionId']" />
+                    </div>
+                    <div class="text-end" v-if="errorLogsMore">
+                        <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
+                            <el-button class="mt-3">
+                                {{ $t('homeDashboard.errorLogs') }}
+                            </el-button>
+                        </router-link>
+                    </div>
                 </div>
-            </div>
+            </el-alert>
         </div>
 
         <el-row class="mb-3">
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end">
+            <el-col :span="12" class="d-flex gap-2 justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
-                <restart is-replay :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <pause :execution="execution" />
-                <kill :execution="execution" class="ms-0" />
+                <kill :execution="execution" />
                 <unqueue :execution="execution" />
-                <status :status="execution.state.current" class="ms-0" />
+                <force-run :execution="execution" />
+                <status :status="execution.state.current" />
             </el-col>
         </el-row>
 
-        <el-table stripe table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
+        <el-table table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
             <el-table-column prop="key" :label="$t('key')" />
 
             <el-table-column prop="value" :label="$t('value')">
@@ -75,26 +80,38 @@
 
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
-            <KestraCascader :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})" class="overflow-auto" />
+            <KestraCascader
+                :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})"
+                :execution
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
             <KestraCascader
                 :options="transform(execution.inputs)"
-                :execution="execution"
+                :execution
                 class="overflow-auto"
             />
         </div>
 
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
-            <KestraCascader :options="transform(execution.variables)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.variables)"
+                :execution
+                class="overflow-auto"
+            />
         </div>
 
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
-            <KestraCascader :options="transform(execution.outputs)" class="overflow-auto" />
+            <KestraCascader
+                :options="transform(execution.outputs)"
+                :execution
+                class="overflow-auto"
+            />
         </div>
     </div>
 </template>
@@ -106,6 +123,7 @@
     import Resume from "./Resume.vue";
     import Pause from "./Pause.vue";
     import Unqueue from "./Unqueue.vue";
+    import ForceRun from "./ForceRun.vue";
     import Kill from "./Kill.vue";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo.vue";
@@ -115,6 +133,10 @@
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
+    import LogLine from "../../components/logs/LogLine.vue"
+    import Alert from "vue-material-design-icons/Alert.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
 
     export default {
         components: {
@@ -126,11 +148,16 @@
             Resume,
             Pause,
             Unqueue,
+            ForceRun,
             Kill,
             DateAgo,
             Labels,
             Crud,
-            KestraCascader
+            KestraCascader,
+            LogLine,
+            Alert,
+            ChevronDown,
+            ChevronUp
         },
         emits: ["follow"],
         methods: {
@@ -169,21 +196,61 @@
                 } else {
                     return this.execution.state.histories[this.execution.state.histories.length - 1].date;
                 }
+            },
+            isFailed() {
+                return this.execution.state.current === State.FAILED;
+            },
+            load() {
+                this.$store
+                    .dispatch(
+                        "execution/loadExecution",
+                        this.$route.params
+                    )
+                    .then(() => {
+                        this.fetchErrorLogs();
+                    })
+            },
+            fetchErrorLogs() {
+                this.$store
+                    .dispatch("execution/loadLogs", {
+                        store: false,
+                        executionId: this.execution.id,
+                        params: {
+                            minLevel: "ERROR"
+                        }
+                    })
+                    .then(response => {
+                        if (response && response.length >= 1) {
+                            this.errorLogsMore = response.length > 3;
+                            this.errorLast = response[response.length - 1];
+                            this.errorLogs = response.length > 3 ? response.slice(1).slice(-3) : response;
+
+                        } else {
+                            this.errorLogs = undefined;
+                            this.errorLogsMore = false;
+                            this.errorLast = undefined;
+                        }
+                    })
+            }
+        },
+        mounted() {
+            if (this.isFailed()) {
+                this.fetchErrorLogs();
             }
         },
         watch: {
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
-                    this.$store.dispatch(
-                        "execution/loadExecution",
-                        this.$route.params
-                    );
+                    this.load();
                 }
             }
         },
         data() {
             return {
-                isExpanded: false
+                isExpanded: false,
+                errorLogs: undefined,
+                errorLogsMore: false,
+                errorLast: undefined,
             };
         },
         computed: {
@@ -263,61 +330,6 @@
     align-items: center;
 }
 
-.error-container {
-    background-color:var(--bs-border-color);
-    border: 1px solid #ff6b6b;
-    border-radius: 4px;
-    color: #ffffff;
-    margin: 10px 0 30px 0;
-}
-
-.error-header {
-    background-color: var(--bs-body-bg);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px;
-}
-
-.error-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 10px;
-    color: #ff6b6b;
-}
-
-.error-message {
-    font-weight: bold;
-    flex-grow: 1;
-    color: var(--el-text-color-regular);
-}
-
-.toggle-icon {
-    font-size: 1.2em;
-    color: #ff6b6b;
-    display: flex;
-    align-items: center;
-}
-
-.arrow-icon {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-.error-stack {
-    background-color: var(--bs-body-bg);
-    border-radius: 4px;
-    padding: 10px;
-    overflow-x: auto;
-}
-
-.stack-line {
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    color: var(--el-text-color-regular);
-}
-
 .execution-overview {
     .cascader {
         &::-webkit-scrollbar {
@@ -385,6 +397,88 @@
                 color: var(--el-text-color-regular);
             }
         }
+    }
+
+    .actions-buttons {
+        .el-button {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+    }
+}
+
+.el-alert.main-error {
+    background-color: var(--background-color-failed) !important;
+    padding: 0.5rem;
+
+    .el-button{
+        color: var(--log-content-error);
+        background-color: var(--log-background-error);
+        border-color: var(--log-border-error);
+    }
+    .el-alert__title {
+        cursor: pointer;
+        font-weight: bold;
+        position: relative;
+        line-height: 2rem;
+        color: var(--content-color-failed) !important;
+        font-size: var(--font-size-sm);
+
+        span {
+            font-weight: normal;
+        }
+
+        code{
+            color: var(--log-content-error) !important;
+        }
+
+        > div {
+            padding-right: 3rem;
+        }
+
+        .main-icon.material-design-icon  {
+            color: var(--el-color-danger);
+            font-size: 1.25rem;
+            position: relative;
+            top: 4px;
+            margin-right: 0.75rem;
+        }
+
+        .toggle-icon {
+            position: absolute;
+            color: var(--el-color-danger);
+            right: 1rem;
+            width: 1rem;
+            height: 1rem;
+            font-size: 1.75rem;
+            top: 10%;
+        }
+
+    }
+
+    .el-alert__description {
+        color: var(--bs-body-color);
+    }
+
+    .el-alert__content {
+        width: 100%;
+
+        .error-stack {
+            margin-top: 0.5rem;
+        }
+
+        .text-end {
+            border-top: 1px solid var(--bs-border-color);
+        }
+    }
+}
+
+.stack-line {
+    margin-bottom: 0;
+
+    .line {
+        padding: calc(var(--spacer) / 2);
+        border-top: 1px solid var(--log-background-error);
     }
 }
 </style>

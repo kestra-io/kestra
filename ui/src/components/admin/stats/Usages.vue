@@ -159,8 +159,7 @@
                 try {
                     this.$router.resolve({name: "namespaces/list"})
                     return "namespaces/list";
-
-                } catch (error) {
+                } catch  {
                     return "flows/list"
                 }
             },

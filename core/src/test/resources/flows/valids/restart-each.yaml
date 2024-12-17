@@ -7,8 +7,9 @@ inputs:
 
 tasks:
   - id: 1_each
-    type: io.kestra.plugin.core.flow.EachParallel
-    value: '["value 1", "value 2", "value 3"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    concurrencyLimit: 0
+    values: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 2-1_seq
         type: io.kestra.plugin.core.flow.Sequential
@@ -17,8 +18,9 @@ tasks:
             type: io.kestra.plugin.core.log.Log
             message: "{{ (inputs.failed ?? 'NONE') == 'FIRST' ? ko : '0'}}"
           - id: 2-1-2_t2
-            type: io.kestra.plugin.core.flow.EachParallel
-            value: '["value a", "value b", "value c"]'
+            type: io.kestra.plugin.core.flow.ForEach
+            concurrencyLimit: 0
+            values: '["value a", "value b", "value c"]'
             tasks:
               - id: 2-1-2-1_t1
                 type: io.kestra.plugin.core.log.Log

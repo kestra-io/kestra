@@ -2,10 +2,11 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
-import io.kestra.plugin.core.condition.DateTimeBetweenCondition;
-import io.kestra.plugin.core.condition.DayWeekInMonthCondition;
+import io.kestra.plugin.core.condition.DateTimeBetween;
+import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +38,8 @@ import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class ScheduleTest {
+
+    private static final String TEST_CRON_EVERYDAY_AT_8 = "0 8 * * *";
 
     @Inject
     RunContextFactory runContextFactory;
@@ -215,6 +220,45 @@ class ScheduleTest {
     }
 
     @Test
+    void shouldNotReturnExecutionForBackFillWhenCurrentDateIsBeforeScheduleDate() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
+        ZonedDateTime now = ZonedDateTime.now();
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.now().with(LocalTime.MIN))
+                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .build()
+            ).build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isEmpty(), is(true));
+    }
+
+    @Test
+    void shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
+        ZonedDateTime now = ZonedDateTime.now();
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.now().with(LocalTime.MIN).plus(Duration.ofHours(8)))
+                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .build()
+            )
+            .build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isPresent(), is(true));
+    }
+
+    @Test
     void noBackfillNextDate() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
@@ -268,9 +312,9 @@ class ScheduleTest {
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
-                DayWeekInMonthCondition.builder()
+                DayWeekInMonth.builder()
                     .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonthCondition.DayInMonth.FIRST)
+                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
                     .date("{{ trigger.date }}")
                     .build()
             ))
@@ -301,7 +345,7 @@ class ScheduleTest {
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
-                DateTimeBetweenCondition.builder()
+                DateTimeBetween.builder()
                     .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
                     .date("{{ trigger.date }}")
                     .build()

@@ -192,7 +192,7 @@
     "resumed done": "L'esecuzione è stata ripresa",
     "toggle output": "Attiva/disattiva outputs",
     "metrics": "Metriche",
-    "no data current task": "Nessun dato disponibile per il task corrente",
+    "no data current task": "Non ci sono dati disponibili per il task corrente",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Errori di esecuzione per namespace",
       "failedExecutions": "Esecuzioni FAILED",
       "errorLogs": "Error logs",
-      "no executions": "Pronto a vedere il tuo flow in azione?"
+      "no executions": "Pronto a vedere il tuo flow in azione?",
+      "wel_text": "Benvenuto!",
+      "start": "Iniziamo a far funzionare il tuo primo workflow.",
+      "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?",
+      "welcome": "Benvenuto in Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> esecuzione/i ripetute",
     "executions resumed": "<code>{executionCount}</code> esecuzione/i riprese",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Raccomandiamo vivamente di annullare questa azione e terminare eventuali esecuzioni in corso prima. Eliminare esecuzioni non terminate può portare a problemi di concorrenza, incoerenze nella gestione delle dipendenze del flow e processi zombie sulla tua istanza, che possono degradare le prestazioni del sistema. Assicurati di comprendere appieno questi rischi prima di procedere con l'eliminazione.",
     "originalCreatedDate": "Data di creazione originale",
     "welcome": {
-      "started": {
-        "title": "Inizia in 3 semplici passaggi"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Video Tutorial](https://kestra.io/tutorial-videos/all)\n* [Documentazione](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Fai un tour del prodotto"
+      "tour": {
+        "title": "Fai un tour del prodotto",
+        "text": "Scegli il tuo caso d'uso e segui una guida passo-passo per imparare le funzionalità e le capacità di Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentazione"
-      },
-      "need-help": {
+      "help": {
+        "text": "Fai qualsiasi domanda nella nostra community su Slack. Se sei bloccato, siamo qui per aiutarti. ✋",
         "title": "Hai bisogno di aiuto?"
       }
     },
@@ -672,7 +676,8 @@
             "default_namespace": "Namespace predefinito",
             "log_level": "Livello di Log predefinito",
             "log_display": "Visualizzazione Log predefinita",
-            "execute_flow": "Esegui il Flow"
+            "execute_flow": "Esegui il Flow",
+            "execute_default_tab": "Scheda di Esecuzione Predefinita"
           }
         },
         "theme": {
@@ -808,6 +813,12 @@
       "empty": {
         "title": "Nessuna scheda attualmente aperta",
         "message": "Puoi creare o importare file namespace dalla barra laterale e puoi guardare il video introduttivo per il nostro Editor."
+      },
+      "close": {
+        "other": "Chiudi le altre schede",
+        "tab": "Chiudi scheda",
+        "right": "Chiudi a destra",
+        "all": "Chiudi tutte le schede"
       }
     },
     "curl": {
@@ -843,7 +854,7 @@
     "webhook link copied": "Link del Webhook copiato.",
     "copy url": "Copia URL",
     "scheduleDate": "Data di pianificazione",
-    "trigger_check_warning": "Avviso: L'uso delle variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza '??' per risolvere il problema. Ad esempio, invece di 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Utilizzare le variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza `??` per risolvere il problema. Ad esempio, invece di `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -889,7 +900,7 @@
     "invalid bulk pause": "Impossibile mettere in pausa le esecuzioni",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
-    "no_data": "Nessun dato disponibile",
+    "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
     "informative notice": "Note(s)",
     "triggers-view": {
       "desc_no_triggers": "Leggi di più sui <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a> nella nostra documentazione.",
@@ -900,7 +911,6 @@
       "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione."
     },
     "create_flow": "Crea Flow",
-    "starred": "Preferiti",
     "invalid bulk unqueue": "Impossibile rimuovere dalla coda le esecuzioni",
     "unqueue done": "L'esecuzione è in coda",
     "bulk unqueue": "Sei sicuro di voler rimuovere dalla coda <code>{executionCount}</code> esecuzione/i?",
@@ -912,40 +922,115 @@
     "execution-warn-title": "Avviso Importante!",
     "worker group key": "Chiave del gruppo Worker",
     "worker group fallback": "Gruppo di Worker di riserva",
+    "force run title": "Esegui forzatamente l'esecuzione <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> esecuzione/i forzata/e",
+    "force run done": "L'esecuzione è forzata a RUNNING",
+    "force run confirm": "Sei sicuro di voler forzare l'esecuzione <code>{id}</code>?<br/><br/>WARNING: forzare l'esecuzione non è garantito e potrebbe creare esecuzioni duplicate dei task.<br/><br/>Le seguenti transizioni saranno effettuate:<br/><ul><li>I task in stato CREATED saranno spostati allo stato RUNNING.</li><li>I task in stato RUNNING saranno ri-sottomessi.</li><li>I task in stato QUEUED saranno rimossi dalla coda.</li><li>I task in stato PAUSED saranno ripresi.</li></ul>",
+    "force run": "Esegui forzatamente",
+    "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
+    "bulk force run": "Sei sicuro di voler forzare l'esecuzione di <code>{executionCount}</code>?<br/><br/>WARNING: forzare l'esecuzione non è garantito e potrebbe creare esecuzioni duplicate dei task.<br/><br/>Le seguenti transizioni verranno effettuate:<br/><ul><li>I task in stato CREATED verranno spostati allo stato RUNNING.</li><li>I task in stato RUNNING verranno ri-sottomessi.</li><li>I task in stato QUEUED verranno rimossi dalla coda.</li><li>I task in stato PAUSED verranno ripresi.</li></ul>",
+    "force run tooltip": "Forza l'esecuzione a partire. Può creare esecuzioni duplicate dei task, se possibile utilizza un'altra azione.",
+    "item": "elemento",
+    "items": "elementi",
+    "warning": "Avviso",
+    "cron": "Cron",
+    "showMore": "Mostra di più",
+    "showLess": "Mostra meno",
+    "documentationMenu": "Menu documentazione",
+    "task run id": "ID di TaskRun",
+    "optional": "Opzionale",
+    "active": "Attivo",
+    "contextBar": {
+      "news": "Notizie",
+      "issue": "Apri un'Issue",
+      "docs": "Documenti",
+      "demo": "Ottieni una demo",
+      "help": "Aiuto"
+    },
+    "execution failed header": "Esecuzione fallita!",
+    "execution failed message": "Con ultimo errore: <code>{message}</code>",
+    "flow not imported": "Alcuni flow non possono essere importati",
+    "flows imported": "Flussi importati",
+    "is required": "{field} è obbligatorio",
+    "bookmark": "Segnalibri",
+    "dashboards": "Dashboard",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Dashboard Predefinito",
+    "custom_dashboard": "Dashboard Personalizzati",
+    "create_custom_dashboard": "Crea nuovo dashboard",
+    "edit_custom_dashboard": "Modifica Dashboard",
+    "custom_dashboard_empty": "Non ci sono risultati da mostrare.",
+    "remove_bookmark": "Sei sicuro di voler rimuovere questo segnalibro?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Inizia ⚡",
+        "text": "Segui la Guida rapida per installare Kestra e iniziare a creare i tuoi primi workflow."
+      },
+      "workflow_components": {
+        "text": "Conosci i principali componenti di orchestrazione di un workflow Kestra.",
+        "title": "Componenti del Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Inizia con i nostri video tutorial.",
+        "title": "Tutorial Video"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Fai clic sul pulsante Esegui per avviare l'esecuzione del tuo primo workflow.",
+      "guidance_desc": "Hai bisogno di assistenza per eseguire il tuo flow?",
+      "guidance_sub_desc": "Segui la documentazione per tutte le informazioni di cui hai bisogno.",
+      "title": "Inizia ad automatizzare con"
+    },
     "filters": {
+      "options": {
+        "child": "Bambino",
+        "metric": "Metrica",
+        "labels": "Etichette",
+        "details": "Dettagli",
+        "absolute_date": "Data assoluta",
+        "scope": "Ambito",
+        "trigger_state": "Stato",
+        "state": "Stato",
+        "action": "Azione",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you would like translated?",
+        "relative_date": "Data relativa",
+        "level": "Livello di Log",
+        "aggregation": "Aggregazione",
+        "permission": "Permesso",
+        "namespace": "Namespace",
+        "user": "Utente",
+        "task": "Compito",
+        "flow": "Flusso",
+        "type": "Tipo"
+      },
+      "settings": {
+        "label": "Impostazioni pagina",
+        "show_chart": "Mostra il grafico principale"
+      },
       "comparators": {
         "contains": "contiene",
         "is": "è",
-        "is_one_of": "è uno di",
-        "not_contains": "non_contiene",
+        "is_not": "non è",
+        "in": "nel",
+        "starts_with": "inizia con",
+        "not_contains": "non contiene",
         "is_not_one_off": "non è uno di",
-        "is_not": "non è"
-      },
-      "recent": {
-        "label": "Ricerche recenti",
-        "empty": "Non hai ancora cercato nulla."
-      },
-      "labels": {
-        "placeholder": "Digita l'etichetta come 'key:value'"
+        "is_one_of": "è uno di",
+        "between": "tra"
       },
       "save": {
+        "label": "Ricerche salvate",
+        "tooltip": "Non puoi salvare criteri di ricerca vuoti.",
         "dialog": {
-          "hint": "Come vuoi etichettare questo criterio di ricerca?",
-          "heading": "Salva ricerca corrente",
+          "heading": "Salva la ricerca corrente",
           "confirmation": "Criteri di ricerca <code>{name}</code>",
-          "placeholder": "Etichetta"
+          "placeholder": "Etichetta",
+          "hint": "Come vuoi etichettare questo criterio di ricerca?"
         },
-        "label": "Ricerche salvate"
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Ambito",
-        "text": "I'm sorry, but it seems like there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate into Italian?",
-        "labels": "Etichette",
-        "state": "Stato",
-        "child": "Bambino"
+        "empty": "Non hai ancora salvato alcuna ricerca."
       },
       "empty": "Nessun dato.",
+      "format": "Digita il parametro come 'key:value'",
       "label": "Scegli filtri"
     }
   }

@@ -67,7 +67,7 @@ public class InternalKVStore implements KVStore {
 
         byte[] serialized = JacksonMapper.ofIon().writeValueAsBytes(value.value());
 
-        this.storage.put(this.tenant, this.storageUri(key), new StorageObject(
+        this.storage.put(this.tenant, this.namespace, this.storageUri(key), new StorageObject(
             value.metadataAsMap(),
             new ByteArrayInputStream(serialized)
         ));
@@ -92,7 +92,7 @@ public class InternalKVStore implements KVStore {
 
         StorageObject withMetadata;
         try {
-            withMetadata = this.storage.getWithMetadata(this.tenant, this.storageUri(key));
+            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key));
         } catch (FileNotFoundException e) {
             return Optional.empty();
         }
@@ -112,7 +112,7 @@ public class InternalKVStore implements KVStore {
     @Override
     public boolean delete(String key) throws IOException {
         KVStore.validateKey(key);
-        return this.storage.delete(this.tenant, this.storageUri(key));
+        return this.storage.delete(this.tenant, this.namespace, this.storageUri(key));
     }
 
     /**
@@ -122,7 +122,7 @@ public class InternalKVStore implements KVStore {
     public List<KVEntry> list() throws IOException {
         List<FileAttributes> list;
         try {
-            list = this.storage.list(this.tenant, this.storageUri(null));
+            list = this.storage.list(this.tenant, this.namespace, this.storageUri(null));
         } catch (FileNotFoundException e) {
             return Collections.emptyList();
         }
@@ -140,7 +140,7 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         try {
-            KVEntry entry = KVEntry.from(this.storage.getAttributes(this.tenant, this.storageUri(key)));
+            KVEntry entry = KVEntry.from(this.storage.getAttributes(this.tenant, this.namespace, this.storageUri(key)));
             if (entry.expirationDate() != null && Instant.now().isAfter(entry.expirationDate())) {
                 this.delete(key);
                 return Optional.empty();

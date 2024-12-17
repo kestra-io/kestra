@@ -1,5 +1,17 @@
 <template>
     <div class="attempt-header">
+        <div>
+            <el-icon
+                v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
+                type="default"
+                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+            >
+                <ChevronDown
+                    v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                />
+                <ChevronRight v-else />
+            </el-icon>
+        </div>
         <div class="task-icon d-none d-md-inline-block me-1">
             <task-icon
                 :cls="taskType(currentTaskRun)"
@@ -43,6 +55,8 @@
             <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
+        <slot name="buttons" />
+
         <el-select
             class="d-none d-md-inline-block attempt-select"
             :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
@@ -58,7 +72,7 @@
         </el-select>
 
         <el-dropdown trigger="click">
-            <el-button type="default" class="more-dropdown-button">
+            <el-button type="default" class="task-run-buttons">
                 <DotsHorizontal title="" />
             </el-button>
             <template #dropdown>
@@ -122,24 +136,11 @@
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-
-        <el-button
-            v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-            class="border-0 expand-collapse"
-            type="default"
-            text
-            @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
-        >
-            <ChevronUp
-                v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
-            />
-            <ChevronDown v-else />
-        </el-button>
     </div>
 </template>
 <script>
     import Restart from "./Restart.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Metrics from "./Metrics.vue";
     import Status from "../Status.vue";
     import ChangeStatus from "./ChangeStatus.vue";
@@ -174,7 +175,7 @@
             ChangeStatus,
             Status,
             Metrics,
-            ChevronUp,
+            ChevronRight,
             Restart,
             Duration
         },
@@ -351,7 +352,8 @@
             text-overflow: ellipsis;
 
             span span {
-                color: var(--bs-tertiary-color);
+                color: var(--el-text-color-regular);
+                font-size: 14px;
 
                 html:not(.dark) & {
                     color: $black;
@@ -376,18 +378,14 @@
             color: var(--bs-gray-800);
         }
 
-        .more-dropdown-button {
+        .task-run-buttons {
             padding: .5rem;
-            height: 100%; 
+            height: 100%;
             border: 1px solid rgba($white, .05);
-
+            background-color: var(--el-button-bg-color) !important;
             &:not(:hover) {
                 background: rgba($white, .10);
             }
-        }
-
-        .expand-collapse {
-            background-color: transparent !important;
         }
     }
 </style>

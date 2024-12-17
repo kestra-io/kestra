@@ -118,6 +118,13 @@
     "next execution date": "Next execution date",
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
+    "contextBar": {
+      "news": "News",
+      "docs": "Docs",
+      "help": "Help",
+      "issue": "Open an Issue",
+      "demo": "Get a demo"
+    },
     "source": "Source",
     "home": "Home",
     "create": "Create",
@@ -149,6 +156,7 @@
     "select datetime": "Select a date",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
+    "is required": "{field} is required",
     "error": "Error",
     "form": "Form",
     "form error": "Form error",
@@ -219,9 +227,14 @@
     "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey to the flow concurrency limit so more executions could be running than the allowed limit.",
     "unqueue confirm": "Are you sure to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
+    "force run": "Force run",
+    "force run title": "Force run execution <code>{id}</code>.",
+    "force run tooltip": "Force the execution to run. It can creates duplicate task executions, if possible use another action.",
+    "force run confirm": "Are you sure to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run done": "Execution is forced run",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
-    "no data current task": "No data available for current task",
+    "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
@@ -388,6 +401,7 @@
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
     "bulk unqueue": "Are you sure you want to unqueue <code>{executionCount}</code> execution(s)?",
+    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -397,6 +411,10 @@
     "cancel": "Cancel",
     "homeDashboard": {
       "title": "Dashboard",
+      "welcome": "Welcome to Kestra",
+      "wel_text": "Welcome!",
+      "start": "Let's get your first workflow up and running.",
+      "guide": "Need guidance to execute your first flow?",
       "today": "Today",
       "yesterday": "Yesterday",
       "last28Days": "Last 28 days",
@@ -407,11 +425,13 @@
       "errorLogs": "Errors logs",
       "no executions": "Ready to see your flow in action?"
     },
+    "dashboards": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
     "executions paused": "<code>{executionCount}</code> executions(s) paused",
     "executions unqueue": "<code>{executionCount}</code> executions(s) unqueue",
+    "executions force run": "<code>{executionCount}</code> executions(s) forced run",
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
     "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
@@ -419,6 +439,7 @@
     "invalid bulk resume": "Could not resume executions",
     "invalid bulk pause": "Could not pause executions",
     "invalid bulk unqueue": "Could not unqueue executions",
+    "invalid bulk force run": "Could not force run executions",
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
@@ -693,17 +714,17 @@
     "execution-warn-deleting-still-running": "We strongly recommend that you cancel this action and kill any ongoing executions first. Deleting non-terminated executions can lead to concurrency issues, flow dependency management inconsistencies, and zombie processes on your instance, which can degrade system performance. Make sure you fully understand these risks before proceeding with the deletion.",
     "originalCreatedDate": "Original creation date",
     "welcome": {
-      "started": {
-        "title": "Get started in 3 easy steps"
+      "tour": {
+        "title": "Take a product tour",
+        "text": "Chose your use case and follow a step-by-step guide to learn Kestra 's features and capabilities. ❤️"
       },
-      "product-tour": {
-        "title": "Take a product tour"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Video Tutorials](https://kestra.io/tutorial-videos/all)\n* [Documentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "doc": {
-        "title": "Docs"
-      },
-      "need-help": {
-        "title": "Need help?"
+      "help": {
+        "title": "Need help?",
+        "text": "Ask any question in our Slack community. If you are stuck, we are help to help you. ✋"
       }
     },
     "pluginPage": {
@@ -722,7 +743,8 @@
             "default_namespace": "Default Namespace",
             "log_level": "Default Log Level",
             "log_display": "Default Log Display",
-            "execute_flow": "Execute the Flow"
+            "execute_flow": "Execute the Flow",
+            "execute_default_tab": "Default Execution Tab"
           }
         },
         "theme": {
@@ -860,6 +882,12 @@
       "empty": {
         "title": "No tabs currently opened",
         "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+      },
+      "close": {
+        "tab": "Close tab",
+        "all": "Close all tabs",
+        "other": "Close other tabs",
+        "right": "Close to the right"
       }
     },
     "curl": {
@@ -886,7 +914,8 @@
     "webhook link copied": "Webhook link copied.",
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
-    "trigger_check_warning": "Warning: Using trigger variables won't work with manual flow execution. Add the '??' coalesce operator to solve the issue. For example, instead of 'trigger.date', use 'trigger.date ?? execution.startDate'.",
+    "warning": "Warning",
+    "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "success_ratio": "Success Ratio",
       "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
@@ -909,6 +938,26 @@
     "active-slots": "Active slots",
     "behavior": "Behavior",
     "concurrency": "Concurrency",
+    "no-executions-view": {
+        "title": "Start automating with ",
+        "sub_title": "Click on the Execute button to start your first workflow execution.",
+        "guidance_desc": "Need guidance to execute your flow?",
+        "guidance_sub_desc": "Follow the documentation for all the info you need."
+    },    
+    "execution_guide": {
+      "get_started": {
+        "title": "Get Started ⚡",
+        "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
+      },
+      "workflow_components": {
+        "title": "Workflow Components",
+        "text": "Get to know the main orchestration components of a Kestra workflow."
+      },
+      "videos_tutorials": {
+        "title": "Video Tutorials",
+        "text": "Get started with our video tutorials."
+      }
+    },
     "concurrency-view": {
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
@@ -925,17 +974,51 @@
     "close sidebar": "close sidebar",
     "change_status": "Change status",
     "files": "Files",
-    "no_data": "No data available",
-    "starred": "Starred",
+    "optional": "Optional",
+    "no_data": "Looks like there's nothing here… yet!<br/>Adjust your filters, or give it another go!",
+    "bookmark": "Bookmarks",
+    "remove_bookmark": "Are you sure you want to remove this bookmark?",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "documentationMenu": "Documentation menu",
+    "item": "item",
+    "items": "items",
+    "cron": "Cron",
+    "execution failed header": "Execution failed!",
+    "execution failed message": "With last error: <code>{message}</code>",
+    "task run id": "TaskRun ID",
+    "active": "Active",
+    "flows imported": "Flows imported",
+    "flow not imported": "Some flow could not be imported",
+    "dashboard_label": "Dashboard",
+    "default_dashboard": "Default Dashboard",
+    "custom_dashboard": "Custom Dashboards",
+    "create_custom_dashboard": "Create new dashboard",
+    "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
+      "format": "Type parameter as 'key:value'",
       "options": {
         "namespace": "Namespace",
+        "flow": "Flow",
         "state": "State",
+        "trigger_state": "State",
         "scope": "Scope",
-        "labels": "Labels",
         "child": "Child",
+        "level": "Log level",
+        "task": "Task",
+        "metric": "Metric",
+        "user": "User",
+        "type": "Type",
+        "permission": "Permission",
+        "action": "Action",
+        "details": "Details",
+        "aggregation": "Aggregation",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
+        "labels": "Labels",
         "text": "text"
       },
       "comparators": {
@@ -944,14 +1027,15 @@
         "is_not": "is not",
         "is_not_one_off": "is not one of",
         "contains": "contains",
-        "not_contains": "not_contains"
-      },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
       },
       "save": {
         "label": "Saved searches",
+        "empty": "You still haven't saved any search.",
+        "tooltip": "You can't save empty search criteria.",
         "dialog": {
           "heading": "Save current search",
           "placeholder": "Label",
@@ -959,8 +1043,9 @@
           "confirmation": "Search criteria <code>{name}</code>"
         }
       },
-      "labels": {
-        "placeholder": "Type label as 'key:value'"
+      "settings": {
+        "label": "Page settings",
+        "show_chart": "Show main chart"
       }
     }
   }

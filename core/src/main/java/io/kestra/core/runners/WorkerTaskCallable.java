@@ -53,7 +53,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
 
     @Override
     public State.Type doCall() throws Exception {
-        final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
+        final Duration workerTaskTimeout = workerTask.getRunContext().render(workerTask.getTask().getTimeout()).as(Duration.class).orElse(null);
 
         try {
             if (workerTaskTimeout != null) {

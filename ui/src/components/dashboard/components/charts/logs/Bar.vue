@@ -19,7 +19,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <el-empty v-else :description="$t('no_data')" />
+        <NoData v-else />
     </div>
 </template>
 
@@ -35,6 +35,8 @@
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -81,9 +83,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                barLegend: {
-                    containerID: "logs",
-                },
+                barLegend: {containerID: "logs"},
                 tooltip: {
                     enabled: true,
                     filter: (value) => value.raw,

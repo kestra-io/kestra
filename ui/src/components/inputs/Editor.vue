@@ -433,16 +433,8 @@
         height: 100%;
     }
 
-    .el-drawer__body .ks-editor {
-        flex: 1;
-    }
-
-    .el-dialog__body .ks-editor {
+    .el-form .ks-editor {
         display: flex;
-        width: 100%;
-    }
-
-    .el-dialog__body .el-form {
         width: 100%;
     }
 
@@ -473,6 +465,10 @@
                 transition: var(--el-transition-box-shadow);
                 box-shadow: 0 0 0 1px var(--bs-border-color) inset;
                 padding-top: 7px;
+
+                &.custom-dark-vs-theme {
+                    background-color: $input-bg;
+                }
 
                 html.dark & {
                     background-color: var(--bs-gray-100);
@@ -532,6 +528,7 @@
 
     .custom-dark-vs-theme {
         .monaco-editor, .monaco-editor-background {
+            outline: none;
             background-color: $input-bg;
             --vscode-editor-background: $input-bg;
             --vscode-breadcrumb-background: $input-bg;

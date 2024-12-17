@@ -40,6 +40,17 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
+                        <el-select :model-value="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                            <el-option
+                                v-for="item in executeDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
                 </Row>
             </template>
         </Block>
@@ -250,7 +261,8 @@
                     editorFontFamily: undefined,
                     executeFlowBehaviour: undefined,
                     envName: undefined,
-                    envColor: undefined
+                    envColor: undefined,
+                    executeDefaultTab: undefined
                 },
                 settingsKeyMapping: {
                     chartColor: "scheme",
@@ -276,8 +288,9 @@
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-            this.pendingSettings.theme = localStorage.getItem("theme") || "light";
-            this.pendingSettings.editorTheme = localStorage.getItem("editorTheme") || "dark";
+            
+            this.pendingSettings.theme = Utils.getTheme();
+            this.pendingSettings.editorTheme = Utils.getTheme("editorTheme")
 
             let scheme = localStorage.getItem("scheme") || "classic";
             if(scheme === "default") scheme = "classic";
@@ -291,6 +304,7 @@
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
+            this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
         },
@@ -361,6 +375,9 @@
             },
             onExecuteFlowBehaviourChange(value) {
                 this.pendingSettings.executeFlowBehaviour = value;
+            },
+            onExecuteDefaultTabChange(value){
+                this.pendingSettings.executeDefaultTab = value;
             },
             saveAllSettings() {
                 Object.keys(this.pendingSettings).forEach((key) => {
@@ -492,6 +509,34 @@
                     {
                         value: "'SimSun', sans-serif",
                         text: "SimSun"
+                    }
+                ]
+            },
+            executeDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "gantt",
+                        label: this.$t("gantt")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value: "outputs",
+                        label: this.$t("outputs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
                     }
                 ]
             }

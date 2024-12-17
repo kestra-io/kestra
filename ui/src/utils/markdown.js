@@ -36,7 +36,7 @@ export default class Markdown {
         let md;
         if (options.onlyLink) {
             md = new markdownIt("zero");
-            md.enable(["link", "linkify", "entity", "html_inline"]);
+            md.enable(["link", "linkify", "entity", "html_inline", "newline"]);
         } else {
             md = new markdownIt();
         }

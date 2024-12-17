@@ -74,6 +74,27 @@ docker run --pull=always --rm -it -p 8080:8080 --user=root \
   -v /tmp:/tmp kestra/kestra:latest server local
 ```
 
+If you're on Windows and use PowerShell:
+```powershell
+docker run --pull=always --rm -it -p 8080:8080 --user=root `
+    -v "/var/run/docker.sock:/var/run/docker.sock" `
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use Command Prompt (CMD):
+```cmd
+docker run --pull=always --rm -it -p 8080:8080 --user=root ^
+    -v "/var/run/docker.sock:/var/run/docker.sock" ^
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use WSL (Linux-based environment in Windows):
+```bash
+docker run --pull=always --rm -it -p 8080:8080 --user=root \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
 
 Access the Kestra UI at [http://localhost:8080](http://localhost:8080) and start building your first flow!
@@ -178,7 +199,7 @@ Stay connected and get support:
 We welcome contributions of all kinds!
 
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contribute) for beginner-friendly tasks to tackle first.
+- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 - **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
 

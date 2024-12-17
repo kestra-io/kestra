@@ -1,6 +1,37 @@
+<template>
+    <el-card shadow="never" v-loading="isLoading">
+        <VueFlow
+            :default-marker-color="cssVariable('--bs-cyan')"
+            :fit-view-on-init="true"
+            :nodes-connectable="false"
+            :nodes-draggable="false"
+            :elevate-nodes-on-select="false"
+        >
+            <Background />
+            <template #node-flow="props">
+                <DependenciesNode
+                    v-bind="props"
+                    @expand-dependencies="expand"
+                    @mouseover="onMouseOver"
+                    @mouseleave="onMouseLeave"
+                    @open-link="openFlow"
+                />
+            </template>
+
+            <Controls :show-interactive="false">
+                <ControlButton>
+                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
+                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
+                    </el-tooltip>
+                </ControlButton>
+            </Controls>
+        </VueFlow>
+    </el-card>
+</template>
+
 <script setup>
     import {ref, onMounted, inject, nextTick, getCurrentInstance} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background";
@@ -19,7 +50,7 @@
     const route = useRoute();
     const store = useStore();
     const axios = inject("axios")
-    const router = getCurrentInstance().appContext.config.globalProperties.$router;
+    const router = useRouter();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
     const loaded = ref([]);
@@ -132,6 +163,7 @@
         }
 
         for (const edge of dependencies.value.edges) {
+            // TODO: https://github.com/kestra-io/kestra/issues/5350
             addEdges([{
                 id: edge.source + "|" + edge.target,
                 source: edge.source,
@@ -172,37 +204,6 @@
         });
     }
 </script>
-
-<template>
-    <el-card shadow="never" v-loading="isLoading">
-        <VueFlow
-            :default-marker-color="cssVariable('--bs-cyan')"
-            :fit-view-on-init="true"
-            :nodes-connectable="false"
-            :nodes-draggable="false"
-            :elevate-nodes-on-select="false"
-        >
-            <Background />
-            <template #node-flow="props">
-                <DependenciesNode
-                    v-bind="props"
-                    @expand-dependencies="expand"
-                    @mouseover="onMouseOver"
-                    @mouseleave="onMouseLeave"
-                    @open-link="openFlow"
-                />
-            </template>
-
-            <Controls :show-interactive="false">
-                <ControlButton>
-                    <el-tooltip :content="$t('expand dependencies')" :persistent="false" transition="" :hide-after="0" effect="light">
-                        <el-button :icon="ArrowExpandAll" size="small" @click="expandAll" />
-                    </el-tooltip>
-                </ControlButton>
-            </Controls>
-        </VueFlow>
-    </el-card>
-</template>
 
 <style lang="scss" scoped>
     .el-card {

@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="h-100 p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
@@ -11,7 +11,7 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="props.flow">
+        <div class="pt-4" v-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -137,16 +137,19 @@
                 />
             </div>
         </div>
-        <el-empty v-else :description="$t('no_data')" />
+
+        <NoData v-else />
     </div>
 </template>
 
 <script setup>
-    import {onBeforeMount, watch, ref} from "vue";
+    import {onBeforeMount, ref, watch} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
     import moment from "moment";
+
+    import NoData from "../../../../layout/NoData.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 
@@ -185,7 +188,7 @@
                     results: response.results?.map(
                         ({abstractTrigger, triggerContext, ...rest}) => {
                             const disabled =
-                                abstractTrigger.disabled || triggerContext.disabled;
+                                abstractTrigger?.disabled ?? triggerContext.disabled;
                             const tooltip = !!abstractTrigger.disabled;
 
                             return {

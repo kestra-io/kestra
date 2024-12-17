@@ -234,3 +234,11 @@
         flex-direction: column;
     }
 </style>
+
+<style lang="scss">
+    .el-tabs__nav-next, .el-tabs__nav-prev{
+        &.is-disabled{
+            display: none;
+        }
+    }
+</style>

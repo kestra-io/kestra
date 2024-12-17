@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
@@ -49,6 +50,7 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     @With
+    @JsonInclude(JsonInclude.Include.ALWAYS) // always include outputs so it's easier to reason about in expressions
     Map<String, Object> outputs;
 
     @NotNull
@@ -56,9 +58,6 @@ public class TaskRun implements TenantInterface {
 
     @With
     Integer iteration;
-
-    @With
-    ExecutionError error;
 
     @With
     Boolean dynamic;
@@ -82,7 +81,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(state),
             this.iteration,
-            this.error,
             this.dynamic
         );
     }
@@ -101,7 +99,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             newState,
             this.iteration,
-            this.error,
             this.dynamic
         );
     }
@@ -124,7 +121,6 @@ public class TaskRun implements TenantInterface {
             this.outputs,
             this.state.withState(State.Type.FAILED),
             this.iteration,
-            this.error,
             this.dynamic
         );
     }

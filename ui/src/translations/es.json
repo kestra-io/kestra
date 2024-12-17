@@ -192,7 +192,7 @@
     "resumed done": "La ejecución se ha reanudado",
     "toggle output": "Alternar salidas",
     "metrics": "Métricas",
-    "no data current task": "No hay datos disponibles para la tarea actual",
+    "no data current task": "No hay datos disponibles para el task actual.",
     "outputs": "Salidas",
     "output": "Salida",
     "eval": {
@@ -360,7 +360,7 @@
     },
     "cancel": "Cancelar",
     "homeDashboard": {
-      "title": "Tablero",
+      "title": "Tablero de control",
       "today": "Hoy",
       "yesterday": "Ayer",
       "last28Days": "Últimos 28 días",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Errores de ejecuciones por namespace",
       "failedExecutions": "Ejecuciones FAILED",
       "errorLogs": "Logs de errores",
-      "no executions": "¿Listo para ver tu flow en acción?"
+      "no executions": "¿Listo para ver tu flow en acción?",
+      "wel_text": "¡Bienvenido!",
+      "start": "Vamos a poner en marcha tu primer flujo de trabajo.",
+      "guide": "¿Necesitas orientación para ejecutar tu primer flow?",
+      "welcome": "Bienvenido a Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> ejecución(es) reproducidas",
     "executions resumed": "<code>{executionCount}</code> ejecución(es) reanudadas",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Recomendamos encarecidamente que canceles esta acción y detengas cualquier ejecución en curso primero. Eliminar ejecuciones no terminadas puede llevar a problemas de concurrencia, inconsistencias en la gestión de dependencias de flow y procesos zombie en tu instancia, lo que puede degradar el rendimiento del sistema. Asegúrate de comprender completamente estos riesgos antes de proceder con la eliminación.",
     "originalCreatedDate": "Fecha de creación original",
     "welcome": {
-      "started": {
-        "title": "Comienza en 3 sencillos pasos"
+      "tutorial": {
+        "title": "Tutorial",
+        "text": "* [Tutoriales en Video](https://kestra.io/tutorial-videos/all)\n* [Documentación](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Realiza un recorrido por el producto"
+      "tour": {
+        "title": "Realiza un recorrido por el producto",
+        "text": "Elige tu caso de uso y sigue una guía paso a paso para aprender las características y capacidades de Kestra. ❤️"
       },
-      "doc": {
-        "title": "Documentación"
-      },
-      "need-help": {
+      "help": {
+        "text": "Haz cualquier pregunta en nuestra comunidad de Slack. Si estás atascado, estamos aquí para ayudarte. ✋",
         "title": "¿Necesitas ayuda?"
       }
     },
@@ -672,7 +676,8 @@
             "default_namespace": "Namespace Predeterminado",
             "log_level": "Nivel de Log Predeterminado",
             "log_display": "Visualización de Log Predeterminada",
-            "execute_flow": "Ejecutar el Flow"
+            "execute_flow": "Ejecutar el Flow",
+            "execute_default_tab": "Pestaña de Ejecución Predeterminada"
           }
         },
         "theme": {
@@ -808,11 +813,17 @@
       "empty": {
         "title": "No hay pestañas abiertas actualmente",
         "message": "Puedes crear o importar archivos de namespace desde la barra lateral y puedes ver el video de introducción para nuestro Editor."
+      },
+      "close": {
+        "other": "Cerrar otras pestañas",
+        "tab": "Cerrar pestaña",
+        "right": "Cerrar a la derecha",
+        "all": "Cerrar todas las pestañas"
       }
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Ten en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
+      "note": "Tenga en cuenta que para el tipo de input SECRET y FILE, el comando debe adaptarse para coincidir con los valores reales."
     },
     "logs_view": {
       "raw": "Vista temporal",
@@ -843,7 +854,7 @@
     "webhook link copied": "Enlace de Webhook copiado.",
     "copy url": "Copiar URL",
     "scheduleDate": "Fecha de programación",
-    "trigger_check_warning": "Advertencia: El uso de variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia '??' para resolver el problema. Por ejemplo, en lugar de 'trigger.date', usa 'trigger.date ?? execution.startDate'.",
+    "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "per_namespace": "(per namespace)",
       "id": "ID",
@@ -889,7 +900,7 @@
     "invalid bulk pause": "No se pudo pausar las ejecuciones",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
-    "no_data": "No hay datos disponibles",
+    "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "informative notice": "Nota(s)",
     "triggers-view": {
       "desc_no_triggers": "Lee más sobre <a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a> en nuestra documentación.",
@@ -900,7 +911,6 @@
       "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación."
     },
     "create_flow": "Crear Flow",
-    "starred": "Estrellado",
     "invalid bulk unqueue": "No se pudieron desencolar ejecuciones",
     "unqueue done": "La ejecución está descolada",
     "bulk unqueue": "¿Está seguro de que desea descolar <code>{executionCount}</code> ejecución(es)?",
@@ -912,40 +922,115 @@
     "execution-warn-title": "¡Advertencia Importante!",
     "worker group key": "Clave del grupo de Worker",
     "worker group fallback": "Grupo de Worker de respaldo",
+    "force run title": "Forzar la ejecución de <code>{id}</code>.",
+    "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
+    "force run done": "La ejecución es forzada a RUNNING",
+    "force run confirm": "¿Está seguro de forzar la ejecución <code>{id}</code>?<br/><br/>ADVERTENCIA: forzar la ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se descolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
+    "force run": "Forzar ejecución",
+    "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
+    "bulk force run": "¿Está seguro de que desea forzar la ejecución de <code>{executionCount}</code> ejecución(es)?<br/><br/>ADVERTENCIA: forzar la ejecución de una ejecución no está garantizado y puede crear ejecuciones de tareas duplicadas.<br/><br/>Las siguientes transiciones se realizarán:<br/><ul><li>Las tareas en estado CREATED se moverán al estado RUNNING.</li><li>Las tareas en estado RUNNING se volverán a enviar.</li><li>Las tareas en estado QUEUED se des-encolarán.</li><li>Las tareas en estado PAUSED se reanudarán.</li></ul>",
+    "force run tooltip": "Forzar la ejecución para que se ejecute. Puede crear ejecuciones de task duplicadas; si es posible, use otra acción.",
+    "item": "elemento",
+    "items": "elementos",
+    "warning": "Advertencia",
+    "cron": "Cron",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
+    "documentationMenu": "Menú de documentación",
+    "task run id": "ID de TaskRun",
+    "optional": "Opcional",
+    "active": "Activo",
+    "contextBar": {
+      "news": "Noticias",
+      "issue": "Abrir un Issue",
+      "docs": "Documentos",
+      "demo": "Obtener una demostración",
+      "help": "Ayuda"
+    },
+    "execution failed header": "¡Ejecución FAILED!",
+    "execution failed message": "Con el último error: <code>{message}</code>",
+    "flow not imported": "Algunos flow no pudieron ser importados",
+    "flows imported": "Flujos importados",
+    "is required": "{field} es obligatorio",
+    "bookmark": "Marcadores",
+    "dashboards": "Tableros de control",
+    "dashboard_label": "Tablero de control",
+    "default_dashboard": "Tablero Predeterminado",
+    "custom_dashboard": "Tableros Personalizados",
+    "create_custom_dashboard": "Crear nuevo dashboard",
+    "edit_custom_dashboard": "Editar Panel de Control",
+    "custom_dashboard_empty": "No hay resultados para mostrar.",
+    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Comenzar ⚡",
+        "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo."
+      },
+      "workflow_components": {
+        "text": "Conozca los principales componentes de orquestación de un flujo de trabajo de Kestra.",
+        "title": "Componentes del Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Comienza con nuestros tutoriales en video.",
+        "title": "Tutoriales en Video"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Haz clic en el botón Ejecutar para iniciar la ejecución de tu primer flujo de trabajo.",
+      "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
+      "guidance_sub_desc": "Sigue la documentación para toda la información que necesitas.",
+      "title": "Comienza a automatizar con"
+    },
     "filters": {
+      "options": {
+        "child": "Niño",
+        "metric": "Métrica",
+        "labels": "Etiquetas",
+        "details": "Detalles",
+        "absolute_date": "Fecha absoluta",
+        "scope": "Ámbito",
+        "trigger_state": "Estado",
+        "state": "Estado",
+        "action": "Acción",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text again?",
+        "relative_date": "Fecha relativa",
+        "level": "Nivel de log",
+        "aggregation": "Agregación",
+        "permission": "Permiso",
+        "namespace": "Namespace",
+        "user": "Usuario",
+        "task": "Tarea",
+        "flow": "Flujo",
+        "type": "Tipo"
+      },
+      "settings": {
+        "label": "Configuración de la página",
+        "show_chart": "Mostrar gráfico principal"
+      },
       "comparators": {
         "contains": "contiene",
         "is": "es",
-        "is_one_of": "es uno de",
-        "not_contains": "no_contiene",
+        "is_not": "no es",
+        "in": "en",
+        "starts_with": "comienza con",
+        "not_contains": "no contiene",
         "is_not_one_off": "no es uno de",
-        "is_not": "no es"
-      },
-      "recent": {
-        "label": "Búsquedas recientes",
-        "empty": "Todavía no has buscado nada."
-      },
-      "labels": {
-        "placeholder": "Escriba label como 'key:value'"
+        "is_one_of": "es uno de",
+        "between": "entre"
       },
       "save": {
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos.",
         "dialog": {
-          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?",
           "heading": "Guardar búsqueda actual",
           "confirmation": "Criterios de búsqueda <code>{name}</code>",
-          "placeholder": "Etiqueta"
+          "placeholder": "Etiqueta",
+          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?"
         },
-        "label": "Búsquedas guardadas"
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Ámbito",
-        "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
-        "labels": "Etiquetas",
-        "state": "Estado",
-        "child": "Niño"
+        "empty": "Todavía no has guardado ninguna búsqueda."
       },
       "empty": "Sin datos.",
+      "format": "Escriba el parámetro como 'key:value'",
       "label": "Elegir filtros"
     }
   }

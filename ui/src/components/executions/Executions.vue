@@ -41,8 +41,11 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child']"
-                    :refresh="{shown: true, canAutoRefresh, callback: refresh}"
+                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :buttons="{
+                        refresh: {shown: true, callback: refresh},
+                        settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                    }"
                 />
             </template>
 
@@ -57,7 +60,6 @@
                     ref="selectTable"
                     :data="executions"
                     :default-sort="{prop: 'state.startDate', order: 'descending'}"
-                    stripe
                     table-layout="auto"
                     fixed
                     @row-dblclick="row => onRowDoubleClick(executionParams(row))"
@@ -73,37 +75,48 @@
                             @update:select-all="toggleAllSelection"
                             @unselect="toggleAllUnselected"
                         >
+                            <!-- Always visible buttons -->
+                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                                {{ $t("change state") }}
+                            </el-button>
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
                             </el-button>
                             <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
                                 {{ $t("replay") }}
                             </el-button>
-                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                {{ $t("change state") }}
-                            </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                                 {{ $t("kill") }}
                             </el-button>
-                            <el-button v-if="canDelete" :icon="Delete" type="default" @click="deleteExecutions()">
+                            <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                                 {{ $t("delete") }}
                             </el-button>
-                            <el-button
-                                v-if="canUpdate"
-                                :icon="LabelMultiple"
-                                @click="isOpenLabelsModal = !isOpenLabelsModal"
-                            >
-                                {{ $t("Set labels") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                {{ $t("resume") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
-                                {{ $t("pause") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
-                                {{ $t("unqueue") }}
-                            </el-button>
+
+                            <!-- Dropdown with additional actions -->
+                            <el-dropdown>
+                                <el-button>
+                                    <DotsVertical />
+                                </el-button>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                                            {{ $t("Set labels") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                            {{ $t("resume") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                            {{ $t("pause") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                            {{ $t("unqueue") }}
+                                        </el-dropdown-item>
+                                        <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                            {{ $t("force run") }}
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
                         </bulk-select>
                         <el-dialog
                             v-if="isOpenLabelsModal"
@@ -282,7 +295,7 @@
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
                                 <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}"
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
@@ -341,6 +354,7 @@
     import SelectTable from "../layout/SelectTable.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
@@ -349,8 +363,9 @@
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import KestraFilter from "../filter/Wrapper.vue"
+    import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import RunFast from "vue-material-design-icons/RunFast.vue";
 </script>
 
 <script>
@@ -376,6 +391,7 @@
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
     import {h, ref} from "vue";
     import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import DateAgo from "../layout/DateAgo.vue";
 
     import {filterLabels} from "./utils"
 
@@ -391,7 +407,8 @@
             TriggerFlow,
             TopNavBar,
             LabelInput,
-            ExecutionsBar
+            ExecutionsBar,
+            DateAgo
         },
         emits: ["state-count"],
         props: {
@@ -501,12 +518,11 @@
                 ],
                 displayColumns: [],
                 childFilter: "ALL",
-                canAutoRefresh: false,
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
                 actionOptions: {},
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 changeStatusDialogVisible: false,
                 selectedStatus: undefined
             };
@@ -541,8 +557,7 @@
                 return undefined;
             },
             startDate() {
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -693,7 +708,7 @@
                     });
             },
             loadData(callback) {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 if (this.showStatChart()) {
                     this.loadStats();
                 }
@@ -704,9 +719,6 @@
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
-            },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -768,6 +780,14 @@
                     "execution/queryUnqueueExecution",
                     "execution/bulkUnqueueExecution",
                     "executions unqueue"
+                );
+            },
+            forceRunExecutions() {
+                this.genericConfirmAction(
+                    "bulk force run",
+                    "execution/queryForceRunExecution",
+                    "execution/bulkForceRunExecution",
+                    "executions force run"
                 );
             },
             restartExecutions() {

@@ -166,8 +166,8 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                 for (Map.Entry<String, Object> e : this.formData.entrySet()) {
                     String key = runContext.render(e.getKey());
 
-                    if (e.getValue() instanceof String) {
-                        String render = runContext.render((String) e.getValue());
+                    if (e.getValue() instanceof String stringValue) {
+                        String render = runContext.render(stringValue);
 
                         if (render.startsWith("kestra://")) {
                             File tempFile = runContext.workingDir().createTempFile().toFile();
@@ -180,9 +180,9 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                         } else {
                             builder.addPart(key, render);
                         }
-                    } else if (e.getValue() instanceof Map && ((Map<String, String>) e.getValue()).containsKey("name") && ((Map<String, String>) e.getValue()).containsKey("content")) {
-                        String name = runContext.render(((Map<String, String>) e.getValue()).get("name"));
-                        String content = runContext.render(((Map<String, String>) e.getValue()).get("content"));
+                    } else if (e.getValue() instanceof Map mapValue && ((Map<String, String>) mapValue).containsKey("name") && ((Map<String, String>) mapValue).containsKey("content")) {
+                        String name = runContext.render(((Map<String, String>) mapValue).get("name"));
+                        String content = runContext.render(((Map<String, String>) mapValue).get("content"));
 
                         File tempFile = runContext.workingDir().createTempFile().toFile();
                         File renamedFile = new File(Files.move(tempFile.toPath(), tempFile.toPath().resolveSibling(name)).toUri());

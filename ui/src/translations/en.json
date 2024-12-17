@@ -1011,6 +1011,7 @@
         "task": "Task",
         "metric": "Metric",
         "user": "User",
+        "type": "Type",
         "permission": "Permission",
         "action": "Action",
         "details": "Details",

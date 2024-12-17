@@ -242,7 +242,7 @@
 .el-input-file {
 
     .el-input__inner::file-selector-button {
-        background: var(--bs-primary);
+        background: var(--backgrounds-background-button-primary);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--el-border-radius-base);
@@ -416,7 +416,7 @@ form.ks-horizontal {
 .el-tabs {
     .el-tabs__active-bar {
         height: 4px;
-        background-color: var(--bs-primary);
+        background-color: var(--backgrounds-background-button-primary);
     }
 
     .el-tabs__item {
@@ -434,7 +434,7 @@ form.ks-horizontal {
         }
 
         &.is-active > * {
-            color: var(--bs-primary);
+            background-color: var(--content-content-link);
             font-weight: bold;
         }
 
@@ -996,7 +996,7 @@ form.ks-horizontal {
     }
 
     .el-dialog__headerbtn .el-dialog__close {
-        color: var(--bs-primary);
+        background-color: var(--content-content-link);
 
         html.dark & {
             color: var(--bs-white)

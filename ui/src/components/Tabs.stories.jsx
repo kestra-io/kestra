@@ -27,7 +27,7 @@ const tabs = [
 /**
  * @type {import('@storybook/vue3').StoryObj<typeof ShowCase>}
  */
-export const ElementPlusPlayground = {
+export const Default = {
     render: () => ({
         setup(){
             // mock app router

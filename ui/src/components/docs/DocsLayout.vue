@@ -211,7 +211,7 @@
             border-radius: var(--bs-border-radius-lg);
 
             .card-body {
-                color: var(--bs-card-color);
+                color: var(--content-content-primary);
                 flex: 1 1 auto;
                 padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
                 gap: 1rem;

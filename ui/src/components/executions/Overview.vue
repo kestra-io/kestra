@@ -408,7 +408,7 @@
 }
 
 .el-alert.main-error {
-    background-color: var(--background-color-failed) !important;
+    background-color: var(--executions-failed-background-failed) !important;
     padding: 0.5rem;
 
     .el-button{
@@ -421,7 +421,7 @@
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--content-color-failed) !important;
+        color: var(--executions-failed-content-failed) !important;
         font-size: var(--font-size-sm);
 
         span {
@@ -429,7 +429,7 @@
         }
 
         code{
-            color: var(--log-content-error) !important;
+            color: var(--logs-error-content-error) !important;
         }
 
         > div {
@@ -437,7 +437,7 @@
         }
 
         .main-icon.material-design-icon  {
-            color: var(--el-color-danger);
+            color: var(--logs-error-content-error);
             font-size: 1.25rem;
             position: relative;
             top: 4px;
@@ -446,7 +446,7 @@
 
         .toggle-icon {
             position: absolute;
-            color: var(--el-color-danger);
+            color: var(--logs-error-content-error);
             right: 1rem;
             width: 1rem;
             height: 1rem;

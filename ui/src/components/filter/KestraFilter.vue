@@ -349,28 +349,19 @@
             return namespaceOptions.value;
 
         case "state":
-            return VALUES.EXECUTION_STATE;
+            return VALUES.EXECUTION_STATES;
 
         case "trigger_state":
-            return VALUES.TRIGGER_STATE;
+            return VALUES.TRIGGER_STATES;
 
         case "scope":
-            return VALUES.SCOPE;
-
-        case "permission":
-            return VALUES.PERMISSIONS;
-
-        case "action":
-            return VALUES.ACTIONS;
+            return VALUES.SCOPES;
 
         case "child":
-            return VALUES.CHILD;
+            return VALUES.CHILDS;
 
         case "level":
-            return VALUES.LEVEL;
-
-        case "relative_date":
-            return VALUES.RELATIVE_DATE;
+            return VALUES.LEVELS;
 
         case "task":
             return props.values?.task || [];
@@ -381,8 +372,20 @@
         case "user":
             return props.values?.user || [];
 
+        case "type":
+            return VALUES.TYPES;
+
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
+
         case "aggregation":
-            return VALUES.AGGREGATION;
+            return VALUES.AGGREGATIONS;
+
+        case "relative_date":
+            return VALUES.RELATIVE_DATE;
 
         case "absolute_date":
             return [];

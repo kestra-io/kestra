@@ -1,6 +1,7 @@
 import {useI18n} from "vue-i18n";
 
 import State from "../../../utils/state.js";
+import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission.js";
 import action from "../../../models/action.js";
 
@@ -33,11 +34,11 @@ export function useValues(label: string) {
     const SCOPE_LABEL = DASHBOARDS.includes(label) ? t("executions") : label;
 
     const VALUES = {
-        EXECUTION_STATE: buildFromArray(
+        EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
         ),
-        TRIGGER_STATE: buildFromArray(["enabled", "disabled"], true),
-        SCOPE: [
+        TRIGGER_STATES: buildFromArray(["enabled", "disabled"], true),
+        SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),
                 value: "USER",
@@ -47,15 +48,20 @@ export function useValues(label: string) {
                 value: "SYSTEM",
             },
         ],
-        CHILD: [
+        CHILDS: [
             {label: t("trigger filter.options.ALL"), value: "ALL"},
             {label: t("trigger filter.options.CHILD"), value: "CHILD"},
             {label: t("trigger filter.options.MAIN"), value: "MAIN"},
         ],
-        LEVEL: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
+        LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
+        TYPES: auditLogTypes,
         PERMISSIONS: bulidFromObject(permission),
-        ACTIONS: bulidFromObject(action),
-        AGGREGATION: buildFromArray(["sum", "avg", "min", "max"]),
+        ACTIONS: bulidFromObject({
+            ...action,
+            LOGIN: "LOGIN",
+            LOGOUT: "LOGOUT",
+        }),
+        AGGREGATIONS: buildFromArray(["sum", "avg", "min", "max"]),
         RELATIVE_DATE: [
             {label: t("datepicker.last5minutes"), value: "PT5M"},
             {label: t("datepicker.last15minutes"), value: "PT15M"},

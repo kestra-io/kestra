@@ -107,6 +107,13 @@ export function useFilters(prefix: string) {
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "details.cls",
+            icon: ICONS.FormatListBulletedType,
+            label: t("filters.options.type"),
+            value: {label: "type", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "permission",
             icon: ICONS.AccountCheck,
             label: t("filters.options.permission"),
@@ -114,7 +121,7 @@ export function useFilters(prefix: string) {
             comparators: [COMPARATORS.IS],
         },
         {
-            key: "action",
+            key: "type",
             icon: ICONS.GestureTapButton,
             label: t("filters.options.action"),
             value: {label: "action", comparator: undefined, value: []},

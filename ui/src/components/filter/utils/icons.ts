@@ -7,6 +7,7 @@ import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
 import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
 import FilterSettingsOutline from "vue-material-design-icons/FilterSettingsOutline.vue";
 import FilterVariantMinus from "vue-material-design-icons/FilterVariantMinus.vue";
+import FormatListBulletedType from "vue-material-design-icons/FormatListBulletedType.vue";
 import GestureTapButton from "vue-material-design-icons/GestureTapButton.vue";
 import History from "vue-material-design-icons/History.vue";
 import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -29,6 +30,7 @@ export {
     DotsSquare,
     FilterSettingsOutline,
     FilterVariantMinus,
+    FormatListBulletedType,
     GestureTapButton,
     History,
     Magnify,

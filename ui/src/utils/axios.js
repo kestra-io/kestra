@@ -1,6 +1,6 @@
 import axios from "axios";
 import NProgress from "nprogress"
-import {storageKeys} from "./constants";
+import {storageKeys} from "./constants.js";
 
 // nprogress
 let requestsTotal = 0

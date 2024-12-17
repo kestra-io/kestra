@@ -227,7 +227,7 @@
 
         &::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
-            background: var(--backgrounds-background-button-primary);
+            background: var(--bs-primary);
         }
     }
 

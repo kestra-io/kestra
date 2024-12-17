@@ -52,7 +52,7 @@
 
         .image-box{
             border: 1px solid var(--bs-border-color);
-            background-color: var(--backgrounds-background-card);
+            background-color: var(--bs-card-bg);
             padding: 9px;
             border-radius: 7px;
             box-shadow:

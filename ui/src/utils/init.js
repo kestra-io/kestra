@@ -117,11 +117,7 @@ export default (app, routes, stores, translations) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
     })
 
-    // avoid loading router in storybook
-    // as it conflicts with storybook's
-    if(routes.length){
-        app.use(router)
-    }
+    app.use(router)
 
     // Google Analytics
     if (window.KESTRA_GOOGLE_ANALYTICS !== null) {

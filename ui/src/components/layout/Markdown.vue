@@ -64,7 +64,7 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            color: var(--content-content-primary);
+            color: var(--bs-body-color);
         }
 
         table,
@@ -169,7 +169,7 @@
         p > code{
             border-radius: var(--bs-border-radius-sm);
             border: 1px solid var(--bs-border-color);
-            color: var(--content-content-primary);
+            color: var(--bs-body-color);
         }
 
         h3, h4, h5 {
@@ -180,7 +180,7 @@
                 font-weight: 400;
                 border-radius: var(--bs-border-radius-sm);
                 border: 1px solid var(--bs-border-color);
-                color: var(--content-content-primary);
+                color: var(--bs-body-color);
 
                 html.dark & {
                     background: var(--bs-gray-100);

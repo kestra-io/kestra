@@ -191,7 +191,7 @@ $system: #5BB8FF;
         background: transparent;
 
         &:hover {
-            background: var(--backgrounds-background-body);
+            background: var(--bs-body-bg);
             color: $active;
         }
         .el-tree-node__expand-icon {

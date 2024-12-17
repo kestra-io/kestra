@@ -37,13 +37,13 @@
                     </el-option>
                 </el-select>
 
-                <el-alert v-if="selectedStatus" class="alert-status-change" type="info" show-icon>
+                <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
                         <li v-for="(text, i) in $t('change status hint')[selectedStatus]" :key="i">
                             {{ text }}
                         </li>
                     </ul>
-                </el-alert>
+                </div>
             </template>
 
             <template #footer>
@@ -191,10 +191,9 @@
 
 <style lang="scss">
     .alert-status-change {
-        margin-top: 1rem;
         ul {
             margin-bottom: 0;
-            padding-left: .5rem;
+            padding-left: 10px;
         }
     }
 </style>

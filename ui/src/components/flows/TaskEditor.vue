@@ -29,7 +29,7 @@
     import YamlUtils from "../../utils/yamlUtils";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {mapGetters} from "vuex";
-    import {SECTIONS} from "../../utils/constants";
+    import {SECTIONS} from "../../utils/constants.js";
 
     export default {
         computed: {

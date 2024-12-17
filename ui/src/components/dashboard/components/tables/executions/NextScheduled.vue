@@ -223,8 +223,8 @@ code {
 }
 
 .nextscheduled {
-    --el-table-tr-bg-color: var(--backgrounds-background-body) !important;
-    background: var(--backgrounds-background-body);
+    --el-table-tr-bg-color: var(--bs-body-bg) !important;
+    background: var(--bs-body-bg);
     & a {
         color: #8e71f7;
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="ks-monaco-editor" />
+    <div class="monaco-editor" />
 </template>
 
 <script>
@@ -714,7 +714,7 @@
 </script>
 
 <style scoped lang="scss">
-    .ks-monaco-editor {
+    .monaco-editor {
         position: absolute;
         width: 100%;
         height: 100%;
@@ -729,7 +729,7 @@
 <style lang="scss">
     @import "../../styles/layout/root-dark.scss";
 
-    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
+    .custom-dark-vs-theme .monaco-editor .sticky-widget {
         background-color: $input-bg;
     }
 </style>

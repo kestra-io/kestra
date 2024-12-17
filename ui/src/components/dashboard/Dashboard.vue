@@ -660,7 +660,7 @@ $spacing: 20px;
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--backgrounds-background-button-primary);
+        background: var(--bs-primary);
         border-radius: 0px;
     }
 }

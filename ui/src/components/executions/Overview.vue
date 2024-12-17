@@ -341,7 +341,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--backgrounds-background-button-primary);
+            background: var(--bs-primary);
             border-radius: 0px;
         }
     }
@@ -416,7 +416,7 @@
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--content-content-primary);
+        color: var(--bs-body-color);
         font-size: var(--font-size-sm);
 
         span {
@@ -448,7 +448,7 @@
     }
 
     .el-alert__description {
-        color: var(--content-content-primary);
+        color: var(--bs-body-color);
     }
 
     .el-alert__content {

@@ -89,7 +89,7 @@
             }
 
             a {
-                color: var(--content-content-primary);
+                color: var(--bs-body-color);
 
                 &.router-link-exact-active {
                     font-weight: 700;

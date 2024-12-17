@@ -74,6 +74,6 @@
     }
 
     button.el-button--primary {
-        background-color: var(--content-content-link);
+        color: var(--bs-primary);
     }
 </style>

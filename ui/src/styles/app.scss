@@ -14,9 +14,6 @@
 @use "layout/root-dark";
 @use "layout/html-tag" as *;
 
-@use "layout/theme-light";
-@use "layout/theme-dark";
-
 // components
 @use "layout/charts";
 @use "components/vue-material-design-icon";
@@ -172,24 +169,4 @@ html.full-screen {
         }
 
     }
-}
-
-// setup non color CSS variables
-:root{
-    --el-box-shadow: $box-shadow;
-    --el-box-shadow-light: $box-shadow-sm;
-    --el-box-shadow-lighter: $box-shadow-sm;
-    --el-box-shadow-dark: $box-shadow-lg;
-
-    --el-transition-duration: 0.2s;
-    --el-transition-duration-fast: 0.2s;
-    --top-navbar-height: 79px;
-    #{--menu-width}: global-var.$menu-width;
-    #{--menu-collapsed-width}: 65px;
-    #{--spacer}: global-var.$spacer;
-
-    #{--font-size-xs}: global-var.$font-size-xs;
-    #{--font-size-sm}: global-var.$font-size-sm;
-    #{--font-size-base}: global-var.$font-size-base;
-    #{--font-size-lg}: global-var.$font-size-lg;
 }

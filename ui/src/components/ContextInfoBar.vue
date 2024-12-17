@@ -172,7 +172,7 @@
         top: 0;
         left: 0;
         z-index: 1040;
-        background-color: var(--backgrounds-background-button-primary);
+        background-color: var(--bs-primary);
         opacity: 0;
         transition: opacity .1s;
         border: none;

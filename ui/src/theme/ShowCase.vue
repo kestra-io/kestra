@@ -188,11 +188,13 @@
                 />
             </el-select>
         </div>
+
+        <Tabs :tabs="tabs" :embed-active-tab="activeTab" @changed="tabChanged" />
     </center>
 </template>
 
 <script lang="ts" setup>
-    import {ref} from "vue"
+    import {getCurrentInstance, ref} from "vue"
     import {ElMessage} from "element-plus"
     import Search from "vue-material-design-icons/SearchWeb.vue"
     import Edit from "vue-material-design-icons/Pencil.vue"
@@ -200,6 +202,16 @@
     import Message from "vue-material-design-icons/Message.vue"
     import Star from "vue-material-design-icons/Star.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    // @ts-expect-error Tabs is not yet TS
+    import Tabs from "../components/Tabs.vue"
+
+    const app = getCurrentInstance()?.appContext.config.globalProperties as any
+
+    if(app){
+        console.log("init")
+        app.$router = {}
+        app.$route = {params: {tab: "first"}}
+    }
 
     const input = ref("")
     const curDate = ref(new Date())
@@ -258,4 +270,34 @@
             label: "Option5",
         },
     ]
+
+    const tabs = [
+        {
+            title: "Tab 1",
+            name: "first",
+        },
+        {
+            title: "Tab 2",
+            name: "second",
+        },
+        {
+            title: "Tab 3",
+            name: "third",
+        },
+    ]
+
+    const activeTab = ref(tabs[0].name)
+
+    function tabChanged(tab: {name:string}) {
+        activeTab.value = tab.name
+    }
 </script>
+
+<style scoped>
+.demo-tabs > :deep( .el-tabs__content) {
+  padding: 32px;
+  color: #6b778c;
+  font-size: 32px;
+  font-weight: 600;
+}
+</style>

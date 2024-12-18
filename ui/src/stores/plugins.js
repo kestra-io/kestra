@@ -35,6 +35,7 @@ export default {
 
             const cachedPluginDoc = state.pluginsDocumentation[options.cls];
             if (!options.all && cachedPluginDoc) {
+                commit("setPlugin", cachedPluginDoc);
                 return Promise.resolve(cachedPluginDoc);
             }
 

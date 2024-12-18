@@ -48,7 +48,9 @@ public class NamespaceFileController {
     @Inject
     private FlowService flowService;
 
-    private static final String DELIMITER_SLASH = "/";
+    private final List<Pattern> forbiddenPathPatterns = List.of(
+        Pattern.compile("/" + FLOWS_FOLDER + "(/.*)?$")
+    );
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -181,13 +183,9 @@ public class NamespaceFileController {
 
     private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws IOException {
         String filePath = path.getPath();
-        if (filePath.startsWith(DELIMITER_SLASH)) {
-            filePath = filePath.substring(1);
-        }
-        String[] filePaths = filePath.split(DELIMITER_SLASH);
-        if (filePaths.length != 0 && filePaths[0].equals(FLOWS_FOLDER)) {
-            if(filePaths.length != 2) {
-                throw new IllegalArgumentException("Invalid flow file path: " + filePath +". To import a flow, the file path should follow this template: /" + FLOWS_FOLDER + "/{flowId}.yml");
+        if(filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
+            if(filePath.split("/").length != 3) {
+                throw new IllegalArgumentException("Invalid flow file path: " + filePath);
             }
 
             String flowSource = new String(inputStream.readAllBytes());
@@ -195,6 +193,7 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return;
         }
+        forbiddenPathsGuard(path);
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
@@ -259,11 +258,9 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {
         URI encodedPath = null;
-        if (!path.startsWith("/")) {
-            path = "/" + path;
+        if (path != null) {
+            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
         }
-        encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
-
         ensureWritableNamespaceFile(encodedPath);
 
         String pathWithoutScheme = encodedPath.getPath();
@@ -298,15 +295,8 @@ public class NamespaceFileController {
         if (path == null) {
             return;
         }
-        String filePath = path.getPath();
-        if (filePath.startsWith(DELIMITER_SLASH)) {
-            filePath = filePath.substring(1);
-        }
-        String[] splitPath = filePath.split(DELIMITER_SLASH);
-        if(splitPath.length == 0) {
-            return;
-        }
-        if (splitPath[0].equals(FLOWS_FOLDER)) {
+
+        if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
             throw new IllegalArgumentException("Forbidden path: " + path.getPath());
         }
     }

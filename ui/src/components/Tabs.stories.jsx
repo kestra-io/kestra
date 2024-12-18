@@ -1,6 +1,5 @@
 import { ref, getCurrentInstance } from "vue";
 import Tabs from "./Tabs.vue";
-import { setup } from "@storybook/vue3";
 
 const meta = {
     title: "components/Tabs",
@@ -34,7 +33,9 @@ export const Default = {
             const app = getCurrentInstance()?.appContext.config.globalProperties
             if(app){
                 app.$router = {}
-                app.$route = {params: {tab: "first"}}
+                app.$route = {
+                    params: {tab: "first"}
+                }
             }
 
             const activeTab = ref(tabs[0].name)

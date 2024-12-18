@@ -1,12 +1,12 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCountStatistics;
 import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.models.stats.SummaryStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -22,7 +22,8 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
-class StatsControllerTest extends JdbcH2ControllerTest {
+@KestraTest
+class StatsControllerTest {
 
     @Inject
     @Client("/")

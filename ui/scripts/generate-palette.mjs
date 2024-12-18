@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
-import paletteLight from "./palette-light.json" with {type: "json"}
-import paletteDark from "./palette-dark.json" with {type: "json"}
+import paletteLight from "./Sytem color-Default_LIGHT.json" with {type: "json"}
+import paletteDark from "./Sytem color-Default_DARK.json" with {type: "json"}
 
 
 function normalizeKey(key) {
@@ -13,21 +13,28 @@ makePalettes(paletteLight, "light", ":root")
 makePalettes(paletteDark, "dark", "html.dark")
 
 function makePalettes(palette, paletteName, selector) {
-    const baseColorNames = Object.keys(palette["Base Color Palette"])
+    const baseColorNames = Object.keys(palette["base-color-palette"])
     const colorIndex = {}
 
     const scss = baseColorNames.map(colorName => {
-        const colorTheme = palette["Base Color Palette"][colorName]
+        const colorTheme = palette["base-color-palette"][colorName]
         return Object.entries(colorTheme).map(([key, value]) => {
             colorIndex[value] = normalizeKey(key)
             return `$base-${normalizeKey(key)}: ${value};`
-        }).join("\n")
+        })
+        // sort the colors by length then by name
+        .sort((color1, color2) => {
+            const [color1Name] = color1.split(":")
+            const [color2Name] = color2.split(":")
+            return color1Name.length === color2Name.length ? color1Name.localeCompare(color2Name) : color1Name.length - color2Name.length
+        })
+        .join("\n")
     }).join("\n")
 
     // write the scss file containing colors in the base palette
     fs.writeFileSync(path.resolve(__dirname, "../src/styles/color-palette.scss"), scss, {encoding: "utf-8"})
 
-    const tokens = palette["Tokens"]
+    const tokens = palette["ks"]
 
     const cssVariableNames = {}
 
@@ -41,12 +48,10 @@ function makePalettes(palette, paletteName, selector) {
                 return getVariableScss(value, prefix, level + 1)
             }
 
-            if(tokenName){
-                const tokenRoot = tokenName.split("-")[1]
-                const cssVariableNamesTheme = cssVariableNames[tokenRoot] || []
-                cssVariableNamesTheme.push(prefix)
-                cssVariableNames[tokenRoot] = cssVariableNamesTheme
-            }
+            const tokenRoot = prefix.split("-")[1]
+            const cssVariableNamesTheme = cssVariableNames[tokenRoot] || []
+            cssVariableNamesTheme.push(prefix)
+            cssVariableNames[tokenRoot] = cssVariableNamesTheme
 
             const colorVar = colorIndex[value] ? `$base-${colorIndex[value]}` : value
             return `\t#{--${prefix}}: ${colorVar};`

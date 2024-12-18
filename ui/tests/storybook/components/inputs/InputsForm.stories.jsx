@@ -5,7 +5,7 @@ import {
     expect,
     waitFor
 } from "@storybook/test";
-import InputsForm from "./InputsForm.vue";
+import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 
 const meta = {
     title: "inputs/InputsForm",

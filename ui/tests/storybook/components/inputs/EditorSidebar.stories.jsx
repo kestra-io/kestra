@@ -1,5 +1,5 @@
 import {useStore} from "vuex";
-import EditorSidebar from "./EditorSidebar.vue";
+import EditorSidebar from "../../../../src/components/inputs/EditorSidebar.vue";
 
 const meta = {
     title: "inputs/EditorSidebar",

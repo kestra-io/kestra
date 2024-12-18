@@ -1,4 +1,4 @@
-import Kicon from './Kicon.vue';
+import Kicon from "../../../src/components/Kicon.vue";
 import LockOff from "vue-material-design-icons/LockOff.vue";
 
 const meta = {

@@ -15,7 +15,7 @@
             placement="bottom"
             :show-arrow="false"
             fit-input-width
-            popper-class="filters-select"
+            :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
@@ -132,7 +132,7 @@
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
-    import {CurrentItem} from "./utils/types";
+    import {Shown, Buttons, CurrentItem} from "./utils/types";
 
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
@@ -161,7 +161,7 @@
         include: {type: Array, default: () => []},
         values: {type: Object, default: undefined},
         buttons: {
-            type: Object,
+            type: Object as () => Buttons,
             default: () => ({
                 refresh: {shown: false, callback: () => {}},
                 settings: {
@@ -171,10 +171,11 @@
             }),
         },
         dashboards: {
-            type: Object,
+            type: Object as () => Shown,
             default: () => ({shown: false}),
         },
         placeholder: {type: String, default: undefined},
+        searchCallback: {type: Function, default: undefined},
     });
 
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
@@ -222,11 +223,17 @@
         }
     };
 
+    const getInputValue = () => select.value?.states.inputValue;
     const handleInputChange = (key) => {
+        if (props.searchCallback) {
+            props.searchCallback(getInputValue());
+            return;
+        }
+
         if (key === "Enter") return;
 
         if (current.value.at(-1)?.label === "user") {
-            emits("input", select.value.states.inputValue);
+            emits("input", getInputValue());
         }
     };
 
@@ -466,7 +473,8 @@
     import {encodeParams, decodeParams} from "./utils/helpers.js";
 
     const triggerSearch = () => {
-        router.push({query: encodeParams(current.value, OPTIONS)});
+        if (props.searchCallback) return;
+        else router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter

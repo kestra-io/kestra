@@ -1,33 +1,29 @@
 <template>
-    <metrics-table ref="table" :task-run-id="taskRunId" :show-task="true" :execution="execution">
+    <metrics-table
+        ref="table"
+        :task-run-id="$route.query.metric?.[0] ?? undefined"
+        :show-task="true"
+        :execution="execution"
+    >
         <template #navbar>
-            <el-form-item>
-                <el-select
-                    filterable
-                    clearable
-                    :persistent="false"
-                    :model-value="taskRunId"
-                    @update:model-value="onFilter"
-                    :placeholder="$t('display metric for specific task') + '...'"
-                >
-                    <el-option
-                        v-for="item in selectOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                    />
-                </el-select>
-            </el-form-item>
+            <KestraFilter
+                :include="['metric']"
+                :placeholder="`${$t('display metric for specific task')}...`"
+                :values="{metric: selectOptions}"
+            />
         </template>
     </metrics-table>
 </template>
 <script>
     import {mapState} from "vuex";
+
     import MetricsTable from "../executions/MetricsTable.vue";
+    import KestraFilter from "../filter/KestraFilter.vue";
 
     export default {
         components: {
-            MetricsTable
+            MetricsTable,
+            KestraFilter,
         },
         emits: ["follow"],
         mounted() {
@@ -38,13 +34,7 @@
         data() {
             return {
                 isModalOpen: false,
-                taskRunId: undefined
             };
-        },
-        methods: {
-            onFilter(value) {
-                this.taskRunId = value;
-            }
         },
         computed: {
             ...mapState("execution", ["execution"]),
@@ -52,9 +42,11 @@
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {
                     options[taskRun.id] = {
-                        label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""),
-                        value: taskRun.id
-                    }
+                        label:
+                            taskRun.taskId +
+                            (taskRun.value ? ` - ${taskRun.value}` : ""),
+                        value: taskRun.id,
+                    };
                 }
 
                 return Object.values(options);

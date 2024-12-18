@@ -1,3 +1,19 @@
+export type Shown = {
+    shown: boolean;
+};
+
+export type Buttons = {
+    refresh: Shown & {
+        callback: () => void;
+    };
+    settings: Shown & {
+        charts: Shown & {
+            value: boolean;
+            callback: () => void;
+        };
+    };
+};
+
 export type CurrentItem = {
     label: string;
     value: string[];

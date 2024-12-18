@@ -1047,6 +1047,7 @@
         "label": "Page settings",
         "show_chart": "Show main chart"
       }
-    }
+    },
+    "custom value": "Custom value"
   }
 }

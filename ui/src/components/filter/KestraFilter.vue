@@ -132,6 +132,8 @@
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
+    import {CurrentItem} from "./utils/types";
+
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
     import Label from "./components/Label.vue";
@@ -406,12 +408,6 @@
         }
     });
 
-    type CurrentItem = {
-        label: string;
-        value: string[];
-        comparator?: Record<string, any>;
-        persistent?: boolean;
-    };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];

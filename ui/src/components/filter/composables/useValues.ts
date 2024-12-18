@@ -1,26 +1,23 @@
 import {useI18n} from "vue-i18n";
 
+import {Value} from "../utils/types";
+
 import State from "../../../utils/state.js";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission.js";
 import action from "../../../models/action.js";
 
-interface Option {
-    label: string;
-    value: string;
-}
-
 const capitalize = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-const buildFromArray = (values: string[], isCapitalized = false): Option[] =>
+const buildFromArray = (values: string[], isCapitalized = false): Value[] =>
     values.map((value) => ({
         label: isCapitalized ? capitalize(value) : value,
         value,
     }));
 
-const bulidFromObject = (object: object): Option[] =>
+const bulidFromObject = (object: object): Value[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,

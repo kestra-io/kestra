@@ -1,8 +1,16 @@
 package io.kestra.webserver.controllers.api;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static io.micronaut.http.HttpRequest.GET;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -15,26 +23,28 @@ import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.InputsTest;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -43,14 +53,6 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.junitpioneer.jupiter.RetryingTest;
-import reactor.core.publisher.Flux;
-
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -59,19 +61,25 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junitpioneer.jupiter.RetryingTest;
+import reactor.core.publisher.Flux;
 
-import static io.kestra.core.utils.Rethrow.throwRunnable;
-import static io.micronaut.http.HttpRequest.GET;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
-
-@KestraTest
+@KestraTest(startRunner = true)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExecutionControllerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
@@ -105,16 +113,10 @@ class ExecutionControllerTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private JdbcTestUtils jdbcTestUtils;
-
-    @Inject
-    protected LocalFlowRepositoryLoader repositoryLoader;
-
-    @Inject
     protected RunnerUtils runnerUtils;
 
     @Inject
-    protected StandAloneRunner runner;
+    private JdbcTestUtils jdbcTestUtils;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
@@ -137,18 +139,10 @@ class ExecutionControllerTest {
             - values""")
         .build();
 
-    @SneakyThrows
-    @BeforeEach
-    protected void setup() {
+    @AfterEach
+    public void cleanUp() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-
-        TestsUtils.loads(repositoryLoader);
-
-        if (!runner.isRunning()) {
-            runner.setSchedulerEnabled(false);
-            runner.run();
-        }
     }
 
     @Test
@@ -202,6 +196,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void trigger() {
         Execution result = triggerInputsFlowExecution(false);
 
@@ -229,6 +224,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs-small-files.yaml"})
     void triggerInputSmall() {
         File applicationFile = new File(Objects.requireNonNull(
             ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
@@ -245,6 +241,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void invalidInputs() {
         MultipartBody.Builder builder = MultipartBody.builder()
             .addPart("validatedString", "B-failed");
@@ -262,6 +259,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void triggerAndWait() {
         Execution result = triggerInputsFlowExecution(true);
 
@@ -270,6 +268,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void get() {
         Execution result = triggerInputsFlowExecution(false);
 
@@ -286,6 +285,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/minimal-bis.yaml"})
     void findByFlowId() {
         String namespace = "io.kestra.tests.minimal.bis";
         String flowId = "minimal-bis";
@@ -310,6 +310,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void triggerAndFollow() {
         Execution result = triggerInputsFlowExecution(false);
 
@@ -336,9 +337,8 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void eval() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential-nested");
-
+    @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
+    void eval(Execution execution) {
         ExecutionController.EvalResult result = this.eval(execution, "my simple string", 0);
         assertThat(result.getResult(), is("my simple string"));
 
@@ -355,7 +355,9 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void evalKeepEncryptedValues() throws TimeoutException, QueueException, JsonProcessingException {
+    @LoadFlows({"flows/valids/encrypted-string.yaml",
+        "flows/valids/inputs.yaml"})
+    void evalKeepEncryptedValues() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
 
         ExecutionController.EvalResult result = this.eval(execution, "{{outputs.hello.value}}", 0);
@@ -375,6 +377,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart_with_inputs.yaml"})
     void restartFromUnknownTaskId() throws TimeoutException, QueueException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "unknownTaskId";
@@ -394,6 +397,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart_with_inputs.yaml"})
     void restartWithNoFailure() throws TimeoutException, QueueException{
         final String flowId = "restart_with_inputs";
 
@@ -412,6 +416,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart_with_inputs.yaml"})
     void restartFromTaskId() throws Exception {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "instant";
@@ -462,6 +467,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart-each.yaml"})
     void restartFromTaskIdWithSequential() throws Exception {
         final String flowId = "restart-each";
         final String referenceTaskId = "2_end";
@@ -495,6 +501,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart_last_failed.yaml"})
     void restartFromLastFailed() throws TimeoutException, QueueException{
         final String flowId = "restart_last_failed";
 
@@ -557,6 +564,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/restart_pause_last_failed.yaml"})
     void restartFromLastFailedWithPause() throws TimeoutException, QueueException{
         final String flowId = "restart_pause_last_failed";
 
@@ -623,6 +631,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void downloadFile() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(execution.getTaskRunList(), hasSize(14));
@@ -660,6 +669,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void filePreview() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(null, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
         assertThat(defaultExecution.getTaskRunList(), hasSize(14));
@@ -710,6 +720,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/webhook.yaml"})
     void webhook() {
         Flow webhook = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, "webhook").orElseThrow();
         String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
@@ -836,6 +847,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/webhook-dynamic-key.yaml"})
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
             GET(
@@ -850,6 +862,7 @@ class ExecutionControllerTest {
 
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
+    @LoadFlows({"flows/valids/webhook-secret-key.yaml"})
     void webhookDynamicKeyFromASecret() {
         Execution execution = client.toBlocking().retrieve(
             GET(
@@ -863,6 +876,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/webhook-with-condition.yaml"})
     void webhookWithCondition() {
         record Hello(String hello) {}
 
@@ -891,7 +905,8 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void resumePaused() throws TimeoutException, InterruptedException, QueueException {
+    @LoadFlows("flows/valids/pause.yaml")
+    void resumePaused() throws InterruptedException, QueueException, TimeoutException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         assertThat(pausedExecution.getState().isPaused(), is(true));
@@ -911,6 +926,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
     void resumePausedWithInputs() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause_on_resume");
@@ -945,6 +961,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause.yaml"})
     void resumeByIds() throws TimeoutException, InterruptedException, QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
@@ -987,6 +1004,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause.yaml"})
     void resumeByQuery() throws TimeoutException, InterruptedException, QueueException {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
@@ -1025,6 +1043,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void changeStatus() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -1041,6 +1060,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     @SuppressWarnings("unchecked")
     void changeStatusByIds() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1072,6 +1092,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     @SuppressWarnings("unchecked")
     void changeStatusByQuery() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1100,6 +1121,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void replayByIds() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1129,6 +1151,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void replayByQuery() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1155,6 +1178,7 @@ class ExecutionControllerTest {
     }
 
     @RetryingTest(5)
+    @LoadFlows({"flows/valids/pause.yaml"})
     void killPaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
@@ -1174,6 +1198,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void find() {
         PagedResults<?> executions = client.toBlocking().retrieve(
             GET("/api/v1/executions/search"), PagedResults.class
@@ -1229,6 +1254,7 @@ class ExecutionControllerTest {
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
     @RetryingTest(5)
+    @LoadFlows({"flows/valids/sleep.yml"})
     void kill() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
@@ -1290,6 +1316,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void delete() throws QueueException, TimeoutException {
         Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
@@ -1301,6 +1328,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void deleteByIds() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1314,10 +1342,11 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void deleteByQuery() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
-        Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
-        Execution result3 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.DELETE("/api/v1/executions/by-query?namespace=" + result1.getNamespace()),
@@ -1327,6 +1356,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void setLabels() throws QueueException, TimeoutException {
         // update label on a terminated execution
         Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1352,6 +1382,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void setLabelsByIds() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1368,6 +1399,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void setLabelsByQuery() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution result2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1411,6 +1443,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
+    @LoadFlows({"flows/valids/full.yaml"})
     void getFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/executions/flows/io.kestra.tests/full"),
@@ -1424,6 +1457,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
+    @LoadFlows({"flows/valids/webhook.yaml"})
     void getFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -1444,28 +1478,6 @@ class ExecutionControllerTest {
         assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution), is(true));
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    void getDistinctNamespaceExecutables() {
-        List<String> result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/namespaces"),
-            Argument.of(List.class, String.class)
-        );
-
-        assertThat(result.size(), greaterThanOrEqualTo(5));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    void getFlowFromNamespace() {
-        List<FlowForExecution> result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
-            Argument.of(List.class, FlowForExecution.class)
-        );
-
-        assertThat(result.size(), greaterThan(100));
-    }
-
     @Test
     void badDate() {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
@@ -1475,6 +1487,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void commaInSingleLabelsValue() {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
@@ -1518,6 +1531,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void commaInOneOfMultiLabels() {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
@@ -1536,6 +1550,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void scheduleDate() {
         // given
         ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
@@ -1552,6 +1567,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void shouldValidateInputsForCreateGivenSimpleInputs() {
         // given
         String namespace = "io.kestra.tests";
@@ -1577,7 +1593,8 @@ class ExecutionControllerTest {
     }
 
     @Test
-   void shouldHaveAnUrlWhenCreated() {
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
         // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
         Map<?, ?> executionResult = client.toBlocking().retrieve(
@@ -1592,6 +1609,8 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml",
+        "flows/valids/minimal.yaml"})
     void shouldPauseARunningFlow() throws QueueException, TimeoutException {
         Execution result = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
 
@@ -1613,6 +1632,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml"})
     void shouldPauseByIdsRunningFlows() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
         Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
@@ -1626,10 +1646,11 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml"})
     void shouldPauseByQueryRunningFlows() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
@@ -1639,6 +1660,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
@@ -1651,6 +1673,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void shouldRefuseSystemLabelsWhenUpdatingLabels() throws QueueException, TimeoutException {
         // update label on a terminated execution
         Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
@@ -1666,6 +1689,8 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue.yml",
+        "flows/valids/minimal.yaml"})
     void shouldUnqueueAQueuedFlow() throws QueueException, TimeoutException {
         // run a first flow so the second is queued
         runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
@@ -1685,6 +1710,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
     void shouldUnqueueByIdsQueuedFlows() throws TimeoutException, QueueException {
         // run a first flow so the others are queued
         runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
@@ -1700,6 +1726,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
     void shouldForceRunAQueuedFlow() throws QueueException, TimeoutException {
         // run a first flow so the second is queued
         runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue");
@@ -1713,6 +1740,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void shouldFailToForceRunNotFoundOrTerminatedExecutions() throws QueueException, TimeoutException {
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/force-run", null)));
         assertThat(notFound.getStatus(), is(HttpStatus.NOT_FOUND));
@@ -1725,6 +1753,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void shouldForceRunACreatedFlow() throws QueueException, TimeoutException {
         Execution result = runUntilCreated("io.kestra.tests", "minimal");
 
@@ -1736,6 +1765,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause.yaml"})
     void shouldForceRunAPausedFlow() throws QueueException, TimeoutException {
         // Run execution until it is paused
         Execution result = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
@@ -1748,6 +1778,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml"})
     void shouldForceRunARunningFlow() throws QueueException, TimeoutException {
         // Run execution until it is paused
         Execution result = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
@@ -1760,6 +1791,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml"})
     void shouldForRunByIdsFlows() throws TimeoutException, QueueException {
         Execution result1 =  runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
         Execution result2 =  runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
@@ -1773,6 +1805,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/sleep.yml"})
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
         runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
         runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");

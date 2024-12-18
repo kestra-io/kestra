@@ -255,6 +255,8 @@
                     return;
                 }
                 emit("on-edit", YamlUtils.deleteTask(props.source, event.id, section), true)
+            },
+            () => {
             }
         )
     }

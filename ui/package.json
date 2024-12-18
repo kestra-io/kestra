@@ -105,7 +105,7 @@
     "sass": "^1.82.0",
     "storybook": "^8.4.6",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0",
+    "typescript-eslint": "^8.18.1",
     "vite": "^6.0.3",
     "vitest": "^2.1.8"
   },

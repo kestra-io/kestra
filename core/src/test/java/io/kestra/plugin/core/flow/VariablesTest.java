@@ -35,6 +35,7 @@ class VariablesTest {
     @Inject
     private RunnerUtils runnerUtils;
 
+    @Test
     @ExecuteFlow("flows/valids/variables.yaml")
     @EnabledIfEnvironmentVariable(named = "KESTRA_TEST1", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "KESTRA_TEST2", matches = ".*")
@@ -65,6 +66,7 @@ class VariablesTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/failed-first.yaml")
     void failedFirst(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(1));

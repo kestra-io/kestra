@@ -36,6 +36,7 @@ public class TaskWithAllowFailureTest {
     @Inject
     private RunnerUtils runnerUtils;
 
+    @Test
     @ExecuteFlow("flows/valids/task-allow-failure-runnable.yml")
     void runnableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
@@ -63,6 +64,7 @@ public class TaskWithAllowFailureTest {
         assertThat(execution.getTaskRunList(), hasSize(4));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/task-allow-failure-flowable.yml")
     void flowableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));

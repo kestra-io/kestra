@@ -42,6 +42,7 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     @ExecuteFlow("flows/valids/encrypted-string.yaml")
     void encryptedStringOutput(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

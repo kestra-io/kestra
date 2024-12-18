@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import jakarta.inject.Inject;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
 public class OutputValuesTest {
@@ -19,6 +20,7 @@ public class OutputValuesTest {
     FlowRepositoryInterface flowRepository;
 
     @SuppressWarnings("unchecked")
+    @Test
     @ExecuteFlow("flows/valids/output-values.yml")
     void output(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

@@ -37,6 +37,7 @@ public class TaskWithAllowWarningTest {
     @Inject
     private RunnerUtils runnerUtils;
 
+    @Test
     @ExecuteFlow("flows/valids/task-allow-warning-runnable.yml")
     void runnableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -64,6 +65,7 @@ public class TaskWithAllowWarningTest {
         assertThat(execution.getTaskRunList(), hasSize(4));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/task-allow-warning-flowable.yml")
     void flowableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

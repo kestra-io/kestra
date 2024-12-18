@@ -180,6 +180,7 @@ class FlowGraphTest {
         assertThat(flowGraph.getClusters().size(), is(7));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/parallel.yaml")
     void parallelWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/parallel.yaml");
@@ -199,6 +200,7 @@ class FlowGraphTest {
         assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun(), is(notNullValue()));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-sequential.yaml")
     void eachWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/each-sequential.yaml");

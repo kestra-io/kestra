@@ -7,10 +7,12 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
 public class BadExecutableTest {
 
+    @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
         assertThat(execution.getTaskRunList().size(), is(1));

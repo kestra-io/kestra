@@ -37,12 +37,14 @@ public class EachSequentialTest {
     @Inject
     private RunnerUtils runnerUtils;
 
+    @Test
     @ExecuteFlow("flows/valids/each-sequential.yaml")
     void sequential(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(11));
         assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-object.yaml")
     void object(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(8));
@@ -50,6 +52,7 @@ public class EachSequentialTest {
         assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-object-in-list.yaml")
     void objectInList(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(8));
@@ -57,6 +60,7 @@ public class EachSequentialTest {
         assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
     void sequentialNested(Execution execution) throws InternalException {
         assertThat(execution.getTaskRunList(), hasSize(23));
@@ -76,6 +80,7 @@ public class EachSequentialTest {
         assertThat((String) evalL2.getOutputs().get("value"), containsString((String) evalL2Lookup.getOutputs().get("value")));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-empty.yaml")
     void eachEmpty(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
@@ -101,6 +106,7 @@ public class EachSequentialTest {
         assertThat(matchingLog, notNullValue());
     }
 
+    @Test
     @ExecuteFlow("flows/valids/each-switch.yaml")
     void eachSwitch(Execution execution) throws InternalException {
         assertThat(execution.getTaskRunList(), hasSize(12));

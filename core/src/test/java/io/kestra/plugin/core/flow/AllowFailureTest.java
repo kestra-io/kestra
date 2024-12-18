@@ -25,6 +25,7 @@ class AllowFailureTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
+    @Test
     @ExecuteFlow("flows/valids/allow-failure.yaml")
     void success(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(9));

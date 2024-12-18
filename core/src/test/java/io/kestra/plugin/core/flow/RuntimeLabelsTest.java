@@ -64,6 +64,7 @@ class RuntimeLabelsTest {
     }
 
 
+    @Test
     @ExecuteFlow("flows/valids/npe-labels-update-task.yml")
     void noNpeOnNullPreviousExecutionLabels(Execution execution) {
         assertThat(execution.getTaskRunList().size(), is(1));

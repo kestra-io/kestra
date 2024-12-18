@@ -8,10 +8,12 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
 public class CurrentEachOutputFunctionTest {
     @SuppressWarnings("unchecked")
+    @Test
     @ExecuteFlow("flows/valids/current-output.yaml")
     void parallel(Execution execution) {
         var output1 = (Map<String, Object>) execution.outputs().get("1-1-1_return");

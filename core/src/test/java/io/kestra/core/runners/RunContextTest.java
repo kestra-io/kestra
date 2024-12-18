@@ -163,6 +163,7 @@ class RunContextTest {
         assertThat(logEntries.getFirst().getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/return.yaml")
     void variables(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(3));
@@ -237,6 +238,7 @@ class RunContextTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     @ExecuteFlow("flows/valids/encrypted-string.yaml")
     void encryptedStringOutput(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

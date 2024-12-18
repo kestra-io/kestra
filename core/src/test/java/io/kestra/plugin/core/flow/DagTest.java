@@ -27,6 +27,7 @@ public class DagTest {
     @Inject
     ModelValidator modelValidator;
 
+    @Test
     @ExecuteFlow("flows/valids/dag.yaml")
     void dag(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

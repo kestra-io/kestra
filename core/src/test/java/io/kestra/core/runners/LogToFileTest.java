@@ -13,6 +13,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -22,6 +23,7 @@ public class LogToFileTest {
     @Inject
     private StorageInterface storage;
 
+    @Test
     @ExecuteFlow("flows/valids/log-to-file.yaml")
     void task(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList(), hasSize(1));

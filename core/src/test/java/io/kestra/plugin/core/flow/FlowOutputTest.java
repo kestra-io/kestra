@@ -11,10 +11,12 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
 class FlowOutputTest {
 
+    @Test
     @ExecuteFlow("flows/valids/flow-with-outputs.yml")
     void shouldGetSuccessExecutionForFlowWithOutputs(Execution execution) {
         assertThat(execution.getOutputs(), aMapWithSize(1));
@@ -23,6 +25,7 @@ class FlowOutputTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     @ExecuteFlow("flows/valids/flow-with-array-outputs.yml")
     void shouldGetSuccessExecutionForFlowWithArrayOutputs(Execution execution) {
         assertThat(execution.getOutputs(), aMapWithSize(1));
@@ -30,6 +33,7 @@ class FlowOutputTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
+    @Test
     @ExecuteFlow("flows/valids/flow-with-outputs-failed.yml")
     void shouldGetFailExecutionForFlowWithInvalidOutputs(Execution execution) {
         assertThat(execution.getOutputs(), nullValue());

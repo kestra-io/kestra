@@ -90,7 +90,7 @@
     "@vue/eslint-config-prettier": "^10.1.0",
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
-    "eslint": "^9.16.0",
+    "eslint": "^9.17.0",
     "eslint-plugin-storybook": "^0.11.1",
     "eslint-plugin-vue": "^9.32.0",
     "ghooks": "^2.0.4",

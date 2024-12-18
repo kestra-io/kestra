@@ -1,7 +1,7 @@
 import JsYaml from "js-yaml";
 import yaml, {Document, YAMLMap, isSeq, isMap, Pair, Scalar, YAMLSeq, LineCounter, isPair} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
-import {SECTIONS} from "./constants";
+import {SECTIONS} from "./constants.js";
 
 const TOSTRING_OPTIONS = {lineWidth: 0};
 

@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -92,7 +91,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-        TestsUtils.loads(repositoryLoader);
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
     }

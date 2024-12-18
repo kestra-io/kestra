@@ -1,33 +1,30 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.queues.QueueException;
-import org.junit.jupiter.api.Test;
-import io.kestra.core.models.executions.Execution;
-
-import java.util.concurrent.TimeoutException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
-public class DisabledTest extends AbstractMemoryRunnerTest {
-    @Test
-    void simple() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "disable-simple");
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import org.junit.jupiter.api.Test;
 
+@KestraTest(startRunner = true)
+public class DisabledTest {
+    @Test
+    @ExecuteFlow("flows/valids/disable-simple.yaml")
+    void simple(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
     }
 
     @Test
-    void error() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "disable-error");
-
+    @ExecuteFlow("flows/valids/disable-error.yaml")
+    void error(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
     @Test
-    void flowable() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "disable-flowable");
-
+    @ExecuteFlow("flows/valids/disable-flowable.yaml")
+    void flowable(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(10));
     }
 }

@@ -1,10 +1,12 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import org.junit.jupiter.api.RepeatedTest;
+import io.kestra.core.runners.RunnerUtils;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -14,8 +16,14 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-class IfTest  extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+class IfTest {
+
+    @Inject
+    private RunnerUtils runnerUtils;
+
     @Test
+    @LoadFlows({"flows/valids/if.yaml"})
     void multipleIf() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
             (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
@@ -25,6 +33,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/if-condition.yaml"})
     void ifTruthy() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
@@ -49,6 +58,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/if-condition.yaml"})
     void ifFalsy() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
@@ -82,6 +92,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/if-without-else.yaml"})
     void ifWithoutElse() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-without-else", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
@@ -98,6 +109,7 @@ class IfTest  extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/if-in-flowable.yaml"})
     void ifInFlowable() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if-in-flowable", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));

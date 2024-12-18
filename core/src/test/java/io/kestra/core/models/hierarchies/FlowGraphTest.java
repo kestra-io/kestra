@@ -2,6 +2,9 @@ package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -10,7 +13,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.plugin.core.flow.Switch;
@@ -32,7 +34,8 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-class FlowGraphTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+class FlowGraphTest {
     @Inject
     private YamlParser yamlParser = new YamlParser();
 
@@ -178,9 +181,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void parallelWithExecution() throws TimeoutException, IllegalVariableEvaluationException, QueueException, IOException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "parallel");
-
+    @ExecuteFlow("flows/valids/parallel.yaml")
+    void parallelWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
 
@@ -199,9 +201,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachWithExecution() throws TimeoutException, IllegalVariableEvaluationException, QueueException, IOException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-sequential");
-
+    @ExecuteFlow("flows/valids/each-sequential.yaml")
+    void eachWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/each-sequential.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
 
@@ -243,6 +244,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/task-flow.yaml",
+        "flows/valids/switch.yaml"})
     void subflow() throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
@@ -273,6 +276,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/task-flow-dynamic.yaml",
+        "flows/valids/switch.yaml"})
     void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException {
         FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
 

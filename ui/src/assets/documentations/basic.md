@@ -4,6 +4,8 @@ Use the shortcut `CTRL + SPACE` on Windows/Linux or `fn + control + SPACE` on Ma
 
 If you want to **comment out** some part of your code, use the `CTRL or ⌘ + K + C` shortcut, and to uncomment it, use `CTRL or ⌘ + K + U`. To remember it, `C` stands for `comment` and `U` stands for `uncomment`.
 
+If you want to fold all nested properties, use `CTRL or ⌘ + K` and then `CTRL or ⌘ + 0` (note that it's zero, not `O`). To unfold again, use `CTRL or ⌘ + K` and then `CTRL or ⌘ + J`.
+
 ### Flow properties
 
 Kestra allows you to automate complex flows using a simple declarative interface.

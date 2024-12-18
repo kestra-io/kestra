@@ -322,7 +322,6 @@
             },
             onTheme(value) {
                 this.pendingSettings.theme = value;
-                Utils.switchTheme(value);            
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {

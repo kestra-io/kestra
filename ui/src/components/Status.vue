@@ -32,9 +32,9 @@
         computed: {
             style() {
                 return {
-                    color: `var(--content-color-${this.status.toLowerCase()}) !important`,
-                    "border-color": `var(--border-color-${this.status.toLowerCase()}) !important`,
-                    "background-color": `var(--background-color-${this.status.toLowerCase()}) !important`
+                    color: `var(--executions-${this.status.toLowerCase()}-content-${this.status.toLowerCase()}) !important`,
+                    borderColor: `var(--executions-${this.status.toLowerCase()}-border-${this.status.toLowerCase()}) !important`,
+                    backgroundColor: `var(--executions-${this.status.toLowerCase()}-background-${this.status.toLowerCase()}) !important`
                 }
             },
             icon() {
@@ -44,7 +44,7 @@
     };
 </script>
 <style scoped lang="scss">
-    .el-button {
+    .status {
         white-space: nowrap;
         border-radius: var(--el-border-radius-base);
         width: 7rem;

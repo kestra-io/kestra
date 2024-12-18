@@ -39,7 +39,7 @@
     strong {
         border: 1px solid v-bind('color');
         border-radius: var(--bs-border-radius);
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
         padding: 0.125rem 0.25rem;
         font-size: var(--font-size-sm);
         white-space: nowrap;

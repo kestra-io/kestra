@@ -338,7 +338,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--backgrounds-background-button-primary);
         }
     }
 

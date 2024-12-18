@@ -317,7 +317,7 @@
     import TaskEditor from "../flows/TaskEditor.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import Editor from "./Editor.vue";
-    import {SECTIONS} from "../../utils/constants.js";
+    import {SECTIONS} from "../../utils/constants";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {editorViewTypes} from "../../utils/constants";
     import Utils from "@kestra-io/ui-libs/src/utils/Utils";
@@ -1272,7 +1272,7 @@
 
     .main-editor {
         padding: calc(var(--spacer) / 2) 0px;
-        background: var(--bs-body-bg);
+        background: var(--backgrounds-background-body);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;
@@ -1322,7 +1322,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--backgrounds-background-button-primary);
             border-radius: 20px;
         }
     }

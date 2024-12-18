@@ -330,8 +330,8 @@
             onSubmit() {
                 this.$emit("confirm");
             },
-            onMultiSelectChange(input, e) {
-                this.inputsValues[input.id] = JSON.stringify(e);
+            onMultiSelectChange(input, val) {
+                this.inputsValues[input.id] = JSON.stringify(val);
                 this.onChange(input);
             },
             onFileChange(input, e) {
@@ -476,7 +476,7 @@
             &:hover {
                 color: var(--bs-secondary);
                 border-color: var(--el-color-primary);
-                background-color: var(--bs-card-bg);
+                background-color: var(--backgrounds-background-card);
             }
 
             &:first-child {

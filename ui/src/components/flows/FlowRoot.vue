@@ -349,6 +349,6 @@
     color: var(--bs-secondary-color);
 }
 .body-color {
-    color: var(--bs-body-color);
+    color: var(--content-content-primary);
 }
 </style>

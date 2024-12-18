@@ -174,7 +174,7 @@
 
     .disabled-means-selected {
         li.is-disabled {
-            color: var(--bs-primary);
+            background-color: var(--content-content-link);
         }
     }
 </style>

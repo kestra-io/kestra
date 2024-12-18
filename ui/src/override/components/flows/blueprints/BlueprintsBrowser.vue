@@ -85,7 +85,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="medium" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -374,7 +374,7 @@
             border-radius: 0;
             border: 0;
             border-bottom: 1px solid var(--el-border-color-darker);
-            
+
             html.dark &.blueprint-card{
                 border-bottom: solid var(--el-border-color-darker);
             }
@@ -403,7 +403,7 @@
                     .tags {
                         margin: 10px 0;
                         display: flex;
-                        
+
 
                         .el-tag.el-tag--info {
                             background-color: #FEFEFE;

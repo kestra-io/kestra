@@ -135,7 +135,7 @@
             },
             iconColor() {
                 const logLevel = this.log.level?.toLowerCase();
-                return `var(--log-content-${logLevel}) !important`; // Use CSS variable for icon color
+                return `var(--log-${logLevel}-content-${logLevel}) !important`; // Use CSS variable for icon color
             },
             message() {
                 let logMessage = !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
@@ -179,7 +179,7 @@
         .icon_container{
             margin-left: -0.90rem;
         }
-        
+
         .log-level {
             padding: calc(var(--spacer) / 4);
         }

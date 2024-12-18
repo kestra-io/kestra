@@ -59,8 +59,9 @@ import java.util.stream.Collectors;
     examples = {
         @Example(
             title = "Run a subflow with custom inputs.",
+            full = true,
             code = """
-                id: running_subflow
+                id: parent_flow
                 namespace: company.team
 
                 tasks:
@@ -69,8 +70,8 @@ import java.util.stream.Collectors;
                     namespace: company.team
                     flowId: subflow
                     inputs:
-                      user: "Rick Astley"
-                      favorite_song: "Never Gonna Give You Up"
+                      user: Rick Astley
+                      favorite_song: Never Gonna Give You Up
                     wait: true
                     transmitFailed: true
                 """

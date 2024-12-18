@@ -1,13 +1,13 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -23,7 +23,6 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -368,9 +367,8 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
-    void deleteExecution() throws TimeoutException, QueueException, IOException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+    @ExecuteFlow("flows/valids/logs.yaml")
+    void deleteExecution(Execution execution) throws IOException {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         executionService.delete(execution, true, true, true);
@@ -380,9 +378,8 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/logs.yaml"})
-    void deleteExecutionKeepLogs() throws TimeoutException, QueueException, IOException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+    @ExecuteFlow("flows/valids/logs.yaml")
+    void deleteExecutionKeepLogs(Execution execution) throws IOException {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         executionService.delete(execution, false, false, false);

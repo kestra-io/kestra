@@ -1,6 +1,7 @@
 @import "../color-palette.scss";
 
 html.dark{
+	/* ks */
 	#{--ks-background-body}: $base-gray-800;
 	#{--ks-background-card}: $base-gray-500;
 	#{--ks-content-primary}: $base-white;

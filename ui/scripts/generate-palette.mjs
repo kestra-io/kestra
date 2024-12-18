@@ -39,7 +39,7 @@ function makePalettes(palette, paletteName, selector) {
     const cssVariableNames = {}
 
     function getVariableScss(tokenTheme, tokenName, level = 0) {
-        const header = level === 1 ? `\t/* ${tokenName} */\n` : ""
+        // TODO: need to bring back the sections headers
         const content = Object.entries(tokenTheme).map(([key, value]) => {
             const normalizedKey = normalizeKey(key)
             const prefix = tokenName ? `${tokenName}-${normalizedKey}` : normalizedKey
@@ -55,10 +55,9 @@ function makePalettes(palette, paletteName, selector) {
 
             const colorVar = colorIndex[value] ? `$base-${colorIndex[value]}` : value
             return `\t#{--${prefix}}: ${colorVar};`
+        }).sort()
 
-        }).join("\n")
-
-        return `${header}${content}\n`
+        return `${content.join("\n")}\n`
     }
 
     const tokenScss = `\t${getVariableScss(tokens, "ks").trim()}`

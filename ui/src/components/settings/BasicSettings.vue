@@ -403,6 +403,10 @@
                     case "autofoldTextEditor":
                         localStorage.setItem(key, this.pendingSettings[key])
                         break
+                    case "theme":
+                        Utils.switchTheme(this.pendingSettings[key]);
+                        localStorage.setItem(key, Utils.getTheme())
+                        break
                     default:
                         if (storedKey) {
                             if(this.pendingSettings[key])

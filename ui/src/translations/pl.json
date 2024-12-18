@@ -1032,6 +1032,7 @@
       "empty": "Brak danych.",
       "format": "Wpisz parametr jako 'key:value'",
       "label": "Wybierz filtry"
-    }
+    },
+    "custom value": "Wartość niestandardowa"
   }
 }

@@ -1032,6 +1032,7 @@
       "empty": "Aucune donnée.",
       "format": "Tapez le paramètre comme 'key:value'",
       "label": "Choisir des filtres"
-    }
+    },
+    "custom value": "Valeur personnalisée"
   }
 }

@@ -1032,6 +1032,7 @@
       "empty": "无数据。",
       "format": "将参数输入为 'key:value'",
       "label": "选择过滤器"
-    }
+    },
+    "custom value": "自定义值"
   }
 }

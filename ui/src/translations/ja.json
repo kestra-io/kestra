@@ -1032,6 +1032,7 @@
       "empty": "データがありません。",
       "format": "「key:value」としてパラメータを入力してください。",
       "label": "フィルターを選択"
-    }
+    },
+    "custom value": "カスタム value"
   }
 }

@@ -938,6 +938,26 @@
     "active-slots": "Active slots",
     "behavior": "Behavior",
     "concurrency": "Concurrency",
+    "no-executions-view": {
+        "title": "Start automating with ",
+        "sub_title": "Click on the Execute button to start your first workflow execution.",
+        "guidance_desc": "Need guidance to execute your flow?",
+        "guidance_sub_desc": "Follow the documentation for all the info you need."
+    },    
+    "execution_guide": {
+      "get_started": {
+        "title": "Get Started ⚡",
+        "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
+      },
+      "workflow_components": {
+        "title": "Workflow Components",
+        "text": "Get to know the main orchestration components of a Kestra workflow."
+      },
+      "videos_tutorials": {
+        "title": "Video Tutorials",
+        "text": "Get started with our video tutorials."
+      }
+    },
     "concurrency-view": {
       "title_no_limit": "No limits are set for this Flow.",
       "desc_no_limit": "Read more about <a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a> in our documentation."
@@ -961,52 +981,6 @@
     "showLess": "Show less",
     "showMore": "Show more",
     "documentationMenu": "Documentation menu",
-    "filters": {
-      "label": "Choose filters",
-      "empty": "No data.",
-      "options": {
-        "namespace": "Namespace",
-        "state": "State",
-        "scope": "Scope",
-        "labels": "Labels",
-        "child": "Child",
-        "level": "Log level",
-        "relative_date": "Relative date",
-        "absolute_date": "Absolute date",
-        "text": "text"
-      },
-      "comparators": {
-        "is": "is",
-        "is_one_of": "is one of",
-        "is_not": "is not",
-        "is_not_one_off": "is not one of",
-        "contains": "contains",
-        "not_contains": "not contains",
-        "in": "in",
-        "between": "between",
-        "starts_with": "starts with"
-      },
-      "recent": {
-        "label": "Recent searches",
-        "empty": "You still haven't searched for anything."
-      },
-      "save": {
-        "label": "Saved searches",
-        "tooltip": "You can't save empty search criteria.",
-        "dialog": {
-          "heading": "Save current search",
-          "placeholder": "Label",
-          "hint": "How do you want to label this search criteria?",
-          "confirmation": "Search criteria <code>{name}</code>"
-        }
-      },
-      "settings": {
-        "show_chart": "Show main chart"
-      },
-      "labels": {
-        "placeholder": "Type label as 'key:value'"
-      }
-    },
     "item": "item",
     "items": "items",
     "cron": "Cron",
@@ -1021,6 +995,58 @@
     "custom_dashboard": "Custom Dashboards",
     "create_custom_dashboard": "Create new dashboard",
     "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_empty": "There are no results to be shown."
+    "custom_dashboard_empty": "There are no results to be shown.",
+    "filters": {
+      "label": "Choose filters",
+      "empty": "No data.",
+      "format": "Type parameter as 'key:value'",
+      "options": {
+        "namespace": "Namespace",
+        "flow": "Flow",
+        "state": "State",
+        "trigger_state": "State",
+        "scope": "Scope",
+        "child": "Child",
+        "level": "Log level",
+        "task": "Task",
+        "metric": "Metric",
+        "user": "User",
+        "type": "Type",
+        "permission": "Permission",
+        "action": "Action",
+        "details": "Details",
+        "aggregation": "Aggregation",
+        "relative_date": "Relative date",
+        "absolute_date": "Absolute date",
+        "labels": "Labels",
+        "text": "text"
+      },
+      "comparators": {
+        "is": "is",
+        "is_one_of": "is one of",
+        "is_not": "is not",
+        "is_not_one_off": "is not one of",
+        "contains": "contains",
+        "not_contains": "not contains",
+        "in": "in",
+        "between": "between",
+        "starts_with": "starts with"
+      },
+      "save": {
+        "label": "Saved searches",
+        "empty": "You still haven't saved any search.",
+        "tooltip": "You can't save empty search criteria.",
+        "dialog": {
+          "heading": "Save current search",
+          "placeholder": "Label",
+          "hint": "How do you want to label this search criteria?",
+          "confirmation": "Search criteria <code>{name}</code>"
+        }
+      },
+      "settings": {
+        "label": "Page settings",
+        "show_chart": "Show main chart"
+      }
+    }
   }
 }

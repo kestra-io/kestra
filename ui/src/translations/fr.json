@@ -922,52 +922,6 @@
     "execution-warn-title": "Avertissement Important !",
     "worker group key": "Clé du groupe de Worker",
     "worker group fallback": "Groupe de Worker de secours",
-    "filters": {
-      "comparators": {
-        "is": "est",
-        "is_one_of": "est l'un des",
-        "is_not_one_off": "n'est pas l'un de",
-        "is_not": "n'est pas",
-        "between": "entre",
-        "in": "dans",
-        "not_contains": "ne contient pas",
-        "starts_with": "commence par",
-        "contains": "contient"
-      },
-      "recent": {
-        "label": "Recherches récentes",
-        "empty": "Vous n'avez pas encore effectué de recherche."
-      },
-      "labels": {
-        "placeholder": "Tapez le label comme 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Comment souhaitez-vous étiqueter ce critère de recherche ?",
-          "heading": "Enregistrer la recherche actuelle",
-          "confirmation": "Critères de recherche <code>{name}</code>",
-          "placeholder": "Étiquette"
-        },
-        "label": "Recherches enregistrées",
-        "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Portée",
-        "text": "I'm sorry, but it seems that the text you want to translate is missing. Could you please provide the text again?",
-        "labels": "Étiquettes",
-        "state": "État",
-        "child": "Enfant",
-        "absolute_date": "Date absolue",
-        "relative_date": "Date relative",
-        "level": "Niveau de log"
-      },
-      "empty": "Aucune donnée.",
-      "label": "Choisir des filtres",
-      "settings": {
-        "show_chart": "Afficher le graphique principal"
-      }
-    },
     "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> exécution(s) forcée(s) en cours d'exécution",
     "force run done": "L'exécution est forcée d'exécuter",
@@ -1006,6 +960,78 @@
     "create_custom_dashboard": "Créer un nouveau tableau de bord",
     "edit_custom_dashboard": "Modifier le tableau de bord",
     "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
-    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?"
+    "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Commencer ⚡",
+        "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows."
+      },
+      "workflow_components": {
+        "text": "Découvrez les principaux composants d'orchestration d'un workflow Kestra.",
+        "title": "Composants du Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Commencez avec nos tutoriels vidéo.",
+        "title": "Tutoriels Vidéo"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
+      "guidance_desc": "Besoin d'aide pour exécuter votre flow ?",
+      "guidance_sub_desc": "Suivez la documentation pour toutes les informations dont vous avez besoin.",
+      "title": "Commencez à automatiser avec"
+    },
+    "filters": {
+      "options": {
+        "child": "Enfant",
+        "metric": "Métrique",
+        "labels": "Étiquettes",
+        "details": "Détails",
+        "absolute_date": "Date absolue",
+        "scope": "Portée",
+        "trigger_state": "État",
+        "state": "État",
+        "action": "Action",
+        "text": "I'm sorry, but it seems like there is no text provided for translation. Could you please provide the text you would like to have translated into French?",
+        "relative_date": "Date relative",
+        "level": "Niveau de log",
+        "aggregation": "Agrégation",
+        "permission": "Permission",
+        "namespace": "Namespace",
+        "user": "Utilisateur",
+        "task": "Tâche",
+        "flow": "Flux",
+        "type": "Type"
+      },
+      "settings": {
+        "label": "Paramètres de la page",
+        "show_chart": "Afficher le graphique principal"
+      },
+      "comparators": {
+        "contains": "contient",
+        "is": "est",
+        "is_not": "n'est pas",
+        "in": "dans",
+        "starts_with": "commence par",
+        "not_contains": "ne contient pas",
+        "is_not_one_off": "n'est pas l'un de",
+        "is_one_of": "est l'un de",
+        "between": "entre"
+      },
+      "save": {
+        "label": "Recherches enregistrées",
+        "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides.",
+        "dialog": {
+          "heading": "Enregistrer la recherche actuelle",
+          "confirmation": "Critères de recherche <code>{name}</code>",
+          "placeholder": "Étiquette",
+          "hint": "Comment souhaitez-vous étiqueter ce critère de recherche ?"
+        },
+        "empty": "Vous n'avez pas encore enregistré de recherche."
+      },
+      "empty": "Aucune donnée.",
+      "format": "Tapez le paramètre comme 'key:value'",
+      "label": "Choisir des filtres"
+    }
   }
 }

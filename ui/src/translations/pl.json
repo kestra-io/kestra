@@ -922,52 +922,6 @@
     "execution-warn-title": "Ważne Ostrzeżenie!",
     "worker group key": "Klucz grupy Worker",
     "worker group fallback": "Grupa Workerów awaryjna",
-    "filters": {
-      "comparators": {
-        "is": "jest",
-        "is_one_of": "jest jednym z",
-        "is_not_one_off": "nie jest jednym z",
-        "is_not": "nie jest",
-        "between": "pomiędzy",
-        "in": "w",
-        "not_contains": "nie zawiera",
-        "starts_with": "zaczyna się od",
-        "contains": "zawiera"
-      },
-      "recent": {
-        "label": "Ostatnie wyszukiwania",
-        "empty": "Nie wyszukałeś jeszcze niczego."
-      },
-      "labels": {
-        "placeholder": "Wpisz label jako 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?",
-          "heading": "Zapisz bieżące wyszukiwanie",
-          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
-          "placeholder": "Etykieta"
-        },
-        "label": "Zapisane wyszukiwania",
-        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Zakres",
-        "text": "tekst",
-        "labels": "Etykiety",
-        "state": "Stan",
-        "child": "Dziecko",
-        "absolute_date": "Data bezwzględna",
-        "relative_date": "Data względna",
-        "level": "Poziom logowania"
-      },
-      "empty": "Brak danych.",
-      "label": "Wybierz filtry",
-      "settings": {
-        "show_chart": "Pokaż główny wykres"
-      }
-    },
     "force run title": "Wymuś uruchomienie wykonania <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> wykonanie(a) wymuszone uruchomienie",
     "force run done": "Wymuszone uruchomienie Execution",
@@ -1006,6 +960,78 @@
     "create_custom_dashboard": "Utwórz nowy dashboard",
     "edit_custom_dashboard": "Edytuj Dashboard",
     "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
-    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?"
+    "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Zacznij ⚡",
+        "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów."
+      },
+      "workflow_components": {
+        "text": "Poznaj główne komponenty orkiestracji w workflow Kestra.",
+        "title": "Komponenty Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Rozpocznij korzystanie z naszych samouczków wideo.",
+        "title": "Samouczki wideo"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Kliknij przycisk Wykonaj, aby rozpocząć pierwsze wykonanie workflow.",
+      "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
+      "guidance_sub_desc": "Postępuj zgodnie z dokumentacją, aby uzyskać wszystkie potrzebne informacje.",
+      "title": "Zacznij automatyzację z"
+    },
+    "filters": {
+      "options": {
+        "child": "Dziecko",
+        "metric": "Metryka",
+        "labels": "Etykiety",
+        "details": "Szczegóły",
+        "absolute_date": "Data bezwzględna",
+        "scope": "Zakres",
+        "trigger_state": "Stan",
+        "state": "Stan",
+        "action": "Akcja",
+        "text": "tekst",
+        "relative_date": "Data względna",
+        "level": "Poziom logowania",
+        "aggregation": "Agregacja",
+        "permission": "Uprawnienie",
+        "namespace": "Namespace",
+        "user": "Użytkownik",
+        "task": "Zadanie",
+        "flow": "Flow",
+        "type": "Typ"
+      },
+      "settings": {
+        "label": "Ustawienia strony",
+        "show_chart": "Pokaż główny wykres"
+      },
+      "comparators": {
+        "contains": "zawiera",
+        "is": "jest",
+        "is_not": "nie jest",
+        "in": "w",
+        "starts_with": "zaczyna się od",
+        "not_contains": "nie zawiera",
+        "is_not_one_off": "nie jest jednym z",
+        "is_one_of": "jest jednym z",
+        "between": "pomiędzy"
+      },
+      "save": {
+        "label": "Zapisane wyszukiwania",
+        "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania.",
+        "dialog": {
+          "heading": "Zapisz bieżące wyszukiwanie",
+          "confirmation": "Kryteria wyszukiwania <code>{name}</code>",
+          "placeholder": "Etykieta",
+          "hint": "Jak chcesz oznaczyć te kryteria wyszukiwania?"
+        },
+        "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania."
+      },
+      "empty": "Brak danych.",
+      "format": "Wpisz parametr jako 'key:value'",
+      "label": "Wybierz filtry"
+    }
   }
 }

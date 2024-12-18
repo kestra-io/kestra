@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
@@ -9,7 +10,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
@@ -35,8 +35,9 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@KestraTest(startRunner = true)
 @Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
-public class TemplateTest extends AbstractMemoryRunnerTest {
+public class TemplateTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
 
@@ -46,6 +47,12 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
     @Inject
     private FlowInputOutput flowIO;
+
+    @Inject
+    protected RunnerUtils runnerUtils;
+
+    @Inject
+    protected LocalFlowRepositoryLoader repositoryLoader;
 
     public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
@@ -92,7 +99,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     }
 
 
-    public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException, QueueException {
+    public static void withFailedTemplate(RunnerUtils runnerUtils, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException, QueueException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
             "flows/templates/with-failed-template.yaml")));
 
@@ -110,6 +117,6 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
     @Test
     void withFailedTemplate() throws TimeoutException, IOException, URISyntaxException, QueueException {
-        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
+        TemplateTest.withFailedTemplate(runnerUtils, repositoryLoader, logQueue);
     }
 }

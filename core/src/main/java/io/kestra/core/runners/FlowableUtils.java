@@ -432,19 +432,18 @@ public class FlowableUtils {
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
         for (Object current : distinctValue) {
-            for (Task task : tasks) {
-                try {
-                    String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
-
+            try {
+                String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
+                for (Task task : tasks) {
                     result.add(ResolvedTask.builder()
                         .task(task)
                         .value(resolvedValue)
                         .parentId(parentTaskRun.getId())
                         .build()
                     );
-                } catch (JsonProcessingException e) {
-                    throw new IllegalVariableEvaluationException(e);
                 }
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
             }
         }
 

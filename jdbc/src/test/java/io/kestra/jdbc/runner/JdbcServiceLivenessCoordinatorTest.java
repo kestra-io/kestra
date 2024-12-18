@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -21,12 +20,12 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -92,7 +91,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-        TestsUtils.loads(repositoryLoader);
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
     }
@@ -208,7 +206,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(sleep.toMillis())
+            .duration(sleep)
             .build();
 
         Execution execution = TestsUtils.mockExecution(flowBuilder(sleep), ImmutableMap.of());
@@ -242,7 +240,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(sleep.toMillis())
+            .duration(sleep)
             .build();
 
         SleepTrigger trigger = SleepTrigger.builder()

@@ -922,52 +922,6 @@
     "execution-warn-title": "¡Advertencia Importante!",
     "worker group key": "Clave del grupo de Worker",
     "worker group fallback": "Grupo de Worker de respaldo",
-    "filters": {
-      "comparators": {
-        "is": "es",
-        "is_one_of": "es uno de",
-        "is_not_one_off": "no es uno de",
-        "is_not": "no es",
-        "between": "entre",
-        "in": "en",
-        "not_contains": "no contiene",
-        "starts_with": "comienza con",
-        "contains": "contiene"
-      },
-      "recent": {
-        "label": "Búsquedas recientes",
-        "empty": "Todavía no has buscado nada."
-      },
-      "labels": {
-        "placeholder": "Escriba label como 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?",
-          "heading": "Guardar búsqueda actual",
-          "confirmation": "Criterios de búsqueda <code>{name}</code>",
-          "placeholder": "Etiqueta"
-        },
-        "label": "Búsquedas guardadas",
-        "tooltip": "No puedes guardar criterios de búsqueda vacíos."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Ámbito",
-        "text": "Lo siento, pero parece que no proporcionaste ningún texto para traducir. Por favor, proporciona el texto que necesitas traducir y estaré encantado de ayudarte.",
-        "labels": "Etiquetas",
-        "state": "Estado",
-        "child": "Niño",
-        "absolute_date": "Fecha absoluta",
-        "relative_date": "Fecha relativa",
-        "level": "Nivel de log"
-      },
-      "empty": "Sin datos.",
-      "label": "Elegir filtros",
-      "settings": {
-        "show_chart": "Mostrar gráfico principal"
-      }
-    },
     "force run title": "Forzar la ejecución de <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> ejecución(es) forzada(s) en ejecución",
     "force run done": "La ejecución es forzada a RUNNING",
@@ -1006,6 +960,78 @@
     "create_custom_dashboard": "Crear nuevo dashboard",
     "edit_custom_dashboard": "Editar Panel de Control",
     "custom_dashboard_empty": "No hay resultados para mostrar.",
-    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?"
+    "remove_bookmark": "¿Está seguro de que desea eliminar este marcador?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Comenzar ⚡",
+        "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo."
+      },
+      "workflow_components": {
+        "text": "Conozca los principales componentes de orquestación de un flujo de trabajo de Kestra.",
+        "title": "Componentes del Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Comienza con nuestros tutoriales en video.",
+        "title": "Tutoriales en Video"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Haz clic en el botón Ejecutar para iniciar la ejecución de tu primer flujo de trabajo.",
+      "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
+      "guidance_sub_desc": "Sigue la documentación para toda la información que necesitas.",
+      "title": "Comienza a automatizar con"
+    },
+    "filters": {
+      "options": {
+        "child": "Niño",
+        "metric": "Métrica",
+        "labels": "Etiquetas",
+        "details": "Detalles",
+        "absolute_date": "Fecha absoluta",
+        "scope": "Ámbito",
+        "trigger_state": "Estado",
+        "state": "Estado",
+        "action": "Acción",
+        "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text again?",
+        "relative_date": "Fecha relativa",
+        "level": "Nivel de log",
+        "aggregation": "Agregación",
+        "permission": "Permiso",
+        "namespace": "Namespace",
+        "user": "Usuario",
+        "task": "Tarea",
+        "flow": "Flujo",
+        "type": "Tipo"
+      },
+      "settings": {
+        "label": "Configuración de la página",
+        "show_chart": "Mostrar gráfico principal"
+      },
+      "comparators": {
+        "contains": "contiene",
+        "is": "es",
+        "is_not": "no es",
+        "in": "en",
+        "starts_with": "comienza con",
+        "not_contains": "no contiene",
+        "is_not_one_off": "no es uno de",
+        "is_one_of": "es uno de",
+        "between": "entre"
+      },
+      "save": {
+        "label": "Búsquedas guardadas",
+        "tooltip": "No puedes guardar criterios de búsqueda vacíos.",
+        "dialog": {
+          "heading": "Guardar búsqueda actual",
+          "confirmation": "Criterios de búsqueda <code>{name}</code>",
+          "placeholder": "Etiqueta",
+          "hint": "¿Cómo desea etiquetar este criterio de búsqueda?"
+        },
+        "empty": "Todavía no has guardado ninguna búsqueda."
+      },
+      "empty": "Sin datos.",
+      "format": "Escriba el parámetro como 'key:value'",
+      "label": "Elegir filtros"
+    }
   }
 }

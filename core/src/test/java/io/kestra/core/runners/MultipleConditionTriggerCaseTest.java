@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class MultipleConditionTriggerCaseTest {
+
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
@@ -99,8 +100,8 @@ public class MultipleConditionTriggerCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
-                countDownLatch.countDown();
                 listener.set(execution);
+                countDownLatch.countDown();
             }
         });
 

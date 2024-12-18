@@ -297,7 +297,7 @@ export default class YamlUtils {
         const yamlDoc = yaml.parseDocument(source);
         const newTaskNode = yamlDoc.createNode(yaml.parseDocument(newTask))
         const tasksNode = yamlDoc.contents.items.find(e => e.key.value === "tasks");
-        if (!tasksNode || !tasksNode?.value.value === null) {
+        if (!tasksNode || tasksNode?.value.value === null) {
             if (tasksNode) {
                 yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(tasksNode), 1)
             }

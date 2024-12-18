@@ -381,6 +381,12 @@
                         this.highlightPebble();
                     });
                 }
+
+                // attach an imperative method to the element so tests can programmatically update
+                // the value of the editor without dealing with how Monaco handles the exact keystrokes
+                this.$refs.monacoEditor.$el.__setValueInTests = (value) => {
+                    this.editor.setValue(value);
+                }
             },
             autoFold(autoFold) {
                 if (autoFold) {
@@ -420,7 +426,7 @@
                     });
                 }
                 this.decorations.set(decorationsToAdd);
-            }
+            },
         },
     };
 </script>
@@ -465,6 +471,10 @@
                 transition: var(--el-transition-box-shadow);
                 box-shadow: 0 0 0 1px var(--bs-border-color) inset;
                 padding-top: 7px;
+
+                &.custom-dark-vs-theme {
+                    background-color: $input-bg;
+                }
 
                 html.dark & {
                     background-color: var(--bs-gray-100);

@@ -6,6 +6,7 @@
             :flow-id="flowParsed?.id"
             :namespace="flowParsed?.namespace"
             :is-creating="true"
+            :flow-validation="flowValidation"
             :flow-graph="flowGraph"
             :is-read-only="false"
             :is-dirty="true"
@@ -74,7 +75,7 @@ tasks:
             sourceWrapper() {
                 return {source: this.source};
             },
-            ...mapState("flow", ["flowGraph", "total"]),
+            ...mapState("flow", ["flowGraph"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),

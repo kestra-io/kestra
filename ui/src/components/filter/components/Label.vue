@@ -1,5 +1,7 @@
 <template>
-    <span v-if="label">{{ $t(`filters.options.${label}`) }}</span>
+    <span v-if="label" class="text-lowercase">
+        {{ $t(`filters.options.${label}`) }}
+    </span>
     <span v-if="comparator" class="comparator">{{ comparator }}</span>
     <span v-if="value">{{ !comparator ? ":" : "" }}{{ value }}</span>
 </template>
@@ -12,7 +14,7 @@
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
 
-    const formatter = (date) => moment(date).format(DATE_FORMAT);
+    const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
 
     const label = computed(() => props.option?.label);
     const comparator = computed(() => props.option?.comparator?.label);
@@ -30,11 +32,15 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
+@import "../styles/filter.scss";
+
 .comparator {
-    background: var(--bs-gray-500);
-    padding: 0.3rem 0.35rem;
-    margin: 0 0.5rem;
     display: inline-block;
+
+    margin: 0 0.5rem;
+    padding: 0.3rem 0.35rem;
+
+    background: $filters-gray-500;
 }
 </style>

@@ -42,8 +42,10 @@
                 <KestraFilter
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
-                    :refresh="{shown: true, callback: refresh}"
-                    :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                    :buttons="{
+                        refresh: {shown: true, callback: refresh},
+                        settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                    }"
                 />
             </template>
 
@@ -293,7 +295,7 @@
                         <el-table-column column-key="action" class-name="row-action">
                             <template #default="scope">
                                 <router-link
-                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}"
+                                    :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
                                 >
                                     <kicon :tooltip="$t('details')" placement="left">
                                         <TextSearch />
@@ -520,7 +522,7 @@
                 isOpenLabelsModal: false,
                 executionLabels: [],
                 actionOptions: {},
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 changeStatusDialogVisible: false,
                 selectedStatus: undefined
             };
@@ -555,8 +557,7 @@
                 return undefined;
             },
             startDate() {
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -707,7 +708,7 @@
                     });
             },
             loadData(callback) {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 if (this.showStatChart()) {
                     this.loadStats();
                 }

@@ -22,7 +22,7 @@ import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
 import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
 
 export function useLeftMenu() {
-    const {t} = useI18n()
+    const {t} = useI18n({useScope: "global"});
     const $router = useRouter()
     const store = useStore()
 

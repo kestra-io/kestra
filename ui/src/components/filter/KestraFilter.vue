@@ -1,25 +1,32 @@
 <template>
-    <section class="d-inline-flex pb-3 filters">
-        <History :prefix @search="handleHistoryItems" />
+    <section class="d-inline-flex mb-3 filters">
+        <Items :prefix="ITEMS_PREFIX" @search="handleClickedItems" />
 
         <el-select
             ref="select"
             :model-value="current"
             value-key="label"
-            :placeholder="t('filters.label')"
-            allow-create
+            :placeholder="props.placeholder ?? t('filters.label')"
             default-first-option
+            allow-create
             filterable
+            clearable
             multiple
             placement="bottom"
             :show-arrow="false"
             fit-input-width
             popper-class="filters-select"
-            :class="{settings: settings.shown, refresh: refresh.shown}"
             @change="(value) => changeCallback(value)"
+            @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @clear="handleClear"
+            :class="{
+                refresh: buttons.refresh.shown,
+                settings: buttons.settings.shown,
+                dashboards: dashboards.shown,
+            }"
         >
             <template #label="{value}">
                 <Label :option="value" />
@@ -28,6 +35,7 @@
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
                 <DateRange
                     v-else
+                    automatic
                     @update:model-value="(v) => valueCallback(v, true)"
                 />
             </template>
@@ -77,18 +85,45 @@
             </template>
         </el-select>
 
-        <el-button-group class="d-inline-flex">
+        <el-button-group
+            class="d-inline-flex"
+            :class="{
+                'me-1':
+                    buttons.refresh.shown ||
+                    buttons.settings.shown ||
+                    dashboards.shown,
+            }"
+        >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
-                <el-button :icon="Magnify" @click="triggerSearch" />
+                <el-button
+                    :icon="Magnify"
+                    @click="triggerSearch"
+                    class="rounded-0"
+                />
             </KestraIcon>
-            <Save :disabled="!current.length" :prefix :current />
-            <Refresh v-if="refresh.shown" @refresh="refresh.callback" />
-            <Settings v-if="settings.shown" :settings />
+            <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
+        </el-button-group>
+
+        <el-button-group
+            v-if="buttons.refresh.shown || buttons.settings.shown"
+            class="d-inline-flex ms-1"
+            :class="{'me-1': dashboards.shown}"
+        >
+            <Refresh
+                v-if="buttons.refresh.shown"
+                @refresh="buttons.refresh.callback"
+            />
+            <Settings
+                v-if="buttons.settings.shown"
+                :settings="buttons.settings"
+                :refresh="buttons.refresh.shown"
+            />
         </el-button-group>
 
         <Dashboards
             v-if="dashboards.shown"
             @dashboard="(value) => emits('dashboard', value)"
+            class="ms-1"
         />
     </section>
 </template>
@@ -96,6 +131,17 @@
 <script setup lang="ts">
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
+
+    import Refresh from "../layout/RefreshButton.vue";
+    import Items from "./segments/Items.vue";
+    import Label from "./components/Label.vue";
+    import Save from "./segments/Save.vue";
+    import Settings from "./segments/Settings.vue";
+    import Dashboards from "./segments/Dashboards.vue";
+    import KestraIcon from "../Kicon.vue";
+    import DateRange from "../layout/DateRange.vue";
+
+    import {Magnify} from "./utils/icons.js";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -107,50 +153,32 @@
     const router = useRouter();
     const route = useRoute();
 
-    import Refresh from "../layout/RefreshButton.vue";
-
-    import History from "./components/history/History.vue";
-    import Label from "./components/Label.vue";
-    import Save from "./components/Save.vue";
-    import Settings from "./components/Settings.vue";
-    import Dashboards from "./components/Dashboards.vue";
-    import KestraIcon from "../Kicon.vue";
-
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-
-    import State from "../../utils/state.js";
-    import DateRange from "../layout/DateRange.vue";
-
-    const emits = defineEmits(["dashboard"]);
+    const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
-        prefix: {type: String, required: true},
-        include: {type: Array, required: true},
-        refresh: {
-            type: Object,
-            default: () => ({shown: false, callback: () => {}}),
-        },
-        settings: {
+        prefix: {type: String, default: undefined},
+        include: {type: Array, default: () => []},
+        values: {type: Object, default: undefined},
+        buttons: {
             type: Object,
             default: () => ({
-                shown: false,
-                charts: {shown: false, value: false, callback: () => {}},
+                refresh: {shown: false, callback: () => {}},
+                settings: {
+                    shown: false,
+                    charts: {shown: false, value: false, callback: () => {}},
+                },
             }),
         },
         dashboards: {
             type: Object,
             default: () => ({shown: false}),
         },
+        placeholder: {type: String, default: undefined},
     });
 
-    import {useFilters, compare} from "./useFilters.js";
-    const {
-        getRecentItems,
-        setRecentItems,
-        COMPARATORS,
-        OPTIONS,
-        encodeParams,
-        decodeParams,
-    } = useFilters(props.prefix);
+    const ITEMS_PREFIX = props.prefix ?? String(route.name);
+
+    import {useFilters} from "./composables/useFilters.js";
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -192,6 +220,19 @@
         }
     };
 
+    const handleInputChange = (key) => {
+        if (key === "Enter") return;
+
+        if (current.value.at(-1)?.label === "user") {
+            emits("input", select.value.states.inputValue);
+        }
+    };
+
+    const handleClear = () => {
+        current.value = [];
+        triggerSearch();
+    };
+
     const filterCallback = (option) => {
         if (!option.value) {
             triggerEnter.value = false;
@@ -215,10 +256,11 @@
     };
     const comparatorCallback = (value) => {
         current.value[dropdowns.value.second.index].comparator = value;
-        emptyLabel.value =
-            current.value[dropdowns.value.second.index].label === "labels"
-                ? t("filters.labels.placeholder")
-                : t("filters.empty");
+        emptyLabel.value = ["labels", "details"].includes(
+            current.value[dropdowns.value.second.index].label,
+        )
+            ? t("filters.format")
+            : t("filters.empty");
 
         dropdowns.value.first = {shown: false, value: {}};
         dropdowns.value.second = {shown: false, index: -1};
@@ -302,51 +344,8 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    const scopeOptions = [
-        {
-            label: t("scope_filter.user", {label: props.prefix}),
-            value: "USER",
-        },
-        {
-            label: t("scope_filter.system", {label: props.prefix}),
-            value: "SYSTEM",
-        },
-    ];
-
-    const childOptions = [
-        {
-            label: t("trigger filter.options.ALL"),
-            value: "ALL",
-        },
-        {
-            label: t("trigger filter.options.CHILD"),
-            value: "CHILD",
-        },
-        {
-            label: t("trigger filter.options.MAIN"),
-            value: "MAIN",
-        },
-    ];
-
-    const levelOptions = [
-        {label: "TRACE", value: "TRACE"},
-        {label: "DEBUG", value: "DEBUG"},
-        {label: "INFO", value: "INFO"},
-        {label: "WARN", value: "WARN"},
-        {label: "ERROR", value: "ERROR"},
-    ];
-
-    const relativeDateOptions = [
-        {label: t("datepicker.last5minutes"), value: "PT5M"},
-        {label: t("datepicker.last15minutes"), value: "PT15M"},
-        {label: t("datepicker.last1hour"), value: "PT1H"},
-        {label: t("datepicker.last12hours"), value: "PT12H"},
-        {label: t("datepicker.last24hours"), value: "PT24H"},
-        {label: t("datepicker.last48hours"), value: "PT48H"},
-        {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "PT720H"},
-        {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    import {useValues} from "./composables/useValues";
+    const {VALUES} = useValues(ITEMS_PREFIX);
 
     const isDatePickerShown = computed(() => {
         const c = current?.value?.at(-1);
@@ -360,23 +359,44 @@
         case "namespace":
             return namespaceOptions.value;
 
-        case "scope":
-            return scopeOptions;
-
         case "state":
-            return State.arrayAllStates().map((s) => ({
-                label: s.name,
-                value: s.name,
-            }));
+            return VALUES.EXECUTION_STATES;
+
+        case "trigger_state":
+            return VALUES.TRIGGER_STATES;
+
+        case "scope":
+            return VALUES.SCOPES;
 
         case "child":
-            return childOptions;
+            return VALUES.CHILDS;
 
         case "level":
-            return levelOptions;
+            return VALUES.LEVELS;
+
+        case "task":
+            return props.values?.task || [];
+
+        case "metric":
+            return props.values?.metric || [];
+
+        case "user":
+            return props.values?.user || [];
+
+        case "type":
+            return VALUES.TYPES;
+
+        case "permission":
+            return VALUES.PERMISSIONS;
+
+        case "action":
+            return VALUES.ACTIONS;
+
+        case "aggregation":
+            return VALUES.AGGREGATIONS;
 
         case "relative_date":
-            return relativeDateOptions;
+            return VALUES.RELATIVE_DATE;
 
         case "absolute_date":
             return [];
@@ -409,9 +429,10 @@
         if (!Array.isArray(v) || !v.length) return;
 
         if (typeof v.at(-1) === "string") {
-            if (v.at(-2)?.label === "labels") {
+            if (["labels", "details"].includes(v.at(-2)?.label)) {
                 // Adding labels to proper filter
                 v.at(-2).value?.push(v.at(-1));
+
                 closeDropdown();
                 triggerSearch();
             } else {
@@ -423,6 +444,7 @@
                 else current.value.push({label, value: [v.at(-1)]});
 
                 triggerSearch();
+                closeDropdown();
             }
 
             triggerEnter.value = false;
@@ -440,24 +462,19 @@
         triggerSearch();
     };
 
-    const handleHistoryItems = (value) => {
+    const handleClickedItems = (value) => {
         if (value) current.value = value;
         select.value?.focus();
     };
 
-    const triggerSearch = () => {
-        if (current.value.length) {
-            const r = getRecentItems().filter((i) =>
-                compare(i.value, current.value),
-            );
-            setRecentItems([...r, {value: current.value}]);
-        }
+    import {encodeParams, decodeParams} from "./utils/helpers.js";
 
-        router.push({query: encodeParams(current.value)});
+    const triggerSearch = () => {
+        router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter
-    current.value = decodeParams(route.query, props.include);
+    current.value = decodeParams(route.query, props.include, OPTIONS);
 
     const addNamespaceFilter = (namespace) => {
         if (!namespace) return;
@@ -471,49 +488,85 @@
 
     const {name, params} = route;
 
-    if (name === "flows/update") addNamespaceFilter(params?.namespace);
-    else if (name === "namespaces/update") addNamespaceFilter(params.id);
+    if (name === "flows/update") {
+        // Single flow page
+        addNamespaceFilter(params?.namespace);
+
+        if (params.id) {
+            current.value.push({
+                label: "flow",
+                value: [`${params.id}`],
+                comparator: COMPARATORS.IS,
+                persistent: true,
+            });
+        }
+    } else if (name === "namespaces/update") {
+        // Single namespace page
+        addNamespaceFilter(params.id);
+    }
 </script>
 
 <style lang="scss">
-@mixin width-available {
-    width: -moz-available;
-    width: -webkit-fill-available;
-    // https://caniuse.com/?search=fill-available
-    width: fill-available;
-}
+@import "./styles/filter.scss";
+
+$included: 144px;
+$refresh: 104px;
+$settins: 52px;
+$dashboards: 52px;
 
 .filters {
     @include width-available;
 
     & .el-select {
-        max-width: calc(100% - 237px);
+        width: 100%;
 
-        &.settings {
-            max-width: calc(100% - 285px);
+        &.refresh.settings.dashboards {
+            max-width: calc(
+                100% - $included - $refresh - $settins - $dashboards
+            );
         }
 
-        &:not(.refresh) {
-            max-width: calc(100% - 189px);
+        &.refresh.settings {
+            max-width: calc(100% - $included - $refresh - $settins + 0.25rem);
+        }
+
+        &.settings.dashboards {
+            max-width: calc(100% - $included - $settins - $dashboards);
+        }
+
+        &.refresh.dashboards {
+            max-width: calc(100% - $included - $refresh - $dashboards);
+        }
+
+        &.refresh {
+            max-width: calc(100% - $included - $refresh);
+        }
+
+        &.settings {
+            max-width: calc(100% - $included - $settins);
+        }
+
+        &.dashboards {
+            max-width: calc(100% - $included - $dashboards);
         }
     }
 
     & .el-select__placeholder {
-        color: var(--bs-gray-700);
+        color: $filters-gray-700;
     }
 
     & .el-select__wrapper {
         border-radius: 0;
         box-shadow:
-            0 -1px 0 0 var(--el-border-color) inset,
-            0 1px 0 0 var(--el-border-color) inset;
+            0 -1px 0 0 $filters-border-color inset,
+            0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
-            background: var(--bs-border-color) !important;
-            color: var(--bs-gray-900);
+            background: $filters-border-color !important;
+            color: $filters-gray-900;
 
             & .el-tag__close {
-                color: var(--bs-gray-900);
+                color: $filters-gray-900;
             }
         }
     }
@@ -526,26 +579,6 @@
             height: 0px;
         }
     }
-
-    & .el-button-group {
-        .el-button {
-            border-radius: 0;
-        }
-
-        span.kicon:last-child .el-button,
-        > button.el-button:last-child {
-            border-top-right-radius: var(--bs-border-radius);
-            border-bottom-right-radius: var(--bs-border-radius);
-        }
-    }
-}
-
-.el-button-group .el-button--primary:last-child {
-    border-left: none;
-}
-
-.el-button-group > .el-dropdown > .el-button {
-    border-left-color: transparent;
 }
 
 .filters-select {

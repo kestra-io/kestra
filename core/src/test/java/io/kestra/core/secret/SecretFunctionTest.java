@@ -1,31 +1,32 @@
 package io.kestra.core.secret;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import reactor.core.publisher.Flux;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeoutException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+@KestraTest(startRunner = true)
+public class SecretFunctionTest {
 
-@KestraTest
-public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> logQueue;
@@ -37,6 +38,7 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     private SecretService secretService;
 
     @Test
+    @LoadFlows({"flows/valids/secrets.yaml"})
     @EnabledIfEnvironmentVariable(named = "SECRET_MY_SECRET", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = ".*")
     void getSecret() throws TimeoutException, QueueException {
@@ -53,9 +55,8 @@ public class SecretFunctionTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void getUnknownSecret() throws IllegalVariableEvaluationException, IOException {
-        String secret = secretService.findSecret(null, null, "unknown_secret_key");
-
-        assertThat(secret, nullValue());
+    void getUnknownSecret() {
+        var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
+        assertThat(exception.getMessage(), is("Cannot find secret for key 'unknown_secret_key'."));
     }
 }

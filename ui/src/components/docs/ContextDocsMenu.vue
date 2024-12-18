@@ -30,7 +30,7 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    const {t} = useI18n();
+    const {t} = useI18n({useScope: "global"});
 
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 

@@ -1,146 +1,146 @@
 @import "../color-palette.scss";
 
 :root{
-	/* backgrounds */
-	#{--backgrounds-background-body}: $base-gray-50;
-	#{--backgrounds-background-card}: $base-white;
-	#{--backgrounds-background-input}: $base-white;
-	#{--backgrounds-background-button-primary}: $base-purple-500;
-	#{--backgrounds-background-button-primary-hover}: $base-purple-400;
-	#{--backgrounds-background-button-secondary-hover}: $base-gray-50;
-	#{--backgrounds-background-button-inactive}: $base-gray-50;
-	#{--backgrounds-background-button-primary-active}: $base-purple-700;
-	#{--backgrounds-background-button-secondary-active}: $base-gray-50;
-	#{--backgrounds-background-left-menu}: $base-white;
-	#{--backgrounds-background-logo}: #2c0059;
-	#{--backgrounds-background-button-secondary}: $base-white;
-	#{--backgrounds-background-card-opacity}: #1b1c23;
-	#{--backgrounds-shadows}: $base-purple-900;
-	#{--backgrounds-background-tags}: $base-gray-200;
-	#{--backgrounds-background-tags-2}: $base-gray-300;
-	#{--backgrounds-background-table_first_row}: $base-gray-50;
-	#{--backgrounds-background-table_row}: $base-white;
-	#{--backgrounds-background-table_first_row-2}: $base-gray-200;
+	/* ks-backgrounds */
+	#{--ks-backgrounds-background-body}: $base-gray-50;
+	#{--ks-backgrounds-background-card}: $base-white;
+	#{--ks-backgrounds-background-input}: $base-white;
+	#{--ks-backgrounds-background-button-primary}: $base-purple-500;
+	#{--ks-backgrounds-background-button-primary-hover}: $base-purple-400;
+	#{--ks-backgrounds-background-button-secondary-hover}: $base-gray-50;
+	#{--ks-backgrounds-background-button-inactive}: $base-gray-50;
+	#{--ks-backgrounds-background-button-primary-active}: $base-purple-700;
+	#{--ks-backgrounds-background-button-secondary-active}: $base-gray-50;
+	#{--ks-backgrounds-background-left-menu}: $base-white;
+	#{--ks-backgrounds-background-logo}: #2c0059;
+	#{--ks-backgrounds-background-button-secondary}: $base-white;
+	#{--ks-backgrounds-background-card-opacity}: #1b1c23;
+	#{--ks-backgrounds-shadows}: $base-purple-900;
+	#{--ks-backgrounds-background-tags}: $base-gray-200;
+	#{--ks-backgrounds-background-tags-2}: $base-gray-300;
+	#{--ks-backgrounds-background-table_first_row}: $base-gray-50;
+	#{--ks-backgrounds-background-table_row}: $base-white;
+	#{--ks-backgrounds-background-table_first_row-2}: $base-gray-200;
 
-	/* content */
-	#{--content-content-primary}: $base-gray-950;
-	#{--content-content-secondary}: $base-gray-800;
-	#{--content-content-link}: $base-purple-500;
-	#{--content-content-tertiary}: $base-gray-500;
-	#{--content-content-inactive}: $base-gray-400;
-	#{--content-content-inverse}: $base-white;
-	#{--content-content-link-hover}: $base-purple-300;
+	/* ks-content */
+	#{--ks-content-content-primary}: $base-gray-950;
+	#{--ks-content-content-secondary}: $base-gray-800;
+	#{--ks-content-content-link}: $base-purple-500;
+	#{--ks-content-content-tertiary}: $base-gray-500;
+	#{--ks-content-content-inactive}: $base-gray-400;
+	#{--ks-content-content-inverse}: $base-white;
+	#{--ks-content-content-link-hover}: $base-purple-300;
 
-	/* border */
-	#{--border-border}: $base-gray-200;
-	#{--border-border-secondary}: $base-gray-200;
-	#{--border-border-active}: $base-purple-500;
-	#{--border-border-inactive}: $base-gray-200;
+	/* ks-border */
+	#{--ks-border-border}: $base-gray-200;
+	#{--ks-border-border-secondary}: $base-gray-200;
+	#{--ks-border-border-active}: $base-purple-500;
+	#{--ks-border-border-inactive}: $base-gray-200;
 
-	/* executions */
-	#{--executions-failed-background-failed}: $base-red-50;
-	#{--executions-failed-border-failed}: $base-red-300;
-	#{--executions-failed-chart-failed}: $base-red-300;
-	#{--executions-failed-content-failed}: $base-red-500;
+	/* ks-executions */
+	#{--ks-executions-failed-background-failed}: $base-red-50;
+	#{--ks-executions-failed-border-failed}: $base-red-300;
+	#{--ks-executions-failed-chart-failed}: $base-red-300;
+	#{--ks-executions-failed-content-failed}: $base-red-500;
 
-	#{--executions-success-background-success}: $base-green-50;
-	#{--executions-success-content-success}: $base-green-700;
-	#{--executions-success-border-success}: $base-green-300;
-	#{--executions-success-chart-success}: $base-green-400;
+	#{--ks-executions-success-background-success}: $base-green-50;
+	#{--ks-executions-success-content-success}: $base-green-700;
+	#{--ks-executions-success-border-success}: $base-green-300;
+	#{--ks-executions-success-chart-success}: $base-green-400;
 
-	#{--executions-warning-chart-warning}: $base-orange-300;
-	#{--executions-warning-border-warning}: $base-orange-300;
-	#{--executions-warning-content-warning}: $base-orange-500;
-	#{--executions-warning-background-warning}: $base-orange-50;
+	#{--ks-executions-warning-chart-warning}: $base-orange-300;
+	#{--ks-executions-warning-border-warning}: $base-orange-300;
+	#{--ks-executions-warning-content-warning}: $base-orange-500;
+	#{--ks-executions-warning-background-warning}: $base-orange-50;
 
-	#{--executions-created-chart-created}: $base-red-100;
-	#{--executions-created-background-created}: $base-red-50;
-	#{--executions-created-content-created}: $base-red-400;
-	#{--executions-created-border-created}: $base-red-200;
+	#{--ks-executions-created-chart-created}: $base-red-100;
+	#{--ks-executions-created-background-created}: $base-red-50;
+	#{--ks-executions-created-content-created}: $base-red-400;
+	#{--ks-executions-created-border-created}: $base-red-200;
 
-	#{--executions-running-chart-running}: $base-blue-300;
-	#{--executions-running-background-running}: $base-blue-50;
-	#{--executions-running-content-running}: $base-blue-600;
-	#{--executions-running-border-running}: $base-blue-400;
+	#{--ks-executions-running-chart-running}: $base-blue-300;
+	#{--ks-executions-running-background-running}: $base-blue-50;
+	#{--ks-executions-running-content-running}: $base-blue-600;
+	#{--ks-executions-running-border-running}: $base-blue-400;
 
-	#{--executions-killed-chart-killed}: $base-gray-300;
-	#{--executions-killed-border-killed}: $base-gray-400;
-	#{--executions-killed-content-killed}: $base-gray-950;
-	#{--executions-killed-background-killed}: $base-gray-50;
+	#{--ks-executions-killed-chart-killed}: $base-gray-300;
+	#{--ks-executions-killed-border-killed}: $base-gray-400;
+	#{--ks-executions-killed-content-killed}: $base-gray-950;
+	#{--ks-executions-killed-background-killed}: $base-gray-50;
 
-	#{--executions-paused-chart-paused}: $base-yellow-500;
-	#{--executions-paused-content-paused}: $base-orange-500;
-	#{--executions-paused-border-paused}: $base-yellow-600;
-	#{--executions-paused-background-paused}: $base-yellow-50;
+	#{--ks-executions-paused-chart-paused}: $base-yellow-500;
+	#{--ks-executions-paused-content-paused}: $base-orange-500;
+	#{--ks-executions-paused-border-paused}: $base-yellow-600;
+	#{--ks-executions-paused-background-paused}: $base-yellow-50;
 
-	#{--executions-killing-background-killing}: $base-gray-200;
-	#{--executions-killing-content-killing}: $base-gray-900;
-	#{--executions-killing-border-killing}: $base-gray-400;
-	#{--executions-killing-chart-killing}: $base-gray-400;
+	#{--ks-executions-killing-background-killing}: $base-gray-200;
+	#{--ks-executions-killing-content-killing}: $base-gray-900;
+	#{--ks-executions-killing-border-killing}: $base-gray-400;
+	#{--ks-executions-killing-chart-killing}: $base-gray-400;
 
-	#{--executions-restarted-content-restarted}: $base-blue-600;
-	#{--executions-restarted-border-restarted}: $base-blue-100;
-	#{--executions-restarted-chart-restarted}: $base-blue-50;
-	#{--executions-restarted-background-restarted}: $base-blue-50;
+	#{--ks-executions-restarted-content-restarted}: $base-blue-600;
+	#{--ks-executions-restarted-border-restarted}: $base-blue-100;
+	#{--ks-executions-restarted-chart-restarted}: $base-blue-50;
+	#{--ks-executions-restarted-background-restarted}: $base-blue-50;
 
-	#{--executions-queued-content-queued}: $base-yellow-800;
-	#{--executions-queued-border-queued}: $base-yellow-600;
-	#{--executions-queued-chart-queued}: $base-yellow-100;
-	#{--executions-queued-background-queued}: $base-yellow-50;
+	#{--ks-executions-queued-content-queued}: $base-yellow-800;
+	#{--ks-executions-queued-border-queued}: $base-yellow-600;
+	#{--ks-executions-queued-chart-queued}: $base-yellow-100;
+	#{--ks-executions-queued-background-queued}: $base-yellow-50;
 
-	#{--executions-retrying-background-retrying}: $base-blue-50;
-	#{--executions-retrying-border-retrying}: $base-blue-500;
-	#{--executions-retrying-content-retrying}: $base-blue-700;
-	#{--executions-retrying-chart-retrying}: $base-blue-200;
+	#{--ks-executions-retrying-background-retrying}: $base-blue-50;
+	#{--ks-executions-retrying-border-retrying}: $base-blue-500;
+	#{--ks-executions-retrying-content-retrying}: $base-blue-700;
+	#{--ks-executions-retrying-chart-retrying}: $base-blue-200;
 
-	#{--executions-retried-background-retried}: $base-blue-50;
-	#{--executions-retried-border-retried}: $base-blue-300;
-	#{--executions-retried-content-retried}: $base-blue-600;
-	#{--executions-retried-chart-retried}: $base-blue-100;
+	#{--ks-executions-retried-background-retried}: $base-blue-50;
+	#{--ks-executions-retried-border-retried}: $base-blue-300;
+	#{--ks-executions-retried-content-retried}: $base-blue-600;
+	#{--ks-executions-retried-chart-retried}: $base-blue-100;
 
-	#{--executions-cancelled-background-cancelled}: $base-gray-300;
-	#{--executions-cancelled-border-cancelled}: $base-gray-500;
-	#{--executions-cancelled-content-cancelled}: $base-gray-950;
-	#{--executions-cancelled-chart-cancelled}: $base-gray-400;
+	#{--ks-executions-cancelled-background-cancelled}: $base-gray-300;
+	#{--ks-executions-cancelled-border-cancelled}: $base-gray-500;
+	#{--ks-executions-cancelled-content-cancelled}: $base-gray-950;
+	#{--ks-executions-cancelled-chart-cancelled}: $base-gray-400;
 
 
-	/* tooltip */
-	#{--tooltip-content-information}: $base-blue-600;
-	#{--tooltip-border-information}: $base-blue-200;
-	#{--tooltip-background-information}: $base-blue-50;
-	#{--tooltip-content-alert}: $base-red-500;
+	/* ks-tooltip */
+	#{--ks-tooltip-content-information}: $base-blue-600;
+	#{--ks-tooltip-border-information}: $base-blue-200;
+	#{--ks-tooltip-background-information}: $base-blue-50;
+	#{--ks-tooltip-content-alert}: $base-red-500;
 
-	/* editor-text-code */
-	#{--editor-text-code-editor-text1}: $base-green-600;
-	#{--editor-text-code-editor-text2}: $base-blue-600;
-	#{--editor-text-code-editor-text3}: $base-orange-600;
-	#{--editor-text-code-editor-text4}: $base-purple-400;
-	#{--editor-text-code-editor-text5}: $base-blue-800;
-	#{--editor-text-code-editor-text6}: $base-blue-500;
+	/* ks-editor-text-code */
+	#{--ks-editor-text-code-editor-text1}: $base-green-600;
+	#{--ks-editor-text-code-editor-text2}: $base-blue-600;
+	#{--ks-editor-text-code-editor-text3}: $base-orange-600;
+	#{--ks-editor-text-code-editor-text4}: $base-purple-400;
+	#{--ks-editor-text-code-editor-text5}: $base-blue-800;
+	#{--ks-editor-text-code-editor-text6}: $base-blue-500;
 
-	/* logs */
-	#{--logs-trace-content-trace}: $base-gray-950;
-	#{--logs-trace-border-trace}: $base-gray-500;
-	#{--logs-trace-chart-trace}: $base-gray-400;
-	#{--logs-trace-background-trace}: $base-gray-300;
+	/* ks-logs */
+	#{--ks-logs-trace-content-trace}: $base-gray-950;
+	#{--ks-logs-trace-border-trace}: $base-gray-500;
+	#{--ks-logs-trace-chart-trace}: $base-gray-400;
+	#{--ks-logs-trace-background-trace}: $base-gray-300;
 
-	#{--logs-info-background-info}: $base-green-50;
-	#{--logs-info-content-info}: $base-green-600;
-	#{--logs-info-chart-info}: $base-green-300;
-	#{--logs-info-border-info}: $base-green-400;
+	#{--ks-logs-info-background-info}: $base-green-50;
+	#{--ks-logs-info-content-info}: $base-green-600;
+	#{--ks-logs-info-chart-info}: $base-green-300;
+	#{--ks-logs-info-border-info}: $base-green-400;
 
-	#{--logs-warn-background-warn}: $base-orange-50;
-	#{--logs-warn-border-warn}: $base-orange-400;
-	#{--logs-warn-content-warn}: $base-orange-800;
-	#{--logs-warn-chart-log-warn}: $base-orange-200;
+	#{--ks-logs-warn-background-warn}: $base-orange-50;
+	#{--ks-logs-warn-border-warn}: $base-orange-400;
+	#{--ks-logs-warn-content-warn}: $base-orange-800;
+	#{--ks-logs-warn-chart-log-warn}: $base-orange-200;
 
-	#{--logs-error-background-error}: $base-red-50;
-	#{--logs-error-border-error}: $base-red-400;
-	#{--logs-error-content-error}: $base-red-500;
-	#{--logs-error-chart-error}: $base-red-300;
+	#{--ks-logs-error-background-error}: $base-red-50;
+	#{--ks-logs-error-border-error}: $base-red-400;
+	#{--ks-logs-error-content-error}: $base-red-500;
+	#{--ks-logs-error-chart-error}: $base-red-300;
 
-	#{--logs-debug-background-debug}: $base-blue-50;
-	#{--logs-debug-border-debug}: $base-blue-400;
-	#{--logs-debug-content-debug}: $base-blue-600;
-	#{--logs-debug-chart-debug}: $base-blue-200;
+	#{--ks-logs-debug-background-debug}: $base-blue-50;
+	#{--ks-logs-debug-border-debug}: $base-blue-400;
+	#{--ks-logs-debug-content-debug}: $base-blue-600;
+	#{--ks-logs-debug-chart-debug}: $base-blue-200;
 }

@@ -32,8 +32,8 @@ function makePalettes(palette, paletteName, selector) {
     const cssVariableNames = {}
 
     function getVariableScss(tokenTheme, tokenName, level = 0) {
-        const header = tokenName && level < 2 ? `\t/* ${tokenName} */\n` : ""
-        return `${header}${Object.entries(tokenTheme).map(([key, value]) => {
+        const header = level === 1 ? `\t/* ${tokenName} */\n` : ""
+        const content = Object.entries(tokenTheme).map(([key, value]) => {
             const normalizedKey = normalizeKey(key)
             const prefix = tokenName ? `${tokenName}-${normalizedKey}` : normalizedKey
 
@@ -42,7 +42,7 @@ function makePalettes(palette, paletteName, selector) {
             }
 
             if(tokenName){
-                const tokenRoot = tokenName.split("-")[0]
+                const tokenRoot = tokenName.split("-")[1]
                 const cssVariableNamesTheme = cssVariableNames[tokenRoot] || []
                 cssVariableNamesTheme.push(prefix)
                 cssVariableNames[tokenRoot] = cssVariableNamesTheme
@@ -51,10 +51,12 @@ function makePalettes(palette, paletteName, selector) {
             const colorVar = colorIndex[value] ? `$base-${colorIndex[value]}` : value
             return `\t#{--${prefix}}: ${colorVar};`
 
-        }).join("\n")}\n`
+        }).join("\n")
+
+        return `${header}${content}\n`
     }
 
-    const tokenScss = `\t${getVariableScss(tokens).trim()}`
+    const tokenScss = `\t${getVariableScss(tokens, "ks").trim()}`
 
     // write the scss file containing colors in the token palette
     fs.writeFileSync(path.resolve(__dirname, `../src/styles/layout/theme-${paletteName}.scss`), `@import "../color-palette.scss";\n\n${selector}{\n${tokenScss}\n}`, {encoding: "utf-8"})

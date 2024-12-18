@@ -100,8 +100,8 @@ public class MultipleConditionTriggerCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
-                countDownLatch.countDown();
                 listener.set(execution);
+                countDownLatch.countDown();
             }
         });
 

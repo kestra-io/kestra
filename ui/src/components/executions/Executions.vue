@@ -42,8 +42,10 @@
                 <KestraFilter
                     prefix="executions"
                     :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
-                    :refresh="{shown: true, callback: refresh}"
-                    :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                    :buttons="{
+                        refresh: {shown: true, callback: refresh},
+                        settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                    }"
                 />
             </template>
 

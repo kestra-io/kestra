@@ -922,62 +922,6 @@
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "worker group key": "वर्कर ग्रुप key",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
-    "filters": {
-      "comparators": {
-        "is": "है",
-        "is_one_of": "में से एक है",
-        "is_not_one_off": "नहीं है उनमें से एक",
-        "is_not": "नहीं है",
-        "between": "के बीच",
-        "in": "में",
-        "not_contains": "नहीं शामिल है",
-        "starts_with": "शुरू होता है",
-        "contains": "शामिल करता है"
-      },
-      "recent": {
-        "label": "हाल की खोजें",
-        "empty": "आपने अभी तक कुछ भी खोजा नहीं है।"
-      },
-      "labels": {
-        "placeholder": "'label' को 'key:value' के रूप में टाइप करें"
-      },
-      "save": {
-        "dialog": {
-          "hint": "आप इस खोज मानदंड को किस तरह से लेबल करना चाहते हैं?",
-          "heading": "वर्तमान खोज सहेजें",
-          "confirmation": "खोज मानदंड <code>{name}</code>",
-          "placeholder": "लेबल"
-        },
-        "label": "सहेजे गए खोजें",
-        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।",
-        "empty": "आपने अभी तक कोई खोज सहेजी नहीं है।"
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "क्षेत्र",
-        "text": "मुझे अनुवाद के लिए कोई पाठ प्रदान नहीं किया गया है। कृपया अनुवाद के लिए पाठ प्रदान करें।",
-        "labels": "लेबल्स",
-        "state": "स्थिति",
-        "child": "बच्चा",
-        "absolute_date": "सटीक तिथि",
-        "relative_date": "सापेक्ष तिथि",
-        "level": "Log स्तर",
-        "task": "कार्य",
-        "aggregation": "एग्रीगेशन",
-        "metric": "मेट्रिक",
-        "trigger_state": "स्थिति",
-        "action": "क्रिया",
-        "permission": "अनुमति",
-        "user": "उपयोगकर्ता",
-        "details": "विवरण"
-      },
-      "empty": "कोई डेटा नहीं।",
-      "label": "फिल्टर चुनें",
-      "settings": {
-        "show_chart": "मुख्य चार्ट दिखाएं"
-      },
-      "key_value_type": "'key:value' के रूप में पैरामीटर टाइप करें"
-    },
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",
     "force run done": "निष्पादन को मजबूरन चलाया गया है",
@@ -1036,6 +980,58 @@
       "guidance_desc": "क्या आपको अपने flow को निष्पादित करने के लिए मार्गदर्शन चाहिए?",
       "guidance_sub_desc": "दस्तावेज़ीकरण का पालन करें ताकि आपको सभी जानकारी मिल सके जिसकी आपको आवश्यकता है।",
       "title": "स्वचालन शुरू करें साथ में"
+    },
+    "filters": {
+      "options": {
+        "child": "बच्चा",
+        "metric": "मेट्रिक",
+        "labels": "लेबल्स",
+        "details": "विवरण",
+        "absolute_date": "सटीक दिनांक",
+        "scope": "स्कोप",
+        "trigger_state": "स्थिति",
+        "state": "स्थिति",
+        "action": "क्रिया",
+        "text": "मुझे अनुवाद के लिए कोई पाठ नहीं मिला। कृपया अनुवाद के लिए पाठ प्रदान करें।",
+        "relative_date": "सापेक्ष तिथि",
+        "level": "Log स्तर",
+        "aggregation": "संकलन",
+        "permission": "अनुमति",
+        "namespace": "Namespace",
+        "user": "उपयोगकर्ता",
+        "task": "कार्य",
+        "flow": "फ्लो",
+        "type": "प्रकार"
+      },
+      "settings": {
+        "label": "पृष्ठ सेटिंग्स",
+        "show_chart": "मुख्य चार्ट दिखाएं"
+      },
+      "comparators": {
+        "contains": "शामिल है",
+        "is": "है",
+        "is_not": "नहीं है",
+        "in": "में",
+        "starts_with": "शुरू होता है",
+        "not_contains": "नहीं शामिल है",
+        "is_not_one_off": "नहीं है उनमें से एक",
+        "is_one_of": "में से एक है",
+        "between": "के बीच"
+      },
+      "save": {
+        "label": "सहेजे गए खोजें",
+        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।",
+        "dialog": {
+          "heading": "वर्तमान खोज सहेजें",
+          "confirmation": "खोज मापदंड <code>{name}</code>",
+          "placeholder": "लेबल",
+          "hint": "आप इस खोज मापदंड को किस तरह से लेबल करना चाहते हैं?"
+        },
+        "empty": "आपने अभी तक कोई खोज सहेजी नहीं है।"
+      },
+      "empty": "कोई डेटा नहीं।",
+      "format": "'key:value' के रूप में पैरामीटर टाइप करें",
+      "label": "फिल्टर चुनें"
     }
   }
 }

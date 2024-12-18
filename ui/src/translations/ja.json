@@ -922,62 +922,6 @@
     "execution-warn-title": "重要なWarning!",
     "worker group key": "ワーカーグループキー",
     "worker group fallback": "ワーカーグループフォールバック",
-    "filters": {
-      "comparators": {
-        "is": "です",
-        "is_one_of": "のいずれかです",
-        "is_not_one_off": "のいずれでもありません",
-        "is_not": "ではありません",
-        "between": "間",
-        "in": "内",
-        "not_contains": "含まれていない",
-        "starts_with": "で始まる",
-        "contains": "含む"
-      },
-      "recent": {
-        "label": "最近の検索",
-        "empty": "まだ何も検索していません。"
-      },
-      "labels": {
-        "placeholder": "'label' を 'key:value' と入力してください"
-      },
-      "save": {
-        "dialog": {
-          "hint": "この検索条件にどのようなラベルを付けますか？",
-          "heading": "現在の検索を保存",
-          "confirmation": "検索条件 <code>{name}</code>",
-          "placeholder": "ラベル"
-        },
-        "label": "保存された検索",
-        "tooltip": "空の検索条件を保存することはできません。",
-        "empty": "まだ検索を保存していません。"
-      },
-      "options": {
-        "namespace": "Namespace（ネームスペース）",
-        "scope": "スコープ",
-        "text": "テキスト",
-        "labels": "ラベル",
-        "state": "状態",
-        "child": "子",
-        "absolute_date": "絶対日付",
-        "relative_date": "相対日付",
-        "level": "ログレベル",
-        "task": "タスク",
-        "aggregation": "集計",
-        "metric": "メトリック",
-        "trigger_state": "状態",
-        "action": "アクション",
-        "permission": "権限",
-        "user": "ユーザー",
-        "details": "詳細情報"
-      },
-      "empty": "データがありません。",
-      "label": "フィルターを選択",
-      "settings": {
-        "show_chart": "メインチャートを表示"
-      },
-      "key_value_type": "「key:value」としてパラメータを入力してください"
-    },
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
     "executions force run": "<code>{executionCount}</code> 回の実行が強制的に実行されました",
     "force run done": "実行は強制的にRUNNINGです。",
@@ -1036,6 +980,58 @@
       "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
       "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
       "title": "自動化を開始"
+    },
+    "filters": {
+      "options": {
+        "child": "子",
+        "metric": "メトリック",
+        "labels": "ラベル",
+        "details": "詳細",
+        "absolute_date": "絶対日付",
+        "scope": "スコープ",
+        "trigger_state": "状態",
+        "state": "状態",
+        "action": "アクション",
+        "text": "申し訳ありませんが、翻訳するためのテキストが提供されていないようです。翻訳が必要なテキストをもう一度送信してください。",
+        "relative_date": "相対日付",
+        "level": "ログレベル",
+        "aggregation": "集計",
+        "permission": "許可",
+        "namespace": "Namespace（ネームスペース）",
+        "user": "ユーザー",
+        "task": "タスク",
+        "flow": "フロー",
+        "type": "タイプ"
+      },
+      "settings": {
+        "label": "ページ設定",
+        "show_chart": "メインチャートを表示"
+      },
+      "comparators": {
+        "contains": "含む",
+        "is": "です",
+        "is_not": "ではありません",
+        "in": "内",
+        "starts_with": "で始まる",
+        "not_contains": "含まれていない",
+        "is_not_one_off": "のいずれでもありません",
+        "is_one_of": "のいずれか",
+        "between": "間"
+      },
+      "save": {
+        "label": "保存済み検索",
+        "tooltip": "空の検索条件を保存することはできません。",
+        "dialog": {
+          "heading": "現在の検索を保存",
+          "confirmation": "検索条件 <code>{name}</code>",
+          "placeholder": "ラベル",
+          "hint": "この検索条件にどのようなラベルを付けますか？"
+        },
+        "empty": "検索をまだ保存していません。"
+      },
+      "empty": "データがありません。",
+      "format": "「key:value」としてパラメータを入力してください。",
+      "label": "フィルターを選択"
     }
   }
 }

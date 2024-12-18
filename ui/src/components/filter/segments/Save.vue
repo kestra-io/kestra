@@ -1,6 +1,11 @@
 <template>
     <el-tooltip v-if="disabled" :content="t('filters.save.tooltip')">
-        <el-button disabled :icon="Save" @click="toggle(true)" />
+        <el-button
+            disabled
+            :icon="Save"
+            @click="toggle(true)"
+            class="rounded-0 rounded-end"
+        />
     </el-tooltip>
 
     <KestraIcon
@@ -8,7 +13,11 @@
         :tooltip="$t('filters.save.dialog.heading')"
         placement="bottom"
     >
-        <el-button :icon="Save" @click="toggle(true)" />
+        <el-button
+            :icon="Save"
+            @click="toggle(true)"
+            class="rounded-0 rounded-end"
+        />
     </KestraIcon>
 
     <el-dialog
@@ -31,7 +40,7 @@
                 @keydown.enter.prevent="save()"
             />
         </section>
-        <section class="current-tags">
+        <section class="items">
             <el-tag v-for="(item, index) in current" :key="index" class="m-1">
                 <Label :option="item" />
             </el-tag>
@@ -53,15 +62,15 @@
     import {getCurrentInstance, ref} from "vue";
     import {ElInput} from "element-plus";
 
+    import KestraIcon from "../../Kicon.vue";
+    import Label from "../components/Label.vue";
+
+    import {Save} from "../utils/icons.js";
+
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
-
-    import KestraIcon from "../../Kicon.vue";
-    import Label from "./Label.vue";
-
-    import Save from "vue-material-design-icons/ContentSaveOutline.vue";
 
     const props = defineProps({
         disabled: {type: Boolean, default: true},
@@ -69,7 +78,7 @@
         current: {type: Object, required: true},
     });
 
-    import {useFilters} from "../useFilters.js";
+    import {useFilters} from "../composables/useFilters.js";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
@@ -93,9 +102,6 @@
     };
 </script>
 
-<style lang="scss">
-.current-tags .el-tag {
-    background: var(--bs-border-color) !important;
-    color: var(--bs-gray-900);
-}
+<style scoped lang="scss">
+@import "../styles/filter.scss";
 </style>

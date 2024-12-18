@@ -1,0 +1,6 @@
+id: null-output
+namespace: io.kestra.tests
+
+tasks:
+  - id: null-output
+    type: io.kestra.core.tasks.test.NullOutputTask

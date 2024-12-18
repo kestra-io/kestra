@@ -12,8 +12,8 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
-import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -206,7 +206,7 @@ class WorkerTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(sleepDuration)
+            .duration(Duration.ofMillis(sleepDuration))
             .build();
 
         Flow flow = Flow.builder()

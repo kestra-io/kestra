@@ -922,62 +922,6 @@
     "execution-warn-title": "Важное предупреждение!",
     "worker group key": "Ключ группы Worker",
     "worker group fallback": "Группа Worker резервный вариант",
-    "filters": {
-      "comparators": {
-        "is": "является",
-        "is_one_of": "является одним из",
-        "is_not_one_off": "не является одним из",
-        "is_not": "не является",
-        "between": "между",
-        "in": "в",
-        "not_contains": "не содержит",
-        "starts_with": "начинается с",
-        "contains": "содержит"
-      },
-      "recent": {
-        "label": "Недавние поиски",
-        "empty": "Вы еще ничего не искали."
-      },
-      "labels": {
-        "placeholder": "Введите label как 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Как вы хотите обозначить этот критерий поиска?",
-          "heading": "Сохранить текущий поиск",
-          "confirmation": "Критерии поиска <code>{name}</code>",
-          "placeholder": "Метка"
-        },
-        "label": "Сохраненные поиски",
-        "tooltip": "Вы не можете сохранить пустые критерии поиска.",
-        "empty": "Вы еще не сохранили ни одного поиска."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Область применения",
-        "text": "Извините, но вы не предоставили текст для перевода. Пожалуйста, вставьте текст, который вы хотите перевести, после \"----------\".",
-        "labels": "Метки",
-        "state": "Состояние",
-        "child": "Ребенок",
-        "absolute_date": "Абсолютная дата",
-        "relative_date": "Относительная дата",
-        "level": "Уровень Log",
-        "task": "Задача",
-        "aggregation": "Агрегация",
-        "metric": "Метрика",
-        "trigger_state": "Состояние",
-        "action": "Действие",
-        "permission": "Разрешение",
-        "user": "Пользователь",
-        "details": "Детали"
-      },
-      "empty": "Нет данных.",
-      "label": "Выберите фильтры",
-      "settings": {
-        "show_chart": "Показать главный график"
-      },
-      "key_value_type": "Введите параметр в формате 'key:value'"
-    },
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",
     "force run done": "Выполнение принудительного запуска",
@@ -1036,6 +980,58 @@
       "guidance_desc": "Нужна помощь для выполнения вашего flow?",
       "guidance_sub_desc": "Следуйте документации для получения всей необходимой информации.",
       "title": "Начните автоматизацию с"
+    },
+    "filters": {
+      "options": {
+        "child": "Дочерний элемент",
+        "metric": "Метрика",
+        "labels": "Метки",
+        "details": "Детали",
+        "absolute_date": "Абсолютная дата",
+        "scope": "Область применения",
+        "trigger_state": "Состояние",
+        "state": "Состояние",
+        "action": "Действие",
+        "text": "I'm sorry, but it seems that the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+        "relative_date": "Относительная дата",
+        "level": "Уровень Log",
+        "aggregation": "Агрегация",
+        "permission": "Разрешение",
+        "namespace": "Namespace",
+        "user": "Пользователь",
+        "task": "Задача",
+        "flow": "Поток",
+        "type": "Тип"
+      },
+      "settings": {
+        "label": "Настройки страницы",
+        "show_chart": "Показать основную диаграмму"
+      },
+      "comparators": {
+        "contains": "содержит",
+        "is": "является",
+        "is_not": "не является",
+        "in": "в",
+        "starts_with": "начинается с",
+        "not_contains": "не содержит",
+        "is_not_one_off": "не является одним из",
+        "is_one_of": "является одним из",
+        "between": "между"
+      },
+      "save": {
+        "label": "Сохранённые поиски",
+        "tooltip": "Вы не можете сохранить пустые критерии поиска.",
+        "dialog": {
+          "heading": "Сохранить текущий поиск",
+          "confirmation": "Критерии поиска <code>{name}</code>",
+          "placeholder": "Ярлык",
+          "hint": "Как вы хотите обозначить этот критерий поиска?"
+        },
+        "empty": "Вы еще не сохранили ни одного поиска."
+      },
+      "empty": "Нет данных.",
+      "format": "Введите параметр в формате 'key:value'",
+      "label": "Выберите фильтры"
     }
   }
 }

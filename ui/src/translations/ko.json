@@ -922,62 +922,6 @@
     "execution-warn-title": "중요한 WARNING!",
     "worker group key": "워크 그룹 key",
     "worker group fallback": "작업자 그룹 대체",
-    "filters": {
-      "comparators": {
-        "is": "입니다",
-        "is_one_of": "중 하나입니다.",
-        "is_not_one_off": "중 하나가 아닙니다.",
-        "is_not": "아님",
-        "between": "사이에",
-        "in": "안에",
-        "not_contains": "포함하지 않음",
-        "starts_with": "시작:",
-        "contains": "포함합니다"
-      },
-      "recent": {
-        "label": "최근 검색",
-        "empty": "아직 아무것도 검색하지 않았습니다."
-      },
-      "labels": {
-        "placeholder": "'label'을 'key:value'로 입력하세요."
-      },
-      "save": {
-        "dialog": {
-          "hint": "이 검색 기준에 어떤 레이블을 지정하시겠습니까?",
-          "heading": "현재 검색 저장",
-          "confirmation": "검색 기준 <code>{name}</code>",
-          "placeholder": "레이블"
-        },
-        "label": "저장된 검색",
-        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
-        "empty": "아직 검색을 저장하지 않았습니다."
-      },
-      "options": {
-        "namespace": "네임스페이스",
-        "scope": "범위",
-        "text": "텍스트",
-        "labels": "레이블",
-        "state": "상태",
-        "child": "자식",
-        "absolute_date": "절대 날짜",
-        "relative_date": "상대 날짜",
-        "level": "로그 레벨",
-        "task": "작업",
-        "aggregation": "집계",
-        "metric": "메트릭",
-        "trigger_state": "상태",
-        "action": "작업",
-        "permission": "권한",
-        "user": "사용자",
-        "details": "세부사항"
-      },
-      "empty": "데이터 없음.",
-      "label": "필터 선택",
-      "settings": {
-        "show_chart": "주요 차트 표시"
-      },
-      "key_value_type": "'key:value'로 매개변수 입력"
-    },
     "force run title": "실행 <code>{id}</code> 강제 실행.",
     "executions force run": "<code>{executionCount}</code> 실행 강제 실행",
     "force run done": "실행이 강제 실행됩니다.",
@@ -1036,6 +980,58 @@
       "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",
       "guidance_sub_desc": "문서를 참조하여 필요한 모든 정보를 확인하세요.",
       "title": "자동화를 시작하세요"
+    },
+    "filters": {
+      "options": {
+        "child": "자식",
+        "metric": "메트릭",
+        "labels": "레이블",
+        "details": "세부사항",
+        "absolute_date": "절대 날짜",
+        "scope": "범위",
+        "trigger_state": "상태",
+        "state": "상태",
+        "action": "동작",
+        "text": "텍스트",
+        "relative_date": "상대 날짜",
+        "level": "로그 레벨",
+        "aggregation": "집계",
+        "permission": "권한",
+        "namespace": "네임스페이스",
+        "user": "사용자",
+        "task": "작업",
+        "flow": "플로우",
+        "type": "유형"
+      },
+      "settings": {
+        "label": "페이지 설정",
+        "show_chart": "주요 차트 표시"
+      },
+      "comparators": {
+        "contains": "포함합니다",
+        "is": "입니다",
+        "is_not": "아님",
+        "in": "안에",
+        "starts_with": "로 시작합니다",
+        "not_contains": "포함하지 않음",
+        "is_not_one_off": "아닌 것 중 하나입니다.",
+        "is_one_of": "중 하나입니다.",
+        "between": "사이에"
+      },
+      "save": {
+        "label": "저장된 검색",
+        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
+        "dialog": {
+          "heading": "현재 검색 저장",
+          "confirmation": "검색 기준 <code>{name}</code>",
+          "placeholder": "레이블",
+          "hint": "이 검색 기준에 어떤 label을 지정하시겠습니까?"
+        },
+        "empty": "아직 검색을 저장하지 않았습니다."
+      },
+      "empty": "데이터가 없습니다.",
+      "format": "'key:value'로 매개변수 입력",
+      "label": "필터 선택"
     }
   }
 }

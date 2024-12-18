@@ -18,7 +18,10 @@
                 value,
             })),
         }"
-        :refresh="{shown: true, callback: load}"
+        :buttons="{
+            refresh: {shown: true, callback: load},
+            settings: {shown: false}
+        }"
     />
 
     <div v-bind="$attrs" v-loading="isLoading">

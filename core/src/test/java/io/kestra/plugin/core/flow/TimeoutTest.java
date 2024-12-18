@@ -11,7 +11,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -51,7 +50,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
             .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
                 .type(Sleep.class.getName())
-                .duration(100000L)
+                .duration(Duration.ofSeconds(100))
                 .timeout(Property.of(Duration.ofNanos(100000)))
                 .build()))
             .build();

@@ -64,7 +64,7 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            color: var(--bs-body-color);
+            color: var(--ks-content-primary);
         }
 
         table,
@@ -115,7 +115,7 @@
 
         pre {
             border-radius: var(--bs-border-radius-lg);
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
         }
 
         blockquote {
@@ -168,19 +168,19 @@
         td > code,
         p > code{
             border-radius: var(--bs-border-radius-sm);
-            border: 1px solid var(--bs-border-color);
-            color: var(--bs-body-color);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-primary);
         }
 
         h3, h4, h5 {
             code {
-                background: var(--bs-white);
+                background: var(--ks-background-card);
                 font-size: 0.65em;
                 padding: 2px 8px;
                 font-weight: 400;
                 border-radius: var(--bs-border-radius-sm);
-                border: 1px solid var(--bs-border-color);
-                color: var(--bs-body-color);
+                border: 1px solid var(--ks-border-primary);
+                color: var(--ks-content-primary);
 
                 html.dark & {
                     background: var(--bs-gray-100);

@@ -67,13 +67,13 @@
 }
 
 .empty-state-title {
-    color: var(--el-text-color-regular);
+    color: var(--ks-content-primary);
 }
 
 .empty-state-description {
     font-size: var(--el-font-size);
     margin-bottom: 16px;
-    color: var(--el-text-color-regular);
+    color: var(--ks-content-primary);
 }
 
 .theme-light {

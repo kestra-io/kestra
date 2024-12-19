@@ -159,7 +159,7 @@ $system: #5BB8FF;
 
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--ks-border-primary);
 
     &.system {
         border-color: $system;
@@ -187,7 +187,7 @@ $system: #5BB8FF;
         background: transparent;
 
         &:hover {
-            background: var(--bs-body-bg);
+            background: var(--ks-background-body);
             color: $active;
         }
         .el-tree-node__expand-icon {
@@ -205,7 +205,7 @@ $system: #5BB8FF;
         align-items: center;
         justify-content: space-between;
         padding: 0 1rem;
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
 
         &.system {
             color: $system;

@@ -670,11 +670,11 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-background-button-primary);
             border-radius: 0px;
         }
 
@@ -700,7 +700,7 @@
         }
 
         .attempt-wrapper {
-            background-color: var(--bs-white);
+            background-color: var(--ks-background-card);
 
             :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
                 border-top: 1px solid var(--bs-border-color);
@@ -749,7 +749,7 @@
             }
 
             &::-webkit-scrollbar-thumb {
-                background: var(--bs-primary);
+                background: var(--ks-background-button-primary);
             }
         }
     }

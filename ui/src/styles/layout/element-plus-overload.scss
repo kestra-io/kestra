@@ -7,7 +7,7 @@
 .el-button {
     html.dark & {
         &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info) {
-            --el-button-hover-text-color: var(--bs-body-color);
+            --el-button-hover-text-color: var(--content-content-primary);
         }
 
              &:hover {
@@ -39,10 +39,10 @@
 
     &.is-text {
         font-weight: bold;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         height: 32px;
         line-height: 32px;
-        background-color: var(--bs-white) !important;
+        background-color: var(--ks-background-card) !important;
 
         html.dark & {
             color: var(--bs-white) !important;
@@ -84,7 +84,7 @@
 
 .el-input-group__append, .el-input-group__prepend {
     background-color: transparent;
-    color: var(--bs-body-color);
+    color: var(--content-content-primary);
 }
 
 // input
@@ -95,7 +95,7 @@
 
 .el-input, .el-input-number, .el-select, .el-date-editor.el-input {
 
-    background-color: var(--bs-body-bg);
+    background-color: var(--backgrounds-background-body);
     width: 100%;
 }
 
@@ -191,7 +191,7 @@
 
         &.is-selected {
             background-color: var(--bs-gray-200);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
         }
 
         &.is-hovering {
@@ -201,8 +201,8 @@
 }
 
 .el-checkbox {
-    --el-checkbox-text-color: var(--bs-body-color);
-    --el-checkbox-checked-text-color: var(--bs-body-color);
+    --el-checkbox-text-color: var(--content-content-primary);
+    --el-checkbox-checked-text-color: var(--content-content-primary);
     --el-checkbox-font-size: var(--font-size-base);
 
     html.dark & {
@@ -226,10 +226,10 @@
 }
 
 .el-input-number__increase, .el-input-number__decrease {
-    background: var(--bs-white);
+    background: var(--ks-background-card);
 
     html.dark & {
-        background: var(--bs-card-bg);
+        background: var(--ks-background-card);
     }
 }
 
@@ -242,7 +242,7 @@
 .el-input-file {
 
     .el-input__inner::file-selector-button {
-        background: var(--bs-primary);
+        background: var(--backgrounds-background-button-primary);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--el-border-radius-base);
@@ -304,7 +304,7 @@ form.ks-horizontal {
     --el-table-border-color: var(--bs-border-color);
     --el-table-border: 1px solid var(--bs-border-color);
 
-    --el-table-header-text-color: var(--bs-body-color);
+    --el-table-header-text-color: var(--content-content-primary);
     --el-table-row-hover-bg-color: var(--bs-gray-200);
     --el-table-header-bg-color: #f5f5ff;
     --el-table-tr-bg-color: var(--bs-white);
@@ -325,7 +325,7 @@ form.ks-horizontal {
             background: var(--bs-gray-100-darken-2);
 
             html.dark & {
-                background: var(--bs-body-bg);
+                background: var(--backgrounds-background-body);
             }
         }
     }
@@ -366,7 +366,7 @@ form.ks-horizontal {
         }
 
         a, button {
-            color: var(--bs-body-color);
+            color: var(--content-content-primary);
             width: 28px;
             border-radius: var(--bs-border-radius);
             text-align: center;
@@ -416,7 +416,7 @@ form.ks-horizontal {
 .el-tabs {
     .el-tabs__active-bar {
         height: 4px;
-        background-color: var(--bs-primary);
+        background-color: var(--backgrounds-background-button-primary);
     }
 
     .el-tabs__item {
@@ -434,7 +434,7 @@ form.ks-horizontal {
         }
 
         &.is-active > * {
-            color: var(--bs-primary);
+            background-color: var(--content-content-link);
             font-weight: bold;
         }
 
@@ -455,14 +455,14 @@ form.ks-horizontal {
 
         .el-tabs__item {
             &.is-active > * {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }
 
 
     &.top {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
         border-bottom: 1px solid var(--bs-border-color);
         padding: calc(var(--spacer) / 2);
         position: sticky;
@@ -493,7 +493,7 @@ form.ks-horizontal {
                 right: -10px;
                 height: 100%;
                 width: 10px;
-                background: linear-gradient(90deg, var(--card-bg) 0%, rgba(0, 0, 0, 0) 100%);
+                background: linear-gradient(90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
                 z-index: calc(var(--el-index-normal) + 2);
             }
         }
@@ -506,7 +506,7 @@ form.ks-horizontal {
                 left: -15px;
                 height: 100%;
                 width: 15px;
-                background: linear-gradient(-90deg, var(--card-bg) 0%, rgba(0, 0, 0, 0) 100%);
+                background: linear-gradient(-90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
                 z-index: calc(var(--el-index-normal) + 2);
             }
         }
@@ -527,7 +527,7 @@ form.ks-horizontal {
         html.dark & {
             .el-tabs__item {
                 &.is-active > a {
-                    color: var(--bs-body-color);
+                    color: var(--content-content-primary);
                 }
             }
         }
@@ -538,8 +538,8 @@ form.ks-horizontal {
             margin-bottom: 1px; // fix tabs overflowing over the bottom line
         }
         & > .el-tabs__header .el-tabs__nav{
-            background-color: var(--card-bg);
-            border-bottom: 1px solid var(--el-border-color-light);
+            background-color: var(--backgrounds-background-card);
+            border-bottom: 1px solid var(--border-border-inactive);
             gap: 2px;
             .el-tabs__item{
                 padding: 0 !important;
@@ -552,22 +552,22 @@ form.ks-horizontal {
                     border-top-right-radius: 3px;
                 }
                 a{
-                    padding-top: 7px;
-                    padding-bottom: 7px;
+                    padding-top: .5rem;
+                    padding-bottom: .5rem;
                     font-weight: normal!important;
-                    color: var(--el-text-color-regular);
+                    color: var(--ks-content-primary);
                     &:hover{
-                        background-color: var(--card-bg-hover);
+                        // create an outline without cutting the rounded corners
+                        box-shadow: 0 0 0 1px var(--border-border-active);
                     }
                 }
                 &.is-active a{
-                    box-shadow:
-                        0 0 0 1px var(--el-bg-color),
-                        0 0 0 2px var(--bs-primary);
-                    background-color: var(--el-bg-color);
-                    color: var(--token-content-link);
+                    background-color: var(--backgrounds-background-body);
+                    color: var(--content-content-link);
                     position: relative;
                     z-index: 1;
+                    // create an outline without cutting the rounded corners
+                    box-shadow: 0 0 0 1px var(--border-border-active);
                 }
             }
         }
@@ -580,8 +580,8 @@ form.ks-horizontal {
     --el-card-border-color: var(--bs-border-color);
     --el-card-border-radius: var(--bs-border-radius-lg);
     --el-card-padding: #{$spacer};
-    color: var(--bs-body-color);
-    background-color: var(--card-bg);
+    color: var(--content-content-primary);
+    background-color: var(--ks-background-card);
 
     .el-card__header {
         padding: $card-cap-padding-y $card-cap-padding-x;
@@ -592,8 +592,8 @@ form.ks-horizontal {
 
 // message box
 .el-message-box {
-    --el-messagebox-title-color: var(--bs-body-color);
-    border: 1px solid var(--bs-border-color);
+    --el-messagebox-title-color: var(--content-content-primary);
+    border: 1px solid var(--ks-border-primary);
 
     &.full-screen {
         max-width: 80%;
@@ -617,7 +617,7 @@ form.ks-horizontal {
     }
 }
 
-// popper
+// popper (tooltip menu)
 .el-popper {
     border-radius: $border-radius-lg;
 
@@ -626,10 +626,10 @@ form.ks-horizontal {
     }
 
     &.is-light {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         .el-popper__arrow::before {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
         }
     }
 
@@ -637,10 +637,10 @@ form.ks-horizontal {
         color: var(--bs-gray-100);
 
         background: var(--bs-gray-900);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         .el-popper__arrow::before {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             background-color: var(--bs-gray-900);
         }
 
@@ -658,22 +658,16 @@ form.ks-horizontal {
 // message box
 .el-pagination {
     --el-pagination-bg-color: transparent;
-    --el-pagination-text-color: var(--bs-body-color);
-    --el-pagination-button-color: var(--bs-body-color);
-    --el-pagination-hover-color: var(--bs-purple);
-
-    //html.dark & {
-    //    --el-pagination-button-bg-color: var(--bs-gray-200);
-    //    --el-pagination-button-color: var(--bs-gray-600);
-    //    --el-pagination-hover-color: var(--bs-gray-800);
-    //}
+    --el-pagination-text-color: var(--content-content-primary);
+    --el-pagination-button-color: var(--content-content-link);
+    --el-pagination-hover-color: var(--content-content-link-hover);
 
     li, button {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-border-inactive);
         margin-right: 3px;
 
         &.is-active {
-            border: 1px solid var(--bs-purple);
+            border: 1px solid var(--border-border-active);
         }
     }
 }
@@ -683,7 +677,7 @@ form.ks-horizontal {
 .el-dropdown__popper {
     font-size: var(--el-font-size-small);
     --el-dropdown-menuItem-hover-fill: var(--bs-gray-300);
-    --el-dropdown-menuItem-hover-color: var(--bs-body-color);
+    --el-dropdown-menuItem-hover-color: var(--content-content-primary);
 
     &.separator-m-0 .el-dropdown-menu__item--divided {
         margin: 0;
@@ -734,7 +728,7 @@ form.ks-horizontal {
     }
 
     .el-input__prefix, .el-input__inner, .el-input__inner::placeholder {
-        background-color: var(--bs-body-bg);
+        background-color: var(--backgrounds-background-body);
     }
 
     .el-input__suffix-inner {
@@ -755,7 +749,7 @@ form.ks-horizontal {
         padding: 0 var(--spacer);
 
         a {
-            color: var(--bs-body-color);
+            color: var(--content-content-primary);
             justify-content: space-between;
         }
     }
@@ -829,7 +823,7 @@ form.ks-horizontal {
         margin-bottom: 0;
         background-color: var(--bs-gray-300);
         border-bottom: 1px solid var(--bs-border-color);
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
         font-weight: bold;
         font-size: var(--font-size-lg);
 
@@ -842,7 +836,7 @@ form.ks-horizontal {
 // popover
 .el-popper {
     .el-popover__title {
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
     }
 }
 
@@ -856,8 +850,8 @@ form.ks-horizontal {
 
 // collapse
 .el-collapse {
-    --el-collapse-content-text-color: var(--bs-body-color);
-    --el-collapse-header-text-color: var(--bs-body-color);
+    --el-collapse-content-text-color: var(--content-content-primary);
+    --el-collapse-header-text-color: var(--content-content-primary);
     --el-collapse-header-border-color: var(--bs-border-color);
     --el-collapse-header-height: auto;
     --el-collapse-header-font-size: var(--font-size-base);
@@ -888,15 +882,10 @@ form.ks-horizontal {
         margin: 0;
     }
 
-
     @each $type in $types {
-        &.el-alert--#{$type} {
+        &.el-alert--#{$type}.is-light {
             border: 1px solid var(--el-color-alert-#{$type});
-            color: var(--el-color-alert-#{$type});
-            @if $type == 'info' {
-                background-color: rgba(14, 59, 154, 0.2);
-                border-color: rgba(23, 97, 253, 1);
-            }
+            #{--el-color-#{$type}}: var(--el-color-alert-#{$type});
         }
     }
 }
@@ -904,7 +893,7 @@ form.ks-horizontal {
 // notifications
 .el-notification {
     --el-notification-border-color: var(--bs-border-color);
-    --el-notification-title-color: var(--bs-body-color);
+    --el-notification-title-color: var(--content-content-primary);
 
     .el-notification__group {
         flex-grow: 2;
@@ -980,7 +969,7 @@ form.ks-horizontal {
 // dialog
 .el-dialog {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
-    background-color: var(--bs-card-bg);
+    background-color: var(--ks-background-card);
 
     .el-dialog__header {
         padding: var(--spacer);
@@ -1007,7 +996,7 @@ form.ks-horizontal {
     }
 
     .el-dialog__headerbtn .el-dialog__close {
-        color: var(--bs-primary);
+        background-color: var(--content-content-link);
 
         html.dark & {
             color: var(--bs-white)
@@ -1097,7 +1086,7 @@ form.ks-horizontal {
             border-color: var(--bs-white);
         }
         .el-step__icon {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             border-radius: 50%;
             background-color: var(--input-bg);
         }
@@ -1127,7 +1116,7 @@ form.ks-horizontal {
 
 .el-switch {
     .el-switch__label {
-        color: var(--bs-body-color);
+        color: var(--content-content-primary);
     }
 }
 

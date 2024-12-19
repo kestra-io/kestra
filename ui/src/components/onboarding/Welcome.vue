@@ -104,11 +104,9 @@
             }
         }
     }
-
 </script>
 
 <style scoped lang="scss">
-
     .main {
         padding: 3rem 1rem 1rem;
         background: var(--el-text-color-primary);
@@ -156,7 +154,7 @@
     .watch {
         font-weight: 500;
         background-color: var(--el-bg-color);
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
         font-size: var(--el-font-size-small);
     }
 
@@ -179,7 +177,7 @@
                 text-align: center;
                 font-size: var(--el-font-size-extra-large);
                 font-weight: 600;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .section-1-desc {
@@ -187,7 +185,7 @@
                 font-weight: 500;
                 font-size: 1rem;
                 text-align: center;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
 

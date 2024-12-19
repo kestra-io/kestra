@@ -581,7 +581,7 @@ $spacing: 20px;
             padding-bottom: $spacing;
 
             & div {
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border: 1px solid var(--bs-gray-300);
                 border-radius: $border-radius;
 
@@ -640,7 +640,7 @@ $spacing: 20px;
 
             & > div {
                 height: 100%;
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border: 1px solid var(--bs-gray-300);
                 border-radius: $border-radius;
 
@@ -659,11 +659,11 @@ $spacing: 20px;
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
+        background: var(--ks-background-button-primary);
         border-radius: 0px;
     }
 }

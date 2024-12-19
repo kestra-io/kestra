@@ -182,7 +182,7 @@
 
             &:hover {
                 background: none !important;
-                color: var(--bs-primary) !important;
+                color: var(--ks-content-link) !important;
             }
         }
 
@@ -306,7 +306,7 @@
             padding-bottom: 16px;
             font-size: 20px;
             background: transparent;
-            color: var(--bs-secondary);
+            color: var(--ks-content-secondary);
             border-top: 1px solid var(--bs-border-color);
 
             .el-button {

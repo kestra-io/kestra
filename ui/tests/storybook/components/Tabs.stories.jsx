@@ -1,4 +1,4 @@
-import { ref, getCurrentInstance } from "vue";
+import {ref, getCurrentInstance} from "vue";
 import Tabs from "../../../src/components/Tabs.vue";
 
 const meta = {

@@ -245,6 +245,6 @@
 }
 
 .selected {
-    color: var(--bs-purple);
+    color: var(--ks-content-link);
 }
 </style>

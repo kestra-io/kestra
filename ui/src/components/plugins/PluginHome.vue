@@ -223,7 +223,7 @@
 
         &::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
-            background: var(--bs-primary);
+            background: var(--ks-background-button-primary);
         }
     }
 

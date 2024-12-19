@@ -205,7 +205,7 @@
 <style scoped lang="scss">
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius-lg);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
 
         .el-collapse-item__header {

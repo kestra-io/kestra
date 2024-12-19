@@ -1272,7 +1272,7 @@
 
     .main-editor {
         padding: calc(var(--spacer) / 2) 0px;
-        background: var(--bs-body-bg);
+        background: var(--ks-background-body);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;
@@ -1318,11 +1318,11 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-background-button-primary);
             border-radius: 20px;
         }
     }
@@ -1422,7 +1422,7 @@
             color: var(--bs-gray-700);
 
             &:hover {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }

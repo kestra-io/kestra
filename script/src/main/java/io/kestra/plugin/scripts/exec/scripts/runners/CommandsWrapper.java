@@ -132,11 +132,14 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     public ScriptOutput run() throws Exception {
-        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
 
             List<NamespaceFile> matchedNamespaceFiles = runContext.storage()
                 .namespace()
-                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude());
+                .findAllFilesMatching(
+                    runContext.render(this.namespaceFiles.getInclude()).asList(String.class),
+                    runContext.render(this.namespaceFiles.getExclude()).asList(String.class)
+                );
 
             matchedNamespaceFiles.forEach(Rethrow.throwConsumer(namespaceFile -> {
                     InputStream content = runContext.storage().getFile(namespaceFile.uri());

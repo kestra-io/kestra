@@ -2,6 +2,7 @@ package io.kestra.plugin.scripts.exec;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.runners.TargetOS;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -22,6 +23,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,26 +56,20 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Schema(
         title = "A list of commands that will run before the `commands`, allowing to set up the environment e.g. `pip install -r requirements.txt`."
     )
-    @PluginProperty(dynamic = true)
-    protected List<String> beforeCommands;
+    protected Property<List<String>> beforeCommands;
 
     @Schema(
         title = "Additional environment variables for the current process."
     )
-    @PluginProperty(
-        additionalProperties = String.class,
-        dynamic = true
-    )
-    protected Map<String, String> env;
+    protected Property<Map<String, String>> env;
 
     @Builder.Default
     @Schema(
         title = "Whether to set the task state to `WARNING` when any `stdErr` output is detected.",
         description = "Note that a script error will set the state to `FAILED` regardless."
     )
-    @PluginProperty
     @NotNull
-    protected Boolean warningOnStdErr = true;
+    protected Property<Boolean> warningOnStdErr = Property.of(true);
 
     @Builder.Default
     @Schema(
@@ -90,14 +86,13 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         description = "If set to `false` all commands will be executed one after the other. The final state of task execution is determined by the last command. Note that this property maybe be ignored if a non compatible interpreter is specified." +
             "\nYou can also disable it if your interpreter does not support the `set -e`option."
     )
-    @PluginProperty
-    protected Boolean failFast = true;
+    protected Property<Boolean> failFast = Property.of(true);
 
     private NamespaceFiles namespaceFiles;
 
     private Object inputFiles;
 
-    private List<String> outputFiles;
+    private Property<List<String>> outputFiles;
 
     @Schema(
         title = "Whether to setup the output directory mechanism.",
@@ -112,7 +107,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         title = "The target operating system where the script will run."
     )
     @Builder.Default
-    protected TargetOS targetOS = TargetOS.AUTO;
+    protected Property<TargetOS> targetOS = Property.of(TargetOS.AUTO);
 
     @Schema(
         title = "Deprecated - use the 'taskRunner' property instead.",
@@ -125,8 +120,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Schema(
         title = "The task runner container image, only used if the task runner is container-based."
     )
-    @PluginProperty(dynamic = true)
-    public abstract String getContainerImage();
+    public abstract Property<String> getContainerImage();
 
     /**
      * Allow setting Docker options defaults values.
@@ -151,27 +145,28 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             runContext.logger().debug("Using task runner '{}'", this.getTaskRunner().getType());
         }
 
+        Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);
         return new CommandsWrapper(runContext)
-            .withEnv(this.getEnv())
-            .withWarningOnStdErr(this.getWarningOnStdErr())
+            .withEnv(renderedEnv.isEmpty() ? new HashMap<>() : renderedEnv)
+            .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withRunnerType(this.getRunner())
-            .withContainerImage(runContext.render(this.getContainerImage()))
+            .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
             .withTaskRunner(this.getTaskRunner())
             .withDockerOptions(this.getDocker() != null ? this.injectDefaults(this.getDocker()) : null)
             .withNamespaceFiles(this.getNamespaceFiles())
             .withInputFiles(this.getInputFiles())
-            .withOutputFiles(this.getOutputFiles())
+            .withOutputFiles(runContext.render(this.getOutputFiles()).asList(String.class))
             .withEnableOutputDirectory(this.getOutputDirectory())
             .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
-            .withTargetOS(this.getTargetOS());
+            .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow());
     }
 
-    protected List<String> getBeforeCommandsWithOptions() {
-        return mayAddExitOnErrorCommands(this.getBeforeCommands());
+    protected List<String> getBeforeCommandsWithOptions(RunContext runContext) throws IllegalVariableEvaluationException {
+        return mayAddExitOnErrorCommands(runContext.render(this.getBeforeCommands()).asList(String.class), runContext);
     }
 
-    protected List<String> mayAddExitOnErrorCommands(List<String> commands) {
-        if (!this.getFailFast()) {
+    protected List<String> mayAddExitOnErrorCommands(List<String> commands, RunContext runContext) throws IllegalVariableEvaluationException {
+        if (!runContext.render(this.getFailFast()).as(Boolean.class).orElseThrow()) {
             return commands;
         }
 

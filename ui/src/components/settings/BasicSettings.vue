@@ -322,7 +322,6 @@
             },
             onTheme(value) {
                 this.pendingSettings.theme = value;
-                Utils.switchTheme(value);            
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
@@ -402,6 +401,10 @@
                         break
                     case "autofoldTextEditor":
                         localStorage.setItem(key, this.pendingSettings[key])
+                        break
+                    case "theme":
+                        Utils.switchTheme(this.pendingSettings[key]);
+                        localStorage.setItem(key, Utils.getTheme())
                         break
                     default:
                         if (storedKey) {

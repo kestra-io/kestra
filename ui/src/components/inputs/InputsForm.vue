@@ -201,263 +201,263 @@
     </el-alert>
 </template>
 <script setup>
-import ValidationError from "../flows/ValidationError.vue";
+    import ValidationError from "../flows/ValidationError.vue";
 </script>
 <script>
-import {mapState} from "vuex";
-import debounce from "lodash/debounce";
-import Editor from "../../components/inputs/Editor.vue";
-import Markdown from "../layout/Markdown.vue";
-import Inputs from "../../utils/inputs";
-import YamlUtils from "../../utils/yamlUtils.js";
-import DurationPicker from "./DurationPicker.vue";
-import {inputsToFormDate} from "../../utils/submitTask"
+    import {mapState} from "vuex";
+    import debounce from "lodash/debounce";
+    import Editor from "../../components/inputs/Editor.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import Inputs from "../../utils/inputs";
+    import YamlUtils from "../../utils/yamlUtils.js";
+    import DurationPicker from "./DurationPicker.vue";
+    import {inputsToFormDate} from "../../utils/submitTask"
 
-export default {
-    computed: {
-        ...mapState("auth", ["user"]),
-        YamlUtils() {
-            return YamlUtils
-        },
-        inputErrors() {
-            // we only keep errors that don't target an input directly
-            const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
+    export default {
+        computed: {
+            ...mapState("auth", ["user"]),
+            YamlUtils() {
+                return YamlUtils
+            },
+            inputErrors() {
+                // we only keep errors that don't target an input directly
+                const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
 
-            return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
-                keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
-                null
-        }
-    },
-    components: {Editor, Markdown, DurationPicker},
-    props: {
-        executeClicked: {
-            type: Boolean,
-            default: false
-        },
-        modelValue: {
-            default: () => ({}),
-            type: Object
-        },
-        initialInputs: {
-            type: Array,
-            default: () => []
-        },
-        flow: {
-            type: Object,
-            default: undefined,
-        },
-        execution: {
-            type: Object,
-            default: undefined,
-        },
-    },
-    data() {
-        return {
-            inputsValues: this.modelValue,
-            /**
-             * To be able to compare values in a watcher, we need to return a new object
-             * We cannot compare proxied objects, that is the sole purpose of this variable.
-             * @see https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
-             */
-            previousInputsValues: {},
-            inputsMetaData: [],
-            inputsValidation: [],
-            multiSelectInputs: {},
-            inputsValidated: new Set(),
-        };
-    },
-    emits: ["update:modelValue", "confirm", "validation"],
-    created() {
-        this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
-
-        this.validateInputs().then(() => {
-            this.$watch("inputsValues", {
-                handler(val) {
-                    // only revalidate if values have changed
-                    if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                        // only revalidate if values are stable for more than 500ms
-                        // to avoid too many calls to the server
-                        debounce(this.validateInputs, 500)();
-                        this.$emit("update:modelValue", this.inputsValues);
-                    }
-                    this.previousInputsValues = JSON.parse(JSON.stringify(val))
-                },
-                deep: true
-            });
-        });
-    },
-    mounted() {
-        setTimeout(() => {
-            const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
-            if (input && !input.className.includes("mx-input")) {
-                input.focus()
-            }
-        }, 500)
-
-        this._keyListener = function(e) {
-            // Ctrl/Control + Enter
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey))  {
-                e.preventDefault();
-                this.onSubmit();
-            }
-        };
-
-        document.addEventListener("keydown", this._keyListener.bind(this));
-    },
-    beforeUnmount() {
-        document.removeEventListener("keydown", this._keyListener);
-    },
-    methods: {
-        inputError(id) {
-            // if this input has not been edited yet
-            // showing any error is annoying
-            if(!this.inputsValidated.has(id)){
-                return null;
-            }
-
-            const errors = this.inputsMetaData
-                .filter((it) => {
-                    return it.id === id && it.errors && it.errors.length > 0;
-                })
-                .map(it => it.errors.map(err => err.message).join("\n"))
-
-            return errors.length > 0 ? errors[0] : null;
-        },
-        updateDefaults() {
-            for (const input of this.inputsMetaData || []) {
-                if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
-                    const {type, defaults} = input;
-                    if (type === "MULTISELECT") {
-                        this.multiSelectInputs[input.id] = input.defaults;
-                    }
-                    this.inputsValues[input.id] = Inputs.normalize(type, defaults);
-                }
+                return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
+                    keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
+                    null
             }
         },
-        onChange(input) {
-            // give a second for the user to finish their edit
-            // and for the server to return with validated content
-            setTimeout(() => {
-                this.inputsValidated.add(input.id);
-            }, 300);
-            this.$emit("update:modelValue", this.inputsValues);
+        components: {Editor, Markdown, DurationPicker},
+        props: {
+            executeClicked: {
+                type: Boolean,
+                default: false
+            },
+            modelValue: {
+                default: () => ({}),
+                type: Object
+            },
+            initialInputs: {
+                type: Array,
+                default: () => []
+            },
+            flow: {
+                type: Object,
+                default: undefined,
+            },
+            execution: {
+                type: Object,
+                default: undefined,
+            },
         },
-        onSubmit() {
-            this.$emit("confirm");
+        data() {
+            return {
+                inputsValues: this.modelValue,
+                /**
+                 * To be able to compare values in a watcher, we need to return a new object
+                 * We cannot compare proxied objects, that is the sole purpose of this variable.
+                 * @see https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
+                 */
+                previousInputsValues: {},
+                inputsMetaData: [],
+                inputsValidation: [],
+                multiSelectInputs: {},
+                inputsValidated: new Set(),
+            };
         },
-        onMultiSelectChange(input, e) {
-            this.inputsValues[input.id] = JSON.stringify(e);
-            this.onChange(input);
-        },
-        onFileChange(input, e) {
-            if (!e.target) {
-                return;
-            }
+        emits: ["update:modelValue", "confirm", "validation"],
+        created() {
+            this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
 
-            const files = e.target.files || e.dataTransfer.files;
-            if (!files.length) {
-                return;
-            }
-            this.inputsValues[input.id] = e.target.files[0];
-            this.onChange(input);
-        },
-        onYamlChange(input, e) {
-            this.inputsValues[input.id] = e.target.value;
-            this.onChange(input);
-        },
-        numberHint(input){
-            const {min, max} = input;
-
-            if (min !== undefined && max !== undefined) {
-                if(min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`;
-                return `Minimum value is ${min}, maximum value is ${max}.`;
-            } else if (min !== undefined) {
-                return `Minimum value is ${min}.`;
-            } else if (max !== undefined) {
-                return `Maximum value is ${max}.`;
-            } else return false;
-        },
-        async validateInputs() {
-            if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
-                return;
-            }
-
-            const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
-
-            const metadataCallback = (response) => {
-                this.inputsMetaData = response.inputs.reduce((acc,it) => {
-                    if(it.enabled){
-                        acc.push({...it.input, errors: it.errors});
-                    }
-                    return acc;
-                }, [])
-                this.updateDefaults();
-            }
-
-            if (this.flow !== undefined) {
-                const options = {namespace: this.flow.namespace, id: this.flow.id};
-                const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
-
-                metadataCallback(data);
-
-            } else if (this.execution !== undefined) {
-                const options = {id: this.execution.id};
-                const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
-
-                metadataCallback(data);
-            } else {
-                this.$emit("validation", {
-                    formData: formData,
-                    callback: (response) => {
-                        metadataCallback(response);
-                    }
-                });
-            }
-        },
-        requiredRules(input) {
-            if(input.required === false)
-                return undefined
-
-            if(input.type === "BOOLEAN"){
-                return [{
-                    validator: (_, val, callback) => {
-                        if(val === "undefined"){
-                            return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+            this.validateInputs().then(() => {
+                this.$watch("inputsValues", {
+                    handler(val) {
+                        // only revalidate if values have changed
+                        if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                            // only revalidate if values are stable for more than 500ms
+                            // to avoid too many calls to the server
+                            debounce(this.validateInputs, 500)();
+                            this.$emit("update:modelValue", this.inputsValues);
                         }
-                        callback()
+                        this.previousInputsValues = JSON.parse(JSON.stringify(val))
                     },
-                }]
-            }
+                    deep: true
+                });
+            });
+        },
+        mounted() {
+            setTimeout(() => {
+                const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
+                if (input && !input.className.includes("mx-input")) {
+                    input.focus()
+                }
+            }, 500)
 
-            if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
-                return [
-                    {
-                        required: true,
-                        validator: (_, __, callback) => {
-                            const val = input.type === "MULTISELECT" ? this.multiSelectInputs[input.id] : this.inputsValues[input.id]
-                            if(!val?.length){
+            this._keyListener = function(e) {
+                // Ctrl/Control + Enter
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey))  {
+                    e.preventDefault();
+                    this.onSubmit();
+                }
+            };
+
+            document.addEventListener("keydown", this._keyListener.bind(this));
+        },
+        beforeUnmount() {
+            document.removeEventListener("keydown", this._keyListener);
+        },
+        methods: {
+            inputError(id) {
+                // if this input has not been edited yet
+                // showing any error is annoying
+                if(!this.inputsValidated.has(id)){
+                    return null;
+                }
+
+                const errors = this.inputsMetaData
+                    .filter((it) => {
+                        return it.id === id && it.errors && it.errors.length > 0;
+                    })
+                    .map(it => it.errors.map(err => err.message).join("\n"))
+
+                return errors.length > 0 ? errors[0] : null;
+            },
+            updateDefaults() {
+                for (const input of this.inputsMetaData || []) {
+                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
+                        const {type, defaults} = input;
+                        if (type === "MULTISELECT") {
+                            this.multiSelectInputs[input.id] = input.defaults;
+                        }
+                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
+                    }
+                }
+            },
+            onChange(input) {
+                // give a second for the user to finish their edit
+                // and for the server to return with validated content
+                setTimeout(() => {
+                    this.inputsValidated.add(input.id);
+                }, 300);
+                this.$emit("update:modelValue", this.inputsValues);
+            },
+            onSubmit() {
+                this.$emit("confirm");
+            },
+            onMultiSelectChange(input, e) {
+                this.inputsValues[input.id] = JSON.stringify(e);
+                this.onChange(input);
+            },
+            onFileChange(input, e) {
+                if (!e.target) {
+                    return;
+                }
+
+                const files = e.target.files || e.dataTransfer.files;
+                if (!files.length) {
+                    return;
+                }
+                this.inputsValues[input.id] = e.target.files[0];
+                this.onChange(input);
+            },
+            onYamlChange(input, e) {
+                this.inputsValues[input.id] = e.target.value;
+                this.onChange(input);
+            },
+            numberHint(input){
+                const {min, max} = input;
+
+                if (min !== undefined && max !== undefined) {
+                    if(min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`;
+                    return `Minimum value is ${min}, maximum value is ${max}.`;
+                } else if (min !== undefined) {
+                    return `Minimum value is ${min}.`;
+                } else if (max !== undefined) {
+                    return `Maximum value is ${max}.`;
+                } else return false;
+            },
+            async validateInputs() {
+                if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
+                    return;
+                }
+
+                const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
+
+                const metadataCallback = (response) => {
+                    this.inputsMetaData = response.inputs.reduce((acc,it) => {
+                        if(it.enabled){
+                            acc.push({...it.input, errors: it.errors});
+                        }
+                        return acc;
+                    }, [])
+                    this.updateDefaults();
+                }
+
+                if (this.flow !== undefined) {
+                    const options = {namespace: this.flow.namespace, id: this.flow.id};
+                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+
+                    metadataCallback(data);
+
+                } else if (this.execution !== undefined) {
+                    const options = {id: this.execution.id};
+                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+
+                    metadataCallback(data);
+                } else {
+                    this.$emit("validation", {
+                        formData: formData,
+                        callback: (response) => {
+                            metadataCallback(response);
+                        }
+                    });
+                }
+            },
+            requiredRules(input) {
+                if(input.required === false)
+                    return undefined
+
+                if(input.type === "BOOLEAN"){
+                    return [{
+                        validator: (_, val, callback) => {
+                            if(val === "undefined"){
                                 return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
                             }
                             callback()
                         },
-                        trigger: "change",
-                    }
-                ]
+                    }]
+                }
+
+                if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
+                    return [
+                        {
+                            required: true,
+                            validator: (_, __, callback) => {
+                                const val = input.type === "MULTISELECT" ? this.multiSelectInputs[input.id] : this.inputsValues[input.id]
+                                if(!val?.length){
+                                    return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                                }
+                                callback()
+                            },
+                            trigger: "change",
+                        }
+                    ]
+                }
+
+                return undefined
             }
-
-            return undefined
-        }
-    },
-    watch: {
-        flow () {
-            this.validateInputs();
-
         },
-        execution () {
-            this.validateInputs();
+        watch: {
+            flow () {
+                this.validateInputs();
+
+            },
+            execution () {
+                this.validateInputs();
+            }
         }
-    }
-};
+    };
 </script>
 
 <style scoped lang="scss">

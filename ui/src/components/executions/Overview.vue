@@ -337,7 +337,7 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
@@ -347,7 +347,7 @@
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {

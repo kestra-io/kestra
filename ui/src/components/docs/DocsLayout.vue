@@ -40,7 +40,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .sidebar {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
         padding: calc(var(--spacer) * 2);
         height: calc(100vh - 80px);
         top: 80px;
@@ -52,7 +52,7 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {

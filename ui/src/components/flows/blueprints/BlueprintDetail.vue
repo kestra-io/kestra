@@ -250,7 +250,7 @@
             display: flex;
             flex-wrap: wrap;
             > div {
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border-radius: var(--bs-border-radius);
                 min-width : 100px;
                 width: 100px;
@@ -285,7 +285,7 @@
             display: flex;
                         
             .el-tag.el-tag--info {
-                background-color: var(--card-bg);
+                background-color: var(--ks-background-card);
                 padding: 15px 10px;
                 color: var(--ks-content-primary);
                 text-transform: capitalize;

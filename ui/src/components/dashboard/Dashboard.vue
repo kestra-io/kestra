@@ -541,19 +541,19 @@
     onBeforeMount(() => {
         handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
 
-    // if (props.flowID) {
-    //     router.replace({query: {...route.query, flowId: props.flowID}});
+        // if (props.flowID) {
+        //     router.replace({query: {...route.query, flowId: props.flowID}});
+        // }
+
+    // if (!route.query.namespace && props.restoreURL) {
+    //     router.replace({query: {...route.query, namespace: defaultNamespace}});
+    //     filters.value.namespace = route.query.namespace || defaultNamespace;
+    // }
+    // else {
+    //     filters.value.namespace = null
     // }
 
-        // if (!route.query.namespace && props.restoreURL) {
-        //     router.replace({query: {...route.query, namespace: defaultNamespace}});
-        //     filters.value.namespace = route.query.namespace || defaultNamespace;
-        // }
-        // else {
-        //     filters.value.namespace = null
-        // }
-
-        // updateParams(route.query);
+    // updateParams(route.query);
     });
 
     watch(
@@ -581,7 +581,7 @@ $spacing: 20px;
             padding-bottom: $spacing;
 
             & div {
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border: 1px solid var(--bs-gray-300);
                 border-radius: $border-radius;
 
@@ -640,7 +640,7 @@ $spacing: 20px;
 
             & > div {
                 height: 100%;
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border: 1px solid var(--bs-gray-300);
                 border-radius: $border-radius;
 
@@ -659,7 +659,7 @@ $spacing: 20px;
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     &::-webkit-scrollbar-thumb {

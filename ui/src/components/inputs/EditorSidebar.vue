@@ -1050,7 +1050,7 @@
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     &::-webkit-scrollbar-thumb {
@@ -1074,7 +1074,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 .sidebar {
-    background: var(--card-bg);
+    background: var(--ks-background-card);
     border-right: 1px solid var(--bs-border-color);
 
     .empty {

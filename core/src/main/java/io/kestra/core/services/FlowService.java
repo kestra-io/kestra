@@ -47,8 +47,12 @@ public class FlowService {
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override 
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("extend", "revision", "deleted", "source");
-                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
+                String name = m.getName();
+                // Ignore both the extend property and any properties that start with "extend."
+                return exclusions.contains(name) || 
+                       name.equals("extend") || 
+                       name.startsWith("extend.");
             }
         });
 

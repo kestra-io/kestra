@@ -9,26 +9,34 @@
 <script setup lang="ts">
     import {computed} from "vue";
 
-    const props = defineProps({option: {type: Object, required: true}});
+    import {CurrentItem} from "../utils/types";
+
+    const props = defineProps<{ option: CurrentItem }>();
 
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
 
     const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
 
-    const label = computed(() => props.option?.label);
+    const UNKNOWN = "unknown";
+
+    const label = computed(() => props.option.label);
     const comparator = computed(() => props.option?.comparator?.label);
     const value = computed(() => {
         const {value, label, comparator} = props.option;
 
         if (!value.length) return;
 
-        if (label !== "absolute_date" && comparator !== "between") {
+        if (label !== "absolute_date" && comparator?.label !== "between") {
             return `${value.join(", ")}`;
         }
 
-        const {startDate, endDate} = value[0];
-        return `${startDate ? formatter(new Date(startDate)) : "unknown"}:and:${endDate ? formatter(new Date(endDate)) : "unknown"}`;
+        if (typeof value[0] !== "string") {
+            const {startDate, endDate} = value[0];
+            return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+        }
+
+        return UNKNOWN;
     });
 </script>
 

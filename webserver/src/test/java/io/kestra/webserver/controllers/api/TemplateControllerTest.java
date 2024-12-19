@@ -1,12 +1,20 @@
 package io.kestra.webserver.controllers.api;
 
+import static io.micronaut.http.HttpRequest.DELETE;
+import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpRequest.PUT;
+import static io.micronaut.http.HttpStatus.NO_CONTENT;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Property;
@@ -21,25 +29,18 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipFile;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static io.micronaut.http.HttpRequest.*;
-import static io.micronaut.http.HttpStatus.NO_CONTENT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+@KestraTest
 @Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
-class TemplateControllerTest extends JdbcH2ControllerTest {
+class TemplateControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -48,11 +49,9 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
     AbstractJdbcTemplateRepository templateRepository;
 
     @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
+    protected void init() {
         templateRepository.findAll(null)
             .forEach(templateRepository::delete);
-
-        super.setup();
     }
 
     private Template createTemplate() {

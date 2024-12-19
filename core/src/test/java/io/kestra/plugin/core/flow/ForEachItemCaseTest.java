@@ -70,8 +70,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 
@@ -132,8 +132,8 @@ public class ForEachItemCaseTest {
             if (execution.getFlowId().equals("for-each-item-subflow")) {
                 log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
                 if (execution.getState().getCurrent().isTerminated()) {
-                    countDownLatch.countDown();
                     triggered.set(execution);
+                    countDownLatch.countDown();
                 }
             }
         });
@@ -180,8 +180,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-failed") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 
@@ -223,8 +223,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-outputs-subflow") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 

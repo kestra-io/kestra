@@ -1,12 +1,12 @@
 <template>
     <section class="d-inline-flex mb-3 filters">
-        <Items :prefix @search="handleClickedItems" />
+        <Items :prefix="ITEMS_PREFIX" @search="handleClickedItems" />
 
         <el-select
             ref="select"
             :model-value="current"
             value-key="label"
-            :placeholder="t('filters.label')"
+            :placeholder="props.placeholder ?? t('filters.label')"
             default-first-option
             allow-create
             filterable
@@ -15,7 +15,7 @@
             placement="bottom"
             :show-arrow="false"
             fit-input-width
-            popper-class="filters-select"
+            :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
@@ -85,7 +85,15 @@
             </template>
         </el-select>
 
-        <el-button-group class="d-inline-flex me-1">
+        <el-button-group
+            class="d-inline-flex"
+            :class="{
+                'me-1':
+                    buttons.refresh.shown ||
+                    buttons.settings.shown ||
+                    dashboards.shown,
+            }"
+        >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button
                     :icon="Magnify"
@@ -93,7 +101,7 @@
                     class="rounded-0"
                 />
             </KestraIcon>
-            <Save :disabled="!current.length" :prefix :current />
+            <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
         </el-button-group>
 
         <el-button-group
@@ -124,6 +132,8 @@
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
+    import {Shown, Buttons, CurrentItem} from "./utils/types";
+
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
     import Label from "./components/Label.vue";
@@ -147,11 +157,11 @@
 
     const emits = defineEmits(["dashboard", "input"]);
     const props = defineProps({
-        prefix: {type: String, required: true},
-        include: {type: Array, required: true},
+        prefix: {type: String, default: undefined},
+        include: {type: Array, default: () => []},
         values: {type: Object, default: undefined},
         buttons: {
-            type: Object,
+            type: Object as () => Buttons,
             default: () => ({
                 refresh: {shown: false, callback: () => {}},
                 settings: {
@@ -161,13 +171,17 @@
             }),
         },
         dashboards: {
-            type: Object,
+            type: Object as () => Shown,
             default: () => ({shown: false}),
         },
+        placeholder: {type: String, default: undefined},
+        searchCallback: {type: Function, default: undefined},
     });
 
+    const ITEMS_PREFIX = props.prefix ?? String(route.name);
+
     import {useFilters} from "./composables/useFilters.js";
-    const {COMPARATORS, OPTIONS} = useFilters(props.prefix);
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
@@ -209,11 +223,17 @@
         }
     };
 
+    const getInputValue = () => select.value?.states.inputValue;
     const handleInputChange = (key) => {
+        if (props.searchCallback) {
+            props.searchCallback(getInputValue());
+            return;
+        }
+
         if (key === "Enter") return;
 
         if (current.value.at(-1)?.label === "user") {
-            emits("input", select.value.states.inputValue);
+            emits("input", getInputValue());
         }
     };
 
@@ -334,7 +354,7 @@
     if (props.include.includes("namespace")) loadNamespaces();
 
     import {useValues} from "./composables/useValues";
-    const {VALUES} = useValues(props.prefix);
+    const {VALUES} = useValues(ITEMS_PREFIX);
 
     const isDatePickerShown = computed(() => {
         const c = current?.value?.at(-1);
@@ -349,7 +369,7 @@
             return namespaceOptions.value;
 
         case "state":
-            return VALUES.EXECUTION_STATES;
+            return props.values?.state || VALUES.EXECUTION_STATES;
 
         case "trigger_state":
             return VALUES.TRIGGER_STATES;
@@ -375,11 +395,17 @@
         case "type":
             return VALUES.TYPES;
 
+        case "service_type":
+            return props.values?.type || [];
+
         case "permission":
             return VALUES.PERMISSIONS;
 
         case "action":
             return VALUES.ACTIONS;
+
+        case "status":
+            return VALUES.STATUSES;
 
         case "aggregation":
             return VALUES.AGGREGATIONS;
@@ -395,12 +421,6 @@
         }
     });
 
-    type CurrentItem = {
-        label: string;
-        value: string[];
-        comparator?: Record<string, any>;
-        persistent?: boolean;
-    };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
@@ -433,6 +453,7 @@
                 else current.value.push({label, value: [v.at(-1)]});
 
                 triggerSearch();
+                closeDropdown();
             }
 
             triggerEnter.value = false;
@@ -458,7 +479,8 @@
     import {encodeParams, decodeParams} from "./utils/helpers.js";
 
     const triggerSearch = () => {
-        router.push({query: encodeParams(current.value, OPTIONS)});
+        if (props.searchCallback) return;
+        else router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter

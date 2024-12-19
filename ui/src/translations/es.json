@@ -1001,7 +1001,9 @@
         "user": "Usuario",
         "task": "Tarea",
         "flow": "Flujo",
-        "type": "Tipo"
+        "type": "Tipo",
+        "status": "Estado",
+        "service_type": "Tipo"
       },
       "settings": {
         "label": "Configuración de la página",
@@ -1032,6 +1034,7 @@
       "empty": "Sin datos.",
       "format": "Escriba el parámetro como 'key:value'",
       "label": "Elegir filtros"
-    }
+    },
+    "custom value": "Valor personalizado"
   }
 }

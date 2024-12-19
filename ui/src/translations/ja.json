@@ -1001,7 +1001,9 @@
         "user": "ユーザー",
         "task": "タスク",
         "flow": "フロー",
-        "type": "タイプ"
+        "type": "タイプ",
+        "status": "ステータス",
+        "service_type": "タイプ"
       },
       "settings": {
         "label": "ページ設定",
@@ -1032,6 +1034,7 @@
       "empty": "データがありません。",
       "format": "「key:value」としてパラメータを入力してください。",
       "label": "フィルターを選択"
-    }
+    },
+    "custom value": "カスタム value"
   }
 }

@@ -1001,7 +1001,9 @@
         "user": "Benutzer",
         "task": "Aufgabe",
         "flow": "Flow",
-        "type": "Typ"
+        "type": "Typ",
+        "status": "Status",
+        "service_type": "Typ"
       },
       "settings": {
         "label": "Seiteneinstellungen",
@@ -1032,6 +1034,7 @@
       "empty": "Keine Daten.",
       "format": "Geben Sie den Parameter als 'key:value' ein",
       "label": "Filter auswählen"
-    }
+    },
+    "custom value": "Benutzerdefinierter Wert"
   }
 }

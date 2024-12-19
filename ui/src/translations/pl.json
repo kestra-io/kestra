@@ -1001,7 +1001,9 @@
         "user": "Użytkownik",
         "task": "Zadanie",
         "flow": "Flow",
-        "type": "Typ"
+        "type": "Typ",
+        "status": "Status",
+        "service_type": "Typ"
       },
       "settings": {
         "label": "Ustawienia strony",
@@ -1032,6 +1034,7 @@
       "empty": "Brak danych.",
       "format": "Wpisz parametr jako 'key:value'",
       "label": "Wybierz filtry"
-    }
+    },
+    "custom value": "Wartość niestandardowa"
   }
 }

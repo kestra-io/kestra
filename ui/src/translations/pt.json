@@ -1001,7 +1001,9 @@
         "user": "Usuário",
         "task": "Tarefa",
         "flow": "Fluxo",
-        "type": "Tipo"
+        "type": "Tipo",
+        "status": "Status",
+        "service_type": "Tipo"
       },
       "settings": {
         "label": "Configurações da página",
@@ -1032,6 +1034,7 @@
       "empty": "Sem dados.",
       "format": "Digite o parâmetro como 'key:value'",
       "label": "Escolher filtros"
-    }
+    },
+    "custom value": "Valor personalizado"
   }
 }

@@ -1012,8 +1012,10 @@
         "metric": "Metric",
         "user": "User",
         "type": "Type",
+        "service_type": "Type",
         "permission": "Permission",
         "action": "Action",
+        "status": "Status",
         "details": "Details",
         "aggregation": "Aggregation",
         "relative_date": "Relative date",
@@ -1047,6 +1049,7 @@
         "label": "Page settings",
         "show_chart": "Show main chart"
       }
-    }
+    },
+    "custom value": "Custom value"
   }
 }

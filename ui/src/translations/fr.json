@@ -1001,7 +1001,9 @@
         "user": "Utilisateur",
         "task": "Tâche",
         "flow": "Flux",
-        "type": "Type"
+        "type": "Type",
+        "status": "Statut",
+        "service_type": "Type"
       },
       "settings": {
         "label": "Paramètres de la page",
@@ -1032,6 +1034,7 @@
       "empty": "Aucune donnée.",
       "format": "Tapez le paramètre comme 'key:value'",
       "label": "Choisir des filtres"
-    }
+    },
+    "custom value": "Valeur personnalisée"
   }
 }

@@ -2,6 +2,8 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
@@ -14,7 +16,6 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.jcodings.util.Hash;
 import org.junit.jupiter.api.Test;
 
 import jakarta.validation.ConstraintViolationException;
@@ -32,16 +33,19 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class InputsTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class InputsTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private RunnerUtils runnerUtils;
 
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
@@ -102,6 +106,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void missingRequired() {
         HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
         inputs.put("string", null);
@@ -110,6 +115,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void nonRequiredNoDefaultNoValueIsNull() {
         HashMap<String, Object> inputsWithMissingOptionalInput = new HashMap<>(inputs);
         inputsWithMissingOptionalInput.remove("bool");
@@ -120,6 +126,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
 
@@ -159,6 +166,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void allValidTypedInputs() {
         Map<String, Object> typeds = typedInputs(inputs);
         typeds.put("int", 42);
@@ -173,6 +181,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputFlow() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -201,6 +210,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedStringBadValue() {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("validatedString", "foo");
@@ -211,6 +221,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedIntegerBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedInt", "9");
@@ -226,6 +237,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedDateBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDate", "2022-01-01");
@@ -241,6 +253,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedDateTimeBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDateTime", "2022-01-01T00:00:00Z");
@@ -256,6 +269,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedDurationBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDuration", "PT1S");
@@ -271,6 +285,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedFloatBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedFloat", "0.01");
@@ -286,6 +301,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputValidatedTimeBadValue() {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedTime", "00:00:01");
@@ -301,6 +317,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputFailed() {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("uri", "http:/bla");
@@ -311,6 +328,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputEnumFailed() {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("enum", "INVALID");
@@ -321,6 +339,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputArrayFailed() {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("array", "[\"s1\", \"s2\"]");
@@ -331,6 +350,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputEmptyJson() {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("json", "{}");
@@ -342,6 +362,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void inputEmptyJsonFlow() throws TimeoutException, QueueException {
         HashMap<String, Object> map = new HashMap<>(inputs);
         map.put("json", "{}");
@@ -363,6 +384,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @RetryingTest(5) // it can happen that a log from another execution arrives first, so we enable retry
+    @LoadFlows({"flows/valids/input-log-secret.yaml"})
     void shouldNotLogSecretInput() throws TimeoutException, QueueException {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {});
 

@@ -24,7 +24,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -41,6 +41,21 @@
                     {{ item }}
                 </el-option>
             </el-select>
+            <el-radio-group
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
+                :data-test-id="`input-form-${input.id}`"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+            >
+                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />.
+                <!-- Allow customs input -->
+                <el-input
+                    v-if="input.allowCustomValue"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    :placeholder="$t('custom value')"
+                />
+            </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -459,30 +474,38 @@
 </style>
 
 <style scoped lang="scss">
-:deep(.boolean-inputs) {
-    .el-radio-button {
-        &.is-active {
-            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
-                color: var(--el-text-color-regular);
-                background-color: var(--bs-gray-100);
-                box-shadow: 0 0 0 0 var(--el-color-primary);
-            }
-        }
+    :deep(.boolean-inputs) {
+        display: flex;
+        align-items: center;
 
-        .el-radio-button__inner {
-            border: var(--el-border);
-            transition: 0.3s ease-in-out;
-
-            &:hover {
-                color: var(--bs-secondary);
-                border-color: var(--el-color-primary);
-                background-color: var(--backgrounds-background-card);
+        .el-radio-button {
+            &.is-active {
+                .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                    color: var(--el-text-color-regular);
+                    background-color: var(--bs-gray-100);
+                    box-shadow: 0 0 0 0 var(--el-color-primary);
+                }
             }
 
-            &:first-child {
-                border-left: var(--el-border);
+            .el-radio-button__inner {
+                border: var(--el-border);
+                transition: 0.3s ease-in-out;
+
+                &:hover {
+                    color: var(--bs-secondary);
+                    border-color: var(--el-color-primary);
+                    background-color: var(--bs-card-bg);
+                }
+
+                &:first-child {
+                    border-left: var(--el-border);
+                }
             }
         }
     }
-}
+
+    .el-input-file {
+        display: flex;
+        align-items: center;
+    }
 </style>

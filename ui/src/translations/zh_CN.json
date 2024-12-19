@@ -1001,7 +1001,9 @@
         "user": "用户",
         "task": "任务",
         "flow": "流程",
-        "type": "类型"
+        "type": "类型",
+        "status": "状态",
+        "service_type": "类型"
       },
       "settings": {
         "label": "页面设置",
@@ -1032,6 +1034,7 @@
       "empty": "无数据。",
       "format": "将参数输入为 'key:value'",
       "label": "选择过滤器"
-    }
+    },
+    "custom value": "自定义值"
   }
 }

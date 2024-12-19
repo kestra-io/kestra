@@ -40,7 +40,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@KestraTest(startRunner = true)
+@KestraTest(startRunner = true, startScheduler = true)
 class TriggerControllerTest {
     @Inject
     @Client("/")

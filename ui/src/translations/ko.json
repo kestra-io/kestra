@@ -1001,7 +1001,9 @@
         "user": "사용자",
         "task": "작업",
         "flow": "플로우",
-        "type": "유형"
+        "type": "유형",
+        "status": "상태",
+        "service_type": "유형"
       },
       "settings": {
         "label": "페이지 설정",

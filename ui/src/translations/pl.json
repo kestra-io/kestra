@@ -1001,7 +1001,9 @@
         "user": "Użytkownik",
         "task": "Zadanie",
         "flow": "Flow",
-        "type": "Typ"
+        "type": "Typ",
+        "status": "Status",
+        "service_type": "Typ"
       },
       "settings": {
         "label": "Ustawienia strony",

@@ -57,7 +57,24 @@ function makePalettes(palette, paletteName, selector) {
             return `\t#{--${prefix}}: ${colorVar};`
         }).sort()
 
-        return `${content.join("\n")}\n`
+        if(level > 0) {
+            return content.join("\n")
+        }
+
+        // add categories comments to make it clearer to find
+        const contentWithCategoriesHeaders = []
+        let previousCategory = null
+        for (const line of content) {
+            const currentCategory = line.match(/#{--\w+-(\w+)/)?.[1] || "Other"
+            if (previousCategory !== currentCategory) {
+                contentWithCategoriesHeaders.push(`\n\t/* ${currentCategory} */`)
+            }
+            previousCategory = currentCategory
+
+            contentWithCategoriesHeaders.push(line)
+        }
+
+        return `${contentWithCategoriesHeaders.join("\n")}\n`
     }
 
     const tokenScss = `\t${getVariableScss(tokens, "ks").trim()}`

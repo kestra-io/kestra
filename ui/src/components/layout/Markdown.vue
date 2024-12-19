@@ -5,56 +5,56 @@
 </template>
 
 <script>
-    import Markdown from "../../utils/markdown";
+import Markdown from "../../utils/markdown";
 
-    export default {
-        props: {
-            watches: {
-                type: Array,
-                default: () => ["source", "show", "toc"],
-            },
-            source: {
-                type: String,
-                default: "",
-            },
-            permalink: {
-                type: Boolean,
-                default: false,
-            },
-            fontSizeVar: {
-                type: String,
-                default: "font-size-sm"
-            }
+export default {
+    props: {
+        watches: {
+            type: Array,
+            default: () => ["source", "show", "toc"],
         },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
+        source: {
+            type: String,
+            default: "",
         },
-        async created() {
+        permalink: {
+            type: Boolean,
+            default: false,
+        },
+        fontSizeVar: {
+            type: String,
+            default: "font-size-sm"
+        }
+    },
+    data() {
+        return {
+            markdownRenderer: undefined
+        }
+    },
+    async created() {
+        this.markdownRenderer = await this.renderMarkdown();
+    },
+    watch: {
+        async source() {
             this.markdownRenderer = await this.renderMarkdown();
+        }
+    },
+    methods: {
+        async renderMarkdown() {
+            return  await Markdown.render(this.source, {
+                permalink: this.permalink,
+            });
         },
-        watch: {
-            async source() {
-                this.markdownRenderer = await this.renderMarkdown();
-            }
+    },
+    computed: {
+        fontSizeCss() {
+            return `var(--${this.fontSizeVar})`;
         },
-        methods: {
-            async renderMarkdown() {
-                return  await Markdown.render(this.source, {
-                    permalink: this.permalink,
-                });
-            },
-        },
-        computed: {
-            fontSizeCss() {
-                return `var(--${this.fontSizeVar})`;
-            },
-            permalinkCss() {
-                return this.permalink ? "-20px" : "0";
-            }
-        },
-    };
+        permalinkCss() {
+            return this.permalink ? "-20px" : "0";
+        }
+    },
+};
 </script>
 
 <style lang="scss">
@@ -64,7 +64,7 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            color: var(--content-content-primary);
+            color: var(--ks-content-primary);
         }
 
         table,
@@ -169,7 +169,7 @@
         p > code{
             border-radius: var(--bs-border-radius-sm);
             border: 1px solid var(--bs-border-color);
-            color: var(--content-content-primary);
+            color: var(--ks-content-primary);
         }
 
         h3, h4, h5 {
@@ -180,7 +180,7 @@
                 font-weight: 400;
                 border-radius: var(--bs-border-radius-sm);
                 border: 1px solid var(--bs-border-color);
-                color: var(--content-content-primary);
+                color: var(--ks-content-primary);
 
                 html.dark & {
                     background: var(--bs-gray-100);

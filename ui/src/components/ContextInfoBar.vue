@@ -46,120 +46,120 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch, type Ref, type Component} from "vue";
-    import {useMouse, watchThrottled} from "@vueuse/core"
-    import ContextDocs from "./docs/ContextDocs.vue"
-    import ContextNews from "./layout/ContextNews.vue"
-    import DateAgo from "./layout/DateAgo.vue"
+import {computed, ref, watch, type Ref, type Component} from "vue";
+import {useMouse, watchThrottled} from "@vueuse/core"
+import ContextDocs from "./docs/ContextDocs.vue"
+import ContextNews from "./layout/ContextNews.vue"
+import DateAgo from "./layout/DateAgo.vue"
 
-    import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
-    import FileDocument from "vue-material-design-icons/FileDocument.vue"
-    import Slack from "vue-material-design-icons/Slack.vue"
-    import Github from "vue-material-design-icons/Github.vue"
-    import Calendar from "vue-material-design-icons/Calendar.vue"
-    import Close from "vue-material-design-icons/Close.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
+import FileDocument from "vue-material-design-icons/FileDocument.vue"
+import Slack from "vue-material-design-icons/Slack.vue"
+import Github from "vue-material-design-icons/Github.vue"
+import Calendar from "vue-material-design-icons/Calendar.vue"
+import Close from "vue-material-design-icons/Close.vue"
+import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {useStorage} from "@vueuse/core"
-    import {useStore} from "vuex";
-    import {useI18n} from "vue-i18n";
+import {useStorage} from "@vueuse/core"
+import {useStore} from "vuex";
+import {useI18n} from "vue-i18n";
 
-    const {t} = useI18n({useScope: "global"});
+const {t} = useI18n({useScope: "global"});
 
-    const store = useStore();
+const store = useStore();
 
-    const configs = computed(() => store.state.misc.configs);
+const configs = computed(() => store.state.misc.configs);
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
-    const hasUnread = computed(() => {
-        const feeds = store.state.misc.feeds
-        return (
-            lastNewsReadDate.value === null ||
-            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
-        )
+const hasUnread = computed(() => {
+    const feeds = store.state.misc.feeds
+    return (
+        lastNewsReadDate.value === null ||
+        (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
+    )
+})
+
+const buttonsList: Record<string, {
+    title:string,
+    icon: Component,
+    component?: Component,
+    url?: string,
+    hasUnreadMarker?: boolean
+}> = {
+    news: {
+        title: t("contextBar.news"),
+        icon: MessageOutline,
+        component: ContextNews,
+        hasUnreadMarker: true
+    },
+    docs: {
+        title: t("contextBar.docs"),
+        icon: FileDocument,
+        component: ContextDocs
+    },
+    help: {
+        title: t("contextBar.help"),
+        icon: Slack,
+        url: "https://kestra.io/slack"
+    },
+    issue: {
+        title: t("contextBar.issue"),
+        icon: Github,
+        url: "https://github.com/kestra-io/kestra/issues/new/choose"
+    },
+    demo: {
+        title: t("contextBar.demo"),
+        icon: Calendar,
+        url: "https://kestra.io/demo"
+    }
+}
+
+const panelWidth = ref(640)
+
+const activeTab = ref("")
+
+const {startResizing, resizing} = useResizablePanel(activeTab)
+
+function useResizablePanel(localActiveTab: Ref<string>) {
+    const {x} = useMouse()
+
+    const resizing = ref(false)
+    const resizingStartPosition = ref(0)
+    const referencePanelWidth = ref(0)
+    const startResizing = () => {
+        resizingStartPosition.value = x.value;
+        referencePanelWidth.value = panelWidth.value;
+        resizing.value = true;
+
+        document.body.addEventListener("mouseup", () => {
+            resizing.value = false;
+        }, {once: true})
+    }
+
+    watchThrottled(x, () => {
+        if(resizing.value){
+            const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
+            panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth * .5)
+        }
+    }, {throttle:20})
+
+    watch(localActiveTab, (value) => {
+        if(value.length){
+            x.value = 0;
+        }
     })
 
-    const buttonsList: Record<string, {
-        title:string,
-        icon: Component,
-        component?: Component,
-        url?: string,
-        hasUnreadMarker?: boolean
-    }> = {
-        news: {
-            title: t("contextBar.news"),
-            icon: MessageOutline,
-            component: ContextNews,
-            hasUnreadMarker: true
-        },
-        docs: {
-            title: t("contextBar.docs"),
-            icon: FileDocument,
-            component: ContextDocs
-        },
-        help: {
-            title: t("contextBar.help"),
-            icon: Slack,
-            url: "https://kestra.io/slack"
-        },
-        issue: {
-            title: t("contextBar.issue"),
-            icon: Github,
-            url: "https://github.com/kestra-io/kestra/issues/new/choose"
-        },
-        demo: {
-            title: t("contextBar.demo"),
-            icon: Calendar,
-            url: "https://kestra.io/demo"
-        }
+    return {startResizing, resizing}
+}
+
+function setActiveTab(tab: string) {
+    if (activeTab.value === tab) {
+        activeTab.value = ""
+    } else {
+        activeTab.value = tab
     }
-
-    const panelWidth = ref(640)
-
-    const activeTab = ref("")
-
-    const {startResizing, resizing} = useResizablePanel(activeTab)
-
-    function useResizablePanel(localActiveTab: Ref<string>) {
-        const {x} = useMouse()
-
-        const resizing = ref(false)
-        const resizingStartPosition = ref(0)
-        const referencePanelWidth = ref(0)
-        const startResizing = () => {
-            resizingStartPosition.value = x.value;
-            referencePanelWidth.value = panelWidth.value;
-            resizing.value = true;
-
-            document.body.addEventListener("mouseup", () => {
-                resizing.value = false;
-            }, {once: true})
-        }
-
-        watchThrottled(x, () => {
-            if(resizing.value){
-                const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
-                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth * .5)
-            }
-        }, {throttle:20})
-
-        watch(localActiveTab, (value) => {
-            if(value.length){
-                x.value = 0;
-            }
-        })
-
-        return {startResizing, resizing}
-    }
-
-    function setActiveTab(tab: string) {
-        if (activeTab.value === tab) {
-            activeTab.value = ""
-        } else {
-            activeTab.value = tab
-        }
-    }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -172,7 +172,7 @@
         top: 0;
         left: 0;
         z-index: 1040;
-        background-color: var(--backgrounds-background-button-primary);
+        background-color: var(--ks-background-button-primary);
         opacity: 0;
         transition: opacity .1s;
         border: none;

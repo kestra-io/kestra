@@ -27,13 +27,13 @@
 </script>
 
 <script>
-    export default {
-        data() {
-            return {
-                collapsed: false,
-            }
+export default {
+    data() {
+        return {
+            collapsed: false,
         }
-    };
+    }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -56,7 +56,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--backgrounds-background-button-primary);
+            background: var(--ks-background-button-primary);
             border-radius: 0px;
         }
 
@@ -109,7 +109,7 @@
         }
 
         :deep(.btn:hover span) {
-            color: var(--content-content-primary);
+            color: var(--ks-content-primary);
         }
 
         :deep(a[target=_blank]:after) {
@@ -135,8 +135,8 @@
 
             &:not(.shiki code) {
                 font-weight: 700;
-                background: var(--backgrounds-background-body);
-                color: var(--content-content-primary);
+                background: var(--ks-background-body);
+                color: var(--ks-content-primary);
                 border: 1px solid var(--border-killing)
             }
         }
@@ -151,7 +151,7 @@
             padding-left: 1rem;
 
             > p {
-                color: var(--content-content-primary);
+                color: var(--ks-content-primary);
             }
         }
 
@@ -160,7 +160,7 @@
         }
 
         :deep(.card-group > a), :deep(h2 > a), :deep(h3 > a) {
-            color: var(--content-content-primary);
+            color: var(--ks-content-primary);
         }
 
         :deep(li > a) {
@@ -200,18 +200,18 @@
             --bs-card-spacer-y: 1rem;
             --bs-card-spacer-x: 1rem;
             border: 1px solid var(--bs-border-color);
-            color: var(--content-content-primary);
+            color: var(--ks-content-primary);
             display: flex;
             flex-direction: column;
             min-width: 0;
             position: relative;
             word-wrap: break-word;
             background-clip: border-box;
-            background-color: var(--backgrounds-background-card);
+            background-color: var(--ks-background-card);
             border-radius: var(--bs-border-radius-lg);
 
             .card-body {
-                color: var(--content-content-primary);
+                color: var(--bs-card-color);
                 flex: 1 1 auto;
                 padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
                 gap: 1rem;

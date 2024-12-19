@@ -30,136 +30,136 @@
     </div>
 </template>
 <script>
-    import Convert from "ansi-to-html"
-    import xss from "xss";
-    import Markdown from "../../utils/markdown";
-    import VRuntimeTemplate from "vue3-runtime-template";
-    import MenuRight from "vue-material-design-icons/MenuRight.vue";
+import Convert from "ansi-to-html"
+import xss from "xss";
+import Markdown from "../../utils/markdown";
+import VRuntimeTemplate from "vue3-runtime-template";
+import MenuRight from "vue-material-design-icons/MenuRight.vue";
 
 
-    let convert = new Convert();
+let convert = new Convert();
 
-    export default {
-        components:{
-            VRuntimeTemplate,
-            MenuRight
+export default {
+    components:{
+        VRuntimeTemplate,
+        MenuRight
+    },
+    props: {
+        cursor: {
+            type: Boolean,
+            default: false
         },
-        props: {
-            cursor: {
-                type: Boolean,
-                default: false
-            },
-            log: {
-                type: Object,
-                required: true,
-            },
-            filter: {
-                type: String,
-                default: "",
-            },
-            level: {
-                type: String,
-                required: true,
-            },
-            excludeMetas: {
-                type: Array,
-                default: () => [],
-            },
-            title: {
-                type: Boolean,
-                default: false
-            }
+        log: {
+            type: Object,
+            required: true,
         },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
+        filter: {
+            type: String,
+            default: "",
         },
-        async created() {
-            this.markdownRenderer = await this.renderMarkdown();
+        level: {
+            type: String,
+            required: true,
         },
-        computed: {
-            metaWithValue() {
-                const metaWithValue = [];
-                const excludes = [
-                    "message",
-                    "timestamp",
-                    "thread",
-                    "taskRunId",
-                    "level",
-                    "index",
-                    "attemptNumber"
-                ];
-                excludes.push.apply(excludes, this.excludeMetas);
-                for (const key in this.log) {
-                    if (this.log[key] && !excludes.includes(key)) {
-                        let meta = {key, value: this.log[key]};
-                        if (key === "executionId") {
-                            meta["router"] = {
-                                name: "executions/update", params: {
-                                    namespace: this.log["namespace"],
-                                    flowId: this.log["flowId"],
-                                    id: this.log[key]
-                                }
-                            };
-                        }
-
-                        if (key === "namespace") {
-                            meta["router"] = {name: "flows/list", query: {namespace: this.log[key]}};
-                        }
-
-
-                        if (key === "flowId") {
-                            meta["router"] = {
-                                name: "flows/update",
-                                params: {namespace: this.log["namespace"], id: this.log[key]}
-                            };
-                        }
-
-                        metaWithValue.push(meta);
+        excludeMetas: {
+            type: Array,
+            default: () => [],
+        },
+        title: {
+            type: Boolean,
+            default: false
+        }
+    },
+    data() {
+        return {
+            markdownRenderer: undefined
+        }
+    },
+    async created() {
+        this.markdownRenderer = await this.renderMarkdown();
+    },
+    computed: {
+        metaWithValue() {
+            const metaWithValue = [];
+            const excludes = [
+                "message",
+                "timestamp",
+                "thread",
+                "taskRunId",
+                "level",
+                "index",
+                "attemptNumber"
+            ];
+            excludes.push.apply(excludes, this.excludeMetas);
+            for (const key in this.log) {
+                if (this.log[key] && !excludes.includes(key)) {
+                    let meta = {key, value: this.log[key]};
+                    if (key === "executionId") {
+                        meta["router"] = {
+                            name: "executions/update", params: {
+                                namespace: this.log["namespace"],
+                                flowId: this.log["flowId"],
+                                id: this.log[key]
+                            }
+                        };
                     }
+
+                    if (key === "namespace") {
+                        meta["router"] = {name: "flows/list", query: {namespace: this.log[key]}};
+                    }
+
+
+                    if (key === "flowId") {
+                        meta["router"] = {
+                            name: "flows/update",
+                            params: {namespace: this.log["namespace"], id: this.log[key]}
+                        };
+                    }
+
+                    metaWithValue.push(meta);
                 }
-                return metaWithValue;
-            },
-            levelClasses() {
-                const lowerCaseLevel = this.log?.level?.toLowerCase();
-                return `log-content-${lowerCaseLevel} log-border-${lowerCaseLevel} log-bg-${lowerCaseLevel}`;
-            },
-            filtered() {
-                return (
-                    this.filter === "" || (
-                        this.log.message &&
-                        this.log.message.toLowerCase().includes(this.filter)
-                    )
-                );
-            },
-            iconColor() {
-                const logLevel = this.log.level?.toLowerCase();
-                return `var(--log-${logLevel}-content-${logLevel}) !important`; // Use CSS variable for icon color
-            },
-            message() {
-                let logMessage = !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
-                    allowList: {"span": ["style"]}
-                }));
-
-                logMessage = logMessage.replaceAll(
-                    /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-                    "$1<a href='$2' target='_blank'>$2</a>$3"
-                );
-                return logMessage;
             }
+            return metaWithValue;
         },
-        methods: {
-            async renderMarkdown() {
-                let markdown = await Markdown.render(this.message, {onlyLink: true});
-
-                // Avoid rendering non-existent properties in the template by VRuntimeTemplate
-                markdown = markdown.replace(/{{/g, "&#123;&#123;").replace(/}}/g, "&#125;&#125;");
-
-                return markdown
-            },
+        levelClasses() {
+            const lowerCaseLevel = this.log?.level?.toLowerCase();
+            return `log-content-${lowerCaseLevel} log-border-${lowerCaseLevel} log-bg-${lowerCaseLevel}`;
         },
-    };
+        filtered() {
+            return (
+                this.filter === "" || (
+                    this.log.message &&
+                    this.log.message.toLowerCase().includes(this.filter)
+                )
+            );
+        },
+        iconColor() {
+            const logLevel = this.log.level?.toLowerCase();
+            return `var(--ks-content-${logLevel}) !important`; // Use CSS variable for icon color
+        },
+        message() {
+            let logMessage = !this.log.message ? "" : convert.toHtml(xss(this.log.message, {
+                allowList: {"span": ["style"]}
+            }));
+
+            logMessage = logMessage.replaceAll(
+                /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
+                "$1<a href='$2' target='_blank'>$2</a>$3"
+            );
+            return logMessage;
+        }
+    },
+    methods: {
+        async renderMarkdown() {
+            let markdown = await Markdown.render(this.message, {onlyLink: true});
+
+            // Avoid rendering non-existent properties in the template by VRuntimeTemplate
+            markdown = markdown.replace(/{{/g, "&#123;&#123;").replace(/}}/g, "&#125;&#125;");
+
+            return markdown
+        },
+    },
+};
 </script>
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
@@ -179,7 +179,7 @@
         .icon_container{
             margin-left: -0.90rem;
         }
-
+        
         .log-level {
             padding: calc(var(--spacer) / 4);
         }

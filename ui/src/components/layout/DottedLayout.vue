@@ -15,13 +15,13 @@
 </template>
 
 <script setup lang="ts">
-    defineProps<{
-        embed: boolean;
-        phrase: string;
-        alt?: string;
-        image: string;
-        imageDark: string;
-    }>();
+defineProps<{
+    embed: boolean;
+    phrase: string;
+    alt?: string;
+    image: string;
+    imageDark: string;
+}>();
 </script>
 
 <style scoped lang="scss">
@@ -52,7 +52,7 @@
 
         .image-box{
             border: 1px solid var(--bs-border-color);
-            background-color: var(--backgrounds-background-card);
+            background-color: var(--ks-background-card);
             padding: 9px;
             border-radius: 7px;
             box-shadow:

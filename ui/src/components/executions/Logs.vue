@@ -107,195 +107,195 @@
 </template>
 
 <script>
-    import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {mapState} from "vuex";
-    import Download from "vue-material-design-icons/Download.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-    import Kicon from "../Kicon.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
-    import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
-    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
-    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import Collapse from "../layout/Collapse.vue";
-    import State from "../../utils/state";
-    import Utils from "../../utils/utils";
-    import LogLine from "../logs/LogLine.vue";
-    import Restart from "./Restart.vue";
-    import LogUtils from "../../utils/logs";
+import TaskRunDetails from "../logs/TaskRunDetails.vue";
+import {mapState} from "vuex";
+import Download from "vue-material-design-icons/Download.vue";
+import Magnify from "vue-material-design-icons/Magnify.vue";
+import Kicon from "../Kicon.vue";
+import LogLevelSelector from "../logs/LogLevelSelector.vue";
+import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
+import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+import Collapse from "../layout/Collapse.vue";
+import State from "../../utils/state";
+import Utils from "../../utils/utils";
+import LogLine from "../logs/LogLine.vue";
+import Restart from "./Restart.vue";
+import LogUtils from "../../utils/logs";
 
-    export default {
-        components: {
-            LogLine,
-            TaskRunDetails,
-            LogLevelSelector,
-            LogLevelNavigator,
-            Kicon,
-            Download,
-            Magnify,
-            Collapse,
-            Restart,
-            DynamicScroller,
-            DynamicScrollerItem,
-        },
-        data() {
-            return {
-                fullscreen: false,
-                level: undefined,
-                filter: undefined,
-                openedTaskrunsCount: 0,
-                raw_view: false,
-                logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
-            };
-        },
-        created() {
-            this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
-            this.filter = (this.$route.query.q || undefined);
-        },
-        watch:{
-            level: {
-                handler() {
-                    if (this.raw_view) {
-                        this.$store.dispatch("execution/loadLogs", {
-                            executionId: this.execution.id,
-                            minLevel: this.level
-                        })
-                    }
-                }
-            },
-            logCursor(newValue) {
-                if (newValue !== undefined && this.raw_view) {
-                    this.scrollToLog(newValue);
-                }
-            }
-        },
-        computed: {
-            State() {
-                return State
-            },
-            temporalLogs() {
-                if (!this.logs?.length) {
-                    return [];
-                }
-
-                const filtered = this.logs.filter(log => {
-                    if (!this.filter) return true;
-                    return log.message?.toLowerCase().includes(this.filter.toLowerCase());
-                });
-
-                return filtered.map((logLine, index) => ({
-                    ...logLine,
-                    index
-                }));
-            },
-            ...mapState("execution", ["execution", "logs", "flow"]),
-            downloadName() {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
-            },
-            logDisplayButtonText() {
-                return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
-            },
-            currentLevelOrLower() {
-                return LogUtils.levelOrLower(this.level);
-            },
-            countByLogLevel() {
-                return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
-            },
-            cursorLogLevel() {
-                return Object.entries(this.viewTypeAwareLogIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
-            },
-            cursorIdxForLevel() {
-                return this.viewTypeAwareLogIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
-            },
-            temporalViewLogIndicesByLevel() {
-                const temporalViewLogIndicesByLevel = this.temporalLogs.reduce((acc, item) => {
-                    if (!acc[item.level]) {
-                        acc[item.level] = [];
-                    }
-                    acc[item.level].push(item.index.toString());
-                    return acc;
-                }, {});
-                LogUtils.levelOrLower(undefined).forEach(level => {
-                    if (!temporalViewLogIndicesByLevel[level]) {
-                        temporalViewLogIndicesByLevel[level] = [];
-                    }
-                });
-
-                return temporalViewLogIndicesByLevel
-            },
-            viewTypeAwareLogIndicesByLevel() {
-                return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
-            }
-        },
-        methods: {
-            downloadContent() {
-                this.$store.dispatch("execution/downloadLogs", {
-                    executionId: this.execution.id,
-                    params: {
+export default {
+    components: {
+        LogLine,
+        TaskRunDetails,
+        LogLevelSelector,
+        LogLevelNavigator,
+        Kicon,
+        Download,
+        Magnify,
+        Collapse,
+        Restart,
+        DynamicScroller,
+        DynamicScrollerItem,
+    },
+    data() {
+        return {
+            fullscreen: false,
+            level: undefined,
+            filter: undefined,
+            openedTaskrunsCount: 0,
+            raw_view: false,
+            logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
+            logCursor: undefined
+        };
+    },
+    created() {
+        this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
+        this.filter = (this.$route.query.q || undefined);
+    },
+    watch:{
+        level: {
+            handler() {
+                if (this.raw_view) {
+                    this.$store.dispatch("execution/loadLogs", {
+                        executionId: this.execution.id,
                         minLevel: this.level
-                    }
-                }).then((response) => {
-                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
-                });
-            },
-            forwardEvent(type, event) {
-                this.$emit(type, event);
-            },
-            prevent(event) {
-                event.preventDefault();
-            },
-            onChange() {
-                this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
-            },
-            expandCollapseAll() {
-                this.$refs.logs.toggleExpandCollapseAll();
-            },
-            toggleViewType() {
-                this.logCursor = undefined;
-                this.raw_view = !this.raw_view;
-            },
-            sortLogsByViewOrder(a, b) {
-                const aSplit = a.split("/");
-                const taskRunIndexA = aSplit?.[0];
-                const bSplit = b.split("/");
-                const taskRunIndexB = bSplit?.[0];
-                if (taskRunIndexA === undefined) {
-                    return taskRunIndexB === undefined ? 0 : -1;
+                    })
                 }
-                if (taskRunIndexB === undefined) {
-                    return 1;
-                }
-                if (taskRunIndexA === taskRunIndexB) {
-                    return this.sortLogsByViewOrder(aSplit.slice(1).join("/"), bSplit.slice(1).join("/"));
-                }
-
-                return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
-            },
-            previousLogForLevel(level) {
-                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
-                if (this.logCursor === undefined) {
-                    this.logCursor = logIndicesForLevel?.[logIndicesForLevel.length - 1];
-                    return;
-                }
-
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
-            },
-            nextLogForLevel(level) {
-                const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
-                if (this.logCursor === undefined) {
-                    this.logCursor = logIndicesForLevel?.[0];
-                    return;
-                }
-
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
-                this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
-            },
-            scrollToLog(index) {
-                this.$refs.logScroller.scrollToItem(index);
+            }
+        },
+        logCursor(newValue) {
+            if (newValue !== undefined && this.raw_view) {
+                this.scrollToLog(newValue);
             }
         }
-    };
+    },
+    computed: {
+        State() {
+            return State
+        },
+        temporalLogs() {
+            if (!this.logs?.length) {
+                return [];
+            }
+
+            const filtered = this.logs.filter(log => {
+                if (!this.filter) return true;
+                return log.message?.toLowerCase().includes(this.filter.toLowerCase());
+            });
+
+            return filtered.map((logLine, index) => ({
+                ...logLine,
+                index
+            }));
+        },
+        ...mapState("execution", ["execution", "logs", "flow"]),
+        downloadName() {
+            return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.execution.id}.log`
+        },
+        logDisplayButtonText() {
+            return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
+        },
+        currentLevelOrLower() {
+            return LogUtils.levelOrLower(this.level);
+        },
+        countByLogLevel() {
+            return Object.fromEntries(Object.entries(this.viewTypeAwareLogIndicesByLevel).map(([level, indices]) => [level, indices.length]));
+        },
+        cursorLogLevel() {
+            return Object.entries(this.viewTypeAwareLogIndicesByLevel).find(([_, indices]) => indices.includes(this.logCursor))?.[0];
+        },
+        cursorIdxForLevel() {
+            return this.viewTypeAwareLogIndicesByLevel?.[this.cursorLogLevel]?.toSorted(this.sortLogsByViewOrder)?.indexOf(this.logCursor);
+        },
+        temporalViewLogIndicesByLevel() {
+            const temporalViewLogIndicesByLevel = this.temporalLogs.reduce((acc, item) => {
+                if (!acc[item.level]) {
+                    acc[item.level] = [];
+                }
+                acc[item.level].push(item.index.toString());
+                return acc;
+            }, {});
+            LogUtils.levelOrLower(undefined).forEach(level => {
+                if (!temporalViewLogIndicesByLevel[level]) {
+                    temporalViewLogIndicesByLevel[level] = [];
+                }
+            });
+
+            return temporalViewLogIndicesByLevel
+        },
+        viewTypeAwareLogIndicesByLevel() {
+            return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
+        }
+    },
+    methods: {
+        downloadContent() {
+            this.$store.dispatch("execution/downloadLogs", {
+                executionId: this.execution.id,
+                params: {
+                    minLevel: this.level
+                }
+            }).then((response) => {
+                Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
+            });
+        },
+        forwardEvent(type, event) {
+            this.$emit(type, event);
+        },
+        prevent(event) {
+            event.preventDefault();
+        },
+        onChange() {
+            this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
+        },
+        expandCollapseAll() {
+            this.$refs.logs.toggleExpandCollapseAll();
+        },
+        toggleViewType() {
+            this.logCursor = undefined;
+            this.raw_view = !this.raw_view;
+        },
+        sortLogsByViewOrder(a, b) {
+            const aSplit = a.split("/");
+            const taskRunIndexA = aSplit?.[0];
+            const bSplit = b.split("/");
+            const taskRunIndexB = bSplit?.[0];
+            if (taskRunIndexA === undefined) {
+                return taskRunIndexB === undefined ? 0 : -1;
+            }
+            if (taskRunIndexB === undefined) {
+                return 1;
+            }
+            if (taskRunIndexA === taskRunIndexB) {
+                return this.sortLogsByViewOrder(aSplit.slice(1).join("/"), bSplit.slice(1).join("/"));
+            }
+
+            return Number.parseInt(taskRunIndexA) - Number.parseInt(taskRunIndexB);
+        },
+        previousLogForLevel(level) {
+            const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
+            if (this.logCursor === undefined) {
+                this.logCursor = logIndicesForLevel?.[logIndicesForLevel.length - 1];
+                return;
+            }
+
+            const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+            this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
+        },
+        nextLogForLevel(level) {
+            const logIndicesForLevel = this.viewTypeAwareLogIndicesByLevel[level];
+            if (this.logCursor === undefined) {
+                this.logCursor = logIndicesForLevel?.[0];
+                return;
+            }
+
+            const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+            this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
+        },
+        scrollToLog(index) {
+            this.$refs.logScroller.scrollToItem(index);
+        }
+    }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -338,7 +338,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--backgrounds-background-button-primary);
+            background: var(--ks-background-button-primary);
         }
     }
 

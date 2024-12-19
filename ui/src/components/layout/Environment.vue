@@ -5,29 +5,29 @@
 </template>
 
 <script>
-    import {mapGetters} from "vuex";
-    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+import {mapGetters} from "vuex";
+import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
 
-    export default {
-        computed: {
-            ...mapGetters("layout", ["envName", "envColor"]),
-            ...mapGetters("misc", ["configs"]),
-            name() {
-                return this.envName || this.configs?.environment?.name;
-            },
-            color() {
-                if (this.envColor) {
-                    return this.envColor;
-                }
-
-                if (this.configs?.environment?.color) {
-                    return this.configs.environment.color;
-                }
-
-                return cssVariable("--bs-info");
+export default {
+    computed: {
+        ...mapGetters("layout", ["envName", "envColor"]),
+        ...mapGetters("misc", ["configs"]),
+        name() {
+            return this.envName || this.configs?.environment?.name;
+        },
+        color() {
+            if (this.envColor) {
+                return this.envColor;
             }
+
+            if (this.configs?.environment?.color) {
+                return this.configs.environment.color;
+            }
+
+            return cssVariable("--bs-info");
         }
     }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -39,7 +39,7 @@
     strong {
         border: 1px solid v-bind('color');
         border-radius: var(--bs-border-radius);
-        color: var(--content-content-primary);
+        color: var(--ks-content-primary);
         padding: 0.125rem 0.25rem;
         font-size: var(--font-size-sm);
         white-space: nowrap;

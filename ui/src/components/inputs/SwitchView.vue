@@ -19,45 +19,45 @@
 </template>
 
 <script setup>
-    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
-    import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
-    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-    import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
-    import {editorViewTypes} from "../../utils/constants";
+import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
+import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
+import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
+import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
+import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
+import {editorViewTypes} from "../../utils/constants";
 </script>
 
 <script>
-    import {mapState, mapMutations} from "vuex";
+import {mapState, mapMutations} from "vuex";
 
-    export default {
-        props: {
-            type: {
-                type: String,
-                required: true
-            }
-        },
-        emits: ["switch-view"],
-        computed: {
-            ...mapState({
-                currentTab: (state) => state.editor.current
-            }),
-            isFlow(){
-                return !this.currentTab || this.currentTab.name === "Flow"
-            }
-        },
-        methods: {
-            ...mapMutations("editor", ["changeView"]),
+export default {
+    props: {
+        type: {
+            type: String,
+            required: true
+        }
+    },
+    emits: ["switch-view"],
+    computed: {
+        ...mapState({
+            currentTab: (state) => state.editor.current
+        }),
+        isFlow(){
+            return !this.currentTab || this.currentTab.name === "Flow"
+        }
+    },
+    methods: {
+        ...mapMutations("editor", ["changeView"]),
 
-            switchView(view) {
-                this.changeView(view)
-                this.$emit("switch-view", view)
-            },
-            buttonType(view) {
-                return view === this.type ? "primary" : "default";
-            }
+        switchView(view) {
+            this.changeView(view)
+            this.$emit("switch-view", view)
+        },
+        buttonType(view) {
+            return view === this.type ? "primary" : "default";
         }
     }
+}
 </script>
 
 <style scoped lang="scss">
@@ -74,6 +74,6 @@
     }
 
     button.el-button--primary {
-        background-color: var(--content-content-link);
+        color: var(--ks-content-link);
     }
 </style>

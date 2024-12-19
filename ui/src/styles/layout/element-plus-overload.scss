@@ -42,7 +42,7 @@
         border: 1px solid var(--ks-border-primary);
         height: 32px;
         line-height: 32px;
-        background-color: var(--bs-white) !important;
+        background-color: var(--ks-background-card) !important;
 
         html.dark & {
             color: var(--bs-white) !important;
@@ -226,7 +226,7 @@
 }
 
 .el-input-number__increase, .el-input-number__decrease {
-    background: var(--bs-white);
+    background: var(--ks-background-card);
 
     html.dark & {
         background: var(--ks-background-card);

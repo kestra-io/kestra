@@ -131,7 +131,7 @@ main {
     .el-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
-        background: var(--bs-white);
+        background: var(--ks-background-card);
 
         .material-design-icon {
             color: $value;

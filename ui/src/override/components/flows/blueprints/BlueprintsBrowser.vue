@@ -492,7 +492,7 @@
             :deep(span) {
                 border-radius: $border-radius !important;
                 border: 1px solid var(--ks-border-primary);
-                background: var(--bs-white);
+                background: var(--ks-background-card);
                 width: 100%;
                 font-size: var(--el-font-size-extra-small);
                 font-weight: bold;

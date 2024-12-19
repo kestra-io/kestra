@@ -448,7 +448,7 @@
         display: flex;
 
         .top-nav {
-            background-color: var(--bs-white);
+            background-color: var(--ks-background-card);
             padding: calc(var(--spacer) / 2);
             border-radius: var(--bs-border-radius-lg);
             border-bottom-left-radius: 0;

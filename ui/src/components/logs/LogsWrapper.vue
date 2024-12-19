@@ -252,7 +252,7 @@
             overflow: hidden;
             padding: $spacer;
             padding-top: calc($spacer/2);
-            background-color: var(--bs-white);
+            background-color: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
 
             html.dark & {

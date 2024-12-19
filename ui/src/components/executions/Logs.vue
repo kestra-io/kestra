@@ -301,7 +301,7 @@
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";
     .attempt-wrapper {
-        background-color: var(--bs-white);
+        background-color: var(--ks-background-card);
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
             border-top: 1px solid var(--bs-border-color);

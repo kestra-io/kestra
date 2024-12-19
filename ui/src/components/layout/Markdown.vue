@@ -174,7 +174,7 @@
 
         h3, h4, h5 {
             code {
-                background: var(--bs-white);
+                background: var(--ks-background-card);
                 font-size: 0.65em;
                 padding: 2px 8px;
                 font-weight: 400;

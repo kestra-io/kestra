@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.webserver.services.FlowAutoLoaderService;
 import io.micronaut.context.ApplicationContext;
@@ -12,6 +13,7 @@ import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import io.kestra.core.utils.Rethrow;
@@ -49,6 +51,12 @@ abstract public class AbstractCommand implements Callable<Integer> {
     @Inject
     private io.kestra.core.utils.VersionProvider versionProvider;
 
+    @Inject
+    protected Provider<PluginRegistry> pluginRegistryProvider;
+
+    @Inject
+    protected Provider<PluginManager> pluginManagerProvider;
+
     private PluginRegistry pluginRegistry;
 
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
@@ -84,8 +92,10 @@ abstract public class AbstractCommand implements Callable<Integer> {
         }
 
         if (this.pluginsPath != null && loadExternalPlugins()) {
-            pluginRegistry = pluginRegistry();
+            pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
+
+            pluginManagerProvider.get(); // This will trigger initialization of the plugin-manager
         }
 
         startWebserver();
@@ -100,10 +110,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
      */
     protected boolean loadExternalPlugins() {
         return true;
-    }
-
-    protected PluginRegistry pluginRegistry() {
-        return KestraContext.getContext().getPluginRegistry(); // Lazy init
     }
 
     private static String message(String message, Object... format) {

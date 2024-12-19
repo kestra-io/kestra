@@ -59,8 +59,10 @@
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance, ref} from "vue";
+    import {PropType, getCurrentInstance, ref} from "vue";
     import {ElInput} from "element-plus";
+
+    import {CurrentItem} from "../utils/types";
 
     import KestraIcon from "../../Kicon.vue";
     import Label from "../components/Label.vue";
@@ -75,7 +77,7 @@
     const props = defineProps({
         disabled: {type: Boolean, default: true},
         prefix: {type: String, required: true},
-        current: {type: Object, required: true},
+        current: {type: Object as PropType<CurrentItem[]>, required: true},
     });
 
     import {useFilters} from "../composables/useFilters.js";

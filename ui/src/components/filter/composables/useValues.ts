@@ -34,7 +34,7 @@ export function useValues(label: string) {
         EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
         ),
-        TRIGGER_STATES: buildFromArray(["enabled", "disabled"], true),
+        TRIGGER_STATES: buildFromArray(["ENABLED", "DISABLED"], true),
         SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),
@@ -58,7 +58,8 @@ export function useValues(label: string) {
             LOGIN: "LOGIN",
             LOGOUT: "LOGOUT",
         }),
-        AGGREGATIONS: buildFromArray(["sum", "avg", "min", "max"]),
+        STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
+        AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE: [
             {label: t("datepicker.last5minutes"), value: "PT5M"},
             {label: t("datepicker.last15minutes"), value: "PT15M"},

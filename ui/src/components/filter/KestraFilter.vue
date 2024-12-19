@@ -369,7 +369,7 @@
             return namespaceOptions.value;
 
         case "state":
-            return VALUES.EXECUTION_STATES;
+            return props.values?.state || VALUES.EXECUTION_STATES;
 
         case "trigger_state":
             return VALUES.TRIGGER_STATES;
@@ -395,11 +395,17 @@
         case "type":
             return VALUES.TYPES;
 
+        case "service_type":
+            return props.values?.type || [];
+
         case "permission":
             return VALUES.PERMISSIONS;
 
         case "action":
             return VALUES.ACTIONS;
+
+        case "status":
+            return VALUES.STATUSES;
 
         case "aggregation":
             return VALUES.AGGREGATIONS;

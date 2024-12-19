@@ -7,7 +7,6 @@
         :shortcuts="shortcuts"
         :start-placeholder="$t('start date')"
         :end-placeholder="$t('end date')"
-        ref="datePicker"
     />
 </template>
 <script>
@@ -98,10 +97,6 @@
             endDate: {
                 type: String,
                 default: undefined
-            },
-            automatic: {
-                type: Boolean,
-                default: false
             }
         },
         methods: {
@@ -116,11 +111,6 @@
             date() {
                 return [new Date(this.startDate), new Date(this.endDate)];
             },
-        },
-        mounted() {
-            if (this.automatic) {
-                this.$refs?.datePicker?.handleOpen();
-            }
         }
     };
 </script>

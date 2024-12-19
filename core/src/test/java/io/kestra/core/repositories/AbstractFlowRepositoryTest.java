@@ -9,10 +9,7 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
@@ -28,7 +25,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,10 +59,6 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Inject
     protected PluginDefaultService pluginDefaultService;
-
-    @Inject
-    @Named(QueueFactoryInterface.TRIGGER_NAMED)
-    private QueueInterface<Trigger> triggerQueue;
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {

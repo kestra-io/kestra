@@ -18,7 +18,6 @@ public abstract class JdbcRunnerRetryTest {
     @Inject
     private RetryCaseTest retryCaseTest;
 
-
     @Test
     @ExecuteFlow("flows/valids/retry-success.yaml")
     void retrySuccess(Execution execution){

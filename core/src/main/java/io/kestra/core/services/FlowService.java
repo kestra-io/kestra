@@ -3,6 +3,8 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -40,6 +42,15 @@ public class FlowService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
+    private static final ObjectMapper WITHOUT_EXTEND_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
+        .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override 
+            public boolean hasIgnoreMarker(final AnnotatedMember m) {
+                List<String> exclusions = Arrays.asList("extend", "revision", "deleted", "source");
+                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+            }
+        });
 
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
@@ -294,11 +305,11 @@ public class FlowService {
     public static String generateSource(Flow flow, @Nullable String source) {
         try {
             if (source == null) {
-                return toYamlWithoutDefault(flow);
+                return toYamlWithoutExtend(flow);
             }
 
             if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
-                source = toYamlWithoutDefault(flow);
+                source = toYamlWithoutExtend(flow);
             }
         } catch (JsonProcessingException e) {
             log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
@@ -326,11 +337,9 @@ public class FlowService {
     }
 
     @SneakyThrows
-    private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
-        String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(object);
-
+    private static String toYamlWithoutExtend(Object object) throws JsonProcessingException {
+        String json = WITHOUT_EXTEND_OBJECT_MAPPER.writeValueAsString(object);
         Object map = fixSnakeYaml(JacksonMapper.toMap(json));
-
         return JacksonMapper.ofYaml().writeValueAsString(map);
     }
 

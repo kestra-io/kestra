@@ -34,7 +34,8 @@ const Sut = defineComponent((props) => {
 export const InputTypes = {
     async play({canvasElement}) {
         const can = within(canvasElement);
-        const popups = within(window.document)
+        const popups = within(window.document);
+
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByLabelText("email input").querySelector(".ks-monaco-editor")
             expect(editor).to.exist;
@@ -47,6 +48,17 @@ export const InputTypes = {
         await userEvent.click(popups.getByText("Second value"));
 
         await waitFor(function testSelect() {expect(can.getByTestId("test-content").textContent).to.include("Second value")})
+
+        await userEvent.click(can.getByLabelText("Multi select input"));
+        await userEvent.click(popups.getByText("Fifth value"));
+        await userEvent.click(popups.getByText("Seventh value"));
+
+        await userEvent.keyboard("{esc}");
+
+        await waitFor(function testMultiSelect() {
+            expect(can.getByTestId("test-content").textContent)
+                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]")
+        })
     },
     render() {
         return <Sut inputs={[

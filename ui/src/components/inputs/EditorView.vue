@@ -1422,7 +1422,7 @@
             color: var(--bs-gray-700);
 
             &:hover {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }

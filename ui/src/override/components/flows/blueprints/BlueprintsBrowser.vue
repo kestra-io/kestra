@@ -406,10 +406,10 @@
                         .el-tag.el-tag--info {
                             background-color: #FEFEFE;
                             padding: 15px 10px;
-                            color: var(--el-text-color-regular);
+                            color: var(--ks-content-primary);
                             text-transform: capitalize;
                             font-size: var(--el-font-size-small);
-                            border: 1px solid var(--bs-border-color);
+                            border: 1px solid var(--ks-border-primary);
 
                             html.dark &.el-tag.el-tag--info {
                                 background-color: var(--bs-gray-600);
@@ -491,7 +491,7 @@
 
             :deep(span) {
                 border-radius: $border-radius !important;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
                 background: var(--bs-white);
                 width: 100%;
                 font-size: var(--el-font-size-extra-small);

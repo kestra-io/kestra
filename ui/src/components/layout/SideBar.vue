@@ -306,7 +306,7 @@
             padding-bottom: 16px;
             font-size: 20px;
             background: transparent;
-            color: var(--bs-secondary);
+            color: var(--ks-content-secondary);
             border-top: 1px solid var(--bs-border-color);
 
             .el-button {

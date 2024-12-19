@@ -1121,7 +1121,7 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--el-text-color-primary);
@@ -1131,7 +1131,7 @@
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         & li {
             height: 30px;
@@ -1140,7 +1140,7 @@
             color: var(--bs-gray-900);
 
             &:hover {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }

@@ -260,7 +260,7 @@
                 margin-bottom: $spacer;
                 display: flex;
                 flex-wrap: wrap;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
 
                 :deep(.wrapper) {
                     .icon {
@@ -287,10 +287,10 @@
             .el-tag.el-tag--info {
                 background-color: var(--card-bg);
                 padding: 15px 10px;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
                 text-transform: capitalize;
                 font-size: var(--el-font-size-small);
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
             }
 
             .tag-box {

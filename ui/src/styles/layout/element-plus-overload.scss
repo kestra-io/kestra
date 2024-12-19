@@ -39,7 +39,7 @@
 
     &.is-text {
         font-weight: bold;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         height: 32px;
         line-height: 32px;
         background-color: var(--bs-white) !important;
@@ -191,7 +191,7 @@
 
         &.is-selected {
             background-color: var(--bs-gray-200);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
         }
 
         &.is-hovering {
@@ -229,7 +229,7 @@
     background: var(--bs-white);
 
     html.dark & {
-        background: var(--bs-card-bg);
+        background: var(--ks-background-card);
     }
 }
 
@@ -455,7 +455,7 @@ form.ks-horizontal {
 
         .el-tabs__item {
             &.is-active > * {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }
@@ -555,7 +555,7 @@ form.ks-horizontal {
                     padding-top: .5rem;
                     padding-bottom: .5rem;
                     font-weight: normal!important;
-                    color: var(--el-text-color-regular);
+                    color: var(--ks-content-primary);
                     &:hover{
                         // create an outline without cutting the rounded corners
                         box-shadow: 0 0 0 1px var(--border-border-active);
@@ -593,7 +593,7 @@ form.ks-horizontal {
 // message box
 .el-message-box {
     --el-messagebox-title-color: var(--content-content-primary);
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--ks-border-primary);
 
     &.full-screen {
         max-width: 80%;
@@ -626,10 +626,10 @@ form.ks-horizontal {
     }
 
     &.is-light {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         .el-popper__arrow::before {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
         }
     }
 
@@ -637,10 +637,10 @@ form.ks-horizontal {
         color: var(--bs-gray-100);
 
         background: var(--bs-gray-900);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         .el-popper__arrow::before {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             background-color: var(--bs-gray-900);
         }
 
@@ -969,7 +969,7 @@ form.ks-horizontal {
 // dialog
 .el-dialog {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
-    background-color: var(--bs-card-bg);
+    background-color: var(--ks-background-card);
 
     .el-dialog__header {
         padding: var(--spacer);
@@ -1086,7 +1086,7 @@ form.ks-horizontal {
             border-color: var(--bs-white);
         }
         .el-step__icon {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             border-radius: 50%;
             background-color: var(--input-bg);
         }

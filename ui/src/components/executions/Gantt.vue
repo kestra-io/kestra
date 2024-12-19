@@ -393,7 +393,7 @@
 
                     code {
                         font-size: var(--font-size-xs);
-                        color: var(--el-text-color-regular);
+                        color: var(--ks-content-primary);
                     }
                 }
 
@@ -444,7 +444,7 @@
 
         .attempt-wrapper {
             margin-bottom: 0;
-            border: 2px solid var(--bs-border-color);
+            border: 2px solid var(--ks-border-primary);
 
             tbody:last-child & {
                 border-bottom: 2px solid var(--bs-border-color);

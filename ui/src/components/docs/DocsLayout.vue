@@ -199,7 +199,7 @@
         :deep(.card) {
             --bs-card-spacer-y: 1rem;
             --bs-card-spacer-x: 1rem;
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             display: flex;
             flex-direction: column;

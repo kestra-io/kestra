@@ -115,7 +115,7 @@
 
         pre {
             border-radius: var(--bs-border-radius-lg);
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
         }
 
         blockquote {
@@ -168,7 +168,7 @@
         td > code,
         p > code{
             border-radius: var(--bs-border-radius-sm);
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
         }
 
@@ -179,7 +179,7 @@
                 padding: 2px 8px;
                 font-weight: 400;
                 border-radius: var(--bs-border-radius-sm);
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
                 color: var(--ks-content-primary);
 
                 html.dark & {

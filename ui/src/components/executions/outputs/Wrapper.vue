@@ -445,7 +445,7 @@
     }
 
     .bordered {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
     }
 
     .bordered > .el-collapse-item {
@@ -487,7 +487,7 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
 
             &[aria-haspopup="false"] {
                 padding-right: 0.5rem !important;
@@ -514,7 +514,7 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
     }

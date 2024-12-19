@@ -51,7 +51,7 @@
         }
 
         .image-box{
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
             background-color: var(--ks-background-card);
             padding: 9px;
             border-radius: 7px;

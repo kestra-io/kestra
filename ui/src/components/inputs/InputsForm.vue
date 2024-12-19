@@ -481,7 +481,7 @@
         .el-radio-button {
             &.is-active {
                 .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
-                    color: var(--el-text-color-regular);
+                    color: var(--ks-content-primary);
                     background-color: var(--bs-gray-100);
                     box-shadow: 0 0 0 0 var(--el-color-primary);
                 }
@@ -492,8 +492,8 @@
                 transition: 0.3s ease-in-out;
 
                 &:hover {
-                    color: var(--bs-secondary);
-                    border-color: var(--el-color-primary);
+                    color: var(--ks-content-secondary);
+                    border-color: var(--ks-border-active);
                     background-color: var(--ks-background-card);
                 }
 

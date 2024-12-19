@@ -9,7 +9,31 @@
 <script setup lang="ts">
     import {computed} from "vue";
 
-    const props = defineProps({option: {type: Object, required: true}});
+    interface Option {
+        label: "namespace"|
+            "flow"|
+            "state"|
+            "trigger_state"|
+            "scope"|
+            "child"|
+            "level"|
+            "task"|
+            "metric"|
+            "user"|
+            "type"|
+            "permission"|
+            "action"|
+            "details"|
+            "aggregation"|
+            "relative_date"|
+            "absolute_date"|
+            "labels"|
+            "text";
+        comparator: { label: string } | string;
+        value: any;
+    }
+
+    const props = defineProps<{option: Option}>();
 
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
@@ -17,7 +41,7 @@
     const formatter = (date: Date) => moment(date).format(DATE_FORMAT);
 
     const label = computed(() => props.option?.label);
-    const comparator = computed(() => props.option?.comparator?.label);
+    const comparator = computed(() => typeof props.option?.comparator === "string" ? props.option?.comparator : props.option?.comparator.label);
     const value = computed(() => {
         const {value, label, comparator} = props.option;
 

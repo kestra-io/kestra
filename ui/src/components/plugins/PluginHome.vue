@@ -6,15 +6,10 @@
         :image="headerImage"
         :image-dark="headerImageDark"
     >
-        <el-row class="my-4">
-            <el-input
-                class="search"
-                :placeholder="$t('pluginPage.search', {count: countPlugin})"
-                v-model="searchInput"
-                clearable
-            />
+        <el-row class="my-4 px-3">
+            <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
         </el-row>
-        <section class="plugins-container">
+        <section class="px-3 plugins-container">
             <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
                 <template #content>
                     <div class="tasks-tooltips">
@@ -84,6 +79,7 @@
     import DottedLayout from "../layout/DottedLayout.vue";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
+    import KestraFilter from "../filter/KestraFilter.vue";
 
     export default {
         props: {
@@ -98,7 +94,8 @@
         },
         components: {
             DottedLayout,
-            TaskIcon
+            TaskIcon,
+            KestraFilter
         },
         data() {
             return {
@@ -199,7 +196,6 @@
         display: grid;
         gap: 16px;
         grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-        margin: 0 2rem;
         padding-bottom: 4rem;
     }
 

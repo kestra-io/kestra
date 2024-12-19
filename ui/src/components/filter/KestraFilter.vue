@@ -15,7 +15,7 @@
             placement="bottom"
             :show-arrow="false"
             fit-input-width
-            popper-class="filters-select"
+            :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
@@ -132,6 +132,8 @@
     import {ref, computed} from "vue";
     import {ElSelect} from "element-plus";
 
+    import {Shown, Buttons, CurrentItem} from "./utils/types";
+
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
     import Label from "./components/Label.vue";
@@ -159,7 +161,7 @@
         include: {type: Array, default: () => []},
         values: {type: Object, default: undefined},
         buttons: {
-            type: Object,
+            type: Object as () => Buttons,
             default: () => ({
                 refresh: {shown: false, callback: () => {}},
                 settings: {
@@ -169,10 +171,11 @@
             }),
         },
         dashboards: {
-            type: Object,
+            type: Object as () => Shown,
             default: () => ({shown: false}),
         },
         placeholder: {type: String, default: undefined},
+        searchCallback: {type: Function, default: undefined},
     });
 
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
@@ -220,11 +223,17 @@
         }
     };
 
+    const getInputValue = () => select.value?.states.inputValue;
     const handleInputChange = (key) => {
+        if (props.searchCallback) {
+            props.searchCallback(getInputValue());
+            return;
+        }
+
         if (key === "Enter") return;
 
         if (current.value.at(-1)?.label === "user") {
-            emits("input", select.value.states.inputValue);
+            emits("input", getInputValue());
         }
     };
 
@@ -360,7 +369,7 @@
             return namespaceOptions.value;
 
         case "state":
-            return VALUES.EXECUTION_STATES;
+            return props.values?.state || VALUES.EXECUTION_STATES;
 
         case "trigger_state":
             return VALUES.TRIGGER_STATES;
@@ -386,11 +395,17 @@
         case "type":
             return VALUES.TYPES;
 
+        case "service_type":
+            return props.values?.type || [];
+
         case "permission":
             return VALUES.PERMISSIONS;
 
         case "action":
             return VALUES.ACTIONS;
+
+        case "status":
+            return VALUES.STATUSES;
 
         case "aggregation":
             return VALUES.AGGREGATIONS;
@@ -406,12 +421,6 @@
         }
     });
 
-    type CurrentItem = {
-        label: string;
-        value: string[];
-        comparator?: Record<string, any>;
-        persistent?: boolean;
-    };
     const current = ref<CurrentItem[]>([]);
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
@@ -470,7 +479,8 @@
     import {encodeParams, decodeParams} from "./utils/helpers.js";
 
     const triggerSearch = () => {
-        router.push({query: encodeParams(current.value, OPTIONS)});
+        if (props.searchCallback) return;
+        else router.push({query: encodeParams(current.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter

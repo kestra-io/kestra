@@ -31,8 +31,8 @@
                     </p>
                 </nav>
             </template>
-            <template #search>
-                <search-field :router="!embed" placeholder="search blueprint" @search="s => q = s" class="blueprints-search" />
+            <template #top>
+                <KestraFilter :prefix="`blueprintsBrowser${tab}`" :placeholder="$t('search')" />
             </template>
             <template #table>
                 <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -85,7 +85,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="medium" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -98,7 +98,6 @@
 </template>
 
 <script>
-    import SearchField from "../../../../components/layout/SearchField.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
     import DataTableActions from "../../../../mixins/dataTableActions";
@@ -112,10 +111,11 @@
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
     import {apiUrl} from "override/utils/route.js";
+    import KestraFilter from "../../../../components/filter/KestraFilter.vue";
 
     export default {
         mixins: [RestoreUrl, DataTableActions],
-        components: {TaskIcon, DataTable, SearchField, Errors},
+        components: {TaskIcon, DataTable, Errors, KestraFilter},
         emits: ["goToDetail", "loaded"],
         props: {
             blueprintBaseUri: {
@@ -277,9 +277,7 @@
                 }
             },
             q() {
-                if (this.embed) {
-                    this.load(this.onDataLoaded);
-                }
+                this.load(this.onDataLoaded);
             },
             selectedTag(newSelectedTag) {
                 if (!this.embed) {

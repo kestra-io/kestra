@@ -477,7 +477,7 @@
 
                 if(!this.$route.query.trigger_state?.length) return all;
 
-                const disabled = this.$route.query?.trigger_state?.[0] === "disabled" ? true : false;
+                const disabled = this.$route.query?.trigger_state?.[0] === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
             },
             visibleColumns() {

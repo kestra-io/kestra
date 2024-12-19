@@ -3,6 +3,8 @@ package io.kestra.core.services;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -40,6 +42,19 @@ public class FlowService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
         .copy()
         .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
+    private static final ObjectMapper WITHOUT_EXTEND_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
+        .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override 
+            public boolean hasIgnoreMarker(final AnnotatedMember m) {
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
+                String name = m.getName();
+                // Ignore both the extend property and any properties that start with "extend."
+                return exclusions.contains(name) || 
+                       name.equals("extend") || 
+                       name.startsWith("extend.");
+            }
+        });
 
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;

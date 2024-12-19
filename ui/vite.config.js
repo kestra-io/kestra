@@ -2,7 +2,6 @@ import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 import {visualizer} from "rollup-plugin-visualizer";
-import * as sass from "sass"
 
 import {filename} from "./plugins/filename"
 import {commit} from "./plugins/commit"
@@ -44,7 +43,7 @@ export default defineConfig({
         devSourcemap: true,
         preprocessorOptions: {
             scss: {
-                logger: sass.Logger.silent
+                silenceDeprecations: ["mixed-decls", "color-functions", "global-builtin", "import"]
             },
         }
     },

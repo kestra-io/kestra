@@ -1,112 +1,116 @@
 <template>
-    <section class="d-inline-flex mb-3 filters">
-        <Items :prefix="ITEMS_PREFIX" @search="handleClickedItems" />
+    <section class="d-flex mb-3 filters">
+        <div :class="['filters filter p-0', {focused: isFocused}]">
+            <Items :prefix="ITEMS_PREFIX" @search="handleClickedItems" class="brd" />
 
-        <el-select
-            ref="select"
-            :model-value="current"
-            value-key="label"
-            :placeholder="props.placeholder ?? t('filters.label')"
-            default-first-option
-            allow-create
-            filterable
-            clearable
-            multiple
-            placement="bottom"
-            :show-arrow="false"
-            fit-input-width
-            popper-class="filters-select"
-            @change="(value) => changeCallback(value)"
-            @keyup="(e) => handleInputChange(e.key)"
-            @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
-            @remove-tag="(item) => removeItem(item)"
-            @visible-change="(visible) => dropdownClosedCallback(visible)"
-            @clear="handleClear"
-            :class="{
-                refresh: buttons.refresh.shown,
-                settings: buttons.settings.shown,
-                dashboards: dashboards.shown,
-            }"
-        >
-            <template #label="{value}">
-                <Label :option="value" />
-            </template>
-            <template #empty>
-                <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
-                <DateRange
-                    v-else
-                    automatic
-                    @update:model-value="(v) => valueCallback(v, true)"
-                />
-            </template>
-            <template v-if="dropdowns.first.shown">
-                <el-option
-                    v-for="option in includedOptions"
-                    :key="option.value"
-                    :value="option.value"
-                    :label="option.label"
-                    @click="() => filterCallback(option)"
-                >
-                    <component
-                        v-if="option.icon"
-                        :is="option.icon"
-                        class="me-2"
+            <el-select
+                ref="select"
+                :model-value="current"
+                value-key="label"
+                :placeholder="props.placeholder ?? t('filters.label')"
+                default-first-option
+                allow-create
+                filterable
+                clearable
+                multiple
+                placement="bottom"
+                :show-arrow="false"
+                fit-input-width
+                popper-class="filters-select"
+                @change="(value) => changeCallback(value)"
+                @keyup="(e) => handleInputChange(e.key)"
+                @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
+                @remove-tag="(item) => removeItem(item)"
+                @visible-change="(visible) => dropdownClosedCallback(visible)"
+                @clear="handleClear"
+                @focus="handleFocus"
+                @blur="handleBlur"
+                :class="{
+                    refresh: buttons.refresh.shown,
+                    settings: buttons.settings.shown,
+                    dashboards: dashboards.shown,
+                }"
+            >
+                <template #label="{value}">
+                    <Label :option="value" />
+                </template>
+                <template #empty>
+                    <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
+                    <DateRange
+                        v-else
+                        automatic
+                        @update:model-value="(v) => valueCallback(v, true)"
                     />
-                    <span>{{ option.label }}</span>
-                </el-option>
-            </template>
-            <template v-else-if="dropdowns.second.shown">
-                <el-option
-                    v-for="comparator in dropdowns.first.value.comparators"
-                    :key="comparator.value"
-                    :value="comparator"
-                    :label="comparator.label"
-                    :class="{
-                        selected: current.some(
-                            (c) => c.comparator === comparator,
-                        ),
-                    }"
-                    @click="() => comparatorCallback(comparator)"
-                />
-            </template>
-            <template v-else-if="dropdowns.third.shown">
-                <el-option
-                    v-for="filter in valueOptions"
-                    :key="filter.value"
-                    :value="filter"
-                    :label="filter.label"
-                    :class="{
-                        selected: current.some((c) =>
-                            c.value.includes(filter.value),
-                        ),
-                    }"
-                    @click="() => valueCallback(filter)"
-                />
-            </template>
-        </el-select>
+                </template>
+                <template v-if="dropdowns.first.shown">
+                    <el-option
+                        v-for="option in includedOptions"
+                        :key="option.value"
+                        :value="option.value"
+                        :label="option.label"
+                        @click="() => filterCallback(option)"
+                    >
+                        <component
+                            v-if="option.icon"
+                            :is="option.icon"
+                            class="me-2"
+                        />
+                        <span>{{ option.label }}</span>
+                    </el-option>
+                </template>
+                <template v-else-if="dropdowns.second.shown">
+                    <el-option
+                        v-for="comparator in dropdowns.first.value.comparators"
+                        :key="comparator.value"
+                        :value="comparator"
+                        :label="comparator.label"
+                        :class="{
+                            selected: current.some(
+                                (c) => c.comparator === comparator,
+                            ),
+                        }"
+                        @click="() => comparatorCallback(comparator)"
+                    />
+                </template>
+                <template v-else-if="dropdowns.third.shown">
+                    <el-option
+                        v-for="filter in valueOptions"
+                        :key="filter.value"
+                        :value="filter"
+                        :label="filter.label"
+                        :class="{
+                            selected: current.some((c) =>
+                                c.value.includes(filter.value),
+                            ),
+                        }"
+                        @click="() => valueCallback(filter)"
+                    />
+                </template>
+            </el-select>
 
-        <el-button-group
-            class="d-inline-flex"
-            :class="{
-                'me-1':
-                    buttons.refresh.shown ||
-                    buttons.settings.shown ||
-                    dashboards.shown,
-            }"
-        >
-            <KestraIcon :tooltip="$t('search')" placement="bottom">
-                <el-button
-                    :icon="Magnify"
-                    @click="triggerSearch"
-                    class="rounded-0"
-                />
-            </KestraIcon>
-            <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
-        </el-button-group>
-
+            <el-button-group
+                class="d-inline-flex"
+                :class="{
+                    'me-1':
+                        buttons.refresh.shown ||
+                        buttons.settings.shown ||
+                        dashboards.shown,
+                }"
+            >
+                <KestraIcon :tooltip="$t('search')" placement="bottom">
+                    <el-button
+                        :icon="Magnify"
+                        @click="triggerSearch"
+                        class="rounded-0"
+                    />
+                </KestraIcon>
+                <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
+            </el-button-group>
+        </div>
+        
         <el-button-group
             v-if="buttons.refresh.shown || buttons.settings.shown"
-            class="d-inline-flex ms-1"
+            class="d-flex ms-1"
             :class="{'me-1': dashboards.shown}"
         >
             <Refresh
@@ -232,6 +236,10 @@
         current.value = [];
         triggerSearch();
     };
+
+    const isFocused = ref(false);
+    const handleFocus = () => (isFocused.value = true);
+    const handleBlur = () => (isFocused.value = false);
 
     const filterCallback = (option) => {
         if (!option.value) {
@@ -521,9 +529,7 @@ $dashboards: 52px;
         width: 100%;
 
         &.refresh.settings.dashboards {
-            max-width: calc(
-                100% - $included - $refresh - $settins - $dashboards
-            );
+            max-width: calc(100% - $included - $refresh - $settins - $dashboards);
         }
 
         &.refresh.settings {
@@ -557,9 +563,7 @@ $dashboards: 52px;
 
     & .el-select__wrapper {
         border-radius: 0;
-        box-shadow:
-            0 -1px 0 0 $filters-border-color inset,
-            0 1px 0 0 $filters-border-color inset;
+        box-shadow: 0 -1px 0 0 $filters-border-color inset, 0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
             background: $filters-border-color !important;
@@ -577,6 +581,46 @@ $dashboards: 52px;
 
         &::-webkit-scrollbar {
             height: 0px;
+        }
+    }
+}
+
+.filter {
+    width: -webkit-fill-available;
+    border-radius: var(--bs-border-radius);
+
+    &.focused {
+        transition: border-color 0.5s;
+        border: 1px solid var(--bs-primary);
+        outline: none;
+
+        & .brd .el-button {
+            border: 0;
+            outline: none !important;
+            border-right: 1px solid var(--bs-border-color);
+
+            &:hover {
+                border-color: #8008f6 !important;
+            }
+        }
+
+        & .el-select__wrapper {
+            box-shadow: 0 0 0 0 var(--el-border-color), 0 0 0 0 var(--el-border-color);
+        }
+
+        & .el-button-group .el-button {
+            border: 0;
+            outline: none !important;
+            border-right: 1px solid var(--bs-border-color);
+            border-left: 1px solid var(--bs-border-color);
+
+            &:hover {
+                border-color: #8008f6 !important;
+            }
+        }
+
+        & .el-select__input, .el-select__caret {
+            color: var(--bs-primary);
         }
     }
 }

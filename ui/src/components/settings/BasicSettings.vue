@@ -171,7 +171,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <el-select :model-value="pendingSettings.dateFormat" @update:model-value="onDateFormat">
+                        <el-select :model-value="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
                             <el-option
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
@@ -280,6 +280,7 @@
                 }).sort((a, b) => a.offset - b.offset),
                 guidedTour: undefined,
                 now: this.$moment(), 
+                localeKey: this.$moment.locale(),
             };
         },
         created() {
@@ -316,8 +317,6 @@
                 this.pendingSettings.defaultLogLevel = value;
             },
             onLang(value) {
-                this.$moment.locale(value);
-                this.$i18n.locale = value;
                 this.pendingSettings.lang = value;
             },
             onTheme(value) {
@@ -405,6 +404,14 @@
                     case "theme":
                         Utils.switchTheme(this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
+                        break
+                    case "lang":
+                        if(this.pendingSettings[key])
+                            localStorage.setItem(key, this.pendingSettings[key])
+                        let newlang=Utils.getLang()
+                        this.$moment.locale(newlang);
+                        this.$i18n.locale = newlang;
+                        this.localeKey = this.$moment.locale();
                         break
                     default:
                         if (storedKey) {

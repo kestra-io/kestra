@@ -1,5 +1,7 @@
 import {useI18n} from "vue-i18n";
 
+import {Comparator, Option} from "../utils/types";
+
 import * as ICONS from "../utils/icons";
 
 const getItem = (key: string) => {
@@ -18,7 +20,7 @@ const filterItems = (items: object[], element: object) => {
     return items.filter((item) => compare(item, element));
 };
 
-const buildComparator = (value: string, multiple = false) => {
+const buildComparator = (value: string, multiple = false): Comparator => {
     return {label: value, value, multiple};
 };
 
@@ -27,7 +29,7 @@ export function useFilters(prefix: string) {
 
     const comparator = (which: string) => `filters.comparators.${which}`;
 
-    const COMPARATORS = {
+    const COMPARATORS: Record<string, Comparator> = {
         IS: buildComparator(t(comparator("is"))),
         IS_ONE_OF: buildComparator(t(comparator("is_one_of")), true),
 
@@ -42,7 +44,7 @@ export function useFilters(prefix: string) {
         STARTS_WITH: buildComparator(t(comparator("starts_with"))),
     };
 
-    const OPTIONS = [
+    const OPTIONS: Option[] = [
         {
             key: "namespace",
             icon: ICONS.DotsSquare,
@@ -114,6 +116,13 @@ export function useFilters(prefix: string) {
             comparators: [COMPARATORS.IS],
         },
         {
+            key: "type",
+            icon: ICONS.FormatListBulletedType,
+            label: t("filters.options.type"),
+            value: {label: "service_type", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
             key: "permission",
             icon: ICONS.AccountCheck,
             label: t("filters.options.permission"),
@@ -125,6 +134,13 @@ export function useFilters(prefix: string) {
             icon: ICONS.GestureTapButton,
             label: t("filters.options.action"),
             value: {label: "action", comparator: undefined, value: []},
+            comparators: [COMPARATORS.IS],
+        },
+        {
+            key: "status",
+            icon: ICONS.StateMachine,
+            label: t("filters.options.status"),
+            value: {label: "status", comparator: undefined, value: []},
             comparators: [COMPARATORS.IS],
         },
         {

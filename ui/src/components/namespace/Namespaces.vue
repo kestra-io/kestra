@@ -12,7 +12,7 @@
     </Navbar>
 
     <el-row class="p-5">
-        <KestraFilter :placeholder="t('search')" />
+        <KestraFilter :placeholder="$t('search')" />
         <el-col v-if="!namespaces || !namespaces.length" :span="24" class="my-2 p-3 namespaces empty">
             <span>{{ t("no_namespaces") }}</span>
         </el-col>

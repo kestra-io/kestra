@@ -1,26 +1,23 @@
 import {useI18n} from "vue-i18n";
 
+import {Value} from "../utils/types";
+
 import State from "../../../utils/state.js";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission.js";
 import action from "../../../models/action.js";
 
-interface Option {
-    label: string;
-    value: string;
-}
-
 const capitalize = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-const buildFromArray = (values: string[], isCapitalized = false): Option[] =>
+const buildFromArray = (values: string[], isCapitalized = false): Value[] =>
     values.map((value) => ({
         label: isCapitalized ? capitalize(value) : value,
         value,
     }));
 
-const bulidFromObject = (object: object): Option[] =>
+const bulidFromObject = (object: object): Value[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,
@@ -37,7 +34,7 @@ export function useValues(label: string) {
         EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
         ),
-        TRIGGER_STATES: buildFromArray(["enabled", "disabled"], true),
+        TRIGGER_STATES: buildFromArray(["ENABLED", "DISABLED"], true),
         SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),
@@ -61,7 +58,8 @@ export function useValues(label: string) {
             LOGIN: "LOGIN",
             LOGOUT: "LOGOUT",
         }),
-        AGGREGATIONS: buildFromArray(["sum", "avg", "min", "max"]),
+        STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
+        AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE: [
             {label: t("datepicker.last5minutes"), value: "PT5M"},
             {label: t("datepicker.last15minutes"), value: "PT15M"},

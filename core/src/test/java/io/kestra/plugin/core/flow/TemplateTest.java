@@ -2,16 +2,15 @@ package io.kestra.plugin.core.flow;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.core.utils.TestsUtils;
@@ -23,12 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
@@ -51,9 +47,6 @@ public class TemplateTest {
     @Inject
     protected RunnerUtils runnerUtils;
 
-    @Inject
-    protected LocalFlowRepositoryLoader repositoryLoader;
-
     public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
@@ -62,14 +55,10 @@ public class TemplateTest {
     public static void withTemplate(
         RunnerUtils runnerUtils,
         TemplateRepositoryInterface templateRepository,
-        LocalFlowRepositoryLoader repositoryLoader,
         QueueInterface<LogEntry> logQueue,
         FlowInputOutput flowIO
-    ) throws TimeoutException, IOException, URISyntaxException, QueueException {
+    ) throws TimeoutException, QueueException {
         templateRepository.create(TEMPLATE_1);
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
-            "flows/templates/with-template.yaml")));
-
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
@@ -94,15 +83,13 @@ public class TemplateTest {
     }
 
     @Test
-    void withTemplate() throws TimeoutException, IOException, URISyntaxException, QueueException {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue, flowIO);
+    @LoadFlows({"flows/templates/with-template.yaml"})
+    void withTemplate() throws TimeoutException, QueueException {
+        TemplateTest.withTemplate(runnerUtils, templateRepository, logQueue, flowIO);
     }
 
 
-    public static void withFailedTemplate(RunnerUtils runnerUtils, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException, QueueException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource(
-            "flows/templates/with-failed-template.yaml")));
-
+    public static void withFailedTemplate(RunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
@@ -116,7 +103,8 @@ public class TemplateTest {
     }
 
     @Test
-    void withFailedTemplate() throws TimeoutException, IOException, URISyntaxException, QueueException {
-        TemplateTest.withFailedTemplate(runnerUtils, repositoryLoader, logQueue);
+    @LoadFlows({"flows/templates/with-failed-template.yaml"})
+    void withFailedTemplate() throws TimeoutException, QueueException {
+        TemplateTest.withFailedTemplate(runnerUtils, logQueue);
     }
 }

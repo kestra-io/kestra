@@ -24,6 +24,10 @@
 </template>
 
 <script setup lang="ts">
+    import {PropType} from "vue";
+
+    import {Buttons} from "../utils/types";
+
     import KestraIcon from "../../Kicon.vue";
     import Title from "../components/Title.vue";
 
@@ -34,7 +38,7 @@
 
     defineProps({
         settings: {
-            type: Object,
+            type: Object as PropType<Buttons["settings"]>,
             default: () => ({
                 charts: {shown: false, value: false, callback: () => {}},
             }),

@@ -1001,7 +1001,9 @@
         "user": "Utilisateur",
         "task": "Tâche",
         "flow": "Flux",
-        "type": "Type"
+        "type": "Type",
+        "status": "Statut",
+        "service_type": "Type"
       },
       "settings": {
         "label": "Paramètres de la page",

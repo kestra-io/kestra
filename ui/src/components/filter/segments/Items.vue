@@ -61,6 +61,8 @@
 <script setup lang="ts">
     import {ref} from "vue";
 
+    import {CurrentItem} from "../utils/types";
+
     import KestraIcon from "../../Kicon.vue";
     import Label from "../components/Label.vue";
     import Title from "../components/Title.vue";
@@ -76,7 +78,7 @@
     import {useFilters} from "../composables/useFilters.js";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
-    let saved = ref<{ value: string; name: string }[]>([]);
+    let saved = ref<{ value: CurrentItem[]; name: string }[]>([]);
 
     const loadAll = () => {
         saved.value = getSavedItems().reverse();

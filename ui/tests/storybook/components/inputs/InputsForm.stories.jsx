@@ -41,6 +41,8 @@ export const InputTypes = {
             expect(editor).to.exist;
             return editor;
         }, {timeout: 500, interval: 100});
+        // wait for the setup to finish
+        await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com")
         await waitFor(function testEmail() {expect(can.getByTestId("test-content").textContent).to.include("foo@example.com")})
 

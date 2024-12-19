@@ -37,41 +37,41 @@
 </template>
 
 <script>
-import path from "path-browserify";
+    import path from "path-browserify";
 
-export default {
-    name: "RecursiveToc",
-    props: {
-        parent: {
-            type: Object,
-            required: true
-        },
-        makeIndexNavigable: {
-            type: Boolean,
-            default: true
-        }
-    },
-    watch: {
-        "$route.path": {
-            handler() {
-                const normalizedPath = path.normalize(this.$route.path);
-                this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
+    export default {
+        name: "RecursiveToc",
+        props: {
+            parent: {
+                type: Object,
+                required: true
             },
-            immediate: true
-        }
-    },
-    data() {
-        return {
-            openedDocs: undefined,
-            disabledPages: [
-                "docs/api-reference",
-                "docs/terraform/data-sources",
-                "docs/terraform/guides",
-                "docs/terraform/resources"
-            ]
+            makeIndexNavigable: {
+                type: Boolean,
+                default: true
+            }
+        },
+        watch: {
+            "$route.path": {
+                handler() {
+                    const normalizedPath = path.normalize(this.$route.path);
+                    this.openedDocs = this.parent.children.filter(child => normalizedPath.includes(child.path)).map(child => child.path);
+                },
+                immediate: true
+            }
+        },
+        data() {
+            return {
+                openedDocs: undefined,
+                disabledPages: [
+                    "docs/api-reference",
+                    "docs/terraform/data-sources",
+                    "docs/terraform/guides",
+                    "docs/terraform/resources"
+                ]
+            }
         }
     }
-}
 </script>
 
 <style lang="scss" scoped>

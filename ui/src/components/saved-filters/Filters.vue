@@ -73,98 +73,98 @@
 </template>
 
 <script setup>
-import ContentSave from "vue-material-design-icons/ContentSave.vue";
-import Plus from "vue-material-design-icons/Plus.vue";
-import Magnify from "vue-material-design-icons/Magnify.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
 </script>
 
 <script>
-import Drawer from "../Drawer.vue";
-import SavedFilter from "./SavedFilter.vue";
-import {mapGetters} from "vuex";
-import _isEqual from "lodash/isEqual";
+    import Drawer from "../Drawer.vue";
+    import SavedFilter from "./SavedFilter.vue";
+    import {mapGetters} from "vuex";
+    import _isEqual from "lodash/isEqual";
 
-export default {
-    components: {
-        Drawer,
-        SavedFilter
-    },
-    props: {
-        storageKey: {
-            type: String,
-            required: true
-        }
-    },
-    data() {
-        return {
-            isDrawerOpen: false,
-            newFilterLabel: undefined,
-            labelFilter: undefined,
-            filters: {}
-        };
-    },
-    computed: {
-        ...mapGetters("filters", ["savedFilters"]),
-        relevantFilters() {
-            return Object.entries(this.filters)
-                .filter(([key, _]) => this.labelFilter ? key.includes(this.labelFilter) : true)
-                .sort(([a, _], [b, __]) => {
-                    const keyA = a.toLowerCase();
-                    const keyB = b.toLowerCase();
-
-                    return (keyA < keyB ? -1 : (keyA > keyB ? 1 : 0));
-                })
-                .reduce((acc, [key, value]) => {
-                    acc[key] = value;
-                    return acc;
-                }, {});
+    export default {
+        components: {
+            Drawer,
+            SavedFilter
         },
-        hasSavedFilters() {
-            return Object.keys(this.filters).length > 0;
-        }
-    },
-    created() {
-        this.resetNewFilterLabel();
-        this.EMPTY_LABEL = "";
-    },
-    mounted() {
-        this.filters = this.savedFilters(this.storageKey);
-    },
-    methods: {
-        resetNewFilterLabel() {
-            this.newFilterLabel = this.EMPTY_LABEL;
-        },
-        removeSavedFilter(label) {
-            delete this.filters[label];
-            this.$store.commit("filters/setSavedFilters",
-                               {
-                                   storageKey: this.storageKey,
-                                   filters: this.filters
-                               });
-        },
-        storeSavedFilters() {
-            if (!this.newFilterLabel) {
-                return;
+        props: {
+            storageKey: {
+                type: String,
+                required: true
             }
-            this.filters[this.newFilterLabel] = this.$route.query;
-            this.$store.commit("filters/setSavedFilters",
-                               {
-                                   storageKey: this.storageKey,
-                                   filters: this.filters
-                               });
+        },
+        data() {
+            return {
+                isDrawerOpen: false,
+                newFilterLabel: undefined,
+                labelFilter: undefined,
+                filters: {}
+            };
+        },
+        computed: {
+            ...mapGetters("filters", ["savedFilters"]),
+            relevantFilters() {
+                return Object.entries(this.filters)
+                    .filter(([key, _]) => this.labelFilter ? key.includes(this.labelFilter) : true)
+                    .sort(([a, _], [b, __]) => {
+                        const keyA = a.toLowerCase();
+                        const keyB = b.toLowerCase();
+
+                        return (keyA < keyB ? -1 : (keyA > keyB ? 1 : 0));
+                    })
+                    .reduce((acc, [key, value]) => {
+                        acc[key] = value;
+                        return acc;
+                    }, {});
+            },
+            hasSavedFilters() {
+                return Object.keys(this.filters).length > 0;
+            }
+        },
+        created() {
             this.resetNewFilterLabel();
+            this.EMPTY_LABEL = "";
         },
-        toggleDrawer() {
-            this.isDrawerOpen = !this.isDrawerOpen;
+        mounted() {
+            this.filters = this.savedFilters(this.storageKey);
         },
-        setFilter(query) {
-            this.$router.push({query: query})
-        },
-        isSelected(query) {
-            return _isEqual(query, this.$route.query);
+        methods: {
+            resetNewFilterLabel() {
+                this.newFilterLabel = this.EMPTY_LABEL;
+            },
+            removeSavedFilter(label) {
+                delete this.filters[label];
+                this.$store.commit("filters/setSavedFilters",
+                                   {
+                                       storageKey: this.storageKey,
+                                       filters: this.filters
+                                   });
+            },
+            storeSavedFilters() {
+                if (!this.newFilterLabel) {
+                    return;
+                }
+                this.filters[this.newFilterLabel] = this.$route.query;
+                this.$store.commit("filters/setSavedFilters",
+                                   {
+                                       storageKey: this.storageKey,
+                                       filters: this.filters
+                                   });
+                this.resetNewFilterLabel();
+            },
+            toggleDrawer() {
+                this.isDrawerOpen = !this.isDrawerOpen;
+            },
+            setFilter(query) {
+                this.$router.push({query: query})
+            },
+            isSelected(query) {
+                return _isEqual(query, this.$route.query);
+            }
         }
     }
-}
 </script>
 
 <style lang="scss">

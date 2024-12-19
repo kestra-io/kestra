@@ -116,212 +116,212 @@
     </div>
 </template>
 <script>
-import {mapState} from "vuex";
-import Status from "../Status.vue";
-import SetLabels from "./SetLabels.vue";
-import Restart from "./Restart.vue";
-import Resume from "./Resume.vue";
-import Pause from "./Pause.vue";
-import Unqueue from "./Unqueue.vue";
-import ForceRun from "./ForceRun.vue";
-import Kill from "./Kill.vue";
-import State from "../../utils/state";
-import DateAgo from "../layout/DateAgo.vue";
-import Crud from "override/components/auth/Crud.vue";
-import Duration from "../layout/Duration.vue";
-import Labels from "../layout/Labels.vue"
-import {toRaw} from "vue";
-import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
-import KestraCascader from "../../components/kestra/Cascader.vue"
-import LogLine from "../../components/logs/LogLine.vue"
-import Alert from "vue-material-design-icons/Alert.vue";
-import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import {mapState} from "vuex";
+    import Status from "../Status.vue";
+    import SetLabels from "./SetLabels.vue";
+    import Restart from "./Restart.vue";
+    import Resume from "./Resume.vue";
+    import Pause from "./Pause.vue";
+    import Unqueue from "./Unqueue.vue";
+    import ForceRun from "./ForceRun.vue";
+    import Kill from "./Kill.vue";
+    import State from "../../utils/state";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Crud from "override/components/auth/Crud.vue";
+    import Duration from "../layout/Duration.vue";
+    import Labels from "../layout/Labels.vue"
+    import {toRaw} from "vue";
+    import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
+    import KestraCascader from "../../components/kestra/Cascader.vue"
+    import LogLine from "../../components/logs/LogLine.vue"
+    import Alert from "vue-material-design-icons/Alert.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
 
-export default {
-    components: {
-        ChangeExecutionStatus,
-        Duration,
-        Status,
-        SetLabels,
-        Restart,
-        Resume,
-        Pause,
-        Unqueue,
-        ForceRun,
-        Kill,
-        DateAgo,
-        Labels,
-        Crud,
-        KestraCascader,
-        LogLine,
-        Alert,
-        ChevronDown,
-        ChevronUp
-    },
-    emits: ["follow"],
-    methods: {
-        transform(obj) {
-            return Object.entries(obj).map(([key, value]) => {
-                const children =
-                    typeof value === "object" && value !== null
-                        ? Object.entries(value).map(
-                            ([k, v]) => this.transform({[k]: v})[0],
-                        )
-                        : [{label: value, value: value}];
+    export default {
+        components: {
+            ChangeExecutionStatus,
+            Duration,
+            Status,
+            SetLabels,
+            Restart,
+            Resume,
+            Pause,
+            Unqueue,
+            ForceRun,
+            Kill,
+            DateAgo,
+            Labels,
+            Crud,
+            KestraCascader,
+            LogLine,
+            Alert,
+            ChevronDown,
+            ChevronUp
+        },
+        emits: ["follow"],
+        methods: {
+            transform(obj) {
+                return Object.entries(obj).map(([key, value]) => {
+                    const children =
+                        typeof value === "object" && value !== null
+                            ? Object.entries(value).map(
+                                ([k, v]) => this.transform({[k]: v})[0],
+                            )
+                            : [{label: value, value: value}];
 
-                // Filter out children with undefined label and value
-                const filteredChildren = children.filter(
-                    (child) =>
-                        child.label !== undefined || child.value !== undefined,
-                );
+                    // Filter out children with undefined label and value
+                    const filteredChildren = children.filter(
+                        (child) =>
+                            child.label !== undefined || child.value !== undefined,
+                    );
 
-                // Return node with or without children based on existence
-                const node = {label: key, value: key};
+                    // Return node with or without children based on existence
+                    const node = {label: key, value: key};
 
-                // Include children only if there are valid entries
-                if (filteredChildren.length) {
-                    node.children = filteredChildren;
+                    // Include children only if there are valid entries
+                    if (filteredChildren.length) {
+                        node.children = filteredChildren;
+                    }
+
+                    return node;
+                });
+            },
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
+            stop() {
+                if (!this.execution || State.isRunning(this.execution.state.current)) {
+                    return new Date().toISOString(true)
+                } else {
+                    return this.execution.state.histories[this.execution.state.histories.length - 1].date;
+                }
+            },
+            isFailed() {
+                return this.execution.state.current === State.FAILED;
+            },
+            load() {
+                this.$store
+                    .dispatch(
+                        "execution/loadExecution",
+                        this.$route.params
+                    )
+                    .then(() => {
+                        this.fetchErrorLogs();
+                    })
+            },
+            fetchErrorLogs() {
+                this.$store
+                    .dispatch("execution/loadLogs", {
+                        store: false,
+                        executionId: this.execution.id,
+                        params: {
+                            minLevel: "ERROR"
+                        }
+                    })
+                    .then(response => {
+                        if (response && response.length >= 1) {
+                            this.errorLogsMore = response.length > 3;
+                            this.errorLast = response[response.length - 1];
+                            this.errorLogs = response.length > 3 ? response.slice(1).slice(-3) : response;
+
+                        } else {
+                            this.errorLogs = undefined;
+                            this.errorLogsMore = false;
+                            this.errorLast = undefined;
+                        }
+                    })
+            }
+        },
+        mounted() {
+            if (this.isFailed()) {
+                this.fetchErrorLogs();
+            }
+        },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
+                    this.load();
+                }
+            }
+        },
+        data() {
+            return {
+                isExpanded: false,
+                errorLogs: undefined,
+                errorLogsMore: false,
+                errorLast: undefined,
+            };
+        },
+        computed: {
+            ...mapState("execution", ["flow", "execution"]),
+            items() {
+                if (!this.execution) {
+                    return []
+                }
+                const stepCount = this.execution.taskRunList
+                    ? this.execution.taskRunList.length
+                    : 0;
+                let ret = [
+                    {key: this.$t("namespace"), value: this.execution.namespace},
+                    {key: this.$t("flow"), value: this.execution.flowId},
+                    {
+                        key: this.$t("revision"),
+                        value: this.execution.flowRevision
+                    },
+                    {key: this.$t("labels"), value: this.execution.labels},
+                    {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
+                    {key: this.$t("updated date"), value: this.stop(), date: true},
+                    {key: this.$t("duration"), value: this.execution.state.histories, duration: true},
+                    {key: this.$t("steps"), value: stepCount},
+                    {key: this.$t("attempt"), value: this.execution?.metadata?.attemptNumber},
+                    {key: this.$t("originalCreatedDate"), value: this.execution?.metadata?.originalCreatedDate, date: true},
+                    {key: this.$t("scheduleDate"), value: this.execution?.scheduleDate, date: true},
+                ];
+
+                if (this.execution.parentId) {
+                    ret.push({
+                        key: this.$t("parent execution"),
+                        value: this.execution.parentId,
+                        link: {
+                            flowId: this.execution.flowId,
+                            id: this.execution.parentId,
+                            namespace: this.execution.namespace
+                        }
+                    });
                 }
 
-                return node;
-            });
-        },
-        forwardEvent(type, event) {
-            this.$emit(type, event);
-        },
-        stop() {
-            if (!this.execution || State.isRunning(this.execution.state.current)) {
-                return new Date().toISOString(true)
-            } else {
-                return this.execution.state.histories[this.execution.state.histories.length - 1].date;
-            }
-        },
-        isFailed() {
-            return this.execution.state.current === State.FAILED;
-        },
-        load() {
-            this.$store
-                .dispatch(
-                    "execution/loadExecution",
-                    this.$route.params
-                )
-                .then(() => {
-                    this.fetchErrorLogs();
+                if (this.execution.originalId && this.execution.originalId !== this.execution.id) {
+                    ret.push({
+                        key: this.$t("original execution"),
+                        value: this.execution.originalId,
+                        link: {
+                            flowId: this.execution.flowId,
+                            id: this.execution.originalId,
+                            namespace: this.execution.namespace
+                        }
+                    });
+                }
+
+                return ret;
+            },
+            inputs() {
+                if (!this.flow) {
+                    return []
+                }
+
+                let inputs = toRaw(this.execution.inputs);
+                Object.keys(inputs).forEach(key => {
+                    (this.flow.inputs || []).forEach(input => {
+                        if (key === input.name && input.type === "SECRET") {
+                            inputs[key] = "******";
+                        }
+                    })
                 })
+                return inputs;
+            }
         },
-        fetchErrorLogs() {
-            this.$store
-                .dispatch("execution/loadLogs", {
-                    store: false,
-                    executionId: this.execution.id,
-                    params: {
-                        minLevel: "ERROR"
-                    }
-                })
-                .then(response => {
-                    if (response && response.length >= 1) {
-                        this.errorLogsMore = response.length > 3;
-                        this.errorLast = response[response.length - 1];
-                        this.errorLogs = response.length > 3 ? response.slice(1).slice(-3) : response;
-
-                    } else {
-                        this.errorLogs = undefined;
-                        this.errorLogsMore = false;
-                        this.errorLast = undefined;
-                    }
-                })
-        }
-    },
-    mounted() {
-        if (this.isFailed()) {
-            this.fetchErrorLogs();
-        }
-    },
-    watch: {
-        $route(newValue, oldValue) {
-            if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
-                this.load();
-            }
-        }
-    },
-    data() {
-        return {
-            isExpanded: false,
-            errorLogs: undefined,
-            errorLogsMore: false,
-            errorLast: undefined,
-        };
-    },
-    computed: {
-        ...mapState("execution", ["flow", "execution"]),
-        items() {
-            if (!this.execution) {
-                return []
-            }
-            const stepCount = this.execution.taskRunList
-                ? this.execution.taskRunList.length
-                : 0;
-            let ret = [
-                {key: this.$t("namespace"), value: this.execution.namespace},
-                {key: this.$t("flow"), value: this.execution.flowId},
-                {
-                    key: this.$t("revision"),
-                    value: this.execution.flowRevision
-                },
-                {key: this.$t("labels"), value: this.execution.labels},
-                {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
-                {key: this.$t("updated date"), value: this.stop(), date: true},
-                {key: this.$t("duration"), value: this.execution.state.histories, duration: true},
-                {key: this.$t("steps"), value: stepCount},
-                {key: this.$t("attempt"), value: this.execution?.metadata?.attemptNumber},
-                {key: this.$t("originalCreatedDate"), value: this.execution?.metadata?.originalCreatedDate, date: true},
-                {key: this.$t("scheduleDate"), value: this.execution?.scheduleDate, date: true},
-            ];
-
-            if (this.execution.parentId) {
-                ret.push({
-                    key: this.$t("parent execution"),
-                    value: this.execution.parentId,
-                    link: {
-                        flowId: this.execution.flowId,
-                        id: this.execution.parentId,
-                        namespace: this.execution.namespace
-                    }
-                });
-            }
-
-            if (this.execution.originalId && this.execution.originalId !== this.execution.id) {
-                ret.push({
-                    key: this.$t("original execution"),
-                    value: this.execution.originalId,
-                    link: {
-                        flowId: this.execution.flowId,
-                        id: this.execution.originalId,
-                        namespace: this.execution.namespace
-                    }
-                });
-            }
-
-            return ret;
-        },
-        inputs() {
-            if (!this.flow) {
-                return []
-            }
-
-            let inputs = toRaw(this.execution.inputs);
-            Object.keys(inputs).forEach(key => {
-                (this.flow.inputs || []).forEach(input => {
-                    if (key === input.name && input.type === "SECRET") {
-                        inputs[key] = "******";
-                    }
-                })
-            })
-            return inputs;
-        }
-    },
-};
+    };
 </script>
 
 <style lang="scss">

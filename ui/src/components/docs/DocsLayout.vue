@@ -27,13 +27,13 @@
 </script>
 
 <script>
-export default {
-    data() {
-        return {
-            collapsed: false,
+    export default {
+        data() {
+            return {
+                collapsed: false,
+            }
         }
-    }
-};
+    };
 </script>
 
 <style lang="scss" scoped>

@@ -82,247 +82,247 @@
     </el-card>
 </template>
 <script>
-import TaskRunDetails from "../logs/TaskRunDetails.vue";
-import {mapState} from "vuex";
-import State from "../../utils/state";
-import Duration from "../layout/Duration.vue";
-import Utils from "../../utils/utils";
-import FlowUtils from "../../utils/flowUtils";
-import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
-import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
+    import {mapState} from "vuex";
+    import State from "../../utils/state";
+    import Duration from "../layout/Duration.vue";
+    import Utils from "../../utils/utils";
+    import FlowUtils from "../../utils/flowUtils";
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
-const ts = date => new Date(date).getTime();
-const TASKRUN_THRESHOLD = 50
-export default {
-    components: {DynamicScroller, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
-    data() {
-        return {
-            colors: State.colorClass(),
-            series: [],
-            realTime: true,
-            dates: [],
-            duration: undefined,
-            selectedTaskRuns: [],
-            taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
-        };
-    },
-    watch: {
-        execution(newValue, oldValue) {
-            if (oldValue.id !== newValue.id && !this.realTime) {
-                this.realTime = true;
-                this.selectedTaskRuns = [];
-                this.paint();
-            }
-            if(newValue.state?.current === State.SUCCESS){
-                this.compute()
-            }
+    const ts = date => new Date(date).getTime();
+    const TASKRUN_THRESHOLD = 50
+    export default {
+        components: {DynamicScroller, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
+        data() {
+            return {
+                colors: State.colorClass(),
+                series: [],
+                realTime: true,
+                dates: [],
+                duration: undefined,
+                selectedTaskRuns: [],
+                taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
+            };
         },
-        forEachItemsTaskRunIds: {
-            handler(newValue, oldValue) {
-                if (newValue.length > 0) {
-                    const newEntriesAmount = newValue.length - (oldValue?.length ?? 0);
-                    for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
-                        this.selectedTaskRuns.push(newValue[i].id);
-                    }
+        watch: {
+            execution(newValue, oldValue) {
+                if (oldValue.id !== newValue.id && !this.realTime) {
+                    this.realTime = true;
+                    this.selectedTaskRuns = [];
+                    this.paint();
+                }
+                if(newValue.state?.current === State.SUCCESS){
+                    this.compute()
                 }
             },
-            immediate: true
-        }
-    },
-    mounted() {
-        this.paint();
-    },
-    computed: {
-        ...mapState("execution", ["flow", "execution"]),
-        taskRunsCount() {
-            return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
-        },
-        taskTypeByTaskRun() {
-            return this.series.map(serie => [serie.task, this.taskType(serie.task)]);
-        },
-        taskTypeByTaskRunId() {
-            return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
-        },
-        forEachItemsTaskRunIds() {
-            return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.plugin.core.flow.ForEachItem" || taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
-        },
-        filteredSeries() {
-            return this.series
-                .filter(serie =>
-                    !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
-                );
-        },
-        start() {
-            return this.execution ? ts(this.execution.state.histories[0].date) : 0;
-        },
-        tasks () {
-            const rootTasks = []
-            const childTasks = []
-            const sortedTasks = []
-            const tasksById = {}
-            for (let task of (this.execution.taskRunList || [])) {
-                const taskWrapper = {task}
-                if (task.parentTaskRunId) {
-                    childTasks.push(taskWrapper)
-                } else {
-                    rootTasks.push(taskWrapper)
-                }
-                tasksById[task.id] = taskWrapper
-            }
-
-            for (let i = 0; i < childTasks.length; i++) {
-                const taskWrapper = childTasks[i];
-                const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
-                if (parentTask) {
-                    tasksById[taskWrapper.task.id] = taskWrapper
-                    if (!parentTask.children) {
-                        parentTask.children = []
+            forEachItemsTaskRunIds: {
+                handler(newValue, oldValue) {
+                    if (newValue.length > 0) {
+                        const newEntriesAmount = newValue.length - (oldValue?.length ?? 0);
+                        for (let i = newValue.length - newEntriesAmount; i < newValue.length; i++) {
+                            this.selectedTaskRuns.push(newValue[i].id);
+                        }
                     }
-                    parentTask.children.push(taskWrapper)
-                }
+                },
+                immediate: true
             }
+        },
+        mounted() {
+            this.paint();
+        },
+        computed: {
+            ...mapState("execution", ["flow", "execution"]),
+            taskRunsCount() {
+                return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
+            },
+            taskTypeByTaskRun() {
+                return this.series.map(serie => [serie.task, this.taskType(serie.task)]);
+            },
+            taskTypeByTaskRunId() {
+                return Object.fromEntries(this.taskTypeByTaskRun.map(([taskRun, taskType]) => [taskRun.id, taskType]));
+            },
+            forEachItemsTaskRunIds() {
+                return this.taskTypeByTaskRun.filter(([, taskType]) => taskType === "io.kestra.plugin.core.flow.ForEachItem" || taskType === "io.kestra.core.tasks.flows.ForEachItem").map(([taskRunId]) => taskRunId);
+            },
+            filteredSeries() {
+                return this.series
+                    .filter(serie =>
+                        !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
+                    );
+            },
+            start() {
+                return this.execution ? ts(this.execution.state.histories[0].date) : 0;
+            },
+            tasks () {
+                const rootTasks = []
+                const childTasks = []
+                const sortedTasks = []
+                const tasksById = {}
+                for (let task of (this.execution.taskRunList || [])) {
+                    const taskWrapper = {task}
+                    if (task.parentTaskRunId) {
+                        childTasks.push(taskWrapper)
+                    } else {
+                        rootTasks.push(taskWrapper)
+                    }
+                    tasksById[task.id] = taskWrapper
+                }
 
-            const nodeStart = node => ts(node.task.state.histories[0].date)
-            const childrenSort = nodes => {
-                nodes.sort((n1,n2) => {
-                    return nodeStart(n1) > nodeStart(n2) ? 1 : -1
-                })
-                for (let node of nodes) {
-                    sortedTasks.push(node.task)
-                    if (node.children) {
-                        childrenSort(node.children)
+                for (let i = 0; i < childTasks.length; i++) {
+                    const taskWrapper = childTasks[i];
+                    const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
+                    if (parentTask) {
+                        tasksById[taskWrapper.task.id] = taskWrapper
+                        if (!parentTask.children) {
+                            parentTask.children = []
+                        }
+                        parentTask.children.push(taskWrapper)
                     }
                 }
+
+                const nodeStart = node => ts(node.task.state.histories[0].date)
+                const childrenSort = nodes => {
+                    nodes.sort((n1,n2) => {
+                        return nodeStart(n1) > nodeStart(n2) ? 1 : -1
+                    })
+                    for (let node of nodes) {
+                        sortedTasks.push(node.task)
+                        if (node.children) {
+                            childrenSort(node.children)
+                        }
+                    }
+                }
+                childrenSort(rootTasks)
+                return sortedTasks
             }
-            childrenSort(rootTasks)
-            return sortedTasks
+        },
+        methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
+            paint() {
+                const repaint = () => {
+                    this.compute()
+                    if (this.realTime) {
+                        const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
+                        setTimeout(repaint, delay);
+                    }
+                }
+
+                repaint();
+            },
+            compute() {
+                this.computeSeries();
+                this.computeDates();
+            },
+            delta() {
+                return this.stop() - this.start;
+            },
+            stop() {
+                if (!this.execution || State.isRunning(this.execution.state.current)) {
+                    return +new Date();
+                }
+
+                return Math.max(...(this.execution.taskRunList || []).map(r => {
+                    let lastIndex = r.state.histories.length - 1
+                    return ts(r.state.histories[lastIndex].date)
+                }));
+            },
+            computeSeries() {
+                if (!this.execution) {
+                    return;
+                }
+
+                if (!State.isRunning(this.execution.state.current)) {
+                    this.stopRealTime();
+                }
+
+                const series = [];
+                const executionDelta = this.delta(); //caching this value matters
+                for (let task of this.tasks) {
+                    let stopTs;
+                    if (State.isRunning(task.state.current)) {
+                        stopTs = ts(new Date());
+                    } else {
+                        const lastIndex = task.state.histories.length - 1;
+                        stopTs = ts(task.state.histories[lastIndex].date);
+                    }
+
+                    const startTs = ts(task.state.histories[0].date);
+
+                    const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
+                    const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
+
+                    const start = startTs - this.start;
+                    let stop = stopTs - this.start - start;
+
+                    const delta = stopTs - startTs;
+                    const duration = this.$moment.duration(delta);
+
+                    let tooltip = `${this.$t("duration")} : ${Utils.humanDuration(duration)}`
+
+                    if (runningState.length > 0) {
+                        tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
+                        tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
+                    }
+
+                    let width = (stop / executionDelta) * 100
+                    if (State.isRunning(task.state.current)) {
+                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                    }
+
+                    series.push({
+                        id: task.id,
+                        name: task.taskId,
+                        start: (start / executionDelta) * 100,
+                        width,
+                        left: left,
+                        tooltip,
+                        color: this.colors[task.state.current],
+                        running: State.isRunning(task.state.current),
+                        task,
+                        flowId: task.flowId,
+                        namespace: task.namespace,
+                        executionId: task.outputs && task.outputs.executionId
+                    });
+                }
+                this.series = series;
+            },
+            computeDates() {
+                const ticks = 5;
+                const date = ts => this.$moment(ts).format("h:mm:ss");
+                const start = this.start;
+                const delta = this.delta() / ticks;
+                const dates = [];
+                for (let i = 0; i < ticks; i++) {
+                    dates.push(date(start + i * delta));
+                }
+                this.dates = dates;
+            },
+            onTaskSelect(taskRunId) {
+                if(this.selectedTaskRuns.includes(taskRunId)) {
+                    this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRunId);
+                    return
+                }
+
+                this.selectedTaskRuns.push(taskRunId);
+            },
+            stopRealTime() {
+                this.realTime = false
+            },
+            taskType(taskRun) {
+                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
+                return task?.type;
+            }
+        },
+        unmounted() {
+            this.stopRealTime();
         }
-    },
-    methods: {
-        forwardEvent(type, event) {
-            this.$emit(type, event);
-        },
-        paint() {
-            const repaint = () => {
-                this.compute()
-                if (this.realTime) {
-                    const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
-                    setTimeout(repaint, delay);
-                }
-            }
-
-            repaint();
-        },
-        compute() {
-            this.computeSeries();
-            this.computeDates();
-        },
-        delta() {
-            return this.stop() - this.start;
-        },
-        stop() {
-            if (!this.execution || State.isRunning(this.execution.state.current)) {
-                return +new Date();
-            }
-
-            return Math.max(...(this.execution.taskRunList || []).map(r => {
-                let lastIndex = r.state.histories.length - 1
-                return ts(r.state.histories[lastIndex].date)
-            }));
-        },
-        computeSeries() {
-            if (!this.execution) {
-                return;
-            }
-
-            if (!State.isRunning(this.execution.state.current)) {
-                this.stopRealTime();
-            }
-
-            const series = [];
-            const executionDelta = this.delta(); //caching this value matters
-            for (let task of this.tasks) {
-                let stopTs;
-                if (State.isRunning(task.state.current)) {
-                    stopTs = ts(new Date());
-                } else {
-                    const lastIndex = task.state.histories.length - 1;
-                    stopTs = ts(task.state.histories[lastIndex].date);
-                }
-
-                const startTs = ts(task.state.histories[0].date);
-
-                const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
-                const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
-
-                const start = startTs - this.start;
-                let stop = stopTs - this.start - start;
-
-                const delta = stopTs - startTs;
-                const duration = this.$moment.duration(delta);
-
-                let tooltip = `${this.$t("duration")} : ${Utils.humanDuration(duration)}`
-
-                if (runningState.length > 0) {
-                    tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
-                    tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
-                }
-
-                let width = (stop / executionDelta) * 100
-                if (State.isRunning(task.state.current)) {
-                    width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
-                }
-
-                series.push({
-                    id: task.id,
-                    name: task.taskId,
-                    start: (start / executionDelta) * 100,
-                    width,
-                    left: left,
-                    tooltip,
-                    color: this.colors[task.state.current],
-                    running: State.isRunning(task.state.current),
-                    task,
-                    flowId: task.flowId,
-                    namespace: task.namespace,
-                    executionId: task.outputs && task.outputs.executionId
-                });
-            }
-            this.series = series;
-        },
-        computeDates() {
-            const ticks = 5;
-            const date = ts => this.$moment(ts).format("h:mm:ss");
-            const start = this.start;
-            const delta = this.delta() / ticks;
-            const dates = [];
-            for (let i = 0; i < ticks; i++) {
-                dates.push(date(start + i * delta));
-            }
-            this.dates = dates;
-        },
-        onTaskSelect(taskRunId) {
-            if(this.selectedTaskRuns.includes(taskRunId)) {
-                this.selectedTaskRuns = this.selectedTaskRuns.filter(id => id !== taskRunId);
-                return
-            }
-
-            this.selectedTaskRuns.push(taskRunId);
-        },
-        stopRealTime() {
-            this.realTime = false
-        },
-        taskType(taskRun) {
-            const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
-            return task?.type;
-        }
-    },
-    unmounted() {
-        this.stopRealTime();
-    }
-};
+    };
 </script>
 
 <style lang="scss" scoped>

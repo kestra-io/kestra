@@ -42,99 +42,99 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, computed} from "vue";
-import {useStore} from "vuex";
-import {ElTree} from "element-plus";
+    import {onMounted, computed} from "vue";
+    import {useStore} from "vuex";
+    import {ElTree} from "element-plus";
 
-import {useI18n} from "vue-i18n";
-const {t} = useI18n({useScope: "global"});
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
-import Navbar from "../layout/TopNavBar.vue";
-import KestraFilter from "../filter/KestraFilter.vue";
+    import Navbar from "../layout/TopNavBar.vue";
+    import KestraFilter from "../filter/KestraFilter.vue";
 
-import permission from "../../models/permission";
-import action from "../../models/action";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
-import Plus from "vue-material-design-icons/Plus.vue";
-import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
-import TextSearch from "vue-material-design-icons/TextSearch.vue";
-import {useRoute} from "vue-router";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import {useRoute} from "vue-router";
 
-const store = useStore();
+    const store = useStore();
 
-interface Namespace {
-    id: string;
-    disabled: boolean;
-}
-
-interface Node {
-    id: string;
-    label: string;
-    disabled: boolean;
-    children?: Node[];
-    system?: boolean;
-}
-
-const routeInfo = computed(() => ({title: t("namespaces")}));
-const user = computed(() => store.state.auth.user);
-const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
-
-const route = useRoute()
-
-const namespaces = computed(() => store.state.namespace.namespaces as Namespace[]);
-const loadData = () => {
-    // TODO: Implement a new endpoint which does not require size limit but returns everything
-    const query = {size: 10000, page: 1, ...(route.query?.q ? {q: route.query.q} : {})}
-    store.dispatch("namespace/search", query);
-};
-
-onMounted(() => loadData());
-
-const hierarchy = (data: Namespace[]): Node[] => {
-    if (!data) return [];
-
-    const map = {} as Node[];
-    const roots: Node[] = [];
-
-    data.forEach(item => {
-        const parts = item.id.split(".");
-        let currentLevel = map;
-
-        parts.forEach((part, index) => {
-            const label = parts.slice(0, index + 1).join(".");
-
-            if (!currentLevel[label]) currentLevel[label] = {id: label, label, disabled: item.disabled, children: []};
-            currentLevel = currentLevel[label].children;
-        });
-
-        if (parts.length === 1) {
-            roots.push(map[item.id]);
-        }
-    });
-
-    const build = (nodes: Node[]): Node[] => {
-        return Object.values(nodes).map(node => {
-            const result: Node = {id: node.id, label: node.label, disabled: node.disabled, children: node.children ? build(node.children) : undefined};
-            return result;
-        });
-    };
-
-    const result = build(map);
-
-    const system = result.findIndex(namespace => namespace.id === "system");
-
-    if (system !== -1) {
-        const [systemItem] = result.splice(system, 1);
-        result.unshift({...systemItem, system: true});
+    interface Namespace {
+        id: string;
+        disabled: boolean;
     }
 
-    return result;
-};
+    interface Node {
+        id: string;
+        label: string;
+        disabled: boolean;
+        children?: Node[];
+        system?: boolean;
+    }
 
-const namespaceLabel = (path) => {
-    const segments = path.split(".");
-    return segments.length > 1 ? segments[segments.length - 1] : path;
-};
+    const routeInfo = computed(() => ({title: t("namespaces")}));
+    const user = computed(() => store.state.auth.user);
+    const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
+
+    const route = useRoute()
+
+    const namespaces = computed(() => store.state.namespace.namespaces as Namespace[]);
+    const loadData = () => {
+        // TODO: Implement a new endpoint which does not require size limit but returns everything
+        const query = {size: 10000, page: 1, ...(route.query?.q ? {q: route.query.q} : {})}
+        store.dispatch("namespace/search", query);
+    };
+
+    onMounted(() => loadData());
+
+    const hierarchy = (data: Namespace[]): Node[] => {
+        if (!data) return [];
+
+        const map = {} as Node[];
+        const roots: Node[] = [];
+
+        data.forEach(item => {
+            const parts = item.id.split(".");
+            let currentLevel = map;
+
+            parts.forEach((part, index) => {
+                const label = parts.slice(0, index + 1).join(".");
+
+                if (!currentLevel[label]) currentLevel[label] = {id: label, label, disabled: item.disabled, children: []};
+                currentLevel = currentLevel[label].children;
+            });
+
+            if (parts.length === 1) {
+                roots.push(map[item.id]);
+            }
+        });
+
+        const build = (nodes: Node[]): Node[] => {
+            return Object.values(nodes).map(node => {
+                const result: Node = {id: node.id, label: node.label, disabled: node.disabled, children: node.children ? build(node.children) : undefined};
+                return result;
+            });
+        };
+
+        const result = build(map);
+
+        const system = result.findIndex(namespace => namespace.id === "system");
+
+        if (system !== -1) {
+            const [systemItem] = result.splice(system, 1);
+            result.unshift({...systemItem, system: true});
+        }
+
+        return result;
+    };
+
+    const namespaceLabel = (path) => {
+        const segments = path.split(".");
+        return segments.length > 1 ? segments[segments.length - 1] : path;
+    };
 </script>
 
 <style lang="scss">

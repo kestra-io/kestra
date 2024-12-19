@@ -30,143 +30,143 @@
 </template>
 
 <script setup>
-import {
-    watch,
-    onUpdated,
-    onMounted,
-    ref,
-    computed,
-    shallowRef, h
-} from "vue";
-import {useStore} from "vuex";
-import {useI18n} from "vue-i18n";
-import {useRoute} from "vue-router";
+    import {
+        watch,
+        onUpdated,
+        onMounted,
+        ref,
+        computed,
+        shallowRef, h
+    } from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
 
-import {SidebarMenu} from "vue-sidebar-menu";
+    import {SidebarMenu} from "vue-sidebar-menu";
 
-import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-import StarOutline from "vue-material-design-icons/StarOutline.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
-import Environment from "./Environment.vue";
-import BookmarkLinkList from "./BookmarkLinkList.vue";
+    import Environment from "./Environment.vue";
+    import BookmarkLinkList from "./BookmarkLinkList.vue";
 
 
-const props = defineProps({
-    generateMenu: {
-        type: Function,
-        required: true
-    }
-})
-
-const $emit = defineEmits(["menu-collapse"])
-
-const $route = useRoute()
-const {locale, t} = useI18n({useScope: "global"});
-const store = useStore()
-
-function flattenMenu(menu) {
-    return menu.reduce((acc, item) => {
-        if (item.child) {
-            acc.push(...flattenMenu(item.child));
+    const props = defineProps({
+        generateMenu: {
+            type: Function,
+            required: true
         }
+    })
 
-        acc.push(item);
-        return acc;
-    }, []);
-}
+    const $emit = defineEmits(["menu-collapse"])
 
-function onToggleCollapse(folded) {
-    collapsed.value = folded;
-    localStorage.setItem("menuCollapsed", folded ? "true" : "false");
-    $emit("menu-collapse", folded);
+    const $route = useRoute()
+    const {locale, t} = useI18n({useScope: "global"});
+    const store = useStore()
 
-    return folded;
-}
-
-function disabledCurrentRoute(items) {
-    return items
-        .map(r => {
-            if (r.href === $route.path) {
-                r.disabled = true;
+    function flattenMenu(menu) {
+        return menu.reduce((acc, item) => {
+            if (item.child) {
+                acc.push(...flattenMenu(item.child));
             }
 
-            // route hack is still needed for blueprints
-            if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
-                r.class = "vsm--link_active";
-            }
+            acc.push(item);
+            return acc;
+        }, []);
+    }
 
-            if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
-                r.class = "vsm--link_active";
-                r.child = disabledCurrentRoute(r.child);
-            }
+    function onToggleCollapse(folded) {
+        collapsed.value = folded;
+        localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+        $emit("menu-collapse", folded);
 
-            return r;
-        })
-}
+        return folded;
+    }
+
+    function disabledCurrentRoute(items) {
+        return items
+            .map(r => {
+                if (r.href === $route.path) {
+                    r.disabled = true;
+                }
+
+                // route hack is still needed for blueprints
+                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                }
+
+                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                    r.child = disabledCurrentRoute(r.child);
+                }
+
+                return r;
+            })
+    }
 
 
-function expandParentIfNeeded() {
-    document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-        e.click()
+    function expandParentIfNeeded() {
+        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
+            e.click()
+        });
+    }
+
+    onUpdated(() => {
+        // Required here because in mounted() the menu is not yet rendered
+        expandParentIfNeeded();
+    })
+
+    const menu = computed(() => {
+        return [
+            ...(store.state.bookmarks.pages?.length ? [{
+                title: t("bookmark"),
+                icon: {
+                    element: shallowRef(StarOutline),
+                    class: "menu-icon",
+                },
+                child: [{
+
+                    component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
+                }]
+            }] : []),
+            ...disabledCurrentRoute(props.generateMenu())
+        ];
     });
-}
-
-onUpdated(() => {
-    // Required here because in mounted() the menu is not yet rendered
-    expandParentIfNeeded();
-})
-
-const menu = computed(() => {
-    return [
-        ...(store.state.bookmarks.pages?.length ? [{
-            title: t("bookmark"),
-            icon: {
-                element: shallowRef(StarOutline),
-                class: "menu-icon",
-            },
-            child: [{
-
-                component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
-            }]
-        }] : []),
-        ...disabledCurrentRoute(props.generateMenu())
-    ];
-});
 
 
-watch(locale, () => {
-    localMenu.value = menu.value;
-}, {deep: true});
+    watch(locale, () => {
+        localMenu.value = menu.value;
+    }, {deep: true});
 
-/**
- * @type {import("vue").Ref<typeof import('vue-sidebar-menu').SidebarMenu>}
- */
-const sideBarRef = ref(null);
+    /**
+     * @type {import("vue").Ref<typeof import('vue-sidebar-menu').SidebarMenu>}
+     */
+    const sideBarRef = ref(null);
 
-watch(menu, (newVal, oldVal) => {
-          // Check if the active menu item has changed, if yes then update the menu
-          if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
-              JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
-              localMenu.value = newVal;
-              sideBarRef.value?.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                  //empty icon name on mouseover
-                  e.setAttribute("title", "")
-              });
-          }
-      },
-      {
-          flush: "post",
-          deep: true
-      });
+    watch(menu, (newVal, oldVal) => {
+              // Check if the active menu item has changed, if yes then update the menu
+              if (JSON.stringify(flattenMenu(newVal).map(e => e.class?.includes("vsm--link_active") ?? false)) !==
+                  JSON.stringify(flattenMenu(oldVal).map(e => e.class?.includes("vsm--link_active") ?? false))) {
+                  localMenu.value = newVal;
+                  sideBarRef.value?.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                      //empty icon name on mouseover
+                      e.setAttribute("title", "")
+                  });
+              }
+          },
+          {
+              flush: "post",
+              deep: true
+          });
 
-const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
-const localMenu = ref([])
+    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    const localMenu = ref([])
 
 
-onMounted(() => {
-    localMenu.value = menu.value;
-})
+    onMounted(() => {
+        localMenu.value = menu.value;
+    })
 </script>
 
 <style lang="scss">

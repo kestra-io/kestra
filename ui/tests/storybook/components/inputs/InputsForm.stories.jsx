@@ -37,8 +37,8 @@ export const InputTypes = {
         const popups = within(window.document);
 
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
-            const editor = can.getByLabelText("email input").querySelector(".ks-monaco-editor")
-            expect(editor).to.exist;
+            const editor = can.getByLabelText("email input").querySelector(".ks-monaco-editor");
+            expect(editor).to.exist();
             return editor;
         }, {timeout: 500, interval: 100});
         // wait for the setup to finish

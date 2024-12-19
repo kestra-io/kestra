@@ -75,110 +75,110 @@
 </template>
 
 <script>
-import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
-import DottedLayout from "../layout/DottedLayout.vue";
-import headerImage from "../../assets/icons/plugin.svg";
-import headerImageDark from "../../assets/icons/plugin-dark.svg";
-import KestraFilter from "../filter/KestraFilter.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import DottedLayout from "../layout/DottedLayout.vue";
+    import headerImage from "../../assets/icons/plugin.svg";
+    import headerImageDark from "../../assets/icons/plugin-dark.svg";
+    import KestraFilter from "../filter/KestraFilter.vue";
 
-export default {
-    props: {
-        plugins: {
-            type: Array,
-            required: true
-        },
-        embed: {
-            type: Boolean,
-            default: false
-        }
-    },
-    components: {
-        DottedLayout,
-        TaskIcon,
-        KestraFilter
-    },
-    data() {
-        return {
-            icons: [],
-            searchInput: "",
-            headerImage,
-            headerImageDark
-        }
-    },
-    created() {
-        this.$store.dispatch("plugin/groupIcons").then(
-            res => {
-                this.icons = res
+    export default {
+        props: {
+            plugins: {
+                type: Array,
+                required: true
+            },
+            embed: {
+                type: Boolean,
+                default: false
             }
-        )
-    },
-    computed: {
-        countPlugin() {
-            let allTasks = [];
-            let allTriggers = [];
-            let allConditions = [];
-            let allTaskRunners = [];
-
-            // avoid duplicate across groups and subgroups
-            this.plugins.forEach(plugin => {
-                allTasks = [...allTasks, ...plugin.tasks];
-                allTriggers = [...allTriggers, ...plugin.triggers];
-                allConditions = [...allConditions, ...plugin.conditions];
-                allTaskRunners = [...allTaskRunners, ...plugin.taskRunners];
-            });
-
-            return (new Set(allTasks)).size +
-                (new Set(allTriggers)).size +
-                (new Set(allConditions)).size +
-                (new Set(allTaskRunners)).size;
         },
-        pluginsList() {
-            return this.plugins
-                .filter((plugin, index, self) => {
-                    return index === self.findIndex((t) => (
-                        t.title === plugin.title && t.group === plugin.group
-                    ));
-                })
-                .filter(plugin => {
-                    return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                        plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                })
-                .filter(plugin => this.isVisible(plugin))
-                .sort((a, b) => {
-                    const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
-                          nameB = b.manifest["X-Kestra-Title"].toLowerCase();
-
-                    return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-                })
-        }
-    },
-    methods: {
-        openGroup(plugin) {
-            this.openPlugin(
-                plugin.tasks?.[0] ??
-                    plugin.triggers?.[0] ??
-                    plugin.conditions?.[0] ??
-                    plugin.taskRunners?.[0]
+        components: {
+            DottedLayout,
+            TaskIcon,
+            KestraFilter
+        },
+        data() {
+            return {
+                icons: [],
+                searchInput: "",
+                headerImage,
+                headerImageDark
+            }
+        },
+        created() {
+            this.$store.dispatch("plugin/groupIcons").then(
+                res => {
+                    this.icons = res
+                }
             )
         },
-        openPlugin(cls) {
-            if (!cls) {
-                return;
-            }
-            this.$router.push({name: "plugins/view", params: {cls: cls}})
-        },
-        isVisible(plugin) {
-            return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
-        },
-        hasIcon(cls) {
-            return this.icons[cls] !== undefined;
-        }
+        computed: {
+            countPlugin() {
+                let allTasks = [];
+                let allTriggers = [];
+                let allConditions = [];
+                let allTaskRunners = [];
 
+                // avoid duplicate across groups and subgroups
+                this.plugins.forEach(plugin => {
+                    allTasks = [...allTasks, ...plugin.tasks];
+                    allTriggers = [...allTriggers, ...plugin.triggers];
+                    allConditions = [...allConditions, ...plugin.conditions];
+                    allTaskRunners = [...allTaskRunners, ...plugin.taskRunners];
+                });
+
+                return (new Set(allTasks)).size +
+                    (new Set(allTriggers)).size +
+                    (new Set(allConditions)).size +
+                    (new Set(allTaskRunners)).size;
+            },
+            pluginsList() {
+                return this.plugins
+                    .filter((plugin, index, self) => {
+                        return index === self.findIndex((t) => (
+                            t.title === plugin.title && t.group === plugin.group
+                        ));
+                    })
+                    .filter(plugin => {
+                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
+                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
+                    })
+                    .filter(plugin => this.isVisible(plugin))
+                    .sort((a, b) => {
+                        const nameA = a.manifest["X-Kestra-Title"].toLowerCase(),
+                              nameB = b.manifest["X-Kestra-Title"].toLowerCase();
+
+                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
+                    })
+            }
+        },
+        methods: {
+            openGroup(plugin) {
+                this.openPlugin(
+                    plugin.tasks?.[0] ??
+                        plugin.triggers?.[0] ??
+                        plugin.conditions?.[0] ??
+                        plugin.taskRunners?.[0]
+                )
+            },
+            openPlugin(cls) {
+                if (!cls) {
+                    return;
+                }
+                this.$router.push({name: "plugins/view", params: {cls: cls}})
+            },
+            isVisible(plugin) {
+                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
+            },
+            hasIcon(cls) {
+                return this.icons[cls] !== undefined;
+            }
+
+        }
     }
-}
 </script>
 
 <style scoped lang="scss">

@@ -113,60 +113,60 @@
 </template>
 
 <script setup>
-import {onBeforeMount, ref} from "vue";
-import {useStore} from "vuex";
-import {useI18n} from "vue-i18n";
+    import {onBeforeMount, ref} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
-import moment from "moment";
+    import moment from "moment";
 
-import Status from "../../../../Status.vue";
-import NoData from "../../../../layout/NoData.vue";
+    import Status from "../../../../Status.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
-import {RouterLink} from "vue-router";
+    import {RouterLink} from "vue-router";
 
-const props = defineProps({
-    flow: {
-        type: String,
-        required: false,
-        default: null,
-    },
-    namespace: {
-        type: String,
-        required: false,
-        default: null,
-    },
-});
+    const props = defineProps({
+        flow: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        namespace: {
+            type: String,
+            required: false,
+            default: null,
+        },
+    });
 
-const store = useStore();
-const {t} = useI18n({useScope: "global"});
+    const store = useStore();
+    const {t} = useI18n({useScope: "global"});
 
-const executions = ref({results: [], total: 0});
-const currentPage = ref(1);
+    const executions = ref({results: [], total: 0});
+    const currentPage = ref(1);
 
-const loadExecutions = (page = 1) => {
-    store
-        .dispatch("execution/findExecutions", {
-            namespace: props.namespace,
-            flowId: props.flow,
-            size: 5,
-            page,
-            state: [
-                "RUNNING",
-                "PAUSED",
-                "RESTARTED",
-                "KILLING",
-                "QUEUED",
-                "RETRYING",
-            ],
-        })
-        .then((response) => {
-            if (!response) return;
-            executions.value = response;
-        });
-};
-onBeforeMount(() => {
-    loadExecutions();
-});
+    const loadExecutions = (page = 1) => {
+        store
+            .dispatch("execution/findExecutions", {
+                namespace: props.namespace,
+                flowId: props.flow,
+                size: 5,
+                page,
+                state: [
+                    "RUNNING",
+                    "PAUSED",
+                    "RESTARTED",
+                    "KILLING",
+                    "QUEUED",
+                    "RETRYING",
+                ],
+            })
+            .then((response) => {
+                if (!response) return;
+                executions.value = response;
+            });
+    };
+    onBeforeMount(() => {
+        loadExecutions();
+    });
 </script>
 
 <style lang="scss" scoped>

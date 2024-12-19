@@ -52,131 +52,131 @@
 </template>
 
 <script>
-import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
-import {mapState} from "vuex";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {mapState} from "vuex";
 
-export default {
-    emits: ["routerChange"],
-    data() {
-        return {
-            offset: 0,
-            activeNames: [],
-            searchInput: ""
-        }
-    },
-    mounted() {
-
-        this.plugins.forEach(plugin => {
-            if (plugin.tasks.includes(this.$route.params.cls)) {
-                this.activeNames = [plugin.group]
-                localStorage.setItem("activePlugin", plugin.group);
-            }
-        })
-        this.scrollToActivePlugin();
-    },
-    components: {
-        TaskIcon
-    },
-    props: {
-        plugins: {
-            type: Array,
-            required: true
-        }
-    },
-    computed: {
-        ...mapState("plugin", ["plugin", "icons"]),
-        countPlugin() {
-            return this.plugins.reduce((acc, plugin) => {
-                return acc + plugin.tasks.length + plugin.triggers.length + plugin.conditions.length + plugin.taskRunners.length
-            }, 0)
-        },
-        pluginsList() {
-            return this.plugins
-                // remove duplicate
-                .filter((plugin, index, self) => {
-                    return index === self.findIndex((t) => (
-                        t.title === plugin.title && t.group === plugin.group
-                    ));
-                })
-                // find plugin that match search input
-                .filter(plugin => {
-                    return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                        plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                        plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                })
-                // keep only task that match search input
-                .map(plugin => {
-                    return {
-                        ...plugin,
-                        tasks: plugin.tasks.filter(task => task.toLowerCase().includes(this.searchInput.toLowerCase())),
-                        triggers: plugin.triggers.filter(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())),
-                        conditions: plugin.conditions.filter(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())),
-                        taskRunners: plugin.taskRunners.filter(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    }
-                })
-        }
-    },
-    methods: {
-
-        scrollToActivePlugin() {
-            const activePlugin = localStorage.getItem("activePlugin");
-            if (activePlugin) {
-                // Use Vue's $refs to scroll to the specific plugin group
-                this.$nextTick(() => {
-                    const pluginElement = this.$refs[`plugin-${activePlugin}`];
-                    if (pluginElement && pluginElement[0]) {
-                        pluginElement[0].$el.scrollIntoView({behavior: "smooth", block: "start"});
-                    }
-                });
+    export default {
+        emits: ["routerChange"],
+        data() {
+            return {
+                offset: 0,
+                activeNames: [],
+                searchInput: ""
             }
         },
+        mounted() {
 
-        // When user navigates to a different plugin, save the new plugin group to localStorage
-        handlePluginChange(pluginGroup) {
-            this.activeNames = [pluginGroup];
-            localStorage.setItem("activePlugin", pluginGroup); // Save to localStorage
+            this.plugins.forEach(plugin => {
+                if (plugin.tasks.includes(this.$route.params.cls)) {
+                    this.activeNames = [plugin.group]
+                    localStorage.setItem("activePlugin", plugin.group);
+                }
+            })
+            this.scrollToActivePlugin();
         },
-
-        sortedPlugins(plugins) {
-            return plugins
-                .sort((a, b) => {
-                    const nameA = (a.title ? a.title.toLowerCase() : ""),
-                          nameB = (b.title ? b.title.toLowerCase() : "");
-
-                    return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-                })
+        components: {
+            TaskIcon
         },
-        group(plugin) {
-            return Object.keys(plugin)
-                .filter(r => r === "tasks" || r === "triggers" || r === "conditions" || r === "taskRunners")
-                .flatMap(type => {
-                    return (plugin[type] === undefined ? {} : plugin[type])
-                        .map(task => {
-                            const namespace = task.substring(0, task.lastIndexOf("."));
-
-                            return {
-                                type: type,
-                                namespace: namespace,
-                                cls: task.substring(task.lastIndexOf(".") + 1)
-                            };
-                        })
-                })
-                .reduce((accumulator, value) => {
-                    accumulator[value.namespace] = accumulator[value.namespace] || {};
-                    accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
-                    accumulator[value.namespace][value.type].push(value.cls);
-
-                    return accumulator;
-                }, Object.create(null))
-
+        props: {
+            plugins: {
+                type: Array,
+                required: true
+            }
         },
-        isVisible(plugin) {
-            return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
+        computed: {
+            ...mapState("plugin", ["plugin", "icons"]),
+            countPlugin() {
+                return this.plugins.reduce((acc, plugin) => {
+                    return acc + plugin.tasks.length + plugin.triggers.length + plugin.conditions.length + plugin.taskRunners.length
+                }, 0)
+            },
+            pluginsList() {
+                return this.plugins
+                    // remove duplicate
+                    .filter((plugin, index, self) => {
+                        return index === self.findIndex((t) => (
+                            t.title === plugin.title && t.group === plugin.group
+                        ));
+                    })
+                    // find plugin that match search input
+                    .filter(plugin => {
+                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
+                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
+                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
+                    })
+                    // keep only task that match search input
+                    .map(plugin => {
+                        return {
+                            ...plugin,
+                            tasks: plugin.tasks.filter(task => task.toLowerCase().includes(this.searchInput.toLowerCase())),
+                            triggers: plugin.triggers.filter(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())),
+                            conditions: plugin.conditions.filter(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())),
+                            taskRunners: plugin.taskRunners.filter(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
+                        }
+                    })
+            }
         },
+        methods: {
+
+            scrollToActivePlugin() {
+                const activePlugin = localStorage.getItem("activePlugin");
+                if (activePlugin) {
+                    // Use Vue's $refs to scroll to the specific plugin group
+                    this.$nextTick(() => {
+                        const pluginElement = this.$refs[`plugin-${activePlugin}`];
+                        if (pluginElement && pluginElement[0]) {
+                            pluginElement[0].$el.scrollIntoView({behavior: "smooth", block: "start"});
+                        }
+                    });
+                }
+            },
+
+            // When user navigates to a different plugin, save the new plugin group to localStorage
+            handlePluginChange(pluginGroup) {
+                this.activeNames = [pluginGroup];
+                localStorage.setItem("activePlugin", pluginGroup); // Save to localStorage
+            },
+
+            sortedPlugins(plugins) {
+                return plugins
+                    .sort((a, b) => {
+                        const nameA = (a.title ? a.title.toLowerCase() : ""),
+                              nameB = (b.title ? b.title.toLowerCase() : "");
+
+                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
+                    })
+            },
+            group(plugin) {
+                return Object.keys(plugin)
+                    .filter(r => r === "tasks" || r === "triggers" || r === "conditions" || r === "taskRunners")
+                    .flatMap(type => {
+                        return (plugin[type] === undefined ? {} : plugin[type])
+                            .map(task => {
+                                const namespace = task.substring(0, task.lastIndexOf("."));
+
+                                return {
+                                    type: type,
+                                    namespace: namespace,
+                                    cls: task.substring(task.lastIndexOf(".") + 1)
+                                };
+                            })
+                    })
+                    .reduce((accumulator, value) => {
+                        accumulator[value.namespace] = accumulator[value.namespace] || {};
+                        accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
+                        accumulator[value.namespace][value.type].push(value.cls);
+
+                        return accumulator;
+                    }, Object.create(null))
+
+            },
+            isVisible(plugin) {
+                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions, ...plugin.taskRunners].length > 0
+            },
+        }
     }
-}
 </script>
 
 <style lang="scss">

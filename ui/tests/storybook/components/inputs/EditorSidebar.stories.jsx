@@ -12,14 +12,14 @@ export const Default = {
     render: () => ({
         setup(){
             const store = useStore()
-            store.commit('editor/toggleExplorerVisibility', true)
+            store.commit("editor/toggleExplorerVisibility", true)
 
             store.$http = {
                 get(){
                     return  Promise.resolve({data: [
-                        {fileName: 'directory 1', type: 'Directory'},
-                        {fileName: 'directory 2', type: 'Directory'},
-                        {fileName: 'animals.txt', type: 'File'},
+                        {fileName: "directory 1", type: "Directory"},
+                        {fileName: "directory 2", type: "Directory"},
+                        {fileName: "animals.txt", type: "File"},
                     ]
                 })}
             }

@@ -7,41 +7,41 @@
 </template>
 
 <script>
-import State from "../utils/state";
+    import State from "../utils/state";
 
-export default {
-    props: {
-        status: {
-            type: String,
-            required: true
+    export default {
+        props: {
+            status: {
+                type: String,
+                required: true
+            },
+            size: {
+                type: String,
+                default: ""
+            },
+            title: {
+                type: String,
+                default: ""
+            },
+            label: {
+                type: Boolean,
+                default: true
+            },
         },
-        size: {
-            type: String,
-            default: ""
-        },
-        title: {
-            type: String,
-            default: ""
-        },
-        label: {
-            type: Boolean,
-            default: true
-        },
-    },
-    emits: ["click"],
-    computed: {
-        style() {
-            return {
-                color: `var(--ks-content-${this.status.toLowerCase()}) !important`,
-                "border-color": `var(--ks-border-${this.status.toLowerCase()}) !important`,
-                "background-color": `var(--ks-background-${this.status.toLowerCase()}) !important`
-            };
-        },
-        icon() {
-            return State.icon()[this.status];
-        },
-    }
-};
+        emits: ["click"],
+        computed: {
+            style() {
+                return {
+                    color: `var(--ks-content-${this.status.toLowerCase()}) !important`,
+                    "border-color": `var(--ks-border-${this.status.toLowerCase()}) !important`,
+                    "background-color": `var(--ks-background-${this.status.toLowerCase()}) !important`
+                };
+            },
+            icon() {
+                return State.icon()[this.status];
+            },
+        }
+    };
 </script>
 <style scoped lang="scss">
     .el-button {

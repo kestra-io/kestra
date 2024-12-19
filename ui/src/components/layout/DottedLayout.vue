@@ -15,13 +15,13 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-    embed: boolean;
-    phrase: string;
-    alt?: string;
-    image: string;
-    imageDark: string;
-}>();
+    defineProps<{
+        embed: boolean;
+        phrase: string;
+        alt?: string;
+        image: string;
+        imageDark: string;
+    }>();
 </script>
 
 <style scoped lang="scss">

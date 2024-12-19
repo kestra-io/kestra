@@ -143,78 +143,78 @@
 </template>
 
 <script setup>
-import {onBeforeMount, ref, watch} from "vue";
-import {useStore} from "vuex";
-import {useI18n} from "vue-i18n";
+    import {onBeforeMount, ref, watch} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
-import moment from "moment";
+    import moment from "moment";
 
-import NoData from "../../../../layout/NoData.vue";
+    import NoData from "../../../../layout/NoData.vue";
 
-import Check from "vue-material-design-icons/Check.vue";
+    import Check from "vue-material-design-icons/Check.vue";
 
-const props = defineProps({
-    flow: {
-        type: String,
-        required: false,
-        default: null,
-    },
-    namespace: {
-        type: String,
-        required: false,
-        default: null,
-    },
-});
+    const props = defineProps({
+        flow: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        namespace: {
+            type: String,
+            required: false,
+            default: null,
+        },
+    });
 
-const store = useStore();
-const {t} = useI18n({useScope: "global"});
+    const store = useStore();
+    const {t} = useI18n({useScope: "global"});
 
-const executions = ref({results: [], total: 0});
-const currentPage = ref(1);
+    const executions = ref({results: [], total: 0});
+    const currentPage = ref(1);
 
-const loadExecutions = (page = 1) => {
-    store
-        .dispatch("trigger/search", {
-            namespace: props.namespace,
-            flowId: props.flow,
-            size: 5,
-            page,
-            sort: "nextExecutionDate:asc",
-        })
-        .then((response) => {
-            if (!response) return;
-            executions.value = {
-                total: response.total,
-                results: response.results?.map(
-                    ({abstractTrigger, triggerContext, ...rest}) => {
-                        const disabled =
-                            abstractTrigger?.disabled ?? triggerContext.disabled;
-                        const tooltip = !!abstractTrigger.disabled;
+    const loadExecutions = (page = 1) => {
+        store
+            .dispatch("trigger/search", {
+                namespace: props.namespace,
+                flowId: props.flow,
+                size: 5,
+                page,
+                sort: "nextExecutionDate:asc",
+            })
+            .then((response) => {
+                if (!response) return;
+                executions.value = {
+                    total: response.total,
+                    results: response.results?.map(
+                        ({abstractTrigger, triggerContext, ...rest}) => {
+                            const disabled =
+                                abstractTrigger?.disabled ?? triggerContext.disabled;
+                            const tooltip = !!abstractTrigger.disabled;
 
-                        return {
-                            ...rest,
-                            abstractTrigger,
-                            triggerContext,
-                            disabled,
-                            tooltip,
-                        };
-                    },
-                ),
-            };
-        });
-};
-watch(
-    () => props.namespace,
-    () => loadExecutions(),
-);
+                            return {
+                                ...rest,
+                                abstractTrigger,
+                                triggerContext,
+                                disabled,
+                                tooltip,
+                            };
+                        },
+                    ),
+                };
+            });
+    };
+    watch(
+        () => props.namespace,
+        () => loadExecutions(),
+    );
 
-const toggleState = (trigger, disabled) => {
-    store.dispatch("trigger/update", {...trigger, disabled});
-};
+    const toggleState = (trigger, disabled) => {
+        store.dispatch("trigger/update", {...trigger, disabled});
+    };
 
-onBeforeMount(() => {
-    loadExecutions();
-});
+    onBeforeMount(() => {
+        loadExecutions();
+    });
 </script>
 
 <style lang="scss">

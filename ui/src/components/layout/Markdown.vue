@@ -5,56 +5,56 @@
 </template>
 
 <script>
-import Markdown from "../../utils/markdown";
+    import Markdown from "../../utils/markdown";
 
-export default {
-    props: {
-        watches: {
-            type: Array,
-            default: () => ["source", "show", "toc"],
+    export default {
+        props: {
+            watches: {
+                type: Array,
+                default: () => ["source", "show", "toc"],
+            },
+            source: {
+                type: String,
+                default: "",
+            },
+            permalink: {
+                type: Boolean,
+                default: false,
+            },
+            fontSizeVar: {
+                type: String,
+                default: "font-size-sm"
+            }
         },
-        source: {
-            type: String,
-            default: "",
+        data() {
+            return {
+                markdownRenderer: undefined
+            }
         },
-        permalink: {
-            type: Boolean,
-            default: false,
-        },
-        fontSizeVar: {
-            type: String,
-            default: "font-size-sm"
-        }
-    },
-    data() {
-        return {
-            markdownRenderer: undefined
-        }
-    },
-    async created() {
-        this.markdownRenderer = await this.renderMarkdown();
-    },
-    watch: {
-        async source() {
+        async created() {
             this.markdownRenderer = await this.renderMarkdown();
-        }
-    },
-    methods: {
-        async renderMarkdown() {
-            return  await Markdown.render(this.source, {
-                permalink: this.permalink,
-            });
         },
-    },
-    computed: {
-        fontSizeCss() {
-            return `var(--${this.fontSizeVar})`;
+        watch: {
+            async source() {
+                this.markdownRenderer = await this.renderMarkdown();
+            }
         },
-        permalinkCss() {
-            return this.permalink ? "-20px" : "0";
-        }
-    },
-};
+        methods: {
+            async renderMarkdown() {
+                return  await Markdown.render(this.source, {
+                    permalink: this.permalink,
+                });
+            },
+        },
+        computed: {
+            fontSizeCss() {
+                return `var(--${this.fontSizeVar})`;
+            },
+            permalinkCss() {
+                return this.permalink ? "-20px" : "0";
+            }
+        },
+    };
 </script>
 
 <style lang="scss">

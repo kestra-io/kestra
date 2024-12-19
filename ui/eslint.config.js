@@ -18,7 +18,7 @@ export default [
     },
     ...pluginVue.configs["flat/strongly-recommended"],
     {
-        files: ["**/*.vue"],
+        files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
             "vue/this-in-template": ["error"],

@@ -17,13 +17,18 @@ export default {
     cap: value => value ? value.toString().capitalize() : "",
     lower: value => value ? value.toString().toLowerCase() : "",
     date: (dateString, format) => {
+        const currentLocale = getCurrentInstance().appContext.config.globalProperties.$moment().locale();
+        const momentInstance = getCurrentInstance().appContext.config.globalProperties.$moment(dateString).locale(currentLocale);
         let f;
         if (format === "iso") {
-            f = "YYYY-MM-DD HH:mm:ss.SSS"
+            f = "YYYY-MM-DD HH:mm:ss.SSS";
         } else {
             f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "llll";
         }
-        return getCurrentInstance().appContext.config.globalProperties.$moment(dateString).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).format(f)
+        // Apply timezone and format using the correct locale
+        return momentInstance
+            .tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+            .format(f);
     }
 }
 

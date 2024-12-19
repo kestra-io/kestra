@@ -24,8 +24,8 @@
                         :size-dependencies="[selectedTaskRuns]"
                     >
                         <div class="d-flex flex-column">
-                            <div class="gantt-row d-flex">
-                                <div class="d-inline-flex cursor-icon" @click="onTaskSelect(item.id)">
+                            <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
+                                <div class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
                                 </div>
@@ -39,7 +39,7 @@
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
                                 </el-tooltip>
-                                <div class="cursor-pointer" :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
+                                <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
                                     <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
                                         <template #content>
                                             <span style="white-space: pre-wrap;">
@@ -419,9 +419,6 @@
         }
     }
 
-    .cursor-pointer {
-        cursor: auto;
-    }
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {

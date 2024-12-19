@@ -2,6 +2,7 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.plugin.core.condition.DateTimeBetween;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +38,8 @@ import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class ScheduleTest {
+
+    private static final String TEST_CRON_EVERYDAY_AT_8 = "0 8 * * *";
 
     @Inject
     RunContextFactory runContextFactory;
@@ -212,6 +217,45 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("date"), date), is(date));
         assertThat(dateFromVars(vars.get("next"), date), is(date.plus(Duration.ofSeconds(1))));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofSeconds(1))));
+    }
+
+    @Test
+    void shouldNotReturnExecutionForBackFillWhenCurrentDateIsBeforeScheduleDate() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
+        ZonedDateTime now = ZonedDateTime.now();
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.now().with(LocalTime.MIN))
+                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .build()
+            ).build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isEmpty(), is(true));
+    }
+
+    @Test
+    void shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
+        ZonedDateTime now = ZonedDateTime.now();
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.now().with(LocalTime.MIN).plus(Duration.ofHours(8)))
+                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .build()
+            )
+            .build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isPresent(), is(true));
     }
 
     @Test

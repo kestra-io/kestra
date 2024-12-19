@@ -12,14 +12,14 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("fw-light", "small");
+        listContainer.classList.add("w-100", "fw-light", "small", "legend");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
         listContainer.style.padding = 0;
 
-        listContainer.style.maxHeight = "200px";
-        listContainer.style.flexWrap = "wrap";
+        listContainer.style.maxHeight = "196px"; // 4 visible items
+        listContainer.style.overflow = "auto";
 
         legendContainer?.appendChild(listContainer);
     }

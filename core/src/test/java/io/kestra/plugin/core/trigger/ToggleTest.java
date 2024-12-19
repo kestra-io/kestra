@@ -1,28 +1,32 @@
 package io.kestra.plugin.core.trigger;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
-class ToggleTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true, startScheduler = true)
+class ToggleTest {
     @Inject
     private TriggerRepositoryInterface triggerRepository;
 
@@ -33,7 +37,11 @@ class ToggleTest extends AbstractMemoryRunnerTest {
     @Inject
     private AbstractScheduler scheduler;
 
+    @Inject
+    private RunnerUtils runnerUtils;
+
     @Test
+    @LoadFlows({"flows/valids/trigger-toggle.yaml"})
     void toggle() throws Exception {
         // we need to await for the scheduler to be ready otherwise there may be an issue with updating the trigger
         Await.until(() -> scheduler.isReady());

@@ -5,7 +5,7 @@
             :key="input.id"
             :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
-            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input)] : undefined"
+            :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
@@ -24,12 +24,13 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
+                clearable
             >
                 <el-option
                     v-for="item in input.values"
@@ -40,6 +41,21 @@
                     {{ item }}
                 </el-option>
             </el-select>
+            <el-radio-group
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
+                :data-test-id="`input-form-${input.id}`"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+            >
+                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />.
+                <!-- Allow customs input -->
+                <el-input
+                    v-if="input.allowCustomValue"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    :placeholder="$t('custom value')"
+                />
+            </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -50,6 +66,7 @@
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
+                clearable
                 :allow-create="input.allowCustomValue"
             >
                 <el-option
@@ -96,7 +113,7 @@
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                class="w-100"
+                class="w-100 boolean-inputs"
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
@@ -397,15 +414,38 @@
                     });
                 }
             },
-            requiredBooleanRule(input) {
-                return input.required !== false ? {
-                    validator: (_, val, callback) => {
-                        if(val === "undefined"){
-                            return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+            requiredRules(input) {
+                if(input.required === false)
+                    return undefined
+
+                if(input.type === "BOOLEAN"){
+                    return [{
+                        validator: (_, val, callback) => {
+                            if(val === "undefined"){
+                                return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                            }
+                            callback()
+                        },
+                    }]
+                }
+
+                if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
+                    return [
+                        {
+                            required: true,
+                            validator: (_, __, callback) => {
+                                const val = input.type === "MULTISELECT" ? this.multiSelectInputs[input.id] : this.inputsValues[input.id]
+                                if(!val?.length){
+                                    return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                                }
+                                callback()
+                            },
+                            trigger: "change",
                         }
-                        callback()
-                    },
-                } : undefined
+                    ]
+                }
+
+                return undefined
             }
         },
         watch: {
@@ -431,4 +471,41 @@
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }
+</style>
+
+<style scoped lang="scss">
+    :deep(.boolean-inputs) {
+        display: flex;
+        align-items: center;
+
+        .el-radio-button {
+            &.is-active {
+                .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                    color: var(--el-text-color-regular);
+                    background-color: var(--bs-gray-100);
+                    box-shadow: 0 0 0 0 var(--el-color-primary);
+                }
+            }
+
+            .el-radio-button__inner {
+                border: var(--el-border);
+                transition: 0.3s ease-in-out;
+
+                &:hover {
+                    color: var(--bs-secondary);
+                    border-color: var(--el-color-primary);
+                    background-color: var(--bs-card-bg);
+                }
+
+                &:first-child {
+                    border-left: var(--el-border);
+                }
+            }
+        }
+    }
+
+    .el-input-file {
+        display: flex;
+        align-items: center;
+    }
 </style>

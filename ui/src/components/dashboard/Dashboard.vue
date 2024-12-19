@@ -5,8 +5,8 @@
         :breadcrumb="[
             {
                 label: t(custom.shown ? 'custom_dashboard' : 'dashboard_label'),
-                link: {}
-            }
+                link: {},
+            },
         ]"
         :id="custom.dashboard.id ?? undefined"
     />
@@ -25,9 +25,12 @@
                         'absolute_date',
                     ]
             "
-            :refresh="{
-                shown: true,
-                callback: custom.shown ? refreshCustom : fetchAll,
+            :buttons="{
+                refresh: {
+                    shown: true,
+                    callback: custom.shown ? refreshCustom : fetchAll,
+                },
+                settings: {shown: false},
             }"
             :dashboards="{shown: customDashboardsEnabled}"
             @dashboard="(v) => handleCustomUpdate(v)"
@@ -297,7 +300,7 @@
     });
 
     const customDashboardsEnabled = computed(
-        () => store.state.misc.configs.isCustomDashboardsEnabled,
+        () => store.state.misc?.configs?.isCustomDashboardsEnabled,
     );
 
     // Custom Dashboards
@@ -538,9 +541,9 @@
     onBeforeMount(() => {
         handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
 
-        if (props.flowID) {
-            router.replace({query: {...route.query, flowId: props.flowID}});
-        }
+        // if (props.flowID) {
+        //     router.replace({query: {...route.query, flowId: props.flowID}});
+        // }
 
     // if (!route.query.namespace && props.restoreURL) {
     //     router.replace({query: {...route.query, namespace: defaultNamespace}});
@@ -646,6 +649,22 @@ $spacing: 20px;
                 }
             }
         }
+    }
+}
+
+:deep(.legend) {
+    &::-webkit-scrollbar {
+        height: 5px;
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--card-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 0px;
     }
 }
 </style>

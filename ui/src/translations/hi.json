@@ -360,7 +360,7 @@
     },
     "cancel": "रद्द करें",
     "homeDashboard": {
-      "title": "सारांश",
+      "title": "डैशबोर्ड",
       "today": "आज",
       "yesterday": "कल",
       "last28Days": "पिछले 28 दिन",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
       "failedExecutions": "असफल निष्पादन",
       "errorLogs": "त्रुटि Logs",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?"
+      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
+      "wel_text": "स्वागत है!",
+      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "welcome": "केस्ट्रा में आपका स्वागत है"
     },
     "executions replayed": "<code>{executionCount}</code> निष्पादन पुनः चलाए गए",
     "executions resumed": "<code>{executionCount}</code> निष्पादन फिर से शुरू किए गए",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
     "originalCreatedDate": "मूल निर्माण तिथि",
     "welcome": {
-      "started": {
-        "title": "3 आसान चरणों में आरंभ करें"
+      "tutorial": {
+        "title": "ट्यूटोरियल",
+        "text": "* [वीडियो ट्यूटोरियल्स](https://kestra.io/tutorial-videos/all)\n* [दस्तावेज़ीकरण](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "उत्पाद टूर लें"
+      "tour": {
+        "title": "उत्पाद टूर लें",
+        "text": "अपना उपयोग मामला चुनें और Kestra की विशेषताओं और क्षमताओं को सीखने के लिए चरण-दर-चरण गाइड का पालन करें। ❤️"
       },
-      "doc": {
-        "title": "दस्तावेज़"
-      },
-      "need-help": {
+      "help": {
+        "text": "हमारे Slack समुदाय में कोई भी प्रश्न पूछें। यदि आप अटके हुए हैं, तो हम आपकी सहायता के लिए यहाँ हैं। ✋",
         "title": "मदद चाहिए?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "ध्यान दें की SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित करना होगा।"
+      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
@@ -918,52 +922,6 @@
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "worker group key": "वर्कर ग्रुप key",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
-    "filters": {
-      "comparators": {
-        "is": "है",
-        "is_one_of": "में से एक है",
-        "is_not_one_off": "नहीं है उनमें से एक",
-        "is_not": "नहीं है",
-        "between": "के बीच",
-        "in": "में",
-        "not_contains": "नहीं शामिल है",
-        "starts_with": "शुरू होता है",
-        "contains": "शामिल करता है"
-      },
-      "recent": {
-        "label": "हाल की खोजें",
-        "empty": "आपने अभी तक कुछ भी खोजा नहीं है।"
-      },
-      "labels": {
-        "placeholder": "'label' को 'key:value' के रूप में टाइप करें"
-      },
-      "save": {
-        "dialog": {
-          "hint": "आप इस खोज मानदंड को किस तरह से लेबल करना चाहते हैं?",
-          "heading": "वर्तमान खोज सहेजें",
-          "confirmation": "खोज मानदंड <code>{name}</code>",
-          "placeholder": "लेबल"
-        },
-        "label": "सहेजे गए खोजें",
-        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।"
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "क्षेत्र",
-        "text": "मुझे अनुवाद के लिए कोई पाठ प्रदान नहीं किया गया है। कृपया अनुवाद के लिए पाठ प्रदान करें।",
-        "labels": "लेबल्स",
-        "state": "स्थिति",
-        "child": "बच्चा",
-        "absolute_date": "सटीक तिथि",
-        "relative_date": "सापेक्ष तिथि",
-        "level": "Log स्तर"
-      },
-      "empty": "कोई डेटा नहीं।",
-      "label": "फिल्टर चुनें",
-      "settings": {
-        "show_chart": "मुख्य चार्ट दिखाएं"
-      }
-    },
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
     "executions force run": "<code>{executionCount}</code> execution(s) जबरन चलाया गया",
     "force run done": "निष्पादन को मजबूरन चलाया गया है",
@@ -1001,6 +959,82 @@
     "custom_dashboard": "कस्टम डैशबोर्ड्स",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
     "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
-    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।"
+    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
+    "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?",
+    "execution_guide": {
+      "get_started": {
+        "title": "शुरू करें ⚡",
+        "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।"
+      },
+      "workflow_components": {
+        "text": "Kestra वर्कफ़्लो के मुख्य ऑर्केस्ट्रेशन घटकों को जानें।",
+        "title": "वर्कफ़्लो घटक"
+      },
+      "videos_tutorials": {
+        "text": "हमारे वीडियो ट्यूटोरियल के साथ शुरू करें।",
+        "title": "वीडियो ट्यूटोरियल्स"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
+      "guidance_desc": "क्या आपको अपने flow को निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "guidance_sub_desc": "दस्तावेज़ीकरण का पालन करें ताकि आपको सभी जानकारी मिल सके जिसकी आपको आवश्यकता है।",
+      "title": "स्वचालन शुरू करें साथ में"
+    },
+    "filters": {
+      "options": {
+        "child": "बच्चा",
+        "metric": "मेट्रिक",
+        "labels": "लेबल्स",
+        "details": "विवरण",
+        "absolute_date": "सटीक दिनांक",
+        "scope": "स्कोप",
+        "trigger_state": "स्थिति",
+        "state": "स्थिति",
+        "action": "क्रिया",
+        "text": "मुझे अनुवाद के लिए कोई पाठ नहीं मिला। कृपया अनुवाद के लिए पाठ प्रदान करें।",
+        "relative_date": "सापेक्ष तिथि",
+        "level": "Log स्तर",
+        "aggregation": "संकलन",
+        "permission": "अनुमति",
+        "namespace": "Namespace",
+        "user": "उपयोगकर्ता",
+        "task": "कार्य",
+        "flow": "फ्लो",
+        "type": "प्रकार",
+        "status": "स्थिति",
+        "service_type": "प्रकार"
+      },
+      "settings": {
+        "label": "पृष्ठ सेटिंग्स",
+        "show_chart": "मुख्य चार्ट दिखाएं"
+      },
+      "comparators": {
+        "contains": "शामिल है",
+        "is": "है",
+        "is_not": "नहीं है",
+        "in": "में",
+        "starts_with": "शुरू होता है",
+        "not_contains": "नहीं शामिल है",
+        "is_not_one_off": "नहीं है उनमें से एक",
+        "is_one_of": "में से एक है",
+        "between": "के बीच"
+      },
+      "save": {
+        "label": "सहेजे गए खोजें",
+        "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।",
+        "dialog": {
+          "heading": "वर्तमान खोज सहेजें",
+          "confirmation": "खोज मापदंड <code>{name}</code>",
+          "placeholder": "लेबल",
+          "hint": "आप इस खोज मापदंड को किस तरह से लेबल करना चाहते हैं?"
+        },
+        "empty": "आपने अभी तक कोई खोज सहेजी नहीं है।"
+      },
+      "empty": "कोई डेटा नहीं।",
+      "format": "'key:value' के रूप में पैरामीटर टाइप करें",
+      "label": "फिल्टर चुनें"
+    },
+    "custom value": "कस्टम value"
   }
 }

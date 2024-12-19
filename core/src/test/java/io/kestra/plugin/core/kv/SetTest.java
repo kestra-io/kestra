@@ -130,7 +130,7 @@ public class SetTest {
             .type(Set.class.getName())
             .key("{{ inputs.key }}")
             .value("{{ inputs.value }}")
-            .namespace("???")
+            .namespace("not-found")
             .build();
 
         // When - Then

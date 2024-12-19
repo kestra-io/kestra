@@ -47,7 +47,10 @@
                     <KestraFilter
                         prefix="flows"
                         :include="['namespace', 'scope', 'labels']"
-                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                        :buttons="{
+                            refresh: {shown: false},
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                        }"
                     />
                 </template>
 
@@ -70,6 +73,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        class="flows-table"
                     >
                         <template #select-actions>
                             <bulk-select
@@ -313,7 +317,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             } if (!query.scope) {
                 query.scope = ["USER"];
             }
@@ -497,6 +501,10 @@
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
+                if(this.namespace){
+                    queryFilter.namespace = this.namespace
+                }
+
                 return _merge(base, queryFilter)
             },
             loadStats() {
@@ -571,5 +579,9 @@
 
     .flow-id {
         min-width: 200px;
+    }
+
+    .flows-table  .el-table__cell {
+        vertical-align: middle;
     }
 </style>

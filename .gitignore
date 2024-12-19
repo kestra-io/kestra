@@ -54,3 +54,5 @@ core/src/main/resources/gradle.properties
 
 # Allure Reports
 **/allure-results/*
+
+*storybook.log

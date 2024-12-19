@@ -1,3 +1,36 @@
+<template>
+    <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
+        <context-docs-link
+            :href="item.path"
+            class="col"
+            v-for="item in navigation"
+            :key="item.path"
+            use-raw
+        >
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <span class="card-icon">
+                        <img
+                            :src="$store.getters['doc/resourceUrl'](item.icon)"
+                            :alt="item.title"
+                            width="50px"
+                            height="50px"
+                        >
+                    </span>
+                    <div class="overflow-hidden">
+                        <h4 class="card-title">
+                            {{ item.title }}
+                        </h4>
+                        <p class="card-text mb-0">
+                            {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </context-docs-link>
+    </div>
+</template>
+
 <script setup>
     import {computed, ref, onMounted} from "vue";
     import {useStore} from "vuex";
@@ -47,39 +80,6 @@
     });
 
 </script>
-
-<template>
-    <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
-        <context-docs-link
-            :href="item.path"
-            class="col"
-            v-for="item in navigation"
-            :key="item.path"
-            use-raw
-        >
-            <div class="card h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="card-icon">
-                        <img
-                            :src="$store.getters['doc/resourceUrl'](item.icon)"
-                            :alt="item.title"
-                            width="50px"
-                            height="50px"
-                        >
-                    </span>
-                    <div class="overflow-hidden">
-                        <h4 class="card-title">
-                            {{ item.title }}
-                        </h4>
-                        <p class="card-text mb-0">
-                            {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </context-docs-link>
-    </div>
-</template>
 
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";

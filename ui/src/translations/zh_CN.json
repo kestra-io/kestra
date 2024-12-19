@@ -360,7 +360,7 @@
     },
     "cancel": "取消",
     "homeDashboard": {
-      "title": "概览",
+      "title": "仪表板",
       "today": "今天",
       "yesterday": "昨天",
       "last28Days": "最近28天",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "每个命名空间的执行错误",
       "failedExecutions": "失败的执行",
       "errorLogs": "错误日志",
-      "no executions": "准备好看到你的流程在行动了吗？"
+      "no executions": "准备好看到你的流程在行动了吗？",
+      "wel_text": "欢迎！",
+      "start": "让我们启动并运行您的第一个workflow。",
+      "guide": "需要指导来执行您的第一个flow吗？",
+      "welcome": "欢迎使用 Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> 个执行已重放",
     "executions resumed": "<code>{executionCount}</code> 个执行已恢复",
@@ -643,17 +647,17 @@
     "execution-warn-deleting-still-running": "我们强烈建议您取消此操作，并首先终止任何正在进行的执行。删除未终止的执行可能导致并发性问题、flow依赖管理不一致以及实例上的僵尸进程，这些都会降低系统性能。在继续删除之前，请确保您完全了解这些风险。",
     "originalCreatedDate": "原始创建日期",
     "welcome": {
-      "started": {
-        "title": "轻松开始的3个步骤"
+      "tutorial": {
+        "title": "教程",
+        "text": "* [视频教程](https://kestra.io/tutorial-videos/all)\n* [文档](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "参加产品巡演"
+      "tour": {
+        "title": "开始产品导览",
+        "text": "选择您的用例，并按照分步指南学习 Kestra 的功能和能力。❤️"
       },
-      "doc": {
-        "title": "文档"
-      },
-      "need-help": {
-        "title": "需要帮助？"
+      "help": {
+        "text": "在我们的Slack社区中提问。如果您遇到困难，我们会帮助您。✋",
+        "title": "需要帮助吗？"
       }
     },
     "pluginPage": {
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "cURL命令",
-      "note": "请注意，对于SECRET和FILE输入类型，命令必须适应以匹配实际值。"
+      "note": "请注意，对于SECRET和FILE类型的input，命令必须调整以匹配实际值。"
     },
     "logs_view": {
       "raw": "时间视图",
@@ -918,52 +922,6 @@
     "execution-warn-title": "重要警告！",
     "worker group key": "工作组 key",
     "worker group fallback": "工作组回退",
-    "filters": {
-      "comparators": {
-        "is": "是",
-        "is_one_of": "是其中之一",
-        "is_not_one_off": "不是其中之一",
-        "is_not": "不是",
-        "between": "之间",
-        "in": "在",
-        "not_contains": "不包含",
-        "starts_with": "以...开始",
-        "contains": "包含"
-      },
-      "recent": {
-        "label": "最近的搜索",
-        "empty": "您还没有搜索任何内容。"
-      },
-      "labels": {
-        "placeholder": "输入label为'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "您想如何标记此搜索条件？",
-          "heading": "保存当前搜索",
-          "confirmation": "搜索条件 <code>{name}</code>",
-          "placeholder": "标签"
-        },
-        "label": "保存的搜索",
-        "tooltip": "您不能保存空的搜索条件。"
-      },
-      "options": {
-        "namespace": "命名空间",
-        "scope": "范围",
-        "text": "文本",
-        "labels": "标签",
-        "state": "状态",
-        "child": "子项",
-        "absolute_date": "绝对日期",
-        "relative_date": "相对日期",
-        "level": "Log级别"
-      },
-      "empty": "无数据。",
-      "label": "选择过滤器",
-      "settings": {
-        "show_chart": "显示主图表"
-      }
-    },
     "force run title": "强制运行执行 <code>{id}</code>。",
     "executions force run": "<code>{executionCount}</code> 次执行被强制运行",
     "force run done": "执行被强制运行",
@@ -1001,6 +959,82 @@
     "custom_dashboard": "自定义仪表板",
     "create_custom_dashboard": "创建新仪表板",
     "edit_custom_dashboard": "编辑仪表板",
-    "custom_dashboard_empty": "没有结果显示。"
+    "custom_dashboard_empty": "没有结果显示。",
+    "remove_bookmark": "您确定要删除此书签吗？",
+    "execution_guide": {
+      "get_started": {
+        "title": "开始使用 ⚡",
+        "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。"
+      },
+      "workflow_components": {
+        "text": "了解 Kestra 工作流的主要编排组件。",
+        "title": "工作流组件"
+      },
+      "videos_tutorials": {
+        "text": "开始观看我们的视频教程。",
+        "title": "视频教程"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
+      "guidance_desc": "需要指导来执行您的flow吗？",
+      "guidance_sub_desc": "请查阅文档以获取您所需的所有信息。",
+      "title": "开始自动化使用"
+    },
+    "filters": {
+      "options": {
+        "child": "子节点",
+        "metric": "指标",
+        "labels": "标签",
+        "details": "详情",
+        "absolute_date": "绝对日期",
+        "scope": "范围",
+        "trigger_state": "状态",
+        "state": "状态",
+        "action": "操作",
+        "text": "文本",
+        "relative_date": "相对日期",
+        "level": "日志级别",
+        "aggregation": "聚合",
+        "permission": "权限",
+        "namespace": "命名空间",
+        "user": "用户",
+        "task": "任务",
+        "flow": "流程",
+        "type": "类型",
+        "status": "状态",
+        "service_type": "类型"
+      },
+      "settings": {
+        "label": "页面设置",
+        "show_chart": "显示主图表"
+      },
+      "comparators": {
+        "contains": "包含",
+        "is": "是",
+        "is_not": "不是",
+        "in": "在",
+        "starts_with": "以...开始",
+        "not_contains": "不包含",
+        "is_not_one_off": "不是其中之一",
+        "is_one_of": "是其中之一",
+        "between": "之间"
+      },
+      "save": {
+        "label": "已保存的搜索",
+        "tooltip": "您不能保存空的搜索条件。",
+        "dialog": {
+          "heading": "保存当前搜索",
+          "confirmation": "搜索条件 <code>{name}</code>",
+          "placeholder": "标签",
+          "hint": "您想如何标记此搜索条件？"
+        },
+        "empty": "您还没有保存任何搜索。"
+      },
+      "empty": "无数据。",
+      "format": "将参数输入为 'key:value'",
+      "label": "选择过滤器"
+    },
+    "custom value": "自定义值"
   }
 }

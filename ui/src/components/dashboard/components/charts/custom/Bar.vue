@@ -140,7 +140,7 @@
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
-                data: [subSectionsEntry[1]],
+                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
                 backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));

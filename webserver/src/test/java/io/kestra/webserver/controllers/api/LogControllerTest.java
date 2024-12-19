@@ -1,9 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -12,8 +13,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -26,7 +27,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class LogControllerTest extends JdbcH2ControllerTest {
+@KestraTest
+class LogControllerTest {
 
     @Inject
     private LogRepositoryInterface logRepository;
@@ -36,8 +38,13 @@ class LogControllerTest extends JdbcH2ControllerTest {
     ReactorHttpClient client;
 
     @Inject
-    @Client("/")
-    ReactorSseClient sseClient;
+    private JdbcTestUtils jdbcTestUtils;
+
+    @BeforeEach
+    protected void setup() {
+        jdbcTestUtils.drop();
+        jdbcTestUtils.migrate();
+    }
 
     @SuppressWarnings("unchecked")
     @Test

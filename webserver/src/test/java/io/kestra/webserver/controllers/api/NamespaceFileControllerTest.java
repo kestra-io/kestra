@@ -1,14 +1,19 @@
 package io.kestra.webserver.controllers.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.core.Is.is;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.flow.Subflow;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -17,33 +22,25 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.Is.is;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 @KestraTest
-class NamespaceFileControllerTest extends JdbcH2ControllerTest {
+class NamespaceFileControllerTest {
     private static final String NAMESPACE = "io.namespace";
 
     @Inject
@@ -56,14 +53,9 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-    @BeforeEach
-    public void init() throws IOException {
+    @AfterEach
+    public void clean() throws IOException {
         storageInterface.delete(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null));
-
-        flowRepository.findAllWithSource(null)
-            .forEach(flowRepository::delete);
-
-        super.setup();
     }
 
     @SuppressWarnings("unchecked")
@@ -154,6 +146,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/task-flow.yaml"})
     void createFile_AddFlow() throws IOException {
         String flowSource = flowRepository.findByIdWithSource(null, "io.kestra.tests", "task-flow").get().getSource();
         File temp = File.createTempFile("task-flow", ".yml");
@@ -178,6 +171,7 @@ class NamespaceFileControllerTest extends JdbcH2ControllerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/task-flow.yaml"})
     void createFile_ExtractZip() throws IOException {
         String namespaceToExport = "io.kestra.tests";
 

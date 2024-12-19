@@ -1,5 +1,16 @@
 package io.kestra.webserver.controllers.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -10,7 +21,6 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -21,21 +31,17 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-class TriggerControllerTest extends JdbcH2ControllerTest {
+@KestraTest(startRunner = true, startScheduler = true)
+class TriggerControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -49,16 +55,10 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     @Inject
     private JdbcTestUtils jdbcTestUtils;
 
-    @Override
     @BeforeEach
     protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-
-        if (!runner.isRunning()) {
-            runner.setSchedulerEnabled(true);
-            runner.run();
-        }
     }
 
     @SuppressWarnings("unchecked")

@@ -7,8 +7,10 @@
                     <KestraFilter
                         prefix="logs"
                         :include="['namespace', 'level', 'absolute_date', 'relative_date']"
-                        :refresh="{shown: true, callback: refresh}"
-                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                        :buttons="{
+                            refresh: {shown: true, callback: refresh},
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                        }"
                     />
                 </template>
 
@@ -88,7 +90,7 @@
                 isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false,
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 statsReady: false,
                 statsData: [],
                 canAutoRefresh: false,
@@ -122,8 +124,10 @@
                 return undefined;
             },
             startDate() {
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                // we mention the last refresh date here to trick
+                // VueJs fine grained reactivity system and invalidate
+                // computed property startDate
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -152,7 +156,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             }
             next(vm => {
                 vm.$router?.replace({query});
@@ -173,12 +177,10 @@
                 }
             },
             refresh() {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 this.load();
             },
             loadQuery(base) {
-                // eslint-disable-next-line no-unused-vars
-                const {triggerId, ...rest} = this.filters || {};
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
@@ -200,7 +202,7 @@
             load() {
                 this.isLoading = true
 
-                // eslint-disable-next-line no-unused-vars
+
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,

@@ -360,7 +360,7 @@
     },
     "cancel": "Отмена",
     "homeDashboard": {
-      "title": "Обзор",
+      "title": "Панель управления",
       "today": "Сегодня",
       "yesterday": "Вчера",
       "last28Days": "Последние 28 дней",
@@ -369,7 +369,11 @@
       "namespacesErrorExecutions": "Ошибки выполнения по namespace",
       "failedExecutions": "Неудачные выполнения",
       "errorLogs": "Логи ошибок",
-      "no executions": "Готовы увидеть ваш flow в действии?"
+      "no executions": "Готовы увидеть ваш flow в действии?",
+      "wel_text": "Добро пожаловать!",
+      "start": "Давайте запустим ваш первый workflow.",
+      "guide": "Нужна помощь в выполнении вашего первого flow?",
+      "welcome": "Добро пожаловать в Kestra"
     },
     "executions replayed": "<code>{executionCount}</code> выполнение(я) воспроизведено",
     "executions resumed": "<code>{executionCount}</code> выполнение(я) возобновлено",
@@ -643,16 +647,16 @@
     "execution-warn-deleting-still-running": "Мы настоятельно рекомендуем отменить это действие и сначала завершить все текущие executions. Удаление незавершенных executions может привести к проблемам с concurrency, несоответствиям в управлении зависимостями flow и появлению \"зомби\"-процессов на вашем экземпляре, что может ухудшить производительность системы. Убедитесь, что вы полностью понимаете эти риски, прежде чем продолжить удаление.",
     "originalCreatedDate": "Оригинальная дата создания",
     "welcome": {
-      "started": {
-        "title": "Начните в 3 простых шага"
+      "tutorial": {
+        "title": "Учебник",
+        "text": "* [Видеоуроки](https://kestra.io/tutorial-videos/all)\n* [Документация](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
       },
-      "product-tour": {
-        "title": "Пройдите экскурсию по продукту"
+      "tour": {
+        "title": "Пройдите экскурсию по продукту",
+        "text": "Выберите ваш вариант использования и следуйте пошаговому руководству, чтобы изучить возможности и функции Kestra. ❤️"
       },
-      "doc": {
-        "title": "Документы"
-      },
-      "need-help": {
+      "help": {
+        "text": "Задайте любой вопрос в нашем сообществе Slack. Если вы застряли, мы здесь, чтобы помочь вам. ✋",
         "title": "Нужна помощь?"
       }
     },
@@ -819,7 +823,7 @@
     },
     "curl": {
       "command": "Команда cURL",
-      "note": "Обратите внимание, что для типов input SECRET и FILE команда должна быть адаптирована для соответствия реальным значениям."
+      "note": "Обратите внимание, что для типов ввода SECRET и FILE команда должна быть адаптирована, чтобы соответствовать реальным значениям."
     },
     "logs_view": {
       "raw": "Временной вид",
@@ -918,52 +922,6 @@
     "execution-warn-title": "Важное предупреждение!",
     "worker group key": "Ключ группы Worker",
     "worker group fallback": "Группа Worker резервный вариант",
-    "filters": {
-      "comparators": {
-        "is": "является",
-        "is_one_of": "является одним из",
-        "is_not_one_off": "не является одним из",
-        "is_not": "не является",
-        "between": "между",
-        "in": "в",
-        "not_contains": "не содержит",
-        "starts_with": "начинается с",
-        "contains": "содержит"
-      },
-      "recent": {
-        "label": "Недавние поиски",
-        "empty": "Вы еще ничего не искали."
-      },
-      "labels": {
-        "placeholder": "Введите label как 'key:value'"
-      },
-      "save": {
-        "dialog": {
-          "hint": "Как вы хотите обозначить этот критерий поиска?",
-          "heading": "Сохранить текущий поиск",
-          "confirmation": "Критерии поиска <code>{name}</code>",
-          "placeholder": "Метка"
-        },
-        "label": "Сохраненные поиски",
-        "tooltip": "Вы не можете сохранить пустые критерии поиска."
-      },
-      "options": {
-        "namespace": "Namespace",
-        "scope": "Область применения",
-        "text": "Извините, но вы не предоставили текст для перевода. Пожалуйста, вставьте текст, который вы хотите перевести, после \"----------\".",
-        "labels": "Метки",
-        "state": "Состояние",
-        "child": "Ребенок",
-        "absolute_date": "Абсолютная дата",
-        "relative_date": "Относительная дата",
-        "level": "Уровень Log"
-      },
-      "empty": "Нет данных.",
-      "label": "Выберите фильтры",
-      "settings": {
-        "show_chart": "Показать главный график"
-      }
-    },
     "force run title": "Принудительный запуск выполнения <code>{id}</code>.",
     "executions force run": "<code>{executionCount}</code> выполнение(я) принудительный запуск",
     "force run done": "Выполнение принудительного запуска",
@@ -1001,6 +959,82 @@
     "custom_dashboard": "Пользовательские панели мониторинга",
     "create_custom_dashboard": "Создать новую панель управления",
     "edit_custom_dashboard": "Редактировать Dashboard",
-    "custom_dashboard_empty": "Нет результатов для отображения."
+    "custom_dashboard_empty": "Нет результатов для отображения.",
+    "remove_bookmark": "Вы уверены, что хотите удалить эту закладку?",
+    "execution_guide": {
+      "get_started": {
+        "title": "Начать ⚡",
+        "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows."
+      },
+      "workflow_components": {
+        "text": "Познакомьтесь с основными компонентами оркестрации в workflow Kestra.",
+        "title": "Компоненты Workflow"
+      },
+      "videos_tutorials": {
+        "text": "Начните с наших видеоуроков.",
+        "title": "Видеоуроки"
+      }
+    },
+    "no-executions-view": {
+      "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
+      "guidance_desc": "Нужна помощь для выполнения вашего flow?",
+      "guidance_sub_desc": "Следуйте документации для получения всей необходимой информации.",
+      "title": "Начните автоматизацию с"
+    },
+    "filters": {
+      "options": {
+        "child": "Дочерний элемент",
+        "metric": "Метрика",
+        "labels": "Метки",
+        "details": "Детали",
+        "absolute_date": "Абсолютная дата",
+        "scope": "Область применения",
+        "trigger_state": "Состояние",
+        "state": "Состояние",
+        "action": "Действие",
+        "text": "I'm sorry, but it seems that the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+        "relative_date": "Относительная дата",
+        "level": "Уровень Log",
+        "aggregation": "Агрегация",
+        "permission": "Разрешение",
+        "namespace": "Namespace",
+        "user": "Пользователь",
+        "task": "Задача",
+        "flow": "Поток",
+        "type": "Тип",
+        "status": "Статус",
+        "service_type": "Тип"
+      },
+      "settings": {
+        "label": "Настройки страницы",
+        "show_chart": "Показать основную диаграмму"
+      },
+      "comparators": {
+        "contains": "содержит",
+        "is": "является",
+        "is_not": "не является",
+        "in": "в",
+        "starts_with": "начинается с",
+        "not_contains": "не содержит",
+        "is_not_one_off": "не является одним из",
+        "is_one_of": "является одним из",
+        "between": "между"
+      },
+      "save": {
+        "label": "Сохранённые поиски",
+        "tooltip": "Вы не можете сохранить пустые критерии поиска.",
+        "dialog": {
+          "heading": "Сохранить текущий поиск",
+          "confirmation": "Критерии поиска <code>{name}</code>",
+          "placeholder": "Ярлык",
+          "hint": "Как вы хотите обозначить этот критерий поиска?"
+        },
+        "empty": "Вы еще не сохранили ни одного поиска."
+      },
+      "empty": "Нет данных.",
+      "format": "Введите параметр в формате 'key:value'",
+      "label": "Выберите фильтры"
+    },
+    "custom value": "Пользовательское значение"
   }
 }

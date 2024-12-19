@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class MultipleConditionTriggerCaseTest {
+
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
@@ -45,16 +46,13 @@ public class MultipleConditionTriggerCaseTest {
     public void trigger() throws InterruptedException, TimeoutException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         ConcurrentHashMap<String, Execution> ended = new ConcurrentHashMap<>();
-        Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger", "trigger-multiplecondition-listener").orElseThrow();
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
-            synchronized (ended) {
-                if (execution.getState().getCurrent() == State.Type.SUCCESS && !execution.getFlowId().equals("trigger-flow-listener-namespace-condition")) {
-                    if (!ended.containsKey(execution.getId())) {
-                        ended.put(execution.getId(), execution);
-                        countDownLatch.countDown();
-                    }
+            if (execution.getState().getCurrent() == State.Type.SUCCESS) {
+                if (!ended.containsKey(execution.getId())) {
+                    ended.put(execution.getId(), execution);
+                    countDownLatch.countDown();
                 }
             }
         });
@@ -78,6 +76,7 @@ public class MultipleConditionTriggerCaseTest {
         receive.blockLast();
         assertThat(ended.size(), is(3));
 
+        Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger", "trigger-multiplecondition-listener").orElseThrow();
         Execution triggerExecution = ended.entrySet()
             .stream()
             .filter(e -> e.getValue().getFlowId().equals(flow.getId()))
@@ -99,8 +98,8 @@ public class MultipleConditionTriggerCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("trigger-flow-listener-namespace-condition") && execution.getState().getCurrent().isTerminated() ) {
-                countDownLatch.countDown();
                 listener.set(execution);
+                countDownLatch.countDown();
             }
         });
 

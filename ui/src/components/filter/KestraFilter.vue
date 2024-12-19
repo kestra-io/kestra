@@ -1,6 +1,6 @@
 <template>
-    <section class="d-flex mb-3 filters">
-        <div :class="['filters filter p-0', {focused: isFocused}]">
+    <section class="d-inline-flex mb-3 filters">
+        <div :class="['d-inline-flex filters filter p-0', {focused: isFocused}]">
             <Items :prefix="ITEMS_PREFIX" @search="handleClickedItems" class="brd" />
 
             <el-select
@@ -89,7 +89,7 @@
             </el-select>
 
             <el-button-group
-                class="d-inline-flex"
+                class="d-inline-flex first-group"
                 :class="{
                     'me-1':
                         buttons.refresh.shown ||
@@ -101,16 +101,16 @@
                     <el-button
                         :icon="Magnify"
                         @click="triggerSearch"
-                        class="rounded-0"
+                        class="rounded-0 search"
                     />
                 </KestraIcon>
-                <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
+                <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current class="save" />
             </el-button-group>
         </div>
         
         <el-button-group
             v-if="buttons.refresh.shown || buttons.settings.shown"
-            class="d-flex ms-1"
+            class="d-inline-flex ms-1"
             :class="{'me-1': dashboards.shown}"
         >
             <Refresh
@@ -614,19 +614,22 @@ $dashboards: 52px;
             }
         }
 
+
         & .el-select__wrapper {
             box-shadow: 0 0 0 0 var(--el-border-color), 0 0 0 0 var(--el-border-color);
         }
 
-        & .el-button-group .el-button {
+        & .first-group .el-button {
             border: 0;
             outline: none !important;
-            border-right: 1px solid var(--bs-border-color);
             border-left: 1px solid var(--bs-border-color);
-
             &:hover {
                 border-color: #8008f6 !important;
             }
+        }
+
+        & .first-group .search{
+            border-right: 1px solid var(--bs-border-color);
         }
 
         & .el-select__input, .el-select__caret {

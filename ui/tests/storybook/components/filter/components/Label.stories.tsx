@@ -1,3 +1,4 @@
+import type {StoryObj} from "@storybook/vue3";
 import {
     within,
     expect,
@@ -22,10 +23,8 @@ export const WithSingleValue = () => <Label option={{
     comparator: "eq"
 }}/>;
 
-/**
- * @type {import('@storybook/vue3').StoryObj<typeof Label>}
- */
-export const WithTest = {
+
+export const WithTest: StoryObj<typeof Label> = {
     // this in an example test and should not be taken seriously
     play({canvasElement}){
         const canvas = within(canvasElement);

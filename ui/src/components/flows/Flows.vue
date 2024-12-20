@@ -278,7 +278,6 @@
                 lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
-                errorMessage: "",
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_FLOWS_CHART)),
             };
         },

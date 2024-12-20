@@ -34,8 +34,6 @@
     import {ref} from "vue";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
 
-    const unused_var = 0
-
     const props = defineProps({
         modelValue: {
             type: Boolean,

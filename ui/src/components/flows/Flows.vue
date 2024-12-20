@@ -15,6 +15,7 @@
                                 type="file"
                                 @change="importFlows()"
                                 ref="file"
+                                required
                             >
                         </div>
                     </div>
@@ -461,6 +462,23 @@
                 )
             },
             importFlows() {
+                const file = this.$refs.file.files[0]; 
+
+                const fileExtension = file.name.split(".").pop().toLowerCase();
+                
+                const allowedExtensions = ["zip", "yaml", "yml"]; 
+                if (!allowedExtensions.includes(fileExtension)) {
+                    this.$notify({
+                        title: this.$t("Error"),
+                        message: this.$t("file not supported"),
+                        type: "error",
+                        duration: 3000,
+                        position: "bottom-right",
+                        customClass: "custom-validation"
+                    });
+                    return; 
+                }
+
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
                 this.$store
@@ -583,5 +601,11 @@
 
     .flows-table  .el-table__cell {
         vertical-align: middle;
+    }
+
+</style>
+<style lang="scss">
+    .custom-validation .el-notification__content {
+        font-size: 14px;
     }
 </style>

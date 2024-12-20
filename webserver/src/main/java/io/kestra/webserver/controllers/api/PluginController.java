@@ -1,15 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.docs.*;
-import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.templates.Template;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.cache.annotation.Cacheable;
@@ -45,7 +39,10 @@ public class PluginController {
     protected JsonSchemaGenerator jsonSchemaGenerator;
 
     @Inject
-    private PluginRegistry pluginRegistry;
+    protected PluginRegistry pluginRegistry;
+
+    @Inject
+    protected JsonSchemaCache jsonSchemaCache;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -59,27 +56,8 @@ public class PluginController {
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf
     ) {
         return HttpResponse.ok()
-            .body(this.schemasCache(type, arrayOf))
+            .body(jsonSchemaCache.getSchemaForType(type, arrayOf))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
-    }
-
-    @Cacheable("default")
-    protected Map<String, Object> schemasCache(SchemaType type, boolean arrayOf) {
-        if (type == SchemaType.flow) {
-            return jsonSchemaGenerator.schemas(Flow.class, arrayOf);
-        } else if (type == SchemaType.template) {
-            return jsonSchemaGenerator.schemas(Template.class, arrayOf);
-        } else if (type == SchemaType.task) {
-            return jsonSchemaGenerator.schemas(Task.class, arrayOf);
-        } else if (type == SchemaType.trigger) {
-            return jsonSchemaGenerator.schemas(AbstractTrigger.class, arrayOf);
-        } else if (type == SchemaType.plugindefault) {
-            return jsonSchemaGenerator.schemas(PluginDefault.class, arrayOf);
-        } else if (type == SchemaType.dashboard) {
-            return jsonSchemaGenerator.schemas(Dashboard.class, arrayOf);
-        } else {
-            throw new IllegalArgumentException("Invalid type " + type);
-        }
     }
 
     @Get(uri = "inputs")

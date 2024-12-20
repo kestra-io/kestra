@@ -3,7 +3,6 @@ package io.kestra.cli.commands.plugins;
 import com.google.common.base.Charsets;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.docs.DocumentationGenerator;
-import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
@@ -44,7 +43,8 @@ public class PluginDocCommand extends AbstractCommand {
         super.call();
         DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
 
-        List<RegisteredPlugin> plugins = core ?  pluginRegistry().plugins() : pluginRegistry().externalPlugins();
+        PluginRegistry registry = pluginRegistryProvider.get();
+        List<RegisteredPlugin> plugins = core ?  registry.plugins() : registry.externalPlugins();
         for (RegisteredPlugin registeredPlugin : plugins) {
             documentationGenerator
                 .generate(registeredPlugin)

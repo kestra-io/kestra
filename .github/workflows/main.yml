@@ -375,7 +375,11 @@ jobs:
     name: Publish Docker
     runs-on: ubuntu-latest
     needs: [build-artifacts, check, check-e2e]
-    if: github.ref == 'refs/heads/develop'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/develop' &&
+      needs.check.result == 'success' &&
+      (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
     strategy:
       matrix:
         image:

@@ -17,9 +17,6 @@
                                 ref="file"
                                 required
                             >
-                            <p v-if="errorMessage" style="color: red;">
-                                {{ errorMessage }}
-                            </p>
                         </div>
                     </div>
                 </li>

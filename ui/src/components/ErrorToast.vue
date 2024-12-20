@@ -99,7 +99,7 @@
             top: calc(18px + 0.5rem);
             right: calc(15px + 2rem);
             transform: translateY(-50%);
-            gap: calc(var(--spacer) / 2);
+            gap: .5rem;
         }
     }
 </style>

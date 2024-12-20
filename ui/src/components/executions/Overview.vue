@@ -477,7 +477,7 @@
     margin-bottom: 0;
 
     .line {
-        padding: calc(var(--spacer) / 2);
+        padding: .5rem;
         border-top: 1px solid var(--log-background-error);
     }
 }

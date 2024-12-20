@@ -336,7 +336,7 @@
 
             > div {
                 > * {
-                    padding: calc(var(--spacer) / 2);
+                    padding: .5rem;
                     flex: 1;
                 }
 
@@ -448,11 +448,11 @@
             }
 
             .attempt-header {
-                padding: calc(var(--spacer) / 2);
+                padding: .5rem;
             }
 
             .line {
-                padding: calc(var(--spacer) / 2);
+                padding: .5rem;
             }
         }
     }

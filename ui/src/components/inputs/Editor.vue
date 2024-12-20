@@ -449,7 +449,7 @@
 
         .top-nav {
             background-color: var(--ks-background-card);
-            padding: calc(var(--spacer) / 2);
+            padding: .5rem;
             border-radius: var(--bs-border-radius-lg);
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
@@ -504,7 +504,7 @@
                     }
 
                     p {
-                        margin-bottom: calc(var(--spacer) / 2);
+                        margin-bottom: .5rem;
 
                         &:last-child {
                             display: none;
@@ -526,7 +526,7 @@
                     list-style: none;
                     padding: 0;
                     margin: 0;
-                    //gap: calc(var(--spacer) / 2);
+                    //gap: .5rem;
                 }
             }
         }

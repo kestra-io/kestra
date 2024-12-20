@@ -321,7 +321,7 @@
 
     .attempt-header {
         display: flex;
-        gap: calc(var(--spacer) / 2);
+        gap: .5rem;
 
         > * {
             display: flex;

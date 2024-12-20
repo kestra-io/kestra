@@ -1271,7 +1271,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
     .main-editor {
-        padding: calc(var(--spacer) / 2) 0px;
+        padding: .5rem 0px;
         background: var(--ks-background-body);
         display: flex;
         height: calc(100% - 49px);

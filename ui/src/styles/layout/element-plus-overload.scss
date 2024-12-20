@@ -111,7 +111,7 @@
         display: flex;
         cursor: pointer;
         margin-left: 10px;
-        gap: calc(var(--spacer) / 2);
+        gap: .5rem;
     }
 
     input[type="file"] {
@@ -442,7 +442,7 @@ form.ks-horizontal {
     &.top {
         background: var(--ks-background-card);
         border-bottom: 1px solid var(--ks-border-primary);
-        padding: calc(var(--spacer) / 2);
+        padding: .5rem;
         position: sticky;
         top: var(--top-navbar-height);
         z-index: 1000;
@@ -491,7 +491,7 @@ form.ks-horizontal {
 
         .el-tabs__item {
             > * {
-                padding: calc(var(--spacer) / 2) calc(var(--spacer));
+                padding: .5rem calc(var(--spacer));
             }
 
             &.is-active > a {
@@ -685,7 +685,7 @@ form.ks-horizontal {
         }
         &:is(li) {
             display: flex;
-            gap: calc(var(--spacer) / 2);
+            gap: .5rem;
 
             i {
                 margin-right: 0;
@@ -710,7 +710,7 @@ form.ks-horizontal {
     }
 
     .el-input__suffix-inner {
-        gap: calc(var(--spacer) / 2);
+        gap: .5rem;
 
         > span:not(.material-design-icon) {
             font-size: 0.75rem;
@@ -839,12 +839,12 @@ form.ks-horizontal {
     border: none;
 
     .el-collapse-item__header {
-        padding: calc(var(--spacer) / 2);
+        padding: .5rem;
         border: none;
     }
 
     .el-collapse-item__content {
-        padding: calc(var(--spacer) / 2);
+        padding: .5rem;
     }
 
     .el-collapse-item__wrap {
@@ -1044,7 +1044,7 @@ form.ks-horizontal {
     .material-design-icon {
         height: 0.75rem;
         width: 0.75rem;
-        margin-right: calc(var(--spacer) / 2);
+        margin-right: .5rem;
     }
 
     html.dark & {

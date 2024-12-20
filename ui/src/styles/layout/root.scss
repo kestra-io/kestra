@@ -118,8 +118,8 @@ $logLevels: "trace", "debug", "info", "warn", "error";
 .button-top {
     background: var(--ks-background-card);
     border-bottom: 1px solid var(--bs-border-color);
-    padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
-    padding-left: calc(var(--spacer) / 2);
+    padding: .5rem calc(var(--spacer) * 2);
+    padding-left: .5rem;
     display: flex;
     align-items: center;
     justify-content: end;
@@ -127,13 +127,13 @@ $logLevels: "trace", "debug", "info", "warn", "error";
 
     :deep(.validation) {
         border: 0;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
     }
 
     :deep(.el-button) {
         border: 0;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
     }
 }

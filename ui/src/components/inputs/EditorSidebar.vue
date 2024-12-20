@@ -1107,8 +1107,8 @@
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
 
         &.el-button--primary {
             opacity: 1;

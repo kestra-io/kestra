@@ -319,10 +319,10 @@
     .log-lines {
         max-height: calc(100vh - 335px);
         transition: max-height 0.2s ease-out;
-        margin-top: calc(var(--spacer) / 2);
+        margin-top: .5rem;
 
         .line {
-            padding: calc(var(--spacer) / 2);
+            padding: .5rem;
 
             &.cursor {
                 background-color: var(--bs-gray-300)

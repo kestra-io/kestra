@@ -171,7 +171,7 @@
         }
 
         &:not(.success) span:not(.material-design-icon) {
-            margin-left: calc(var(--spacer) / 2);
+            margin-left: .5rem;
             font-size: $font-size-sm;
         }
 
@@ -214,7 +214,7 @@
 
             .material-design-icon {
                 font-size: 1.5rem;
-                margin-right: calc(var(--spacer) / 2);
+                margin-right: .5rem;
             }
         }
 

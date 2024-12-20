@@ -6,12 +6,12 @@
 
 // use bootstrap for main style
 :root {
-    --el-bg-color: var(--backgrounds-background-body);
-    --el-bg-color-page: var(--backgrounds-background-body);
+    --el-bg-color: var(--ks-background-body);
+    --el-bg-color-page: var(--ks-background-body);
     --el-bg-color-overlay: var(--bs-white);
 
-    --el-text-color-primary: var(--content-content-link);
-    --el-text-color-regular: var(--content-content-primary);
+    --el-text-color-primary: var(--ks-content-link);
+    --el-text-color-regular: var(--ks-content-primary);
     --el-text-color-secondary: var(--content-content-secondary);
     --el-text-color-placeholder: var(--content-content-secondary);
     --el-text-color-disabled: var(--content-content-inactive);
@@ -20,8 +20,8 @@
     --el-border-color-light: var(--border-border);
     --el-border-color-lighter: var(--border-border);
     --el-border-color-extra-light: var(--border-border);
-    --el-border-color-dark: var(--border-border-secondary);
-    --el-border-color-darker: var(--border-border-secondary);
+    --el-border-color-dark: var(--ks-border-secondary);
+    --el-border-color-darker: var(--ks-border-secondary);
 
     --el-fill-color: var(--bs-gray-300); // used in buttons .is-text
     --el-fill-color-light: var(--bs-gray-200); // used in many places autocomplete suggestion highlighted
@@ -40,7 +40,7 @@
 
     --bs-code-color: #7400DF;
 
-    #{--card-bg}: var(--backgrounds-background-card);
+    #{--card-bg}: var(--ks-background-card);
     #{--input-bg}: $input-bg;
 
     #{--bs-border-color}: #E5E4F7;

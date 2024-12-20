@@ -46,17 +46,17 @@ html.dark {
     #{--card-bg}: $card-bg;
     #{--input-bg}: #262A36;;
 
-    --el-bg-color: var(--backgrounds-background-body);
-    --el-bg-color-page: var(--backgrounds-background-body);
+    --el-bg-color: var(--ks-background-body);
+    --el-bg-color-page: var(--ks-background-body);
     --el-bg-color-overlay: var(--bs-gray-100-darken-5);
 
     --el-disabled-bg-color: var(--bs-gray-100-lighten-5);
     --el-disabled-border-color: var(--bs-border-color);
 
     --el-text-color-primary: var(--bs-primary);
-    --el-text-color-regular: var(--content-content-primary);
+    --el-text-color-regular: var(--ks-content-primary);
     --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--content-content-primary);
+    --el-text-color-placeholder: var(--ks-content-primary);
     --el-text-color-disabled: var(--bs-gray-400);
 
     --el-border-color: var(--bs-border-color);
@@ -86,7 +86,7 @@ html.dark {
     #{--el-box-shadow-lighter}: $box-shadow-sm;
     #{--el-box-shadow-dark}: $box-shadow-lg;
 
-    --el-button-active-text-color: var(--content-content-primary);
+    --el-button-active-text-color: var(--ks-content-primary);
 
     --input-suffix-color: #C6C1D9;
     --white-black-font-color: #{$white};

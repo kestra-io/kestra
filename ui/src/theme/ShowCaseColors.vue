@@ -25,7 +25,7 @@
 <style scoped>
     .wrapper {
         padding: 1rem;
-        background-color: var(--backgrounds-background-body);
+        background-color: var(--ks-background-body);
     }
     .var-theme {
         display: grid;

@@ -197,7 +197,8 @@ subprojects {
         test {
             useJUnitPlatform()
 
-            maxHeapSize = "4048m"
+            // set Xmx for test workers
+            maxHeapSize = '4g'
 
             // configure en_US default locale for tests
             systemProperty 'user.language', 'en'

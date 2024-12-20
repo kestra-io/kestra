@@ -57,8 +57,8 @@ public class FlowCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("switch") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 

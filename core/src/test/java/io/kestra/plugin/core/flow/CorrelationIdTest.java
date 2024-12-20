@@ -46,12 +46,12 @@ class CorrelationIdTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("subflow-child") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 child.set(execution);
+                countDownLatch.countDown();
             }
             if (execution.getFlowId().equals("subflow-grand-child") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 grandChild.set(execution);
+                countDownLatch.countDown();
             }
         });
 

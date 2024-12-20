@@ -49,6 +49,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         if (kestraTest.startRunner()){
             StandAloneRunner runner = applicationContext.getBean(StandAloneRunner.class);
             if (!runner.isRunning()){
+                runner.setSchedulerEnabled(kestraTest.startScheduler());
                 runner.run();
             }
         }

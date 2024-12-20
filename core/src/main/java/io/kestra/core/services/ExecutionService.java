@@ -629,22 +629,27 @@ public class ExecutionService {
      * @return the execution in a KILLING state if not already terminated
      */
     public Execution kill(Execution execution, Flow flow) {
+        if (execution.getState().getCurrent() == State.Type.KILLING || execution.getState().isTerminated()) {
+            return execution;
+        }
+
+        Execution newExecution;
         if (execution.getState().isPaused()) {
             // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
-                return this.resume(execution, flow, State.Type.KILLING);
+                newExecution = this.resume(execution, flow, State.Type.KILLING);
             } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
                 log.warn("Unable to resume a paused execution before killing it", e);
+                newExecution = execution.withState(State.Type.KILLING);
             }
+        } else {
+            newExecution = execution.withState(State.Type.KILLING);
         }
 
-        if (execution.getState().getCurrent() != State.Type.KILLING && !execution.getState().isTerminated()) {
-            return execution.withState(State.Type.KILLING);
-        }
-
-        return execution;
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        return newExecution;
     }
 
     /**

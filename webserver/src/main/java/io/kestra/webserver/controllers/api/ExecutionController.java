@@ -624,7 +624,10 @@ public class ExecutionController {
     }
 
     private URI executionUrl(Execution execution) {
-        return URI.create(kestraUrl.orElse("") + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId(): "")
+        String regexToRemoveTheTrailingSlashAtTheEnd = "/$";
+        String trimmedUrl = kestraUrl.orElse("").replaceAll(regexToRemoveTheTrailingSlashAtTheEnd, "");
+
+        return URI.create(trimmedUrl + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId(): "")
             + "/executions/"
             + execution.getNamespace() + "/"
             + execution.getFlowId() + "/"

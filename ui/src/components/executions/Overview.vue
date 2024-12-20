@@ -374,12 +374,12 @@
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -468,7 +468,7 @@
         }
 
         .text-end {
-            border-top: 1px solid var(--bs-border-color);
+            border-top: 1px solid var(--ks-border-primary);
         }
     }
 }

@@ -476,7 +476,7 @@
         max-width: 300px;
 
         &:last-child {
-            border-right: 1px solid var(--bs-border-color);
+            border-right: 1px solid var(--ks-border-primary);
         }
 
         .el-cascader-menu__wrap {
@@ -494,12 +494,12 @@
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -524,7 +524,7 @@
     flex: 0 0 3px;
     border-radius: 0.15rem;
     margin: 0 4px;
-    background-color: var(--bs-border-color);
+    background-color: var(--ks-border-primary);
     border: none;
     cursor: col-resize;
     user-select: none; /* disable selection */

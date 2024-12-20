@@ -425,7 +425,7 @@
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 2px solid var(--bs-border-color);
+        border-bottom: 2px solid var(--ks-border-primary);
         margin-bottom: 10px;
 
         &:last-child {
@@ -447,7 +447,7 @@
             border: 2px solid var(--ks-border-primary);
 
             tbody:last-child & {
-                border-bottom: 2px solid var(--bs-border-color);
+                border-bottom: 2px solid var(--ks-border-primary);
             }
 
             .attempt-header {

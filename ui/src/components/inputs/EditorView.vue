@@ -1340,7 +1340,7 @@
         flex: 0 0 3px;
         border-radius: 0.15rem;
         margin: 0 4px;
-        background-color: var(--bs-border-color);
+        background-color: var(--ks-border-primary);
         border: none;
         cursor: col-resize;
         user-select: none; /* disable selection */

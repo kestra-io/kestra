@@ -92,7 +92,7 @@
 
         :deep(h2) {
             font-weight: 600;
-            border-top: 1px solid var(--bs-border-color);
+            border-top: 1px solid var(--ks-border-primary);
             margin-bottom: 2rem;
             margin-top: 4.12rem;
             padding-top: 3.125rem;

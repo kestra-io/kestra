@@ -469,7 +469,7 @@
                 background-color: var(--el-input-bg-color, var(--el-fill-color-blank));
                 border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
                 transition: var(--el-transition-box-shadow);
-                box-shadow: 0 0 0 1px var(--bs-border-color) inset;
+                box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
                 padding-top: 7px;
 
                 &.custom-dark-vs-theme {

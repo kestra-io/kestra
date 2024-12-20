@@ -69,7 +69,7 @@
 
         table,
         th {
-            border-bottom: 2px solid var(--bs-border-color);
+            border-bottom: 2px solid var(--ks-border-primary);
         }
 
         th,
@@ -160,7 +160,7 @@
                 }
             }
             padding: 5px ;
-            border-left: 4px solid var(--bs-border-color);
+            border-left: 4px solid var(--ks-border-primary);
         }
 
         strong > code,

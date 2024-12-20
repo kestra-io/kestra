@@ -23,7 +23,7 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all class="tree h-auto p-2 rounded-full">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
@@ -137,7 +137,7 @@
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 $width: 200px;
 $active: #A396FF;
 $system: #5BB8FF;
@@ -152,7 +152,7 @@ $system: #5BB8FF;
         border-radius: var(--bs-border-radius-lg);
 
         &.is-focus {
-            box-shadow: 0 0 0 1px var(--bs-border-color) inset;
+            box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
         }
     }
 }
@@ -181,7 +181,7 @@ $system: #5BB8FF;
         border-radius: var(--bs-border-radius-lg);
     }
 
-    .el-tree-node__content {
+    :deep(.el-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;

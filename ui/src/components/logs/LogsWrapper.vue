@@ -260,7 +260,7 @@
             }
 
             > * + * {
-                border-top: 1px solid var(--bs-border-color);
+                border-top: 1px solid var(--ks-border-primary);
             }
         }
     }

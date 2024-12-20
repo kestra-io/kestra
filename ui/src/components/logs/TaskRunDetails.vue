@@ -703,7 +703,7 @@
             background-color: var(--ks-background-card);
 
             :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-                border-top: 1px solid var(--bs-border-color);
+                border-top: 1px solid var(--ks-border-primary);
             }
 
             html.dark & {

@@ -1,5 +1,4 @@
 import type {StorybookConfig} from "@storybook/vue3-vite";
-import viteJSXPlugin from "@vitejs/plugin-vue-jsx"
 
 const config: StorybookConfig = {
   stories: [
@@ -16,6 +15,7 @@ const config: StorybookConfig = {
     options: {},
   },
   async viteFinal(config) {
+    const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
     config.plugins = [
       ...config.plugins ?? [],
       viteJSXPlugin(),

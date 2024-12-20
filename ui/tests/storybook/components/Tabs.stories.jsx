@@ -23,6 +23,8 @@ const tabs = [
     },
 ]
 
+const a = 0
+
 /**
  * @type {import('@storybook/vue3').StoryObj<typeof ShowCase>}
  */

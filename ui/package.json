@@ -14,7 +14,8 @@
     "lint": "eslint --fix",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test-storybook": "test-storybook"
+    "test-storybook": "test-storybook",
+    "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",
@@ -93,8 +94,8 @@
     "eslint": "^9.17.0",
     "eslint-plugin-storybook": "^0.11.1",
     "eslint-plugin-vue": "^9.32.0",
-    "ghooks": "^2.0.4",
     "globals": "^15.14.0",
+    "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.2.11",
     "monaco-editor": "^0.52.2",
@@ -110,12 +111,12 @@
     "vitest": "^2.1.8"
   },
   "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.28.1",
-    "@rollup/rollup-darwin-x64": "^4.28.1",
-    "@rollup/rollup-linux-x64-gnu": "^4.28.1",
     "@esbuild/darwin-arm64": "^0.24.0",
     "@esbuild/darwin-x64": "^0.24.0",
-    "@esbuild/linux-x64": "^0.24.0"
+    "@esbuild/linux-x64": "^0.24.0",
+    "@rollup/rollup-darwin-arm64": "^4.28.1",
+    "@rollup/rollup-darwin-x64": "^4.28.1",
+    "@rollup/rollup-linux-x64-gnu": "^4.28.1"
   },
   "overrides": {
     "bootstrap": {
@@ -124,10 +125,5 @@
   },
   "lint-staged": {
     "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"
-  },
-  "config": {
-    "ghooks": {
-      "pre-commit": "cd ui && npx lint-staged"
-    }
   }
 }

@@ -2,6 +2,7 @@ package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,6 +33,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,6 +53,7 @@ import java.util.stream.Stream;
 @ToString
 @EqualsAndHashCode
 @FlowValidation
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
@@ -60,8 +63,8 @@ public class Flow extends AbstractFlow implements HasUID {
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
-                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source", "extend");
+                return exclusions.contains(m.getName()) || m.getName().startsWith("extend.") || super.hasIgnoreMarker(m);
             }
         });
 
@@ -123,11 +126,12 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty(beta = true)
     List<SLA> sla;
 
+    @JsonIgnore
+    private Map<String, Object> extend;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
     }
-
 
     /** {@inheritDoc **/
     @Override

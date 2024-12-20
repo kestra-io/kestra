@@ -33,7 +33,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.50.0')
     api platform("com.azure:azure-sdk-bom:1.2.29")
-    api platform('software.amazon.awssdk:bom:2.29.29')
+    api platform('software.amazon.awssdk:bom:2.29.37')
 
 
     constraints {
@@ -66,7 +66,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.31.1'
+        api 'software.amazon.awssdk.crt:aws-crt:0.33.7'
 
         // Other libs
         api("org.projectlombok:lombok:1.18.36")
@@ -76,7 +76,7 @@ dependencies {
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        api group: 'net.thisptr', name: 'jackson-jq', version: '1.1.0'
+        api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
         api group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.17.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
@@ -105,8 +105,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.4'
-        api 'com.github.docker-java:docker-java:3.4.0'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.0'
+        api 'com.github.docker-java:docker-java:3.4.1'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.1'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin

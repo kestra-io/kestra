@@ -141,7 +141,7 @@
             }
 
             .guidance {
-                color: var(--el-text-color-secondary);
+                color: var(--ks-content-link);
             }
         }
 

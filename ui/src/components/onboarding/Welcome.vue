@@ -138,7 +138,7 @@
     }
 
     .product-link, .watch {
-        background: var(--el-button-bg-color);
+        background: var(--ks-background-button-secondary);
         color: var(--el-button-text-color);
         font-weight: 700;
         border-radius: 5px;

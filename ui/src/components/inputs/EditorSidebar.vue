@@ -1124,7 +1124,7 @@
         color: var(--ks-content-primary);
 
         &:hover {
-            color: var(--el-text-color-primary);
+            color: var(--ks-content-link);
         }
     }
 

@@ -118,7 +118,7 @@
         font-size: 0.875em;
         border-radius: 4px;
         &:hover{
-            color: var(--el-text-color-secondary);
+            color: var(--ks-content-link);
             background-color: var(--el-bg-color);
         }
     }

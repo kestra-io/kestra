@@ -32,7 +32,7 @@
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end actions-buttons">
+            <el-col :span="12" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -337,17 +337,17 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-background-button-primary);
             border-radius: 0px;
         }
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {
@@ -366,7 +366,7 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 
             &[aria-haspopup="false"] {
@@ -374,12 +374,12 @@
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -394,7 +394,7 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
     }
@@ -437,7 +437,7 @@
         }
 
         .main-icon.material-design-icon  {
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             font-size: 1.25rem;
             position: relative;
             top: 4px;
@@ -446,7 +446,7 @@
 
         .toggle-icon {
             position: absolute;
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             right: 1rem;
             width: 1rem;
             height: 1rem;
@@ -457,7 +457,7 @@
     }
 
     .el-alert__description {
-        color: var(--bs-body-color);
+        color: var(--ks-content-primary);
     }
 
     .el-alert__content {
@@ -468,7 +468,7 @@
         }
 
         .text-end {
-            border-top: 1px solid var(--bs-border-color);
+            border-top: 1px solid var(--ks-border-primary);
         }
     }
 }
@@ -477,8 +477,8 @@
     margin-bottom: 0;
 
     .line {
-        padding: calc(var(--spacer) / 2);
-        border-top: 1px solid var(--log-background-error);
+        padding: .5rem;
+        border-top: 1px solid var(--ks-log-background-error);
     }
 }
 </style>

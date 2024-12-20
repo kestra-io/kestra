@@ -144,7 +144,7 @@
                 return this.$route.params.id;
             },
             countStats() {
-                return [...this.logDaily || []].reduce((a, b) => {
+                return [...(this.logDaily || [])].reduce((a, b) => {
                     return a + Object.values(b.counts).reduce((a, b) => a + b, 0);
                 }, 0);
             },
@@ -242,7 +242,7 @@
         > div.log-content {
             margin-bottom: var(--spacer);
             .navbar {
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
             }
         }
 
@@ -252,15 +252,15 @@
             overflow: hidden;
             padding: $spacer;
             padding-top: calc($spacer/2);
-            background-color: var(--bs-white);
-            border: 1px solid var(--bs-border-color);
+            background-color: var(--ks-background-card);
+            border: 1px solid var(--ks-border-primary);
 
             html.dark & {
                 background-color: var(--bs-gray-100);
             }
 
             > * + * {
-                border-top: 1px solid var(--bs-border-color);
+                border-top: 1px solid var(--ks-border-primary);
             }
         }
     }

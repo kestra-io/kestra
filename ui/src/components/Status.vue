@@ -32,10 +32,10 @@
         computed: {
             style() {
                 return {
-                    color: `var(--content-color-${this.status.toLowerCase()}) !important`,
-                    "border-color": `var(--border-color-${this.status.toLowerCase()}) !important`,
-                    "background-color": `var(--background-color-${this.status.toLowerCase()}) !important`
-                }
+                    color: `var(--ks-content-${this.status.toLowerCase()}) !important`,
+                    "border-color": `var(--ks-border-${this.status.toLowerCase()}) !important`,
+                    "background-color": `var(--ks-background-${this.status.toLowerCase()}) !important`
+                };
             },
             icon() {
                 return State.icon()[this.status];

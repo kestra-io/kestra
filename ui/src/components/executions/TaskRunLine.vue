@@ -321,7 +321,7 @@
 
     .attempt-header {
         display: flex;
-        gap: calc(var(--spacer) / 2);
+        gap: .5rem;
 
         > * {
             display: flex;
@@ -352,7 +352,7 @@
             text-overflow: ellipsis;
 
             span span {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
                 font-size: 14px;
 
                 html:not(.dark) & {

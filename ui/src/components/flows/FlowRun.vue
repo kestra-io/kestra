@@ -205,18 +205,18 @@
 <style scoped lang="scss">
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius-lg);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
 
         .el-collapse-item__header {
             background: transparent;
-            border-bottom: 1px solid var(--bs-border-color);
+            border-bottom: 1px solid var(--ks-border-primary);
             font-size: var(--bs-font-size-sm);
         }
 
         .el-collapse-item__content {
             background: var(--bs-gray-100);
-            border-bottom: 1px solid var(--bs-border-color);
+            border-bottom: 1px solid var(--ks-border-primary);
         }
 
         .el-collapse-item__header, .el-collapse-item__content {

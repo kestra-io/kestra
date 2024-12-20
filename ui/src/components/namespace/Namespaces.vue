@@ -13,7 +13,7 @@
 
     <el-row class="p-5">
         <KestraFilter :placeholder="$t('search')" />
-        <el-col v-if="!namespaces || !namespaces.length" :span="24" class="my-2 p-3 namespaces empty">
+        <el-col v-if="!namespaces || !namespaces.length" :span="24" class="p-3 my-2 namespaces empty">
             <span>{{ t("no_namespaces") }}</span>
         </el-col>
         <el-col
@@ -23,7 +23,7 @@
             class="my-1 namespaces"
             :class="{system: namespace.id === 'system'}"
         >
-            <el-tree :data="[namespace]" default-expand-all :props="{class: 'tree'}" class="h-auto p-2 rounded-full">
+            <el-tree :data="[namespace]" default-expand-all class="h-auto p-2 rounded-full tree">
                 <template #default="{data}">
                     <router-link :to="{name: 'namespaces/update', params: {id: data.id, tab: data.system ? 'blueprints': ''}}" tag="div" class="node">
                         <div class="d-flex">
@@ -137,13 +137,11 @@
     };
 </script>
 
-<style lang="scss">
-$width: 200px;
-$active: #A396FF;
-$system: #5BB8FF;
+<style lang="scss" scoped>
+@import "../../styles/color-palette.scss";
 
 .filter {
-    min-width: $width;
+    min-width: 200px;
     color: var(--bs-heading-color);
     font-size: var(--font-size-sm);
 
@@ -152,21 +150,17 @@ $system: #5BB8FF;
         border-radius: var(--bs-border-radius-lg);
 
         &.is-focus {
-            box-shadow: 0 0 0 1px var(--bs-border-color) inset;
+            box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
         }
     }
 }
 
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--ks-border-primary);
 
     &.system {
-        border-color: $system;
-
-        .el-tree-node__content .icon {
-            color: $system;
-        }
+        border-color: $base-blue-300;
     }
 
     &.empty {
@@ -181,21 +175,21 @@ $system: #5BB8FF;
         border-radius: var(--bs-border-radius-lg);
     }
 
-    .el-tree-node__content {
+    :deep(.el-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
 
         &:hover {
-            background: var(--bs-body-bg);
-            color: $active;
+            background: var(--ks-background-body);
+            color: var(--ks-content-link);
         }
         .el-tree-node__expand-icon {
             display: none;
         }
 
         .icon {
-            color: $active;
+            color: var(--ks-content-link);
         }
     }
 
@@ -205,24 +199,11 @@ $system: #5BB8FF;
         align-items: center;
         justify-content: space-between;
         padding: 0 1rem;
-        color: var(--el-text-color-regular);
-
-        &.system {
-            color: $system;
-        }
+        color: var(--ks-content-primary);
 
         &:hover {
             background: transparent;
-            color: $active;
-        }
-
-        & .system {
-            font-size: var(--font-size-sm);
-            color: #475569;
-
-            html.dark & {
-                color: #E3DBFF;
-            }
+            color: var(--ks-content-link);
         }
     }
 }

@@ -670,11 +670,11 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-background-button-primary);
             border-radius: 0px;
         }
 
@@ -700,10 +700,10 @@
         }
 
         .attempt-wrapper {
-            background-color: var(--bs-white);
+            background-color: var(--ks-background-card);
 
             :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-                border-top: 1px solid var(--bs-border-color);
+                border-top: 1px solid var(--ks-border-primary);
             }
 
             html.dark & {
@@ -730,10 +730,10 @@
         .log-lines {
             max-height: 50vh;
             transition: max-height 0.2s ease-out;
-            margin-top: calc(var(--spacer) / 2);
+            margin-top: .5rem;
 
             .line {
-                padding: calc(var(--spacer) / 2);
+                padding: .5rem;
 
                 &.cursor {
                     background-color: var(--bs-gray-300)
@@ -749,7 +749,7 @@
             }
 
             &::-webkit-scrollbar-thumb {
-                background: var(--bs-primary);
+                background: var(--ks-background-button-primary);
             }
         }
     }

@@ -139,8 +139,8 @@
         position: sticky;
         z-index: 1000;
         padding: var(--spacer) calc(2 * var(--spacer));
-        border-bottom: 1px solid var(--bs-border-color);
-        background: var(--card-bg);
+        border-bottom: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-card);
 
         .top-title, h1, .el-breadcrumb {
             white-space: nowrap;
@@ -192,7 +192,7 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
-                gap: calc(var(--spacer) / 2);
+                gap: .5rem;
                 align-items: center;
             }
         }

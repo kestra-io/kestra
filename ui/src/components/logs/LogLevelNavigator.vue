@@ -71,9 +71,9 @@
         }
 
         .close-button {
-            color: var(--el-text-color-secondary);
+            color: var(--ks-content-link);
             &:hover {
-                color: var(--el-text-color-primary);
+                color: var(--ks-content-link);
             }
         }
     }

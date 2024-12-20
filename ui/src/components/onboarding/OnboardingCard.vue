@@ -86,8 +86,8 @@ a:hover {
 }
 
 .el-card {
-    background-color: var(--card-bg);
-    border-color: var(--el-border-color);
+    background-color: var(--ks-background-card);
+    border-color: var(--ks-border-primary);
     box-shadow: var(--el-box-shadow);
     position: relative;
     min-width: 250px;

@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 p-4">
+    <div class="p-4 h-100">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
@@ -223,8 +223,9 @@ code {
 }
 
 .nextscheduled {
-    --el-table-tr-bg-color: var(--bs-body-bg) !important;
-    background: var(--bs-body-bg);
+    --el-table-tr-bg-color: var(--ks-background-body) !important;
+    background: var(--ks-background-body);
+    // FIXME: choose variables
     & a {
         color: #8e71f7;
 

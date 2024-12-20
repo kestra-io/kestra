@@ -336,7 +336,7 @@
 
             > div {
                 > * {
-                    padding: calc(var(--spacer) / 2);
+                    padding: .5rem;
                     flex: 1;
                 }
 
@@ -365,7 +365,7 @@
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--bs-primary);
+                    background: var(--ks-background-button-primary);
                 }
             }
 
@@ -393,7 +393,7 @@
 
                     code {
                         font-size: var(--font-size-xs);
-                        color: var(--el-text-color-regular);
+                        color: var(--ks-content-primary);
                     }
                 }
 
@@ -422,7 +422,7 @@
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 2px solid var(--bs-border-color);
+        border-bottom: 2px solid var(--ks-border-primary);
         margin-bottom: 10px;
 
         &:last-child {
@@ -441,18 +441,18 @@
 
         .attempt-wrapper {
             margin-bottom: 0;
-            border: 2px solid var(--bs-border-color);
+            border: 2px solid var(--ks-border-primary);
 
             tbody:last-child & {
-                border-bottom: 2px solid var(--bs-border-color);
+                border-bottom: 2px solid var(--ks-border-primary);
             }
 
             .attempt-header {
-                padding: calc(var(--spacer) / 2);
+                padding: .5rem;
             }
 
             .line {
-                padding: calc(var(--spacer) / 2);
+                padding: .5rem;
             }
         }
     }

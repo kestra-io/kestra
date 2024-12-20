@@ -90,7 +90,7 @@
 
     .el-input {
         :deep(.el-input__prefix), :deep(input)::placeholder {
-            color: var(--bs-body-color);
+            color: var(--ks-content-primary);
         }
     }
 </style>

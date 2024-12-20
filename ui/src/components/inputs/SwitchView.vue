@@ -65,8 +65,8 @@
         border: 0;
         background: none;
         opacity: 0.5;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
 
         &.el-button--primary {
             opacity: 1;
@@ -74,6 +74,6 @@
     }
 
     button.el-button--primary {
-        color: var(--bs-primary);
+        color: var(--ks-content-link);
     }
 </style>

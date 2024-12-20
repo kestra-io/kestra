@@ -133,7 +133,7 @@
         }
 
         .text-total {
-            color: var(--el-text-primary);
+            color: var(--ks-content-primary);
             font-weight: normal;
         }
 
@@ -141,7 +141,7 @@
             padding: 0 4px;
             line-height: 1.85;
             font-size: var(--el-font-size-extra-small);
-            color: var(--bs-purple);
+            color: var(--ks-content-link);
             white-space: nowrap;
         }
     }

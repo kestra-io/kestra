@@ -67,7 +67,7 @@
     .wrapper{
         position: relative;
         .buttons {
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
             position: absolute;
             z-index: 1;
             top: 0;
@@ -103,7 +103,7 @@
                 top: calc(.5 * var(--spacer));
                 right: calc(.5 * var(--spacer));
                 z-index: 2;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
                 cursor: pointer;
             }
         }
@@ -114,11 +114,11 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
         font-size: 0.875em;
         border-radius: 4px;
         &:hover{
-            color: var(--el-text-color-secondary);
+            color: var(--ks-content-link);
             background-color: var(--el-bg-color);
         }
     }

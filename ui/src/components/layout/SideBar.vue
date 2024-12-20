@@ -182,7 +182,7 @@
 
             &:hover {
                 background: none !important;
-                color: var(--bs-primary) !important;
+                color: var(--ks-content-link) !important;
             }
         }
 
@@ -194,7 +194,7 @@
     #side-menu {
         position: static;
         z-index: 1039;
-        border-right: 1px solid var(--bs-border-color);
+        border-right: 1px solid var(--ks-border-primary);
 
         .logo {
             overflow: hidden;
@@ -306,8 +306,8 @@
             padding-bottom: 16px;
             font-size: 20px;
             background: transparent;
-            color: var(--bs-secondary);
-            border-top: 1px solid var(--bs-border-color);
+            color: var(--ks-content-secondary);
+            border-top: 1px solid var(--ks-border-primary);
 
             .el-button {
                 padding: 8px;

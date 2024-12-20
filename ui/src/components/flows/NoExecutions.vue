@@ -128,7 +128,7 @@
                 line-height: var(--el-font-line-height-primary);
                 text-align: center;
                 font-weight: 600;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .section-1-desc {
@@ -137,11 +137,11 @@
                 font-weight: 300;
                 font-size: var(--el-font-size-extra-small);
                 text-align: center;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .guidance {
-                color: var(--el-text-color-secondary);
+                color: var(--ks-content-link);
             }
         }
 

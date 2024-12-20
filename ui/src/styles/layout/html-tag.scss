@@ -22,7 +22,7 @@ button {
 pre {
     overflow: hidden;
     background: var(--bs-gray-200);
-    color: var(--bs-body-color);
+    color: var(--ks-content-primary);
     padding: var(--spacer);
 }
 
@@ -41,6 +41,6 @@ blockquote {
 }
 
 hr {
-    border-color: var(--bs-border-color);
+    border-color: var(--ks-border-primary);
     opacity: 1;
 }

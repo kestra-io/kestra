@@ -1,0 +1,150 @@
+@import "../color-palette.scss";
+
+html.dark{
+	/* background */
+	#{--ks-background-body}: $base-gray-800;
+	#{--ks-background-button-inactive}: $base-gray-600;
+	#{--ks-background-button-primary-active}: $base-purple-700;
+	#{--ks-background-button-primary-hover}: $base-purple-400;
+	#{--ks-background-button-primary}: $base-purple-500;
+	#{--ks-background-button-secondary-active}: $base-gray-800;
+	#{--ks-background-button-secondary-hover}: $base-gray-400;
+	#{--ks-background-button-secondary}: $base-gray-500;
+	#{--ks-background-button-success-hover}: $base-green-400;
+	#{--ks-background-button-success}: $base-green-500;
+	#{--ks-background-cancelled}: #d1cfe9;
+	#{--ks-background-card-opacity}: #121319;
+	#{--ks-background-card}: $base-gray-500;
+	#{--ks-background-created}: $base-red-200;
+	#{--ks-background-failed}: $base-red-900;
+	#{--ks-background-information}: $base-blue-700;
+	#{--ks-background-input}: $base-gray-900;
+	#{--ks-background-killed}: $base-gray-500;
+	#{--ks-background-killing}: $base-gray-600;
+	#{--ks-background-left-menu}: $base-gray-900;
+	#{--ks-background-logo}: #2c0059;
+	#{--ks-background-paused}: $base-yellow-900;
+	#{--ks-background-queued}: $base-yellow-900;
+	#{--ks-background-restarted}: $base-blue-300;
+	#{--ks-background-retried}: #578dff;
+	#{--ks-background-retrying}: $base-blue-500;
+	#{--ks-background-running}: $base-blue-500;
+	#{--ks-background-success}: $base-green-900;
+	#{--ks-background-table-header}: $base-gray-600;
+	#{--ks-background-table-row-hover}: $base-white;
+	#{--ks-background-table-row}: $base-gray-400;
+	#{--ks-background-tag}: $base-gray-400;
+	#{--ks-background-warning}: $base-orange-900;
+
+	/* border */
+	#{--ks-border-active}: $base-purple-500;
+	#{--ks-border-cancelled}: $base-gray-800;
+	#{--ks-border-created}: $base-red-200;
+	#{--ks-border-failed}: $base-red-400;
+	#{--ks-border-inactive}: $base-gray-400;
+	#{--ks-border-information}: $base-blue-500;
+	#{--ks-border-killed}: $base-gray-800;
+	#{--ks-border-killing}: $base-gray-800;
+	#{--ks-border-paused}: $base-yellow-200;
+	#{--ks-border-primary}: $base-gray-400;
+	#{--ks-border-queued}: $base-yellow-900;
+	#{--ks-border-restarted}: #c7f0ff;
+	#{--ks-border-retried}: #a2cdff;
+	#{--ks-border-retrying}: #7fbbff;
+	#{--ks-border-running}: $base-blue-400;
+	#{--ks-border-secondary}: $base-gray-500;
+	#{--ks-border-success}: $base-green-400;
+	#{--ks-border-system}: $base-blue-300;
+	#{--ks-border-warning}: #e9985b;
+
+	/* chart */
+	#{--ks-chart-cancelled}: $base-gray-800;
+	#{--ks-chart-created}: $base-red-100;
+	#{--ks-chart-failed}: $base-red-300;
+	#{--ks-chart-killed}: $base-gray-800;
+	#{--ks-chart-killing}: $base-gray-600;
+	#{--ks-chart-paused}: $base-yellow-300;
+	#{--ks-chart-queued}: $base-yellow-700;
+	#{--ks-chart-restarted}: #c7f0ff;
+	#{--ks-chart-retried}: #a2cdff;
+	#{--ks-chart-retrying}: #7fbbff;
+	#{--ks-chart-running}: $base-blue-300;
+	#{--ks-chart-success}: $base-green-300;
+	#{--ks-chart-warning}: #eeae7e;
+
+	/* content */
+	#{--ks-content-alert}: $base-red-300;
+	#{--ks-content-cancelled}: $base-gray-900;
+	#{--ks-content-created}: #fff2f3;
+	#{--ks-content-failed}: $base-red-200;
+	#{--ks-content-inactive}: $base-gray-300;
+	#{--ks-content-information}: #c7f0ff;
+	#{--ks-content-inverse}: $base-gray-950;
+	#{--ks-content-killed}: $base-white;
+	#{--ks-content-killing}: $base-white;
+	#{--ks-content-link-hover}: $base-purple-50;
+	#{--ks-content-link}: $base-purple-100;
+	#{--ks-content-paused}: #fffbef;
+	#{--ks-content-primary}: $base-white;
+	#{--ks-content-queued}: $base-yellow-200;
+	#{--ks-content-restarted}: #7fbbff;
+	#{--ks-content-retried}: #c7f0ff;
+	#{--ks-content-retrying}: #c7f0ff;
+	#{--ks-content-running}: #7fbbff;
+	#{--ks-content-secondary}: $base-gray-200;
+	#{--ks-content-success}: $base-green-100;
+	#{--ks-content-tertiary}: $base-gray-300;
+	#{--ks-content-warning}: #fff2ea;
+
+	/* dialog */
+	#{--ks-dialog-background}: $base-gray-500;
+	#{--ks-dialog-border}: $base-gray-400;
+	#{--ks-dialog-headerbtn-hover}: $base-purple-200;
+	#{--ks-dialog-headerbtn}: $base-gray-300;
+	#{--ks-dialog-header}: $base-gray-500;
+
+	/* editor */
+	#{--ks-editor-number}: #f3c4a1;
+	#{--ks-editor-pabble}: #fff2ea;
+	#{--ks-editor-property}: $base-green-200;
+	#{--ks-editor-punctuation}: $base-gray-300;
+	#{--ks-editor-value}: $base-blue-300;
+
+	/* log */
+	#{--ks-log-background-debug}: $base-blue-300;
+	#{--ks-log-background-error}: $base-red-300;
+	#{--ks-log-background-info}: $base-blue-700;
+	#{--ks-log-background-trace}: #d1cfe9;
+	#{--ks-log-background-warn}: #e58238;
+	#{--ks-log-border-debug}: $base-blue-300;
+	#{--ks-log-border-error}: $base-red-300;
+	#{--ks-log-border-info}: $base-blue-500;
+	#{--ks-log-border-trace}: $base-gray-800;
+	#{--ks-log-border-warn}: #e9985b;
+	#{--ks-log-chart-debug}: $base-blue-400;
+	#{--ks-log-chart-error}: $base-red-300;
+	#{--ks-log-chart-info}: $base-blue-500;
+	#{--ks-log-chart-log-warn}: #f3c4a1;
+	#{--ks-log-chart-trace}: $base-gray-800;
+	#{--ks-log-content-debug}: #a2cdff;
+	#{--ks-log-content-error}: $base-red-100;
+	#{--ks-log-content-info}: #c7f0ff;
+	#{--ks-log-content-trace}: $base-gray-900;
+	#{--ks-log-content-warn}: #fff2ea;
+
+	/* select */
+	#{--ks-select-active-icon}: $base-purple-100;
+	#{--ks-select-active}: $base-gray-900;
+	#{--ks-select-background}: $base-gray-800;
+	#{--ks-select-border}: $base-gray-400;
+	#{--ks-select-hover}: $base-gray-600;
+
+	/* tag */
+	#{--ks-tag-background-hover}: $base-gray-400;
+	#{--ks-tag-background}: $base-gray-500;
+	#{--ks-tag-content}: $base-white;
+
+	/* tooltip */
+	#{--ks-tooltip-background}: $base-gray-800;
+	#{--ks-tooltip-border}: $base-gray-400;
+}

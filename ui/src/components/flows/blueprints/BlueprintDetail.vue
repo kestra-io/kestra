@@ -250,7 +250,7 @@
             display: flex;
             flex-wrap: wrap;
             > div {
-                background: var(--card-bg);
+                background: var(--ks-background-card);
                 border-radius: var(--bs-border-radius);
                 min-width : 100px;
                 width: 100px;
@@ -260,7 +260,7 @@
                 margin-bottom: $spacer;
                 display: flex;
                 flex-wrap: wrap;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
 
                 :deep(.wrapper) {
                     .icon {
@@ -285,12 +285,12 @@
             display: flex;
                         
             .el-tag.el-tag--info {
-                background-color: var(--card-bg);
+                background-color: var(--ks-background-card);
                 padding: 15px 10px;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
                 text-transform: capitalize;
                 font-size: var(--el-font-size-small);
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
             }
 
             .tag-box {

@@ -208,7 +208,7 @@
         padding-inline-start: 0;
         margin-bottom: 0;
         font-size: var(--font-size-xs);
-        margin-left: calc(var(--spacer) / 2);
+        margin-left: .5rem;
     }
 
     h6,
@@ -234,17 +234,17 @@
 
             h6 {
                 font-size: var(--font-size-sm);
-                margin-bottom: calc(var(--spacer) / 2);
+                margin-bottom: .5rem;
             }
 
             li {
-                margin-bottom: calc(var(--spacer) / 2);
+                margin-bottom: .5rem;
             }
         }
     }
 }
 
 .selected {
-    color: var(--bs-purple);
+    color: var(--ks-content-link);
 }
 </style>

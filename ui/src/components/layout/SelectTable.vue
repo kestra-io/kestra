@@ -82,7 +82,7 @@
         width: var(--table-header-width);
         background-color: var(--bs-gray-100-darken-3);
         border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
-        border-bottom: 1px solid var(--bs-border-color);
+        border-bottom: 1px solid var(--ks-border-primary);
         overflow-x: auto;
 
         & ~ .el-table {

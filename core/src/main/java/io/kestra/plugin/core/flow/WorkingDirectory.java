@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.InputFilesInterface;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.models.tasks.NamespaceFilesInterface;
@@ -202,7 +203,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     private Object inputFiles;
 
-    private List<String> outputFiles;
+    private Property<List<String>> outputFiles;
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
@@ -262,10 +263,13 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
             runContext.storage()
                 .namespace()
-                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
+                .findAllFilesMatching(
+                    runContext.render(this.namespaceFiles.getInclude()).asList(String.class),
+                    runContext.render(this.namespaceFiles.getExclude()).asList(String.class)
+                )
                 .forEach(Rethrow.throwConsumer(namespaceFile -> {
                     InputStream content = runContext.storage().getFile(namespaceFile.uri());
                     runContext.workingDir().putFile(Path.of(namespaceFile.path()), content);
@@ -280,7 +284,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     public void postExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
         if (this.outputFiles != null) {
             try {
-                Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, this.outputFiles);
+                Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, runContext.render(this.outputFiles).asList(String.class));
                 if (!outputFilesURIs.isEmpty()) {
                     final ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try (os) {

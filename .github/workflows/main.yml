@@ -36,6 +36,21 @@ env:
   DOCKER_PYTHON_LIBRARIES: kestra
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
 jobs:
+  triggers-EE-build:
+    name: Trigger EE Build && Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      # Trigger EE CI on PR
+      - name: trigger EE CI
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: kestra-io/kestra-ee
+          ref: refs/heads/feat/issue-220
+          workflow: check.yml
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          inputs: '{ "pr-number": "${{ github.event.pull_request.number }}"}'
+
   build-artifacts:
     name: Build Artifacts
     runs-on: ubuntu-latest

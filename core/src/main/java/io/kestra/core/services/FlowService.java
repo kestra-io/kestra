@@ -1,8 +1,12 @@
 package io.kestra.core.services;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
@@ -38,8 +42,41 @@ import java.util.stream.StreamSupport;
 @Slf4j
 public class FlowService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
-        .copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+    .copy()
+    .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+
+    private static final ObjectMapper WITHOUT_EXTEND_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
+    .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+        @Override 
+        public boolean hasIgnoreMarker(final AnnotatedMember m) {
+            List<String> exclusions = Arrays.asList("revision", "deleted", "source", "extend");
+            return exclusions.contains(m.getName()) || m.getName().startsWith("extend.") || super.hasIgnoreMarker(m);
+        }
+    });
+
+    private static void removeExtendProperties(Map<String, Object> map) {
+        map.remove("extend");
+        map.keySet().removeIf(key -> key.startsWith("extend."));
+    }
+
+    public static String generateSource(Flow flow) {
+        try {
+            String json = WITHOUT_EXTEND_OBJECT_MAPPER.writeValueAsString(flow);
+            Map<String, Object> map = JacksonMapper.toMap(json);
+            removeExtendProperties(map);
+            String source = JacksonMapper.ofYaml().writeValueAsString(map);
+            return source.replaceFirst("(?m)^revision: \\d+\n?","");
+        } catch (JsonProcessingException e) {
+            log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
+            return null;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private abstract class ExtendIgnoreMixIn {
+        @JsonIgnore
+        abstract Object getExtend();
+    }
 
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
@@ -285,22 +322,6 @@ public class FlowService {
         }
 
         return source + String.format("\ndisabled: %s", disabled);
-    }
-
-    public static String generateSource(Flow flow) {
-        try {
-            String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(flow);
-
-            Object map = fixSnakeYaml(JacksonMapper.toMap(json));
-
-            String source = JacksonMapper.ofYaml().writeValueAsString(map);
-
-            // remove the revision from the generated source
-            return source.replaceFirst("(?m)^revision: \\d+\n?","");
-        } catch (JsonProcessingException e) {
-            log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
-            return null;
-        }
     }
 
     // Used in Git plugin

@@ -13,9 +13,13 @@
                                 id="importFlows"
                                 class="el-input__inner"
                                 type="file"
-                                @change="importFlows()"
+                                @change="handleFileChange"
                                 ref="file"
+                                required
                             >
+                            <p v-if="errorMessage" style="color: red;">
+                                {{ errorMessage }}
+                            </p>
                         </div>
                     </div>
                 </li>
@@ -214,6 +218,8 @@
 </script>
 
 <script>
+    import {ElMessage} from "element-plus"
+
     import {mapState} from "vuex";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -272,6 +278,7 @@
                 lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
+                errorMessage: "",
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_FLOWS_CHART)),
             };
         },
@@ -326,6 +333,26 @@
             });
         },
         methods: {
+            handleFileChange(event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const allowedExtensions = /(\.zip|\.yaml|\.yml)$/i;
+                    if (!allowedExtensions.exec(file.name)) {
+                        // Display error message using ElMessage
+                        ElMessage({
+                            showClose: true,
+                            message: "Invalid file type. Please upload a .zip, .yaml, or .yml file.",
+                            type: "error",
+                            offset: 50,
+                            duration: 2000
+                        })
+                        this.$refs.file.value = "";
+                    } else {
+                        this.importFlows(file);
+                    }
+                }
+            },
             selectionMapper(element) {
                 return {
                     id: element.id,

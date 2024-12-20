@@ -990,6 +990,7 @@
     "active": "Active",
     "flows imported": "Flows imported",
     "flow not imported": "Some flow could not be imported",
+    "file not supported": "Invalid file type. Please upload a zip, yaml, or yml file.",
     "dashboard_label": "Dashboard",
     "default_dashboard": "Default Dashboard",
     "custom_dashboard": "Custom Dashboards",

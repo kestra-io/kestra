@@ -13,7 +13,7 @@
                                 id="importFlows"
                                 class="el-input__inner"
                                 type="file"
-                                @change="handleFileChange"
+                                @change="importFlows()"
                                 ref="file"
                                 required
                             >
@@ -218,8 +218,6 @@
 </script>
 
 <script>
-    import {ElMessage} from "element-plus"
-
     import {mapState} from "vuex";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -333,26 +331,6 @@
             });
         },
         methods: {
-            handleFileChange(event) {
-                const file = event.target.files[0];
-
-                if (file) {
-                    const allowedExtensions = /(\.zip|\.yaml|\.yml)$/i;
-                    if (!allowedExtensions.exec(file.name)) {
-                        // Display error message using ElMessage
-                        ElMessage({
-                            showClose: true,
-                            message: "Invalid file type. Please upload a .zip, .yaml, or .yml file.",
-                            type: "error",
-                            offset: 50,
-                            duration: 2000
-                        })
-                        this.$refs.file.value = "";
-                    } else {
-                        this.importFlows(file);
-                    }
-                }
-            },
             selectionMapper(element) {
                 return {
                     id: element.id,
@@ -488,6 +466,23 @@
                 )
             },
             importFlows() {
+                const file = this.$refs.file.files[0]; 
+
+                const fileExtension = file.name.split(".").pop().toLowerCase();
+                
+                const allowedExtensions = ["zip", "yaml", "yml"]; 
+                if (!allowedExtensions.includes(fileExtension)) {
+                    this.$notify({
+                        title: this.$t("Error"),
+                        message: this.$t("file not supported"),
+                        type: "error",
+                        duration: 3000,
+                        position: "bottom-right",
+                        customClass: "custom-validation"
+                    });
+                    return; 
+                }
+
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
                 this.$store
@@ -610,5 +605,11 @@
 
     .flows-table  .el-table__cell {
         vertical-align: middle;
+    }
+
+</style>
+<style lang="scss">
+    .custom-validation .el-notification__content {
+        font-size: 14px;
     }
 </style>

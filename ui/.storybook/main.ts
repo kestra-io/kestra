@@ -3,7 +3,8 @@ import viteJSXPlugin from "@vitejs/plugin-vue-jsx"
 
 const config: StorybookConfig = {
   stories: [
-    "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)"
+    "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../src/theme/**/*.stories.@(js|jsx|mjs|ts|tsx)"
 ],
   addons: [
     "@storybook/addon-essentials",

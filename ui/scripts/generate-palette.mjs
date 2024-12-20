@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
-import paletteLight from "./Sytem color-Default_LIGHT.json" with {type: "json"}
-import paletteDark from "./Sytem color-Default_DARK.json" with {type: "json"}
+import paletteLight from "./Sytem color-Light.json" with {type: "json"}
+import paletteDark from "./Sytem color-Dark.json" with {type: "json"}
 
 
 function normalizeKey(key) {

@@ -32,7 +32,7 @@
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end actions-buttons">
+            <el-col :span="12" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -437,7 +437,7 @@
         }
 
         .main-icon.material-design-icon  {
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             font-size: 1.25rem;
             position: relative;
             top: 4px;
@@ -446,7 +446,7 @@
 
         .toggle-icon {
             position: absolute;
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             right: 1rem;
             width: 1rem;
             height: 1rem;
@@ -478,7 +478,7 @@
 
     .line {
         padding: .5rem;
-        border-top: 1px solid var(--log-background-error);
+        border-top: 1px solid var(--ks-log-background-error);
     }
 }
 </style>

@@ -3,23 +3,21 @@ package io.kestra.plugin.core.http;
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.*;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Head;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.*;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -29,11 +27,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class RequestTest {
@@ -86,7 +86,54 @@ class RequestTest {
     }
 
     @Test
-    void failed() throws Exception {
+    void redirect() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(server.getURL().toString() + "/redirect")
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("{ \"hello\": \"world\" }"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
+    @Test
+    void noRedirect() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(server.getURL().toString() + "/redirect")
+                .options(HttpInterface.RequestOptions.builder()
+                    .followRedirects(false)
+                    .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getCode(), is(301));
+        }
+    }
+
+    @Test
+    void allowFailed() throws Exception {
         try (
             ApplicationContext applicationContext = ApplicationContext.run();
             EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
@@ -108,7 +155,31 @@ class RequestTest {
         }
     }
 
-    @RetryingTest(5)
+    @Test
+    void failed() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(server.getURL().toString() + "/hello417")
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode(), is(417));
+        }
+    }
+
+    @Test
     void selfSigned() throws Exception {
         final String url = "https://self-signed.badssl.com/";
 
@@ -133,6 +204,30 @@ class RequestTest {
     }
 
     @Test
+    void json() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .method(HttpMethod.POST)
+                .uri(server.getURL().toString() + "/post/json")
+                .body(JacksonMapper.ofJson().writeValueAsString(ImmutableMap.of("hello", "world")))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("{\"hello\":\"world\"}"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
+    @Test
     void form() throws Exception {
         try (
             ApplicationContext applicationContext = ApplicationContext.run();
@@ -144,7 +239,7 @@ class RequestTest {
                 .type(RequestTest.class.getName())
                 .method(HttpMethod.POST)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .uri(server.getURL().toString() + "/post/simple")
+                .uri(server.getURL().toString() + "/post/url-encoded")
                 .headers(ImmutableMap.of(
                     "test", "{{ inputs.test }}"
                 ))
@@ -256,6 +351,24 @@ class RequestTest {
         }
     }
 
+    @Test
+    void bytes() {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri("https://github.com/kestra-io.png")
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> task.run(runContext)
+        );
+
+        assertThat(exception.getMessage(), containsString("Illegal unicode code"));
+    }
+
     @Controller
     static class MockController {
         @Get("/hello")
@@ -273,8 +386,18 @@ class RequestTest {
             return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("{ \"hello\": \"world\" }");
         }
 
-        @Post(uri = "/post/simple", consumes = MediaType.APPLICATION_FORM_URLENCODED)
-        HttpResponse<String> simple(HttpRequest<?> request, String hello) {
+        @Get("/redirect")
+        HttpResponse<String> redirect() {
+            return HttpResponse.redirect(URI.create("/hello"));
+        }
+
+        @Post(uri = "/post/json")
+        HttpResponse<Map<String, String>> postBody(@Body Map<String, String> body) {
+            return HttpResponse.ok(body);
+        }
+
+        @Post(uri = "/post/url-encoded", consumes = MediaType.APPLICATION_FORM_URLENCODED)
+        HttpResponse<String> postUrlEncoded(HttpRequest<?> request, String hello) {
             return HttpResponse.ok(hello + " > " + request.getHeaders().get("test"));
         }
 

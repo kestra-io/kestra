@@ -85,7 +85,7 @@
                                     {{ $t('copy') }}
                                 </el-button>
                             </el-tooltip>
-                            <el-button v-else size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                            <el-button v-else text bg size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                 {{ $t('use') }}
                             </el-button>
                         </div>
@@ -413,6 +413,7 @@
 
                             html.dark &.el-tag.el-tag--info {
                                 background-color: var(--bs-gray-600);
+                                border-color: var(--bs-gray-600-lighten-15);
                             }
                         }
 
@@ -441,9 +442,10 @@
                         white-space: nowrap;
                     }
 
-                    :deep(.el-button){
-                        background-color:  var(--el-color-primary);
+                    :deep(.el-button.is-text){
+                        background-color:  var(--el-color-primary) !important;
                         color:  var(--el-color-white);
+
                     }
                 }
             }

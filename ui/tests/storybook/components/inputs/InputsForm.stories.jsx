@@ -38,6 +38,7 @@ export const InputTypes = {
 
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByLabelText("email input").querySelector(".ks-monaco-editor")
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             expect(editor).to.exist;
             return editor;
         }, {timeout: 500, interval: 100});

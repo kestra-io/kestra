@@ -52,6 +52,7 @@ html.dark{
 	#{--ks-border-killed}: $base-gray-800;
 	#{--ks-border-killing}: $base-gray-800;
 	#{--ks-border-paused}: $base-yellow-200;
+	#{--ks-border-primary}: $base-gray-400;
 	#{--ks-border-queued}: $base-yellow-900;
 	#{--ks-border-restarted}: #c7f0ff;
 	#{--ks-border-retried}: #a2cdff;
@@ -62,7 +63,6 @@ html.dark{
 	#{--ks-border-trace}: $base-gray-800;
 	#{--ks-border-warning}: #e9985b;
 	#{--ks-border-warn}: #e9985b;
-	#{--ks-border}: $base-gray-400;
 
 	/* chart */
 	#{--ks-chart-cancelled}: $base-gray-800;

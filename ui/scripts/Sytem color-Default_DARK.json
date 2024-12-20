@@ -93,7 +93,7 @@
     "background-card": "#2f3342",
     "content-primary": "#ffffff",
     "content-secondary": "#ecebef",
-    "border": "#404559",
+    "border-primary": "#404559",
     "content-link": "#bbbbff",
     "background-failed": "#260002",
     "background-success": "#002319",

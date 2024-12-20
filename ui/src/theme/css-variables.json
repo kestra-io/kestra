@@ -67,7 +67,7 @@
     "ks-content-cancelled"
   ],
   "border": [
-    "ks-border",
+    "ks-border-primary",
     "ks-border-secondary",
     "ks-border-active",
     "ks-border-inactive",

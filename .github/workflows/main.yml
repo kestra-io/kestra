@@ -63,31 +63,6 @@ jobs:
         working-directory: ui
         run: npm ci
 
-      - name: Npm lint
-        uses: reviewdog/action-eslint@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review # Change reporter.
-          workdir: "ui"
-
-      - name: Install Playwright
-        shell: bash
-        working-directory: ui
-        run: npx playwright install --with-deps
-
-      - name: Build Storybook
-        shell: bash
-        working-directory: ui
-        run: npm run build-storybook --quiet
-
-      - name: Serve Storybook and run tests
-        shell: bash
-        working-directory: ui
-        run: |
-          npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
-            "npx http-server storybook-static --port 6006 --silent" \
-            "npx wait-on tcp:127.0.0.1:6006 && npm run test-storybook"
-
       # Setup build
       - uses: ./actions/.github/actions/setup-build
         id: build
@@ -188,6 +163,48 @@ jobs:
         with:
           name: ${{ steps.vars.outputs.artifact }}
           path: /tmp/${{ steps.vars.outputs.artifact }}.tar
+
+
+  check-frontend:
+    name: Run frontend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Npm install
+        shell: bash
+        working-directory: ui
+        run: npm ci
+
+      - name: Npm lint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review # Change reporter.
+          workdir: "ui"
+
+      - name: Run front-end unit tests
+        shell: bash
+        working-directory: ui
+        run: npm run test:unit
+
+      - name: Install Playwright
+        shell: bash
+        working-directory: ui
+        run: npx playwright install --with-deps
+
+      - name: Build Storybook
+        shell: bash
+        working-directory: ui
+        run: npm run build-storybook --quiet
+
+      - name: Serve Storybook and run tests
+        shell: bash
+        working-directory: ui
+        run: |
+          npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
+            "npx http-server storybook-static --port 6006 --silent" \
+            "npx wait-on tcp:127.0.0.1:6006 && npm run test-storybook"
 
   # Run Reusable Workflow from QA repository
   check-e2e:
@@ -358,7 +375,11 @@ jobs:
     name: Publish Docker
     runs-on: ubuntu-latest
     needs: [build-artifacts, check, check-e2e]
-    if: github.ref == 'refs/heads/develop'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/develop' &&
+      needs.check.result == 'success' &&
+      (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
     strategy:
       matrix:
         image:

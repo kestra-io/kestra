@@ -4,7 +4,9 @@
             {{ t("dashboard.total_executions") }}
         </span>
 
-        <div class="d-flex flex-row align-items-center justify-content-center h-100">
+        <div
+            class="d-flex flex-row align-items-center justify-content-center h-100"
+        >
             <div class="w-75">
                 <Doughnut
                     v-if="total > 0"
@@ -15,7 +17,7 @@
                 />
                 <NoData v-else />
             </div>
-            <div id="totals" />
+            <div v-if="total > 0" id="totals" />
         </div>
     </div>
 </template>

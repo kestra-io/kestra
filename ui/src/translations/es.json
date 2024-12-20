@@ -1001,7 +1001,9 @@
         "user": "Usuario",
         "task": "Tarea",
         "flow": "Flujo",
-        "type": "Tipo"
+        "type": "Tipo",
+        "status": "Estado",
+        "service_type": "Tipo"
       },
       "settings": {
         "label": "Configuración de la página",

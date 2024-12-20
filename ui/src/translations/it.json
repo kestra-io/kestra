@@ -1001,7 +1001,9 @@
         "user": "Utente",
         "task": "Compito",
         "flow": "Flusso",
-        "type": "Tipo"
+        "type": "Tipo",
+        "status": "Stato",
+        "service_type": "Tipo"
       },
       "settings": {
         "label": "Impostazioni pagina",

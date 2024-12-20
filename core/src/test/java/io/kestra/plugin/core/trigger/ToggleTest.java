@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-@KestraTest(startRunner = true)
+@KestraTest(startRunner = true, startScheduler = true)
 class ToggleTest {
     @Inject
     private TriggerRepositoryInterface triggerRepository;

@@ -6,7 +6,7 @@
     background: var(--ks-background-card);
 
     &:hover {
-        border: 1px solid var(ks-border-active);
+        border: 1px solid var(--ks-border-active);
         background-color: var(--ks-background-card);
         opacity: 0.9;
     }

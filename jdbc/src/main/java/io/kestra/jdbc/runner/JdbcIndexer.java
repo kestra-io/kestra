@@ -25,6 +25,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.exception.DataException;
 
 /**
  * This class is responsible to batch-indexed asynchronously queue messages.<p>
@@ -91,7 +92,22 @@ public class JdbcIndexer implements IndexerInterface {
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", itemClassName).increment(items.size());
 
                 this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, "type", itemClassName).record(() -> {
-                    int saved = saveRepositoryInterface.saveBatch(items);
+                    // Note that the indexer is fault-tolerant, this may be OK as long as nothing critical is saved via the index
+                    // which is the case today as the indexer only save logs and metrics.
+                    int saved = 0;
+                    try {
+                        saved = saveRepositoryInterface.saveBatch(items);
+                    } catch (DataException de) {
+                        // try each item one by one and ignore the one that fails
+                        for (T item : items) {
+                            try {
+                                saveRepositoryInterface.save(item);
+                                saved++;
+                            } catch (DataException de2) {
+                                log.error("Unable to index a item {}, skipping it", item, de2);
+                            }
+                        }
+                    }
                     this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", itemClassName).increment(saved);
                 });
             }

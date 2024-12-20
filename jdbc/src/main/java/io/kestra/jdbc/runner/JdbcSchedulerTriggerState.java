@@ -63,8 +63,15 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     @Override
     public Trigger update(Trigger trigger) {
+        // here we save a trigger after evaluation, but as during its evaluation it can have been disabled in DB,
+        // we need to load it form DB and copy the disabled flag if set
+        Optional<Trigger> existing = findLast(trigger);
+        Trigger updated = trigger;
+        if (existing.isPresent() && existing.get().getDisabled()) {
+            updated = trigger.toBuilder().disabled(true).build();
+        }
 
-        return this.triggerRepository.update(trigger);
+        return this.triggerRepository.update(updated);
     }
 
     public Trigger updateExecution(Trigger trigger) {

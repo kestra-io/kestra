@@ -943,8 +943,12 @@
                 }
 
                 if (!this.dialog.folder) {
-                    this.items.push(NEW);
-                    this.items = this.sorted(this.items);
+                    const firstFolder = NEW.fileName.split("/")[0];
+                    if (!this.items.find(item => item.fileName === firstFolder)) {
+                        NEW.fileName = firstFolder;
+                        this.items.push(NEW);
+                        this.items = this.sorted(this.items);
+                    }
                 } else {
                     const SELF = this;
                     (function pushItemToFolder(basePath = "", array) {
@@ -955,8 +959,35 @@
                                 folderPath === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
-                                item.children.push(NEW);
-                                item.children = SELF.sorted(item.children);
+                                // find the first node that is not present in the current tree and then add it.
+                                
+                                const paths = NEW.fileName.split("/");
+                                let index = 0;
+                                let UNCOMMON_NODE = item;
+
+                                while (UNCOMMON_NODE && index < paths.length) {
+                                    // if any of node's children have path's folder name move ahead;
+                                    if (index >= paths.length) break;
+
+                                    const nextNode = UNCOMMON_NODE.children?.find(item => item.fileName.toLowerCase() === paths[index].toLowerCase());
+
+                                    if (!nextNode) {
+                                        break;
+                                    }
+
+                                    index++;
+                                    UNCOMMON_NODE = nextNode;
+                                }
+
+                                // return as all folders are already present so no change required.
+                                if (index === paths.length) return true;
+
+                                // add the node with last folder name which is not present already.
+                                NEW.fileName = paths[index];
+
+                                if (!UNCOMMON_NODE.children) UNCOMMON_NODE.children = [];
+                                UNCOMMON_NODE.children.push(NEW);
+                                UNCOMMON_NODE.children = SELF.sorted(UNCOMMON_NODE.children);
                                 return true; // Return true if the folder is found and item is pushed
                             } else if (Array.isArray(item.children)) {
                                 if (

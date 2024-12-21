@@ -163,7 +163,7 @@
                     tabs.push({
                         name: "editor",
                         component: FlowEditor,
-                        title: this.$t("editor"),
+                        title: this.$t("edit"),
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,

@@ -193,6 +193,13 @@
     };
 
     const handleInputChange = (key) => {
+        if (key === "Backspace" && select.value.states.inputValue === "") {
+            const lastItem = current.value.at(-1);
+            if (lastItem) {
+                removeItem(lastItem);
+            }
+        }
+
         if (key === "Enter") return;
 
         if (current.value.at(-1)?.label === "user") {
@@ -445,8 +452,10 @@
 
     const removeItem = (value) => {
         current.value = current.value.filter(
-            (item) => JSON.stringify(item) !== JSON.stringify(value),
-        );
+            (item) => {
+                return JSON.stringify(item) !== JSON.stringify(value)
+            },
+        );        
 
         triggerSearch();
     };

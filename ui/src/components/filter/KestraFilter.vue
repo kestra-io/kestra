@@ -455,7 +455,7 @@
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );        
 
-        
+
         triggerSearch();
     };
 

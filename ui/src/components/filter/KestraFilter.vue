@@ -452,11 +452,10 @@
 
     const removeItem = (value) => {
         current.value = current.value.filter(
-            (item) => {
-                return JSON.stringify(item) !== JSON.stringify(value)
-            },
+            (item) => JSON.stringify(item) !== JSON.stringify(value),
         );        
 
+        
         triggerSearch();
     };
 

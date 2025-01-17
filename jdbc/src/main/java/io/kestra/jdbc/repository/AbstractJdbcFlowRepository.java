@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
@@ -479,6 +480,30 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
+    abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
+
+    @Override
+    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, Collections.emptyList());
+
+                if (filters != null)
+                    for (QueryFilter filter : filters) {
+                        QueryFilter.Field field = filter.field();
+                        QueryFilter.Op operation = filter.operation();
+                        Object value = filter.value();
+                        if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
+                            select = select.and(findCondition(labels, operation));
+                        else
+                            select = getConditionOnField(select, field, value, operation, null);
+                    }
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
+    }
 
     public ArrayListTotal<Flow> find(
         Pageable pageable,

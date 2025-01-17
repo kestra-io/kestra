@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
@@ -63,7 +64,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         Logs.Fields.LEVEL, "level",
         Logs.Fields.MESSAGE, "message"
     );
-
     @Override
     public Set<Logs.Fields> dateFields() {
         return Set.of(Logs.Fields.DATE);
@@ -77,15 +77,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     @Override
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
-        @Nullable String query,
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable String triggerId,
-        @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
+        @Nullable List<QueryFilter> filters
     ) {
+
+        String query = getQuery(filters);
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -95,9 +91,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .select(field("value"))
                     .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    .where(this.defaultFilter(tenantId))
+                    .and(this.findCondition(query));
 
-                this.filter(select, query, namespace, flowId, triggerId, minLevel, startDate , endDate);
+               select = this.filter(select, filters, "timestamp");
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });

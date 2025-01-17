@@ -1,16 +1,22 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
+import io.kestra.webserver.utils.RequestUtils;
+import io.kestra.webserver.utils.TimeLineSearch;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
@@ -30,6 +36,7 @@ import java.util.Optional;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
+
 @Validated
 @Controller("/api/v1/")
 @Requires(beans = LogRepositoryInterface.class)
@@ -47,22 +54,52 @@ public class LogController {
     @Get(uri = "logs/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Parameter(description = "A trigger id filter") @Nullable @QueryValue String triggerId,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
-        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
-    ) {
-        validateTimeline(startDate, endDate);
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        // Deprecated params
+        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix",deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "A trigger id filter",deprecated = true) @Nullable @QueryValue String triggerId,
+        @Parameter(description = "The min log level filter", deprecated = true) @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
+    ) throws HttpStatusException {
+        // If filters is empty, map old params to QueryFilter
+        if (filters == null || filters.isEmpty()) {
+            filters = RequestUtils.mapLegacyParamsToFilters(
+                query,
+                namespace,
+                flowId,
+                triggerId,
+                minLevel,
+                startDate,
+                endDate,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+        }
+        final ZonedDateTime now = ZonedDateTime.now();
 
-        return PagedResults.of(
-            logRepository.find(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace, flowId, triggerId, minLevel, startDate, endDate)
-        );
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+
+        ZonedDateTime resolvedStartDate = RequestUtils.resolveAbsoluteDateTime(timeLineSearch.getStartDate(),
+            timeLineSearch.getTimeRange(),
+            now);
+
+        // Update filters with the resolved startDate
+        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
+        return PagedResults.of(logRepository.find(
+            PageableUtils.from(page, size, sort),
+            tenantService.resolveTenant(),
+            filters
+        ));
     }
 
     @ExecuteOn(TaskExecutors.IO)

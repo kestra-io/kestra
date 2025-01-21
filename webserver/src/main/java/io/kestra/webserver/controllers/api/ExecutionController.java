@@ -39,6 +39,7 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.ExecutionStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
@@ -151,6 +152,9 @@ public class ExecutionController {
 
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
+
+    @Inject
+    private ExecutionStreamingService streamingService;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -597,9 +601,8 @@ public class ExecutionController {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
         List<Label> parsedLabels = parseLabels(labels);
         Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate);
-        final AtomicReference<Runnable> disposable = new AtomicReference<>();
-        Mono<CompletableFuture<ExecutionResponse>> handle = flowInputOutput.readExecutionInputs(flow, current, inputs)
-            .handle((executionInputs, sink) -> {
+        return flowInputOutput.readExecutionInputs(flow, current, inputs)
+            .flatMap(executionInputs -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
                 try {
                     // inject the traceparent into the execution
@@ -609,32 +612,35 @@ public class ExecutionController {
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
-                    CompletableFuture<ExecutionResponse> future = new CompletableFuture<>();
                     if (!wait) {
-                        future.complete(ExecutionResponse.fromExecution(executionWithInputs, executionUrl(executionWithInputs)));
-                    } else {
-                        disposable.set(this.executionQueue.receive(either -> {
-                            if (either.isRight()) {
-                                log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
-                                sink.complete();
-                            }
-
-                            Execution item = either.getLeft();
-                            if (item.getId().equals(executionWithInputs.getId()) && this.isStopFollow(flow, item)) {
-                                future.complete(ExecutionResponse.fromExecution(item, executionUrl(item)));
-                            }
-                        }));
+                        return Mono.just(ExecutionResponse.fromExecution(
+                            executionWithInputs,
+                            executionUrl(executionWithInputs)
+                        ));
                     }
-                    sink.next(future);
+
+                    // Use Flux to wait for completion using the streaming service
+                    return Flux.<Event<Execution>>create(emitter -> {
+                            streamingService.registerSubscriber(
+                                executionWithInputs.getId(),
+                                emitter
+                            );
+                        })
+                        .filter(event -> "end".equals(event.getId()))
+                        .map(Event::getData)
+                        .map(execution -> ExecutionResponse.fromExecution(
+                            execution,
+                            executionUrl(execution)
+                        ))
+                        .next()
+                        .doFinally(signalType -> {
+                            // This will be called in all completion scenarios (normal, error, or cancel)
+                            log.debug("SSE connection finished with signal: {}", signalType);
+                        });
                 } catch (QueueException e) {
-                    sink.error(e);
+                    return Mono.error(e);
                 }
             });
-        return handle.flatMap(Mono::fromFuture).doFinally(ignored -> {
-            if (disposable.get() != null) {
-                disposable.get().run();
-            }
-        });
     }
 
     private URI executionUrl(Execution execution) {
@@ -1490,71 +1496,42 @@ public class ExecutionController {
     public Flux<Event<Execution>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
-        AtomicReference<Runnable> cancel = new AtomicReference<>();
+        return Flux.create(emitter -> {
+            // Send initial event
+            emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
-        return Flux
-            .<Event<Execution>>create(emitter -> {
-                // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
+            // Check if execution exists
+            try {
+                Execution execution = Await.until(
+                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                    Duration.ofMillis(500),
+                    Duration.ofSeconds(10)
+                );
 
-                // already finished execution
-                Execution execution;
-                try {
-                    execution = Await.until(
-                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                        Duration.ofMillis(500),
-                        Duration.ofSeconds(10)
-                    );
-                } catch (TimeoutException e) {
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the execution " + executionId));
-                    return;
-                }
+                Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
-                Flow flow;
-                try {
-                    flow = flowRepository.findByExecutionWithoutAcl(execution);
-                } catch (IllegalStateException e)  {
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find the flow for the execution " + executionId));
-                    return;
-                }
-
-                if (this.isStopFollow(flow, execution)) {
+                // If execution is already complete, just send final state
+                if (isStopFollow(flow, execution)) {
                     emitter.next(Event.of(execution).id("end"));
                     emitter.complete();
                     return;
                 }
 
-                // emit the repository one first in order to wait the queue connections
+                // Send current state
                 emitter.next(Event.of(execution).id("progress"));
 
-                // consume new value
-                Runnable receive = this.executionQueue.receive(either -> {
-                    if (either.isRight()) {
-                        log.error("Unable to deserialize the execution: {}", either.getRight().getMessage());
-                        return;
-                    }
+                // Register for updates
+                streamingService.registerSubscriber(executionId, emitter);
 
-                    Execution current = either.getLeft();
-                    if (current.getId().equals(executionId)) {
-
-                        emitter.next(Event.of(current).id("progress"));
-
-                        if (this.isStopFollow(flow, current)) {
-                            emitter.next(Event.of(current).id("end"));
-                            emitter.complete();
-                        }
-                    }
-                });
-
-                cancel.set(receive);
-            }, FluxSink.OverflowStrategy.BUFFER)
-            .doFinally(ignored -> {
                 Schedulers.boundedElastic().schedule(() -> {
-                    if (cancel.get() != null) {
-                        cancel.get().run();
-                    }
-                });
-            });
+            } catch (TimeoutException e) {
+                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                    "Unable to find execution " + executionId));
+            } catch (IllegalStateException e) {
+                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                    "Unable to find flow for execution " + executionId));
+            }
+        }, FluxSink.OverflowStrategy.BUFFER);
     }
 
     @ExecuteOn(TaskExecutors.IO)

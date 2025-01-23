@@ -36,4 +36,4 @@ tasks:
 
   - id: assert_delete
     type: io.kestra.plugin.core.execution.Fail
-    runIf: "{{ outputs.download_files_check.files  | length > 0 }}"
+    runIf: "{{ outputs.download_files_check.files | length > 0 }}"

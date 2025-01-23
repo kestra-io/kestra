@@ -1,0 +1,12 @@
+id: return
+namespace: qa
+variables:
+  my_var: test
+tasks:
+  - id: return1
+    type: io.kestra.plugin.core.debug.Return
+    format: "some string with pebble {{ vars.my_var}}"
+
+  - id: assertValue
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ outputs.return1.value != 'some string with pebble test'}}"

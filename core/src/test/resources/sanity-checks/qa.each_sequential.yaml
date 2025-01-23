@@ -1,0 +1,12 @@
+id: each_sequential
+namespace: qa
+
+tasks:
+  - id: each_sequential
+    type: io.kestra.plugin.core.flow.EachSequential
+    value: ["Hello", "Kestra", "!"]
+    
+    tasks:
+      - id: print_value
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ taskrun.value }}"

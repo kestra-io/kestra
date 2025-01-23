@@ -1,0 +1,10 @@
+id: subflow
+namespace: qa
+
+tasks:
+  - id: subflow_call
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: qa
+    flowId: shell
+    wait: true
+    transmitFailed: true

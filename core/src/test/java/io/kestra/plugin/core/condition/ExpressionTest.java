@@ -2,6 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -24,7 +25,7 @@ class ExpressionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
         Expression build = Expression.builder()
-            .expression("{{ flow.id }}")
+            .expression(new Property<>("{{ flow.id }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -38,7 +39,7 @@ class ExpressionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
         Expression build = Expression.builder()
-            .expression("{{ unknown is defined }}")
+            .expression(new Property<>("{{ unknown is defined }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

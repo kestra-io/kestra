@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -58,8 +59,7 @@ public class TimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 time. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = new Property<>("{{ trigger.date }}");
 
     @Schema(
         title = "The time to test must be after this one.",
@@ -77,7 +77,7 @@ public class TimeBetween extends Condition implements ScheduleCondition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
+        String render = conditionContext.getRunContext().render(date).as(String.class, conditionContext.getVariables()).orElseThrow();
         OffsetTime currentDate = DateUtils.parseZonedDateTime(render).toOffsetDateTime().toOffsetTime();
 
         if (this.before != null && this.after != null) {

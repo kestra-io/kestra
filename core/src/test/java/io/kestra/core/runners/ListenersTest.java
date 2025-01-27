@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest(startRunner = true)
-public class ListenersTest {
+class ListenersTest {
 
     @Inject
     private RunnerUtils runnerUtils;

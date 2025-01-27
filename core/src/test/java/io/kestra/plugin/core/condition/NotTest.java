@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -31,8 +32,8 @@ class NotTest {
             Arguments.of(
                 Collections.singletonList(
                     DayWeek.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.SUNDAY)
+                        .date(Property.of("2013-09-08"))
+                        .dayOfWeek(Property.of(DayOfWeek.SUNDAY))
                         .build()
                 ),
                 false
@@ -40,12 +41,12 @@ class NotTest {
             Arguments.of(
                 Arrays.asList(
                     DayWeek.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.SATURDAY)
+                        .date(Property.of("2013-09-08"))
+                        .dayOfWeek(Property.of(DayOfWeek.SATURDAY))
                         .build(),
                     DayWeek.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.MONDAY)
+                        .date(Property.of("2013-09-08"))
+                        .dayOfWeek(Property.of(DayOfWeek.MONDAY))
                         .build()
                 ),
                 true
@@ -53,12 +54,12 @@ class NotTest {
             Arguments.of(
                 Arrays.asList(
                     DayWeek.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.SUNDAY)
+                        .date(Property.of("2013-09-08"))
+                        .dayOfWeek(Property.of(DayOfWeek.SUNDAY))
                         .build(),
                     DayWeek.builder()
-                        .date("2013-09-08")
-                        .dayOfWeek(DayOfWeek.MONDAY)
+                        .date(Property.of("2013-09-08"))
+                        .dayOfWeek(Property.of(DayOfWeek.MONDAY))
                         .build()
                 ),
                 false

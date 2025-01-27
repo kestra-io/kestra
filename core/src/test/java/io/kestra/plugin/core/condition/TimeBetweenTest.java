@@ -3,6 +3,7 @@ package io.kestra.plugin.core.condition;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -40,7 +41,7 @@ class TimeBetweenTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         TimeBetween build = TimeBetween.builder()
-            .date(date)
+            .date(Property.of(date))
             .before(before)
             .after(after)
             .build();

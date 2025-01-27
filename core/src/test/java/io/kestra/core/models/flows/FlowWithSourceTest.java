@@ -110,7 +110,7 @@ class FlowWithSourceTest {
             ))
             .listeners(List.of(
                 Listener.builder()
-                    .conditions(List.of(Expression.builder().expression("true").build()))
+                    .conditions(List.of(Expression.builder().expression(Property.of("true")).build()))
                     .build()
             ))
             .triggers(List.of(

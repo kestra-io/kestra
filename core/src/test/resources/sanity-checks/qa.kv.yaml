@@ -17,8 +17,9 @@ tasks:
     key: "{{ vars.key }}"
 
   - id: assert_get_set
-    type: io.kestra.plugin.core.execution.Fail
-    runIf: "{{ vars.data != outputs.get.value }}"
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ vars.data == outputs.get.value }}"
 
   - id: delete
     type: io.kestra.plugin.core.kv.Delete
@@ -28,5 +29,6 @@ tasks:
     type: io.kestra.plugin.core.kv.GetKeys
 
   - id: assert_delete_get_keys
-    type: io.kestra.plugin.core.execution.Fail
-    runIf: "{{ outputs.get_keys.keys | length > 0 }}"
+    type: io.kestra.plugin.core.execution.Assert
+    conditions: 
+      - "{{ outputs.get_keys.keys | length == 0 }}"

@@ -19,8 +19,9 @@ tasks:
       - "main.py"
 
   - id: assert_upload_download
-    type: io.kestra.plugin.core.execution.Fail
-    runIf: "{{ read(outputs.download.uri) != read(outputs.download_files.files['/main.py']) }}"
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ read(outputs.download.uri) == read(outputs.download_files.files['/main.py']) }}"
 
   - id: delete_files
     type: io.kestra.plugin.core.namespace.DeleteFiles
@@ -35,5 +36,9 @@ tasks:
       - "main.py"
 
   - id: assert_delete
-    type: io.kestra.plugin.core.execution.Fail
-    runIf: "{{ outputs.download_files_check.files | length > 0 }}"
+    type: io.kestra.plugin.core.execution.Assert
+    conditions: 
+      - "{{ outputs.download_files_check.files | length == 0 }}"
+
+  - id: purge
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

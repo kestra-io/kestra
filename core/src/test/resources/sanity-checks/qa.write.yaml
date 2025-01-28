@@ -1,8 +1,7 @@
 id: write
-namespace: kestra.test
+namespace: qa
 
 tasks:
-
   - id: write
     type: io.kestra.plugin.core.storage.Write
     content: |

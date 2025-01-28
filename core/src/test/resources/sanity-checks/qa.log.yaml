@@ -2,7 +2,6 @@ id: log
 namespace: qa
 
 inputs:
-
   - id: time
     type: DATE
     after: 2024-01-01
@@ -17,14 +16,14 @@ inputs:
     required: true
 
 tasks:
-
   - id: logs1
     type: io.kestra.plugin.core.log.Log
-    message: "{{inputs.time}} - {{inputs.city}}"
+    message: "{{ inputs.time }} - {{ inputs.city }}"
+    level: WARN
 
   - id: logs2
     type: io.kestra.plugin.core.log.Log
-    message: "{{inputs.time}} - {{inputs.city}}"
+    message: "{{ inputs.time }} - {{ inputs.city }}"
     level: INFO
 
        

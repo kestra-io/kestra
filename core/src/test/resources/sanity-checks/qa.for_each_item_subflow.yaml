@@ -1,0 +1,18 @@
+id: for_each_item_subflow
+namespace: qa
+
+inputs:
+  - id: order
+    type: STRING
+
+tasks:
+  - id: read_file
+    type: io.kestra.plugin.scripts.shell.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    commands:
+      - cat "{{ inputs.order }}"
+
+  - id: read_file_content
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ read(inputs.order) }}"

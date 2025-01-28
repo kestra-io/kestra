@@ -1,12 +1,11 @@
 id: for_each_subflow
 namespace: qa
-tasks:
 
+tasks:
   - id: run_extract
     type: io.kestra.plugin.core.flow.ForEach
     values: '["Paris", "Berlin"]'
     tasks:
-
       - id: subflow
         type: io.kestra.plugin.core.flow.Subflow
         namespace: qa

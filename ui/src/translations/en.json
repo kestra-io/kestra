@@ -1091,7 +1091,10 @@
         "not_contains": "not contains",
         "in": "in",
         "between": "between",
-        "starts_with": "starts with"
+        "starts_with": "starts with",
+        "greater_than": "greater than",
+        "less_than": "less than",
+        "ends_with": "ends with"
       },
       "save": {
         "label": "Saved searches",

@@ -1019,7 +1019,10 @@
         "not_contains": "não contém",
         "is_not_one_off": "não é um dos",
         "is_one_of": "é um dos",
-        "between": "entre"
+        "between": "entre",
+        "greater_than": "maior que",
+        "less_than": "menor que",
+        "ends_with": "termina com"
       },
       "save": {
         "label": "Pesquisas salvas",

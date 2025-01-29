@@ -1019,7 +1019,10 @@
         "not_contains": "포함하지 않음",
         "is_not_one_off": "아닌 것 중 하나입니다.",
         "is_one_of": "중 하나입니다.",
-        "between": "사이에"
+        "between": "사이에",
+        "greater_than": "보다 큼",
+        "less_than": "보다 작음",
+        "ends_with": "끝남"
       },
       "save": {
         "label": "저장된 검색",

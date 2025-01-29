@@ -26,7 +26,9 @@
         const {value, label, comparator} = props.option;
 
         if (!value.length) return;
-
+        if (label === "labels") {
+            return Array.isArray(value) && value.length === 1 ? value[0] : value;
+        }
         if (label !== "absolute_date" && comparator?.label !== "between") {
             return `${value.join(", ")}`;
         }

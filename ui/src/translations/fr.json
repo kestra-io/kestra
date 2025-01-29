@@ -1019,7 +1019,10 @@
         "not_contains": "ne contient pas",
         "is_not_one_off": "n'est pas l'un de",
         "is_one_of": "est l'un de",
-        "between": "entre"
+        "between": "entre",
+        "greater_than": "supérieur à",
+        "less_than": "moins que",
+        "ends_with": "se termine par"
       },
       "save": {
         "label": "Recherches enregistrées",

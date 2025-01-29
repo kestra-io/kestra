@@ -190,10 +190,10 @@ import java.util.Optional;
                                 message: |
                                   Full table name: {{parents[1].taskrun.value }}_{{parent.taskrun.value}}_{{taskrun.value}}
                                   Direct/current loop (months): {{taskrun.value}}
-                                  Value of loop one higher up (years): {{parents[0].taskrun.value}} 
+                                  Value of loop one higher up (years): {{parents[0].taskrun.value}}
                                   Further up (table types): {{parents[1].taskrun.value}}
                 """
-        ),        
+        ),
     }
 )
 public class ForEach extends Sequential implements FlowableTask<VoidOutput> {

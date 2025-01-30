@@ -45,8 +45,9 @@ public class RegisteredPlugin {
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
-    private final List<String> guides;
     private final List<Class<? extends LogExporter<?>>> logExporters;
+    private final List<Class<? extends AdditionalPlugin>> additionalPlugins;
+    private final List<String> guides;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
@@ -61,7 +62,8 @@ public class RegisteredPlugin {
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
             !dataFilters.isEmpty() ||
-            !logExporters.isEmpty()
+            !logExporters.isEmpty() ||
+            !additionalPlugins.isEmpty()
         ;
     }
 
@@ -126,6 +128,10 @@ public class RegisteredPlugin {
             return LogExporter.class;
         }
 
+        if (this.getAdditionalPlugins().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AdditionalPlugin.class;
+        }
+
         if (this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
@@ -158,13 +164,10 @@ public class RegisteredPlugin {
         result.put("charts", Arrays.asList(this.getCharts().toArray(Class[]::new)));
         result.put("data-filters", Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
         result.put("log-exporters", Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
+        result.put("additional-plugins", Arrays.asList(this.getAdditionalPlugins().toArray(Class[]::new)));
 
         return result;
     }
-
-//    public Map<String, Map<String,List<Class>>> allClassGroupedBySubGroup() {
-//
-//    }
 
     public Set<String> subGroupNames() {
         return allClass()
@@ -357,6 +360,12 @@ public class RegisteredPlugin {
         if (!this.getLogExporters().isEmpty()) {
             b.append("[Log Exporters: ");
             b.append(this.getLogExporters().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getAdditionalPlugins().isEmpty()) {
+            b.append("[Additional Plugins: ");
+            b.append(this.getAdditionalPlugins().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

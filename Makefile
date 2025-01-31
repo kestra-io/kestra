@@ -181,7 +181,7 @@ clone-plugins:
 	@echo "Using PLUGIN_GIT_DIR: $(PLUGIN_GIT_DIR)"
 	@mkdir -p "$(PLUGIN_GIT_DIR)"
 	@echo "Fetching repository list from GitHub..."
-	@REPOS=$$(curl -s "https://api.github.com/orgs/kestra-io/repos?per_page=500" | jq -r '.[].name'); \
+	@REPOS=$(gh repo list kestra-io -L 1000  --json  name | jq -r  .[].name | sort | grep "^plugin-") \
 	for repo in $$REPOS; do \
 	    if [[ $$repo == plugin-* ]]; then \
 	        if [ -d "$(PLUGIN_GIT_DIR)/$$repo" ]; then \

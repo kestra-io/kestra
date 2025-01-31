@@ -218,6 +218,9 @@ div.line {
     }
 
     .log-content {
+        // prevent Firefox word breaks 
+        flex-grow: 1;
+
         .header > * + * {
             margin-left: 1rem;
         }

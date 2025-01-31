@@ -238,7 +238,7 @@ build-plugins:
 	    for jar in "$${JARS[@]}"; do \
 	        JAR_NAME=$$(basename "$$jar"); \
 	        BASE_NAME=$$(echo "$$JAR_NAME" | sed -E 's/(-[0-9]+.*)?\.jar$$//'); \
-	        rm -f "$(PLUGIN_JARS_DIR)/$$BASE_NAME"-*.jar; \
+	        rm -f "$(PLUGIN_JARS_DIR)/$$BASE_NAME"-[0-9]*.jar; \
 	        cp "$$jar" "$(PLUGIN_JARS_DIR)/"; \
 	        echo "✅ Copied JAR: $$JAR_NAME"; \
 	    done; \

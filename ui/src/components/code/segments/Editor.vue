@@ -29,6 +29,7 @@
                     creation
                     :flow
                     @remove="(yaml) => emits('updateTask', yaml)"
+                    @reorder="(yaml) => emits('reorder', yaml)"
                 />
 
                 <hr class="my-4">
@@ -96,6 +97,7 @@
         "updateTask",
         "updateMetadata",
         "updateDocumentation",
+        "reorder",
     ]);
 
     const saveEvent = (e: KeyboardEvent) => {

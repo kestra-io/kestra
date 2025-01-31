@@ -17,7 +17,7 @@ VERSION := $(shell ./gradlew properties -q | awk '/^version:/ {print $$2}')
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 DATE := $(shell date --rfc-3339=seconds)
-PLUGIN_GIT_DIR ?= $(HOME)/workspace/dev-plugins
+PLUGIN_GIT_DIR ?= $(pwd)/..
 PLUGIN_JARS_DIR ?= $(HOME)/workspace/plugins
 
 DOCKER_IMAGE = kestra/kestra

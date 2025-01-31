@@ -835,6 +835,7 @@ $dashboards: 52px;
         }
 
         &.dashboards {
+            min-width: $dashboards;
             max-width: calc(100% - $included - $dashboards);
         }
     }
@@ -872,6 +873,7 @@ $dashboards: 52px;
 .filters-select {
     & .el-select-dropdown {
         width: auto !important;
+        max-width: 300px;
 
         &:has(.el-select-dropdown__empty) {
             width: auto !important;

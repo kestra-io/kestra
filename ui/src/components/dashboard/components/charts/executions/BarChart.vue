@@ -28,6 +28,8 @@
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+    import {useRouter} from "vue-router";
+    const router = useRouter();
 
     import Utils from "../../../../../utils/utils.js";
     import {getScheme} from "../../../../../utils/scheme.js";
@@ -112,7 +114,6 @@
         };
     });
 
-    const emit = defineEmits(["click"]);
 
     const options = computed(() =>
         defaultConfig({
@@ -213,7 +214,18 @@
                 },
             },
             onClick: (e, elements) => {
-                emit("click", e, elements);
+                if (elements.length > 0) {
+                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
+                    router.push({
+                        name: "executions/list",
+                        query: {
+                            state: state,
+                            scope: "USER",
+                            size: 100,
+                            page: 1,
+                        },
+                    });
+                }
             },
         }),
     );

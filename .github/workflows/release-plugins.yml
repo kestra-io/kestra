@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: 'The release version (e.g., 0.21.0)'
+        description: 'The release version (e.g., 0.21.0-RC1)'
         required: true
         type: string
       nextVersion:
@@ -24,6 +24,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          caches-enabled: true
 
       # Get Plugins List
       - name: Get Plugins List

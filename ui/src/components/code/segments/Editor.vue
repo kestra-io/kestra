@@ -237,6 +237,7 @@
                 "error_handlers",
                 YamlUtils.parse(props.flow).errors ?? [],
             ),
+            getSectionTitle("finally", YamlUtils.parse(props.flow).finally ?? []),
         ];
     });
 </script>

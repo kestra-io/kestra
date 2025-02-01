@@ -25,6 +25,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
       # Setup build
       - uses: ./actions/.github/actions/setup-build
         id: build
@@ -40,6 +47,11 @@ jobs:
         id: plugins-list
         with:
           plugin-version: 'LATEST'
+
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
       # Execute
       - name: Run Gradle Release

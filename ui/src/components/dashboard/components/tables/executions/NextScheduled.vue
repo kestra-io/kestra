@@ -211,14 +211,6 @@ code {
 .nextscheduled {
     --el-table-tr-bg-color: var(--ks-background-body) !important;
     background: var(--ks-background-body);
-    // FIXME: choose variables
-    & a {
-        color: #8e71f7;
-
-        html.dark & {
-            color: #e0e0fc;
-        }
-    }
 }
 
 .next-toggle {

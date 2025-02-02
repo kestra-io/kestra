@@ -166,6 +166,7 @@
                 :flow="flowYaml"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
+                @reorder="(yaml) => handleReorder(yaml)"
                 @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
@@ -799,8 +800,8 @@
         }
 
         haveChange.value = true;
-        store.dispatch("core/isUnsaved", true);
-
+        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+        
         if(!props.isCreating){
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
@@ -957,6 +958,12 @@
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
+    };
+
+    const handleReorder = (yaml) => {
+        flowYaml.value = yaml;
+        haveChange.value = true;
+        save()
     };
 
     const editorUpdate = (event) => {

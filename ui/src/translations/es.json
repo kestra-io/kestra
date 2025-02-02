@@ -1068,19 +1068,22 @@
         "main": "Propiedades principales",
         "error_handlers": "Manejadores de Errores",
         "tasks": "Tareas",
-        "advanced": "Configuración avanzada"
+        "advanced": "Configuración avanzada",
+        "finally": "Finalmente"
       },
       "creation": {
         "select": "Seleccione una {section}",
         "tasks": "Agregar una task",
         "error handlers": "Agregar un manejador de errores",
-        "triggers": "Agregar un trigger"
+        "triggers": "Agregar un trigger",
+        "finally": "Agregar un bloque finally"
       },
       "save": {
         "tasks": "Guardar tarea",
         "triggers": "Guardar trigger",
         "error handlers": "Guardar controlador de errores",
-        "input": "Guardar input"
+        "input": "Guardar input",
+        "finally": "Guardar tarea"
       },
       "labels": {
         "no_code": "Editor Sin Código",

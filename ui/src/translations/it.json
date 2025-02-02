@@ -1068,19 +1068,22 @@
         "main": "Proprietà principali",
         "error_handlers": "Gestori degli Errori",
         "tasks": "Attività",
-        "advanced": "Configurazione avanzata"
+        "advanced": "Configurazione avanzata",
+        "finally": "Infine"
       },
       "creation": {
         "select": "Seleziona una {section}",
         "tasks": "Aggiungi un task",
         "error handlers": "Aggiungi un gestore degli errori",
-        "triggers": "Aggiungi un trigger"
+        "triggers": "Aggiungi un trigger",
+        "finally": "Aggiungi un blocco finally"
       },
       "save": {
         "tasks": "Salva task",
         "triggers": "Salva trigger",
         "error handlers": "Salva gestore errori",
-        "input": "Salva input"
+        "input": "Salva input",
+        "finally": "Salva task"
       },
       "labels": {
         "no_code": "Editor Senza Codice",

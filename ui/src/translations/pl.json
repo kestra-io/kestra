@@ -1068,19 +1068,22 @@
         "main": "Główne właściwości",
         "error_handlers": "Obsługa błędów",
         "tasks": "Zadania",
-        "advanced": "Zaawansowana konfiguracja"
+        "advanced": "Zaawansowana konfiguracja",
+        "finally": "Na koniec"
       },
       "creation": {
         "select": "Wybierz {section}",
         "tasks": "Dodaj task",
         "error handlers": "Dodaj obsługę błędów",
-        "triggers": "Dodaj trigger"
+        "triggers": "Dodaj trigger",
+        "finally": "Dodaj blok finally"
       },
       "save": {
         "tasks": "Zapisz task",
         "triggers": "Zapisz trigger",
         "error handlers": "Zapisz obsługę błędów",
-        "input": "Zapisz input"
+        "input": "Zapisz input",
+        "finally": "Zapisz task"
       },
       "labels": {
         "no_code": "Edytor No Code",

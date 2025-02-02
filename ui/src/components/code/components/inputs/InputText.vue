@@ -2,7 +2,14 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <span v-if="label" class="label">{{ label }}</span>
     <div class="mt-1 mb-2 wrapper" :class="props.class">
-        <el-input v-model="input" @input="handleInput" :placeholder :disabled />
+        <el-input
+            v-model="input"
+            @input="handleInput"
+            :placeholder
+            :disabled
+            type="textarea"
+            :autosize="{minRows: 1}"
+        />
     </div>
 </template>
 

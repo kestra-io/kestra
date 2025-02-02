@@ -8,17 +8,21 @@
             </div>
             <h2>{{ title }}</h2>
             <p><slot name="message" /></p>
-            <slot name="buttons" />
+            <a class="el-button el-button--large el-button--primary" target="_blank" :href="getADemoUrl.href">
+                {{ $t("demos.get_a_demo_button") }}
+            </a>
         </div>
     </EmptyTemplate>
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, nextTick} from "vue";
+    import {onMounted, nextTick, computed} from "vue";
     import {useStore} from "vuex";
+    import {useRoute} from "vue-router";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
     const store = useStore();
+    const route = useRoute();
 
     onMounted(() => {
         store.commit("doc/setDocPath", "<reset>")
@@ -26,6 +30,17 @@
             store.commit("doc/setDocPath", "")
             store.commit("misc/setContextInfoBarOpenTab", "docs")
         })
+    });
+
+    const getADemoUrl = computed(() => {
+        const demoUrl = new URL("https://kestra.io/demo");
+        // set all utm params from the route query
+        for (const [key, value] of Object.entries(route.query)) {
+            if (key.startsWith("utm_")) {
+                demoUrl.searchParams.set(key, value as string);
+            }
+        }
+        return demoUrl;
     });
 
     defineProps<{

@@ -1068,19 +1068,22 @@
         "main": "주요 속성",
         "error_handlers": "오류 처리기",
         "tasks": "작업",
-        "advanced": "고급 구성"
+        "advanced": "고급 구성",
+        "finally": "마지막으로"
       },
       "creation": {
         "select": "{section}을 선택하십시오",
         "tasks": "작업 추가",
         "error handlers": "오류 처리기 추가",
-        "triggers": "트리거 추가"
+        "triggers": "트리거 추가",
+        "finally": "마지막 블록 추가"
       },
       "save": {
         "tasks": "작업 저장",
         "triggers": "트리거 저장",
         "error handlers": "오류 처리기 저장",
-        "input": "입력 저장"
+        "input": "입력 저장",
+        "finally": "작업 저장"
       },
       "labels": {
         "no_code": "코드 없는 편집기",

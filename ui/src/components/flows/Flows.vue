@@ -165,12 +165,15 @@
                                 class-name="row-graph"
                             >
                                 <template #default="scope">
-                                    <!-- TODO: Replace the usage of StateChart with one of the new chart components -->
-                                    <state-chart
+                                    <ExecutionsBarChart
                                         v-if="dailyGroupByFlowReady"
-                                        :namespace="scope.row.namespace"
-                                        :flow-id="scope.row.id"
+                                        class="stats-chart"
+                                        :duration="false"
+                                        :scales="false"
                                         :data="chartData(scope.row)"
+                                        small
+                                        external-tooltip
+                                        @click="tableChartClick.bind(null, scope.row.namespace, scope.row.id)"
                                     />
                                 </template>
                             </el-table-column>
@@ -201,16 +204,40 @@
 </template>
 
 <script setup>
+    import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
+    import ExecutionsBar from "../dashboard/components/charts/executions/Bar.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
-
+    import Upload from "vue-material-design-icons/Upload.vue";
+    import ExecutionsBarChart from "../dashboard/components/charts/executions/BarChart.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import {chartClick} from "../../utils/charts.js";
+    import {useRoute, useRouter} from "vue-router";
+
+    const route = useRoute();
+    const router = useRouter();
+
+    function tableChartClick(namespace, flowId, e, elements){
+        if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
+            chartClick(
+                moment,
+                router,
+                route,
+                {
+                    date: e.chart.data.labels[elements[0].index],
+                    state: e.chart.data.datasets[elements[0].datasetIndex].label,
+                    namespace,
+                    flowId
+                }
+            )
+        }
+    }
 </script>
 
 <script>
@@ -226,14 +253,11 @@
     import SelectTableActions from "../../mixins/selectTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable.vue";
-    import StateChart from "../stats/StateChart.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
-    import Upload from "vue-material-design-icons/Upload.vue";
-    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
     import {storageKeys} from "../../utils/constants";
 
     export default {
@@ -242,15 +266,12 @@
             TextSearch,
             DataTable,
             DateAgo,
-            StateChart,
             Status,
             TriggerAvatar,
             MarkdownTooltip,
             Kicon,
             Labels,
-            Upload,
             TopNavBar,
-            ExecutionsBar
         },
         props: {
             topbar: {

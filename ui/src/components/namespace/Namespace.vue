@@ -1,18 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #additional-right>
-            <ul v-if="$route.params.tab === 'secrets' && canCreateSecret">
-                <li>
-                    <el-button :icon="FamilyTree" @click="modalInheritedSecretsVisible = true">
-                        {{ $t('secret.inherited') }}
-                    </el-button>
-                </li>
-                <li>
-                    <el-button :icon="Plus" type="primary" @click="modalAddSecretVisible = true">
-                        {{ $t('secret.add') }}
-                    </el-button>
-                </li>
-            </ul>
             <ul v-if="$route.params.tab === 'kv'">
                 <li>
                     <el-button :icon="Plus" type="primary" @click="modalAddKvVisible = true">
@@ -31,12 +19,11 @@
             </ul>
         </template>
     </top-nav-bar>
-    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" id="namespaces" />
+    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" />
 </template>
 
 <script setup>
     import TopNavBar from "../layout/TopNavBar.vue";
-    import FamilyTree from "vue-material-design-icons/FamilyTree.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 </script>
 
@@ -186,46 +173,51 @@
                         name: "edit",
                         component: DemoNamespace,
                         title: this.$t("edit"),
-                        containerClass: "demo-container",
+                        maximize: true,
                         props: {
                             tab: "edit",
-                        }
+                        },
+                        locked: true
                     },
                     {
                         name: "variables",
                         component: DemoNamespace,
                         title: this.$t("variables"),
-                        containerClass: "demo-container",
+                        maximize: true,
                         props: {
                             tab: "variables",
-                        }
+                        },
+                        locked: true
                     },
                     {
                         name: "plugin-defaults",
                         component: DemoNamespace,
                         title: this.$t("plugin defaults"),
-                        containerClass: "demo-container",
+                        maximize: true,
                         props: {
                             tab: "plugin-defaults",
-                        }
+                        },
+                        locked: true
                     },
                     {
                         name: "secrets",
                         component: DemoNamespace,
                         title: this.$t("secret.names"),
-                        containerClass: "demo-container",
+                        maximize: true,
                         props: {
                             tab: "secrets",
-                        }
+                        },
+                        locked: true
                     },
                     {
                         name: "audit-logs",
                         component: DemoNamespace,
                         title: this.$t("auditlogs"),
-                        containerClass: "demo-container",
+                        maximize: true,
                         props: {
                             tab: "audit-logs",
-                        }
+                        },
+                        locked: true
                     }
                 ])
 

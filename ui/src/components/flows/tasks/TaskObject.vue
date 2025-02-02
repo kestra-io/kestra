@@ -135,7 +135,7 @@
         emits: ["update:modelValue"],
         methods: {
             properties(requiredFields) {
-                if (this.schema) {
+                if (this.schema?.properties) {
                     const properties = Object.entries(
                         this.schema.properties,
                     ).reduce((acc, [key, value]) => {

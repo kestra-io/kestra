@@ -117,7 +117,9 @@ export default (callback, store, router) => {
                 const originalRequest = errorResponse.config
 
                 if (!refreshing) {
-                    const originalRequestData = JSON.parse(originalRequest.data ?? "{}");
+                    const originalRequestData = typeof originalRequest.data === "string"
+                        ? JSON.parse(originalRequest.data)
+                        : (originalRequest.data ?? {});
 
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature

@@ -1068,19 +1068,22 @@
         "main": "メインプロパティ",
         "error_handlers": "エラーハンドラー",
         "tasks": "タスク",
-        "advanced": "高度な設定"
+        "advanced": "高度な設定",
+        "finally": "最後に"
       },
       "creation": {
         "select": "{section}を選択してください",
         "tasks": "タスクを追加",
         "error handlers": "エラーハンドラーを追加",
-        "triggers": "トリガーを追加"
+        "triggers": "トリガーを追加",
+        "finally": "finally ブロックを追加"
       },
       "save": {
         "tasks": "タスクを保存",
         "triggers": "トリガーを保存",
         "error handlers": "エラーハンドラーを保存",
-        "input": "入力を保存"
+        "input": "入力を保存",
+        "finally": "タスクを保存"
       },
       "labels": {
         "no_code": "コードエディタなし",

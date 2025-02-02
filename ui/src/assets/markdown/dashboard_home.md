@@ -6,7 +6,6 @@ Welcome to the Custom Dashboard! This feature allows you to create and manage pe
 
 Below is an example of a dashboard definition that displays executions over time, a table that uses metrics to display the sum of sales per namespace, and a table that shows the log count by level per namespace:
 
-::collapse{title="Expand for a example dashboard definition"}
 ```yaml
 title: Getting Started
 description: First custom dashboard
@@ -84,7 +83,6 @@ charts:
             - dev_graph
             - prod_graph
 ```
-::
 
 To see all available properties to configure a custom dashboard as code, see examples provided in the [Enterprise Edition Examples](https://github.com/kestra-io/enterprise-edition-examples) repository.
 

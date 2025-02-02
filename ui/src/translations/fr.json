@@ -1068,19 +1068,22 @@
         "main": "Principales propriétés",
         "error_handlers": "Gestionnaires d'erreurs",
         "tasks": "Tâches",
-        "advanced": "Configuration avancée"
+        "advanced": "Configuration avancée",
+        "finally": "Enfin"
       },
       "creation": {
         "select": "Sélectionnez une {section}",
         "tasks": "Ajouter une tâche",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
-        "triggers": "Ajouter un trigger"
+        "triggers": "Ajouter un trigger",
+        "finally": "Ajouter un bloc finally"
       },
       "save": {
         "tasks": "Enregistrer la tâche",
         "triggers": "Enregistrer le trigger",
         "error handlers": "Enregistrer le gestionnaire d'erreurs",
-        "input": "Enregistrer l'input"
+        "input": "Enregistrer l'input",
+        "finally": "Enregistrer la task"
       },
       "labels": {
         "no_code": "Éditeur sans code",

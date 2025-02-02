@@ -364,6 +364,24 @@ export default class YamlUtils {
         return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
     }
 
+    static insertFinally(source, finallyTask) {
+        const yamlDoc = yaml.parseDocument(source);
+        const newFinallyNode = yamlDoc.createNode(yaml.parseDocument(finallyTask));
+        const items = yamlDoc.contents.items.find(item => item.key.value === "finally");
+        if (items && items.value.items) {
+            yamlDoc.contents.items[yamlDoc.contents.items.indexOf(items)].value.items.push(newFinallyNode);
+        } else {
+            if (items) {
+                yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(items), 1)
+            }
+            const finallySeq = new yaml.YAMLSeq();
+            finallySeq.items.push(newFinallyNode);
+            const newFinally = new yaml.Pair(new yaml.Scalar("finally"), finallySeq);
+            yamlDoc.contents.items.push(newFinally);
+        }
+        return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
+    }
+
     static insertErrorInFlowable(source, errorTask, flowableTask) {
         const yamlDoc = yaml.parseDocument(source);
         const newErrorNode = yamlDoc.createNode(yaml.parseDocument(errorTask));
@@ -571,7 +589,7 @@ export default class YamlUtils {
             return source;
         }
 
-        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
+        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "finally", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
         const updatedItems = [];
         for (const prop of order) {
             const item = yamlDoc.contents.items.find(e => e.key.value === prop);

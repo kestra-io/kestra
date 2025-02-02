@@ -7,11 +7,6 @@
         <template #message>
             {{ $t('demos.tenants.message') }}
         </template>
-        <template #buttons>
-            <el-button v-if="!isFullScreen()" target="_blank" href="https://kestra.io/demo" type="primary" size="large">
-                {{ $t("demos.get_a_demo_button") }}
-            </el-button>
-        </template>
     </Layout>
 </template>
 

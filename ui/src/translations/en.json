@@ -821,18 +821,18 @@
         "edit": {
           "title": "Upgrade Your Namespace Management",
           "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
-      },
+        },
         "variables": {
-        "title": "Centrally Govern Your Variables",
-        "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
-      },
-      "plugin-defaults": {
-        "title": "Standardize Configuration with Plugin Defaults",
-        "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
-      },
-      "secrets": {
-        "title": "Manage Secrets in a Secure Way",
-        "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
+          "title": "Centrally Govern Your Variables",
+          "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
+        },
+        "plugin-defaults": {
+          "title": "Standardize Configuration with Plugin Defaults",
+          "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
+        },
+        "secrets": {
+          "title": "Manage Secrets in a Secure Way",
+          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
         "audit-logs": {
           "title": "Track All Changes in One Place",
@@ -1128,7 +1128,8 @@
         "advanced": "Advanced configuration",
         "tasks": "Tasks",
         "triggers": "Triggers",
-        "error_handlers": "Error Handlers"
+        "error_handlers": "Error Handlers",
+        "finally": "Finally"
       },
       "fields": {
         "main": {
@@ -1151,12 +1152,14 @@
         "select": "Select a {section}",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
-        "error handlers": "Add an error handler"
+        "error handlers": "Add an error handler",
+        "finally": "Add a finally block"
       },
       "save": {
         "tasks": "Save task",
         "triggers": "Save trigger",
         "error handlers": "Save error handler",
+        "finally": "Save task",
         "input": "Save input"
       }
     },

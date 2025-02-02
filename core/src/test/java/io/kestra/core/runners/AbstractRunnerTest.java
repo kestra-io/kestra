@@ -220,7 +220,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/trigger-flow-listener-namespace-condition.yaml",
         "flows/valids/trigger-multiplecondition-flow-c.yaml",
         "flows/valids/trigger-multiplecondition-flow-d.yaml"})

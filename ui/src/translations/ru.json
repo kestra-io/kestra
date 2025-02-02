@@ -1068,19 +1068,22 @@
         "main": "Основные свойства",
         "error_handlers": "Обработчики ошибок",
         "tasks": "Задачи",
-        "advanced": "Расширенная конфигурация"
+        "advanced": "Расширенная конфигурация",
+        "finally": "Наконец"
       },
       "creation": {
         "select": "Выберите {section}",
         "tasks": "Добавить task",
         "error handlers": "Добавить обработчик ошибок",
-        "triggers": "Добавить trigger"
+        "triggers": "Добавить trigger",
+        "finally": "Добавить блок finally"
       },
       "save": {
         "tasks": "Сохранить task",
         "triggers": "Сохранить trigger",
         "error handlers": "Сохранить обработчик ошибок",
-        "input": "Сохранить input"
+        "input": "Сохранить input",
+        "finally": "Сохранить task"
       },
       "labels": {
         "no_code": "Редактор No Code",

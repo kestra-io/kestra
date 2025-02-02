@@ -91,6 +91,28 @@ class RequestTest {
         assertThat(output.getHeaders().get("content-length").getFirst(), is("512789"));
     }
 
+
+    @Test
+    void head404() throws Exception {
+        final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.of(url))
+            .method(Property.of("HEAD"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> task.run(runContext)
+        );
+
+        assertThat(exception.getResponse().getStatus().getCode(), is(404));
+    }
+
     @Test
     void redirect() throws Exception {
         try (

@@ -56,13 +56,3 @@
         },
     };
 </script>
-
-<style scoped lang="scss">
-    :deep(.el-table) {
-        td {
-            .el-tag {
-                margin-right: .3rem;
-            }
-        }
-    }
-</style>

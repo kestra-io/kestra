@@ -31,7 +31,6 @@
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
-    import Utils from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
 
@@ -53,6 +52,8 @@
         },
     });
 
+    const theme = computed(() => store.getters["misc/theme"]);
+
     const parsedData = computed(() => {
         let stateCounts = Object.create(null);
 
@@ -68,7 +69,7 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getScheme(state));
+        const backgroundColor = labels.map((state) => getScheme(theme.value, state));
 
         const maxDataValue = Math.max(...data);
         const thicknessScale = data.map(
@@ -80,6 +81,8 @@
             datasets: [{data, backgroundColor, thicknessScale, borderWidth: 0}],
         };
     });
+
+
 
     const options = computed(() =>
         defaultConfig({
@@ -113,13 +116,13 @@
                     });
                 }
             },
-        }, store.getters["misc/theme"]),
+        }, theme.value),
     );
 
-    const centerPlugin = {
+    const centerPlugin = computed(() => ({
         id: "centerPlugin",
         beforeDraw(chart) {
-            const darkTheme = Utils.getTheme() === "dark";
+            const darkTheme = theme.value === "dark";
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
@@ -137,7 +140,7 @@
 
             ctx.restore();
         },
-    };
+    }));
 
     const thicknessPlugin = {
         id: "thicknessPlugin",

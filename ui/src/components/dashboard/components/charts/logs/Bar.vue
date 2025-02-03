@@ -51,13 +51,15 @@
         },
     });
 
+    const theme = computed(() => store.getters["misc/theme"]);
+
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.counts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getScheme(state, "logs"),
+                        backgroundColor: getScheme(theme.value, state, "logs"),
                         yAxisID: "y",
                         data: [],
                     };
@@ -140,7 +142,7 @@
                     },
                 },
             },
-        }, store.getters["misc/theme"]),
+        }, theme.value),
     );
 </script>
 

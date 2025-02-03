@@ -1,6 +1,6 @@
 <template>
     <div class="state">
-        <span class="circle" :style="{backgroundColor: getScheme(label)}" />
+        <span class="circle" :style="{backgroundColor: getScheme(store.getters['misc/theme'], label)}" />
 
         <p class="m-0 fw-light small">
             {{ label.toLowerCase().capitalize() }}
@@ -9,7 +9,10 @@
 </template>
 
 <script setup>
+    import {useStore} from "vuex";
     import {getScheme} from "../../../utils/scheme.js";
+
+    const store = useStore()
 
     defineProps({
         label: {

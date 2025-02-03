@@ -69,6 +69,7 @@
             const tooltipContent = ref("");
 
             const dataReady = computed(() => props.data.length > 0)
+            const theme = computed(() => store.getters["misc/theme"]);
 
             const options = computed(() => defaultConfig({
                 barThickness: 4,
@@ -121,9 +122,9 @@
                         position: "right",
                     }
                 },
-            }, store.getters["misc/theme"]));
+            }, theme.value));
 
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+            const darkTheme = computed(() => theme.value === "dark");
 
             const chartData = computed(() => {
                 let datasets = props.data
@@ -132,7 +133,7 @@
                             if (accumulator[state] === undefined) {
                                 accumulator[state] = {
                                     label: state,
-                                    backgroundColor: getScheme(state),
+                                    backgroundColor: getScheme(theme.value, state),
                                     yAxisID: "y",
                                     data: []
                                 };
@@ -153,8 +154,8 @@
                             fill: "start",
                             pointRadius: 0,
                             borderWidth: 0.2,
-                            backgroundColor: Utils.hexToRgba(!darkTheme ? "#eaf0f9" : "#292e40", 0.5),
-                            borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                            backgroundColor: Utils.hexToRgba(!darkTheme.value ? "#eaf0f9" : "#292e40", 0.5),
+                            borderColor: !darkTheme.value ? "#7081b9" : "#7989b4",
                             yAxisID: "yB",
                             data: props.data
                                 .map((value) => {

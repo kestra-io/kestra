@@ -1,5 +1,3 @@
-import Utils from "./utils";
-
 const SCHEME = "scheme";
 const OPTIONS = Object.freeze({
     classic: {
@@ -108,9 +106,8 @@ export const setScheme = (value) => {
     localStorage.setItem(SCHEME, value);
 };
 
-export const getScheme = (state, type = "executions") => {
+export const getScheme = (theme, state, type = "executions") => {
     const scheme = localStorage.getItem(SCHEME) ?? "classic";
-    const theme = Utils.getTheme();
 
     return OPTIONS[scheme]?.[theme]?.[type]?.[state];
 };

@@ -71,6 +71,8 @@
         },
     });
 
+    const theme = computed(() => store.getters["misc/theme"])
+
     const tooltipContent = ref("")
 
     const parsedData = computed(() => {
@@ -79,7 +81,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getScheme(state),
+                        backgroundColor: getScheme(theme.value, state),
                         yAxisID: "y",
                         data: [],
                     };
@@ -230,7 +232,7 @@
                     });
                 }
             },
-        }, store.getters["misc/theme"]),
+        }, theme.value),
     );
 </script>
 

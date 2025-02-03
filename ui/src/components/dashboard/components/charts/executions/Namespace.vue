@@ -59,6 +59,8 @@
         },
     });
 
+    const theme = computed(() => store.getters["misc/theme"]);
+
     const parsedData = computed(() => {
         const labels = Object.entries(props.data)
             .sort(([, a], [, b]) => b.total - a.total)
@@ -76,7 +78,7 @@
                     executionData[state] = {
                         label: state,
                         data: [],
-                        backgroundColor: getScheme(state),
+                        backgroundColor: getScheme(theme.value, state),
                         stack: state,
                     };
                 }
@@ -167,7 +169,7 @@
                     });
                 }
             },
-        }, store.getters["misc/theme"]),
+        }, theme.value),
     );
 </script>
 

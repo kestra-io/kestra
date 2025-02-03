@@ -19,6 +19,7 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
+    import {useStore} from "vuex";
     import {Bar} from "vue-chartjs";
     import Utils from "../../utils/utils.js";
     import {getScheme} from "../../utils/scheme.js";
@@ -60,6 +61,7 @@
             const route = useRoute();
             const router = useRouter();
             const {t} = useI18n({useScope: "global"});
+            const store = useStore();
 
             let duration = t("duration")
 
@@ -119,7 +121,7 @@
                         position: "right",
                     }
                 },
-            }))
+            }, store.getters["misc/theme"]));
 
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 

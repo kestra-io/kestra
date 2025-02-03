@@ -28,8 +28,11 @@
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
+    import {useStore} from "vuex";
     import {useRouter} from "vue-router";
     const router = useRouter();
+
+    const store = useStore();
 
     import Utils from "../../../../../utils/utils.js";
     import {getScheme} from "../../../../../utils/scheme.js";
@@ -227,7 +230,7 @@
                     });
                 }
             },
-        }),
+        }, store.getters["misc/theme"]),
     );
 </script>
 

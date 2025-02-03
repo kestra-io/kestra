@@ -30,6 +30,8 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
+    import {useStore} from "vuex";
+
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
@@ -39,6 +41,8 @@
     import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
+
+    const store = useStore();
 
     const props = defineProps({
         data: {
@@ -136,7 +140,7 @@
                     },
                 },
             },
-        }),
+        }, store.getters["misc/theme"]),
     );
 </script>
 

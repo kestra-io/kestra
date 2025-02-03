@@ -102,7 +102,7 @@
                     }
                 },
             },
-        });
+        }, store.getters["misc/theme"]);
     });
 
     function isDurationAgg() {

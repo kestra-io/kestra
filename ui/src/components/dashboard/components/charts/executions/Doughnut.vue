@@ -25,16 +25,18 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+    import {useRouter} from "vue-router";
 
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
-
     import Utils from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
-    import {useRouter} from "vue-router";
+
     const router = useRouter();
+    const store = useStore();
 
     import NoData from "../../../../layout/NoData.vue";
 
@@ -111,7 +113,7 @@
                     });
                 }
             },
-        }),
+        }, store.getters["misc/theme"]),
     );
 
     const centerPlugin = {

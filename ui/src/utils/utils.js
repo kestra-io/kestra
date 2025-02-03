@@ -229,7 +229,7 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
-        store.commit("miscs/setTheme", theme);
+        store.commit("misc/setTheme", theme);
         localStorage.setItem("theme", theme);
     }
 

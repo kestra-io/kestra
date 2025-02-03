@@ -30,9 +30,10 @@ export function tooltip(tooltipModel) {
     return undefined;
 }
 
-export function defaultConfig(override) {
+export function defaultConfig(override, theme) {
+    const protectedTheme = theme ?? Utils.getTheme();
     const color =
-        Utils.getTheme() === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
+        protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 
     return _merge(
         {

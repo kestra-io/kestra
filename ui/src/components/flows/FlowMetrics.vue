@@ -58,7 +58,7 @@
 
 <script>
     import {Bar} from "vue-chartjs";
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
@@ -80,9 +80,7 @@
                 "aggregatedMetric",
                 "tasksWithMetrics",
             ]),
-            theme() {
-                return localStorage.getItem("theme") || "light";
-            },
+            ...mapGetters("misc", ["theme"]),
             xGrid() {
                 return this.theme === "light"
                     ? {}
@@ -171,7 +169,7 @@
                             },
                         },
                     },
-                });
+                }, this.theme);
             },
             display() {
                 return this.$route.query.metric && this.$route.query.aggregation;

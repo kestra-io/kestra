@@ -77,7 +77,7 @@
                     }
                 },
             },
-        });
+        }, store.getters["misc/theme"]);
     });
 
     const centerPlugin = {

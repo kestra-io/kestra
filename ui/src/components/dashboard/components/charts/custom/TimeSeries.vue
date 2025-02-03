@@ -120,7 +120,7 @@
                     },
                 }),
             },
-        });
+        }, store.getters["misc/theme"]);
     });
 
     function isDuration(field) {

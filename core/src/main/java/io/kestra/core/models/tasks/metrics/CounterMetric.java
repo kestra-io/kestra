@@ -1,6 +1,5 @@
 package io.kestra.core.models.tasks.metrics;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.metrics.Counter;
@@ -24,10 +23,6 @@ public class CounterMetric extends AbstractMetric {
     public static final String TYPE = "counter";
 
     @NotNull
-    @JsonInclude
-    private final String type = TYPE;
-
-    @NotNull
     @EqualsAndHashCode.Exclude
     private Property<Double> value;
 
@@ -45,5 +40,9 @@ public class CounterMetric extends AbstractMetric {
         }
 
         return Counter.of(name.get(), value.get(), tagsAsStrings);
+    }
+
+    public String getType() {
+        return TYPE;
     }
 }

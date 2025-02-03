@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks.metrics;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -35,6 +36,10 @@ public abstract class AbstractMetric {
     protected Property<String> name;
 
     protected Property<Map<String, String>> tags;
+
+    @NotNull
+    @JsonInclude
+    private String type;
 
     public abstract AbstractMetricEntry<?> toMetric(RunContext runContext) throws IllegalVariableEvaluationException;
 

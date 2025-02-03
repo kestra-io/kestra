@@ -1,6 +1,5 @@
 package io.kestra.core.models.tasks.metrics;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.metrics.Timer;
@@ -25,10 +24,6 @@ public class TimerMetric extends AbstractMetric {
     public static final String TYPE = "timer";
 
     @NotNull
-    @JsonInclude
-    private final String type = TYPE;
-
-    @NotNull
     @EqualsAndHashCode.Exclude
     private Property<Duration> value;
 
@@ -46,5 +41,9 @@ public class TimerMetric extends AbstractMetric {
         }
 
         return Timer.of(name.get(), value.get(), tagsAsStrings);
+    }
+
+    public String getType() {
+        return TYPE;
     }
 }

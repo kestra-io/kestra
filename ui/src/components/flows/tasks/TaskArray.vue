@@ -28,6 +28,8 @@
     import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";
 
+    defineOptions({inheritAttrs: false});
+
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({modelValue: {type: Array, default: undefined}});
 

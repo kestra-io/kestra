@@ -1,8 +1,8 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
-            <el-button :icon="Menu">
-                {{ selectedDashboard ?? $t('default_dashboard') }}
+            <el-button :icon="Menu" class="main-button d-inline">
+                <span class="text-truncate">{{ selectedDashboard ?? $t('default_dashboard') }}</span>
             </el-button>
         </KestraIcon>
 
@@ -140,5 +140,13 @@
 
 .items {
     max-height: 160px !important; // 5 visible items
+}
+
+.main-button {
+    max-width: 300px;
+
+    span {
+        max-width: 250px;
+    }
 }
 </style>

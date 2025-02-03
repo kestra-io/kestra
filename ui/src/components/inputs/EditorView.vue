@@ -940,15 +940,13 @@
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
-        metadata.value = event;
-
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...event};
+            metadata.value = {...metadata.value, ...(event.concurrency.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
             validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event;
+            metadata.value = event.concurrency.limit === 0 ?  {concurrency: null} : event;
         }
     };
 

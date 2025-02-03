@@ -30,8 +30,6 @@
     import moment from "moment";
     import {Bar} from "vue-chartjs";
 
-    import {useStore} from "vuex";
-
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
@@ -39,10 +37,9 @@
     import Logs from "../../../../../utils/logs.js";
 
     import NoData from "../../../../layout/NoData.vue";
+    import {useTheme} from "../../../../../utils/utils.js";
 
     const {t} = useI18n({useScope: "global"});
-
-    const store = useStore();
 
     const props = defineProps({
         data: {
@@ -51,7 +48,7 @@
         },
     });
 
-    const theme = computed(() => store.getters["misc/theme"]);
+    const theme = useTheme();
 
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {

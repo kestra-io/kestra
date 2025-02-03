@@ -26,7 +26,7 @@
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import KestraUtils from "../../../../../utils/utils.js"
+    import KestraUtils, {useTheme} from "../../../../../utils/utils.js"
 
     const store = useStore();
 
@@ -50,7 +50,7 @@
         .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
     const yBShown = aggregator.length === 2;
 
-    const theme = computed(() => store.getters["misc/theme"]);
+    const theme = useTheme();
 
     const DEFAULTS = {
         display: true,

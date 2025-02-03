@@ -25,7 +25,7 @@
     import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
-    import Utils from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils.js";
 
     import {Doughnut, Pie} from "vue-chartjs";
 
@@ -56,7 +56,7 @@
 
     const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
 
-    const theme = computed(() => store.getters["misc/theme"]);
+    const theme = useTheme();
 
     const options = computed(() => {
         return defaultConfig({

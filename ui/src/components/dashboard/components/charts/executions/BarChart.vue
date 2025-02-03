@@ -28,13 +28,10 @@
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
-    import {useStore} from "vuex";
     import {useRouter} from "vue-router";
     const router = useRouter();
 
-    const store = useStore();
-
-    import Utils from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils.js";
     import {getScheme} from "../../../../../utils/scheme.js";
     import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
@@ -71,13 +68,15 @@
         },
     });
 
-    const theme = computed(() => store.getters["misc/theme"])
+    const theme = useTheme()
 
     const tooltipContent = ref("")
 
     const parsedData = computed(() => {
+        console.log("theme", theme.value)
         let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.executionCounts).forEach(function (state) {
+                console.log("theme", theme.value)
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,

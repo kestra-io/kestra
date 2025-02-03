@@ -32,7 +32,6 @@
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRouter} from "vue-router";
-    import {useStore} from "vuex";
     const router = useRouter();
 
     import {Bar} from "vue-chartjs";
@@ -41,12 +40,11 @@
 
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {getScheme} from "../../../../../utils/scheme.js";
+    import {useTheme} from "../../../../../utils/utils.js";
 
     import NoData from "../../../../layout/NoData.vue";
 
     const {t} = useI18n({useScope: "global"});
-
-    const store = useStore();
 
     const props = defineProps({
         data: {
@@ -59,7 +57,7 @@
         },
     });
 
-    const theme = computed(() => store.getters["misc/theme"]);
+    const theme = useTheme();
 
     const parsedData = computed(() => {
         const labels = Object.entries(props.data)

@@ -18,6 +18,7 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
+    import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
@@ -52,7 +53,7 @@
 
     const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
 
-    const theme = computed(() => store.getters["misc/theme"]);
+    const theme = useTheme();
 
     const options = computed(() => {
         return defaultConfig({

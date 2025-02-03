@@ -1,3 +1,5 @@
+import {computed} from "vue";
+import {useStore} from "vuex";
 import moment from "moment";
 import humanizeDuration from "humanize-duration";
 
@@ -307,4 +309,9 @@ export default class Utils {
             return "yyyy-MM-DD:HH:mm";
         }
     }
+}
+
+export const useTheme = () => {
+    const store = useStore();
+    return computed(() => store.getters["misc/theme"]);
 }

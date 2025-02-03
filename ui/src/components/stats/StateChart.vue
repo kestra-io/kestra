@@ -19,9 +19,8 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
-    import {useStore} from "vuex";
     import {Bar} from "vue-chartjs";
-    import Utils from "../../utils/utils.js";
+    import Utils, {useTheme} from "../../utils/utils.js";
     import {getScheme} from "../../utils/scheme.js";
     import {defaultConfig, tooltip, chartClick, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";
@@ -61,7 +60,6 @@
             const route = useRoute();
             const router = useRouter();
             const {t} = useI18n({useScope: "global"});
-            const store = useStore();
 
             let duration = t("duration")
 
@@ -69,7 +67,7 @@
             const tooltipContent = ref("");
 
             const dataReady = computed(() => props.data.length > 0)
-            const theme = computed(() => store.getters["misc/theme"]);
+            const theme = useTheme();
 
             const options = computed(() => defaultConfig({
                 barThickness: 4,

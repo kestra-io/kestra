@@ -108,6 +108,7 @@ export const setScheme = (value) => {
 
 export const getScheme = (theme, state, type = "executions") => {
     const scheme = localStorage.getItem(SCHEME) ?? "classic";
+    console.log(`scheme: ${scheme} - theme: ${theme} - type: ${type} - state: ${state} - OPTIONS: ${OPTIONS[scheme]?.[theme]?.[type]?.[state]}`);
 
     return OPTIONS[scheme]?.[theme]?.[type]?.[state];
 };

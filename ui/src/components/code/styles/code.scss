@@ -53,7 +53,8 @@ $code-font-sm: var(--el-font-size-small);
     font-size: $code-font-sm;
 }
 
-.delete {
+.delete,
+.reorder {
     cursor: pointer;
     padding-left: 0;
     color: $code-gray-700;
@@ -64,7 +65,8 @@ $code-font-sm: var(--el-font-size-small);
     :deep(*) {
         --el-disabled-text-color: #{$code-gray-700};
 
-        .el-input__inner {
+        .el-input__inner,
+        .el-textarea__inner {
             color: $code-gray-700;
             font-size: $code-font-sm;
         }

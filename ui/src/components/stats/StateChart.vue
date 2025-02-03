@@ -21,7 +21,7 @@
     import {useRoute, useRouter} from "vue-router"
     import {Bar} from "vue-chartjs";
     import Utils, {useTheme} from "../../utils/utils.js";
-    import {getScheme} from "../../utils/scheme.js";
+    import {useScheme} from "../../utils/scheme.js";
     import {defaultConfig, tooltip, chartClick, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";
 
@@ -68,6 +68,7 @@
 
             const dataReady = computed(() => props.data.length > 0)
             const theme = useTheme();
+            const scheme = useScheme();
 
             const options = computed(() => defaultConfig({
                 barThickness: 4,
@@ -131,7 +132,7 @@
                             if (accumulator[state] === undefined) {
                                 accumulator[state] = {
                                     label: state,
-                                    backgroundColor: getScheme(theme.value, state),
+                                    backgroundColor: scheme.value[state],
                                     yAxisID: "y",
                                     data: []
                                 };

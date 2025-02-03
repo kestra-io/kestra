@@ -32,7 +32,7 @@
     const router = useRouter();
 
     import Utils, {useTheme} from "../../../../../utils/utils.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
     import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
     const {t} = useI18n({useScope: "global"});
@@ -69,6 +69,7 @@
     });
 
     const theme = useTheme()
+    const scheme = useScheme();
 
     const tooltipContent = ref("")
 
@@ -80,7 +81,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getScheme(theme.value, state),
+                        backgroundColor: scheme.value[state],
                         yAxisID: "y",
                         data: [],
                     };

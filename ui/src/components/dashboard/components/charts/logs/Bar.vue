@@ -33,7 +33,7 @@
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 
     import NoData from "../../../../layout/NoData.vue";
@@ -49,6 +49,7 @@
     });
 
     const theme = useTheme();
+    const scheme = useScheme("logs");
 
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {
@@ -56,7 +57,7 @@
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getScheme(theme.value, state, "logs"),
+                        backgroundColor: scheme.value[state],
                         yAxisID: "y",
                         data: [],
                     };

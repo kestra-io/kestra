@@ -39,7 +39,7 @@
     import {barLegend} from "../legend.js";
 
     import {defaultConfig} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
     import {useTheme} from "../../../../../utils/utils.js";
 
     import NoData from "../../../../layout/NoData.vue";
@@ -58,6 +58,7 @@
     });
 
     const theme = useTheme();
+    const scheme = useScheme()
 
     const parsedData = computed(() => {
         const labels = Object.entries(props.data)
@@ -76,7 +77,7 @@
                     executionData[state] = {
                         label: state,
                         data: [],
-                        backgroundColor: getScheme(theme.value, state),
+                        backgroundColor: scheme.value[state],
                         stack: state,
                     };
                 }

@@ -32,10 +32,10 @@
     import {totalsLegend} from "../legend.js";
     import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
 
     const router = useRouter();
-
+    const scheme = useScheme();
 
     import NoData from "../../../../layout/NoData.vue";
 
@@ -69,7 +69,7 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getScheme(theme.value, state));
+        const backgroundColor = labels.map((state) => scheme.value[state]);
 
         const maxDataValue = Math.max(...data);
         const thicknessScale = data.map(

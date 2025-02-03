@@ -195,7 +195,7 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(theme) {
+    static switchTheme(store, theme) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
@@ -229,6 +229,7 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
+        store.commit("miscs/setTheme", theme);
         localStorage.setItem("theme", theme);
     }
 

@@ -105,7 +105,7 @@
         },
         methods: {
             displayApp() {
-                Utils.switchTheme();
+                Utils.switchTheme(this.$store);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";

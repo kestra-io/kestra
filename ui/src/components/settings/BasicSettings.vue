@@ -38,7 +38,7 @@
                                         label: $t('no_code.labels.yaml'),
                                         value: 'YAML'
 
-                                    }, 
+                                    },
                                     {
                                         label: $t('no_code.labels.no_code'),
                                         value: 'NO_CODE'
@@ -135,8 +135,8 @@
                             :max="50"
                         />
                     </Column>
-                    
-                    <Column :label="$t('settings.blocks.theme.fields.logs_font_size')"> 
+
+                    <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
                         <el-input-number
                             :model-value="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
@@ -312,7 +312,7 @@
                     };
                 }).sort((a, b) => a.offset - b.offset),
                 guidedTour: undefined,
-                now: this.$moment(), 
+                now: this.$moment(),
                 localeKey: this.$moment.locale(),
             };
         },
@@ -323,7 +323,7 @@
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-            
+
             this.pendingSettings.theme = Utils.getTheme();
             this.pendingSettings.editorTheme = Utils.getTheme("editorTheme")
 
@@ -363,7 +363,7 @@
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme("syncWithSystem");
+                    Utils.switchTheme(this.$store, "syncWithSystem");
                 }
             },
             onDateFormat(value) {
@@ -446,9 +446,9 @@
                     case "logsFontSize":
                         localStorage.setItem(key, this.pendingSettings[key])
                         this.$store.commit("layout/setLogsFontSize", this.pendingSettings[key])
-                        break   
+                        break
                     case "theme":
-                        Utils.switchTheme(this.pendingSettings[key]);
+                        Utils.switchTheme(this.$store, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -612,7 +612,7 @@
 
     .el-input__count {
         color: var(--bs-white) !important;
-        
+
         .el-input__count-inner {
             background: none !important;
         }

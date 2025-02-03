@@ -126,7 +126,8 @@
                     class: "menu-icon",
                 },
                 child: [{
-
+                    // here we use only one component for all bookmarks
+                    // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
                 }]
             }] : []),

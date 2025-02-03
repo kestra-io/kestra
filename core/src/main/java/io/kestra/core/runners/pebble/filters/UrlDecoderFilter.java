@@ -12,8 +12,8 @@ import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -31,10 +31,7 @@ public class UrlDecoderFilter implements Filter {
             return null;
         }
         String arg = (String) input;
-        try {
-            arg = URLDecoder.decode(arg, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-        }
+        arg = URLDecoder.decode(arg, StandardCharsets.UTF_8);
         return arg;
     }
 

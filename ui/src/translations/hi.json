@@ -1068,19 +1068,22 @@
         "main": "मुख्य गुणधर्म",
         "error_handlers": "त्रुटि हैंडलर",
         "tasks": "कार्य",
-        "advanced": "उन्नत कॉन्फ़िगरेशन"
+        "advanced": "उन्नत कॉन्फ़िगरेशन",
+        "finally": "अंत में"
       },
       "creation": {
         "select": "किसी {section} का चयन करें",
         "tasks": "कार्य जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
-        "triggers": "ट्रिगर जोड़ें"
+        "triggers": "ट्रिगर जोड़ें",
+        "finally": "अंत में एक finally ब्लॉक जोड़ें"
       },
       "save": {
         "tasks": "कार्य सहेजें",
         "triggers": "ट्रिगर सहेजें",
         "error handlers": "त्रुटि हैंडलर सहेजें",
-        "input": "इनपुट सहेजें"
+        "input": "इनपुट सहेजें",
+        "finally": "कार्य सहेजें"
       },
       "labels": {
         "no_code": "कोड संपादक नहीं",

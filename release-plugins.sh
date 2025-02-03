@@ -19,7 +19,8 @@
 #   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT
 # To release a specific plugin:
 #   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT plugin-kubernetes
-
+# To release specific plugins from file:
+#   ./release-plugins.sh --release-version=0.20.0 --plugin-file .plugins
 #===============================================================================
 
 set -e;
@@ -43,6 +44,7 @@ usage() {
     echo "Options:"
     echo "  --release-version <version>  Specify the release version (required)."
     echo "  --next-version    <version>  Specify the next version (required)."
+    echo "  --plugin-file                File containing the plugin list (default: .plugins)"
     echo "  --dry-run                    Specify to run in DRY_RUN."
     echo "  -y, --yes                    Automatically confirm prompts (non-interactive)."
     echo "  -h, --help                   Show this help message and exit."
@@ -79,6 +81,14 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --next-version=*)
             NEXT_VERSION="${1#*=}"
+            shift
+            ;;
+        --plugin-file)
+            PLUGIN_FILE="$2"
+            shift 2
+            ;;
+        --plugin-file=*)
+            PLUGIN_FILE="${1#*=}"
             shift
             ;;
         --dry-run)

@@ -1,10 +1,15 @@
-# Custom Dashboard Feature
+# Custom Dashboards as Code
 
-Welcome to the Custom Dashboard! This feature allows you to create and manage personalized dashboards to monitor and visualize your data effectively.
+Build custom dashboards to track workflow `executions`, `logs` and `metrics` filtered by specific namespaces or labels and showing data you care about.
 
-## Create a new Dashboard as code
+The declarative syntax allows you to manage dashboards as code — you can version control that dashboard definition alongside your flows.
 
-Below is an example of a dashboard definition that displays executions over time, a table that uses metrics to display the sum of sales per namespace, and a table that shows the log count by level per namespace:
+## Example
+
+Below is an example dashboard definition that displays:
+- **time series** of **executions** over time
+- **table** with specific **metrics** aggregated per namespace
+- **table** with **logs** aggregated per log level and namespace.
 
 ```yaml
 title: Getting Started
@@ -84,19 +89,18 @@ charts:
             - prod_graph
 ```
 
-To see all available properties to configure a custom dashboard as code, see examples provided in the [Enterprise Edition Examples](https://github.com/kestra-io/enterprise-edition-examples) repository.
+For more examples, check our [GitHub repository](https://github.com/kestra-io/enterprise-edition-examples) and explore Dashboard Blueprints.
 
 ## Querying data
 
-The `data` property of a chart defines the type of data that is queried and displayed. The `type` determines which columns are displayed.
+The `data` property of a chart defines the type of data that is queried. The `type` determines which columns are displayed.
 
 Dashboards can query data from these source `types`:
 - `type: io.kestra.plugin.core.dashboard.data.Executions`: data related to your workflow executions
-- `type: io.kestra.plugin.core.dashboard.data.Logs`: logs produced by your workflows
-- `type: io.kestra.plugin.core.dashboard.data.Metrics`: metrics emitted by your plugins
+- `type: io.kestra.plugin.core.dashboard.data.Logs`: logs produced by your executions
+- `type: io.kestra.plugin.core.dashboard.data.Metrics`: metrics emitted during executions.
 
-After defining the data source, specify the columns to display in the chart. Each column is defined by the `field` and may include additional optional properties.
-
+After defining the data source, specify the **columns** to display in the chart. Each column is defined by the `field` and may include additional optional properties.
 
 | Property | Description                                                                                                    |
 | --- |----------------------------------------------------------------------------------------------------------------|
@@ -107,7 +111,7 @@ After defining the data source, specify the columns to display in the chart. Eac
 | `columnAlignment` | Specifies the alignment of the column in the table: supported alignments include `LEFT`, `RIGHT`, `CENTER`               |
 
 
-You can also use the `where` property to set conditions that filter the result set before displaying it in the chart. Filters can apply to any column in the data source. For shared logic, use the `AND` operator in the `where` property to combine several conditions. If multiple conditions are needed with different logic, use the `type: OR` property.
+You can also use the `where` property to set conditions that filter the result set before displaying it in the chart. Filters can apply to any column in the data source. For shared logic, use the `AND` operator in the `where` property to combine several conditions. If multiple conditions are needed with a different logic, use the `type: OR` property.
 
 Available filter types include:
 - `CONTAINS`

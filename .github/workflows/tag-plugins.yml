@@ -1,4 +1,4 @@
-name: Update and Tag Kestra Plugins
+name: Set Version and Tag Plugins
 
 on:
   workflow_dispatch:
@@ -21,6 +21,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          caches-enabled: true
+
       # Get Plugins List
       - name: Get Plugins List
         uses: ./.github/actions/plugins-list
@@ -28,8 +44,13 @@ jobs:
         with:
           plugin-version: 'LATEST'
 
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       # Execute
-      - name: Tag Plugins
+      - name: Set Version and Tag Plugins
         if: ${{ github.event.inputs.dryRun == 'false' }}
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
@@ -40,7 +61,7 @@ jobs:
           --yes \
            ${{ steps.plugins-list.outputs.repositories }}
 
-      - name: Run Gradle Release (DRY_RUN)
+      - name: Set Version and Tag Plugins (DRY_RUN)
         if: ${{ github.event.inputs.dryRun == 'true' }}
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}

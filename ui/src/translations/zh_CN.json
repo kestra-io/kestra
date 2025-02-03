@@ -1068,19 +1068,22 @@
         "main": "主要属性",
         "error_handlers": "错误处理程序",
         "tasks": "任务",
-        "advanced": "高级配置"
+        "advanced": "高级配置",
+        "finally": "最后"
       },
       "creation": {
         "select": "选择一个{section}",
         "tasks": "添加任务",
         "error handlers": "添加错误处理程序",
-        "triggers": "添加一个trigger"
+        "triggers": "添加一个trigger",
+        "finally": "添加一个finally块"
       },
       "save": {
         "tasks": "保存任务",
         "triggers": "保存 trigger",
         "error handlers": "保存错误处理程序",
-        "input": "保存输入"
+        "input": "保存输入",
+        "finally": "保存任务"
       },
       "labels": {
         "no_code": "无代码编辑器",

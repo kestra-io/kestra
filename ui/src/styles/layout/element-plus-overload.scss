@@ -470,6 +470,19 @@ form.ks-horizontal {
             opacity: 0.5;
         }
     }
+
+    td {
+        .el-tag {
+            margin-right: .3rem;
+        }
+
+        a {
+            color: var(--ks-content-primary);
+            &:hover{
+                text-decoration: underline;
+            }
+        }
+    }
 }
 
 // tabs

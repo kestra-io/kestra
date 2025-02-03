@@ -15,6 +15,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.trace.TracerFactory;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.opentelemetry.api.OpenTelemetry;
@@ -153,7 +154,7 @@ public final class ExecutableUtils {
                 throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
             }
 
-            List<Label> newLabels = inheritLabels ? new ArrayList<>(currentExecution.getLabels()) : new ArrayList<>(systemLabels(currentExecution));
+            List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
             if (labels != null) {
                 labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
             }
@@ -199,6 +200,16 @@ public final class ExecutableUtils {
                 .execution(execution)
                 .build());
         }));
+    }
+
+    private static List<Label> filterLabels(List<Label> labels, Flow flow) {
+        if (ListUtils.isEmpty(flow.getLabels())) {
+            return labels;
+        }
+        
+        return labels.stream()
+            .filter(label -> flow.getLabels().stream().noneMatch(flowLabel -> flowLabel.key().equals(label.key())))
+            .toList();
     }
 
     private static List<Label> systemLabels(Execution execution) {

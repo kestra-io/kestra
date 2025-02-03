@@ -1068,19 +1068,22 @@
         "main": "Propriedades principais",
         "error_handlers": "Manipuladores de Erros",
         "tasks": "Tarefas",
-        "advanced": "Configuração avançada"
+        "advanced": "Configuração avançada",
+        "finally": "Finalmente"
       },
       "creation": {
         "select": "Selecione uma {section}",
         "tasks": "Adicionar uma task",
         "error handlers": "Adicionar um manipulador de erro",
-        "triggers": "Adicionar um trigger"
+        "triggers": "Adicionar um trigger",
+        "finally": "Adicionar um bloco finally"
       },
       "save": {
         "tasks": "Salvar task",
         "triggers": "Salvar trigger",
         "error handlers": "Salvar manipulador de erro",
-        "input": "Salvar input"
+        "input": "Salvar input",
+        "finally": "Salvar task"
       },
       "labels": {
         "no_code": "Editor Sem Código",

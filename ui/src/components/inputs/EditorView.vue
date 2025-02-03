@@ -166,6 +166,7 @@
                 :flow="flowYaml"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
+                @reorder="(yaml) => handleReorder(yaml)"
                 @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
@@ -957,6 +958,12 @@
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
+    };
+
+    const handleReorder = (yaml) => {
+        flowYaml.value = yaml;
+        haveChange.value = true;
+        save()
     };
 
     const editorUpdate = (event) => {

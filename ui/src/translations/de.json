@@ -1068,19 +1068,22 @@
         "main": "Haupteigenschaften",
         "error_handlers": "Fehlerbehandler",
         "tasks": "Aufgaben",
-        "advanced": "Erweiterte Konfiguration"
+        "advanced": "Erweiterte Konfiguration",
+        "finally": "Schließlich"
       },
       "creation": {
         "select": "Wählen Sie einen {section} aus",
         "tasks": "Aufgabe hinzufügen",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
-        "triggers": "Füge einen Trigger hinzu"
+        "triggers": "Füge einen Trigger hinzu",
+        "finally": "Fügen Sie einen Finally-Block hinzu"
       },
       "save": {
         "tasks": "Aufgabe speichern",
         "triggers": "Speicher Trigger",
         "error handlers": "Fehlerbehandlungsroutine speichern",
-        "input": "Eingabe speichern"
+        "input": "Eingabe speichern",
+        "finally": "Aufgabe speichern"
       },
       "labels": {
         "no_code": "Kein Code-Editor",

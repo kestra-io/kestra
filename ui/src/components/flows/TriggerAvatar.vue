@@ -11,7 +11,7 @@
                     :hide-after="0"
                 >
                     <template #reference>
-                        <el-button @click="copyLink(trigger)">
+                        <el-button @click="copyLink(trigger)" size="small">
                             <task-icon :only-icon="true" :cls="trigger?.type" :icons="icons" />
                         </el-button>
                     </template>

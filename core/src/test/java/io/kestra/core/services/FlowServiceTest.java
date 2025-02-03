@@ -22,6 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -323,7 +324,7 @@ class FlowServiceTest {
     }
 
     @Test
-    void checkValidSubflowsNotFound() {
+    void checkSubflowNotFound() {
         Flow flow = create("mainFlow", "task", 1).toBuilder()
             .tasks(List.of(
                 io.kestra.plugin.core.flow.Subflow.builder()
@@ -341,5 +342,24 @@ class FlowServiceTest {
 
         assertThat(exception.getConstraintViolations().size(), is(1));
         assertThat(exception.getConstraintViolations().iterator().next().getMessage(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
+    }
+
+    @Test
+    void checkValidSubflow() {
+        Flow subflow = create("existingSubflow", "task", 1);
+        flowRepository.create(subflow, subflow.generateSource(), subflow);
+
+        Flow flow = create("mainFlow", "task", 1).toBuilder()
+            .tasks(List.of(
+                io.kestra.plugin.core.flow.Subflow.builder()
+                    .id("subflowTask")
+                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
+                    .namespace("io.kestra.unittest")
+                    .flowId("existingSubflow")
+                    .build()
+            ))
+            .build();
+
+        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow));
     }
 }

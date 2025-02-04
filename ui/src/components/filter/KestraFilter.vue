@@ -156,7 +156,7 @@
     import Dashboards from "./segments/Dashboards.vue";
     import KestraIcon from "../Kicon.vue";
     import DateRange from "../layout/DateRange.vue";
-    import Status from "../../components/Status.vue";
+    import Status from "./components/Status.vue";
 
     import {Magnify} from "./utils/icons";
 
@@ -459,18 +459,16 @@
             break;
 
         case "state":
-            valueOptions.value = (props.values?.state || VALUES.EXECUTION_STATES).
-                map(value => {
-                    value.label = {
-                        "component": shallowRef(Status),
-                        "props": {
-                            "class": "justify-content-center",
-                            "status": value.value,
-                            "size": "small"
-                        }
+            valueOptions.value = (props.values?.state || VALUES.EXECUTION_STATES).map(value => {
+                value.label = {
+                    "component": shallowRef(Status),
+                    "props": {
+                        "status": value.value,
+                        "label": true,
                     }
-                    return value;
-                });
+                };
+                return value;
+            });
             break;
 
         case "trigger_state":

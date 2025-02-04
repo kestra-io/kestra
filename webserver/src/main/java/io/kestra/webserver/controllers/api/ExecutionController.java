@@ -576,7 +576,7 @@ public class ExecutionController {
         List<Label> parsedLabels = parseLabels(labels);
         Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
-            .validateExecutionInputs(flow.getInputs(), execution, inputs)
+            .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
             .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
     }
 

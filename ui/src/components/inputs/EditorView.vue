@@ -96,14 +96,6 @@
                 :infos="flowInfos"
             />
 
-            <el-tooltip :content="$t('export_to_file')" :hide-after="0" :persistent="false" effect="light">
-                <el-button
-                    v-if="!isNamespace"
-                    :icon="Download"
-                    @click="exportYaml"
-                />
-            </el-tooltip>
-
             <EditorButtons
                 v-if="isCreating || openedTabs.length"
                 :is-creating="props.isCreating"

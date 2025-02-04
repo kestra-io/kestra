@@ -383,7 +383,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
     void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();

@@ -7,7 +7,7 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.annotation.WebServerEnabled;
-import io.kestra.webserver.controllers.api.BlueprintController.BlueprintItem;
+import io.kestra.webserver.controllers.api.BlueprintController.ApiBlueprintItem;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.type.Argument;
@@ -60,14 +60,14 @@ public class FlowAutoLoaderService {
             // Loads all flows.
             Integer count = Mono.from(httpClient
                     .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/versions/" + versionProvider.getVersion() + "?tags=getting-started"),
-                        Argument.of(PagedResults.class, BlueprintItem.class)
+                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/kinds/flow/versions/" + versionProvider.getVersion() + "?tags=getting-started"),
+                        Argument.of(PagedResults.class, ApiBlueprintItem.class)
                     ))
-                .map(response -> ((PagedResults<BlueprintItem>)response.body()).getResults())
+                .map(response -> ((PagedResults<ApiBlueprintItem>)response.body()).getResults())
                 .flatMapIterable(Function.identity())
                 .flatMap(it -> Mono.from(httpClient
                     .exchange(
-                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/" + it.getId() + "/versions/" + versionProvider.getVersion() + "/flow"),
+                        HttpRequest.create(HttpMethod.GET, "/v1/blueprints/kinds/flow/" + it.getId() + "/versions/" + versionProvider.getVersion() + "/source"),
                         Argument.STRING
                     )).mapNotNull(response -> {
                         String body = response.body();

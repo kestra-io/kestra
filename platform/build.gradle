@@ -13,27 +13,27 @@ javaPlatform {
 dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.16"
-    def protobufVersion = "3.25.5"
-    def bouncycastleVersion = "1.79"
+    def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
+    def bouncycastleVersion = "1.80"
     def aetherVersion = "1.1.0"
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.19.0"
     def opensearchRestVersion = "2.18.0"
-    def flyingSaucerVersion = "9.11.2"
+    def flyingSaucerVersion = "9.11.3"
     def jacksonVersion = "2.18.2"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
-    api platform("io.micronaut.platform:micronaut-platform:4.7.3")
+    api platform("io.micronaut.platform:micronaut-platform:4.7.4")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.52.0')
-    api platform("com.azure:azure-sdk-bom:1.2.30")
-    api platform('software.amazon.awssdk:bom:2.29.37')
+    api platform('com.google.cloud:libraries-bom:26.53.0')
+    api platform("com.azure:azure-sdk-bom:1.2.31")
+    api platform('software.amazon.awssdk:bom:2.30.11')
 
 
     constraints {
@@ -66,7 +66,10 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.33.7'
+        api 'software.amazon.awssdk.crt:aws-crt:0.33.11'
+
+        // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
+        api "io.micrometer:micrometer-core:1.14.3"
 
         // Other libs
         api("org.projectlombok:lombok:1.18.36")
@@ -77,7 +80,7 @@ dependencies {
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
-        api group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.4.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.18.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
@@ -90,12 +93,12 @@ dependencies {
         api "org.eclipse.aether:aether-transport-file:$aetherVersion"
         api "org.eclipse.aether:aether-transport-http:$aetherVersion"
         api 'org.apache.maven:maven-aether-provider:3.3.9'
-        api 'com.github.oshi:oshi-core:6.6.5'
+        api 'com.github.oshi:oshi-core:6.6.6'
         api 'io.pebbletemplates:pebble:3.2.2'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.9.0'
+        api 'nl.basjes.gitignore:gitignore-reader:1.10.0'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion
@@ -104,7 +107,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
-        api 'org.postgresql:postgresql:42.7.4'
+        api 'org.postgresql:postgresql:42.7.5'
         api 'com.github.docker-java:docker-java:3.4.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.1'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
@@ -115,7 +118,7 @@ dependencies {
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.3'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.3'
-        api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.1.8'
+        api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.0'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
 
@@ -123,7 +126,7 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.19.16")
+        api ("org.jooq:jooq:3.19.18")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"

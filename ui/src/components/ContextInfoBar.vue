@@ -30,10 +30,14 @@
             </template>
             <span class="versionNumber">{{ configs?.version }}</span>
         </el-tooltip>
+        <el-button class="theme-switcher" @click="onSwitchTheme">
+            <WeatherNight v-if="themeIsDark" />
+            <WeatherSunny v-else />
+        </el-button>
     </div>
     <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <div :style="{overflow: 'hidden'}">
-            <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
+            <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
                 <Close />
             </button>
             <ContextDocs v-if="activeTab === 'docs'" />
@@ -59,16 +63,20 @@
     import Calendar from "vue-material-design-icons/Calendar.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
+    import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
 
     import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import Utils from "../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
     const store = useStore();
 
-    const configs = computed(() => store.state.misc.configs);
+    const configs = computed(() => store.getters["misc/configs"]);
+    const activeTab = computed(() => store.getters["misc/contextInfoBarOpenTab"])
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
@@ -117,8 +125,6 @@
 
     const panelWidth = ref(640)
 
-    const activeTab = ref("")
-
     const {startResizing, resizing} = useResizablePanel(activeTab)
 
     function useResizablePanel(localActiveTab: Ref<string>) {
@@ -155,10 +161,17 @@
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            activeTab.value = ""
+            store.commit("misc/setContextInfoBarOpenTab", "")
         } else {
-            activeTab.value = tab
+            store.commit("misc/setContextInfoBarOpenTab", tab)
         }
+    }
+
+    const themeIsDark = ref(localStorage.getItem("theme") === "dark")
+
+    const onSwitchTheme = () => {
+        themeIsDark.value = !themeIsDark.value;
+        Utils.switchTheme(themeIsDark.value ? "dark" : "light");
     }
 </script>
 
@@ -215,6 +228,10 @@
             color: var(--ks-content-tertiary);
             opacity: .4;
             margin-top: 1rem;
+        }
+
+        .theme-switcher {
+            transform: rotate(-90deg);
         }
 
         .context-button-icon {

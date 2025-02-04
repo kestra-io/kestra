@@ -54,7 +54,7 @@ public class HttpResponse<T> {
                 null
             )
             .headers(HttpService.toHttpHeaders(response.getHeaders()))
-            .body(response instanceof ClassicHttpResponse classicHttpResponse ?
+            .body(response instanceof ClassicHttpResponse classicHttpResponse && classicHttpResponse.getEntity() != null ?
                 IOUtils.toByteArray(classicHttpResponse.getEntity().getContent()) :
                 null
             )

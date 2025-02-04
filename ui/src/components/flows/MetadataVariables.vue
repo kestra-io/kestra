@@ -48,7 +48,7 @@
                 </el-form-item>
             </el-form>
         </drawer>
-        <div v-if="variables">
+        <div v-if="variables" class="mb-3">
             <div
                 class="d-flex w-100 mb-2"
                 v-for="(value, index) in newVariables"
@@ -76,7 +76,6 @@
         <div v-else class="d-flex justify-content-center">
             <el-button
                 :icon="Plus"
-                type="success"
                 class="w-25"
                 @click="addVariable"
             >

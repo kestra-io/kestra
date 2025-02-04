@@ -95,11 +95,6 @@ public class TriggerController {
             if (flow.isEmpty()) {
                 // Warn instead of throwing to avoid blocking the trigger UI
                 log.warn(String.format("Flow %s not found for trigger %s", tc.getFlowId(), tc.getTriggerId()));
-                triggers.add(Triggers.builder()
-                    .abstractTrigger(null)
-                    .triggerContext(tc)
-                    .build()
-                );
 
                 return;
             }

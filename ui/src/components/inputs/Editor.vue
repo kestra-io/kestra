@@ -35,8 +35,11 @@
                 </div>
             </slot>
         </nav>
-        <slot name="absolute" />
-        <div class="editor-container" ref="container" :class="containerClass">
+        <div class="editor-absolute-container pe-none">
+            <slot name="absolute" />
+        </div>
+        <span v-if="label" class="label">{{ label }}</span>
+        <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
                     ref="monacoEditor"
@@ -98,6 +101,8 @@
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
+            label: {type: String, default: undefined},
+            shouldFocus: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -207,6 +212,7 @@
                         alwaysConsumeMouseWheel: false,
                     };
                     options.renderSideBySide = this.diffSideBySide;
+                    options.useInlineViewWhenSpaceIsLimited = false;
                 }
 
                 if (this.minimap === false) {
@@ -260,11 +266,13 @@
                         this.focus = false;
                     });
 
-                    this.editor.onDidFocusEditorText?.(() => {
-                        this.focus = true;
-                    });
-
-                    this.$refs.monacoEditor.focus();
+                    if(this.shouldFocus){                
+                        this.editor.onDidFocusEditorText?.(() => {
+                            this.focus = true;
+                        });
+                        
+                        this.$refs.monacoEditor.focus();
+                    }
                 }
 
                 if (!this.readOnly) {
@@ -474,6 +482,10 @@
     };
 </script>
 
+<style scoped lang="scss">
+@import "../code/styles/code.scss";
+</style>
+
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
@@ -501,6 +513,17 @@
         html.dark & {
             background-color: var(--bs-gray-100);
         }
+    }
+
+    .editor-absolute-container {
+        position: absolute;
+        top: 8px;
+        right: 20px;
+        z-index: 10;
+    }
+
+    .editor-absolute-container > * {
+        pointer-events: auto;
     }
 
     .editor-container {

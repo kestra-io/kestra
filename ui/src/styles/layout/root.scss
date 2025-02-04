@@ -94,13 +94,13 @@
 $logLevels: "trace", "debug", "info", "warn", "error";
 @each $logLevel in $logLevels {
     .log-border-#{$logLevel} {
-        border-color: var(--ks-border-#{$logLevel}) !important;
+        border-color: var(--ks-log-border-#{$logLevel}) !important;
     }
     .log-bg-#{$logLevel} {
-        background-color: var(--ks-background-#{$logLevel}) !important;
+        background-color: var(--ks-log-background-#{$logLevel}) !important;
     }
     .log-content-#{$logLevel} {
-        color: var(--ks-content-#{$logLevel}) !important;
+        color: var(--ks-log-content-#{$logLevel}) !important;
     }
 }
 

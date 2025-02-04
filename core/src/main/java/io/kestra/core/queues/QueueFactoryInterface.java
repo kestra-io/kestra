@@ -26,6 +26,7 @@ public interface QueueFactoryInterface {
     String TRIGGER_NAMED = "triggerQueue";
     String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
     String CLUSTER_EVENT_NAMED = "clusterEventQueue";
+    String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
 
     QueueInterface<Execution> execution();
 
@@ -58,4 +59,6 @@ public interface QueueFactoryInterface {
     WorkerTriggerResultQueueInterface workerTriggerResultQueue();
 
     QueueInterface<SubflowExecutionResult> subflowExecutionResult();
+
+    QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();
 }

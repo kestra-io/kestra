@@ -1,6 +1,7 @@
 package io.kestra.core.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -93,7 +94,7 @@ public class HttpRequest {
             .build();
     }
 
-    public HttpUriRequest to() throws IOException {
+    public HttpUriRequest to(RunContext runContext) throws IOException {
         HttpUriRequestBase builder = new HttpUriRequestBase(this.method, this.uri);
 
         // headers
@@ -102,6 +103,10 @@ public class HttpRequest {
                 .forEach((key, value) -> value
                     .forEach(headerValue -> builder.addHeader(key, headerValue))
                 );
+        }
+
+        if (runContext.getTraceParent() != null) {
+            builder.addHeader("traceparent", runContext.getTraceParent());
         }
 
         // body

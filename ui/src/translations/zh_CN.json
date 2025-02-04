@@ -262,11 +262,13 @@
       "header": {
         "catch phrase": {
           "1": "第一步总是最难的。",
-          "2": "探索蓝图以启动你的下一个流程。"
+          "2": "探索蓝图以启动您的下一个{kind}。"
         },
         "alt": "蓝图图标"
       },
-      "empty": "没有可显示的blueprints。"
+      "empty": "没有可显示的blueprints。",
+      "custom": "自定义blueprints",
+      "community": "社区"
     },
     "use": "使用",
     "plugins": {
@@ -288,7 +290,7 @@
     "template creation": "模板创建",
     "templates": "模板",
     "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
-    "no result": "没有日志发出",
+    "no result": "没有结果显示。",
     "trigger": "触发器",
     "triggers": "触发器",
     "trigger details": "触发器详情",
@@ -298,7 +300,6 @@
     "Fold auto": "编辑器：自动折叠多行",
     "Fold content lines": "折叠多行字符串",
     "Unfold content lines": "展开多行字符串",
-    "Max displayable": "最大可显示",
     "Total": "总计",
     "sub flow": "子流程",
     "execute": "执行",
@@ -435,10 +436,7 @@
     "show documentation": "显示文档",
     "focus task": "点击任何元素以查看其文档。",
     "validate": "验证",
-    "add global error handler": "添加全局错误处理程序",
     "add error handler": "添加错误处理程序",
-    "add trigger": "添加触发器",
-    "edit metadata": "编辑元数据",
     "taskDefaults": "任务默认值",
     "disabled": "禁用",
     "before": "之前",
@@ -528,7 +526,6 @@
     "worker group": "工作组",
     "version": "版本",
     "services": "服务",
-    "cluster": "集群",
     "server type": "服务器类型",
     "hostname": "主机名",
     "port": "端口",
@@ -649,7 +646,7 @@
     "welcome": {
       "tutorial": {
         "title": "教程",
-        "text": "* [视频教程](https://kestra.io/tutorial-videos/all)\n* [文档](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">视频教程</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">文档</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>"
       },
       "tour": {
         "title": "开始产品导览",
@@ -874,7 +871,8 @@
       "see_all": "查看全部",
       "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下执行总次数的结果。",
       "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数之和除以终止状态下执行总次数的结果。",
-      "preview": "仪表板预览"
+      "preview": "仪表板预览",
+      "click_chart_preview": "单击图表源代码以查看预览"
     },
     "delete_log": "您确定要删除这个log吗？",
     "docs": "文档",
@@ -889,7 +887,6 @@
     "concurrency": "并发",
     "open sidebar": "打开侧边栏",
     "close sidebar": "关闭侧边栏",
-    "change_status": "更改状态",
     "in-our-documentation": "在我们的文档中。",
     "read-more": "了解更多关于",
     "flow-dependencies": "依赖项",
@@ -1070,24 +1067,101 @@
         "triggers": "触发器",
         "main": "主要属性",
         "error_handlers": "错误处理程序",
-        "tasks": "任务"
+        "tasks": "任务",
+        "advanced": "高级配置",
+        "finally": "最后"
       },
       "creation": {
         "select": "选择一个{section}",
         "tasks": "添加任务",
         "error handlers": "添加错误处理程序",
-        "triggers": "添加一个trigger"
+        "triggers": "添加一个trigger",
+        "finally": "添加一个finally块"
       },
       "save": {
         "tasks": "保存任务",
-        "triggers": "保存 trigger"
+        "triggers": "保存 trigger",
+        "error handlers": "保存错误处理程序",
+        "input": "保存输入",
+        "finally": "保存任务"
       },
       "labels": {
         "no_code": "无代码编辑器",
-        "yaml": "YAML编辑器"
+        "yaml": "YAML编辑器",
+        "label": "标签",
+        "variable": "变量"
       },
-      "adding": "+ 添加{what}"
+      "adding": "+ 添加{what}",
+      "adding_default": "+ 添加新value"
     },
-    "export_to_file": "导出到文件"
+    "export_to_file": "导出到文件",
+    "change state current state": "当前状态是：",
+    "create_dashboard": "创建仪表板",
+    "instance": "实例",
+    "demos": {
+      "namespace": {
+        "plugin-defaults": {
+          "title": "使用插件默认值标准化配置",
+          "message": "在 Kestra Enterprise Edition 中，您可以设置特定于 namespace 的插件默认值，从而减少每个 flow 中重复设置的需求。这种集中的插件管理强制执行一致的配置，允许安全引用机密或变量，并简化工作流的维护。"
+        },
+        "audit-logs": {
+          "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。",
+          "title": "在一个地方跟踪所有更改"
+        },
+        "secrets": {
+          "title": "以安全方式管理Secrets",
+          "message": "在 Kestra Enterprise Edition 中，您可以在 namespace 级别存储和控制机密，从而最大限度地降低风险并确保每个团队的凭据保持隔离。得益于嵌套层次结构，您还可以在父 namespace 中配置凭据，并且它们将被所有子 namespace 继承。对专用机密管理器和细粒度的 namespace 级别权限设置的支持进一步增强了安全性和合规性。"
+        },
+        "variables": {
+          "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。",
+          "title": "集中管理您的变量"
+        },
+        "edit": {
+          "message": "在 Kestra 企业版中，namespace 提供了高级的隔离和治理功能，用于管理大规模的密钥、变量和插件默认值。管理员可以为每个 namespace 配置自定义密钥管理器、隔离存储后端、专用 worker 组以及细粒度权限。这确保了密钥、变量和插件配置在不同团队和项目中保持安全且易于维护。",
+          "title": "升级您的Namespace管理"
+        }
+      },
+      "instance": {
+        "title": "管理您的实例中的基础设施",
+        "message": "Kestra Enterprise Edition 提供一个操作仪表板，帮助您观察平台的健康状况并跟踪所有服务（如 Workers、Schedulers 和 Executors）的正常运行时间指标。在同一页面，您还可以创建公告以通知用户计划中的停机时间，并且可以进入维护模式，将所有服务和工作流执行暂时置于 PAUSED 状态以进行升级。"
+      },
+      "audit-logs": {
+        "message": "Kestra Enterprise Edition记录每个活动，提供强大且不可更改的记录，使得跟踪更改、保持合规性和解决问题变得容易。",
+        "title": "使用审计日志跟踪更改"
+      },
+      "blueprints": {
+        "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。",
+        "title": "添加自定义蓝图"
+      },
+      "enterprise_edition": "企业版",
+      "IAM": {
+        "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
+        "message": "Kestra 企业版具有内置的 IAM 功能，包括单点登录 (SSO)、SCIM 目录同步和基于角色的访问控制 (RBAC)，可以与多个身份提供商集成，并允许您为用户和服务帐户分配细粒度的权限。"
+      },
+      "tenants": {
+        "title": "在独立的tenant中管理工作流",
+        "message": "Kestra 企业版支持多租户，为不同的团队或项目提供完全隔离的环境，每个环境都有自己的资源，如专用的worker组、密钥和内部存储后端。"
+      },
+      "get_a_demo_button": "获取演示",
+      "apps": {
+        "title": "使用 Kestra 构建自定义应用程序",
+        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。"
+      }
+    },
+    "apps": "应用程序",
+    "editor_shortcuts": {
+      "save_flow": "保存flow",
+      "comment_uncomment": "注释/取消注释",
+      "duplicate_cursor": "复制光标",
+      "uncomment": "取消注释",
+      "label": "键盘快捷键",
+      "fold_unfold": "折叠/展开代码",
+      "comment": "评论",
+      "move_line": "移动行",
+      "command_palette": "显示命令面板"
+    },
+    "something_went_wrong": {
+      "loading_execution": "加载执行时出现问题"
+    }
   }
 }

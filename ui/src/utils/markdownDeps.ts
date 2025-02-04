@@ -8,6 +8,13 @@ import {createHighlighterCore} from "shiki/core";
 import githubDark from "shiki/themes/github-dark.mjs";
 import githubLight from "shiki/themes/github-light.mjs";
 import {linkTag} from "./markdown_plugins/link";
+import yaml from "shiki/langs/yaml.mjs";
+import python from "shiki/langs/python.mjs";
+import javascript from "shiki/langs/javascript.mjs";
+import {createOnigurumaEngine} from "shiki/engine-oniguruma.mjs";
+
+const langs = [yaml, python, javascript]
+const onigurumaEngine = createOnigurumaEngine(() => import("shiki/wasm"));
 
 export {
     markdownIt,
@@ -19,5 +26,7 @@ export {
     createHighlighterCore,
     githubDark,
     githubLight,
-    linkTag
+    linkTag,
+    langs,
+    onigurumaEngine
 }

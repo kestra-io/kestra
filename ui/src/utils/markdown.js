@@ -1,19 +1,19 @@
 let highlighter = null;
 
-async function getHighlighter(createHighlighterCore, githubDark, githubLight) {
+async function getHighlighter(createHighlighterCore, langs, engine, githubDark, githubLight) {
     if (!highlighter) {
         highlighter = createHighlighterCore({
-            langs: [import("shiki/langs/yaml.mjs"), import("shiki/langs/python.mjs"), import("shiki/langs/javascript.mjs")],
+            langs,
             themes: [githubDark, githubLight],
-            loadWasm: import("shiki/wasm"),
+            engine
         });
     }
     return highlighter;
 }
 
 export async function render(markdown, options = {}) {
-    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag} = await import( "./markdownDeps")
-    const highlighter = await getHighlighter(createHighlighterCore, githubDark, githubLight);
+    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
+    const highlighter = await getHighlighter(createHighlighterCore, langs, onigurumaEngine, githubDark, githubLight);
 
     githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
     githubLight["colors"]["editor.background"] = "var(--bs-white)";
@@ -23,7 +23,7 @@ export async function render(markdown, options = {}) {
     let md;
     if (options.onlyLink) {
         md = new markdownIt("zero");
-        md.enable(["link", "linkify", "entity", "html_inline", "newline"]);
+        md.enable(["link", "linkify", "entity", "html_inline"]);
     } else {
         md = new markdownIt();
     }

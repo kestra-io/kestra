@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 
 @CommandLine.Command(
     name = "webserver",
-    description = "start the webserver"
+    description = "Start the Kestra webserver"
 )
 @Slf4j
 public class WebServerCommand extends AbstractServerCommand {

@@ -10,7 +10,7 @@
 # OPTIONS:
 #   --release-version <version>  Specify the release version (required)
 #   --next-version    <version>  Specify the next version (required)
-#   --dry-un                     Specify to run in DRY_RUN.
+#   --dry-run                    Specify to run in DRY_RUN.
 #   -y, --yes                    Automatically confirm prompts (non-interactive).
 #   -h, --help                   Show the help message and exit
 
@@ -19,7 +19,8 @@
 #   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT
 # To release a specific plugin:
 #   ./release-plugins.sh --release-version=0.20.0 --next-version=0.21.0-SNAPSHOT plugin-kubernetes
-
+# To release specific plugins from file:
+#   ./release-plugins.sh --release-version=0.20.0 --plugin-file .plugins
 #===============================================================================
 
 set -e;
@@ -43,6 +44,7 @@ usage() {
     echo "Options:"
     echo "  --release-version <version>  Specify the release version (required)."
     echo "  --next-version    <version>  Specify the next version (required)."
+    echo "  --plugin-file                File containing the plugin list (default: .plugins)"
     echo "  --dry-run                    Specify to run in DRY_RUN."
     echo "  -y, --yes                    Automatically confirm prompts (non-interactive)."
     echo "  -h, --help                   Show this help message and exit."
@@ -79,6 +81,14 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --next-version=*)
             NEXT_VERSION="${1#*=}"
+            shift
+            ;;
+        --plugin-file)
+            PLUGIN_FILE="$2"
+            shift 2
+            ;;
+        --plugin-file=*)
+            PLUGIN_FILE="${1#*=}"
             shift
             ;;
         --dry-run)
@@ -123,9 +133,14 @@ else
   PLUGINS_COUNT="${#PLUGINS_ARGS[@]}"
 fi
 
+# Extract the major and minor versions
+BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
+PUSH_RELEASE_BRANCH="releases/v${BASE_VERSION}.x"
+
 ## Get plugin list
 echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "NEXT_VERSION=$NEXT_VERSION"
+echo "PUSH_RELEASE_BRANCH=$PUSH_RELEASE_BRANCH"
 echo "GIT_BRANCH=$GIT_BRANCH"
 echo "DRY_RUN=$DRY_RUN"
 echo "Found ($PLUGINS_COUNT) plugin repositories:";
@@ -142,13 +157,14 @@ fi
 # Main
 ###############################################################
 mkdir -p $WORKING_DIR
-cd $WORKING_DIR;
 
 COUNTER=1;
 for PLUGIN in "${PLUGINS_ARRAY[@]}"
 do
+  cd $WORKING_DIR;
+
   echo "---------------------------------------------------------------------------------------"
-  echo "[$COUNTER/$PLUGINS_COUNT]Release Plugin: $PLUGIN"
+  echo "[$COUNTER/$PLUGINS_COUNT] Release Plugin: $PLUGIN"
   echo "---------------------------------------------------------------------------------------"
   if [[ -z "${GITHUB_PAT}" ]]; then
     git clone git@github.com:kestra-io/$PLUGIN
@@ -157,18 +173,50 @@ do
     git clone https://${GITHUB_PAT}@github.com/kestra-io/$PLUGIN.git
   fi
   cd "$PLUGIN";
-  git checkout "$GIT_BRANCH";
+
+  if [[ "$PLUGIN" == "plugin-transform" ]] && [[ "$GIT_BRANCH" == "master" ]]; then # quickfix
+    git checkout main;
+  else
+    git checkout "$GIT_BRANCH";
+  fi
 
   if [[ "$DRY_RUN" == false ]]; then
-    echo "Run gradle release"
-    echo "Branch: $(git rev-parse --abbrev-ref HEAD)";
-    ./gradlew release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion="${RELEASE_VERSION}" -Prelease.newVersion="${NEXT_VERSION}"
-    git push
+    CURRENT_BRANCH=$(git branch --show-current);
+
+    echo "Run gradle release for plugin: $PLUGIN";
+    echo "Branch: $CURRENT_BRANCH";
+
+    if [[ "$AUTO_YES" == false ]]; then
+      askToContinue
+    fi
+
+    # Create and push release branch
+    git checkout -b "$PUSH_RELEASE_BRANCH";
+    git push -u origin "$PUSH_RELEASE_BRANCH";
+
+    # Run gradle release
+    git checkout "$CURRENT_BRANCH";
+
+    if [[ "$RELEASE_VERSION" == *"-SNAPSHOT" ]]; then
+      # -SNAPSHOT qualifier maybe used to test release-candidates
+      ./gradlew release -Prelease.useAutomaticVersion=true \
+        -Prelease.releaseVersion="${RELEASE_VERSION}" \
+        -Prelease.newVersion="${NEXT_VERSION}" \
+        -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}" \
+        -Prelease.failOnSnapshotDependencies=false
+    else
+      ./gradlew release -Prelease.useAutomaticVersion=true \
+        -Prelease.releaseVersion="${RELEASE_VERSION}" \
+        -Prelease.newVersion="${NEXT_VERSION}" \
+        -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}"
+    fi
+
+    git push;
+    sleep 5; # add a short delay to not spam Maven Central
   else
-    echo "Skip gradle release [DRY_RUN=false]"
+    echo "Skip gradle release [DRY_RUN=true]";
   fi
   COUNTER=$(( COUNTER + 1 ));
-  sleep 5 #  add a short delay to not spam Maven Central
 done;
 
 exit 0;

@@ -8,15 +8,16 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.ListUtils;
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.SneakyThrows;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -111,6 +112,14 @@ public class FlowService {
         return flowRepository.get().findByNamespace(tenantId, namespace);
     }
 
+    public Optional<Flow> findById(String tenantId, String namespace, String flowId) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().findById(tenantId, namespace, flowId);
+    }
+
     public Stream<FlowWithSource> keepLastVersion(Stream<FlowWithSource> stream) {
         return keepLastVersionCollector(stream);
     }
@@ -150,6 +159,35 @@ public class FlowService {
             return Collections.emptyList();
         }
     }
+
+    // check if subflow is present in given namespace
+    public void checkValidSubflows(Flow flow) {
+        List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
+            .filter(io.kestra.plugin.core.flow.Subflow.class::isInstance)
+            .map(io.kestra.plugin.core.flow.Subflow.class::cast)
+            .toList();
+
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+
+        subFlows.forEach(subflow -> {
+            Optional<Flow> optional = findById(flow.getTenantId(), subflow.getNamespace(), subflow.getFlowId());
+
+            if (optional.isEmpty()) {
+                violations.add(ManualConstraintViolation.of(
+                    "The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.",
+                    flow,
+                    Flow.class,
+                    "flow.tasks",
+                    flow.getNamespace()
+                ));
+            }
+        });
+
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+    }
+
     public record Relocation(String from, String to) {}
 
     @SuppressWarnings("unchecked")

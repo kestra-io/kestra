@@ -16,7 +16,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -43,7 +43,7 @@ class TimeoutTest {
     @Inject
     private RunnerUtils runnerUtils;
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     void timeout() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));

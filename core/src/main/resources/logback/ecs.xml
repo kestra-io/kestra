@@ -18,7 +18,7 @@
         <target>System.err</target>
         <immediateFlush>true</immediateFlush>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>ERROR</level>
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator>

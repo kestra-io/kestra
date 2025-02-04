@@ -503,6 +503,7 @@
                         this.logsSSE = sse;
 
                         this.logsSSE.onmessage = event => {
+
                             // we are receiving a first "fake" event to force initializing the connection: ignoring it
                             if (event.lastEventId !== "start") {
                                 this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
@@ -525,7 +526,16 @@
                                 this.scrollToBottomFailedTask();
                             }
                         }
+
+                        this.logsSSE.onerror = _ => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("something_went_wrong.loading_execution"),
+                            });
+                        }
                     })
+
             },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
@@ -695,16 +705,20 @@
             margin-bottom: 0;
             border: 1px solid var(--ks-border-primary);
 
+            :deep(.el-card__body) {
+                padding: 0;
+            }
+
             .attempt-wrapper & {
                 border-radius: .25rem;
             }
-            
+
             tbody:last-child & {
                 border-bottom: 1px solid var(--ks-border-primary);
             }
 
             .attempt-header {
-                padding: .5rem;
+                padding: 0 .5rem .5rem;
                 border-bottom: 1px solid var(--ks-border-primary);
             }
 
@@ -728,10 +742,9 @@
         .log-lines {
             max-height: 50vh;
             transition: max-height 0.2s ease-out;
-            margin-top: .5rem;
 
             .line {
-                padding: .5rem;
+                padding: 1rem;
 
                 &.cursor {
                     background-color: var(--bs-gray-300)

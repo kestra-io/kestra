@@ -72,158 +72,134 @@
         </el-row>
     </div>
     <div v-else class="dashboard">
-        <el-row v-if="!props.flow">
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="CheckBold"
-                    :label="t('dashboard.success_ratio')"
-                    :tooltip="t('dashboard.success_ratio_tooltip')"
-                    :value="stats.success"
-                    :redirect="{
-                        name: 'executions/list',
-                        query: {
-                            state: State.SUCCESS,
-                            scope: 'USER',
-                            size: 100,
-                            page: 1,
-                        },
-                    }"
-                    class="me-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="Alert"
-                    :label="t('dashboard.failure_ratio')"
-                    :tooltip="t('dashboard.failure_ratio_tooltip')"
-                    :value="stats.failed"
-                    :redirect="{
-                        name: 'executions/list',
-                        query: {
-                            state: State.FAILED,
-                            scope: 'USER',
-                            size: 100,
-                            page: 1,
-                        },
-                    }"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="FileTree"
-                    :label="t('flows')"
-                    :value="numbers.flows"
-                    :redirect="{
-                        name: 'flows/list',
-                        query: {scope: 'USER', size: 100, page: 1},
-                    }"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="LightningBolt"
-                    :label="t('triggers')"
-                    :value="numbers.triggers"
-                    :redirect="{
-                        name: 'admin/triggers',
-                        query: {size: 100, page: 1},
-                    }"
-                    class="ms-2"
-                />
-            </el-col>
-        </el-row>
+        <Card
+            :icon="CheckBold"
+            :label="t('dashboard.success_ratio')"
+            :tooltip="t('dashboard.success_ratio_tooltip')"
+            :value="stats.success"
+            :loading="executionsLoading"
+            :redirect="{
+                name: 'executions/list',
+                query: {
+                    state: State.SUCCESS,
+                    scope: 'USER',
+                    size: 100,
+                    page: 1,
+                },
+            }"
+        />
 
-        <el-row>
-            <el-col :xs="24" :lg="props.flow ? 24 : 16">
-                <ExecutionsBar
-                    :data="graphData"
-                    :total="stats.total"
-                    :class="{'me-2': !props.flow}"
-                />
-            </el-col>
-            <el-col v-if="!props.flow" :xs="24" :lg="8">
-                <ExecutionsDoughnut
-                    :data="graphData"
-                    :total="stats.total"
-                    class="ms-2"
-                />
-            </el-col>
-        </el-row>
+        <Card
+            :icon="Alert"
+            :label="t('dashboard.failure_ratio')"
+            :tooltip="t('dashboard.failure_ratio_tooltip')"
+            :value="stats.failed"
+            :loading="executionsLoading"
+            :redirect="{
+                name: 'executions/list',
+                query: {
+                    state: State.FAILED,
+                    scope: 'USER',
+                    size: 100,
+                    page: 1,
+                },
+            }"
+        />
 
-        <el-row>
-            <el-col :xs="24" :lg="props.flow ? 7 : 12">
-                <div v-if="props.flow" class="h-100 p-4 me-2">
-                    <span class="d-flex justify-content-between">
-                        <span class="fs-6 fw-bold">
-                            {{ t("dashboard.description") }}
-                        </span>
-                        <el-button
-                            :icon="BookOpenOutline"
-                            @click="descriptionDialog = true"
-                        >
-                            {{ t("open") }}
-                        </el-button>
+        <Card
+            :icon="FileTree"
+            :label="t('flows')"
+            :value="numbers.flows"
+            :loading="numbersLoading"
+            :redirect="{
+                name: 'flows/list',
+                query: {scope: 'USER', size: 100, page: 1},
+            }"
+        />
 
-                        <el-dialog
-                            v-model="descriptionDialog"
-                            :title="$t('description')"
-                        >
-                            <Markdown
-                                :source="description"
-                                class="p-4 description"
-                            />
-                        </el-dialog>
-                    </span>
+        <Card
+            :icon="LightningBolt"
+            :label="t('triggers')"
+            :value="numbers.triggers"
+            :loading="numbersLoading"
+            :redirect="{
+                name: 'admin/triggers',
+                query: {size: 100, page: 1},
+            }"
+        />
 
-                    <Markdown :source="description" class="p-4 description" />
-                </div>
-                <ExecutionsInProgress
-                    v-else
-                    :flow="props.flowId"
-                    :namespace="props.namespace"
-                    class="me-2"
-                />
-            </el-col>
-            <el-col v-if="props.flow" :xs="24" :lg="10">
-                <ExecutionsNextScheduled
-                    :flow="props.flowId"
-                    :namespace="props.namespace"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :lg="props.flow ? 7 : 12">
-                <ExecutionsDoughnut
-                    v-if="props.flow"
-                    :data="graphData"
-                    :total="stats.total"
-                    class="ms-2"
-                />
-                <ExecutionsNextScheduled
-                    v-else-if="isAllowedTriggers"
-                    :flow="props.flowId"
-                    :namespace="props.namespace"
-                    class="ms-2"
-                />
-                <ExecutionsEmptyNextScheduled v-else />
-            </el-col>
-        </el-row>
+        <ExecutionsBar
+            :data="graphData"
+            :total="stats.total"
+            class="card card-2/3"
+        />
 
-        <el-row v-if="!props.flow">
-            <el-col :xs="24">
-                <ExecutionsNamespace
-                    :data="namespaceExecutions"
-                    :total="stats.total"
-                />
-            </el-col>
-        </el-row>
+        <ExecutionsDoughnut
+            :data="graphData"
+            :total="stats.total"
+            class="card card-1/3"
+        />
 
-        <el-row v-if="!props.flow">
-            <el-col :xs="24">
-                <Logs :data="logs" />
-            </el-col>
-        </el-row>
+        <div v-if="props.flow" class="h-100 p-4 card card-1/2">
+            <span class="d-flex justify-content-between">
+                <span class="fs-6 fw-bold">
+                    {{ t("dashboard.description") }}
+                </span>
+                <el-button
+                    :icon="BookOpenOutline"
+                    @click="descriptionDialog = true"
+                >
+                    {{ t("open") }}
+                </el-button>
+
+                <el-dialog
+                    v-model="descriptionDialog"
+                    :title="$t('description')"
+                >
+                    <Markdown
+                        :source="description"
+                        class="p-4 description"
+                    />
+                </el-dialog>
+            </span>
+
+            <Markdown :source="description" class="p-4 description" />
+        </div>
+        <ExecutionsInProgress
+            v-else
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            class="card card-1/2"
+        />
+
+        <ExecutionsNextScheduled
+            v-if="props.flow"
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            class="card card-1/2"
+        />
+
+        <ExecutionsDoughnut
+            v-if="props.flow"
+            :data="graphData"
+            :total="stats.total"
+            class="card card-1/2"
+        />
+        <ExecutionsNextScheduled
+            v-else-if="isAllowedTriggers"
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            class="card card-1/2"
+        />
+
+        <ExecutionsEmptyNextScheduled v-else class="card card-1/2" />
+        <ExecutionsNamespace
+            v-if="!props.flow"
+            class="card card-1"
+            :data="namespaceExecutions"
+            :total="stats.total"
+        />
+        <Logs v-if="!props.flow" :data="logs" class="card card-1" />
     </div>
 </template>
 
@@ -344,16 +320,21 @@
 
     const defaultNumbers = {flows: 0, triggers: 0};
     const numbers = ref({...defaultNumbers});
+    const numbersLoading = ref(false);
     const fetchNumbers = () => {
         if (props.flowId) {
             return;
         }
 
+        numbersLoading.value = true;
         store.$http
             .post(`${apiUrl(store)}/stats/summary`, mergeQuery())
             .then((response) => {
                 if (!response.data) return;
                 numbers.value = {...defaultNumbers, ...response.data};
+            })
+            .finally(() => {
+                numbersLoading.value = false;
             });
     };
 
@@ -425,7 +406,10 @@
         return queryFilter;
     }
 
+    const executionsLoading = ref(false);
     const fetchExecutions = () => {
+        executionsLoading.value = true;
+
         store.dispatch("stat/daily", mergeQuery()).then((response) => {
             const sorted = response.sort(
                 (a, b) => new Date(b.date) - new Date(a.date),
@@ -437,6 +421,8 @@
                 yesterday: sorted.at(-2),
                 today: sorted.at(-1),
             };
+        }).finally(() => {
+            executionsLoading.value = false;
         });
     };
 
@@ -499,7 +485,8 @@
 
     watch(
         route,
-        () => {
+        async () => {
+            await handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
             fetchAll();
         },
         {immediate: true, deep: true},
@@ -513,21 +500,8 @@ $spacing: 20px;
 
 .dashboard-filters,
 .dashboard {
-    padding: 0 32px;
-
-    & .el-row {
-        width: 100%;
-
-        & .el-col {
-            padding-bottom: $spacing;
-
-            & div {
-                background: var(--ks-background-card);
-                border: 1px solid var(--ks-border-primary);
-                border-radius: $border-radius;
-            }
-        }
-    }
+    padding: 0 2rem;
+    margin: 0;
 
     .description {
         border: none !important;
@@ -539,8 +513,68 @@ $spacing: 20px;
     }
 }
 
-.dashboard {
-    margin: 0;
+$media-md: 600px;
+$media-lg: 1200px;
+
+.dashboard{
+    padding-bottom: 1rem;
+    margin: 1rem 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    @media (min-width: $media-md) {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+    }
+}
+
+
+
+.card {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    background: var(--ks-background-card);
+    color: var(--ks-content-primary);
+    border: 1px solid var(--ks-border-primary);
+    border-radius: $border-radius;
+    overflow: hidden;
+    flex-shrink: 0;
+    @media (min-width: $media-md) {
+        grid-column: span 6;
+    }
+    @media (min-width: $media-lg) {
+        grid-column: span 3;
+    }
+}
+
+@media (min-width: $media-md) {
+    .card-1\/2, .card-2\/3, .card-1\/3 {
+        grid-column: span 12;
+    }
+}
+
+.card-1\/2{
+    @media (min-width: $media-lg) {
+        grid-column: span 6;
+    }
+}
+
+.card-2\/3{
+    @media (min-width: $media-lg) {
+        grid-column: span 8;
+    }
+}
+
+.card-1\/3{
+    @media (min-width: $media-lg) {
+        grid-column: span 4;
+    }
+}
+
+.card-1{
+    @media (min-width: $media-md) {
+        grid-column: span 12;
+    }
 }
 
 .dashboard-filters {
@@ -557,13 +591,13 @@ $spacing: 20px;
 }
 
 .description {
-    padding: 0px 32px;
+    padding: 0 2rem 1rem 2rem;
     margin: 0;
     color: var(--ks-content-secondary);
 }
 
 .custom {
-    padding: 24px 32px;
+    padding: 0 2rem 1rem 2rem;
 
     &.el-row {
         width: 100%;

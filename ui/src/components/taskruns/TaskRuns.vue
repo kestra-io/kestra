@@ -1,75 +1,22 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="container" v-if="ready">
-        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total">
             <template #navbar>
-                <el-form-item>
-                    <search-field />
-                </el-form-item>
-                <el-form-item>
-                    <namespace-select
-                        data-type="flow"
-                        v-if="$route.name !== 'flows/update'"
-                        :value="$route.query.namespace"
-                        @update:model-value="onDataTableValue('namespace', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <status-filter-buttons
-                        :value="Utils.asArray($route.query.state)"
-                        @update:model-value="onDataTableValue('state', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <date-filter
-                        @update:is-relative="onDateFilterTypeChange"
-                        @update:filter-value="onDataTableValue"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <label-filter
-                        :model-value="$route.query.labels"
-                        @update:model-value="onDataTableValue('labels', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-input
-                        :placeholder="$t('trigger execution id')"
-                        clearable
-                        :model-value="$route.query.triggerExecutionId"
-                        @update:model-value="onDataTableValue('triggerExecutionId', $event)"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <el-select
-                        :placeholder="$t('trigger filter.title')"
-                        :model-value="$route.query.childFilter"
-                        :persistent="false"
-                        @update:model-value="onDataTableValue('childFilter', $event === 'ALL' ? undefined : $event)"
-                    >
-                        <el-option
-                            v-for="(col, val) in $tm('trigger filter.options')"
-                            :key="val"
-                            :label="col"
-                            :value="val"
-                        />
-                    </el-select>
-                </el-form-item>
-                <el-form-item>
-                    <refresh-button class="float-right" @refresh="load" :can-auto-refresh="canAutoRefresh" />
-                </el-form-item>
+                <KestraFilter
+                    prefix="taskruns"
+                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :buttons="{
+                        refresh: {shown: true, callback: load},
+                        settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                    }"
+                />
             </template>
 
             <template #top>
-                <state-global-chart
-                    v-if="taskRunDaily"
-                    class="mb-4"
-                    :ready="dailyReady"
-                    :data="taskRunDaily"
-                    :start-date="startDate"
-                    :end-date="endDate"
-                    :type="stateGlobalChartTypes.TASKRUNS"
-                />
+                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <ExecutionsBar v-if="taskRunDaily" :data="taskRunDaily" :total="executionsCount" />
+                </el-card>
             </template>
 
             <template #table>
@@ -156,8 +103,7 @@
     </section>
 </template>
 <script setup>
-    import Utils from "../../utils/utils";
-    import DateFilter from "../executions/date-select/DateFilter.vue";
+    import KestraFilter from "../filter/KestraFilter.vue";
 </script>
 <script>
     import {mapState} from "vuex";
@@ -167,19 +113,14 @@
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import DataTableActions from "../../mixins/dataTableActions";
-    import SearchField from "../layout/SearchField.vue";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
-    import StatusFilterButtons from "../layout/StatusFilterButtons.vue";
-    import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
-    import {stateGlobalChartTypes} from "../../utils/constants";
-    import LabelFilter from "../labels/LabelFilter.vue";
+    import {stateGlobalChartTypes, storageKeys} from "../../utils/constants";
+    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -187,27 +128,23 @@
             Status,
             TextSearch,
             DataTable,
-            SearchField,
-            NamespaceSelect,
-            RefreshButton,
-            StatusFilterButtons,
-            StateGlobalChart,
             DateAgo,
             Kicon,
             Id,
-            LabelFilter,
-            TopNavBar
+            TopNavBar,
+            ExecutionsBar
         },
         data() {
             return {
                 dailyReady: false,
                 isDefaultNamespaceAllow: true,
                 canAutoRefresh: false,
-                lastRefreshDate: new Date()
+                lastRefreshDate: new Date(),
+                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_CHART)),
             };
         },
         computed: {
-            ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
+            ...mapState("taskrun", ["taskruns", "total"]),
             ...mapState("stat", ["taskRunDaily"]),
             routeInfo() {
                 return {
@@ -234,10 +171,12 @@
 
                 // the default is PT30D
                 return this.$moment().subtract(30, "days").toISOString(true);
-            }
-        },
-        created() {
-            this.$store.dispatch("taskrun/maxTaskRunSetting");
+            },
+            executionsCount() {
+                return [...this.taskRunDaily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
+            },
         },
         methods: {
             onDateFilterTypeChange(event) {
@@ -257,6 +196,17 @@
                         tenant: this.$route.params.tenant
                     },
                 });
+            },
+            onShowChartChange(value) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_CHART, value);
+
+                if (this.showChart) {
+                    this.loadData();
+                }
+            },
+            showStatChart() {
+                return this.showChart;
             },
             loadQuery(base, stats) {
                 let queryFilter = this.queryWithFilter();

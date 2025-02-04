@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.5"
+    id "com.gradleup.shadow" version "8.3.6"
     id "application"
 
     // test
@@ -25,7 +25,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.ben-manes.versions" version "0.52.0"
 
     // front
     id 'org.siouan.frontend-jdk21' version '10.0.0' apply false
@@ -39,7 +39,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "11.1.1" apply false
+    id "org.owasp.dependencycheck" version "12.0.2" apply false
 }
 
 idea {
@@ -121,8 +121,10 @@ allprojects {
             micronaut "io.micronaut:micronaut-management"
             micronaut "io.micrometer:micrometer-core"
             micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
+            micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-otlp"
             micronaut "io.micronaut:micronaut-http-client"
             micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
+            micronaut "io.micronaut.tracing:micronaut-tracing-opentelemetry-http"
 
             // logs
             implementation "org.slf4j:slf4j-api"
@@ -132,6 +134,9 @@ allprojects {
             implementation group: 'org.slf4j', name: 'jul-to-slf4j'
             implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
             implementation group: 'org.fusesource.jansi', name: 'jansi'
+
+            // OTEL
+            implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
             // jackson
             implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
@@ -590,4 +595,13 @@ release {
     git {
         requireBranch.set('develop')
     }
+
+    // Dynamically set properties with default values
+    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
+            ? project.property('release.failOnSnapshotDependencies').toBoolean()
+            : true)
+
+    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
+            ? project.property('release.pushReleaseVersionBranch').toString()
+            : null)
 }

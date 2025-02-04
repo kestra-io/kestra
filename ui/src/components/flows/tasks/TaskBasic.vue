@@ -1,38 +1,54 @@
 <template>
-    <el-form-item
-        :key="index"
-        :required="isRequired(key)"
-        v-for="(schema, key, index) in properties"
-    >
-        <template #label>
-            <span class="d-flex flex-grow-1">
-                <span class="me-auto">
-                    <code>{{ getKey(key) }}</code>&nbsp;
-                    <el-tooltip v-if="hasTooltip(schema)" :persistent="false" transition="" :hide-after="0" effect="light">
-                        <template #content>
-                            <markdown class="markdown-tooltip" :source="helpText(schema)" />
-                        </template>
-                        <help />
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tag disable-transitions type="info" size="small">
-                        {{ getType(schema, key) }}
-                    </el-tag>
-                </span>
-            </span>
-        </template>
-        <component
-            :is="`task-${getType(schema)}`"
-            :model-value="getPropertiesValue(key)"
-            @update:model-value="onObjectInput(key, $event)"
-            :root="getKey(key)"
-            :schema="schema"
+    <el-form label-position="top">
+        <el-form-item
+            :key="index"
             :required="isRequired(key)"
-            :definitions="definitions"
-            :min="getExclusiveMinimum(key)"
-        />
-    </el-form-item>
+            v-for="(schema, key, index) in properties"
+        >
+            <template #label>
+                <span v-if="required" class="me-1 text-danger">*</span>
+                <span v-if="getKey(key)" class="label">
+                    {{
+                        getKey(key)
+                            .split(".")
+                            .map(
+                                (word) =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1),
+                            )
+                            .join(" ")
+                    }}
+                </span>
+                <el-tag disable-transitions size="small" class="ms-2 type-tag">
+                    {{ getType(schema, key) }}
+                </el-tag>
+                <el-tooltip
+                    v-if="hasTooltip(schema)"
+                    :persistent="false"
+                    :hide-after="0"
+                    effect="light"
+                >
+                    <template #content>
+                        <markdown
+                            class="markdown-tooltip"
+                            :source="helpText(schema)"
+                        />
+                    </template>
+                    <help class="ms-2" />
+                </el-tooltip>
+            </template>
+            <component
+                :is="`task-${getType(schema)}`"
+                :model-value="getPropertiesValue(key)"
+                @update:model-value="onObjectInput(key, $event)"
+                :root="getKey(key)"
+                :schema="schema"
+                :required="isRequired(key)"
+                :definitions="definitions"
+                :min="getExclusiveMinimum(key)"
+            />
+        </el-form-item>
+    </el-form>
 </template>
 
 <script>
@@ -57,11 +73,11 @@
         computed: {
             properties() {
                 if (this.schema) {
-                    const properties = this.schema.properties
-                    return this.sortProperties(properties)
+                    const properties = this.schema.properties;
+                    return this.sortProperties(properties);
                 }
                 return undefined;
-            }
+            },
         },
         methods: {
             getPropertiesValue(properties) {
@@ -74,8 +90,7 @@
                     return properties;
                 }
 
-                return Object
-                    .entries(properties)
+                return Object.entries(properties)
                     .sort((a, b) => {
                         if (a[0] === "id") {
                             return -1;
@@ -83,8 +98,12 @@
                             return 1;
                         }
 
-                        const aRequired = (this.schema.required || []).includes(a[0]);
-                        const bRequired = (this.schema.required || []).includes(b[0]);
+                        const aRequired = (this.schema.required || []).includes(
+                            a[0],
+                        );
+                        const bRequired = (this.schema.required || []).includes(
+                            b[0],
+                        );
 
                         if (aRequired && !bRequired) {
                             return -1;
@@ -105,7 +124,7 @@
                     })
                     .reduce((result, entry) => {
                         result[entry[0]] = entry[1];
-                        return result
+                        return result;
                     }, {});
             },
             onObjectInput(properties, value) {
@@ -125,18 +144,21 @@
             },
             getExclusiveMinimum(key) {
                 const property = this.schema.properties[key];
-                const propertyHasExclusiveMinimum = property && property.exclusiveMinimum
-                return propertyHasExclusiveMinimum ? property.exclusiveMinimum : null;
-            }
+                const propertyHasExclusiveMinimum =
+                    property && property.exclusiveMinimum;
+                return propertyHasExclusiveMinimum
+                    ? property.exclusiveMinimum
+                    : null;
+            },
         },
     };
 </script>
 
 <style lang="scss" scoped>
-    .el-form-item.is-required:not(.is-no-asterisk).asterisk-left {
-        > :deep(.el-form-item__label) {
-            display: flex;
-        }
-    }
+@import "../../code/styles/code.scss";
 
+.type-tag {
+    background-color: var(--ks-tag-background);
+    color: var(--ks-tag-content);
+}
 </style>

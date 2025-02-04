@@ -3,6 +3,7 @@ package io.kestra.plugin.core.log;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -68,23 +69,24 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         title = "The log level. If not specified, it defaults to `INFO`."
     )
     @Builder.Default
-    @PluginProperty
-    private Level level = Level.INFO;
+    private Property<Level> level = Property.of(Level.INFO);
 
     @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
+        var renderedLevel = runContext.render(this.level).as(Level.class).orElseThrow();
+
         if(this.message instanceof String stringValue) {
             String render = runContext.render(stringValue);
-            this.log(logger, this.level, render);
+            this.log(logger, renderedLevel, render);
         } else if (this.message instanceof Collection<?> collectionValue) {
             Collection<String> messages = (Collection<String>) collectionValue;
             messages.forEach(throwConsumer(message -> {
                 String render;
                 render = runContext.render(message);
-                this.log(logger, this.level, render);
+                this.log(logger, renderedLevel, render);
             }));
         } else {
             throw new IllegalArgumentException("Invalid message type '" + this.message.getClass() + "'");
@@ -94,7 +96,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
     }
 
     public void log(Logger logger, Level level, String message) {
-        switch (this.level) {
+        switch (level) {
             case TRACE:
                 logger.trace(message);
                 break;
@@ -111,7 +113,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
                 logger.error(message);
                 break;
             default:
-                throw new IllegalArgumentException("Invalid log level '" + this.level + "'");
+                throw new IllegalArgumentException("Invalid log level '" + this.level.toString() + "'");
         }
     }
 }

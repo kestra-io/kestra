@@ -67,10 +67,18 @@
             </el-menu-item>
         </el-menu>
 
-        <div class="d-inline-flex">
-            <el-button size="small" text @click="toggleYamlEditor">
-                {{ isYamlEditorShown ? $t("no_code.labels.no_code") : $t("no_code.labels.yaml") }}
-            </el-button>
+        <div class="d-inline-flex align-items-center">
+            <el-switch
+                v-if="!isNamespace"
+                v-model="editorViewType"
+                @change="changeEditorViewType"
+                active-value="NO_CODE"
+                inactive-value="YAML"
+                :inactive-text="$t('no_code.labels.no_code')"
+                size="small"
+                class="me-2"
+            />
+
             <switch-view
                 v-if="!isNamespace"
                 :type="viewType"
@@ -86,13 +94,6 @@
                 :errors="flowErrors"
                 :warnings="flowWarnings"
                 :infos="flowInfos"
-            />
-
-            <el-button
-                v-if="!isNamespace"
-                :icon="Download"
-                @click="exportYaml"
-                class="ms-2 me-0"
             />
 
             <EditorButtons
@@ -115,10 +116,7 @@
                             params: {tenant: routeParams.tenant},
                         })
                 "
-                @open-new-error="isNewErrorOpen = true"
-                @open-new-trigger="isNewTriggerOpen = true"
-                @open-edit-metadata="isEditMetadataOpen = true"
-                @export-yaml="exportYaml"
+                @export="exportYaml"
                 :is-namespace="isNamespace"
             />
         </div>
@@ -130,8 +128,9 @@
             :class="combinedEditor ? 'editor-combined' : ''"
             style="flex: 1;"
         >
-            <template v-if="isYamlEditorShown">
+            <template v-if="editorViewType === 'YAML'">
                 <editor
+                    class="position-relative"
                     v-if="isCreating || openedTabs.length"
                     ref="editorDomElement"
                     @save="save"
@@ -146,7 +145,11 @@
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                     :read-only="isReadOnly"
                     :navbar="false"
-                />
+                >
+                    <template #absolute>
+                        <KeyShortcuts />
+                    </template>
+                </editor>
                 <section v-else class="no-tabs-opened">
                     <div class="img" />
 
@@ -168,6 +171,8 @@
                 :flow="flowYaml"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
+                @reorder="(yaml) => handleReorder(yaml)"
+                @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
@@ -176,11 +181,11 @@
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"
             >
-                <Blueprints @loaded="blueprintsLoaded = true" embed />
+                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" />
             </div>
 
             <div
-                v-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
+                v-else-if="viewType === editorViewTypes.SOURCE_TOPOLOGY || viewType === editorViewTypes.TOPOLOGY"
                 :class="viewType === editorViewTypes.SOURCE_TOPOLOGY ? 'combined-right-view' : 'vueflow'"
                 class="topology-display"
             >
@@ -209,7 +214,7 @@
             </div>
 
             <PluginDocumentation
-                v-if="viewType === editorViewTypes.SOURCE_DOC"
+                v-else-if="viewType === editorViewTypes.SOURCE_DOC"
                 class="plugin-doc combined-right-view enhance-readability"
             />
         </div>
@@ -324,13 +329,13 @@
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import CircleMedium from "vue-material-design-icons/CircleMedium.vue";
-    import Download from "vue-material-design-icons/Download.vue";
 
     import TypeIcon from "../utils/icons/Type.vue"
 
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
+    import KeyShortcuts from "./KeyShortcuts.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -346,10 +351,8 @@
     import EditorButtons from "./EditorButtons.vue";
     import Drawer from "../Drawer.vue";
     import {ElMessageBox} from "element-plus";
-
-    import localUtils from "../../utils/utils";
-    
     import NoCode from "../code/NoCode.vue";
+    import localUtils from "../../utils/utils";
 
     const store = useStore();
     const router = useRouter();
@@ -499,14 +502,20 @@
         return undefined;
     });
 
-    const isYamlEditorShown = ref(true);
-    const toggleYamlEditor = () => {
-        isYamlEditorShown.value = !isYamlEditorShown.value
-        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, isYamlEditorShown.value === true ? "YAML" : "NO_CODE");
+    const editorViewType = ref("YAML");
+    const changeEditorViewType = (value) => {
+        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+
+        if(value === "NO_CODE") {
+            editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
+        }
     }
 
     const handleTopologyEditClick = (params) => {
-        isYamlEditorShown.value = false;
+        if (viewType.value === editorViewTypes.TOPOLOGY) {
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
+        }
+        editorViewType.value = "NO_CODE";
         nextTick(() => router.replace({query: {...route.query, ...params}}))
     }
 
@@ -643,7 +652,7 @@
 
         // validate flow on first load
         store
-            .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
+            .dispatch("flow/validateFlow", {flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value})
             .then((value) => {
                 if (validationDomElement.value && editorDomElement.value) {
                     validationDomElement.value.onResize(
@@ -670,7 +679,7 @@
     };
 
     onMounted(async () => {
-        isYamlEditorShown.value = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "YAML";
+        editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
 
         if(!props.isNamespace) {
             initViewType()
@@ -739,15 +748,16 @@
         emit(type, event);
     };
 
-    const updatePluginDocumentation = (event) => {
-        const taskType = YamlUtils.getTaskType(
-            event.model.getValue(),
-            event.position
-        );
+    const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        if (taskType && pluginSingleList && pluginSingleList.includes(taskType)) {
+        const taskType = task !== undefined ? task : YamlUtils.getTaskType(
+            event.model.getValue(),
+            event.position,
+            pluginSingleList
+        );
+        if (taskType) {
             store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
-                store.commit("plugin/setEditorPlugin", plugin);
+                store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
             });
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
@@ -796,8 +806,8 @@
         }
 
         haveChange.value = true;
-        store.dispatch("core/isUnsaved", true);
-
+        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+        
         if(!props.isCreating){
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
@@ -813,7 +823,7 @@
         if(!currentIsFlow) return;
 
         return store
-            .dispatch("flow/validateFlow", {flow: yamlWithNextRevision.value})
+            .dispatch("flow/validateFlow", {flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value})
             .then((value) => {
                 if (
                     flowHaveTasks() &&
@@ -919,7 +929,9 @@
         );
     };
 
-    const validateFlow = (flow = yamlWithNextRevision.value) => {
+    const validateFlow = (flow) => {
+        if(!flow) return;
+
         return store
             .dispatch("flow/validateFlow", {flow})
             .then((value) => {
@@ -934,15 +946,13 @@
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
-        metadata.value = event;
-
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...event};
+            metadata.value = {...metadata.value, ...(event.concurrency.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
-            validateFlow()
+            validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event;
+            metadata.value = event.concurrency.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
@@ -952,6 +962,12 @@
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
+    };
+
+    const handleReorder = (yaml) => {
+        flowYaml.value = yaml;
+        haveChange.value = true;
+        save()
     };
 
     const editorUpdate = (event) => {
@@ -1058,7 +1074,7 @@
 
         haveChange.value = false;
         await store.dispatch("flow/validateFlow", {
-            flow: yamlWithNextRevision.value,
+            flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value
         });
     };
 
@@ -1095,6 +1111,8 @@
                 }
             });
         } else {
+            if(!currentTab.value.dirty) return;
+
             await store.dispatch("namespace/createFile", {
                 namespace: props.namespace ?? routeParams.id,
                 path: currentTab.value.path ?? currentTab.value.name,
@@ -1201,10 +1219,13 @@
         const {offsetWidth, parentNode} = document.getElementById("editorWrapper");
         let blockWidthPercent = (offsetWidth / parentNode.offsetWidth) * 100;
 
+        const isNoCode = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
+        const maxWidth = isNoCode ? 33.3 : 75;
+
         document.onmousemove = function onMouseMove(e) {
             let percent = blockWidthPercent + ((e.clientX - dragX) / parentNode.offsetWidth) * 100;
 
-            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent;
+            editorWidth.value = percent > maxWidth ? maxWidth : percent < 25 ? 25 : percent;
             validationDomElement.value.onResize((percent * parentNode.offsetWidth) / 100);
         };
 
@@ -1329,7 +1350,7 @@
 
     const exportYaml = () => {
         const blob = new Blob([flowYaml.value], {type: "text/yaml"});
-        localUtils.downloadUrl(blob, "flow.yaml");
+        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 </script>
 

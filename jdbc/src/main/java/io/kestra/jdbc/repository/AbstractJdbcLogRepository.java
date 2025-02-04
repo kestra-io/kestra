@@ -13,12 +13,13 @@ import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
-import java.util.stream.Stream;
 import lombok.Getter;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -29,8 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.*;
 import java.util.stream.Collectors;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
 
@@ -63,6 +63,16 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         Logs.Fields.LEVEL, "level",
         Logs.Fields.MESSAGE, "message"
     );
+
+    @Override
+    public Set<Logs.Fields> dateFields() {
+        return Set.of(Logs.Fields.DATE);
+    }
+
+    @Override
+    public Logs.Fields dateFilterField() {
+        return Logs.Fields.DATE;
+    }
 
     @Override
     public ArrayListTotal<LogEntry> find(
@@ -636,21 +646,39 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Generate custom fields for date as they probably need formatting
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+
                 // Init request
                 SelectConditionStep<Record> selectConditionStep = select(
                     context,
-                    this.getFilterService(),
-                    descriptors,
+                    filterService,
+                    columnsWithoutDate,
+                    dateFields,
                     this.getFieldsMapping(),
                     this.jdbcRepository.getTable(),
                     tenantId
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, this.getFilterService(), descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+
+                List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
 
                 // Apply GroupBy for aggregation
-                SelectHavingStep<Record> selectHavingStep = groupBy(selectConditionStep, descriptors, fieldsMapping);
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
 
                 // Apply OrderBy
                 SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
@@ -658,11 +686,29 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 // Fetch and paginate if provided
                 List<Map<String, Object>> results = fetchSeekStep(selectSeekStep, pageable);
 
-
                 // Fetch total count for pagination
                 int total = context.fetchCount(selectConditionStep);
 
                 return new ArrayListTotal<>(results, total);
             });
+    }
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+
+    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
+        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+        Map<F, String> fieldsMapping,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Set<F> dateFields
+    ) {
+        return descriptors.getColumns().entrySet().stream()
+            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
+            .map(entry -> {
+                Duration duration = Duration.between(startDate, endDate);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+            })
+            .toList();
+
     }
 }

@@ -121,8 +121,6 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Integer purge(Execution execution);
 
-    Integer maxTaskRunSetting();
-
     List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
         @Nullable String query,
         @Nullable String namespace,

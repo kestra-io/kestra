@@ -29,6 +29,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -105,6 +106,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @With
     @Nullable
     Instant scheduleDate;
+
+    @NonFinal
+    @Setter
+    String traceParent;
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
@@ -199,7 +204,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -222,7 +228,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -258,7 +265,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -281,7 +289,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 

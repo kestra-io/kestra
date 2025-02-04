@@ -359,7 +359,7 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
     void restartForEachItem() throws Exception {
         forEachItemCaseTest.restartForEachItem();

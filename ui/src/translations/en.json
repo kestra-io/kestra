@@ -1167,7 +1167,7 @@
       "label": "Keyboard shortcuts",
       "save_flow": "Save flow",
       "move_line": "Move line",
-      "duplicate_line": "Duplicate line",
+      "duplicate_cursor": "Duplicate cursor",
       "fold_unfold": "Fold/Unfold code",
       "comment_uncomment": "Comment/Uncomment",
       "comment": "Comment",

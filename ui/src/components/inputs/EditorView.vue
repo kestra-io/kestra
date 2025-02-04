@@ -147,7 +147,7 @@
                     :navbar="false"
                 >
                     <template #absolute>
-                        <key-shortcuts />
+                        <KeyShortcuts />
                     </template>
                 </editor>
                 <section v-else class="no-tabs-opened">

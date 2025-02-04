@@ -215,7 +215,7 @@
             }
 
             & .el-button, :slotted(&) .el-button {
-                color: var(--bs-body-color);
+                color: var(--ks-content-primary);
             }
         }
     }

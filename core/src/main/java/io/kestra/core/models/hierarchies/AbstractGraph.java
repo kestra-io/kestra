@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,7 +18,7 @@ public abstract class AbstractGraph {
     @JsonInclude
     protected String type;
     @Setter
-    protected boolean error;
+    protected BranchType branchType;
 
     public AbstractGraph() {
         this.type = this.getClass().getName();
@@ -39,8 +38,8 @@ public abstract class AbstractGraph {
         this.uid = uid;
     }
 
-    public void updateErrorWithChildren(boolean error) {
-        this.error = error;
+    public void updateWithChildren(BranchType branchType) {
+        this.branchType = branchType;
     }
 
     public AbstractGraph forExecution() {
@@ -52,5 +51,10 @@ public abstract class AbstractGraph {
         if (this == o) return true;
         if (!(o instanceof AbstractGraph)) return false;
         return o.hashCode() == this.hashCode();
+    }
+
+    public enum BranchType {
+        ERROR,
+        FINALLY
     }
 }

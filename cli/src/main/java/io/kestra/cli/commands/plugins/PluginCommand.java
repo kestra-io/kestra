@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "plugins",
-    description = "handle plugins",
+    description = "Manage plugins",
     mixinStandardHelpOptions = true,
     subcommands = {
         PluginInstallCommand.class,

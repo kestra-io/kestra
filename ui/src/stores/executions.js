@@ -1,5 +1,6 @@
 import axios from "axios";
 import {apiUrl} from "override/utils/route";
+import Utils from "../utils/utils.js"
 
 export default {
     namespaced: true,
@@ -128,7 +129,7 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/executions/kill/by-query`, {params: options});
         },
         resume(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
@@ -136,7 +137,7 @@ export default {
             });
         },
         validateResume(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume/validate`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
@@ -177,7 +178,7 @@ export default {
             })
         },
         validateExecution(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}/validate`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
@@ -189,7 +190,7 @@ export default {
             })
         },
         triggerExecution(_, options) {
-            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}`, options.formData, {
+            return this.$http.post(`${apiUrl(this)}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"

@@ -68,6 +68,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected final JdbcQueueIndexer jdbcQueueIndexer;
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
@@ -349,19 +350,21 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         poolExecutor.execute(() -> {
             while (running.get() && !this.isClosed.get()) {
-                try {
-                    Integer count = runnable.get();
-                    if (count > 0) {
-                        lastPoll.set(ZonedDateTime.now());
-                    }
+                if (!this.isPaused.get()) {
+                    try {
+                        Integer count = runnable.get();
+                        if (count > 0) {
+                            lastPoll.set(ZonedDateTime.now());
+                        }
 
-                    sleep.set(lastPoll.get().plus(configuration.getPollSwitchInterval()).compareTo(ZonedDateTime.now()) < 0 ?
-                        configuration.getMaxPollInterval().toMillis() :
-                        configuration.getMinPollInterval().toMillis()
-                    );
-                } catch (CannotCreateTransactionException e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Can't poll on receive", e);
+                        sleep.set(lastPoll.get().plus(configuration.getPollSwitchInterval()).compareTo(ZonedDateTime.now()) < 0 ?
+                            configuration.getMaxPollInterval().toMillis() :
+                            configuration.getMinPollInterval().toMillis()
+                        );
+                    } catch (CannotCreateTransactionException e) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Can't poll on receive", e);
+                        }
                     }
                 }
 
@@ -392,6 +395,15 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .forEach(consumer);
     }
 
+    @Override
+    public void pause() {
+        this.isPaused.set(true);
+    }
+
+    @Override
+    public void resume() {
+        this.isPaused.set(false);
+    }
 
     @Override
     public void close() throws IOException {

@@ -12,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
-public class FetchTest {
+class FetchTest {
 
     @Test
     @ExecuteFlow("flows/valids/get-log.yaml")

@@ -61,7 +61,7 @@
     import {mapState} from "vuex";
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
-    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+    import {cssVariable} from "@kestra-io/ui-libs";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     export default {

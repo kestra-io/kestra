@@ -1,9 +1,8 @@
 <template>
     <el-select
         :model-value="modelValue"
-        placeholder=""
+        :placeholder="$t('no_code.creation.select', {section: section.toLowerCase().slice(0, -1)})"
         filterable
-        :persistent="false"
         @update:model-value="onInput"
     >
         <el-option
@@ -28,7 +27,7 @@
 
 <script>
     import {mapState} from "vuex";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     export default {
         components: {
@@ -78,7 +77,7 @@
         display: inline-block;
         width: 20px;
         height: 20px;
-        margin-right: var(--spacer);
+        margin-right: 1rem;
     }
 
     :deep(.el-input__prefix-inner) {

@@ -51,7 +51,7 @@
 <script>
     import {mapState} from "vuex";
     import LabelInput from "../../components/labels/LabelInput.vue";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
 
     import {filterLabels} from "./utils"
     import permission from "../../models/permission.js";

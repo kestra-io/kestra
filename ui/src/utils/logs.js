@@ -1,4 +1,4 @@
-import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+import {cssVariable} from "@kestra-io/ui-libs";
 
 const LEVELS = [
     "ERROR",

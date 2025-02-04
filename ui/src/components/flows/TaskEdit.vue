@@ -266,6 +266,6 @@
 <style scoped lang="scss">
     // Required, otherwise the doc titles and properties names are not visible
     .documentation {
-        padding: var(--spacer);
+        padding: 1rem;
     }
 </style>

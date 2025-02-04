@@ -8,18 +8,20 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
+import io.kestra.core.repositories.QueryBuilderInterface;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +30,8 @@ import java.util.Optional;
 public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcRepository implements DashboardRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
+
+    List<QueryBuilderInterface<?>> queryBuilders;
 
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
@@ -129,11 +133,18 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
     @Override
     public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
-        throw new NotImplementedException();
+        Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
+
+        QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
+            dataChart.getData().repositoryClass(),
+            clazz -> queryBuilders.stream().filter(b -> clazz.isAssignableFrom(b.getClass())).findFirst().orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
+        );
+
+        return queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);
     }
 
     @Override
     public Boolean isEnabled() {
-        return false;
+        return true;
     }
 }

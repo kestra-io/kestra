@@ -1100,6 +1100,32 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void replay() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+
+        assertThat(execution.getState().isTerminated(), is(true));
+
+        // replay execution
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/executions/" + execution.getId() + "/replay",
+                null
+            ),
+            Execution.class
+        );
+        assertThat(replay.getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(replay.getOriginalId(), is(execution.getId()));
+        assertThat(replay.getLabels(), hasItem(new Label(Label.REPLAY, "true")));
+
+        // load the original execution and check that it has the system.replayed label
+        Execution original = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + execution.getId()),
+            Execution.class
+        );
+        assertThat(original.getLabels(), hasItem(new Label(Label.REPLAYED, "true")));
+    }
+
+    @Test
     void replayByIds() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");

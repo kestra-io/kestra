@@ -2,8 +2,8 @@
 $filters-gray-500: var(--bs-gray-500);
 $filters-gray-700: var(--bs-gray-700);
 $filters-gray-900: var(--bs-gray-900);
-$filters-card-color: var(--card-bg);
-$filters-border-color: var(--bs-border-color);
+$filters-card-color: var(--ks-background-card);
+$filters-border-color: var(--ks-border-primary);
 
 // Typography
 $filters-font-xs: var(--el-font-size-extra-small);
@@ -32,8 +32,8 @@ $filters-font-xs: var(--el-font-size-extra-small);
 
     .scroller {
         &::-webkit-scrollbar {
-            height: 5px;
-            width: 5px;
+            height: 3px;
+            width: 3px;
         }
 
         &::-webkit-scrollbar-track {

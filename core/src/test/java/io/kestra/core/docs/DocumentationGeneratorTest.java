@@ -100,7 +100,7 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Return a value for debugging purposes."));
-        assertThat(render, containsString("is mostly useful"));
+        assertThat(render, containsString("is intended for troubleshooting"));
         assertThat(render, containsString("## Metrics"));
         assertThat(render, containsString("### `length`\n" + "* **Type:** ==counter== "));
         assertThat(render, containsString("### `duration`\n" + "* **Type:** ==timer== "));
@@ -180,7 +180,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends TaskRunner> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, TaskRunner.class);
+        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, Process.class);
 
         String render = DocumentationGenerator.render(doc);
 

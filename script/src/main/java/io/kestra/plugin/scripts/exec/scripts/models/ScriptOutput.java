@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,6 +44,8 @@ public class ScriptOutput implements Output {
 
     @JsonIgnore
     private Boolean warningOnStdErr;
+
+    private TaskRunnerDetailResult taskRunner;
 
     @Override
     public Optional<State.Type> finalState() {

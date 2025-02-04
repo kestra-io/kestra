@@ -32,6 +32,7 @@
     import {SECTIONS} from "../../utils/constants.js";
 
     export default {
+        inheritAttrs: false,
         computed: {
             ...mapGetters("flow", ["taskError"]),
         },

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.HasSource;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowScope;
@@ -425,7 +426,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Flow flowParsed = yamlParser.parse(flow, Flow.class);
-
+        flowService.checkValidSubflows(flowParsed);
         return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
@@ -588,6 +589,7 @@ public class FlowController {
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 
                     modelValidator.validate(pluginDefaultService.injectDefaults(flowParse.withSource(flow)));
+                    flowService.checkValidSubflows(flowParse);
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 } catch (RuntimeException re) {
@@ -699,7 +701,7 @@ public class FlowController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws IOException {
         var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels));
-        var bytes = zipFlows(flows);
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
@@ -716,24 +718,8 @@ public class FlowController {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .toList();
-        var bytes = zipFlows(flows);
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yml");
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
-    }
-
-    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-            for (var flow : flows) {
-                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
-                archive.putNextEntry(zipEntry);
-                archive.write(flow.getSource().getBytes());
-                archive.closeEntry();
-            }
-
-            archive.finish();
-            return bos.toByteArray();
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -844,46 +830,26 @@ public class FlowController {
             When sending a ZIP archive, a list of files that couldn't be imported is returned.
         """
     )
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "200", description = "On success")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload
     ) throws IOException {
-        String fileName = fileUpload.getFilename().toLowerCase();
         String tenantId = tenantService.resolveTenant();
-        List<String> wrongFiles = new ArrayList<>();
-
-        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
-            List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
-            for (String source : sources) {
+        final List<String> wrongFiles = new ArrayList<>();
+        try {
+            HasSource.readSourceFile(fileUpload, (source, name) -> {
                 try {
-                    this.importFlow(tenantId, source.trim());
+                    this.importFlow(tenantId, source);
                 } catch (Exception e) {
-                    wrongFiles.add(String.valueOf(sources.indexOf(source)));
+                    wrongFiles.add(name);
                 }
-                this.importFlow(tenantId, source.trim());
-            }
-        } else if (fileName.endsWith(".zip")) {
-            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
-                ZipEntry entry;
-                while ((entry = archive.getNextEntry()) != null) {
-                    if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
-                        continue;
-                    }
-
-                    String source = new String(archive.readAllBytes());
-                    try {
-                        this.importFlow(tenantId, source);
-                    } catch (Exception e) {
-                        wrongFiles.add(entry.getName());
-                    }
-                }
-            }
-        } else {
+            });
+        } catch (IOException e){
+            log.error("Unexpected error while importing flows", e);
             fileUpload.discard();
-            throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
+            return HttpResponse.badRequest();
         }
-
         return HttpResponse.ok(wrongFiles);
     }
 

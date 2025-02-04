@@ -69,7 +69,7 @@ public class NamespaceControllerTest {
         assertThat(list.getTotal(), is(6L));
         assertThat(list.getResults().size(), is(6));
         assertThat(list.getResults(), everyItem(hasProperty("disabled", is(true))));
-        assertThat(list.getResults().map(NamespaceWithDisabled::getId), containsInAnyOrder(
+        assertThat(list.getResults().stream().map(NamespaceWithDisabled::getId).toList(), containsInAnyOrder(
             "my", "my.ns", "my.ns.flow",
             "another", "another.ns", "system"
         ));

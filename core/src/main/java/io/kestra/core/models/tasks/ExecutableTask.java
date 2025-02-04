@@ -43,6 +43,11 @@ public interface ExecutableTask<T extends Output>{
      */
     SubflowId subflowId();
 
+    /**
+     * Returns the restart behavior of subflow executions.
+     */
+    RestartBehavior getRestartBehavior();
+
     record SubflowId(String namespace, String flowId, Optional<Integer> revision) {
         public String flowUid() {
             // as the Flow task can only be used in the same tenant we can hardcode null here
@@ -53,5 +58,10 @@ public interface ExecutableTask<T extends Output>{
             // as the Flow task can only be used in the same tenant we can hardcode null here
             return Flow.uidWithoutRevision(null, this.namespace, this.flowId);
         }
+    }
+
+    enum RestartBehavior {
+        NEW_EXECUTION,
+        RETRY_FAILED
     }
 }

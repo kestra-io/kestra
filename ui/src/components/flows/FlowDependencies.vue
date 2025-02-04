@@ -38,7 +38,7 @@
     import dagre from "dagre"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue";
 
-    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+    import {cssVariable} from "@kestra-io/ui-libs";
     import {DependenciesNode} from "@kestra-io/ui-libs"
 
     import {linkedElements} from "../../utils/vueFlow"

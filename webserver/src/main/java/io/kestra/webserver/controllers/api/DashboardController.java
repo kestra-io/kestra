@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.dashboards.GlobalFilter;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.validations.ModelValidator;
@@ -14,7 +15,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -40,7 +40,6 @@ import java.util.Optional;
 @Validated
 @Controller("/api/v1/dashboards")
 @Slf4j
-@Requires(property = "kestra.repository.type", value = "elasticsearch")
 public class DashboardController {
     protected static final YamlParser YAML_PARSER = new YamlParser();
 
@@ -156,22 +155,23 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> dashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
-        @Parameter(description = "The filters to apply") @Body Map<String, Object> filters
+        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
     ) throws IOException {
-        ZonedDateTime startDate = Optional.ofNullable(filters.get("startDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
-        ZonedDateTime endDate = Optional.ofNullable(filters.get("endDate")).map(Object::toString).map(ZonedDateTime::parse).orElse(null);
-        if (startDate == null || endDate == null) {
-            throw new IllegalArgumentException("`startDate` and `endDate` filters are required.");
-        }
-
-        if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
-        }
-
         String tenantId = tenantService.resolveTenant();
         Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
+        }
+
+        ZonedDateTime endDate = globalFilter.getEndDate();
+        ZonedDateTime startDate = globalFilter.getStartDate();
+        if (startDate == null || endDate == null) {
+            endDate = ZonedDateTime.now();
+            startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 
         Duration windowDuration = Duration.ofSeconds(endDate.minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
@@ -185,11 +185,55 @@ public class DashboardController {
         }
 
         if (chart instanceof DataChart dataChart) {
-            Integer pageNumber = (Integer) filters.get("pageNumber");
-            Integer pageSize = (Integer) filters.get("pageSize");
+            Integer pageNumber = globalFilter.getPageNumber();
+            Integer pageSize = globalFilter.getPageSize();
+
+            dataChart.getData().setGlobalFilter(globalFilter);
+
+            // StartDate & EndDate are only set in the globalFilter for JDBC
+            // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
             return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "charts/preview", consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
+    public PagedResults<Map<String, Object>> previewChart(
+        @Parameter(description = "The chart") @Body String chart
+    ) throws IOException {
+        Chart<?> parsed = YAML_PARSER.parse(chart, Chart.class);
+
+        return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), (DataChart) parsed, ZonedDateTime.now().minusDays(8), ZonedDateTime.now(), null));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate/chart", consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Dashboards"}, summary = "Validate a chart from yaml source")
+    public ValidateConstraintViolation validateChart(
+        @Parameter(description = "The dashboard") @Body String chart
+    ) throws ConstraintViolationException {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+            validateConstraintViolationBuilder.index(0);
+
+        try {
+            Chart<?> parsed = YAML_PARSER.parse(chart, Chart.class);
+
+            modelValidator.validate(parsed);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        } catch (RuntimeException re) {
+            // In case of any error, we add a validation violation so the error is displayed in the UI.
+            // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+            // in dev like incompatible plugin versions.
+            log.error("Unable to validate the dashboard", re);
+            validateConstraintViolationBuilder.constraints("Unable to validate the chart: " + re.getMessage());
+        }
+
+        return validateConstraintViolationBuilder.build();
+    }
+
+
 }

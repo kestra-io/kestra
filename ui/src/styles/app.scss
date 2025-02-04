@@ -1,7 +1,7 @@
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
-@use "@kestra-io/ui-libs/src/scss/app.scss";
+@use "@kestra-io/ui-libs/style.css";
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -34,13 +34,13 @@ html {
     }
 
     &.menu-collapsed {
-        #{--offset-from-menu}: var(--spacer);
+        #{--offset-from-menu}: 1rem;
     }
 
     &.menu-not-collapsed {
-        #{--offset-from-menu}: var(--spacer);
+        #{--offset-from-menu}: 1rem;
         @include mixin.res(lg) {
-            #{--offset-from-menu}: calc(var(--spacer) * 4);
+            #{--offset-from-menu}: 4rem;
         }
     }
 }
@@ -128,7 +128,7 @@ main {
     .el-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
-        background: var(--bs-white);
+        background: var(--ks-background-card);
 
         .material-design-icon {
             color: $value;
@@ -169,4 +169,28 @@ html.full-screen {
         }
 
     }
+}
+
+// setup non color CSS variables
+:root{
+    --el-box-shadow: $box-shadow;
+    --el-box-shadow-light: $box-shadow-sm;
+    --el-box-shadow-lighter: $box-shadow-sm;
+    --el-box-shadow-dark: $box-shadow-lg;
+
+    --el-transition-duration: 0.2s;
+    --el-transition-duration-fast: 0.2s;
+    --top-navbar-height: 79px;
+    #{--menu-width}: global-var.$menu-width;
+    #{--menu-collapsed-width}: 65px;
+    #{--spacer}: global-var.$spacer;
+
+    #{--font-size-xs}: global-var.$font-size-xs;
+    #{--font-size-sm}: global-var.$font-size-sm;
+    #{--font-size-base}: global-var.$font-size-base;
+    #{--font-size-lg}: global-var.$font-size-lg;
+}
+
+body{
+    background-color: var(--ks-background-body);
 }

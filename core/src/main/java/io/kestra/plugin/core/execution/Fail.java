@@ -3,6 +3,7 @@ package io.kestra.plugin.core.execution;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -89,29 +90,27 @@ import lombok.experimental.SuperBuilder;
     aliases = "io.kestra.core.tasks.executions.Fail"
 )
 public class Fail extends Task implements RunnableTask<VoidOutput> {
-    @PluginProperty(dynamic = true)
     @Schema(
         title = "Optional condition, must coerce to a boolean.",
         description = "Boolean coercion allows 0, -0, and '' to coerce to false, all other values to coerce to true."
     )
-    private String condition;
+    private Property<String> condition;
 
-    @PluginProperty(dynamic = true)
     @Schema(title = "Optional error message.")
     @Builder.Default
-    private String errorMessage = "Task failure";
+    private Property<String> errorMessage = Property.of("Task failure");
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         if (condition != null) {
-            String rendered = runContext.render(condition);
+            String rendered = runContext.render(condition).as(String.class).orElse(null);
             if (TruthUtils.isTruthy(rendered)) {
-                runContext.logger().error(runContext.render(errorMessage));
+                runContext.logger().error(runContext.render(errorMessage).as(String.class).orElse(null));
                 throw new Exception("Fail on a condition");
             }
             return null;
         }
 
-        throw new Exception(runContext.render(errorMessage));
+        throw new Exception(runContext.render(errorMessage).as(String.class).orElse(null));
     }
 }

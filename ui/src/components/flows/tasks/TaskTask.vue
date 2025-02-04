@@ -1,8 +1,5 @@
 <template>
-    <el-input
-        :model-value="JSON.stringify(values)"
-        :disabled="true"
-    >
+    <el-input :model-value="JSON.stringify(values)">
         <template #append>
             <el-button :icon="TextSearch" @click="isOpen = true" />
         </template>

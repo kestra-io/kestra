@@ -8,6 +8,8 @@ import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import javax.sql.DataSource;
 import jakarta.validation.constraints.NotNull;
 
@@ -31,7 +33,17 @@ public class JooqExecuteListenerFactory {
                     public void executeEnd(ExecuteContext ctx) {
                         Duration duration = Duration.ofMillis(System.currentTimeMillis() - startTime);
 
-                        metricRegistry.timer(MetricRegistry.JDBC_QUERY_DURATION, "sql", ctx.sql())
+                        List<String> tags = new ArrayList<>();
+                        tags.add("batch");
+                        tags.add(ctx.batchMode().name());
+
+                        // in batch query, the query will be expanded without parameters, and will lead to overflow of metrics
+                        if (ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE) {
+                            tags.add("sql");
+                            tags.add(ctx.sql());
+                        }
+
+                        metricRegistry.timer(MetricRegistry.JDBC_QUERY_DURATION, tags.toArray(new String[0]))
                             .record(duration);
 
                         if (log.isTraceEnabled()) {
@@ -44,5 +56,4 @@ public class JooqExecuteListenerFactory {
             }
         };
     }
-
 }

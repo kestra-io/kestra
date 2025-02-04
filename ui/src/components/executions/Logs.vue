@@ -117,7 +117,7 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
-    import State from "../../utils/state";
+    import {State, Utils as LibUtils} from "@kestra-io/ui-libs"
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
@@ -278,7 +278,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
             },
             nextLogForLevel(level) {
@@ -288,7 +288,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
@@ -301,14 +301,10 @@
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";
     .attempt-wrapper {
-        background-color: var(--bs-white);
+        background-color: var(--ks-background-card);
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-border-color);
-        }
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
+            border-top: 1px solid var(--ks-border-primary);
         }
 
         .attempt-wrapper & {
@@ -319,14 +315,10 @@
     .log-lines {
         max-height: calc(100vh - 335px);
         transition: max-height 0.2s ease-out;
-        margin-top: calc(var(--spacer) / 2);
+        margin-top: .5rem;
 
         .line {
-            padding: calc(var(--spacer) / 2);
-
-            &.cursor {
-                background-color: var(--bs-gray-300)
-            }
+            padding: .5rem;
         }
 
         &::-webkit-scrollbar {
@@ -338,7 +330,7 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
         }
     }
 

@@ -106,7 +106,7 @@ export default {
             DATA.append("fileContent", BLOB);
 
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
-            await this.$http.post(URL, DATA, HEADERS);
+            await this.$http.post(URL, Utils.toFormData(DATA), HEADERS);
         },
 
         // Get namespace file content

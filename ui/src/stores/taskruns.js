@@ -5,7 +5,6 @@ export default {
     state: {
         taskruns: undefined,
         total: 0,
-        maxTaskRunSetting: 100
     },
     actions: {
         findTaskRuns({commit}, options) {
@@ -14,11 +13,6 @@ export default {
                 commit("setTotal", response.data.total)
             })
         },
-        maxTaskRunSetting({commit}) {
-            return this.$http.get(`${apiUrl(this)}/taskruns/maxTaskRunSetting`).then(response => {
-                commit("setMaxTaskRunSetting", response.data)
-            })
-        }
     },
     mutations: {
         setTaskruns(state, taskruns) {
@@ -27,9 +21,6 @@ export default {
         setTotal(state, total) {
             state.total = total
         },
-        setMaxTaskRunSetting(state,maxTaskRunSetting){
-            state.maxTaskRunSetting = maxTaskRunSetting
-        }
     },
     getters: {}
 }

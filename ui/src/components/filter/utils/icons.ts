@@ -19,6 +19,8 @@ import StateMachine from "vue-material-design-icons/StateMachine.vue";
 import TagOutline from "vue-material-design-icons/TagOutline.vue";
 import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
+import Pencil from "vue-material-design-icons/Pencil.vue";
+import Menu from "vue-material-design-icons/Menu.vue";
 
 export {
     AccountCheck,
@@ -42,4 +44,6 @@ export {
     TagOutline,
     TimelineTextOutline,
     ViewDashboardEdit,
+    Pencil,
+    Menu
 };

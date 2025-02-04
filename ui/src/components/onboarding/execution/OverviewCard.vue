@@ -56,8 +56,8 @@
 
 <style scoped lang="scss">
 .el-card {
-	background-color: var(--card-bg);
-	border-color: var(--el-border-color);
+	background-color: var(--ks-background-card);
+	border-color: var(--ks-border-primary);
 	box-shadow: var(--el-box-shadow);
 	position: relative;
 	width: 100px;
@@ -74,7 +74,7 @@
 		position: absolute;
 		bottom: 15px;
 		font-size: 12px;
-		border: 1px solid var(--el-border-color);
+		border: 1px solid var(--ks-border-primary);
 		padding: 3px 10px;
 		border-radius: 5px;
 
@@ -105,7 +105,7 @@
 
 :deep(.markdown) {
 	font-size: var(--el-font-size-extra-small) !important;
-	color: var(--bs-tertiary-color);
+	color: var(--ks-content-tertiary);
 }
 
 </style>

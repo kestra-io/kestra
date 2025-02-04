@@ -85,7 +85,7 @@ public class FlowUsage {
             })
             .map(t -> {
                 try {
-                    TaskRunner taskRunner = (TaskRunner) t.getClass().getMethod("getTaskRunner").invoke(t);
+                    TaskRunner<?> taskRunner = (TaskRunner<?>) t.getClass().getMethod("getTaskRunner").invoke(t);
                     return taskRunner != null ? taskRunner.getType() : null;
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                     return null;

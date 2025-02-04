@@ -31,7 +31,7 @@
     import KestraIcon from "../../Kicon.vue";
     import Title from "../components/Title.vue";
 
-    import {ChartBar} from "../utils/icons.js";
+    import {ChartBar} from "../utils/icons";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});

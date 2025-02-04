@@ -1,17 +1,20 @@
 <template>
-    <div class="w-100">
-        <drawer
-            v-if="isEditOpen"
-            v-model="isEditOpen"
-        >
+    <span v-if="required" class="me-1 text-danger">*</span>
+    <span class="label">{{ label }}</span>
+    <div class="mt-1 mb-2 wrapper">
+        <drawer v-if="isEditOpen" v-model="isEditOpen">
             <template #header>
                 <code>variables</code>
             </template>
 
             <template #footer>
                 <div>
-                    <el-button :icon="ContentSave" @click="update()" type="primary">
-                        {{ $t('save') }}
+                    <el-button
+                        :icon="ContentSave"
+                        @click="update()"
+                        type="primary"
+                    >
+                        {{ $t("save") }}
                     </el-button>
                 </div>
             </template>
@@ -23,7 +26,9 @@
                     </template>
                     <el-input
                         :model-value="newVariables[selectedIndex][0]"
-                        @update:model-value="updateIndex($event, selectedIndex, 'key')"
+                        @update:model-value="
+                            updateIndex($event, selectedIndex, 'key')
+                        "
                     />
                 </el-form-item>
                 <el-form-item>
@@ -36,38 +41,46 @@
                         :full-height="false"
                         :input="true"
                         lang="text"
-                        @update:model-value="updateIndex($event, selectedIndex, 'value')"
+                        @update:model-value="
+                            updateIndex($event, selectedIndex, 'value')
+                        "
                     />
                 </el-form-item>
             </el-form>
         </drawer>
-        <div class="w-100">
-            <div v-if="variables">
-                <div class="d-flex w-100" v-for="(value, index) in newVariables" :key="index">
-                    <div class="flex-fill flex-grow-1 w-100 me-2">
-                        <el-input
-                            disabled
-                            :model-value="value[0]"
+        <div v-if="variables" class="mb-3">
+            <div
+                class="d-flex w-100 mb-2"
+                v-for="(value, index) in newVariables"
+                :key="index"
+            >
+                <div class="flex-fill flex-grow-1 w-100 me-2">
+                    <el-input disabled :model-value="value[0]" />
+                </div>
+                <div class="flex-shrink-1">
+                    <el-button-group class="d-flex flex-nowrap">
+                        <el-button
+                            :icon="TextSearch"
+                            @click="selectVariable(index)"
                         />
-                    </div>
-                    <div class="flex-shrink-1">
-                        <el-button-group class="d-flex flex-nowrap">
-                            <el-button :icon="TextSearch" @click="selectVariable(index)" />
-                            <el-button :icon="Plus" @click="addVariable" />
-                            <el-button
-                                :icon="Minus"
-                                @click="deleteInput(index)"
-                                :disabled="index === 0 && newVariables.length === 1"
-                            />
-                        </el-button-group>
-                    </div>
+                        <el-button :icon="Plus" @click="addVariable" />
+                        <el-button
+                            :icon="Minus"
+                            @click="deleteInput(index)"
+                            :disabled="index === 0 && newVariables.length === 1"
+                        />
+                    </el-button-group>
                 </div>
             </div>
-            <div v-else class="d-flex justify-content-center">
-                <el-button :icon="Plus" type="success" class="w-25" @click="addVariable">
-                    Add
-                </el-button>
-            </div>
+        </div>
+        <div v-else class="d-flex justify-content-center">
+            <el-button
+                :icon="Plus"
+                class="w-25"
+                @click="addVariable"
+            >
+                Add
+            </el-button>
         </div>
     </div>
 </template>
@@ -87,20 +100,29 @@
         components: {Editor, Drawer},
         emits: ["update:modelValue"],
         props: {
+            modelValue: {
+                type: Object,
+                default: () => {},
+            },
             variables: {
-                type: Array,
-                default: () => []
-            }
+                type: Object,
+                default: () => {},
+            },
+            label: {type: String, required: true},
+            required: {type: Boolean, default: false},
+            disabled: {type: Boolean, default: false},
         },
         created() {
-            this.newVariables = this.variables ? this.variables : this.newVariables
+            this.newVariables = this.variables
+                ? Object.entries(this.variables)
+                : this.newVariables;
         },
         data() {
             return {
-                newVariables: ["",undefined],
+                newVariables: ["", undefined],
                 selectedIndex: undefined,
-                isEditOpen: false
-            }
+                isEditOpen: false,
+            };
         },
         methods: {
             selectVariable(index) {
@@ -109,7 +131,10 @@
             },
             update() {
                 this.isEditOpen = false;
-                this.$emit("update:modelValue", this.newVariables);
+                this.$emit(
+                    "update:modelValue",
+                    Object.fromEntries(this.newVariables),
+                );
             },
             updateIndex(event, index, edited) {
                 if (edited === "key") {
@@ -123,8 +148,11 @@
             },
             addVariable() {
                 this.newVariables.push(["", undefined]);
-
-            }
+            },
         },
     };
 </script>
+
+<style scoped lang="scss">
+@import "../../components/code/styles/code.scss";
+</style>

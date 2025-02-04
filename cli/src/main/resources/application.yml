@@ -160,6 +160,9 @@ kestra:
   metrics:
     prefix: kestra
 
+  traces:
+    root: DISABLED
+
   server:
     basic-auth:
       enabled: false
@@ -194,3 +197,12 @@ kestra:
     prefixes:
       - system.
       - internal.
+
+otel:
+  exclusions:
+    - /ping
+    - /metrics
+    - /health
+    - /env
+    - /prometheus
+  propagators: tracecontext, baggage

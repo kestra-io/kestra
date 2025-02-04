@@ -1,85 +1,61 @@
+/* stylelint-disable custom-property-pattern */
+/* stylelint-disable color-no-hex */
 @use 'sass:map';
 @use 'sass:math';
 @use 'element-plus/theme-chalk/src/mixins/var' as *;
 
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 // use bootstrap for main style
 :root {
-    #{--bs-body-bg}: #fafaff;
-
-    --el-bg-color: var(--bs-body-bg);
-    --el-bg-color-page: var(--bs-body-bg);
+    --el-bg-color: var(--ks-background-body);
+    --el-bg-color-page: var(--ks-background-body);
     --el-bg-color-overlay: var(--bs-white);
 
-    --el-text-color-primary: var(--bs-primary);
-    --el-text-color-regular: var(--bs-body-color);
-    --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-body-color);
-    --el-text-color-disabled: var(--bs-gray-300-darken-5);
+    --el-text-color-primary: var(--ks-content-link);
+    --el-text-color-regular: var(--ks-content-primary);
+    --el-text-color-secondary: var(--ks-content-secondary);
+    --el-text-color-placeholder: var(--ks-content-secondary);
+    --el-text-color-disabled: var(--ks-content-inactive);
 
-    --el-border-color: var(--bs-border-color);
-    --el-border-color-light: var(--bs-border-color);
-    --el-border-color-lighter: var(--bs-border-color);
-    --el-border-color-extra-light: var(--bs-border-color);
-    --el-border-color-dark: var(--bs-border-color);
-    --el-border-color-darker: var(--bs-border-color);
+    --el-border-color: var(--ks-border-primary);
+    --el-border-color-light: var(--ks-border-primary);
+    --el-border-color-lighter: var(--ks-border-primary);
+    --el-border-color-extra-light: var(--ks-border-primary);
+    --el-border-color-dark: var(--ks-border-secondary);
+    --el-border-color-darker: var(--ks-border-secondary);
 
-    --el-fill-color: var(--bs-gray-300);
-    --el-fill-color-light: var(--bs-gray-200);
-    --el-fill-color-lighter: var(--bs-gray-100);
-    --el-fill-color-extra-light: var(--bs-white);
-    --el-fill-color-dark: var(--bs-gray-400);
-    --el-fill-color-darker: var(--bs-gray-500);
-    --el-fill-color-blank: var(--bs-white);
+    --el-fill-color: $base-gray-300;// used in buttons .is-text
+    --el-fill-color-light: $base-gray-200; // used in many places autocomplete suggestion highlighted
+    --el-fill-color-lighter: $base-gray-100; // used to be for table stripped but not anymore
+    --el-fill-color-extra-light: $base-white; // not used at all
+    --el-fill-color-dark: $base-gray-400; // used in buttons .is-text when active
+    --el-fill-color-darker: $base-gray-500; // not used at kestra
+    --el-fill-color-blank: $base-white;// used in many places --el-input-background-color
 
-    --el-color-alert-primary: var(--bs-primary);
-    --el-color-alert-info: #134ecc;
-    --el-color-alert-danger: #ab0009;
-    --el-color-alert-error: #ab0009;
-    --el-color-alert-warning: #dd5f00;
-    --el-color-alert-success: #016046;
+    // alert colors
+    @each $type in $types {
+        #{--el-color-alert-#{$type}}: var(--ks-content-#{$type});
+    }
 
-    --el-box-shadow: $box-shadow;
-    --el-box-shadow-light: $box-shadow-sm;
-    --el-box-shadow-lighter: $box-shadow-sm;
-    --el-box-shadow-dark: $box-shadow-lg;
+    --bs-code-color: $base-purple-600;
 
-    --el-transition-duration: 0.2s;
-    --el-transition-duration-fast: 0.2s;
-
-    --input-suffix-color: #574F6C;
-    --white-black-font-color: #{$black};
-    --top-navbar-height: 79px;
-
-    --bs-code-color: #7400DF;
-}
-
-:root {
-    #{--menu-width}: $menu-width;
-    #{--menu-collapsed-width}: 65px;
-    #{--spacer}: $spacer;
-
-    #{--font-size-xs}: $font-size-xs;
-    #{--font-size-sm}: $font-size-sm;
-    #{--font-size-base}: $font-size-base;
-    #{--font-size-lg}: $font-size-lg;
-    #{--card-bg}: $card-bg;
-    #{--card-bg-hover}: darken($card-bg, 2);
+    #{--card-bg}: var(--ks-background-card);
     #{--input-bg}: $input-bg;
 
-    #{--bs-border-color}: #E5E4F7;
-    #{--bs-border-secondary-color}: #E5E4F7;
+    #{--bs-border-color}: var(--ks-border-primary);
+    #{--bs-border-secondary-color}: var(--ks-border-secondary);
 
-    #{--bs-card-bg}: #FFFFFF;
-    #{--bs-body-color}: black;
-    #{--bs-heading-color}: var(--bs-black);
+    #{--bs-card-bg}: var(--ks-background-card);
+    #{--bs-body-color}: $base-black;
+    #{--bs-heading-color}: $base-black;
     #{--bs-secondary}: #564A75;
     #{--bs-secondary-rgb}: to-rgb(#564A75);
     #{--bs-tertiary-color}: #7E719F;
     #{--bs-tertiary}: $tertiary;
-    #{--bs-link-color-rgb}: to-rgb(#8405FF);
-    #{--bs-link-hover-color-rgb}: to-rgb(#9470FF);
+    #{--bs-link-color-rgb}: to-rgb($base-purple-500);
+    #{--bs-link-hover-color-rgb}: to-rgb($base-purple-300);
 
     #{--bs-gray}: #{map.get($grays, "600")};
     @each $key, $value in $grays {
@@ -97,150 +73,34 @@
         }
     }
 
-
-    /**
-    ** Log Levels Colors
-    **/
-    $content-information: #134ecc;
-    $content-running: #7400df;
-    $content-alert: #ab0009;
-    $content-warning: #c15300;
-    $content-success: #03DABA;
-    #{--background-failed}: #fed6d9;
-    #{--background-success}: #e4f9f3;
-    #{--content-information}: $content-information;
-    #{--border-failed}: #fec9cb;
-    #{--border-information}: #7fbaff;
-    #{--background-information}: #c7f0ff;
-    #{--content-alert}: $content-alert;
-    #{--content-success}: $content-success;
-    #{--border-success}: #beefe2;
-    #{--chart-success}: #02be8a;
-    #{--chart-failed}: #fd9297;
-    #{--chart-warning}: #f3c4a1;
-    #{--chart-created}: #5bb8ff;
-    #{--chart-running}: #bbbbff;
-    #{--chart-killed}: #7fbaff;
-    #{--chart-paused}: #d1cfe9;
-    #{--border-warning}: #f3c4a1;
-    #{--content-warning}: $content-warning;
-    #{--background-warning}: #fae7da;
-    #{--background-created}: #c7f0ff;
-    #{--content-created}: #134ecc;
-    #{--border-created}: #a2cdff;
-    #{--border-killed}: #fde592;
-    #{--border-killing}: #d1cfe9;
-    #{--content-killed}: #7e703e;
-    #{--background-killed}: #fef0be;
-    #{--background-running}: #e0e0ff;
-    #{--content-running}: $content-running;
-    #{--border-running}: #bbbbff;
-    #{--content-paused}: #564a75;
-    #{--border-paused}: #e5e4f7;
-    #{--background-paused}: #f5f5ff;
-    #{--log-content-trace}: #26282d;
-    #{--log-border-trace}: #b8b6d9;
-    #{--log-chart-trace}: #d1cfe9;
-    #{--log-background-trace}: #e5e4f7;
-    #{--log-background-info}: #e4f9f3;
-    #{--log-content-info}: #017f5c;
-    #{--log-chart-info}: #21ce9c;
-    #{--log-border-info}: #02be8a;
-    #{--log-background-warn}: #fae7da;
-    #{--log-border-warn}: #e58238;
-    #{--log-content-warn}: #8a3b00;
-    #{--log-chart-warn}: #eeae7e;
-    #{--log-background-error}: #fed6d9;
-    #{--log-border-error}: #e3262f;
-    #{--log-content-error}: #ab0009;
-    #{--log-chart-error}: #fd7278;
-    #{--log-background-debug}: #c7f0ff;
-    #{--log-border-debug}: #3991ff;
-    #{--log-content-debug}: #134ecc;
-    #{--log-chart-debug}: #7fbaff;
-
+    $content-information: $base-blue-600;
+    $content-running: $base-purple-600;
+    $content-alert: $base-red-500;
+    $content-warning: $base-orange-600;
+    $content-success: $base-green-300;
     #{--bs-info-rgb}: to_rgb($content-information);
     #{--bs-running-rgb}: to_rgb($content-running);
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
 
-    #{--bs-border-info}: var(--border-information);
-    #{--bs-border-running}: var(--border-running);
-    #{--bs-border-danger}: var(--border-failed);
-    #{--bs-border-warning}: var(--border-warning);
-    #{--bs-border-success}: var(--border-success);
-    #{--token-content-link}: #8405FF;
-
-    /**
-    ** State Levels Colors
-    **/
-    // CREATED
-    #{--content-color-created}: #E3262F;
-    #{--border-color-created}: #FD9297;
-    #{--background-color-created}: #FFF2F3;
-    // RUNNING
-    #{--content-color-running}: #134ECC;
-    #{--border-color-running}: #3991FF;
-    #{--background-color-running}: #C7F0FF;
-    // RETRYING
-    #{--content-color-retrying}: #0E3B9A;
-    #{--border-color-retrying}: #1761FD;
-    #{--background-color-retrying}: #C7F0FF;
-    // RETRIED
-    #{--content-color-retried}: #134ECC;
-    #{--border-color-retried}: #5BB8FF;
-    #{--background-color-retried}: #C7F0FF;
-    // PAUSED
-    #{--content-color-paused}: #DD5F00;
-    #{--border-color-paused}: #DDC46D;
-    #{--background-color-paused}: #FFFBEF;
-    // RESTARTED
-    #{--content-color-restarted}: #134ECC;
-    #{--border-color-restarted}: #A2CDFF;
-    #{--background-color-restarted}: #C7F0FF;
-    // KILLING
-    #{--content-color-killing}: #564A75;
-    #{--border-color-killing}: #564A75;
-    #{--background-color-killing}: #F0F0FF;
-    // SUCCESS
-    #{--content-color-success}: #016046;
-    #{--border-color-success}: #21CE9C;
-    #{--background-color-success}: #E4F9F3;
-    // WARNING
-    #{--content-color-warning}: #DD5F00;
-    #{--border-color-warning}: #E9985B;
-    #{--background-color-warning}: #FFF2EA;
-    // KILLED
-    #{--content-color-killed}: #26282D;
-    #{--border-color-killed}: #D1CFE9;
-    #{--background-color-killed}: #FAFAFF;
-    // FAILED
-    #{--content-color-failed}: #AB0009;
-    #{--border-color-failed}: #FD7278;
-    #{--background-color-failed}: #FFF2F3;
-    // CANCELLED
-    #{--content-color-cancelled}: #26282D;
-    #{--border-color-cancelled}: #B8B6D9;
-    #{--background-color-cancelled}: #E5E4F7;
-    // QUEUED
-    #{--content-color-queued}: #9E8C4E;
-    #{--border-color-queued}: #DDC46D;
-    #{--background-color-queued}: #FFFBEF;
-
-
+    #{--bs-border-info}: var(--ks-border-info);
+    #{--bs-border-running}: var(--ks-border-running);
+    #{--bs-border-danger}: var(--ks-border-error);
+    #{--bs-border-warning}: var(--ks-border-warning);
+    #{--bs-border-success}: var(--ks-border-success);
 }
 
 $logLevels: "trace", "debug", "info", "warn", "error";
 @each $logLevel in $logLevels {
     .log-border-#{$logLevel} {
-        border-color: var(--log-border-#{$logLevel}) !important;
+        border-color: var(--ks-log-border-#{$logLevel}) !important;
     }
     .log-bg-#{$logLevel} {
-        background-color: var(--log-background-#{$logLevel}) !important;
+        background-color: var(--ks-log-background-#{$logLevel}) !important;
     }
     .log-content-#{$logLevel} {
-        color: var(--log-content-#{$logLevel}) !important;
+        color: var(--ks-log-content-#{$logLevel}) !important;
     }
 }
 
@@ -253,28 +113,28 @@ $logLevels: "trace", "debug", "info", "warn", "error";
 }
 
 .text-tertiary {
-    color: var(--bs-tertiary-color);
+    color: var(--ks-content-tertiary);
 }
 
 .button-top {
-    background: var(--card-bg);
-    border-bottom: 1px solid var(--bs-border-color);
-    padding: calc(var(--spacer) / 2) calc(var(--spacer) * 2);
-    padding-left: calc(var(--spacer) / 2);
+    background: var(--ks-background-card);
+    border-bottom: 1px solid var(--ks-border-primary);
+    padding: .5rem 2rem;
+    padding-left: .5rem;
     display: flex;
     align-items: center;
     justify-content: end;
     max-height: 49.5px;
 
-    :deep(.validation) {
+    .validation {
         border: 0;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
     }
 
-    :deep(.el-button) {
+    .el-button {
         border: 0;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
     }
 }

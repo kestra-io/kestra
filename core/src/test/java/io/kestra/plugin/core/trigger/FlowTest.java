@@ -3,6 +3,7 @@ package io.kestra.plugin.core.trigger;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -39,7 +40,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -82,7 +83,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -124,7 +125,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()

@@ -117,7 +117,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .selectCount()
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId))
-                .and(NAMESPACE_FIELD.eq(namespace))
+                .and(DSL.or(
+                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
+                    NAMESPACE_FIELD.eq(namespace)
+                ))
                 .fetchOne(0, int.class));
     }
 

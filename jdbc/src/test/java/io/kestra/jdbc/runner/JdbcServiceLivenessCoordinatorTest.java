@@ -46,8 +46,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @KestraTest(environments =  {"test", "liveness"})
@@ -127,7 +126,10 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait, is(true));
-        assertThat(receive.blockLast().getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
+        WorkerTaskResult workerTaskResult = receive.blockLast();
+        assertThat(workerTaskResult, notNullValue());
+        assertThat(workerTaskResult.getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
+        assertThat(workerTaskResult.getTaskRun().getAttempts(), hasSize(2));
         newWorker.shutdown();
     }
 

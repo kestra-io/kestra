@@ -66,7 +66,7 @@
 
 <style lang="scss" scoped>
     .post {
-        padding: var(--spacer);
+        padding: 1rem;
 
         h5 {
             margin-bottom: 0;
@@ -92,8 +92,8 @@
 
         hr {
             border-top-color: var(--bs-gray-700);
-            margin-top: calc(var(--spacer) * 2);
-            margin-bottom: calc(var(--spacer) * 2);
+            margin-top: .5rem;
+            margin-bottom: .5rem;
         }
 
         .small {
@@ -106,7 +106,7 @@
         }
 
         .expandIcon {
-            margin-right:var(--spacer);
+            margin-right: 1rem;
         }
     }
 
@@ -126,7 +126,7 @@
             float: none;
             max-width: none;
             max-height: none;
-            margin-bottom: var(--spacer)
+            margin-bottom: 1rem;
         }
     }
 
@@ -144,7 +144,7 @@
 
     .newsButtonBar {
         display: flex;
-        margin-top: var(--spacer);
+        margin-top: 1rem;
     }
 
     :deep(.news-date) {

@@ -35,6 +35,8 @@ env:
   DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
   DOCKER_PYTHON_LIBRARIES: kestra
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+  # to save corepack from itself
+  COREPACK_INTEGRITY_KEYS: 0
 jobs:
   build-artifacts:
     name: Build Artifacts
@@ -45,13 +47,14 @@ jobs:
       docker-artifact-name: ${{ steps.vars.outputs.artifact }}
       plugins: ${{ steps.plugins-list.outputs.plugins }}
     steps:
-      # Checkout
-      - uses: actions/checkout@v4
+
+      - name: Checkout current ref
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - name: Checkout GitHub Actions
+        uses: actions/checkout@v4
         with:
           repository: kestra-io/actions
           path: actions
@@ -296,7 +299,7 @@ jobs:
           storageType: gcs
           resultsGlob: "**/build/allure-results"
           bucket: internal-kestra-host
-          baseUrl: "https://internal.kestra.io"
+          baseUrl: "https://internal.dev.kestra.io"
           prefix: ${{ format('{0}/{1}', github.repository, 'allure/java') }}
           copyLatest: true
           ignoreMissingResults: true
@@ -334,7 +337,10 @@ jobs:
       always() &&
       startsWith(github.ref, 'refs/tags/v') &&
       needs.check.result == 'success' &&
-      (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      (
+        github.event.inputs.skip-test == 'true' ||
+        (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      )
     steps:
       # Download Exec
       - name: Download executable
@@ -379,7 +385,10 @@ jobs:
       always() &&
       github.ref == 'refs/heads/develop' &&
       needs.check.result == 'success' &&
-      (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      (
+        github.event.inputs.skip-test == 'true' ||
+        (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      )
     strategy:
       matrix:
         image:
@@ -448,9 +457,12 @@ jobs:
     needs: [check, check-e2e]
     if: |
       always() &&
-      github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v') &&
+      (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')) &&
       needs.check.result == 'success' &&
-      (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      (
+        github.event.inputs.skip-test == 'true' ||
+        (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
+      )
     steps:
       - uses: actions/checkout@v4
 

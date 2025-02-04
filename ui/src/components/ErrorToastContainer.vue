@@ -20,7 +20,7 @@
 
 <script>
     import Slack from "vue-material-design-icons/Slack.vue";
-    import Markdown from "../utils/markdown";
+    import * as Markdown from "../utils/markdown";
 
     export default {
         props: {
@@ -57,14 +57,14 @@
 
 <style lang="scss" scoped>
     ul {
-        margin-top: calc(var(--spacer) * 1);
+        margin-top: 1rem;
         margin-bottom: 0;
-        margin-left: calc(var(--spacer) * -3);
+        margin-left: -3rem;
     }
 
     li {
         font-size: 0.8rem;
-        margin-top: calc(var(--spacer) * 0.5);
+        margin-top: .5rem;
 
     }
 </style>

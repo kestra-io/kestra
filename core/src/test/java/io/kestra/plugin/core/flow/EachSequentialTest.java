@@ -118,4 +118,11 @@ public class EachSequentialTest {
         TaskRun switchNumber2 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-2", Arrays.asList("b", "2"));
         assertThat((String) switchNumber2.getOutputs().get("value"), is("2 b"));
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-disabled-tasks.yaml")
+    void eachDisabledTasks(Execution execution) {
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
 }

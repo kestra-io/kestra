@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -21,16 +22,6 @@ class IfTest {
 
     @Inject
     private RunnerUtils runnerUtils;
-
-    @Test
-    @LoadFlows({"flows/valids/if.yaml"})
-    void multipleIf() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
-            (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
-
-        assertThat(execution.getTaskRunList(), hasSize(12));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-    }
 
     @Test
     @LoadFlows({"flows/valids/if-condition.yaml"})
@@ -116,6 +107,14 @@ class IfTest {
 
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/if-with-only-disabled-tasks.yaml")
+    void ifWithOnlyDisabledTasks(Execution execution) {
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.findTaskRunsByTaskId("if").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

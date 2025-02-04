@@ -104,7 +104,7 @@
 
 <script>
     import LogLine from "./LogLine.vue";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import _xor from "lodash/xor";
     import _groupBy from "lodash/groupBy";
     import moment from "moment";
@@ -328,8 +328,6 @@
                 return Download
             },
             currentTaskRuns() {
-                // console.log(this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true))
-                // return this.logs.map(log => log.taskRunId).filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
                 return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? [];
             },
             params() {
@@ -488,7 +486,10 @@
                             if (isEnd) {
                                 this.closeExecutionSSE();
                             }
-                            this.throttledExecutionUpdate(executionEvent);
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (executionEvent.lastEventId !== "start") {
+                                this.throttledExecutionUpdate(executionEvent);
+                            }
                             if (isEnd) {
                                 this.throttledExecutionUpdate.flush();
                             }
@@ -502,7 +503,10 @@
                         this.logsSSE = sse;
 
                         this.logsSSE.onmessage = event => {
-                            this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (event.lastEventId !== "start") {
+                                this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
+                            }
 
                             clearTimeout(this.timeout);
                             this.timeout = setTimeout(() => {
@@ -670,29 +674,16 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
 
-        &.even > div > .el-card {
-            background: var(--bs-gray-100);
-
-            html.dark & {
-                background: var(--bs-gray-200);
-            }
-
-            .task-icon {
-                border: none;
-                color: $white;
-            }
-        }
-
         :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
-            padding-bottom: var(--spacer);
+            padding-bottom: 1rem;
         }
 
         :deep(.line) {
@@ -700,18 +691,29 @@
         }
 
         .attempt-wrapper {
-            background-color: var(--bs-white);
+            background-color: var(--ks-background-input);
+            margin-bottom: 0;
+            border: 1px solid var(--ks-border-primary);
 
-            :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-                border-top: 1px solid var(--bs-border-color);
-            }
-
-            html.dark & {
-                background-color: var(--bs-gray-100);
+            :deep(.el-card__body) {
+                padding: 0;
             }
 
             .attempt-wrapper & {
                 border-radius: .25rem;
+            }
+
+            tbody:last-child & {
+                border-bottom: 1px solid var(--ks-border-primary);
+            }
+
+            .attempt-header {
+                padding: 0 .5rem .5rem;
+                border-bottom: 1px solid var(--ks-border-primary);
+            }
+
+            .line {
+                padding: .5rem;
             }
         }
 
@@ -730,10 +732,9 @@
         .log-lines {
             max-height: 50vh;
             transition: max-height 0.2s ease-out;
-            margin-top: calc(var(--spacer) / 2);
 
             .line {
-                padding: calc(var(--spacer) / 2);
+                padding: 1rem;
 
                 &.cursor {
                     background-color: var(--bs-gray-300)
@@ -749,7 +750,7 @@
             }
 
             &::-webkit-scrollbar-thumb {
-                background: var(--bs-primary);
+                background: var(--ks-button-background-primary);
             }
         }
     }

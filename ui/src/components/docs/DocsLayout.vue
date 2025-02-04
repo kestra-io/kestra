@@ -40,8 +40,8 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .sidebar {
-        background: var(--card-bg);
-        padding: calc(var(--spacer) * 2);
+        background: var(--ks-background-card);
+        padding: 2rem;
         height: calc(100vh - 80px);
         top: 80px;
         position: sticky;
@@ -52,16 +52,16 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
 
         &.collapsed {
-            padding: calc(var(--spacer) * 2) calc(var(--spacer) * 0.5);
+            padding: 2rem .5rem;
             background: transparent;
         }
 
@@ -92,7 +92,7 @@
 
         :deep(h2) {
             font-weight: 600;
-            border-top: 1px solid var(--bs-border-color);
+            border-top: 1px solid var(--ks-border-primary);
             margin-bottom: 2rem;
             margin-top: 4.12rem;
             padding-top: 3.125rem;
@@ -109,7 +109,7 @@
         }
 
         :deep(.btn:hover span) {
-            color: var(--bs-body-color);
+            color: var(--ks-content-primary);
         }
 
         :deep(a[target=_blank]:after) {
@@ -126,7 +126,7 @@
 
         :deep(.code-block) {
             .language {
-                color: var(--bs-tertiary-color);
+                color: var(--ks-content-tertiary);
             }
         }
 
@@ -135,8 +135,8 @@
 
             &:not(.shiki code) {
                 font-weight: 700;
-                background: var(--bs-body-bg);
-                color: var(--bs-body-color);
+                background: var(--ks-background-body);
+                color: var(--ks-content-primary);
                 border: 1px solid var(--border-killing)
             }
         }
@@ -151,7 +151,7 @@
             padding-left: 1rem;
 
             > p {
-                color: var(--bs-body-color);
+                color: var(--ks-content-primary);
             }
         }
 
@@ -160,7 +160,7 @@
         }
 
         :deep(.card-group > a), :deep(h2 > a), :deep(h3 > a) {
-            color: var(--bs-body-color);
+            color: var(--ks-content-primary);
         }
 
         :deep(li > a) {
@@ -169,12 +169,12 @@
 
         :deep(.video-container) {
             position: relative;
-            margin: calc(var(--spacer) * 2) 0;
+            margin: 2rem 0;
             padding-top: 35.25%;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-background-body);
             height: 28.351rem;
             border-radius: calc($spacer / 2);
-            border: 1px solid var(--bs-border-secondary-color);
+            border: 1px solid var(--ks-border-secondary);
 
             @media only screen and (max-width: 1919px) {
                 padding-top: 56.25%;
@@ -199,21 +199,21 @@
         :deep(.card) {
             --bs-card-spacer-y: 1rem;
             --bs-card-spacer-x: 1rem;
-            border: 1px solid var(--bs-border-color);
-            color: var(--bs-body-color);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-primary);
             display: flex;
             flex-direction: column;
             min-width: 0;
             position: relative;
             word-wrap: break-word;
             background-clip: border-box;
-            background-color: var(--bs-card-bg);
+            background-color: var(--ks-background-card);
             border-radius: var(--bs-border-radius-lg);
 
             .card-body {
-                color: var(--bs-card-color);
+                color: var(--ks-content-primary);
                 flex: 1 1 auto;
-                padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+                padding: 1rem;
                 gap: 1rem;
             }
         }
@@ -244,10 +244,10 @@
         }
 
         :deep(.doc-alert) {
-            border: 1px solid var(--border-information);
+            border: 1px solid var(--ks-border-info);
             border-radius: 4px;
-            color: var(--content-information);
-            background: var(--background-information);
+            color: var(--ks-content-info);
+            background: var(--ks-background-info);
         }
     }
 </style>

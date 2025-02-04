@@ -2,7 +2,7 @@ import {useI18n} from "vue-i18n";
 
 import {Value} from "../utils/types";
 
-import State from "../../../utils/state.js";
+import {State} from "@kestra-io/ui-libs";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission.js";
 import action from "../../../models/action.js";

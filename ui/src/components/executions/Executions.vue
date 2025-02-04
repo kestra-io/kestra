@@ -55,7 +55,7 @@
                 </el-card>
             </template>
 
-            <template #table v-if="executions.length">
+            <template #table v-if="executions?.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -379,7 +379,7 @@
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -589,9 +589,6 @@
             },
             isDisplayedTop() {
                 return this.embed === false && this.filter
-            },
-            filterStorageKey() {
-                return storageKeys.EXECUTIONS_FILTERS
             },
             states() {
                 return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {
@@ -938,7 +935,7 @@
                     name: "flows/update", params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
-                        tab: "editor",
+                        tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })

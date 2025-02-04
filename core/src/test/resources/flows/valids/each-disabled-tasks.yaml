@@ -1,0 +1,15 @@
+id: each-disabled-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["1", "2"]
+    tasks:
+      - id: 1-1
+        type: io.kestra.plugin.core.debug.Return
+        disabled: true
+        format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+  - id: 2_end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

@@ -3,13 +3,12 @@ package io.kestra.plugin.core.state;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.MapUtils;
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -28,37 +27,35 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public abstract class AbstractState extends Task {
     private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
+    public static final String TASKS_STATES = "tasks-states";
 
     @Schema(
         title = "The name of the state file."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
     @Builder.Default
-    protected String name = "default";
+    protected Property<String> name = Property.of("default");
 
     @Schema(
         title = "Share state for the current namespace.",
         description = "By default, the state is isolated by namespace **and** flow, setting to `true` will allow to share the state between the **same** namespace"
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private final Boolean namespace = false;
+    private final Property<Boolean> namespace = Property.of(false);
 
     @Schema(
         title = "Isolate the state with `taskrun.value`.",
         description = "By default, the state will be isolated with `taskrun.value` (during iteration with each). Setting to `false` will allow using the same state for every run of the iteration."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private final Boolean taskrunValue = true;
+    private final Property<Boolean> taskrunValue = Property.of(true);
 
 
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException, ResourceExpiredException {
         return JacksonMapper.ofJson(false).readValue(runContext.stateStore().getState(
-            !this.namespace,
-            "tasks-states",
-            runContext.render(this.name),
+            !runContext.render(this.namespace).as(Boolean.class).orElseThrow(),
+            TASKS_STATES,
+            runContext.render(this.name).as(String.class).orElse(null),
             taskRunValue(runContext)
         ), TYPE_REFERENCE);
     }
@@ -75,9 +72,9 @@ public abstract class AbstractState extends Task {
         Map<String, Object> merge = MapUtils.merge(current, runContext.render(map));
 
         String key = runContext.stateStore().putState(
-            !this.namespace,
-            "tasks-states",
-            runContext.render(this.name),
+            !runContext.render(this.namespace).as(Boolean.class).orElseThrow(),
+            TASKS_STATES,
+            runContext.render(this.name).as(String.class).orElse(null),
             taskRunValue(runContext),
             JacksonMapper.ofJson(false).writeValueAsBytes(merge)
         );
@@ -87,14 +84,15 @@ public abstract class AbstractState extends Task {
 
     protected boolean delete(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
         return runContext.stateStore().deleteState(
-            !this.namespace,
-            "tasks-states",
-            runContext.render(this.name),
+            !runContext.render(this.namespace).as(Boolean.class).orElseThrow(),
+            TASKS_STATES,
+            runContext.render(this.name).as(String.class).orElse(null),
             taskRunValue(runContext)
         );
     }
 
-    private String taskRunValue(RunContext runContext) {
-        return this.taskrunValue ? runContext.storage().getTaskStorageContext().map(StorageContext.Task::getTaskRunValue).orElse(null) : null;
+    private String taskRunValue(RunContext runContext) throws IllegalVariableEvaluationException {
+        return Boolean.TRUE.equals(runContext.render(this.taskrunValue).as(Boolean.class).orElseThrow()) ?
+            runContext.storage().getTaskStorageContext().map(StorageContext.Task::getTaskRunValue).orElse(null) : null;
     }
 }

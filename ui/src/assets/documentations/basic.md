@@ -92,7 +92,7 @@ inputs:
     required: false
     defaults: Kestrel
     description: This is an optional input — if not set at runtime, it will use the default value Kestrel
-    
+
   - id: run_task
     type: BOOLEAN
     defaults: true
@@ -112,7 +112,7 @@ inputs:
     dependsOn:
       inputs:
         - run_task
-      condition: "{{ inputs.run_task }}"      
+      condition: "{{ inputs.run_task }}"
 
   - id: bird
     type: SELECT
@@ -125,7 +125,7 @@ inputs:
     dependsOn:
       inputs:
         - user
-      condition: "{{ inputs.user == 'Kestrel' }}" 
+      condition: "{{ inputs.user == 'Kestrel' }}"
 
 variables:
   first: 1
@@ -143,7 +143,7 @@ tasks:
     type: io.kestra.plugin.core.debug.Return
     format: Hello World!
     runIf: "{{ inputs.run_task }}"
-  
+
   - id: fallback
     type: io.kestra.plugin.core.debug.Return
     format: fallback output
@@ -175,8 +175,8 @@ The table below lists common Pebble expressions and functions.
 | Expression                                                                                         | Description                                                                                                                     |
 |----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | `{{ printContext() }}`                                                                             | Fetch the entire execution context as a JSON object.                                                                            |
-| `{{ errorLogs() }}`            | Enrich your alert notifications with context about why Execution failed incl. information about failed task runs and their error stacktraces.                                                            |
-| `{{ appLink('appId') }}`            | Fetch the URL of the App linked to the current Execution. To get the base URL of the app allowing to create new Executions, add `baseUrl=true` e.g. `{{ appLink('yourAppId', baseUrl=true) }}`. If there is only one App linked to the flow, you can skip the App ID argument e.g. `{{ appLink() }}`.                                                                                          |
+| `{{ errorLogs() }}`                                                                                | Enrich your alert notifications with context about why Execution failed incl. information about failed task runs and their error stacktraces.                                                            |
+| `{{ appLink('appId') }}`                                                                           | Fetch the URL of the App linked to the current Execution. To get the base URL of the app allowing to create new Executions, add `baseUrl=true` e.g. `{{ appLink('yourAppId', baseUrl=true) }}`. If there is only one App linked to the flow, you can skip the App ID argument e.g. `{{ appLink() }}`.                                                                                          |
 | `{{ flow.id }}`                                                                                    | The identifier of the flow.                                                                                                     |
 | `{{ flow.namespace }}`                                                                             | The name of the flow namespace.                                                                                                 |
 | `{{ flow.tenantId }}`                                                                              | The identifier of the tenant (EE only).                                                                                         |
@@ -189,7 +189,8 @@ The table below lists common Pebble expressions and functions.
 | `{{ taskrun.id }}`                                                                                 | The current task run ID.                                                                                                        |
 | `{{ taskrun.startDate }}`                                                                          | The current task run start date.                                                                                                |
 | `{{ taskrun.parentId }}`                                                                           | The current task run parent identifier. Only available with tasks inside a Flowable Task.                                       |
-| `{{ taskrun.value }}`                                                                              | The value of the current task run, only available with tasks wrapped in Flowable Tasks.                                         |
+| `{{ taskrun.value }}`                                                                              | The value of the current task run, only available with tasks inside in Flowable Tasks.                                         |
+| `{{ taskrun.iteration }}`                                                                          | The index of the current task run iteration, only available with tasks inside in Flowable Tasks.
 | `{{ taskrun.attemptsCount }}`                                                                      | The number of attempts for the current task (when retry or restart is performed).                                               |
 | `{{ parent.taskrun.value }}`                                                                       | The value of the closest (first) parent task run, only available with tasks inside a Flowable Task.                             |
 | `{{ parent.outputs }}`                                                                             | The outputs of the closest (first) parent task run Flowable Task, only available with tasks wrapped in a Flowable Task.         |

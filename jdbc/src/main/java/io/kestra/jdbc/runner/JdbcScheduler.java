@@ -3,8 +3,6 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.*;
@@ -15,7 +13,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +25,12 @@ import java.util.function.BiConsumer;
 @Singleton
 @Slf4j
 public class JdbcScheduler extends AbstractScheduler {
-    private final QueueInterface<Execution> executionQueue;
     private final TriggerRepositoryInterface triggerRepository;
-
     private final FlowRepositoryInterface flowRepository;
     private final JooqDSLContextWrapper dslContextWrapper;
     private final ConditionService conditionService;
 
 
-    @SuppressWarnings("unchecked")
     @Inject
     public JdbcScheduler(
         ApplicationContext applicationContext,
@@ -44,7 +38,6 @@ public class JdbcScheduler extends AbstractScheduler {
     ) {
         super(applicationContext, flowListeners);
 
-        executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         triggerRepository = applicationContext.getBean(AbstractJdbcTriggerRepository.class);
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
         executionState = applicationContext.getBean(SchedulerExecutionState.class);

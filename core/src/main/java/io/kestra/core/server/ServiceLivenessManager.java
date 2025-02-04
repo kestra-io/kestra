@@ -81,7 +81,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             case CREATED:
                 onCreateState(event);
                 break;
-            case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED:
+            case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED, MAINTENANCE:
                 updateServiceInstanceState(Instant.now(), event.getService(), newState, NOOP);
                 break;
             default:

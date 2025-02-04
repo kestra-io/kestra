@@ -36,15 +36,9 @@ import lombok.ToString;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import org.apache.commons.lang3.stream.Streams;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SuperBuilder
@@ -53,7 +47,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language."
+    title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language.",
+    description = "Restarting a parent flow will restart any subflows that has previously been executed."
 )
 @Plugin(
     examples = {
@@ -157,8 +152,19 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Schema(
         title = "Don't trigger the subflow now but schedule it on a specific date."
-   )
+    )
     private Property<ZonedDateTime> scheduleDate;
+
+    @Schema(
+        title = "What to do when a failed execution is restarting.",
+        description = """
+            - RETRY_FAILED (default): will restart the subflow execution if it's failed.
+            - NEW_EXECUTION: will create a new subflow execution.""
+            """
+    )
+    @NotNull
+    @Builder.Default
+    private RestartBehavior restartBehavior = RestartBehavior.RETRY_FAILED;
 
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
@@ -171,7 +177,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             inputs.putAll(runContext.render(this.inputs));
         }
 
-        return List.of(ExecutableUtils.subflowExecution(
+        return ExecutableUtils.subflowExecution(
             runContext,
             flowExecutorInterface,
             currentExecution,
@@ -182,7 +188,9 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             labels,
             inheritLabels,
             scheduleDate
-        ));
+        )
+            .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
+            .orElse(Collections.emptyList());
     }
 
     @Override

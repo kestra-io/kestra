@@ -28,7 +28,7 @@ dependencies {
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
-    testImplementation("com.github.tomakehurst:wiremock-jre8")
+    testImplementation "org.wiremock:wiremock"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')

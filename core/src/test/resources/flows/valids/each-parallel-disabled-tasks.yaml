@@ -1,0 +1,15 @@
+id: each-parallel-disabled-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.plugin.core.flow.EachParallel
+    value: '["value 1", "value 2", "value 3"]'
+    tasks:
+      - id: 1-1
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ task.id }}"
+        disabled: true
+  - id: 2_end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

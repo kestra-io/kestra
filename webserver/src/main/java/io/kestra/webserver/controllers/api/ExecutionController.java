@@ -32,6 +32,7 @@ import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Webhook;
@@ -69,6 +70,8 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -174,6 +177,9 @@ public class ExecutionController {
 
     @Value("${kestra.url}")
     private Optional<String> kestraUrl;
+
+    @Inject
+    private OpenTelemetry openTelemetry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -523,6 +529,10 @@ public class ExecutionController {
         }
 
         try {
+            // inject the traceparent into the execution
+            var propagator = openTelemetry.getPropagators().getTextMapPropagator();
+            propagator.inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
             return HttpResponse.ok(result);
@@ -592,6 +602,10 @@ public class ExecutionController {
             .handle((executionInputs, sink) -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
                 try {
+                    // inject the traceparent into the execution
+                    var propagator = openTelemetry.getPropagators().getTextMapPropagator();
+                    propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE);
+
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
@@ -637,8 +651,8 @@ public class ExecutionController {
         private final URI url;
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
-        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, URI url) {
-            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate);
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, String traceParent, URI url) {
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent);
 
             this.url = url;
         }
@@ -662,6 +676,7 @@ public class ExecutionController {
                 execution.isDeleted(),
                 execution.getMetadata(),
                 execution.getScheduleDate(),
+                execution.getTraceParent(),
                 url
             );
         }
@@ -879,9 +894,22 @@ public class ExecutionController {
 
         this.controlRevision(execution.get(), revision);
 
-        Execution replay = executionService.replay(execution.get(), taskRunId, revision);
+        return innerReplay(execution.get(), taskRunId, revision);
+    }
+
+    private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
+        Execution replay = executionService.replay(execution, taskRunId, revision);
         executionQueue.emit(replay);
-        eventPublisher.publishEvent(new CrudEvent<>(replay, execution.get(), CrudEventType.CREATE));
+        eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
+
+        // update parent exec with replayed label
+        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+        if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
+            newLabels.add(new Label(Label.REPLAYED, "true"));
+        }
+        Execution newExecution = execution.withLabels(newLabels);
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        executionRepository.save(newExecution);
 
         return replay;
     }
@@ -918,6 +946,11 @@ public class ExecutionController {
         Flow flow = flowRepository.findByExecution(execution.get());
 
         Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        List<Label> newLabels = new ArrayList<>(replay.getLabels());
+        if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
+            newLabels.add(new Label(Label.RESTARTED, "true"));
+        }
+        replay = replay.withLabels(newLabels);
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, execution.get(), CrudEventType.UPDATE));
 
@@ -932,13 +965,13 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/change-status")
-    @Operation(tags = {"Executions"}, summary = "Change the status of an execution")
+    @Operation(tags = {"Executions"}, summary = "Change the state of an execution")
     public Execution changeStatus(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The new status of the execution") @NotNull @QueryValue State.Type status
+        @Parameter(description = "The new state of the execution") @NotNull @QueryValue State.Type status
     ) throws QueueException {
         if (!status.isTerminated()) {
-            throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
+            throw new IllegalArgumentException("You can only change the state of an execution to a terminal state.");
         }
 
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
@@ -947,7 +980,7 @@ public class ExecutionController {
         }
 
         if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the status of a terminated execution.");
+            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -960,15 +993,15 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/change-status/by-ids")
-    @Operation(tags = {"Executions"}, summary = "Change status of executions by id")
+    @Operation(tags = {"Executions"}, summary = "Change executions state by id")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", description = "Changed status with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Changed state with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public HttpResponse<?> changeStatusById(
         @Parameter(description = "The execution id") @Body List<String> executionsId,
-        @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
+        @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus
     ) throws QueueException {
         if (!newStatus.isTerminated()) {
-            throw new IllegalArgumentException("You can only change the status of an execution to a terminal state.");
+            throw new IllegalArgumentException("You can only change the state of an execution to a terminal state.");
         }
 
         List<Execution> executions = new ArrayList<>();
@@ -1000,7 +1033,7 @@ public class ExecutionController {
         if (!invalids.isEmpty()) {
             return HttpResponse.badRequest(BulkErrorResponse
                 .builder()
-                .message("invalid bulk change execution status")
+                .message("invalid bulk change executions state")
                 .invalids(invalids)
                 .build()
             );
@@ -1018,9 +1051,9 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/change-status/by-query")
-    @Operation(tags = {"Executions"}, summary = "Change executions status by query parameters")
+    @Operation(tags = {"Executions"}, summary = "Change executions state by query parameters")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
-    @ApiResponse(responseCode = "422", description = "Changed status with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+    @ApiResponse(responseCode = "422", description = "Changed state with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public HttpResponse<?> changeStatusByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1036,7 +1069,7 @@ public class ExecutionController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-        @Parameter(description = "The new status of the executions") @NotNull @QueryValue State.Type newStatus
+        @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus
     ) throws QueueException {
         validateTimeline(startDate, endDate);
 
@@ -1440,9 +1473,7 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            Execution replay = executionService.replay(execution, null, null);
-            executionQueue.emit(replay);
-            eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
+            innerReplay(execution, null, null);
         }
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
@@ -1463,8 +1494,11 @@ public class ExecutionController {
 
         return Flux
             .<Event<Execution>>create(emitter -> {
+                // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
+                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
+
                 // already finished execution
-                Execution execution = null;
+                Execution execution;
                 try {
                     execution = Await.until(
                         () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
@@ -1515,9 +1549,11 @@ public class ExecutionController {
                 cancel.set(receive);
             }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(ignored -> {
-                if (cancel.get() != null) {
-                    cancel.get().run();
-                }
+                Schedulers.boundedElastic().schedule(() -> {
+                    if (cancel.get() != null) {
+                        cancel.get().run();
+                    }
+                });
             });
     }
 

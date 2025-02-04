@@ -1,169 +1,118 @@
 package io.kestra.plugin.core.http;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.client.configurations.SslOptions;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.http.*;
-import io.micronaut.http.client.DefaultHttpClientConfiguration;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.http.ssl.ClientSslConfiguration;
-import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.reactor.http.client.ReactorStreamingHttpClient;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpHeaders;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
+@Slf4j
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-abstract public class AbstractHttp extends Task implements HttpInterface {
+public abstract class AbstractHttp extends Task implements HttpInterface {
     @NotNull
-    protected String uri;
+    protected Property<String> uri;
 
     @Builder.Default
-    protected HttpMethod method = HttpMethod.GET;
+    protected Property<String> method = Property.of("GET");
 
-    protected String body;
+    protected Property<String> body;
 
-    protected Map<String, Object> formData;
+    protected Property<Map<String, Object>> formData;
 
-    protected String contentType;
+    @Builder.Default
+    protected Property<String> contentType = Property.of("application/json");
 
-    protected Map<CharSequence, CharSequence> headers;
+    protected Property<Map<CharSequence, CharSequence>> headers;
 
-    protected RequestOptions options;
+    protected HttpConfiguration options;
 
+    @Deprecated
+    @Schema(
+        title = "If true, allow a failed response code (response code >= 400)",
+        description = "Deprecated, use `options.allowFailed` instead."
+    )
+    private Property<Boolean> allowFailed;
+
+    @Deprecated
+    public void setAllowFailed(Property<Boolean> allowFailed) {
+        if (this.options == null) {
+            this.options = HttpConfiguration.builder()
+                .build();
+        }
+
+        this.options = this.options.toBuilder()
+            .allowFailed(allowFailed)
+            .build();
+    }
+
+    @Deprecated
     protected SslOptions sslOptions;
 
-
-    protected DefaultHttpClientConfiguration configuration(RunContext runContext, HttpMethod httpMethod) throws IllegalVariableEvaluationException {
-        DefaultHttpClientConfiguration configuration = new DefaultHttpClientConfiguration();
-
-        if (this.options != null) {
-            if (this.options.getConnectTimeout() != null) {
-                configuration.setConnectTimeout(this.options.getConnectTimeout());
-            }
-
-            if (this.options.getReadTimeout() != null) {
-                configuration.setReadTimeout(this.options.getReadTimeout());
-            }
-
-            if (this.options.getReadIdleTimeout() != null) {
-                configuration.setReadIdleTimeout(this.options.getReadIdleTimeout());
-            }
-
-            if (this.options.getConnectionPoolIdleTimeout() != null) {
-                configuration.setConnectionPoolIdleTimeout(this.options.getConnectionPoolIdleTimeout());
-            }
-
-            if (this.options.getMaxContentLength() != null) {
-                configuration.setMaxContentLength(this.options.getMaxContentLength());
-            }
-
-            if (this.options.getProxyType() != null) {
-                configuration.setProxyType(this.options.getProxyType());
-            }
-
-            if (this.options.getProxyAddress() != null && this.options.getProxyPort() != null) {
-                configuration.setProxyAddress(new InetSocketAddress(
-                    runContext.render(this.options.getProxyAddress()),
-                    this.options.getProxyPort()
-                ));
-            }
-
-            if (this.options.getProxyUsername() != null) {
-                configuration.setProxyUsername(runContext.render(this.options.getProxyUsername()));
-            }
-
-            if (this.options.getProxyPassword() != null) {
-                configuration.setProxyPassword(runContext.render(this.options.getProxyPassword()));
-            }
-
-            if (this.options.getDefaultCharset() != null) {
-                configuration.setDefaultCharset(this.options.getDefaultCharset());
-            }
-
-            if (this.options.getFollowRedirects() != null) {
-                configuration.setFollowRedirects(this.options.getFollowRedirects());
-            }
-
-            if (this.options.getLogLevel() != null) {
-                configuration.setLogLevel(this.options.getLogLevel());
-            }
+    @Deprecated
+    public void sslOptions(SslOptions sslOptions) {
+        if (this.options == null) {
+            this.options = HttpConfiguration.builder()
+                .build();
         }
 
-        if (httpMethod == HttpMethod.HEAD) {
-            configuration.setMaxContentLength(Integer.MAX_VALUE);
-        }
-
-        ClientSslConfiguration clientSslConfiguration = new ClientSslConfiguration();
-
-        if (this.sslOptions != null) {
-            if (this.sslOptions.getInsecureTrustAllCertificates() != null) {
-                clientSslConfiguration.setInsecureTrustAllCertificates(this.sslOptions.getInsecureTrustAllCertificates());
-            }
-        }
-
-        configuration.setSslConfiguration(clientSslConfiguration);
-
-        return configuration;
+        this.sslOptions = sslOptions;
+        this.options = this.options.toBuilder()
+            .ssl(sslOptions)
+            .build();
     }
 
-    protected HttpClient client(RunContext runContext, HttpMethod httpMethod) throws IllegalVariableEvaluationException, MalformedURLException, URISyntaxException {
-        URI from = new URI(runContext.render(this.uri));
-
-        return ReactorHttpClient.create(from.toURL(), this.configuration(runContext, httpMethod));
-    }
-
-    protected ReactorStreamingHttpClient streamingClient(RunContext runContext, HttpMethod httpMethod) throws IllegalVariableEvaluationException, MalformedURLException, URISyntaxException {
-        URI from = new URI(runContext.render(this.uri));
-
-        return ReactorStreamingHttpClient.create(from.toURL(), this.configuration(runContext, httpMethod));
+    protected HttpClient client(RunContext runContext) throws IllegalVariableEvaluationException, MalformedURLException, URISyntaxException {
+        return HttpClient.builder()
+            .configuration(this.options)
+            .runContext(runContext)
+            .build();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected HttpRequest request(RunContext runContext) throws IllegalVariableEvaluationException, URISyntaxException, IOException {
-        URI from = new URI(runContext.render(this.uri));
+        HttpRequest.HttpRequestBuilder request = HttpRequest.builder()
+            .method(runContext.render(this.method).as(String.class).orElse(null))
+            .uri(new URI(runContext.render(this.uri).as(String.class).orElseThrow()));
 
-        MutableHttpRequest request = HttpRequest
-            .create(method, from.toString());
+        var renderedFormData = runContext.render(this.formData).asMap(String.class, Object.class);
+        if (!renderedFormData.isEmpty()) {
+            if ("multipart/form-data".equals(runContext.render(this.contentType).as(String.class).orElse(null))) {
+                HashMap<String, Object> multipart = new HashMap<>();
 
-
-        if (this.options != null && this.options.getBasicAuthUser() != null && this.options.getBasicAuthPassword() != null) {
-            request.basicAuth(
-                runContext.render(this.options.getBasicAuthUser()),
-                runContext.render(this.options.getBasicAuthPassword())
-            );
-        }
-
-        if (this.formData != null) {
-            if (MediaType.MULTIPART_FORM_DATA.equals(this.contentType)) {
-                request.contentType(MediaType.MULTIPART_FORM_DATA);
-
-                MultipartBody.Builder builder = MultipartBody.builder();
-                for (Map.Entry<String, Object> e : this.formData.entrySet()) {
+                for (Map.Entry<String, Object> e : renderedFormData.entrySet()) {
                     String key = runContext.render(e.getKey());
 
                     if (e.getValue() instanceof String stringValue) {
@@ -176,9 +125,9 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                                 IOUtils.copyLarge(runContext.storage().getFile(new URI(render)), outputStream);
                             }
 
-                            builder.addPart(key, tempFile);
+                            multipart.put(key, tempFile);
                         } else {
-                            builder.addPart(key, render);
+                            multipart.put(key, render);
                         }
                     } else if (e.getValue() instanceof Map mapValue && ((Map<String, String>) mapValue).containsKey("name") && ((Map<String, String>) mapValue).containsKey("content")) {
                         String name = runContext.render(((Map<String, String>) mapValue).get("name"));
@@ -191,51 +140,44 @@ abstract public class AbstractHttp extends Task implements HttpInterface {
                             IOUtils.copyLarge(runContext.storage().getFile(new URI(content)), outputStream);
                         }
 
-                        builder.addPart(key, renamedFile);
+                        multipart.put(key, renamedFile);
                     } else {
-                        builder.addPart(key, JacksonMapper.ofJson().writeValueAsString(e.getValue()));
+                        multipart.put(key, JacksonMapper.ofJson().writeValueAsString(e.getValue()));
                     }
                 }
 
-                request.body(builder.build());
+                request.body(HttpRequest.MultipartRequestBody.builder().content(multipart).build());
             } else {
-                request.contentType(MediaType.APPLICATION_FORM_URLENCODED);
-                request.body(runContext.render(this.formData));
+                request.body(HttpRequest.UrlEncodedRequestBody.builder()
+                    .content(renderedFormData)
+                    .build()
+                );
             }
         } else if (this.body != null) {
-            request.body(runContext.render(body));
-        }
-
-        if (this.contentType != null) {
-            request.contentType(runContext.render(this.contentType));
-        }
-
-        if (this.headers != null) {
-            request.headers(this.headers
-                .entrySet()
-                .stream()
-                .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
-                    e.getKey(),
-                    runContext.render(e.getValue().toString())
-                )))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            request.body(HttpRequest.StringRequestBody.builder()
+                .content(runContext.render(body).as(String.class).orElseThrow())
+                .contentType(runContext.render(this.contentType).as(String.class).orElse(null))
+                .charset(this.options != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : StandardCharsets.UTF_8)
+                .build()
             );
         }
 
-        return request;
-    }
-
-    protected String[] tags(HttpRequest<String> request, HttpResponse<String> response) {
-        ArrayList<String> tags = new ArrayList<>(
-            Arrays.asList("request.method", request.getMethodName())
-        );
-
-        if (response != null) {
-            tags.addAll(
-                Arrays.asList("response.code", String.valueOf(response.getStatus().getCode()))
+        var renderedHeader = runContext.render(this.headers).asMap(CharSequence.class, CharSequence.class);
+        if (!renderedHeader.isEmpty()) {
+            request.headers(HttpHeaders.of(
+                renderedHeader
+                    .entrySet()
+                    .stream()
+                    .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
+                            e.getKey().toString(),
+                            runContext.render(e.getValue().toString())
+                        ))
+                    )
+                    .collect(Collectors.groupingBy(AbstractMap.SimpleEntry::getKey, Collectors.mapping(AbstractMap.SimpleEntry::getValue, Collectors.toList()))),
+                (a, b) -> true)
             );
         }
 
-        return tags.toArray(String[]::new);
+        return request.build();
     }
 }

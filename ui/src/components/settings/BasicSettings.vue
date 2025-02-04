@@ -30,6 +30,26 @@
                         </el-select>
                     </Column>
 
+                    <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
+                        <el-select :model-value="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                            <el-option
+                                v-for="item in [
+                                    {
+                                        label: $t('no_code.labels.yaml'),
+                                        value: 'YAML'
+
+                                    }, 
+                                    {
+                                        label: $t('no_code.labels.no_code'),
+                                        value: 'NO_CODE'
+                                    }]"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
                         <el-select :model-value="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
                             <el-option
@@ -260,6 +280,7 @@
                 pendingSettings: {
                     defaultNamespace: undefined,
                     defaultLogLevel: undefined,
+                    editorType: undefined,
                     lang: undefined,
                     theme: undefined,
                     editorTheme: undefined,
@@ -299,6 +320,7 @@
             const store = useStore();
 
             this.pendingSettings.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
             
@@ -325,6 +347,10 @@
         methods: {
             onNamespaceSelect(value) {
                 this.pendingSettings.defaultNamespace = value;
+            },
+            onEditorTypeChange(value) {
+                this.pendingSettings.editorType = value;
+                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
             },
             onLevelChange(value) {
                 this.pendingSettings.defaultLogLevel = value;
@@ -579,12 +605,13 @@
     };
 </script>
 <style>
-    .el-input-number {
+
+    .settings-wrapper .el-input-number {
         max-width: 20vw;
     }
 
     .el-input__count {
-        color: var(--bs-white) !important;
+        color: var(--ks-content-primary) !important;
         
         .el-input__count-inner {
             background: none !important;

@@ -1,0 +1,15 @@
+id: if-with-only-disabled-tasks
+namespace: io.kestra.tests
+
+variables:
+  numeric_variable: 42
+
+tasks:
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ vars.numeric_variable > 0 }}"
+    then:
+      - id: log1
+        disabled: true
+        type: io.kestra.plugin.core.log.Log
+        message: Log 1

@@ -2,7 +2,7 @@ package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.tasks.runners.RunnerResult;
+import io.kestra.core.models.tasks.runners.TaskRunnerResult;
 import io.kestra.core.models.tasks.runners.TaskCommands;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -59,7 +59,9 @@ public class LogConsumerTest {
             "echo \"::{\\\"outputs\\\":{\\\"someOutput\\\":\\\"" + outputValue + "\\\"}}::\"\n" +
                 "echo -n another line"
         ));
-        RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
+        var run = Docker.from(DockerOptions.builder()
+            .image("alpine")
+            .build()).run(
             runContext,
             taskCommands,
             Collections.emptyList()
@@ -84,7 +86,7 @@ public class LogConsumerTest {
             "echo " + outputValue +
                 "echo -n another line"
         ));
-        RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
+        var run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
             Collections.emptyList()
@@ -108,7 +110,7 @@ public class LogConsumerTest {
                 echo '::{"logs": [{"level":"TRACE","message":"Hello Trace"}, {"level":"TRACE","message":"Hello Trace 2"}]}::'
             """
         ));
-        RunnerResult run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
+        var run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
             Collections.emptyList()

@@ -25,14 +25,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, watch, computed, getCurrentInstance,  onUnmounted, nextTick} from "vue";
+    import {ref, watch, computed, getCurrentInstance, onUnmounted, nextTick} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
-    import useMarkdownParser from "@kestra-io/ui-libs/src/composables/useMarkdownParser";
-    import MDCRenderer from "@kestra-io/ui-libs/src/components/content/MDCRenderer.vue";
+    import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
     import DocsLayout from "./DocsLayout.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
     import ContextChildCard from "./ContextChildCard.vue";
@@ -40,7 +39,6 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
-    const parse = useMarkdownParser();
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
 
@@ -54,7 +52,7 @@
 
     onUnmounted(() => {
         ast.value = undefined
-        store.commit("doc/setDocPath", undefined);
+        store.commit("doc/setDocPath", "");
     });
 
     const ast = ref<any>(undefined);
@@ -68,8 +66,39 @@
          ["ChildTableOfContents", ContextChildTableOfContents]
         ]);
 
+    async function fetchDefaultDocFromDocIdIfPossible() {
+        let response: {metadata: any, content:string} | undefined = undefined;
+        const docId = store.state.doc.docId;
+
+        // if there is a contextual doc configured for this docId, fetch it
+        try {
+            response = await store.dispatch("doc/fetchDocId", docId)
+        } catch {
+            // eat the error
+        }
+
+        if(response === undefined){
+            refreshPage();
+        }else{
+            await setDocPageFromResponse(response)
+        }
+    }
+
+    async function setDocPageFromResponse(response){
+        await store.commit("doc/setPageMetadata", response.metadata);
+        let content = response.content;
+        if (!("canShare" in navigator)) {
+            content = content.replaceAll(/\s*web-share\s*/g, "");
+        }
+        const parse = await getMDCParser()
+        ast.value = await parse(content);
+    }
 
     watch(docPath, async (val) => {
+        if (!val?.length) {
+            fetchDefaultDocFromDocIdIfPossible()
+            return;
+        }
         refreshPage(val);
         nextTick(() => {
             docWrapper.value?.scrollTo(0, 0);
@@ -78,16 +107,6 @@
 
     async function refreshPage(val) {
         let response: {metadata: any, content:string} | undefined = undefined;
-        const docId = store.state.doc.docId;
-
-        // if there is a contextual doc configured for this docId, fetch it
-        if(val === undefined && docId !== undefined){
-            try {
-                response = await store.dispatch("doc/fetchAppId", docId)
-            } catch {
-                // eat the error
-            }
-        }
 
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
@@ -97,19 +116,15 @@
         if(response === undefined){
             return;
         }
-        await store.commit("doc/setPageMetadata", response.metadata);
-        let content = response.content;
-        if (!("canShare" in navigator)) {
-            content = content.replaceAll(/\s*web-share\s*/g, "");
-        }
-        ast.value = await parse(content);
+
+        setDocPageFromResponse(response)
     }
 </script>
 
 <style lang="scss" scoped>
     .blank {
         margin-top: 4px;
-        margin-left: var(--spacer);
-        color: var(--bs-tertiary-color);
+        margin-left: 1rem;
+        color: var(--ks-content-tertiary);
     }
 </style>

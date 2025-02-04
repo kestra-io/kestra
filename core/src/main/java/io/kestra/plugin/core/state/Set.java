@@ -3,6 +3,7 @@ package io.kestra.plugin.core.state;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,16 +60,15 @@ public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Schema(
         title = "The data to be stored in the state store."
     )
-    @PluginProperty(dynamic = true, additionalProperties = Object.class)
-    private Map<String, Object> data;
+    private Property<Map<String, Object>> data;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        Pair<String, Map<String, Object>> data = this.merge(runContext, runContext.render(this.data));
+        Pair<String, Map<String, Object>> dataRendered = this.merge(runContext, runContext.render(this.data).asMap(String.class, Object.class));
 
         return Output.builder()
-            .count(data.getRight().size())
-            .key(data.getLeft().toString())
+            .count(dataRendered.getRight().size())
+            .key(dataRendered.getLeft())
             .build();
     }
 

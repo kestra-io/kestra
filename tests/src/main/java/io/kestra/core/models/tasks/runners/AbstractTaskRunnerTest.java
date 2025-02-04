@@ -5,7 +5,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -88,7 +87,7 @@ public abstract class AbstractTaskRunnerTest {
         // This is purely to showcase that no logs is sent as STDERR for now as CloudWatch doesn't seem to send such information.
         Map<String, Boolean> logsWithIsStdErr = new HashMap<>();
 
-        TaskRunner taskRunner = taskRunner();
+        TaskRunner<?> taskRunner = taskRunner();
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
@@ -116,7 +115,7 @@ public abstract class AbstractTaskRunnerTest {
         Mockito.when(commands.getCommands()).thenReturn(renderedCommands);
 
         List<String> filesToDownload = List.of("output.txt");
-        RunnerResult run = taskRunner.run(runContext, commands, filesToDownload);
+        TaskRunnerResult<?> run = taskRunner.run(runContext, commands, filesToDownload);
 
         Map<String, URI> outputFiles = ScriptService.uploadOutputFiles(runContext, commands.getOutputDirectory());
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
@@ -191,7 +190,7 @@ public abstract class AbstractTaskRunnerTest {
         return runContextFactory.of(mergedVars);
     }
 
-    protected abstract TaskRunner taskRunner();
+    protected abstract TaskRunner<?> taskRunner();
 
     protected String defaultImage() {
         return "ubuntu";

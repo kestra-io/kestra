@@ -25,7 +25,8 @@
     import moment from "moment";
 
     import {useRoute} from "vue-router";
-    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+    import {Utils} from "@kestra-io/ui-libs";
+    import KestraUtils from "../../../../../utils/utils.js"
 
     const store = useStore();
 
@@ -37,6 +38,7 @@
     const props = defineProps({
         identifier: {type: Number, required: true},
         chart: {type: Object, required: true},
+        isPreview: {type: Boolean, required: false, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -128,7 +130,7 @@
     const parsedData = computed(() => {
         const parseValue = (value) => {
             const date = moment(value, moment.ISO_8601, true);
-            return date.isValid() ? date.format("YYYY-MM-DD") : value;
+            return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
         };
 
         const rawData = generated.value.results;
@@ -218,6 +220,7 @@
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
+                        label: label,
                         borderColor: getConsistentHEXColor(label),
                     },
                     ...yDatasetData,
@@ -228,25 +231,35 @@
 
     const generated = ref();
     const generate = async () => {
-        const params = {
-            id: dashboard.value.id,
-            chartId: props.chart.id,
-            startDate: route.query.timeRange
-                ? moment()
-                    .subtract(
-                        moment.duration(route.query.timeRange).as("milliseconds"),
-                    )
-                    .toISOString(true)
-                : route.query.startDate ||
-                    moment()
-                        .subtract(moment.duration("PT720H").as("milliseconds"))
-                        .toISOString(true),
-            endDate: route.query.timeRange
-                ? moment().toISOString(true)
-                : route.query.endDate || moment().toISOString(true),
-        };
+        if (!props.isPreview) {
+            const params = {
+                id: dashboard.value.id,
+                chartId: props.chart.id,
+                startDate: route.query.timeRange
+                    ? moment()
+                        .subtract(
+                            moment.duration(route.query.timeRange).as("milliseconds"),
+                        )
+                        .toISOString(true)
+                    : route.query.startDate ||
+                        moment()
+                            .subtract(moment.duration("PT720H").as("milliseconds"))
+                            .toISOString(true),
+                endDate: route.query.timeRange
+                    ? moment().toISOString(true)
+                    : route.query.endDate || moment().toISOString(true),
+            };
+            if (route.query.namespace) {
+                params.namespace = route.query.namespace;
+            }
+            if (route.query.labels) {
+                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
+            }
 
-        generated.value = await store.dispatch("dashboard/generate", params);
+            generated.value = await store.dispatch("dashboard/generate", params);
+        } else {
+            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+        }
     };
 
     watch(route, async () => await generate());

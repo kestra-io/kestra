@@ -36,9 +36,9 @@
 
 <script>
     import {mapState} from "vuex";
+    import {State} from "@kestra-io/ui-libs";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import State from "../../utils/state.js";
 
     export default {
         props: {

@@ -31,7 +31,7 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Exit the execution: terminate it in the state defined by the property `state`.",
-    description = "Note that if this execution has running tasks, for ex in a parallel branch, they will not be terminated except if `state` is set to `KILLED`."
+    description = "Note that if this execution has running tasks, for example in a parallel branch, the tasks will not be terminated except if `state` is set to `KILLED`."
 )
 @Plugin(
     examples = {
@@ -72,7 +72,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
     @NotNull
     @Schema(
         title = "The execution exit state",
-        description = "Using `KILLED` will ends existing running tasks, other state will not."
+        description = "Using `KILLED` will end existing running tasks, and any other execution with a different state will continue to run."
     )
     @Builder.Default
     private Property<ExitState> state = Property.of(ExitState.SUCCESS);

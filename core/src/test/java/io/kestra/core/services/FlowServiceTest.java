@@ -5,11 +5,12 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -20,6 +21,8 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -42,7 +45,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
     }
@@ -270,7 +273,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
 
@@ -301,7 +304,9 @@ class FlowServiceTest {
     void delete() {
         Flow flow = create("deleteTest", "test", 1);
         FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(true));
         flowService.delete(saved);
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(false));
     }
 
     @Test
@@ -309,5 +314,52 @@ class FlowServiceTest {
         Flow flow = create("findByTest", "test", 1).toBuilder().namespace("some.namespace").build();
         flowRepository.create(flow, flow.generateSource(), flow);
         assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size(), is(1));
+    }
+
+    @Test
+    void findById() {
+        Flow flow = create("findByIdTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent(), is(true));
+    }
+
+    @Test
+    void checkSubflowNotFound() {
+        Flow flow = create("mainFlow", "task", 1).toBuilder()
+            .tasks(List.of(
+                io.kestra.plugin.core.flow.Subflow.builder()
+                    .id("subflowTask")
+                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
+                    .namespace("io.kestra.unittest")
+                    .flowId("nonExistentSubflow")
+                    .build()
+            ))
+            .build();
+
+        ConstraintViolationException exception = assertThrows(ConstraintViolationException.class, () -> {
+            flowService.checkValidSubflows(flow);
+        });
+
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(exception.getConstraintViolations().iterator().next().getMessage(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
+    }
+
+    @Test
+    void checkValidSubflow() {
+        Flow subflow = create("existingSubflow", "task", 1);
+        flowRepository.create(subflow, subflow.generateSource(), subflow);
+
+        Flow flow = create("mainFlow", "task", 1).toBuilder()
+            .tasks(List.of(
+                io.kestra.plugin.core.flow.Subflow.builder()
+                    .id("subflowTask")
+                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
+                    .namespace("io.kestra.unittest")
+                    .flowId("existingSubflow")
+                    .build()
+            ))
+            .build();
+
+        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow));
     }
 }

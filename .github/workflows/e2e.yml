@@ -158,7 +158,7 @@ jobs:
           storageType: gcs
           resultsGlob: build/allure-results
           bucket: internal-kestra-host
-          baseUrl: "https://internal.kestra.io"
+          baseUrl: "https://internal.dev.kestra.io"
           prefix: ${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'allure/playwright') }}
           copyLatest: true
           ignoreMissingResults: true

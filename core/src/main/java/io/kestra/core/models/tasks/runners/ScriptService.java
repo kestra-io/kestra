@@ -85,7 +85,7 @@ public final class ScriptService {
         List<String> commands,
         boolean replaceWithRelativePath
     ) throws IOException, IllegalVariableEvaluationException {
-        return commands
+        return ListUtils.emptyOnNull(commands)
             .stream()
             .map(throwFunction(c -> runContext.render(c, additionalVars)))
             .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, replaceWithRelativePath)))

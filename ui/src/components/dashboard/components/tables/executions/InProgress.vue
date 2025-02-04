@@ -130,7 +130,7 @@
 
     import moment from "moment";
 
-    import State from "../../../../../utils/state.js"
+    import {State} from "@kestra-io/ui-libs";
 
     import Status from "../../../../Status.vue";
     import NoData from "../../../../layout/NoData.vue";
@@ -184,11 +184,11 @@
 
 <style lang="scss" scoped>
 code {
-    color: var(--bs-code-color);
+    color: var(--ks-content-id);
 }
 
 .inprogress {
-    background: var(--bs-body-bg);
+    background: var(--ks-background-body);
     & a {
         color: #8e71f7;
 

@@ -6,6 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
@@ -14,13 +15,16 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
-import io.kestra.plugin.core.flow.WaitFor;
+import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -69,6 +73,9 @@ public class ExecutorService {
 
     @Inject
     private SLAService slaService;
+
+    @Inject
+    private OpenTelemetry openTelemetry;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -270,7 +277,8 @@ public class ExecutorService {
                 // Then wait for completion (KILLED or whatever) on child tasks to KILLED the parent one.
                 List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
                     flowableParent.childTasks(runContext, parentTaskRun),
-                    FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun)
+                    FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun),
+                    FlowableUtils.resolveTasks(flowableParent.getFinally(), parentTaskRun)
                 );
 
                 List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
@@ -399,7 +407,7 @@ public class ExecutorService {
 
         logService.logExecution(
             newExecution,
-            flow.logger(),
+            logger,
             Level.INFO,
             "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),
@@ -426,7 +434,8 @@ public class ExecutorService {
             .resolveSequentialNexts(
                 executor.getExecution(),
                 ResolvedTask.of(executor.getFlow().getTasks()),
-                ResolvedTask.of(executor.getFlow().getErrors())
+                ResolvedTask.of(executor.getFlow().getErrors()),
+                ResolvedTask.of(executor.getFlow().getFinally())
             );
 
         if (nextTaskRuns.isEmpty()) {
@@ -553,7 +562,7 @@ public class ExecutorService {
                 }
             }
             // WaitFor case
-            else if (task instanceof WaitFor waitFor && taskRun.getState().isRunning()) {
+            else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
                     TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
@@ -686,7 +695,8 @@ public class ExecutorService {
 
         List<ResolvedTask> currentTasks = executor.getExecution().findTaskDependingFlowState(
             ResolvedTask.of(executor.getFlow().getTasks()),
-            ResolvedTask.of(executor.getFlow().getErrors())
+            ResolvedTask.of(executor.getFlow().getErrors()),
+            ResolvedTask.of(executor.getFlow().getFinally())
         );
 
         if (!executor.getExecution().isTerminated(currentTasks)) {
@@ -730,6 +740,8 @@ public class ExecutorService {
             return executor;
         }
 
+        var propagator = openTelemetry.getPropagators().getTextMapPropagator();
+
         // submit TaskRun when receiving created, must be done after the state execution store
         Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
@@ -738,6 +750,7 @@ public class ExecutorService {
             .map(throwFunction(taskRun -> {
                     Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                    propagator.inject(Context.current(), runContext, RunContextTextMapSetter.INSTANCE); // inject the traceparent into the run context
                     WorkerTask workerTask = WorkerTask.builder()
                         .runContext(runContext)
                         .taskRun(taskRun)
@@ -861,17 +874,21 @@ public class ExecutorService {
                         );
                     } else {
                         executions.addAll(subflowExecutions);
-                        if (!executableTask.waitForExecution()) {
-                            // send immediately all workerTaskResult to ends the executable task
+                        Optional<FlowWithSource> flow = flowExecutorInterface.findByExecution(subflowExecutions.getFirst().getExecution());
+                        if (flow.isPresent()) {
+                            // add SubflowExecutionResults to notify parents
                             for (SubflowExecution<?> subflowExecution : subflowExecutions) {
                                 Optional<SubflowExecutionResult> subflowExecutionResult = executableTask.createSubflowExecutionResult(
                                     runContext,
-                                    subflowExecution.getParentTaskRun().withState(State.Type.SUCCESS),
-                                    executor.getFlow(),
+                                    // if we didn't wait for the execution, we directly set the state to SUCCESS
+                                    executableTask.waitForExecution() ? subflowExecution.getParentTaskRun() : subflowExecution.getParentTaskRun().withState(State.Type.SUCCESS),
+                                    flow.get(),
                                     subflowExecution.getExecution()
                                 );
                                 subflowExecutionResult.ifPresent(subflowExecutionResults::add);
                             }
+                        } else {
+                            log.error("Unable to find flow for execution {}", subflowExecutions.getFirst().getExecution().getId());
                         }
                     }
                 } catch (Exception e) {
@@ -1015,6 +1032,15 @@ public class ExecutorService {
             in ? "<< IN " : ">> OUT",
             value.getClass().getSimpleName(),
             value.getParentTaskRun().toStringState()
+        );
+    }
+
+    public void log(Logger log, Boolean in, SubflowExecutionEnd value) {
+        log.debug(
+            "{} {} : {}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.toStringState()
         );
     }
 

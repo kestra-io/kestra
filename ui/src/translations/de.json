@@ -262,11 +262,13 @@
       "header": {
         "catch phrase": {
           "1": "Der erste Schritt ist immer der schwerste.",
-          "2": "Erkunden Sie Blueprints, um Ihren nächsten Flow zu starten."
+          "2": "Erkunden Sie Blueprints, um Ihr nächstes {kind} zu starten."
         },
         "alt": "Blueprints-Symbol"
       },
-      "empty": "Keine Blueprints zum Anzeigen."
+      "empty": "Keine Blueprints zum Anzeigen.",
+      "custom": "Benutzerdefinierte Blueprints",
+      "community": "Gemeinschaft"
     },
     "use": "Verwenden",
     "plugins": {
@@ -288,7 +290,7 @@
     "template creation": "Vorlagenerstellung",
     "templates": "Vorlagen",
     "templates deprecated": "Vorlagen sind veraltet. Bitte verwenden Sie stattdessen Subflows. Siehe den <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrationsabschnitt</a>, der erklärt, wie Sie von Vorlagen zu Subflows migrieren können.",
-    "no result": "Keine Logs bisher ausgegeben",
+    "no result": "Es gibt keine Ergebnisse anzuzeigen.",
     "trigger": "Trigger",
     "triggers": "Trigger",
     "trigger details": "Trigger-Details",
@@ -298,7 +300,6 @@
     "Fold auto": "Editor: Automatisches Falten von Mehrzeilen",
     "Fold content lines": "Mehrzeilige Zeichenfolgen falten",
     "Unfold content lines": "Mehrzeilige Zeichenfolgen entfalten",
-    "Max displayable": "Maximal anzeigbar",
     "Total": "Gesamt",
     "sub flow": "Subflow",
     "execute": "Ausführen",
@@ -360,7 +361,7 @@
     },
     "cancel": "Abbrechen",
     "homeDashboard": {
-      "title": "Dashboard",
+      "title": "Dashboards",
       "today": "Heute",
       "yesterday": "Gestern",
       "last28Days": "Letzte 28 Tage",
@@ -435,10 +436,7 @@
     "show documentation": "Dokumentation anzeigen",
     "focus task": "Klicken Sie auf ein Element, um dessen Dokumentation zu sehen.",
     "validate": "Validieren",
-    "add global error handler": "Globalen Fehler-Handler hinzufügen",
     "add error handler": "Fehler-Handler hinzufügen",
-    "add trigger": "Trigger hinzufügen",
-    "edit metadata": "Metadaten bearbeiten",
     "taskDefaults": "Task-Standards",
     "disabled": "Deaktiviert",
     "before": "vor",
@@ -528,7 +526,6 @@
     "worker group": "Worker-Gruppe",
     "version": "Version",
     "services": "Dienste",
-    "cluster": "Cluster",
     "server type": "Servertyp",
     "hostname": "Hostname",
     "port": "Port",
@@ -649,7 +646,7 @@
     "welcome": {
       "tutorial": {
         "title": "Tutorial",
-        "text": "* [Video-Tutorials](https://kestra.io/tutorial-videos/all)\n* [Dokumentation](https://kestra.io/docs)\n* [Blueprints](https://kestra.io/blueprints)"
+        "text": "* <a href=\"https://kestra.io/tutorial-videos/all\" target=\"_blank\">Video-Tutorials</a>  \n* <a href=\"https://kestra.io/docs\" target=\"_blank\">Dokumentation</a>  \n* <a href=\"https://kestra.io/blueprints\" target=\"_blank\">Blueprints</a>"
       },
       "tour": {
         "title": "Produkt-Tour starten",
@@ -677,7 +674,8 @@
             "log_level": "Standard-Log-Ebene",
             "log_display": "Standard-Log-Anzeige",
             "execute_flow": "Flow ausführen",
-            "execute_default_tab": "Standard-Ausführungs-Registerkarte"
+            "execute_default_tab": "Standard-Ausführungs-Registerkarte",
+            "editor_type": "Standard-Editor-Typ"
           }
         },
         "theme": {
@@ -872,20 +870,23 @@
       "not_auth": "Sie haben nicht die erforderlichen Berechtigungen, um dieses Widget anzuzeigen.",
       "see_all": "Alle anzeigen",
       "success_ratio_tooltip": "Erfolgsquote ist die Summe der SUCCESS, CANCELLED und WARNING Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand.",
-      "failure_ratio_tooltip": "Der Fehlerrate ist die Summe der FAILED, KILLED und RETRIED Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand."
+      "failure_ratio_tooltip": "Der Fehlerrate ist die Summe der FAILED, KILLED und RETRIED Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand.",
+      "preview": "Dashboard-Vorschau",
+      "click_chart_preview": "Klicken Sie auf einen Diagramm-Quellcode, um die Vorschau anzuzeigen."
     },
     "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
     "docs": "Dokumentation",
     "behavior": "Verhalten",
     "concurrency-view": {
       "desc_no_limit": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
-      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt."
+      "title_no_limit": "Es sind keine Grenzen für diesen Flow festgelegt.",
+      "desc_no_executions": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ausführungen</a></strong> in unserer Dokumentation.",
+      "title_no_executions": "Keine laufenden Ausführungen für diesen Flow."
     },
     "active-slots": "Aktive Slots",
     "concurrency": "Nebenläufigkeit",
     "open sidebar": "Seitenleiste öffnen",
     "close sidebar": "Seitenleiste schließen",
-    "change_status": "Status ändern",
     "in-our-documentation": "in unserer Dokumentation.",
     "read-more": "Mehr erfahren über",
     "flow-dependencies": "Abhängigkeiten",
@@ -1036,6 +1037,128 @@
       "format": "Geben Sie den Parameter als 'key:value' ein",
       "label": "Filter auswählen"
     },
-    "custom value": "Benutzerdefinierter Wert"
+    "custom value": "Benutzerdefinierter Wert",
+    "execution restarted": "Diese Ausführung wurde {nbRestart} Mal neu gestartet.",
+    "chart": "Diagramm",
+    "source only": "Nur Quelle",
+    "chart preview": "Diagrammvorschau",
+    "execution replayed": "Diese Ausführung wurde erneut abgespielt.",
+    "execution replay": "Diese Ausführung ist eine Wiederholung von <code>{originalId}</code>.",
+    "no_code": {
+      "fields": {
+        "main": {
+          "description": "Beschreibung",
+          "namespace": "Namespace",
+          "flow_id": "Flow-ID"
+        },
+        "general": {
+          "plugin_defaults": "Plugin-Standardeinstellungen",
+          "variables": "Variablen",
+          "labels": "Labels",
+          "outputs": "Ausgaben",
+          "concurrency": "Nebenläufigkeit",
+          "inputs": "Eingaben",
+          "retry": "Wiederholen",
+          "disabled": "Deaktiviert"
+        }
+      },
+      "sections": {
+        "general": "Allgemeine Eigenschaften",
+        "triggers": "Trigger",
+        "main": "Haupteigenschaften",
+        "error_handlers": "Fehlerbehandler",
+        "tasks": "Aufgaben",
+        "advanced": "Erweiterte Konfiguration",
+        "finally": "Schließlich"
+      },
+      "creation": {
+        "select": "Wählen Sie einen {section} aus",
+        "tasks": "Aufgabe hinzufügen",
+        "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
+        "triggers": "Füge einen Trigger hinzu",
+        "finally": "Fügen Sie einen Finally-Block hinzu"
+      },
+      "save": {
+        "tasks": "Aufgabe speichern",
+        "triggers": "Speicher Trigger",
+        "error handlers": "Fehlerbehandlungsroutine speichern",
+        "input": "Eingabe speichern",
+        "finally": "Aufgabe speichern"
+      },
+      "labels": {
+        "no_code": "Kein Code-Editor",
+        "yaml": "YAML-Editor",
+        "label": "Label",
+        "variable": "Variable"
+      },
+      "adding": "+ {what} hinzufügen",
+      "adding_default": "+ Neuen Wert hinzufügen"
+    },
+    "export_to_file": "In Datei exportieren",
+    "change state current state": "Aktueller Zustand ist:",
+    "create_dashboard": "Dashboard erstellen",
+    "instance": "Instanz",
+    "demos": {
+      "namespace": {
+        "plugin-defaults": {
+          "title": "Konfiguration mit Plugin-Standards standardisieren",
+          "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Plugin-Standardeinstellungen festlegen, wodurch der Bedarf an doppelter Einrichtung in jedem Flow reduziert wird. Diese zentrale Plugin-Verwaltung erzwingt konsistente Konfigurationen, ermöglicht die sichere Referenzierung von Geheimnissen oder Variablen und vereinfacht die Wartung Ihrer Workflows."
+        },
+        "audit-logs": {
+          "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat.",
+          "title": "Alle Änderungen an einem Ort verfolgen"
+        },
+        "secrets": {
+          "title": "Geheimnisse auf sichere Weise verwalten",
+          "message": "In der Kestra Enterprise Edition können Sie Geheimnisse auf der Namespace-Ebene speichern und verwalten, um Risiken zu minimieren und sicherzustellen, dass die Anmeldedaten jedes Teams isoliert bleiben. Dank der verschachtelten Hierarchie können Sie auch Anmeldedaten in einem übergeordneten Namespace konfigurieren, die dann von allen untergeordneten Namespaces geerbt werden. Die Unterstützung für dedizierte Geheimnis-Manager und fein abgestufte Berechtigungseinstellungen auf Namespace-Ebene stärkt die Sicherheit und Compliance weiter."
+        },
+        "variables": {
+          "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Variablen definieren und verwalten, um wiederholte Konfigurationen über Flows hinweg zu eliminieren. Diese Variablen gewährleisten Konsistenz, vereinfachen Konfigurationsaktualisierungen und können von jedem Task oder Trigger leicht referenziert werden, um sauberere und besser wartbare Workflows zu ermöglichen.",
+          "title": "Verwalten Sie Ihre Variablen zentral"
+        },
+        "edit": {
+          "message": "In der Kestra Enterprise Edition bieten Namespaces erweiterte Isolation und Governance von Secrets, Variablen und Plugin-Standardeinstellungen im großen Maßstab. Administratoren können benutzerdefinierte Secrets-Manager, isolierte Speicher-Backends, dedizierte Worker-Gruppen und fein abgestufte Berechtigungen auf Basis von Namespaces konfigurieren. Dies stellt sicher, dass Secrets, Variablen und Plugin-Konfigurationen über verschiedene Teams und Projekte hinweg sicher und einfach zu verwalten bleiben.",
+          "title": "Verbessern Sie Ihr Namespace-Management"
+        }
+      },
+      "instance": {
+        "title": "Verwalten Sie die Infrastruktur in Ihrer Instanz",
+        "message": "Kestra Enterprise Edition bietet ein operatives Dashboard, das Ihnen hilft, die Gesundheit Ihrer Plattform zu überwachen und die Betriebszeitmetriken aller Dienste wie z.B. Workers, Schedulers und Executors zu verfolgen. Auf derselben Seite können Sie auch Ankündigungen erstellen, um Ihre Benutzer über geplante Ausfallzeiten zu informieren, und Sie können einen Wartungsmodus aktivieren, der vorübergehend alle Dienste und Workflow-Ausführungen in einen PAUSED-Zustand versetzt, um ein Upgrade durchzuführen."
+      },
+      "audit-logs": {
+        "message": "Kestra Enterprise Edition protokolliert jede Aktivität mit robusten, unveränderlichen Aufzeichnungen, was es einfach macht, Änderungen nachzuverfolgen, die Einhaltung von Vorschriften zu gewährleisten und Probleme zu beheben.",
+        "title": "Änderungen mit Audit Logs nachverfolgen"
+      },
+      "blueprints": {
+        "message": "In der Kestra Enterprise Edition können Sie benutzerdefinierte Blueprints erstellen, die nur für Ihre Organisation verfügbar sind. Sie können diese als Best-Practice-Vorlagen verwenden, um häufig genutzte Workflows in Ihrem Team zu teilen, zu zentralisieren und zu dokumentieren.",
+        "title": "Benutzerdefinierte Blueprints hinzufügen"
+      },
+      "enterprise_edition": "Enterprise Edition",
+      "IAM": {
+        "title": "Benutzer über IAM mit SSO, SCIM und RBAC verwalten",
+        "message": "Kestra Enterprise Edition verfügt über integrierte IAM-Funktionen mit Single Sign-On (SSO), SCIM-Verzeichnissynchronisation und rollenbasierter Zugriffskontrolle (RBAC). Es integriert sich mit mehreren Identitätsanbietern und ermöglicht Ihnen, feingranulare Berechtigungen für Benutzer und Dienstkonten zuzuweisen."
+      },
+      "tenants": {
+        "title": "Verwalten Sie Workflows in isolierten Tenants",
+        "message": "Die Kestra Enterprise Edition unterstützt Multi-Tenancy und bietet vollständig isolierte Umgebungen für verschiedene Teams oder Projekte, jeweils mit eigenen Ressourcen wie dedizierten Worker-Gruppen oder Secrets und internen Speicher-Backends."
+      },
+      "get_a_demo_button": "Demo anfordern",
+      "apps": {
+        "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra",
+        "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können."
+      }
+    },
+    "apps": "Apps",
+    "editor_shortcuts": {
+      "save_flow": "Flow speichern",
+      "comment_uncomment": "Kommentar/Kommentar entfernen",
+      "duplicate_cursor": "Kursor duplizieren",
+      "uncomment": "Entkommentieren",
+      "label": "Tastenkombinationen",
+      "fold_unfold": "Code ein-/ausklappen",
+      "comment": "Kommentar",
+      "move_line": "Zeile verschieben",
+      "command_palette": "Befehlsübersicht anzeigen"
+    }
   }
 }

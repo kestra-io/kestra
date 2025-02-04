@@ -2,6 +2,7 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -69,7 +69,7 @@ class ScheduleTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
 
@@ -239,7 +239,8 @@ class ScheduleTest {
     }
 
     @Test
-    void shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
+    void
+    shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
         ZonedDateTime now = ZonedDateTime.now();
@@ -259,7 +260,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDate() throws Exception {
+    void noBackfillNextDate() {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
@@ -267,7 +268,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDateContext() throws Exception {
+    void noBackfillNextDateContext() {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").timezone("Europe/Paris").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
@@ -369,7 +370,7 @@ class ScheduleTest {
     }
 
     @Test
-    void lateMaximumDelay() throws Exception {
+    void lateMaximumDelay() {
         Schedule trigger = Schedule.builder()
             .id("schedule")
             .cron("* * * * *")

@@ -36,6 +36,7 @@ dependencies {
     implementation group: 'de.focus-shift', name: 'jollyday-jaxb'
     implementation 'nl.basjes.gitignore:gitignore-reader'
     implementation group: 'dev.failsafe', name: 'failsafe'
+    api 'org.apache.httpcomponents.client5:httpclient5'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils'
@@ -64,4 +65,8 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"
     testImplementation "io.micronaut:micronaut-management"
+
+    testImplementation "org.testcontainers:testcontainers:1.20.4"
+    testImplementation "org.testcontainers:junit-jupiter:1.20.4"
+    testImplementation "org.bouncycastle:bcpkix-jdk18on:1.80"
 }

@@ -7,7 +7,7 @@ import io.kestra.plugin.core.runner.Process;
 class ProcessTest extends AbstractTaskRunnerTest {
 
     @Override
-    protected TaskRunner taskRunner() {
+    protected TaskRunner<?> taskRunner() {
         return new Process();
     }
 }

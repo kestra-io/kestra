@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -131,7 +132,7 @@ abstract public class JdbcQueueTest {
         return FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace(namespace == null ? "kestra.test" : namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
             .build();
     }
 

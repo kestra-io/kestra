@@ -214,7 +214,7 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column column-key="disable" class-name="row-action">
+                        <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
                                 <el-switch
                                     v-if="!scope.row.missingSource"
@@ -504,7 +504,7 @@
 </script>
 <style>
     .trigger-issue-icon {
-        color: var(--bs-warning);
+        color: var(--ks-content-warning);
         font-size: 1.4em;
     }
     .el-table__expanded-cell[class*=cell]{

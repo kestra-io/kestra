@@ -30,7 +30,7 @@ public class TaskRunnerTest {
 
     @Test
     void additionalVarsAndEnv() throws IllegalVariableEvaluationException {
-        TaskRunner taskRunner = new TaskRunnerAdditional(true);
+        TaskRunner<?> taskRunner = new TaskRunnerAdditional(true);
         TaskCommands taskCommands = new TaskCommandsAdditional();
 
         Map<String, Object> contextVariables = Map.of(
@@ -75,7 +75,7 @@ public class TaskRunnerTest {
         )));
     }
 
-    private static class TaskRunnerAdditional extends TaskRunner {
+    private static class TaskRunnerAdditional extends TaskRunner<TaskRunnerDetailResult> {
 
         public static final String RUNNER_BUCKET_PATH = "{{runnerBucketPath}}";
         public static final String RUNNER_WORKING_DIR = "runnerWorkingDir";
@@ -97,7 +97,7 @@ public class TaskRunnerTest {
         }
 
         @Override
-        public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) {
+        public TaskRunnerResult<TaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) {
             return null;
         }
 

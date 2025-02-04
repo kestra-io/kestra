@@ -5,8 +5,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     @Inject
@@ -66,7 +67,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("{{ inputs.testInputs }}")
+                .format(new Property<>("{{ inputs.testInputs }}"))
                 .build())
             )
             .build();
@@ -113,7 +114,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             WorkerTrigger workerTrigger = worker.getWorkerThreadTasks()
                 .stream()
                 .filter(workerJob -> workerJob instanceof WorkerTrigger)
-                .map(workerJob -> (WorkerTrigger) workerJob)
+                .map(WorkerTrigger.class::cast)
                 .findFirst()
                 .orElseThrow();
 

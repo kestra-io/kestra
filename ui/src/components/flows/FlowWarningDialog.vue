@@ -17,6 +17,6 @@
 <style lang="scss">
 .flow-warning-dialog .icon {
     font-size: var(--font-size-lg);
-    color: var(--el-color-warning);
+    color: var(--ks-content-warning);
 }
 </style>

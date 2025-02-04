@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
@@ -363,7 +364,7 @@ class TriggerControllerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
                 .type(Return.class.getName())
-                .format("return data")
+                .format(Property.of("return data"))
                 .build()))
             .triggers(List.of(
                 Schedule.builder()

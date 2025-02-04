@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
@@ -39,25 +40,23 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         title = "The file to be deleted.",
         description = "Must be a `kestra://` storage URI."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String uri;
+    private Property<String> uri;
 
     @Schema(
         title = "Raise an error if the file is not found."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private final Boolean errorOnMissing = false;
+    private final Property<Boolean> errorOnMissing = Property.of(false);
 
     @Override
     public Delete.Output run(RunContext runContext) throws Exception {
         StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
-        URI render = URI.create(runContext.render(this.uri));
+        URI render = URI.create(runContext.render(this.uri).as(String.class).orElseThrow());
 
         boolean delete = storageInterface.delete(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), render);
 
-        if (errorOnMissing && !delete) {
+        if (runContext.render(errorOnMissing).as(Boolean.class).orElseThrow() && !delete) {
             throw new NoSuchElementException("Unable to find file '" + render + "'");
         }
 

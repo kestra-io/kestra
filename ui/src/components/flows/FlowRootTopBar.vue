@@ -14,7 +14,7 @@
                         {{ $t("restore") }}
                     </el-button>
                 </li>
-                <li v-if="isAllowedEdit && !deleted && activeTabName !== 'editor'">
+                <li v-if="isAllowedEdit && !deleted && activeTabName !== 'edit'">
                     <el-button
                         :icon="Pencil"
                         @click="editFlow"
@@ -101,7 +101,7 @@
                     params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
-                        tab: "editor",
+                        tab: "edit",
                         tenant: this.$route.params.tenant,
                     },
                 });

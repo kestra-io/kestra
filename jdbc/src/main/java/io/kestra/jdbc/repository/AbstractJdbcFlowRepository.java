@@ -282,7 +282,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .selectCount()
                 .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId))
-                .and(NAMESPACE_FIELD.eq(namespace))
+                .and(DSL.or(
+                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
+                    NAMESPACE_FIELD.eq(namespace)
+                ))
                 .fetchOne(0, int.class));
     }
 
@@ -669,7 +672,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         FlowWithSource deleted = flow.toDeleted();
 
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted.toFlow());
         fields.put(field("source_code"), deleted.getSource());
 
         this.jdbcRepository.persist(deleted, fields);

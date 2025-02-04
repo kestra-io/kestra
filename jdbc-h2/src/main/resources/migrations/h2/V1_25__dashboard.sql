@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS dashboards (
-                                     "key" VARCHAR(250) NOT NULL PRIMARY KEY,
+                                          "key" VARCHAR(250) NOT NULL PRIMARY KEY,
     "value" TEXT NOT NULL,
     "deleted" BOOL NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.deleted')),
     "tenant_id" VARCHAR(250) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),

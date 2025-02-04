@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -89,7 +90,7 @@ abstract public class AbstractSchedulerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("{{ inputs.testInputs }}")
+                .format(new Property<>("{{ inputs.testInputs }}"))
                 .build()));
 
         if (list != null) {

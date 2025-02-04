@@ -2,6 +2,7 @@ package io.kestra.plugin.core.kv;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -25,7 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 @KestraTest
-public class SetTest {
+class SetTest {
     static final String TEST_KEY = "test-key";
 
     @Inject
@@ -40,8 +41,8 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -73,9 +74,9 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
-            .namespace("io.kestra.test")
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .namespace(new Property<>("io.kestra.test"))
             .build();
 
         // When
@@ -101,9 +102,9 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
-            .namespace("io.kestra")
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .namespace(new Property<>("io.kestra"))
             .build();
         // When
         set.run(runContext);
@@ -128,9 +129,9 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
-            .namespace("not-found")
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .namespace(new Property<>("not-found"))
             .build();
 
         // When - Then
@@ -143,9 +144,9 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
-            .ttl(Duration.ofMinutes(5))
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .ttl(Property.of(Duration.ofMinutes(5)))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -170,9 +171,9 @@ public class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key("{{ inputs.key }}")
-            .value("{{ inputs.value }}")
-            .overwrite(false)
+            .key(new Property<>("{{ inputs.key }}"))
+            .value(new Property<>("{{ inputs.value }}"))
+            .overwrite(Property.of(false))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -188,31 +189,33 @@ public class SetTest {
 
     @Test
     void typeSpecified() throws Exception {
-        // Given
+        KVStore kv = createAndPerformSetTask("123.45", KVType.NUMBER);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value(), is(123.45));
+
+        kv = createAndPerformSetTask("true", KVType.BOOLEAN);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value(), is(true));
+
+        kv = createAndPerformSetTask("2023-05-02T01:02:03Z", KVType.DATETIME);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value(), is(Instant.parse("2023-05-02T01:02:03Z")));
+
+        kv = createAndPerformSetTask("P1DT5S", KVType.DURATION);
+        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
+        assertThat((long) Double.parseDouble(kv.getValue(TEST_KEY).orElseThrow().value().toString()), is(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds()));
+
+        kv = createAndPerformSetTask("[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
+        assertThat(kv.getValue(TEST_KEY).orElseThrow().value(), is(List.of(Map.of("some", "value"), Map.of("another", "value"))));
+    }
+
+    private KVStore createAndPerformSetTask(String value, KVType type) throws Exception {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(TEST_KEY)
+            .key(new Property<>(TEST_KEY))
+            .value(new Property<>(value))
+            .kvType(Property.of(type))
             .build();
-
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, null);
-
-        final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
-
-        set.toBuilder().value("123.45").kvType(KVType.NUMBER).build().run(runContext);
-        assertThat(kv.getValue(TEST_KEY).get().value(), is(123.45));
-
-        set.toBuilder().value("true").kvType(KVType.BOOLEAN).build().run(runContext);
-        assertThat(kv.getValue(TEST_KEY).get().value(), is(true));
-
-        set.toBuilder().value("2023-05-02T01:02:03Z").kvType(KVType.DATETIME).build().run(runContext);
-        assertThat(kv.getValue(TEST_KEY).get().value(), is(Instant.parse("2023-05-02T01:02:03Z")));
-
-        set.toBuilder().value("P1DT5S").kvType(KVType.DURATION).build().run(runContext);
-        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
-        assertThat((long) Double.parseDouble(kv.getValue(TEST_KEY).get().value().toString()), is(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds()));
-
-        set.toBuilder().value("[{\"some\":\"value\"},{\"another\":\"value\"}]").kvType(KVType.JSON).build().run(runContext);
-        assertThat(kv.getValue(TEST_KEY).get().value(), is(List.of(Map.of("some", "value"), Map.of("another", "value"))));
+        set.run(runContext);
+        return runContext.namespaceKv(runContext.flowInfo().namespace());
     }
 }

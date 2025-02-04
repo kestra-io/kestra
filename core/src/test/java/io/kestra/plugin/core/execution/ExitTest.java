@@ -46,11 +46,11 @@ class ExitTest {
     @Test
     @LoadFlows("flows/valids/exit-killed.yaml")
     void shouldExitAndKillTheExecution() throws TimeoutException, QueueException, InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(2);// Only the second reception of the execution will move all tasks to KILLED
+        CountDownLatch countDownLatch = new CountDownLatch(3);// We need to wait for 3 execution modifications to be sure all tasks are passed to KILLED
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
-            if (execution.getFlowId().equals("exit-killed") && execution.getState().getCurrent().isTerminated()) {
+            if (execution.getFlowId().equals("exit-killed") && execution.getState().getCurrent().isKilled()) {
                 killedExecution.set(execution);
                 countDownLatch.countDown();
             }

@@ -22,6 +22,7 @@
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     import ExecutionMetric from "./ExecutionMetric.vue";
     import throttle from "lodash/throttle";
@@ -93,7 +94,10 @@
                             if (isEnd) {
                                 this.closeSSE();
                             }
-                            this.throttledExecutionUpdate(executionEvent);
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (executionEvent.lastEventId !== "start") {
+                                this.throttledExecutionUpdate(executionEvent);
+                            }
                             if (isEnd) {
                                 this.throttledExecutionUpdate.flush();
                             }
@@ -155,7 +159,9 @@
                     },
                     {
                         name: "auditlogs",
+                        component: DemoAuditLogs,
                         title: title("auditlogs"),
+                        maximized: true,
                         locked: true
                     }
                 ];

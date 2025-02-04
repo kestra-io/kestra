@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "kv",
-    description = "handle KV Store",
+    description = "Manage KV Store",
     mixinStandardHelpOptions = true,
     subcommands = {
         KvUpdateCommand.class,

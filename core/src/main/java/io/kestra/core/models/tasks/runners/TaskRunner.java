@@ -32,7 +32,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @Getter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
+public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Plugin, WorkerJobLifecycle {
     @NotBlank
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
@@ -62,7 +62,7 @@ public abstract class TaskRunner implements Plugin, WorkerJobLifecycle {
      * For remote task runner (like Kubernetes or in a cloud provider), <code>filesToUpload</code> must be used to upload input and namespace files to the runner,
      * and <code>filesToDownload</code> must be used to download output files from the runner.
      */
-    public abstract RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception;
+    public abstract TaskRunnerResult<T> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception;
 
     public Map<String, Object> additionalVars(RunContext runContext, TaskCommands taskCommands) throws IllegalVariableEvaluationException {
         if (this.additionalVars == null) {

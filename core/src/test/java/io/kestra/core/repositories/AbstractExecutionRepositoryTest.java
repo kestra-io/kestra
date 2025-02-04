@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceUtils;
@@ -63,17 +64,17 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<TaskRun> taskRuns = Arrays.asList(
             TaskRun.of(execution.build(), ResolvedTask.of(
-                    Return.builder().id("first").type(Return.class.getName()).format("test").build())
+                    Return.builder().id("first").type(Return.class.getName()).format(Property.of("test")).build())
                 )
                 .withState(State.Type.SUCCESS),
             spyTaskRun(TaskRun.of(execution.build(), ResolvedTask.of(
-                        Return.builder().id("second").type(Return.class.getName()).format("test").build())
+                        Return.builder().id("second").type(Return.class.getName()).format(Property.of("test")).build())
                     )
                     .withState(state),
                 state
             ),
             TaskRun.of(execution.build(), ResolvedTask.of(
-                Return.builder().id("third").type(Return.class.getName()).format("test").build())).withState(state)
+                Return.builder().id("third").type(Return.class.getName()).format(Property.of("test")).build())).withState(state)
         );
 
         if (flowId == null) {

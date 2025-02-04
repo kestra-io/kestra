@@ -17,12 +17,11 @@
 </template>
 
 <script>
+    import {YamlUtils} from "@kestra-io/ui-libs";
     import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapMutations, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import {apiUrl} from "override/utils/route";
-    import {YamlUtils} from "@kestra-io/ui-libs";
 
     export default {
         mixins: [RouteContext],
@@ -51,14 +50,13 @@
         methods: {
             ...mapMutations("editor", ["closeAllTabs"]),
 
-            async queryBlueprint(blueprintId) {
-                return (await this.$http.get(`${this.blueprintUri}/${blueprintId}/flow`)).data;
-            },
             async setupFlow() {
+                const blueprintId = this.$route.query.blueprintId;
+                const blueprintSource = this.$route.query.blueprintSource;
                 if (this.$route.query.copy && this.flow){
                     this.source = this.flow.source;
-                } else if (this.$route.query.blueprintId && this.$route.query.blueprintSource) {
-                    this.source = await this.queryBlueprint(this.$route.query.blueprintId)
+                } else if (blueprintId && blueprintSource) {
+                    this.source = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
                     this.source = `id: myflow
@@ -84,9 +82,6 @@ tasks:
                 return {
                     title: this.$t("flows")
                 };
-            },
-            blueprintUri() {
-                return `${apiUrl(this.$store)}/blueprints/${this.$route.query.blueprintSource}`
             },
             flowParsed() {
                 return YamlUtils.parse(this.source);

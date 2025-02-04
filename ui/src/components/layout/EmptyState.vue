@@ -66,14 +66,14 @@
 }
 
 .empty-state-title {
-    color: var(--el-text-color-regular);
+    color: var(--ks-content-primary);
     font-weight: 700;
     font-size: var(--el-font-size-large);
 }
 
 .empty-state-description {
     font-size: var(--el-font-size-small);
-    color: var(--el-text-color-regular);
+    color: var(--ks-content-primary);
 }
 
 .theme-light {

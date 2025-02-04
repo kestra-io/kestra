@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.exec.scripts.models;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.plugin.scripts.runner.docker.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -77,9 +78,8 @@ public class DockerOptions {
     @PluginProperty(dynamic = true)
     protected List<String> volumes;
 
-    @PluginProperty
     @Builder.Default
-    protected PullPolicy pullPolicy = PullPolicy.ALWAYS;
+    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -112,6 +112,11 @@ public class DockerOptions {
     )
     @PluginProperty(dynamic = true)
     private String shmSize;
+
+    @Schema(
+        title = "Give extended privileges to this container."
+    )
+    private Property<Boolean> privileged;
 
     @Deprecated
     public void setDockerHost(String host) {

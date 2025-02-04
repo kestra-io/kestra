@@ -59,7 +59,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         YamlParser yamlParser = context.getBean(YamlParser.class);
         Flow flow = yamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
         RunnerUtils runnerUtils = context.getBean(RunnerUtils.class);
-        return runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+        return runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
     }
 
     @Override

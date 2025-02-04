@@ -29,6 +29,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -409,7 +410,7 @@ class FlowControllerTest {
         );
 
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat(), is("updated task"));
+        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat().toString(), is("updated task"));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(
@@ -949,7 +950,7 @@ class FlowControllerTest {
         return Return.builder()
             .id(id)
             .type(Return.class.getName())
-            .format(format)
+            .format(new Property<>(format))
             .build();
     }
 

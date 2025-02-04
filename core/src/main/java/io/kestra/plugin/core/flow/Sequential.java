@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -10,24 +11,17 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
+
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuperBuilder
@@ -72,6 +66,15 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     protected List<Task> errors;
 
     @Valid
+    @JsonProperty("finally")
+    @Getter(AccessLevel.NONE)
+    protected List<Task> _finally;
+
+    public List<Task> getFinally() {
+        return this._finally;
+    }
+
+    @Valid
     @PluginProperty
     // FIXME -> issue with Pause @NotEmpty
     private List<Task> tasks;
@@ -84,6 +87,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
             subGraph,
             this.getTasks(),
             this.errors,
+            this._finally,
             taskRun,
             execution
         );
@@ -91,12 +95,14 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return subGraph;
     }
 
-    @Override
     public List<Task> allChildTasks() {
         return Stream
             .concat(
                 this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
-                this.getErrors() != null ? this.getErrors().stream() : Stream.empty()
+                Stream.concat(
+                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
+                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
+                )
             )
             .toList();
     }
@@ -112,6 +118,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
             parentTaskRun
         );
     }

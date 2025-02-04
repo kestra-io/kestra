@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -45,30 +46,27 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(
         title = "The file to be split."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String from;
+    private Property<String> from;
 
     @Schema(
         title = "The separator used to join the file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private String separator = "\n";
+    private Property<String> separator = Property.of("\n");
 
     @Schema(
         title = "The name of a supported charset"
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String charset = StandardCharsets.UTF_8.name();
+    private final Property<String> charset = Property.of(StandardCharsets.UTF_8.name());
 
     @Override
     public Reverse.Output run(RunContext runContext) throws Exception {
-        URI from = new URI(runContext.render(this.from));
+        URI from = new URI(runContext.render(this.from).as(String.class).orElseThrow());
         String extension = FileUtils.getExtension(from);
-        String separator = runContext.render(this.separator);
-        Charset charset = Charsets.toCharset(runContext.render(this.charset));
+        String separator = runContext.render(this.separator).as(String.class).orElseThrow();
+        Charset charset = Charsets.toCharset(runContext.render(this.charset).as(String.class).orElseThrow());
 
         File tempFile = runContext.workingDir().createTempFile(extension).toFile();
 

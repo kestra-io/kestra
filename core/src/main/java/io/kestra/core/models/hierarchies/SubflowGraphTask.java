@@ -77,6 +77,11 @@ public class SubflowGraphTask extends AbstractGraphTask {
         }
 
         @Override
+        public RestartBehavior getRestartBehavior() {
+            return subflowTask.getRestartBehavior();
+        }
+
+        @Override
         public String getId() {
             return ((TaskInterface) subflowTask).getId();
         }

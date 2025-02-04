@@ -29,6 +29,7 @@
     import {apiUrl} from "override/utils/route";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     export default {
         mixins: [RouteContext],
@@ -161,7 +162,7 @@
                     )
                 ) {
                     tabs.push({
-                        name: "editor",
+                        name: "edit",
                         component: FlowEditor,
                         title: this.$t("edit"),
                         containerClass: "full-container",
@@ -267,6 +268,11 @@
                 tabs.push(                    {
                     name: "auditlogs",
                     title: this.$t("auditlogs"),
+                    component: DemoAuditLogs,
+                    maximize: true,
+                    props:{
+                        embed: true
+                    },
                     locked: true
                 });
 
@@ -341,9 +347,9 @@
 </script>
 <style lang="scss" scoped>
 .gray-700 {
-    color: var(--bs-secondary-color);
+    color: var(--ks-content-secondary-color);
 }
 .body-color {
-    color: var(--bs-body-color);
+    color: var(--ks-content-primary);
 }
 </style>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -61,9 +62,8 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
         title = "The file to be deduplicated.",
         description = "Must be a `kestra://` internal storage URI."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String from;
+    private Property<String> from;
 
     @Schema(
         title = "The 'pebble' expression to be used for extracting the deduplication key from each item.",
@@ -79,7 +79,7 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
     @Override
     public Output run(RunContext runContext) throws Exception {
 
-        URI from = new URI(runContext.render(this.from));
+        URI from = new URI(runContext.render(this.from).as(String.class).orElseThrow());
 
         final PebbleFieldExtractor keyExtractor = getKeyExtractor(runContext);
 

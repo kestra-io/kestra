@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.dashboard.chart;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;

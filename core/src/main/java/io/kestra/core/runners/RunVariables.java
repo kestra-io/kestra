@@ -15,13 +15,11 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -294,13 +292,7 @@ public final class RunVariables {
                 }
 
                 if (execution.getLabels() != null) {
-                    builder.put("labels", execution.getLabels()
-                        .stream()
-                        .filter(label -> label.value() != null && label.key() != null)
-                        .map(label -> mapLabel(label))
-                        // using an accumulator in case labels with the same key exists: the first is kept
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
-                    );
+                    builder.put("labels", Label.toNestedMap(execution.getLabels()));
                 }
 
                 if (execution.getVariables() != null) {
@@ -328,23 +320,6 @@ public final class RunVariables {
             }
 
             return builder.build();
-        }
-    }
-
-    private static Map.Entry<String, Object> mapLabel(Label label) {
-        if (label.key().startsWith(Label.SYSTEM_PREFIX)) {
-            return Map.entry(
-                label.key().substring(0, Label.SYSTEM_PREFIX.length() - 1),
-                Map.entry(
-                    label.key().substring(Label.SYSTEM_PREFIX.length()),
-                    label.value()
-                )
-            );
-        } else {
-            return Map.entry(
-                label.key(),
-                label.value()
-            );
         }
     }
 

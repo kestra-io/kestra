@@ -113,7 +113,7 @@ tasks:
         )
     }
 )
-public class Process extends TaskRunner {
+public class Process extends TaskRunner<TaskRunnerDetailResult> {
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -123,7 +123,7 @@ public class Process extends TaskRunner {
     }
 
     @Override
-    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+    public TaskRunnerResult<TaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
         AbstractLogConsumer defaultLogConsumer = taskCommands.getLogConsumer();
 
@@ -157,7 +157,7 @@ public class Process extends TaskRunner {
                 logger.debug("Command succeed with exit code {}", exitCode);
             }
 
-            return new RunnerResult(exitCode, defaultLogConsumer);
+            return new TaskRunnerResult<>(exitCode, defaultLogConsumer);
         } catch (InterruptedException e) {
             logger.warn("Killing process {} for InterruptedException", pid);
             killDescendantsOf(process.toHandle(), logger);

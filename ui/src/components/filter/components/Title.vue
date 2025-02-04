@@ -9,7 +9,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../styles/filter.scss";
+@import "../styles/filter";
 
 .title {
     margin: 0;

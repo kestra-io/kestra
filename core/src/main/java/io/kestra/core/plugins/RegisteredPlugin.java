@@ -7,6 +7,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.secret.SecretPluginInterface;
@@ -39,12 +40,13 @@ public class RegisteredPlugin {
     private final List<Class<? extends Condition>> conditions;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
-    private final List<Class<? extends TaskRunner>> taskRunners;
+    private final List<Class<? extends TaskRunner<?>>> taskRunners;
     private final List<Class<? extends AppPluginInterface>> apps;
     private final List<Class<? extends AppBlockInterface>> appBlocks;
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
     private final List<String> guides;
+    private final List<Class<? extends LogExporter>> logExporters;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
@@ -58,7 +60,8 @@ public class RegisteredPlugin {
             !apps.isEmpty()  ||
             !appBlocks.isEmpty() ||
             !charts.isEmpty() ||
-            !dataFilters.isEmpty()
+            !dataFilters.isEmpty() ||
+            !logExporters.isEmpty()
         ;
     }
 
@@ -119,6 +122,10 @@ public class RegisteredPlugin {
             return AppPluginInterface.class;
         }
 
+        if (this.getLogExporters().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return LogExporter.class;
+        }
+
         if (this.getAliases().containsKey(cls.toLowerCase())) {
             // This is a quick-win, but it may trigger an infinite loop ... or not ...
             return baseClass(this.getAliases().get(cls.toLowerCase()).getValue().getName());
@@ -150,6 +157,7 @@ public class RegisteredPlugin {
         result.put("appBlocks", Arrays.asList(this.getAppBlocks().toArray(Class[]::new)));
         result.put("charts", Arrays.asList(this.getCharts().toArray(Class[]::new)));
         result.put("data-filters", Arrays.asList(this.getDataFilters().toArray(Class[]::new)));
+        result.put("log-exporters", Arrays.asList(this.getLogExporters().toArray(Class[]::new)));
 
         return result;
     }
@@ -329,6 +337,12 @@ public class RegisteredPlugin {
         if (!this.getDataFilters().isEmpty()) {
             b.append("[DataFilters: ");
             b.append(this.getDataFilters().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+
+        if (!this.getLogExporters().isEmpty()) {
+            b.append("[Log Exporters: ");
+            b.append(this.getLogExporters().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

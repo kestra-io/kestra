@@ -18,7 +18,7 @@ import java.util.Map;
 
 @CommandLine.Command(
     name = "executor",
-    description = "start an executor"
+    description = "Start the Kestra executor"
 )
 @Slf4j
 public class ExecutorCommand extends AbstractServerCommand {
@@ -31,22 +31,22 @@ public class ExecutorCommand extends AbstractServerCommand {
     @Inject
     private StartExecutorService startExecutorService;
 
-    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
+    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "The list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipExecutions = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (tenant|namespace|flowId) to skip, separated by a coma; for troubleshooting purpose only")
+    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "The list of flow identifiers (tenant|namespace|flowId) to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipFlows = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting purpose only")
+    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "The list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipNamespaces = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting purpose only")
+    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "The list of tenants to skip, separated by a coma; for troubleshooting purpose only")
     private List<String> skipTenants = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--start-executors"}, split=",", description = "a list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
+    @CommandLine.Option(names = {"--start-executors"}, split=",", description = "The list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
     private List<String> startExecutors = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "a list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
+    @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "The list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
     private List<String> notStartExecutors = Collections.emptyList();
 
     @SuppressWarnings("unused")

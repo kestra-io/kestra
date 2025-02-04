@@ -12,7 +12,6 @@ export const encodeParams = (filters, OPTIONS) => {
             })
             .filter((v) => v !== null);
     };
-
     return filters.reduce((query, filter) => {
         const match = OPTIONS.find((o) => o.value.label === filter.label);
         const key = match ? match.key : filter.label === "text" ? "q" : null;
@@ -28,10 +27,12 @@ export const encodeParams = (filters, OPTIONS) => {
             }
             if (key !== "date") query[key] = encode(filter.value, key);
             else {
-                const {startDate, endDate} = filter.value[0];
+                if(filter.value?.length > 0) {
+                    const {startDate, endDate} = filter.value[0];
 
-                query.startDate = startDate;
-                query.endDate = endDate;
+                    query.startDate = startDate;
+                    query.endDate = endDate;
+                }
             }
         }
 

@@ -52,7 +52,7 @@
 </template>
 
 <script>
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import {mapState} from "vuex";
 
     export default {
@@ -182,7 +182,7 @@
 <style lang="scss">
 .plugins-list {
     &.enhance-readability {
-        padding: calc(var(--spacer) * 1.5);
+        padding: 1.5rem;
         background-color: var(--bs-gray-100);
     }
 
@@ -208,7 +208,7 @@
         padding-inline-start: 0;
         margin-bottom: 0;
         font-size: var(--font-size-xs);
-        margin-left: calc(var(--spacer) / 2);
+        margin-left: .5rem;
     }
 
     h6,
@@ -230,21 +230,21 @@
         }
 
         .toc-h4 {
-            margin-left: var(--spacer);
+            margin-left: .5rem;
 
             h6 {
                 font-size: var(--font-size-sm);
-                margin-bottom: calc(var(--spacer) / 2);
+                margin-bottom: .5rem;
             }
 
             li {
-                margin-bottom: calc(var(--spacer) / 2);
+                margin-bottom: .5rem;
             }
         }
     }
 }
 
 .selected {
-    color: var(--bs-purple);
+    color: var(--ks-content-link);
 }
 </style>

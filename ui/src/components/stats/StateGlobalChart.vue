@@ -2,6 +2,7 @@
     <el-card :header="header" shadow="never">
         <div class="state-global-charts" :class="{big: big}">
             <template v-if="hasData">
+                <!-- TODO: Replace the usage of StateChart with one of the new chart components -->
                 <state-chart
                     v-if="ready"
                     :data="data"

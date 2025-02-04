@@ -11,6 +11,7 @@ import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import reactor.core.publisher.Flux;
 
 public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry>, QueryBuilderInterface<Logs.Fields> {
     /**
@@ -83,6 +84,13 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
+    );
+
+    Flux<LogEntry> findAsync(
+        @Nullable String tenantId,
+        @Nullable String namespace,
+        @Nullable Level minLevel,
+        ZonedDateTime startDate
     );
 
     List<LogStatistics> statistics(

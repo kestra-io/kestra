@@ -28,11 +28,42 @@
             </el-alert>
         </div>
 
+        <div v-if="isRestarted()">
+            <el-alert type="warning" :closable="false" class="mb-4 main-warning">
+                <template #title>
+                    <div>
+                        <alert class="main-icon" />
+                        {{ $t('execution restarted', {nbRestart: execution?.metadata?.attemptNumber - 1}) }}
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
+        <div v-if="isReplayed()">
+            <el-alert type="info" :closable="false" class="mb-4 main-info">
+                <template #title>
+                    <div>
+                        {{ $t('execution replayed') }}
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
+        <div v-if="isReplay()">
+            <el-alert type="info" :closable="false" class="mb-4 main-info">
+                <template #title>
+                    <div>
+                        <span v-html="$t('execution replay', {originalId: execution?.originalId})" />
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
         <el-row class="mb-3">
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end actions-buttons">
+            <el-col :span="12" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -125,7 +156,7 @@
     import Unqueue from "./Unqueue.vue";
     import ForceRun from "./ForceRun.vue";
     import Kill from "./Kill.vue";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import DateAgo from "../layout/DateAgo.vue";
     import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
@@ -199,6 +230,15 @@
             },
             isFailed() {
                 return this.execution.state.current === State.FAILED;
+            },
+            isRestarted() {
+                return this.execution.labels?.find( it => it.key === "system.restarted" && (it.value === "true" || it.value === true)) !== undefined;
+            },
+            isReplayed() {
+                return this.execution.labels?.find( it => it.key === "system.replayed" && (it.value === "true" || it.value === true)) !== undefined;
+            },
+            isReplay() {
+                return this.execution.labels?.find( it => it.key === "system.replay" && (it.value === "true" || it.value === true)) !== undefined;
             },
             load() {
                 this.$store
@@ -337,17 +377,17 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {
@@ -366,7 +406,7 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 
             &[aria-haspopup="false"] {
@@ -374,12 +414,12 @@
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -394,7 +434,7 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
     }
@@ -408,20 +448,20 @@
 }
 
 .el-alert.main-error {
-    background-color: var(--background-color-failed) !important;
+    background-color: var(--ks-background-error) !important;
     padding: 0.5rem;
 
     .el-button{
-        color: var(--log-content-error);
-        background-color: var(--log-background-error);
-        border-color: var(--log-border-error);
+        color: var(--ks-log-content-error);
+        background-color: var(--ks-log-background-error);
+        border-color: var(--ks-log-border-error);
     }
     .el-alert__title {
         cursor: pointer;
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--content-color-failed) !important;
+        color: var(--ks-content-error) !important;
         font-size: var(--font-size-sm);
 
         span {
@@ -429,7 +469,7 @@
         }
 
         code{
-            color: var(--log-content-error) !important;
+            color: var(--ks-log-content-error) !important;
         }
 
         > div {
@@ -437,7 +477,7 @@
         }
 
         .main-icon.material-design-icon  {
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             font-size: 1.25rem;
             position: relative;
             top: 4px;
@@ -446,7 +486,7 @@
 
         .toggle-icon {
             position: absolute;
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             right: 1rem;
             width: 1rem;
             height: 1rem;
@@ -457,7 +497,7 @@
     }
 
     .el-alert__description {
-        color: var(--bs-body-color);
+        color: var(--ks-content-primary);
     }
 
     .el-alert__content {
@@ -468,7 +508,7 @@
         }
 
         .text-end {
-            border-top: 1px solid var(--log-background-error);
+            border-top: 1px solid var(--ks-log-background-error);
         }
     }
 }
@@ -477,8 +517,8 @@
     margin-bottom: 0;
 
     .line {
-        padding: calc(var(--spacer) / 2);
-        border-top: 1px solid var(--log-background-error);
+        padding: .5rem;
+        border-top: 1px solid var(--ks-log-background-error);
     }
 }
 </style>

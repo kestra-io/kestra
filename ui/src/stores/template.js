@@ -75,7 +75,7 @@ export default {
                 });
         },
         importTemplates(_, options) {
-            return this.$http.post(`${apiUrl(this)}/templates/import`, options, {headers: {"Content-Type": "multipart/form-data"}})
+            return this.$http.post(`${apiUrl(this)}/templates/import`, Utils.toFormData(options), {headers: {"Content-Type": "multipart/form-data"}})
         },
         deleteTemplateByIds(_, options) {
             return this.$http.delete(`${apiUrl(this)}/templates/delete/by-ids`, {data: options.ids})

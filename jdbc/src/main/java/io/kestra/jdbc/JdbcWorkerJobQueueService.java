@@ -1,6 +1,7 @@
 package io.kestra.jdbc;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.Pauseable;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
@@ -21,7 +22,7 @@ import java.util.function.Consumer;
 
 @Singleton
 @Slf4j
-public class JdbcWorkerJobQueueService implements Closeable {
+public class JdbcWorkerJobQueueService implements Closeable, Pauseable {
     private final JdbcQueue<WorkerJob> workerTaskQueue;
     private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private final ServiceRegistry serviceRegistry;
@@ -82,6 +83,16 @@ public class JdbcWorkerJobQueueService implements Closeable {
         }));
 
         return this.disposable.get();
+    }
+
+    @Override
+    public void pause() {
+        this.workerTaskQueue.pause();
+    }
+
+    @Override
+    public void resume() {
+        this.workerTaskQueue.resume();
     }
 
     /** {@inheritDoc} **/

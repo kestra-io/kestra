@@ -960,7 +960,7 @@
                                 Array.isArray(item.children)
                             ) {
                                 // find the first node that is not present in the current tree and then add it.
-                                
+
                                 const paths = NEW.fileName.split("/");
                                 let index = 0;
                                 let UNCOMMON_NODE = item;
@@ -1077,11 +1077,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
+        background: var(--ks-button-background-primary);
         border-radius: 5px;
 
         html.dark & {
-            background:  var(--bs-primary);
+            background:  var(--ks-button-background-primary);
         }
     }
 
@@ -1098,11 +1098,11 @@
 </style>
 
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--card-bg);
-    border-right: 1px solid var(--bs-border-color);
+    background: var(--ks-background-card);
+    border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
     min-width: calc(30% - 8px);
 
@@ -1136,8 +1136,8 @@
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
 
         &.el-button--primary {
             opacity: 1;
@@ -1150,17 +1150,17 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
 
         &:hover {
-            color: var(--el-text-color-secondary);
+            color: var(--ks-content-link);
         }
     }
 
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         & li {
             height: 30px;
@@ -1169,7 +1169,7 @@
             color: var(--bs-gray-900);
 
             &:hover {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
             }
         }
     }

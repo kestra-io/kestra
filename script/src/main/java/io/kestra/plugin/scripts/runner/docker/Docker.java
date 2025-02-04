@@ -9,12 +9,12 @@ import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.transport.DomainSocket;
 import com.sun.jna.LastErrorException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.DefaultRunContext;
@@ -144,7 +144,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
         ),
     }
 )
-public class Docker extends TaskRunner {
+public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
@@ -201,6 +201,16 @@ public class Docker extends TaskRunner {
     protected String networkMode;
 
     @Schema(
+        title = "List of port bindings.",
+        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
+            "- 8080:80/udp" +
+            "- 127.0.0.1:8080:80" +
+            "- 127.0.0.1:8080:80/udp"
+    )
+    @PluginProperty(dynamic = true)
+    protected List<String> portBindings;
+
+    @Schema(
         title = "List of volumes to mount.",
         description = """
             Make sure to provide a map of a local path to a container path in the format: `/home/local/path:/app/container/path`.
@@ -228,9 +238,8 @@ public class Docker extends TaskRunner {
         Use the `ALWAYS` pull policy to pull the latest version of an image
         even if an image with the same tag already exists."""
     )
-    @PluginProperty
     @Builder.Default
-    protected PullPolicy pullPolicy = PullPolicy.ALWAYS;
+    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -265,6 +274,11 @@ public class Docker extends TaskRunner {
     private String shmSize;
 
     @Schema(
+        title = "Give extended privileges to this container."
+    )
+    private Property<Boolean> privileged;
+
+    @Schema(
         title = "File handling strategy.",
         description = """
             How to handle local files (input files, output files, namespace files, ...).
@@ -273,16 +287,20 @@ public class Docker extends TaskRunner {
     )
     @NotNull
     @Builder.Default
-    @PluginProperty
-    private FileHandlingStrategy fileHandlingStrategy = FileHandlingStrategy.VOLUME;
+    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.of(FileHandlingStrategy.VOLUME);
 
     @Schema(
         title = "Whether the container should be deleted upon completion."
     )
     @NotNull
     @Builder.Default
-    @PluginProperty
-    private Boolean delete = true;
+    private Property<Boolean> delete = Property.of(true);
+
+    @Builder.Default
+    @Schema(
+        title = "Whether to wait for the container to exit."
+    )
+    private final Property<Boolean> wait = Property.of(true);
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -312,12 +330,12 @@ public class Docker extends TaskRunner {
             .cpu(dockerOptions.getCpu())
             .memory(dockerOptions.getMemory())
             .shmSize(dockerOptions.getShmSize())
+            .privileged(dockerOptions.getPrivileged())
             .build();
     }
 
-
     @Override
-    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+    public TaskRunnerResult<DockerTaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
         if (taskCommands.getContainerImage() == null && this.image == null) {
             throw new IllegalArgumentException("This task runner needs the `containerImage` property to be set");
         }
@@ -335,8 +353,9 @@ public class Docker extends TaskRunner {
         String resolvedHost = DockerService.findHost(runContext, this.host);
         try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
             // pull image
-            if (this.getPullPolicy() != PullPolicy.NEVER) {
-                pullImage(dockerClient, image, this.getPullPolicy(), logger);
+            var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
+            if (!PullPolicy.NEVER.equals(renderedPolicy)) {
+                pullImage(dockerClient, image, renderedPolicy, logger);
             }
 
             // create container
@@ -354,7 +373,8 @@ public class Docker extends TaskRunner {
             String filesVolumeName = null;
 
             // create a volume if we need to handle files
-            if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME) {
+            var strategy = runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null);
+            if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
                 CreateVolumeCmd files = dockerClient.createVolumeCmd()
                     .withLabels(ScriptService.labels(runContext, "kestra.io/"));
                 filesVolumeName = files.exec().getName();
@@ -413,6 +433,14 @@ public class Docker extends TaskRunner {
                     exec.getId(),
                     String.join(" ", taskCommands.getCommands())
                 );
+            }
+
+            if (!Boolean.TRUE.equals(runContext.render(wait).as(Boolean.class).orElseThrow())) {
+                return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
+                    .exitCode(0)
+                    .logConsumer(defaultLogConsumer)
+                    .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
+                    .build();
             }
 
             // register the runnable to be used for killing the container.
@@ -483,7 +511,7 @@ public class Docker extends TaskRunner {
                 Await.until(ended::get);
 
                 if (exitCode != 0) {
-                    if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
+                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
                         downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
                     }
 
@@ -492,24 +520,28 @@ public class Docker extends TaskRunner {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
                     downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
                 }
 
-                return new RunnerResult(exitCode, defaultLogConsumer);
+                return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
+                    .exitCode(exitCode)
+                    .logConsumer(defaultLogConsumer)
+                    .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
+                    .build();
             } finally {
                 try {
                     // kill container if it's still running, this means there was an exception and the container didn't
                     // come to a normal end.
                     kill();
 
-                    if (Boolean.TRUE.equals(delete)) {
+                    if (Boolean.TRUE.equals(runContext.render(delete).as(Boolean.class).orElseThrow())) {
                         dockerClient.removeContainerCmd(exec.getId()).exec();
                         if (logger.isTraceEnabled()) {
                             logger.trace("Container deleted: {}", exec.getId());
                         }
 
-                        if (needVolume && this.fileHandlingStrategy == FileHandlingStrategy.VOLUME  && filesVolumeName != null) {
+                        if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
                             dockerClient.removeVolumeCmd(filesVolumeName).exec();
 
                             if (logger.isTraceEnabled()) {
@@ -660,7 +692,7 @@ public class Docker extends TaskRunner {
         }
 
         List<Bind> binds = new ArrayList<>();
-        if (this.fileHandlingStrategy == FileHandlingStrategy.MOUNT && workingDirectory != null) {
+        if (FileHandlingStrategy.MOUNT.equals(runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null)) && workingDirectory != null) {
             String bindPath = windowsToUnixPath(workingDirectory.toString());
             binds.add(new Bind(
                 bindPath,
@@ -683,45 +715,43 @@ public class Docker extends TaskRunner {
                 .getDeviceRequests()
                 .stream()
                 .map(throwFunction(deviceRequest -> new com.github.dockerjava.api.model.DeviceRequest()
-                    .withDriver(runContext.render(deviceRequest.getDriver()))
-                    .withCount(deviceRequest.getCount())
-                    .withDeviceIds(runContext.render(deviceRequest.getDeviceIds()))
-                    .withCapabilities(deviceRequest.getCapabilities())
-                    .withOptions(deviceRequest.getOptions())
+                    .withDriver(runContext.render(deviceRequest.getDriver()).as(String.class).orElse(null))
+                    .withCount(runContext.render(deviceRequest.getCount()).as(Integer.class).orElse(null))
+                    .withDeviceIds(runContext.render(deviceRequest.getDeviceIds()).asList(String.class))
+                    .withCapabilities(runContext.render(deviceRequest.getCapabilities()).asList(List.class))
+                    .withOptions(runContext.render(deviceRequest.getOptions()).asMap(String.class, String.class))
                 ))
                 .toList()
             );
         }
 
-        if (this.getCpu() != null) {
-            if (this.getCpu().getCpus() != null) {
-                hostConfig.withCpuQuota(this.getCpu().getCpus() * 10000L);
-            }
+        if (this.getCpu() != null && this.getCpu().getCpus() != null) {
+            hostConfig.withCpuQuota(runContext.render(this.getCpu().getCpus()).as(Long.class).orElseThrow() * 10000L);
         }
 
         if (this.getMemory() != null) {
             if (this.getMemory().getMemory() != null) {
-                hostConfig.withMemory(convertBytes(runContext.render(this.getMemory().getMemory())));
+                hostConfig.withMemory(convertBytes(runContext.render(this.getMemory().getMemory()).as(String.class).orElse(null)));
             }
 
             if (this.getMemory().getMemorySwap() != null) {
-                hostConfig.withMemorySwap(convertBytes(runContext.render(this.getMemory().getMemorySwap())));
+                hostConfig.withMemorySwap(convertBytes(runContext.render(this.getMemory().getMemorySwap()).as(String.class).orElse(null)));
             }
 
             if (this.getMemory().getMemorySwappiness() != null) {
-                hostConfig.withMemorySwappiness(convertBytes(runContext.render(this.getMemory().getMemorySwappiness())));
+                hostConfig.withMemorySwappiness(convertBytes(runContext.render(this.getMemory().getMemorySwappiness()).as(String.class).orElse(null)));
             }
 
             if (this.getMemory().getMemoryReservation() != null) {
-                hostConfig.withMemoryReservation(convertBytes(runContext.render(this.getMemory().getMemoryReservation())));
+                hostConfig.withMemoryReservation(convertBytes(runContext.render(this.getMemory().getMemoryReservation()).as(String.class).orElse(null)));
             }
 
             if (this.getMemory().getKernelMemory() != null) {
-                hostConfig.withKernelMemory(convertBytes(runContext.render(this.getMemory().getKernelMemory())));
+                hostConfig.withKernelMemory(convertBytes(runContext.render(this.getMemory().getKernelMemory()).as(String.class).orElse(null)));
             }
 
             if (this.getMemory().getOomKillDisable() != null) {
-                hostConfig.withOomKillDisable(this.getMemory().getOomKillDisable());
+                hostConfig.withOomKillDisable(runContext.render(this.getMemory().getOomKillDisable()).as(Boolean.class).orElse(null));
             }
         }
 
@@ -729,10 +759,21 @@ public class Docker extends TaskRunner {
             hostConfig.withShmSize(convertBytes(runContext.render(this.getShmSize())));
         }
 
+        if (this.getPrivileged() != null) {
+            hostConfig.withPrivileged(runContext.render(this.getPrivileged()).as(Boolean.class).orElseThrow());
+        }
+
         if (this.getNetworkMode() != null) {
             hostConfig.withNetworkMode(runContext.render(this.getNetworkMode(), additionalVars));
         }
 
+        if (this.getPortBindings() != null) {
+            hostConfig.withPortBindings(runContext.render(this.getPortBindings(), additionalVars)
+                .stream()
+                .map(PortBinding::parse)
+                .toList()
+            );
+        }
 
         return container
             .withHostConfig(hostConfig)
@@ -786,6 +827,12 @@ public class Docker extends TaskRunner {
                 }
             );
         }
+    }
+
+    @SuperBuilder
+    @Getter
+    public static class DockerTaskRunnerDetailResult extends TaskRunnerDetailResult {
+        private String containerId;
     }
 
     public enum FileHandlingStrategy {

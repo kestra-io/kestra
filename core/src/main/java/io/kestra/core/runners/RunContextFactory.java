@@ -114,6 +114,7 @@ public class RunContextFactory {
                 .build(runContextLogger))
             .withKvStoreService(kvStoreService)
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withTask(task)
             .build();
     }
 
@@ -131,6 +132,7 @@ public class RunContextFactory {
                 .build(runContextLogger)
             )
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withTrigger(trigger)
             .build();
     }
 
@@ -148,6 +150,11 @@ public class RunContextFactory {
 
     @VisibleForTesting
     public RunContext of(final Map<String, Object> variables) {
+        return of((Task) null, variables);
+    }
+
+    @VisibleForTesting
+    public RunContext of(final Task task, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
@@ -177,6 +184,7 @@ public class RunContextFactory {
                 flowService
             ))
             .withVariables(variables)
+            .withTask(task)
             .build();
     }
 

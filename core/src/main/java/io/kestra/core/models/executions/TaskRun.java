@@ -152,6 +152,7 @@ public class TaskRun implements TenantInterface {
             .taskId(resolvedTask.getTask().getId())
             .parentTaskRunId(resolvedTask.getParentId())
             .value(resolvedTask.getValue())
+            .iteration(resolvedTask.getIteration())
             .state(new State())
             .build();
     }

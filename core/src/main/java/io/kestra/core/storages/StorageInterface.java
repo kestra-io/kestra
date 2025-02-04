@@ -100,4 +100,13 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         URI uri = StorageContext.forInput(execution, input, file.getName()).getContextStorageURI();
         return this.put(execution.getTenantId(), execution.getNamespace(), uri, new BufferedInputStream(new FileInputStream(file)));
     }
+
+    /**
+     * Throws an IllegalArgumentException if the URI is not absolute: a.k.a., if it contains <code>".." + File.separator</code>.
+     */
+    default void parentTraversalGuard(URI uri) {
+        if (uri != null && (uri.toString().contains(".." + File.separator) || uri.toString().contains(File.separator + "..") || uri.toString().equals(".."))) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+    }
 }

@@ -2,7 +2,7 @@ package io.kestra.plugin.core.kv;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
@@ -51,37 +51,34 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     @Schema(
         title = "The key for which to get the value."
     )
-    @PluginProperty(dynamic = true)
-    private String key;
+    private Property<String> key;
 
     @NotNull
     @Schema(
         title = "The namespace on which to get the value."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private String namespace = "{{ flow.namespace }}";
+    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to fail if there is no value for the given key."
     )
-    @PluginProperty
     @Builder.Default
-    private boolean errorOnMissing = false;
+    private Property<Boolean> errorOnMissing = Property.of(false);
 
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        String renderedNamespace = runContext.render(this.namespace);
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
 
         FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
         flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
 
-        String renderedKey = runContext.render(this.key);
+        String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
 
         Optional<KVValue> maybeValue = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
-        if (this.errorOnMissing && maybeValue.isEmpty()) {
+        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && maybeValue.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 

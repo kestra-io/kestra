@@ -3,6 +3,9 @@ package io.kestra.core.schedulers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.Condition;
@@ -19,10 +22,12 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
@@ -60,11 +65,12 @@ import java.util.stream.Collectors;
 @SuppressWarnings("this-escape")
 public abstract class AbstractScheduler implements Scheduler, Service {
     protected final ApplicationContext applicationContext;
-    private final QueueInterface<Execution> executionQueue;
-    private final QueueInterface<Trigger> triggerQueue;
+    protected final QueueInterface<Execution> executionQueue;
+    protected final QueueInterface<Trigger> triggerQueue;
     private final QueueInterface<WorkerJob> workerTaskQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    @SuppressWarnings("rawtypes") private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -91,9 +97,11 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final String id = IdUtils.create();
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
-    private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
+    private final ApplicationEventPublisher<ServiceStateChangeEvent> serviceStateEventPublisher;
+    protected final ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher;
     protected final List<Runnable> receiveCancellations = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
@@ -108,6 +116,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
+        this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.runContextInitializer = applicationContext.getBean(RunContextInitializer.class);
@@ -116,7 +125,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.logService = applicationContext.getBean(LogService.class);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         setState(ServiceState.CREATED);
     }
 
@@ -126,6 +136,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void run() {
         this.flowListeners.run();
         this.flowListeners.listen(this::initializedTriggers);
@@ -240,6 +251,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 }
             }
         ));
+
+        // listen to cluster events
+        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(((QueueInterface<ClusterEvent>) clusterEventQueueInterface).receive(this::clusterEventQueue)));
+
         setState(ServiceState.RUNNING);
     }
 
@@ -322,6 +337,48 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             });
 
         this.isReady = true;
+    }
+
+    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
+            return;
+        }
+
+        ClusterEvent clusterEvent = either.getLeft();
+        log.info("Cluster event received: {}", clusterEvent);
+        switch (clusterEvent.eventType()) {
+            case MAINTENANCE_ENTER -> {
+                this.executionQueue.pause();
+                this.triggerQueue.pause();
+                this.workerTaskQueue.pause();
+                this.workerTriggerResultQueue.pause();
+                this.executionKilledQueue.pause();
+                this.pauseAdditionalQueues();
+
+                this.isPaused.set(true);
+                this.setState(ServiceState.MAINTENANCE);
+            }
+            case MAINTENANCE_EXIT -> {
+                this.executionQueue.resume();
+                this.triggerQueue.resume();
+                this.workerTaskQueue.resume();
+                this.workerTriggerResultQueue.resume();
+                this.executionKilledQueue.resume();
+                this.resumeAdditionalQueues();
+
+                this.isPaused.set(false);
+                this.setState(ServiceState.RUNNING);
+            }
+        }
+    }
+
+    protected void resumeAdditionalQueues() {
+        // by default: do nothing
+    }
+
+    protected void pauseAdditionalQueues() {
+        // by default: do nothing
     }
 
     private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger) {
@@ -424,6 +481,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private void handle() {
         if (!isReady()) {
             log.warn("Scheduler is not ready, waiting");
+            return;
+        }
+
+        if (this.isPaused.get()) {
             return;
         }
 
@@ -617,9 +678,12 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         var newExecution = execution.withTenantId(trigger.getTenantId());
         try {
             this.executionQueue.emit(newExecution);
+            this.executionEventPublisher.publishEvent(new CrudEvent<>(newExecution, CrudEventType.CREATE));
         } catch (QueueException e) {
             try {
-                this.executionQueue.emit(newExecution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED));
+                Execution failedExecution = newExecution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED);
+                this.executionQueue.emit(failedExecution);
+                this.executionEventPublisher.publishEvent(new CrudEvent<>(failedExecution, CrudEventType.CREATE));
             } catch (QueueException ex) {
                 log.error("Unable to emit the execution", ex);
             }
@@ -927,7 +991,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     protected void setState(final ServiceState state) {
         this.state.set(state);
-        eventPublisher.publishEvent(new ServiceStateChangeEvent(this));
+        serviceStateEventPublisher.publishEvent(new ServiceStateChangeEvent(this));
     }
 
     /**

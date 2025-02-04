@@ -24,7 +24,8 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Write data to a file in the internal storage."
+    title = "Write data to a file in the internal storage.",
+    description = "Use the Write task to store outputs as files internally and then reference the stored file for processing further down your flow."
 )
 @Plugin(
     examples = {

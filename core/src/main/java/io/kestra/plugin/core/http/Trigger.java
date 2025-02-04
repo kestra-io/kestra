@@ -1,14 +1,17 @@
 package io.kestra.plugin.core.http;
 
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.client.configurations.SslOptions;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TruthUtils;
-import io.micronaut.http.HttpMethod;
+import io.micronaut.http.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -99,36 +102,33 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
                 The condition will be evaluated before any 'generic trigger conditions' that can be configured via the `conditions` property.
                 """
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
     @NotNull
-    private String responseCondition = "{{ response.statusCode < 400 }}";
+    private Property<String> responseCondition = new Property<>("{{ response.statusCode < 400 }}");
 
     @NotNull
-    private String uri;
+    private Property<String> uri;
 
     @Builder.Default
-    private HttpMethod method = HttpMethod.GET;
+    private Property<String> method = Property.of("GET");
 
-    private String body;
+    private Property<String> body;
 
-    private Map<String, Object> formData;
+    private Property<Map<String, Object>> formData;
 
-    private String contentType;
+    @Builder.Default
+    private Property<String> contentType = Property.of(MediaType.APPLICATION_JSON);
 
-    private Map<CharSequence, CharSequence> headers;
+    private Property<Map<CharSequence, CharSequence>> headers;
 
-    private RequestOptions options;
-
-    private SslOptions sslOptions;
+    private HttpConfiguration options;
 
     @Builder.Default
     @Schema(
         title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs if encryption is configured",
         description = "When true, the `encryptedBody` output will be filled, otherwise the `body` output will be filled"
     )
-    private boolean encryptBody = false;
-
+    private Property<Boolean> encryptBody = Property.of(false);
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
@@ -142,17 +142,19 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
             .formData(this.formData)
             .contentType(this.contentType)
             .headers(this.headers)
-            .options(this.options)
-            .sslOptions(this.sslOptions)
-            // we allow failed status code as it is the condition that must determine whether we trigger the flow
-            .allowFailed(true)
+            .options((this.options == null ? HttpConfiguration.builder() : this.options.toBuilder())
+                // we allow failed status code as it is the condition that must determine whether we trigger the flow
+                .allowFailed(Property.of(true))
+                .ssl(this.options != null && this.options.getSsl() != null ? this.options.getSsl() : this.sslOptions)
+                .build()
+            )
             .encryptBody(this.encryptBody)
             .build();
         var output = request.run(runContext);
 
         logger.debug("{} respond with status code '{}'", output.getUri(), output.getCode());
 
-        Object body = this.encryptBody
+        Object body = runContext.render(this.encryptBody).as(Boolean.class).orElseThrow()
             ? runContext.decrypt(output.getEncryptedBody().getValue())
             : output.getBody();
 
@@ -161,7 +163,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         response.put("body", body); // body can be null so we need a null-friendly map
         response.put("headers", output.getHeaders());
         Map<String, Object> responseVariables = Map.of("response", response);
-        var renderedCondition = runContext.render(this.responseCondition, responseVariables);
+        String renderedCondition = runContext.render(this.responseCondition).as(String.class, responseVariables).orElse(null);
         if (TruthUtils.isTruthy(renderedCondition)) {
             Execution execution = TriggerService.generateExecution(this, conditionContext, context, output);
 
@@ -169,5 +171,22 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         }
 
         return Optional.empty();
+    }
+
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    private SslOptions sslOptions;
+
+    @Deprecated
+    public void sslOptions(SslOptions sslOptions) {
+        if (this.options == null) {
+            this.options = HttpConfiguration.builder()
+                .build();
+        }
+
+        this.sslOptions = sslOptions;
+        this.options = this.options.toBuilder()
+            .ssl(sslOptions)
+            .build();
     }
 }

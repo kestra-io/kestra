@@ -24,6 +24,12 @@ public interface FlowableTask <T extends Output> {
     @PluginProperty
     List<Task> getErrors();
 
+    @Schema(
+        title = "List of tasks to run after any tasks failed or success on this FlowableTask."
+    )
+    @PluginProperty
+    List<Task> getFinally();
+
     /**
      * Create the topology representation of a flowable task.
      * <p>
@@ -71,6 +77,7 @@ public interface FlowableTask <T extends Output> {
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
             parentTaskRun,
             runContext,
             isAllowFailure(),

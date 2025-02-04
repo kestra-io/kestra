@@ -8,6 +8,8 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -58,6 +60,11 @@ public class DefaultRunContext extends RunContext {
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private String traceParent;
+
+    // those are only used to validate dynamic properties inside the RunContextProperty
+    private Task task;
+    private AbstractTrigger trigger;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
@@ -97,9 +104,33 @@ public class DefaultRunContext extends RunContext {
         return secretInputs;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public String getTraceParent() {
+        return traceParent;
+    }
+
+    @Override
+    public void setTraceParent(String traceParent) {
+        this.traceParent = traceParent;
+    }
+
     @JsonIgnore
     public ApplicationContext getApplicationContext() {
         return applicationContext;
+    }
+
+    @JsonIgnore
+    Task getTask() {
+        return task;
+    }
+
+    @JsonIgnore
+    AbstractTrigger getTrigger() {
+        return trigger;
     }
 
     void init(final ApplicationContext applicationContext) {
@@ -148,6 +179,14 @@ public class DefaultRunContext extends RunContext {
 
     void setTriggerExecutionId(final String triggerExecutionId) {
         this.triggerExecutionId = triggerExecutionId;
+    }
+
+    void setTask(final Task task) {
+        this.task = task;
+    }
+
+    void setTrigger(final AbstractTrigger trigger) {
+        this.trigger = trigger;
     }
 
     /**
@@ -435,6 +474,8 @@ public class DefaultRunContext extends RunContext {
         } catch (IOException ex) {
             logger().warn("Unable to cleanup worker task", ex);
         }
+
+        logger.resetMDC();
     }
 
     /**
@@ -521,6 +562,8 @@ public class DefaultRunContext extends RunContext {
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
         private List<String> secretInputs;
+        private Task task;
+        private AbstractTrigger trigger;
 
         /**
          * Builds the new {@link DefaultRunContext} object.
@@ -541,6 +584,8 @@ public class DefaultRunContext extends RunContext {
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
             context.secretInputs = secretInputs;
+            context.task = task;
+            context.trigger = trigger;
             return context;
         }
     }

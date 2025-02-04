@@ -34,6 +34,8 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useRouter} from "vue-router";
+    const router = useRouter();
 
     import {Bar} from "vue-chartjs";
 
@@ -97,6 +99,8 @@
         };
     });
 
+    const MAX_LABEL_LENGTH = 15;
+
     const options = computed(() =>
         defaultConfig({
             barThickness: 25,
@@ -131,6 +135,12 @@
                     position: "bottom",
                     display: true,
                     stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            const namespaceName = this.getLabelForValue(value)
+                            return namespaceName.length > MAX_LABEL_LENGTH ? `${namespaceName.substring(0, MAX_LABEL_LENGTH)}...` : namespaceName;
+                        },
+                    }
                 },
                 y: {
                     title: {
@@ -147,6 +157,20 @@
                         maxTicksLimit: 8,
                     },
                 },
+            },
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
+                    router.push({
+                        name: "executions/list",
+                        query: {
+                            state: state,
+                            scope: "USER",
+                            size: 100,
+                            page: 1,
+                        },
+                    });
+                }
             },
         }),
     );

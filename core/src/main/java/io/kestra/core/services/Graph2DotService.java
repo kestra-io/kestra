@@ -64,10 +64,15 @@ public class Graph2DotService {
     }
 
     private static String label(AbstractGraph node) {
-        String shape = node instanceof GraphClusterEnd ? "point" : "box";
-        String label = node instanceof GraphClusterEnd ? "end" : node.getLabel();
+        String shape;
 
-        return "[shape=" + shape + ",label=\"" + label + "\"]";
+        if (node instanceof GraphClusterRoot || node instanceof GraphClusterFinally || node instanceof GraphClusterEnd) {
+            shape = "point";
+        } else {
+            shape = "box";
+        }
+
+        return "[shape=" + shape + "]";
     }
 
     private static String nodeName(AbstractGraph node) {

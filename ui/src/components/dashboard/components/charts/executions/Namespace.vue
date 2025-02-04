@@ -8,10 +8,7 @@
                         {{ t("dashboard.per_namespace") }}
                     </span>
                 </p>
-                <div v-if="loading" class="loading-skeleton">
-                    <div class="skeleton-line" />
-                </div>
-                <p v-else class="m-0 fs-2 fw-bold">
+                <p class="m-0 fs-2">
                     {{ total }}
                 </p>
             </div>
@@ -57,11 +54,6 @@
             type: Number,
             required: true,
         },
-        loading:{
-            type:Boolean , 
-            required:true , 
-            default: false
-        }
     });
 
     const parsedData = computed(() => {
@@ -192,43 +184,6 @@ $height: 200px;
 
     html.dark & {
         color: $gray-300;
-    }
-}
-.loading-skeleton {
-    height: 2rem;
-    display: flex;
-    align-items: center;
-}
-
-.skeleton-line {
-    height: 1.5rem;
-    width: 60px;
-    background: linear-gradient(
-        90deg,
-        rgba(190, 190, 190, 0.2) 25%,
-        rgba(129, 129, 129, 0.24) 37%,
-        rgba(190, 190, 190, 0.2) 63%
-    );
-    background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-    border-radius: 4px;
-
-    html.dark & {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.1) 25%,
-            rgba(255, 255, 255, 0.15) 37%,
-            rgba(255, 255, 255, 0.1) 63%
-        );
-    }
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
     }
 }
 </style>

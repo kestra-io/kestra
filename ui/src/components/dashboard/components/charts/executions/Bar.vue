@@ -1,6 +1,8 @@
 <template>
     <div class="p-4 responsive-container">
-        <div class="d-flex flex-wrap justify-content-between pb-4 info-container">
+        <div
+            class="d-flex flex-wrap justify-content-between pb-4 info-container"
+        >
             <div class="info-block">
                 <p class="m-0 fs-6">
                     <span class="fw-bold">{{ t("executions") }}</span>
@@ -8,16 +10,15 @@
                         {{ t("dashboard.per_day") }}
                     </span>
                 </p>
-                <div v-if="loading" class="loading-skeleton">
-                    <div class="skeleton-line" />
-                </div>
-                <p v-else class="m-0 fs-2 fw-bold">
+                <p class="m-0 fs-2">
                     {{ total }}
                 </p>
             </div>
 
             <div class="switch-container">
-                <div class="d-flex justify-content-end align-items-center switch-content">
+                <div
+                    class="d-flex justify-content-end align-items-center switch-content"
+                >
                     <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
@@ -42,6 +43,7 @@
         <NoData v-else />
     </div>
 </template>
+
 <script setup>
     import {ref} from "vue";
     import {useI18n} from "vue-i18n";
@@ -69,11 +71,6 @@
             type: Number,
             required: true,
         },
-        loading:{
-            type:Boolean , 
-            required:true , 
-            default: false
-        }
     });
 </script>
 
@@ -138,43 +135,6 @@ $height: 200px;
 
     .pe-2 {
         padding-right: 0.5rem;
-    }
-}
-.loading-skeleton {
-    height: 2rem;
-    display: flex;
-    align-items: center;
-}
-
-.skeleton-line {
-    height: 1.5rem;
-    width: 60px;
-    background: linear-gradient(
-        90deg,
-        rgba(190, 190, 190, 0.2) 25%,
-        rgba(129, 129, 129, 0.24) 37%,
-        rgba(190, 190, 190, 0.2) 63%
-    );
-    background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-    border-radius: 4px;
-
-    html.dark & {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.1) 25%,
-            rgba(255, 255, 255, 0.15) 37%,
-            rgba(255, 255, 255, 0.1) 63%
-        );
-    }
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0 50%;
     }
 }
 </style>

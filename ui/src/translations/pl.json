@@ -1159,6 +1159,9 @@
       "comment": "Komentarz",
       "move_line": "Przenieś linię",
       "command_palette": "Pokaż paletę poleceń"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Wystąpił problem podczas ładowania wykonania"
     }
   }
 }

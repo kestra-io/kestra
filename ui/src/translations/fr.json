@@ -1159,6 +1159,9 @@
       "comment": "Commentaire",
       "move_line": "Déplacer la ligne",
       "command_palette": "Afficher la palette de commandes"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"
     }
   }
 }

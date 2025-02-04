@@ -107,9 +107,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
@@ -619,24 +617,23 @@ public class ExecutionController {
                         ));
                     }
 
+                    String subscriberId = UUID.randomUUID().toString();
                     // Use Flux to wait for completion using the streaming service
                     return Flux.<Event<Execution>>create(emitter -> {
                             streamingService.registerSubscriber(
                                 executionWithInputs.getId(),
-                                emitter
+                                subscriberId,
+                                emitter,
+                                flow
                             );
                         })
-                        .filter(event -> "end".equals(event.getId()))
+                        .last()
                         .map(Event::getData)
                         .map(execution -> ExecutionResponse.fromExecution(
                             execution,
                             executionUrl(execution)
                         ))
-                        .next()
-                        .doFinally(signalType -> {
-                            // This will be called in all completion scenarios (normal, error, or cancel)
-                            log.debug("SSE connection finished with signal: {}", signalType);
-                        });
+                        .doFinally(signalType -> streamingService.unregisterSubscriber(executionWithInputs.getId(), subscriberId));
                 } catch (QueueException e) {
                     return Mono.error(e);
                 }
@@ -1485,18 +1482,14 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
-    private boolean isStopFollow(Flow flow, Execution execution) {
-        return conditionService.isTerminatedWithListeners(flow, execution) &&
-            execution.getState().getCurrent() != State.Type.PAUSED;
-    }
-
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Executions"}, summary = "Follow an execution")
     public Flux<Event<Execution>> follow(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
-        return Flux.create(emitter -> {
+        String subscriberId = UUID.randomUUID().toString();
+        return Flux.<Event<Execution>>create(emitter -> {
             // Send initial event
             emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
@@ -1511,7 +1504,7 @@ public class ExecutionController {
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
                 // If execution is already complete, just send final state
-                if (isStopFollow(flow, execution)) {
+                if (streamingService.isStopFollow(flow, execution)) {
                     emitter.next(Event.of(execution).id("end"));
                     emitter.complete();
                     return;
@@ -1521,9 +1514,7 @@ public class ExecutionController {
                 emitter.next(Event.of(execution).id("progress"));
 
                 // Register for updates
-                streamingService.registerSubscriber(executionId, emitter);
-
-                Schedulers.boundedElastic().schedule(() -> {
+                streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
             } catch (TimeoutException e) {
                 emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                     "Unable to find execution " + executionId));
@@ -1531,7 +1522,8 @@ public class ExecutionController {
                 emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                     "Unable to find flow for execution " + executionId));
             }
-        }, FluxSink.OverflowStrategy.BUFFER);
+        }, FluxSink.OverflowStrategy.BUFFER)
+            .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)

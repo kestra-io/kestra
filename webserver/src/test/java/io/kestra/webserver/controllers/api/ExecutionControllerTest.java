@@ -321,6 +321,8 @@ class ExecutionControllerTest {
         assertThat(results, is(notNullValue()));
         assertThat(results.size(), is(greaterThan(0)));
         assertThat(results.getLast().getData().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(results.getFirst().getId(), is("start"));
+        assertThat(results.getLast().getId(), is("end"));
     }
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {

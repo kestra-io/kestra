@@ -35,7 +35,9 @@
                 </div>
             </slot>
         </nav>
-        <slot name="absolute" />
+        <div class="editor-absolute-container pe-none">
+            <slot name="absolute" />
+        </div>
         <span v-if="label" class="label">{{ label }}</span>
         <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
             <div ref="editorContainer" class="editor-wrapper position-relative">
@@ -511,6 +513,17 @@
         html.dark & {
             background-color: var(--bs-gray-100);
         }
+    }
+
+    .editor-absolute-container {
+        position: absolute;
+        top: 8px;
+        right: 20px;
+        z-index: 10;
+    }
+
+    .editor-absolute-container > * {
+        pointer-events: auto;
     }
 
     .editor-container {

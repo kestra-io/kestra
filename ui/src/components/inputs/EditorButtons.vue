@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="mx-2">
+    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="me-2">
         <el-dropdown>
             <el-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />

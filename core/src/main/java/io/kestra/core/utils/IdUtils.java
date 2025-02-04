@@ -1,9 +1,9 @@
 package io.kestra.core.utils;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import java.nio.charset.StandardCharsets;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -21,7 +21,7 @@ abstract public class IdUtils {
     public static String from(String from) {
         return FriendlyId.toFriendlyId(
             UUID.nameUUIDFromBytes(
-                HASH_FUNCTION.hashString(from, Charsets.UTF_8).asBytes()
+                HASH_FUNCTION.hashString(from, StandardCharsets.UTF_8).asBytes()
             )
         );
     }

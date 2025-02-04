@@ -25,7 +25,7 @@ import java.util.Optional;
 @Schema(
     title = "Return a value for debugging purposes.",
     description = """
-        This task is intended for troubleshooting. 
+        This task is intended for troubleshooting.
 
         It allows you to return templated values, inputs or outputs."""
 )

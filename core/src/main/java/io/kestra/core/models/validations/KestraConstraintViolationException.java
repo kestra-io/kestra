@@ -5,11 +5,14 @@ import io.kestra.core.models.tasks.Task;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
+import java.io.Serial;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class KestraConstraintViolationException extends ConstraintViolationException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public KestraConstraintViolationException(Set<? extends ConstraintViolation<?>> constraintViolations) {
         super(constraintViolations);

@@ -311,10 +311,12 @@ public class JsonSchemaGenerator {
             if (member.getDeclaredType().isInstanceOf(Property.class)) {
                 memberAttributes.put("$dynamic", true);
                 // if we are in the String definition of a Property but the target type is not String: we configure the pattern
-                Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
-                if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
-                    memberAttributes.put("pattern", ".*{{.*}}.*");
-                }
+                // TODO this was a good idea but their is too much cases where it didn't work like in List or Map so if we want it we need to make it more clever
+                //  I keep it for now commented but at some point we may want to re-do and improve it or remove these commented lines
+//                Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
+//                if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
+//                    memberAttributes.put("pattern", ".*{{.*}}.*");
+//                }
             } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
                 memberAttributes.put("$dynamic", false);
             }

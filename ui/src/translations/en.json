@@ -336,7 +336,7 @@
     "template creation": "Template creation",
     "templates": "Templates",
     "templates deprecated": "Templates are deprecated. Please use subflows instead. See the <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrations section</a> explaining how you can migrate from templates to subflows.",
-    "no result": "No logs emitted so far",
+    "no result": "There are no results to be shown.",
     "empty search": "Search results are empty",
     "trigger": "Trigger",
     "triggers": "Triggers",
@@ -1163,6 +1163,20 @@
         "input": "Save input"
       }
     },
-    "instance": "Instance"
+    "editor_shortcuts": {
+      "label": "Keyboard shortcuts",
+      "command_palette": "Show command palette",
+      "save_flow": "Save flow",
+      "move_line": "Move line",
+      "duplicate_cursor": "Duplicate cursor",
+      "fold_unfold": "Fold/Unfold code",
+      "comment_uncomment": "Comment/Uncomment",
+      "comment": "Comment",
+      "uncomment": "Uncomment"
+    },
+    "instance": "Instance",
+    "something_went_wrong": {
+        "loading_execution": "Something went wrong while loading the execution"
+    }
   }
 }

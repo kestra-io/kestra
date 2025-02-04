@@ -290,7 +290,7 @@
     "template creation": "Создание шаблона",
     "templates": "Шаблоны",
     "templates deprecated": "Шаблоны устарели. Пожалуйста, используйте subflows вместо них. См. <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">раздел миграции</a>, объясняющий, как можно мигрировать с шаблонов на subflows.",
-    "no result": "Логи пока не были сгенерированы",
+    "no result": "Нет результатов для отображения.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Подробности trigger",
@@ -1148,6 +1148,20 @@
         "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения."
       }
     },
-    "apps": "Приложения"
+    "apps": "Приложения",
+    "editor_shortcuts": {
+      "save_flow": "Сохранить flow",
+      "comment_uncomment": "Комментарий/Раскомментировать",
+      "duplicate_cursor": "Дублировать курсор",
+      "uncomment": "Раскомментировать",
+      "label": "Горячие клавиши",
+      "fold_unfold": "Свернуть/Развернуть код",
+      "comment": "Комментарий",
+      "move_line": "Переместить строку",
+      "command_palette": "Показать палитру команд"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Произошла ошибка при загрузке выполнения"
+    }
   }
 }

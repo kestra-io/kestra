@@ -1,14 +1,8 @@
 package io.kestra.core.utils;
 
-import com.google.common.collect.Lists;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MapUtils {
@@ -37,9 +31,7 @@ public class MapUtils {
                     Object value = v.getValue();
                     Object found;
 
-                    if (value == null && original == null) {
-                        found = null;
-                    } else if (value == null) {
+                    if (value == null) {
                         found = original;
                     } else if (original == null) {
                         found = value;
@@ -47,22 +39,10 @@ public class MapUtils {
                         found = merge(mapOriginal, mapValue);
                     } else if (value instanceof Collection collectionValue
                         && original instanceof Collection collectionOriginal) {
-                        try {
-                            found = Lists
-                                .newArrayList(
-                                    collectionOriginal,
-                                    collectionValue
-                                )
-                                .stream()
-                                .flatMap(Collection::stream)
-                                .toList();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        found = mergeCollections(collectionOriginal, collectionValue);
                     } else {
                         found = value;
                     }
-
 
                     m.put(v.getKey(), found);
                 },
@@ -72,6 +52,13 @@ public class MapUtils {
         copy.putAll(copyMap);
 
         return copy;
+    }
+
+    private static Collection mergeCollections(Collection collectionOriginal, Collection collectionValue) {
+        List<String> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
+        newList.addAll(collectionOriginal);
+        newList.addAll(collectionValue);
+        return newList;
     }
 
     private static Map copyMap(Map original) {

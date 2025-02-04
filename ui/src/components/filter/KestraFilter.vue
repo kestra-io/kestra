@@ -560,11 +560,11 @@
         if (typeof wholeSearchContent.at(-1) === "string") {
             if (
                 ["labels", "details"].includes(wholeSearchContent.at(-2)?.label) ||
-                wholeSearchContent.at(-2).value?.length === 0
+                wholeSearchContent.at(-2)?.value?.length === 0
             ) {
                 // Adding value to preceding empty filter
                 // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
-                wholeSearchContent.at(-2).value?.push(wholeSearchContent.at(-1));
+                wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");

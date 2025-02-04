@@ -11,6 +11,7 @@ import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -40,6 +41,7 @@ public class ExecutionLogService {
         final AtomicReference<Runnable> disposable = new AtomicReference<>();
 
         return Flux.<Event<LogEntry>>create(emitter -> {
+
                 // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
                 emitter.next(Event.of(LogEntry.builder().build()).id("start"));
 
@@ -65,9 +67,11 @@ public class ExecutionLogService {
                 }));
             }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(ignored -> {
-                if (disposable.get() != null) {
-                    disposable.get().run();
-                }
+                Schedulers.boundedElastic().schedule(() -> {
+                    if (disposable.get() != null) {
+                        disposable.get().run();
+                    }
+                });
             });
     }
 

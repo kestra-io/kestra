@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcRepository {
 
@@ -39,7 +40,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
-       return defaultFilterWithNoACL(tenantId, false);
+        return defaultFilterWithNoACL(tenantId, false);
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
@@ -100,24 +101,27 @@ public abstract class AbstractJdbcRepository {
     protected <F extends Enum<F>> SelectConditionStep<Record> select(
         DSLContext context,
         JdbcFilterService filterService,
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+        Map<String, ? extends ColumnDescriptor<F>> descriptors,
+        List<Field<Date>> dateFields,
         Map<F, String> fieldsMapping,
         Table<Record> table,
         String tenantId) {
 
         return context
             .select(
-                descriptors.getColumns().entrySet().stream()
-                    .map(entry -> {
-                        ColumnDescriptor<F> col = entry.getValue();
-                        String key = entry.getKey();
-                        Field<?> field = columnToField(col, fieldsMapping);
-                        if (col.getAgg() != null) {
-                            field = filterService.buildAggregation(field, col.getAgg());
-                        }
-                        return field.as(key);
-                    })
-                    .toList()
+                Stream.concat(
+                    descriptors.entrySet().stream()
+                        .map(entry -> {
+                            ColumnDescriptor<F> col = entry.getValue();
+                            String key = entry.getKey();
+                            Field<?> field = columnToField(col, fieldsMapping);
+                            if (col.getAgg() != null) {
+                                field = filterService.buildAggregation(field, col.getAgg());
+                            }
+                            return field.as(key);
+                        }),
+                    dateFields.stream()
+                ).toList()
             )
             .from(table)
             .where(this.defaultFilter(tenantId));
@@ -128,10 +132,10 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectConditionStep the select condition step to which the filters will be applied
-     * @param jdbcFilterService the service used to apply the filters
-     * @param descriptors the data filter containing the filter conditions
-     * @param fieldsMapping a map of field enums to their corresponding database column names
-     * @param <F> the type of the fields enum
+     * @param jdbcFilterService   the service used to apply the filters
+     * @param descriptors         the data filter containing the filter conditions
+     * @param fieldsMapping       a map of field enums to their corresponding database column names
+     * @param <F>                 the type of the fields enum
      * @return the select condition step with the applied filters
      */
     protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors, Map<F, String> fieldsMapping) {
@@ -143,27 +147,36 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectConditionStep the select condition step to which the grouping will be applied
-     * @param descriptors the data filter containing the column descriptors for grouping
-     * @param fieldsMapping a map of field enums to their corresponding database column names
-     * @param <F> the type of the fields enum
+     * @param columnsNoDate       the data filter containing the column descriptors for grouping
+     * @param dateFields          the data filter containing the column descriptors for grouping
+     * @param fieldsMapping       a map of field enums to their corresponding database column names
+     * @param <F>                 the type of the fields enum
      * @return the select having step with the applied grouping
      */
-    protected <F extends Enum<F>> SelectHavingStep<Record> groupBy(SelectConditionStep<Record> selectConditionStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors, Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectHavingStep<Record> groupBy(
+        SelectConditionStep<Record> selectConditionStep,
+        List<? extends ColumnDescriptor<F>> columnsNoDate,
+        List<Field<Date>> dateFields,
+        Map<F, String> fieldsMapping
+    ) {
         return selectConditionStep.groupBy(
-            descriptors.getColumns().values().stream()
-                .filter(col -> col.getAgg() == null)
-                .map(col -> field(fieldsMapping.get(col.getField())))
-                .toList()
+            Stream.concat(
+                columnsNoDate.stream()
+                    .filter(col -> col.getAgg() == null)
+                    .map(col -> field(fieldsMapping.get(col.getField()))),
+                dateFields.stream()
+            ).toList()
         );
     }
+
 
     /**
      * Applies ordering to the given select step based on the provided descriptors.
      * Used in the fetchData() method
      *
      * @param selectHavingStep the select step to which the ordering will be applied
-     * @param descriptors the data filter containing the order by information
-     * @param <F> the type of the fields enum
+     * @param descriptors      the data filter containing the order by information
+     * @param <F>              the type of the fields enum
      * @return the select step with the applied ordering
      */
     protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
@@ -186,7 +199,7 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectSeekStep the select step to fetch the results from
-     * @param pageable the pageable object containing the pagination information
+     * @param pageable       the pageable object containing the pagination information
      * @return the list of fetched results
      */
     protected List<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
@@ -201,6 +214,4 @@ public abstract class AbstractJdbcRepository {
     protected <F extends Enum<F>> Field<?> columnToField(ColumnDescriptor<?> column, Map<F, String> fieldsMapping) {
         return column.getField() != null ? field(fieldsMapping.get(column.getField())) : null;
     }
-
-
 }

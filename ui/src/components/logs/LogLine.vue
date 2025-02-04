@@ -1,7 +1,7 @@
 <template>
     <div
         class="py-2 line font-monospace"
-        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined}"
+        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined, ['key-' + $.vnode.key]: true}"
         v-if="filtered"
         :style="logLineStyle"
     >
@@ -30,7 +30,11 @@
                     </span>
                 </span>
             </div>
-            <div ref="lineContent" v-html="renderedMarkdown" />
+            <div
+                ref="lineContent"
+                :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
+                v-html="renderedMarkdown"
+            />
         </div>
     </div>
 </template>
@@ -185,31 +189,40 @@
     };
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
-
 div.line {
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;
     display: flex;
-    align-items: center;
-    gap: $spacer;
+    align-items: flex-start;
+    gap: 1rem;
 
     border-left-width: 2px !important;
     border-left-style: solid;
     border-left-color: transparent;
 
-    .icon_container{
+    border-top: 1px solid var(--ks-border-primary);
+
+    // hack for class containing 0
+    &[class*="-0"] {
+        border-top: 0;
+    }
+
+    .icon_container {
         margin-left: -0.90rem;
     }
 
     .log-level {
         padding: .25rem;
+        margin-top: 0.25rem;
     }
 
     .log-content {
+        // prevent Firefox word breaks 
+        flex-grow: 1;
+
         .header > * + * {
-            margin-left: $spacer;
+            margin-left: 1rem;
         }
     }
 
@@ -243,7 +256,7 @@ div.line {
             border-radius: 4px;
         }
     }
-    
+
     .message {
         line-height: 1.8;
     }

@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: 'The release version'
+        description: 'The release version (e.g., 0.21.0-RC1)'
         required: true
         type: string
       nextVersion:
-        description: 'The next version'
+        description: 'The next version (e.g., 0.22.0-SNAPSHOT)'
         required: true
         type: string
       dryRun:
@@ -18,20 +18,40 @@ on:
 jobs:
   release:
     name: Release plugins
-    runs-on: kestra-private-standard
+    runs-on: ubuntu-latest
     steps:
       # Checkout
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          caches-enabled: true
+
       # Get Plugins List
       - name: Get Plugins List
         uses: ./.github/actions/plugins-list
-        if: "!startsWith(github.ref, 'refs/tags/v')"
         id: plugins-list
         with:
           plugin-version: 'LATEST'
+
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
       # Execute
       - name: Run Gradle Release
@@ -39,6 +59,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
+          chmod +x ./release-plugins.sh;
           ./release-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --next-version=${{github.event.inputs.nextVersion}} \
@@ -50,6 +71,7 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
+          chmod +x ./release-plugins.sh;
           ./release-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --next-version=${{github.event.inputs.nextVersion}} \

@@ -46,11 +46,12 @@
     }
 
     &.is-text {
-        font-weight: bold;
         border: 1px solid var(--ks-border-primary);
         height: 32px;
         line-height: 32px;
-        background-color: var(--ks-background-card) !important;
+        font-weight: normal;
+        --el-button-background-color: var(--ks-background-card);
+        --el-button-text-color: var(--ks-content-primary);
 
         &.version {
             --el-button-text-color: var(--ks-content-primary);
@@ -160,6 +161,8 @@
 
 
 .el-select {
+    --el-disabled-text-color: var(--ks-content-inactive);
+
     &.fit-text .el-select__input {
         width: fit-content !important;
     }
@@ -181,6 +184,12 @@
         &.is-disabled {
             html.dark & {
                 background-color: var(--bs-gray-400);
+            }
+
+            .el-select__suffix {
+                .el-select__caret {
+                    color: var(--ks-content-inactive);
+                }
             }
         }
     }
@@ -361,9 +370,10 @@ form.ks-horizontal {
     --el-table-border: 1px solid var(--ks-border-primary);
 
     --el-table-header-text-color: var(--ks-content-primary);
-    --el-table-row-hover-bg-color: var(--bs-gray-200);
     --el-table-header-bg-color: var(--ks-background-table-header);
-    --el-table-tr-bg-color: var(--ks-background-card);
+    --el-table-row-hover-bg-color: var(--ks-background-table-row-hover);
+    --el-table-header-bg-color: var(--ks-background-table-header);
+    --el-table-tr-bg-color: var(--ks-background-table-row);
 
     outline: 1px solid var(--ks-border-primary);
     border-radius: var(--bs-border-radius-lg);
@@ -424,7 +434,6 @@ form.ks-horizontal {
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: var(--bs-gray-400);
 
             .material-design-icon__svg {
                 bottom: -0.125rem;
@@ -459,6 +468,19 @@ form.ks-horizontal {
     tr.disabled {
         td {
             opacity: 0.5;
+        }
+    }
+
+    td {
+        .el-tag {
+            margin-right: .3rem;
+        }
+
+        a {
+            color: var(--ks-content-primary);
+            &:hover{
+                text-decoration: underline;
+            }
         }
     }
 }
@@ -966,9 +988,12 @@ form.ks-horizontal {
 // tags
 .el-tag {
     --el-tag-bg-color: var(--ks-tag-background);
-    --el-tag-hover-color: var(--bs-gray-600-darken-2);
     --el-tag-text-color: var(--ks-tag-content);
     border: 0;
+
+    a{
+        color: var(--ks-tag-content);
+    }
 
     @each $i in ($types) {
         &.el-tag--#{$i} {

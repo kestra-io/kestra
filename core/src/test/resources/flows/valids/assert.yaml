@@ -1,0 +1,16 @@
+id: assert
+namespace: io.kestra.tests
+
+tasks:
+  - id: before
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      output1: xyz
+      output2: abc
+      taskInfo: "{{ task.id }} > {{ taskrun.startDate }}"
+  - id: fail
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ 42 == 42 }}"
+      - "{{ outputs.before.values.output1  == 'xyz' }}"
+      - "{{ outputs.before.values.output2  == 'xyz' }}"

@@ -154,6 +154,8 @@
     import ArrowTop from "../../assets/onboarding/icons/arrow-top.svg";
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
 
+    import {editorViewTypes} from "../../utils/constants";
+
     const router = useRouter();
     const store = useStore();
 
@@ -286,7 +288,7 @@
                     fullscreen: true,
                 });
 
-                wait(1);
+                return wait(1);
             },
         },
         {
@@ -314,7 +316,7 @@
                     template: flows.value[activeFlow.value]?.id,
                 });
 
-                wait(1);
+                return wait(1);
             },
         },
         {
@@ -325,7 +327,7 @@
             params: {...STEP_OPTIONS, placement: "right"},
             before: () => {
                 toggleScroll();
-                wait(1);
+                return wait(1);
             },
         },
         {
@@ -334,6 +336,9 @@
             target: ".combined-right-view.topology-display",
             highlightElement: ".combined-right-view.topology-display",
             params: {...STEP_OPTIONS, placement: "left"},
+            before: () => {
+                store.commit("editor/changeView", editorViewTypes.SOURCE_TOPOLOGY);
+            }
         },
         {
             ...properties(4, true, false),
@@ -345,7 +350,7 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
-                wait(500);
+                return wait(200);
             },
         },
         {
@@ -357,10 +362,12 @@
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {
-                modifiers: [{name: "offset", options: {offset: () => [0,130]}}],
+                modifiers: [{name: "offset", options: {offset: () => [0, 70]}}],
                 placement: "bottom",
             },
-            before: () => wait(1),
+            before: () => {
+                return wait(200)
+            },
         },
         {
             ...properties(6, true, true, true),

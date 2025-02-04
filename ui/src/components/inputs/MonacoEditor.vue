@@ -609,6 +609,7 @@
                         language: this.language,
                         suggest: {
                             showClasses: false,
+                            showWords: false
                         }
                     },
                     ...this.options

@@ -1,6 +1,10 @@
 <template>
     <div @click="emits('add', props.what)" class="py-2 adding">
-        {{ t("no_code.adding", {what: props.what}) }}
+        {{
+            props.what
+                ? t("no_code.adding", {what: props.what})
+                : t("no_code.adding_default")
+        }}
     </div>
 </template>
 
@@ -9,7 +13,7 @@
     const {t} = useI18n({useScope: "global"});
 
     const emits = defineEmits(["add"]);
-    const props = defineProps({what: {type: String, required: true}});
+    const props = defineProps({what: {type: String, default: undefined}});
 </script>
 
 <style scoped lang="scss">

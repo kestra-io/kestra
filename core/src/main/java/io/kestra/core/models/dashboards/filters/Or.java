@@ -2,6 +2,7 @@ package io.kestra.core.models.dashboards.filters;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.validations.OrFilterValidation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -17,6 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode
 @OrFilterValidation
+@Schema(title = "OR")
 public class Or <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude

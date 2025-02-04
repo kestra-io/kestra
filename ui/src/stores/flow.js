@@ -62,9 +62,13 @@ export default {
         },
         loadFlow({commit}, options) {
             const httpClient = options.httpClient ?? this.$http
-            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}${options.source === undefined ? "?source=true" : ""}`,
+            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}`,
                 {
-                    params: options,
+                    params: {
+                        revision: options.revision,
+                        allowDeleted: options.allowDeleted,
+                        source: options.source === undefined ? true : undefined
+                    },
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }

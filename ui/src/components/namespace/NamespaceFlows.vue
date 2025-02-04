@@ -38,6 +38,7 @@
                 <el-table-column
                     prop="state.startDate"
                     :label="$t('last execution date')"
+                    v-if="user.hasAny(permission.EXECUTION)"
                 >
                     <template #default="scope">
                         <date-ago
@@ -51,6 +52,7 @@
                 <el-table-column
                     prop="state.current"
                     :label="$t('last execution status')"
+                    v-if="user.hasAny(permission.EXECUTION)"
                 >
                     <template #default="scope">
                         <status
@@ -64,6 +66,7 @@
                 <el-table-column
                     prop="state"
                     :label="$t('execution statistics')"
+                    v-if="user.hasAny(permission.EXECUTION)"
                     class-name="row-graph"
                 >
                     <template #default="scope">
@@ -102,6 +105,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import permission from "../../models/permission";
     import DataTable from "../layout/DataTable.vue";
     import DataTableActions from "../../mixins/dataTableActions";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
@@ -119,56 +123,63 @@
         components: {DataTable, MarkdownTooltip, Labels, DateAgo, Status, StateChart, TriggerAvatar, Kicon, TextSearch},
         mixins: [DataTableActions],
         computed: {
+            ...mapState("auth", ["user"]),
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "lastExecutions"]),
         },
         data() {
             return {
+                permission: permission,
                 dailyGroupByFlowReady: false,
                 lastExecutionByFlowReady: false
             }
         },
         methods: {
-            loadQuery(base) {               
+            loadQuery(base) {
                 return _merge(base, this.queryWithFilter())
             },
             loadData(callback) {
                 const params =  {
                     namespace: this.$route.params.id,
-                    page: this.$route.query.page || this.internalPageNumber, 
+                    page: this.$route.query.page || this.internalPageNumber,
                     size: this.$route.query.size || this.internalPageSize
                 }
 
-                this.$store.dispatch("flow/findFlows", this.loadQuery(params)).then((flows) => {
-                    this.dailyGroupByFlowReady = false;
-                    this.lastExecutionByFlowReady = false;
+                this.$store
+                    .dispatch("flow/findFlows", this.loadQuery(params))
+                    .then((flows) => {
+                        this.dailyGroupByFlowReady = false;
+                        this.lastExecutionByFlowReady = false;
 
-                    if (flows.results && flows.results.length > 0) {
-                        this.$store
-                            .dispatch("stat/dailyGroupByFlow", {
-                                flows: flows.results
-                                    .map(flow => {
-                                        return {namespace: flow.namespace, id: flow.id}
-                                    }),
-                                startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
-                                endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
-                            })
-                            .then(() => {
-                                this.dailyGroupByFlowReady = true
-                            })
+                        if (flows.results && flows.results.length > 0) {
+                            if (this.user && this.user.hasAny(permission.EXECUTION)) {
+                                this.$store
+                                    .dispatch("stat/dailyGroupByFlow", {
+                                        flows: flows.results
+                                            .map(flow => {
+                                                return {namespace: flow.namespace, id: flow.id}
+                                            }),
+                                        startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
+                                        endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
+                                    })
+                                    .then(() => {
+                                        this.dailyGroupByFlowReady = true
+                                    })
 
-                        this.$store
-                            .dispatch("stat/lastExecutions", {
-                                flows: flows.results
-                                    .map(flow => {
-                                        return {namespace: flow.namespace, id: flow.id}
-                                    }),
-                            })
-                            .then(() => {
-                                this.lastExecutionByFlowReady = true
-                            })
-                    }
-                }).finally(callback);
+                                this.$store
+                                    .dispatch("stat/lastExecutions", {
+                                        flows: flows.results
+                                            .map(flow => {
+                                                return {namespace: flow.namespace, id: flow.id}
+                                            }),
+                                    })
+                                    .then(() => {
+                                        this.lastExecutionByFlowReady = true
+                                    })
+                            }
+                        }
+                    })
+                    .finally(callback);
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null}

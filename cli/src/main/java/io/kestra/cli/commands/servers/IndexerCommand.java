@@ -14,7 +14,7 @@ import java.util.Map;
 
 @CommandLine.Command(
     name = "indexer",
-    description = "start an indexer"
+    description = "Start the Kestra indexer"
 )
 @Slf4j
 public class IndexerCommand extends AbstractServerCommand {

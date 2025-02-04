@@ -46,11 +46,9 @@
                         Watch Video
                     </el-button>
                 </div>
-                <div class="mid-bar mb-3">
-                    <div class="title title--center-line">
-                        {{ $t("homeDashboard.guide") }}
-                    </div>
-                </div>
+                <el-divider>
+                    {{ $t("homeDashboard.guide") }}
+                </el-divider>
                 <onboarding-bottom />
             </div>
         </div>
@@ -182,40 +180,12 @@
                 color: var(--ks-content-primary);
             }
         }
+    }
 
-        .mid-bar {
-            margin-top: 50px;
-
-            .title {
-                font-weight: 500;
-                color: var(--ks-content-secondary);
-                display: flex;
-                align-items: center;
-                white-space: nowrap;
-                font-size: var(--el-font-size-extra-small);
-
-                &--center-line {
-                    text-align: center;
-                    padding: 0;
-
-                    &::before,
-                    &::after {
-                        content: "";
-                        background-color: var(--ks-border-primary);
-                        height: 2px;
-                        width: 50%;
-                    }
-
-                    &::before {
-                        margin-right: 1rem;
-                    }
-
-                    &::after {
-                        margin-left: 1rem;
-                    }
-                }
-            }
-        }
+    :deep(.el-divider__text) {
+        color: var(--ks-content-secondary);
+        white-space: nowrap;
+        font-size: var(--el-font-size-extra-small);
     }
 
     @container (max-width: 20px) {
@@ -231,13 +201,6 @@
 
         .section-1 .section-1-main .container {
             width: 76%;
-        }
-
-        .title--center-line {
-            &::before,
-            &::after {
-                width: 50%;
-            }
         }
     }
 

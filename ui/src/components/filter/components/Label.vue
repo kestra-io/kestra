@@ -41,7 +41,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "../styles/filter";
 
 .comparator {
     display: inline-block;
@@ -49,6 +48,6 @@
     margin: 0 0.5rem;
     padding: 0.3rem 0.35rem;
 
-    background: $filters-gray-500;
+    background: var(--ks-background-paused);
 }
 </style>

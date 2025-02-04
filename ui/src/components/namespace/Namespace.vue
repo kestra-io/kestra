@@ -1,18 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
         <template #additional-right>
-            <ul v-if="$route.params.tab === 'secrets' && canCreateSecret">
-                <li>
-                    <el-button :icon="FamilyTree" @click="modalInheritedSecretsVisible = true">
-                        {{ $t('secret.inherited') }}
-                    </el-button>
-                </li>
-                <li>
-                    <el-button :icon="Plus" type="primary" @click="modalAddSecretVisible = true">
-                        {{ $t('secret.add') }}
-                    </el-button>
-                </li>
-            </ul>
             <ul v-if="$route.params.tab === 'kv'">
                 <li>
                     <el-button :icon="Plus" type="primary" @click="modalAddKvVisible = true">
@@ -31,12 +19,11 @@
             </ul>
         </template>
     </top-nav-bar>
-    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" id="namespaces" />
+    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" />
 </template>
 
 <script setup>
     import TopNavBar from "../layout/TopNavBar.vue";
-    import FamilyTree from "vue-material-design-icons/FamilyTree.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 </script>
 
@@ -53,7 +40,7 @@
     import Flows from "./Flows.vue";
     import EditorView from "../inputs/EditorView.vue";
     import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
-    import {apiUrl} from "override/utils/route";
+    import DemoNamespace from "../demo/Namespace.vue";
 
     export default {
         mixins: [RouteContext],
@@ -103,9 +90,9 @@
                         component: BlueprintsBrowser,
                         title: this.$t("blueprints.title"),
                         props: {
-                            blueprintBaseUri: `${apiUrl(this.$store)}/blueprints/community`,
                             embed: this.embed,
-                            system: true
+                            system: true,
+                            tab: "community"
                         }
                     })
                 }
@@ -121,11 +108,11 @@
                         }
                     },
                     {
-                        name: "editor",
+                        name: "files",
                         component: EditorView,
-                        title: this.$t("editor"),
+                        title: this.$t("files"),
                         props: {
-                            tab: "edit",
+                            tab: "files",
                             isNamespace: true,
                             namespace: this.$route.params.id,
                             isReadOnly: false,
@@ -140,12 +127,12 @@
                         title: this.$t("flows"),
                         props: {
                             tab: "flows",
-                            topbar:false,
+                            embed: false,
                         },
                         query: {
                             id: this.$route.query.id
                         }
-                    },   
+                    },
                     {
                         name: "executions",
                         component: Executions,
@@ -168,7 +155,7 @@
                         query: {
                             id: this.$route.query.id
                         }
-                    },      
+                    },
                     {
                         name: "kv",
                         component: NamespaceKV,
@@ -181,73 +168,57 @@
                                 this.modalAddKvVisible = value
                             }
                         }
-                    },          
+                    },
                     {
                         name: "edit",
-                        component: "",
+                        component: DemoNamespace,
                         title: this.$t("edit"),
+                        maximize: true,
                         props: {
                             tab: "edit",
                         },
-                        query: {
-                            id: this.$route.query.id
-                        },
-                        disabled: true,
                         locked: true
                     },
                     {
                         name: "variables",
-                        component: "",
+                        component: DemoNamespace,
                         title: this.$t("variables"),
-                        containerClass: "container",
+                        maximize: true,
                         props: {
-                            type: "variables",
                             tab: "variables",
                         },
-                        disabled: true,
                         locked: true
                     },
                     {
                         name: "plugin-defaults",
-                        component: "",
+                        component: DemoNamespace,
                         title: this.$t("plugin defaults"),
-                        containerClass: "container",
+                        maximize: true,
                         props: {
-                            type: "pluginDefaults",
                             tab: "plugin-defaults",
                         },
-                        disabled: true,
                         locked: true
-                    },              
+                    },
                     {
                         name: "secrets",
-                        component: "",
+                        component: DemoNamespace,
                         title: this.$t("secret.names"),
+                        maximize: true,
                         props: {
-                            addSecretModalVisible: this.modalAddSecretVisible,
-                            inheritedSecretsModalVisible: this.modalInheritedSecretsVisible
+                            tab: "secrets",
                         },
-                        "v-on": {
-                            "update:addSecretModalVisible": (value) => {
-                                this.modalAddSecretVisible = value
-                            },
-                            "update:inheritedSecretsModalVisible": (value) => {
-                                this.modalInheritedSecretsVisible = value
-                            }
-                        },
-                        disabled: true,
                         locked: true
                     },
                     {
                         name: "audit-logs",
-                        component: "",
+                        component: DemoNamespace,
                         title: this.$t("auditlogs"),
+                        maximize: true,
                         props: {
-                            restoreUrl: false
+                            tab: "audit-logs",
                         },
-                        disabled: true,
                         locked: true
-                    }             
+                    }
                 ])
 
                 return tabs;

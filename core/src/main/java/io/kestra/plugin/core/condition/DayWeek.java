@@ -22,7 +22,7 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekdays."
+    title = "Condition to allow events on a particular day of the week."
 )
 @Plugin(
     examples = {

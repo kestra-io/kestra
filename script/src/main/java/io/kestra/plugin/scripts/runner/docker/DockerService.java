@@ -89,27 +89,27 @@ public class DockerService {
 
             for (Credentials c : credentials) {
                 if (c.getUsername() != null) {
-                    auths.put("username", runContext.render(c.getUsername()));
+                    auths.put("username", runContext.render(c.getUsername()).as(String.class).orElse(null));
                 }
 
                 if (c.getPassword() != null) {
-                    auths.put("password", runContext.render(c.getPassword()));
+                    auths.put("password", runContext.render(c.getPassword()).as(String.class).orElse(null));
                 }
 
                 if (c.getRegistryToken() != null) {
-                    auths.put("registrytoken", runContext.render(c.getRegistryToken()));
+                    auths.put("registrytoken", runContext.render(c.getRegistryToken()).as(String.class).orElse(null));
                 }
 
                 if (c.getIdentityToken() != null) {
-                    auths.put("identitytoken", runContext.render(c.getIdentityToken()));
+                    auths.put("identitytoken", runContext.render(c.getIdentityToken()).as(String.class).orElse(null));
                 }
 
                 if (c.getAuth() != null) {
-                    auths.put("auth", runContext.render(c.getAuth()));
+                    auths.put("auth", runContext.render(c.getAuth()).as(String.class).orElse(null));
                 }
 
                 if (c.getRegistry() != null) {
-                    registry = runContext.render(c.getRegistry());
+                    registry = runContext.render(c.getRegistry()).as(String.class).orElse(null);
                 } else if (image != null) {
                     String renderedImage = runContext.render(image);
                     String detectedRegistry = registryUrlFromImage(renderedImage);

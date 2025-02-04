@@ -11,6 +11,7 @@ import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.Set;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
+@Schema(title = "Logs")
 public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Logs.Fields, C> {
     @Override
     public Class<? extends QueryBuilderInterface<Logs.Fields>> repositoryClass() {

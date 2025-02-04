@@ -151,6 +151,7 @@ public class Extension extends AbstractExtension {
             functions.put("errorLogs", errorLogsFunction);
         }
         functions.put("randomInt", new RandomIntFunction());
+        functions.put("randomPort", new RandomPortFunction());
         return functions;
     }
 

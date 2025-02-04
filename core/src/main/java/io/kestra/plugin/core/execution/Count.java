@@ -45,7 +45,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 
                 tasks:
                   - id: counts
-                    type: io.kestra.plugin.core.execution.Counts
+                    type: io.kestra.plugin.core.execution.Count
                     expression: "{{ count == 0 }}"
                     flows:
                       - namespace: company.team
@@ -108,7 +108,8 @@ public class Count extends Task implements RunnableTask<Count.Output> {
             "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
             "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"
     )
-    protected Property<String> expression;
+    @PluginProperty(dynamic = true) // we cannot use `Property` as we render it multiple time with different variables, which is an issue for the property cache
+    protected String expression;
 
     protected Property<List<String>> namespaces;
 
@@ -140,8 +141,8 @@ public class Count extends Task implements RunnableTask<Count.Output> {
             flowInfo.tenantId(),
             flows,
             runContext.render(this.states).asList(State.Type.class),
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate).as(String.class).orElseThrow()) : null,
-            endDate != null ? ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()) : null,
+            runContext.render(this.startDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
+            runContext.render(this.endDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
             runContext.render(this.namespaces).asList(String.class)
         );
 
@@ -150,10 +151,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         List<Result> count = executionCounts
             .stream()
             .filter(throwPredicate(item -> runContext
-                .render(
-                    runContext.render(this.expression).as(String.class).orElseThrow(),
-                    ImmutableMap.of("count", item.getCount().intValue())
-                )
+                .render(this.expression, ImmutableMap.of("count", item.getCount().intValue()))
                 .equals("true")
             ))
             .map(item -> Result.builder()

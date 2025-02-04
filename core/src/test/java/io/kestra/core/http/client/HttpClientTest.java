@@ -1,7 +1,6 @@
 package io.kestra.core.http.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Charsets;
 import com.google.common.net.HttpHeaders;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
@@ -420,7 +419,7 @@ class HttpClientTest {
                             try (var inputStream = fileUpload.getInputStream()) {
                                 sink.next(new AbstractMap.SimpleEntry<>(
                                     fileUpload.getName(),
-                                    IOUtils.toString(inputStream, Charsets.UTF_8)
+                                    IOUtils.toString(inputStream, StandardCharsets.UTF_8)
                                 ));
                             }
                         } catch (IOException e) {

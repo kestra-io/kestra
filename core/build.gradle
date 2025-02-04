@@ -68,5 +68,5 @@ dependencies {
 
     testImplementation "org.testcontainers:testcontainers:1.20.4"
     testImplementation "org.testcontainers:junit-jupiter:1.20.4"
-    testImplementation "org.bouncycastle:bcpkix-jdk18on:1.78.1"
+    testImplementation "org.bouncycastle:bcpkix-jdk18on:1.80"
 }

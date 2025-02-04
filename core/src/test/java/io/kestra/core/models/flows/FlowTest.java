@@ -1,19 +1,22 @@
 package io.kestra.core.models.flows;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 
-import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.net.URL;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -153,6 +156,39 @@ class FlowTest {
 
         assertThat(validate.get().getMessage(), containsString("file: no `defaults` can be set for inputs of type 'FILE'"));
         assertThat(validate.get().getMessage(), containsString("array: `itemType` cannot be `ARRAY"));
+    }
+
+    // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.
+    // This can happen for eg. in the persistence layer that don't necessarily track LinkedHashMaps original property orders.
+    @Test
+    void equals() {
+        Flow flowA = baseFlow();
+        LinkedHashMap<String, Object> triggerInputsReverseOrder = new LinkedHashMap<>();
+        triggerInputsReverseOrder.put("c", "d");
+        triggerInputsReverseOrder.put("a", "b");
+        Flow flowABis = baseFlow().toBuilder().revision(2).triggers(List.of(io.kestra.plugin.core.trigger.Flow.builder().inputs(triggerInputsReverseOrder).build())).build();
+        assertThat(flowA.equalsWithoutRevision(flowABis), is(true));
+
+        Flow flowB = baseFlow().toBuilder().id("b").build();
+        assertThat(flowA.equalsWithoutRevision(flowB), is(false));
+
+        Flow flowAnotherTenant = baseFlow().toBuilder().tenantId("b").build();
+        assertThat(flowA.equalsWithoutRevision(flowAnotherTenant), is(false));
+    }
+
+    private static Flow baseFlow() {
+        LinkedHashMap<String, Object> triggerInputs = new LinkedHashMap<>();
+        triggerInputs.put("a", "b");
+        triggerInputs.put("c", "d");
+        return Flow.builder()
+            .id("a")
+            .namespace("a")
+            .revision(1)
+            .tenantId("a")
+            .inputs(List.of(StringInput.builder().id("a").build(), StringInput.builder().id("b").build()))
+            .tasks(List.of(Log.builder().message("a").build(), Log.builder().message("b").build()))
+            .triggers(List.of(io.kestra.plugin.core.trigger.Flow.builder().inputs(triggerInputs).build()))
+            .build();
     }
 
     private Flow parse(String path) {

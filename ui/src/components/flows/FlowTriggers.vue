@@ -190,7 +190,7 @@
             <el-button
                 type="primary"
                 @click="postBackfill()"
-                :disabled="checkBackfill()"
+                :disabled="checkBackfill"
             >
                 {{ $t("execute backfill") }}
             </el-button>
@@ -293,7 +293,36 @@
             },
             cleanBackfill() {
                 return {...this.backfill, labels: this.backfill.labels.filter(label => label.key && label.value)}
-            }
+            },
+            checkBackfill() {
+                if (!this.backfill.start) {
+                    return true
+                }
+                if (this.backfill.end && this.backfill.start > this.backfill.end) {
+                    return true
+                }
+                if (this.flow.inputs) {
+                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
+
+                    if (requiredInputs.length > 0) {
+                        if (!this.backfill.inputs) {
+                            return true
+                        }
+                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i] !== null && this.backfill.inputs[i] !== undefined);
+                        if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
+                            return true
+                        }
+                    }
+                }
+                if (this.backfill.labels.length > 0) {
+                    for (let label of this.backfill.labels) {
+                        if ((label.key && !label.value) || (!label.key && label.value)) {
+                            return true
+                        }
+                    }
+                }
+                return false
+            },
         },
         methods: {
             userCan(action) {
@@ -309,34 +338,6 @@
             setBackfillModal(trigger, bool) {
                 this.isBackfillOpen = bool
                 this.selectedTrigger = trigger
-            },
-            checkBackfill() {
-                if (!this.backfill.start) {
-                    return true
-                }
-                if (this.backfill.end && this.backfill.start > this.backfill.end) {
-                    return true
-                }
-                if (this.flow.inputs) {
-                    const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
-                    if (requiredInputs.length > 0) {
-                        if (!this.backfill.inputs) {
-                            return true
-                        }
-                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i])
-                        if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                            return true
-                        }
-                    }
-                }
-                if (this.backfill.labels.length > 0) {
-                    for (let label of this.backfill.labels) {
-                        if ((label.key && !label.value) || (!label.key && label.value)) {
-                            return true
-                        }
-                    }
-                }
-                return false
             },
             postBackfill() {
                 this.$store.dispatch("trigger/update", {

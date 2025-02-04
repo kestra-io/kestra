@@ -1,5 +1,10 @@
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
 import Errors from "../components/errors/Errors.vue"
+import DemoIAM from "../components/demo/IAM.vue"
+import DemoTenants from "../components/demo/Tenants.vue"
+import DemoAuditLogs from "../components/demo/AuditLogs.vue"
+import DemoInstance from "../components/demo/Instance.vue"
+import DemoApps from "../components/demo/Apps.vue"
 
 export default [
     //Initial
@@ -9,7 +14,7 @@ export default [
     //Dashboards
     {name: "home", path: "/:tenant?/dashboards/:id?", component: () => import("../components/dashboard/Dashboard.vue")},
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/DashboardCreate.vue")},
-    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("../components/dashboard/components/DashboardEdit.vue")},
+    {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("override/components/dashboard/components/DashboardEdit.vue")},
 
     //Flows
     {name: "flows/list", path: "/:tenant?/flows", component: () => import("../components/flows/Flows.vue")},
@@ -25,8 +30,8 @@ export default [
     {name: "taskruns/list", path: "/:tenant?/taskruns", component: () => import("../components/taskruns/TaskRuns.vue")},
 
     //Blueprints
-    {name: "blueprints", path: "/:tenant?/blueprints", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: {topNavbar: false}},
-    {name: "blueprints/view", path: "/:tenant?/blueprints/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},
+    {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
+    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
@@ -56,4 +61,11 @@ export default [
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},
+
+    //Demo Pages
+    {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
+    {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
+    {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
+    {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
 ];

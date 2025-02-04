@@ -41,8 +41,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.lang.reflect.*;
-import java.time.Duration;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -50,6 +49,7 @@ import java.util.stream.StreamSupport;
 
 @Singleton
 public class JsonSchemaGenerator {
+    private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
 
     private final PluginRegistry pluginRegistry;
 
@@ -251,6 +251,7 @@ public class JsonSchemaGenerator {
             if (javaType.isInstanceOf(Property.class)) {
                 TypeContext context = target.getContext();
                 Class<?> erasedType = javaType.getTypeParameters().getFirst().getErasedType();
+
                 if(String.class.isAssignableFrom(erasedType)) {
                     return List.of(
                         context.resolve(String.class)
@@ -264,6 +265,10 @@ public class JsonSchemaGenerator {
                         javaType.getTypeParameters().getFirst()
                     );
                 } else if (List.class.isAssignableFrom(erasedType) || Map.class.isAssignableFrom(erasedType)) {
+                    return List.of(
+                        javaType.getTypeParameters().getFirst()
+                    );
+                } else if (isAssignableFromResolvedAsString(erasedType)) {
                     return List.of(
                         javaType.getTypeParameters().getFirst()
                     );
@@ -306,10 +311,12 @@ public class JsonSchemaGenerator {
             if (member.getDeclaredType().isInstanceOf(Property.class)) {
                 memberAttributes.put("$dynamic", true);
                 // if we are in the String definition of a Property but the target type is not String: we configure the pattern
-                Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
-                if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
-                    memberAttributes.put("pattern", ".*{{.*}}.*");
-                }
+                // TODO this was a good idea but their is too much cases where it didn't work like in List or Map so if we want it we need to make it more clever
+                //  I keep it for now commented but at some point we may want to re-do and improve it or remove these commented lines
+//                Class<?> targetType = member.getDeclaredType().getTypeParameters().getFirst().getErasedType();
+//                if (!String.class.isAssignableFrom(targetType) && String.class.isAssignableFrom(member.getType().getErasedType())) {
+//                    memberAttributes.put("pattern", ".*{{.*}}.*");
+//                }
             } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
                 memberAttributes.put("$dynamic", false);
             }
@@ -471,6 +478,15 @@ public class JsonSchemaGenerator {
         }
     }
 
+    private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {
+        for (Class<?> clazz : TYPES_RESOLVED_AS_STRING) {
+            if (clazz.isAssignableFrom(declaredType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext) {
         if (declaredType.getErasedType() == Task.class) {
             return getRegisteredPlugins()
@@ -506,14 +522,14 @@ public class JsonSchemaGenerator {
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTaskRunners().stream())
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .map(typeContext::resolve)
                 .toList();
         } else if (declaredType.getErasedType() == LogExporter.class) {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getLogExporters().stream())
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .map(typeContext::resolve)
                 .toList();
         } else if (declaredType.getErasedType() == Chart.class) {
             return getRegisteredPlugins()

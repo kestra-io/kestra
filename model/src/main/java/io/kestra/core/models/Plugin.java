@@ -4,8 +4,6 @@ import io.kestra.core.models.annotations.Plugin.Id;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -53,6 +51,18 @@ public interface Plugin {
         return Optional.ofNullable(annotation)
             .map(io.kestra.core.models.annotations.Plugin::internal)
             .orElse(false);
+    }
+
+    /**
+     * Static helper method to check whether a given plugin is deprecated.
+     *
+     * @param plugin    The plugin type.
+     * @return  {@code true} if the plugin is deprecated.
+     */
+    static boolean isDeprecated(final Class<?> plugin) {
+        Objects.requireNonNull(plugin, "Cannot check if a plugin is deprecated from null");
+        Deprecated annotation = plugin.getAnnotation(Deprecated.class);
+        return annotation != null;
     }
 
     /**

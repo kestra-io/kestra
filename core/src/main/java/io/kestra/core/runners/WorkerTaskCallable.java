@@ -25,7 +25,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
     Output taskOutput;
 
     WorkerTaskCallable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
-        super(runContext, task.getClass().getName(), task.getClass().getClassLoader());
+        super(runContext, task.getClass().getName(), workerTask.uid(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;
         this.metricRegistry = metricRegistry;

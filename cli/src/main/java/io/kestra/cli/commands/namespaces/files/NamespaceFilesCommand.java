@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "files",
-    description = "handle namespace files",
+    description = "Manage namespace files",
     mixinStandardHelpOptions = true,
     subcommands = {
         NamespaceFilesUpdateCommand.class,

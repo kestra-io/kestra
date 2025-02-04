@@ -2,89 +2,37 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <span class="label">{{ label }}</span>
     <div class="mt-1 mb-2 wrapper">
-        <drawer v-if="isEditOpen" v-model="isEditOpen">
-            <template #header>
-                <code>inputs</code>
-            </template>
-
-            <template #footer>
-                <div>
-                    <el-button
-                        :icon="ContentSave"
-                        @click="update()"
-                        type="primary"
-                    >
-                        {{ $t("save") }}
-                    </el-button>
-                </div>
-            </template>
-            <div>
-                <el-select
-                    :model-value="selectedInput.type"
-                    @update:model-value="onChangeType"
-                >
-                    <el-option
-                        v-for="(input, index) in inputsType"
-                        :key="index"
-                        :label="input.type"
-                        :value="input.type"
-                    />
-                </el-select>
-                <task-root
-                    v-loading="loading"
-                    v-if="inputSchema"
-                    name="root"
-                    :model-value="selectedInput"
-                    @update:model-value="updateSelected($event, selectedIndex)"
-                    :schema="inputSchema.schema"
-                    :definitions="inputSchema.schema.definitions"
+        <el-row
+            v-for="(input, index) in newInputs"
+            :key="index"
+            @click="selectInput(input, index)"
+        >
+            <el-col :span="24" class="d-flex">
+                <InputText disabled :model-value="input.id" class="w-100" />
+                <DeleteOutline
+                    @click.prevent.stop="deleteInput(index)"
+                    class="ms-2 delete"
                 />
-            </div>
-        </drawer>
-        <div class="w-100 mb-3">
-            <div>
-                <div
-                    class="d-flex w-100 mb-2"
-                    v-for="(input, index) in newInputs"
-                    :key="index"
-                >
-                    <div class="flex-fill flex-grow-1 w-100 me-2">
-                        <el-input disabled :model-value="input.id" />
-                    </div>
-                    <div class="flex-shrink-1">
-                        <el-button-group class="d-flex flex-nowrap">
-                            <el-button
-                                :icon="TextSearch"
-                                @click="selectInput(input, index)"
-                            />
-                            <el-button :icon="Plus" @click="addInput" />
-                            <el-button
-                                :icon="Minus"
-                                @click="deleteInput(index)"
-                                :disabled="
-                                    index === 0 && newInputs.length === 1
-                                "
-                            />
-                        </el-button-group>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </el-col>
+        </el-row>
+        <Add @add="addInput(index)" />
     </div>
 </template>
+
 <script setup>
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import TaskRoot from "./tasks/TaskRoot.vue";
+    import MetadataInputsContent from "./MetadataInputsContent.vue";
+    import InputText from "../code/components/inputs/InputText.vue";
+    import Add from "../code/components/Add.vue";
+
+    import {DeleteOutline} from "../code/utils/icons";
 </script>
+
 <script>
+    import {h} from "vue";
+
     import {mapState} from "vuex";
-    import Drawer from "../Drawer.vue";
 
     export default {
-        components: {Drawer},
         emits: ["update:modelValue"],
         props: {
             modelValue: {
@@ -103,9 +51,7 @@
             ...mapState("plugin", ["inputSchema", "inputsType"]),
         },
         mounted() {
-            if (this.inputs && this.inputs.length > 0) {
-                this.newInputs = this.inputs;
-            }
+            this.newInputs = this.inputs;
 
             this.$store
                 .dispatch("plugin/loadInputsType")
@@ -113,7 +59,7 @@
         },
         data() {
             return {
-                newInputs: [{type: "STRING"}],
+                newInputs: [],
                 selectedInput: undefined,
                 selectedIndex: undefined,
                 isEditOpen: false,
@@ -125,8 +71,26 @@
                 this.loading = true;
                 this.selectedInput = input;
                 this.selectedIndex = index;
-                this.isEditOpen = true;
+                // this.isEditOpen = true;
                 this.loadSchema(input.type);
+
+                this.$store.commit("code/setPanel", {
+                    breadcrumb: {
+                        label: this.$t("inputs").toLowerCase(),
+                        to: {
+                            name: this.$route.name,
+                            params: this.$route.params,
+                            query: this.$route.query,
+                        },
+                    },
+                    panel: h(MetadataInputsContent, {
+                        modelValue: input,
+                        inputs: this.inputs,
+                        label: this.$t("inputs"),
+                        selectedIndex: index,
+                        "onUpdate:modelValue": this.updateSelected,
+                    }),
+                });
             },
             getCls(type) {
                 return this.inputsType.find((e) => e.type === type).cls;
@@ -155,13 +119,15 @@
                 }
             },
             updateSelected(value) {
-                this.newInputs[this.selectedIndex] = value;
+                this.newInputs = value;
             },
             deleteInput(index) {
                 this.newInputs.splice(index, 1);
+                this.$emit("update:modelValue", this.newInputs);
             },
             addInput() {
                 this.newInputs.push({type: "STRING"});
+                this.selectInput(this.newInputs.at(-1), 0);
             },
             onChangeType(value) {
                 this.loading = true;

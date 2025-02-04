@@ -293,10 +293,12 @@
         );
     };
 
-    const onCreateNewTask = () => {
+    const onCreateNewTask = (details) => {
         emit("openNoCode", {
             section: SECTIONS.TASKS.toLowerCase(),
             identifier: "new",
+            target: details[0],
+            position: details[1],
         });
     };
 

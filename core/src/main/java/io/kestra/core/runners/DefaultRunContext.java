@@ -60,6 +60,7 @@ public class DefaultRunContext extends RunContext {
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private String traceParent;
 
     // those are only used to validate dynamic properties inside the RunContextProperty
     private Task task;
@@ -101,6 +102,20 @@ public class DefaultRunContext extends RunContext {
     @JsonInclude
     public List<String> getSecretInputs() {
         return secretInputs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public String getTraceParent() {
+        return traceParent;
+    }
+
+    @Override
+    public void setTraceParent(String traceParent) {
+        this.traceParent = traceParent;
     }
 
     @JsonIgnore
@@ -459,6 +474,8 @@ public class DefaultRunContext extends RunContext {
         } catch (IOException ex) {
             logger().warn("Unable to cleanup worker task", ex);
         }
+
+        logger.resetMDC();
     }
 
     /**

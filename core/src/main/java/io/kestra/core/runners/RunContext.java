@@ -43,6 +43,14 @@ public abstract class RunContext {
     @JsonInclude
     public abstract List<String> getSecretInputs();
 
+    /**
+     * OpenTelemetry trace parent
+     */
+    @JsonInclude
+    public abstract String getTraceParent();
+
+    public abstract void setTraceParent(String traceParent);
+
     public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
@@ -118,6 +126,7 @@ public abstract class RunContext {
 
     /**
      * Cleanup any temporary resources, files created through this context.
+     * Also reset logs MDC so the logger should not be used after this point.
      */
     public abstract void cleanup();
 

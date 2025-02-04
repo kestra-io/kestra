@@ -60,7 +60,7 @@ public class StaticFilter implements HttpServerFilter {
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
                                 .map(throwFunction(n -> IOUtils.toString(
                                     Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                                    Charsets.UTF_8
+                                    StandardCharsets.UTF_8
                                 )))
                         )
                         .filter(Optional::isPresent)

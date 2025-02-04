@@ -28,9 +28,6 @@ public class FileEmptyFunction implements Function {
     @Inject
     private StorageInterface storageInterface;
 
-    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
-    private String serverType;
-
     @Override
     public List<String> getArgumentNames() {
         return List.of("path");

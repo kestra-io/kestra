@@ -70,7 +70,9 @@
         },
         methods: {
             loadToc() {
-                this.$store.dispatch("plugin/listWithSubgroup")
+                this.$store.dispatch("plugin/listWithSubgroup", {
+                    includeDeprecated: false
+                })
             },
 
             loadPlugin() {

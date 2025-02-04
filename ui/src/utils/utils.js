@@ -210,7 +210,7 @@ export default class Utils {
         // class name
         let htmlClass = document.getElementsByTagName("html")[0].classList;
 
-        function removeClasses() 
+        function removeClasses()
         {
             htmlClass.forEach((cls) => {
             if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
@@ -238,7 +238,7 @@ export default class Utils {
         if(theme === "syncWithSystem") {
             theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
-        
+
         return theme;
     }
 
@@ -276,10 +276,6 @@ export default class Utils {
         document.body.removeChild(node);
     }
 
-    static distinctFilter(value, index, array) {
-        return array.indexOf(value) === index;
-    }
-
     static toFormData(obj) {
         if (!(obj instanceof FormData)) {
             const formData = new FormData();
@@ -289,5 +285,25 @@ export default class Utils {
             return formData;
         }
         return obj;
+    }
+
+    static getDateFormat(startDate, endDate) {
+        if (!startDate || !endDate) {
+            return "yyyy-MM-DD";
+        }
+
+        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+
+        if (duration.asDays() > 365) {
+            return "yyyy-MM";
+        } else if (duration.asDays() > 180) {
+            return "yyyy-'W'ww";
+        } else if (duration.asDays() > 1) {
+            return "yyyy-MM-DD";
+        } else if (duration.asHours() > 1) {
+            return "yyyy-MM-DD:HH:00";
+        } else {
+            return "yyyy-MM-DD:HH:mm";
+        }
     }
 }

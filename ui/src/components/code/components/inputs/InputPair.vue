@@ -1,28 +1,27 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
     <span class="label">{{ label }}</span>
-    <div class="mt-1 mb-2 wrapper">
+    <div class="mt-1 mb-2 w-100 wrapper">
         <el-row
             v-for="(value, key, index) in props.modelValue"
             :key="index"
             :gutter="10"
         >
-            <el-col :span="6">
+            <el-col :span="8">
                 <InputText
                     :model-value="key"
                     :placeholder="t('key')"
                     @update:model-value="(changed) => updateKey(key, changed)"
                 />
             </el-col>
-            <el-col :span="16">
+            <el-col :span="16" class="d-flex">
                 <InputText
                     :model-value="value"
                     :placeholder="t('value')"
                     @update:model-value="(changed) => updateValue(key, changed)"
+                    class="w-100 me-2"
                 />
-            </el-col>
-            <el-col :span="2" class="col align-self-center delete">
-                <DeleteOutline @click="removePair(key)" />
+                <DeleteOutline @click="removePair(key)" class="delete" />
             </el-col>
         </el-row>
 
@@ -46,11 +45,11 @@
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({
         modelValue: {
-            type: Array as PropType<PairField["value"][]>,
+            type: Object as PropType<PairField["value"][]>,
             default: undefined,
         },
         label: {type: String, required: true},
-        property: {type: String, required: true},
+        property: {type: String, default: undefined},
         required: {type: Boolean, default: false},
     });
 
@@ -74,7 +73,7 @@
 
         if (index !== -1) {
             // Get the value of the old key
-            const [value] = entries[index];
+            const [, value] = entries[index];
 
             // Remove the old key from the entries
             entries.splice(index, 1);
@@ -98,11 +97,4 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
-
-.delete {
-    cursor: pointer;
-    padding-left: 0;
-    color: $code-gray-700;
-    text-align: right;
-}
 </style>

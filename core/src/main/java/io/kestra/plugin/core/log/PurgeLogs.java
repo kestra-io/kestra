@@ -2,7 +2,7 @@ package io.kestra.plugin.core.log;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
@@ -56,37 +56,32 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         title = "Namespace whose logs need to be purged, or namespace of the logs that needs to be purged.",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
-    @PluginProperty(dynamic = true)
-    private String namespace;
+    private Property<String> namespace;
 
     @Schema(
         title = "The flow ID of the logs to be purged.",
         description = "You need to provide the `namespace` properties if you want to purge a flow logs."
     )
-    @PluginProperty(dynamic = true)
-    private String flowId;
+    private Property<String> flowId;
 
     @Schema(
         title = "The levels of the logs to be purged.",
         description = "If not set, log for any levels will be purged."
     )
-    @PluginProperty
-    private List<Level> logLevels;
+    private Property<List<Level>> logLevels;
 
     @Schema(
         title = "The minimum date to be purged.",
         description = "All logs after this date will be purged."
     )
-    @PluginProperty(dynamic = true)
-    private String startDate;
+    private Property<String> startDate;
 
     @Schema(
         title = "The maximum date to be purged.",
         description = "All logs before this date will be purged."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String endDate;
+    private Property<String> endDate;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -97,17 +92,19 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         var flowInfo = runContext.flowInfo();
         if (namespace == null){
             flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
-        } else if (!runContext.render(namespace).equals(flowInfo.namespace())) {
-            flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace), flowInfo.tenantId(), flowInfo.namespace());
+        } else if (!flowInfo.namespace().equals(runContext.render(namespace).as(String.class).orElse(null))) {
+            flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace).as(String.class).orElse(null), flowInfo.tenantId(), flowInfo.namespace());
         }
 
+        var logLevelsRendered = runContext.render(this.logLevels).asList(String.class);
+        var renderedDate = runContext.render(startDate).as(String.class).orElse(null);
         int deleted = logService.purge(
             flowInfo.tenantId(),
-            runContext.render(namespace),
-            runContext.render(flowId),
-            logLevels,
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,
-            ZonedDateTime.parse(runContext.render(endDate))
+            runContext.render(namespace).as(String.class).orElse(null),
+            runContext.render(flowId).as(String.class).orElse(null),
+            logLevelsRendered.isEmpty() ? null : logLevelsRendered,
+            renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
+            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow())
         );
 
         return Output.builder().count(deleted).build();

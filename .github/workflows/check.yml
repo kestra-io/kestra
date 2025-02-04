@@ -9,6 +9,8 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      # to save corepack from itself
+      COREPACK_INTEGRITY_KEYS: 0
     name: Check & Publish
     runs-on: ubuntu-latest
     timeout-minutes: 60

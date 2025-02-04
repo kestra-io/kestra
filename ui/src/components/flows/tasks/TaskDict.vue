@@ -1,13 +1,13 @@
 <template>
-    <div class="d-flex w-100" v-for="(item, index) in currentValue" :key="index">
-        <div class="flex-fill flex-grow-1 w-100 me-2">
-            <el-input
+    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10">
+        <el-col :span="6">
+            <InputText
                 :model-value="item[0]"
                 @update:model-value="onKey(index, $event)"
                 @change="onKeyChange(index, $event)"
             />
-        </div>
-        <div class="flex-fill flex-grow-1 w-100 me-2">
+        </el-col>
+        <el-col :span="16">
             <component
                 :is="`task-${schema.additionalProperties ? getType(schema.additionalProperties) : 'expression'}`"
                 :model-value="item[1]"
@@ -17,19 +17,19 @@
                 :required="isRequired(item[0])"
                 :definitions="definitions"
             />
-        </div>
-        <div class="flex-shrink-1">
-            <el-button-group class="d-flex flex-nowrap">
-                <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" />
-            </el-button-group>
-        </div>
-    </div>
+        </el-col>
+        <el-col :span="2" class="col align-self-center delete">
+            <DeleteOutline @click="removeItem(index)" />
+        </el-col>
+    </el-row>
+    <Add v-if="!disabledAdding" @add="addItem()" />
 </template>
 
 <script setup>
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
+    import {DeleteOutline} from "../../code/utils/icons";
+
+    import InputText from "../../code/components/inputs/InputText.vue";
+    import Add from "../../code/components/Add.vue";
 </script>
 
 <script>
@@ -47,6 +47,9 @@
     export default {
         mixins: [Task],
         emits: ["update:modelValue"],
+        props: {
+            class: {type: String, default: undefined},
+        },
         data() {
             return {
                 currentValue: undefined,
@@ -56,6 +59,9 @@
             this.currentValue = Object.entries(toRaw(this.values));
         },
         computed: {
+            disabledAdding() {
+                return !this.currentValue.at(-1)[0] || !this.currentValue.at(-1)[1];
+            },
             values() {
                 if (this.modelValue === undefined) {
                     return emptyValueObjectProvider();
@@ -67,15 +73,14 @@
         watch: {
             modelValue(_newValue, _oldValue) {
                 this.currentValue = Object.entries(toRaw(this.values));
-            }
+            },
         },
-        methods:{
+        methods: {
             emitLocal(index, value) {
-                const local = this.currentValue
-                    .reduce(function(acc, cur, i) {
-                        acc[i === index ? value : cur[0]] = cur[1];
-                        return acc;
-                    }, {});
+                const local = this.currentValue.reduce(function (acc, cur, i) {
+                    acc[i === index ? value : cur[0]] = cur[1];
+                    return acc;
+                }, {});
 
                 this.$emit("update:modelValue", local);
             },
@@ -117,3 +122,7 @@
         },
     };
 </script>
+
+<style scoped lang="scss">
+@import "../../code/styles/code.scss";
+</style>

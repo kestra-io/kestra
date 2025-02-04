@@ -144,7 +144,7 @@
         align-items: flex-start;
         gap: 10px;
         border-radius: 2px;
-        background-color: var(--ks-background-tag);
+        background-color: var(--ks-tag-background);
         font-size: 0.65rem;
         line-height: 1.0625rem;
     }

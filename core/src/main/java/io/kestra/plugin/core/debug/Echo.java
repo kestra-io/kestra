@@ -54,7 +54,7 @@ public class Echo extends Task implements RunnableTask<VoidOutput> {
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Log log = Log.builder()
-            .level(runContext.render(this.level).as(Level.class).orElseThrow())
+            .level(this.level)
             .message(runContext.render(this.format).as(String.class).orElse(null))
             .build();
         log.run(runContext);

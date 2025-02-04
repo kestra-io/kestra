@@ -1,5 +1,5 @@
 <template>
-    <el-row class="my-5">
+    <el-row class="my-5 settings-wrapper">
         <el-col
             :xs="layout(24, 0)"
             :sm="layout(20, 2)"

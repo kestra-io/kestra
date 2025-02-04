@@ -4,7 +4,7 @@
         <el-tag
             v-for="(value, key) in labelMap"
             :key="key"
-            :type="checked(key, value) ? 'primary' : 'info'"
+            :type="checked(key, value) ? 'primary' : undefined"
             class="me-1 labels"
             size="small"
             disable-transitions
@@ -83,15 +83,3 @@
         }
     };
 </script>
-
-<style lang="scss" scoped>
-    :deep(.el-tag) {
-        & a, span {
-            color: var(--bs-white);
-        }
-
-        &.el-tag--info {
-            background: var(--bs-gray-600);
-        }
-    }
-</style>

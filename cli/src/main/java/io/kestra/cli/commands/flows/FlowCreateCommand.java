@@ -15,12 +15,12 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "create",
-    description = "create a single flow",
+    description = "Create a single flow",
     mixinStandardHelpOptions = true
 )
 @Slf4j
 public class FlowCreateCommand extends AbstractApiCommand {
-    @CommandLine.Parameters(index = "0", description = "the file containing the flow")
+    @CommandLine.Parameters(index = "0", description = "The file containing the flow")
     public Path flowFile;
 
     @SuppressWarnings("deprecation")

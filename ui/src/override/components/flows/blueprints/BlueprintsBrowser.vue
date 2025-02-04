@@ -2,98 +2,100 @@
     <errors code="404" v-if="error && embed" />
     <div v-else>
         <slot name="nav" />
-        <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
-            <template #navbar>
-                <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
-                    <el-radio-button
-                        :key="0"
-                        :value="0"
-                        class="hoverable"
+        <slot name="content">
+            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+                <template #navbar>
+                    <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
+                        <el-radio-button
+                            :key="0"
+                            :value="0"
+                            class="hoverable"
+                        >
+                            {{ $t("all tags") }}
+                        </el-radio-button>
+                        <el-radio-button
+                            v-for="tag in Object.values(tags || {})"
+                            :key="tag.id"
+                            :value="tag.id"
+                            class="hoverable"
+                            @dblclick.stop="selectedTag = 0"
+                        >
+                            {{ tag.name }}
+                        </el-radio-button>
+                    </el-radio-group>
+                    <nav v-else-if="system" class="header pb-3">
+                        <p class="mb-0 fw-lighter">
+                            {{ $t("system_namespace") }}
+                        </p>
+                        <p class="fs-5 fw-semibold">
+                            {{ $t("system_namespace_description") }}
+                        </p>
+                    </nav>
+                </template>
+                <template #top>
+                    <KestraFilter :prefix="`blueprintsBrowser${blueprintType}`" :placeholder="$t('search')" :decode="false" />
+                </template>
+                <template #table>
+                    <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
+                        {{ $t('blueprints.empty') }}
+                    </el-alert>
+                    <el-card
+                        class="blueprint-card"
+                        :class="{'embed': embed}"
+                        v-for="blueprint in blueprints"
+                        :key="blueprint.id"
+                        @click="goToDetail(blueprint.id)"
                     >
-                        {{ $t("all tags") }}
-                    </el-radio-button>
-                    <el-radio-button
-                        v-for="tag in Object.values(tags || {})"
-                        :key="tag.id"
-                        :value="tag.id"
-                        class="hoverable"
-                        @dblclick.stop="selectedTag = 0"
-                    >
-                        {{ tag.name }}
-                    </el-radio-button>
-                </el-radio-group>
-                <nav v-else-if="system" class="header pb-3">
-                    <p class="mb-0 fw-lighter">
-                        {{ $t("system_namespace") }}
-                    </p>
-                    <p class="fs-5 fw-semibold">
-                        {{ $t("system_namespace_description") }}
-                    </p>
-                </nav>
-            </template>
-            <template #top>
-                <KestraFilter :prefix="`blueprintsBrowser${tab}`" :placeholder="$t('search')" :decode="false" />
-            </template>
-            <template #table>
-                <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
-                    {{ $t('blueprints.empty') }}
-                </el-alert>
-                <el-card
-                    class="blueprint-card"
-                    :class="{'embed': embed}"
-                    v-for="blueprint in blueprints"
-                    :key="blueprint.id"
-                    @click="goToDetail(blueprint.id)"
-                >
-                    <component
-                        class="blueprint-link"
-                        :is="embed ? 'div' : 'router-link'"
-                        :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab}}"
-                    >
-                        <div class="left">
-                            <div class="blueprint">
-                                <div class="ps-0 title">
-                                    {{ blueprint.title }}
-                                </div>
-                                <div v-if="!system" class="tags text-uppercase">
-                                    <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
-                                        <el-tag size="small">
-                                            {{ tag }}
-                                        </el-tag>
+                        <component
+                            class="blueprint-link"
+                            :is="embed ? 'div' : 'router-link'"
+                            :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab: blueprintType, kind: blueprintKind}}"
+                        >
+                            <div class="left">
+                                <div class="blueprint">
+                                    <div class="ps-0 title">
+                                        {{ blueprint.title }}
+                                    </div>
+                                    <div v-if="!system" class="tags text-uppercase">
+                                        <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
+                                            <el-tag size="small">
+                                                {{ tag }}
+                                            </el-tag>
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="tasks-container">
+                                    <task-icon
+                                        :icons="icons"
+                                        :cls="task"
+                                        :key="task"
+                                        v-for="task in [...new Set(blueprint.includedTasks)]"
+                                    />
+                                </div>
                             </div>
-                            <div class="tasks-container">
-                                <task-icon
-                                    :icons="icons"
-                                    :cls="task"
-                                    :key="task"
-                                    v-for="task in [...new Set(blueprint.includedTasks)]"
-                                />
-                            </div>
-                        </div>
-                        <div class="side buttons ms-auto">
-                            <slot name="buttons" :blueprint="blueprint" />
-                            <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
-                                <el-button
-                                    @click.prevent.stop="copy(blueprint.id)"
-                                    :icon="icon.ContentCopy"
-                                    size="large"
-                                    text
-                                    bg
-                                >
-                                    {{ $t('copy') }}
+                            <div class="side buttons ms-auto">
+                                <slot name="buttons" :blueprint="blueprint" />
+                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
+                                    <el-button
+                                        @click.prevent.stop="copy(blueprint.id)"
+                                        :icon="icon.ContentCopy"
+                                        size="large"
+                                        text
+                                        bg
+                                    >
+                                        {{ $t('copy') }}
+                                    </el-button>
+                                </el-tooltip>
+                                <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                    {{ $t('use') }}
                                 </el-button>
-                            </el-tooltip>
-                            <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                {{ $t('use') }}
-                            </el-button>
-                        </div>
-                    </component>
-                </el-card>
-            </template>
-        </data-table>
-        <slot name="bottom-bar" />
+                            </div>
+                        </component>
+                    </el-card>
+                </template>
+            </data-table>
+            <slot name="bottom-bar" />
+        </slot>
     </div>
 </template>
 
@@ -110,7 +112,6 @@
     import Utils from "../../../../utils/utils";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
-    import {apiUrl} from "override/utils/route.js";
     import KestraFilter from "../../../../components/filter/KestraFilter.vue";
 
     export default {
@@ -118,13 +119,13 @@
         components: {TaskIcon, DataTable, Errors, KestraFilter},
         emits: ["goToDetail", "loaded"],
         props: {
-            blueprintBaseUri: {
+            blueprintType: {
                 type: String,
-                required: true
+                default: "community"
             },
-            tab: {
+            blueprintKind: {
                 type: String,
-                default: undefined,
+                default: "flow",
             },
             embed: {
                 type: Boolean,
@@ -139,13 +140,16 @@
                 default: tagsResponse => Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
             }
         },
+        mounted() {
+            this.$store.commit("doc/setDocId", `blueprints.${this.blueprintType}`);
+        },
         data() {
             return {
                 q: undefined,
                 selectedTag: this.initSelectedTag(),
                 tags: undefined,
-                blueprints: undefined,
                 total: 0,
+                blueprints: undefined,
                 icon: {
                     ContentCopy: shallowRef(ContentCopy)
                 },
@@ -156,19 +160,22 @@
             initSelectedTag() {
                 return this.$route?.query?.selectedTag ?? 0
             },
-            async copy(blueprintId) {
+            async copy(id) {
                 await Utils.copy(
-                    (await this.$http.get(`${this.embedFriendlyBlueprintBaseUri}/${blueprintId}/flow`)).data
+                    (await this.$store.dispatch("blueprints/getBlueprintSource", {type: this.blueprintType, kind: this.blueprintKind, id: id}))
                 );
             },
             async blueprintToEditor(blueprintId) {
                 localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
+                const query = this.blueprintKind === "flow" ?
+                    {blueprintId: blueprintId, blueprintSource: this.blueprintType} :
+                    {blueprintId: blueprintId};
                 this.$router.push({
-                    name: "flows/create",
+                    name: `${this.blueprintKind}s/create`,
                     params: {
                         tenant: this.$route.params.tenant
                     },
-                    query: {blueprintId: blueprintId, blueprintSource: this.embedFriendlyBlueprintBaseUri.includes("community") ? "community" : "custom"}
+                    query: query
                 });
             },
             goToDetail(blueprintId) {
@@ -176,30 +183,25 @@
                     this.$emit("goToDetail", blueprintId);
                 }
             },
-            loadTags(beforeLoadBlueprintBaseUri) {
+            loadTags(beforeLoadBlueprintType) {
                 const query = {}
                 if (this.$route.query.q || this.q) {
                     query.q = this.$route.query.q || this.q;
                 }
-
-                return this.$http
-                    .get(beforeLoadBlueprintBaseUri + "/tags", {
-                        params: query
-                    })
-                    .then(response => {
+                return this.$store.dispatch("blueprints/getBlueprintTagsForQuery", {type: this.blueprintType, kind: this.blueprintKind, ...query})
+                    .then(data => {
                         // Handle switch tab while fetching data
-                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
-                            this.tags = this.tagsResponseMapper(response.data);
+                        if (this.blueprintType === beforeLoadBlueprintType) {
+                            this.tags = this.tagsResponseMapper(data);
                         }
-                    })
+                    });
             },
-            loadBlueprints(beforeLoadBlueprintBaseUri) {
+            loadBlueprints(beforeLoadBlueprintType) {
                 const query = {}
 
                 if (this.$route.query.page || this.internalPageNumber) {
                     query.page = parseInt(this.$route.query.page || this.internalPageNumber);
                 }
-
 
                 if (this.$route.query.size || this.internalPageSize) {
                     query.size = parseInt(this.$route.query.size || this.internalPageSize);
@@ -215,25 +217,22 @@
                     query.tags = this.$route.query.selectedTag || this.selectedTag;
                 }
 
-                return this.$http
-                    .get(beforeLoadBlueprintBaseUri, {
-                        params: query
-                    })
-                    .then(response => {
+                return this.$store
+                    .dispatch("blueprints/getBlueprintsForQuery", {type: this.blueprintType, kind: this.blueprintKind, params: query})
+                    .then(data => {
                         // Handle switch tab while fetching data
-                        if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri) {
-                            const blueprintsResponse = response.data;
-                            this.total = blueprintsResponse.total;
-                            this.blueprints = blueprintsResponse.results;
+                        if (this.blueprintType === beforeLoadBlueprintType) {
+                            this.total = data.total;
+                            this.blueprints = data.results;
                         }
                     });
             },
             loadData(callback) {
-                const beforeLoadBlueprintBaseUri = this.embedFriendlyBlueprintBaseUri;
+                const beforeLoadBlueprintType = this.blueprintType;
 
                 Promise.all([
-                    this.loadTags(beforeLoadBlueprintBaseUri),
-                    this.loadBlueprints(beforeLoadBlueprintBaseUri)
+                    this.loadTags(beforeLoadBlueprintType),
+                    this.loadBlueprints(beforeLoadBlueprintType)
                 ]).then(() => {
                     this.$emit("loaded");
                 }).catch(() => {
@@ -244,7 +243,7 @@
                     }
                 }).finally(() => {
                     // Handle switch tab while fetching data
-                    if (this.embedFriendlyBlueprintBaseUri === beforeLoadBlueprintBaseUri && callback) {
+                    if (this.blueprintType === beforeLoadBlueprintType && callback) {
                         callback();
                     }
                 })
@@ -261,14 +260,6 @@
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
-            embedFriendlyBlueprintBaseUri() {
-                const tab = this.tab ?? this?.$route?.params?.tab ?? "community";
-                let base = this.blueprintBaseUri;
-
-                return base
-                    ? (base.endsWith("/undefined") ? base.replace("/undefined", `/${tab}`) : base)
-                    : `${apiUrl(this.$store)}/blueprints/${tab}`;
-            }
         },
         watch: {
             $route(newValue, oldValue) {
@@ -304,11 +295,11 @@
                     this.selectedTag = 0;
                 }
             },
-            blueprintBaseUri() {
+            blueprintType() {
                 this.loadData();
             },
-            tab() {
-                this.loadData()
+            blueprintKind() {
+                this.loadData();
             }
         }
     };

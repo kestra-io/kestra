@@ -10,7 +10,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "sys",
-    description = "handle systems maintenance",
+    description = "Manage system maintenance mode",
     mixinStandardHelpOptions = true,
     subcommands = {
         ReindexCommand.class,

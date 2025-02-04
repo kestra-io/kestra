@@ -317,7 +317,7 @@ public class ExecutionService {
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
-        Execution newExecution = execution;
+        Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);

@@ -26,6 +26,7 @@
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
+    import KestraUtils from "../../../../../utils/utils.js"
 
     const store = useStore();
 
@@ -129,7 +130,7 @@
     const parsedData = computed(() => {
         const parseValue = (value) => {
             const date = moment(value, moment.ISO_8601, true);
-            return date.isValid() ? date.format("YYYY-MM-DD") : value;
+            return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
         };
 
         const rawData = generated.value.results;

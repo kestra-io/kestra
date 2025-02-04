@@ -100,6 +100,7 @@
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
             label: {type: String, default: undefined},
+            shouldFocus: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -209,6 +210,7 @@
                         alwaysConsumeMouseWheel: false,
                     };
                     options.renderSideBySide = this.diffSideBySide;
+                    options.useInlineViewWhenSpaceIsLimited = false;
                 }
 
                 if (this.minimap === false) {
@@ -262,11 +264,13 @@
                         this.focus = false;
                     });
 
-                    this.editor.onDidFocusEditorText?.(() => {
-                        this.focus = true;
-                    });
-
-                    this.$refs.monacoEditor.focus();
+                    if(this.shouldFocus){                
+                        this.editor.onDidFocusEditorText?.(() => {
+                            this.focus = true;
+                        });
+                        
+                        this.$refs.monacoEditor.focus();
+                    }
                 }
 
                 if (!this.readOnly) {

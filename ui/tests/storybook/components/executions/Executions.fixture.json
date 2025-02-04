@@ -29,6 +29,10 @@
                     "type": "io.kestra.plugin.core.trigger.Schedule",
                     "cron": "*/1 * * * *"
                 }
+            ],
+            "labels": [
+                {"key":"airbyte", "value":"007"},
+                {"key":"sync", "value":"false"}
             ]
         },
         {
@@ -71,6 +75,9 @@
                     "type": "io.kestra.plugin.core.log.Log",
                     "message": "Hello from {{ flow.id }}"
                 }
+            ],
+            "labels": [
+                {"key":"kestra", "value":"42"}
             ]
         },
         {
@@ -92,6 +99,9 @@
                     "type": "io.kestra.plugin.core.log.Log",
                     "message": "Hello World! \uD83D\uDE80"
                 }
+            ],
+            "labels": [
+                {"key":"labelwithNoValue"}
             ]
         },
         {
@@ -148,6 +158,9 @@
                     "type": "io.kestra.plugin.core.log.Log",
                     "message": "Hello World! \uD83D\uDE80"
                 }
+            ],
+            "labels": [
+                {"key":"long label with a value", "value":"this is a long value"}
             ]
         },
         {

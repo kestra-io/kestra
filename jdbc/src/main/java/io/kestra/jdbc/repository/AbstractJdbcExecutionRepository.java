@@ -79,6 +79,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Executions.Fields.TRIGGER_EXECUTION_ID, "trigger_execution_id"
     );
 
+    @Override
+    public Set<Executions.Fields> dateFields() {
+        return Set.of(Executions.Fields.START_DATE, Executions.Fields.END_DATE);
+    }
+
+    @Override
+    public Executions.Fields dateFilterField() {
+        return Executions.Fields.START_DATE;
+    }
+
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
@@ -352,11 +362,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter
     ) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Integer maxTaskRunSetting() {
         throw new UnsupportedOperationException();
     }
 
@@ -877,7 +882,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 select = select.and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()));
                 select = select.and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                if (states != null) {
+                if (!ListUtils.isEmpty(states)) {
                     select = select.and(this.statesFilter(states));
                 }
 
@@ -921,7 +926,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         List<ExecutionCount> counts = new ArrayList<>();
         // fill missing with count at 0
-        if (flows != null) {
+        if (!ListUtils.isEmpty(flows)) {
             counts.addAll(flows
                 .stream()
                 .map(flow -> result
@@ -939,7 +944,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 .toList());
         }
 
-        if (namespaces != null) {
+        if (!ListUtils.isEmpty(namespaces)) {
             Map<String, Long> groupedByNamespace = result.stream()
                 .collect(Collectors.groupingBy(
                     ExecutionCount::getNamespace,
@@ -1124,11 +1129,20 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Generate custom fields for date as they probably need formatting
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+
                 // Init request
                 SelectConditionStep<Record> selectConditionStep = select(
                     context,
                     filterService,
-                    descriptors,
+                    columnsWithoutDate,
+                    dateFields,
                     this.getFieldsMapping(),
                     this.jdbcRepository.getTable(),
                     tenantId
@@ -1137,8 +1151,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 // Apply Where filter
                 selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
 
+                List<? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
+
                 // Apply GroupBy for aggregation
-                SelectHavingStep<Record> selectHavingStep = groupBy(selectConditionStep, descriptors, fieldsMapping);
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
 
                 // Apply OrderBy
                 SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
@@ -1165,7 +1188,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             return NAMESPACE_FIELD;
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
-        } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
+        }
+        else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
             return DSL.field("{0} / 1000", Long.class, field);
         }
         return field;
@@ -1219,5 +1243,24 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         } else {
             return selectConditionStep;
         }
+    }
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+
+    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
+        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+        Map<F, String> fieldsMapping,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Set<F> dateFields
+    ) {
+        return descriptors.getColumns().entrySet().stream()
+            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
+            .map(entry -> {
+                Duration duration = Duration.between(startDate, endDate);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+            })
+            .toList();
+
     }
 }

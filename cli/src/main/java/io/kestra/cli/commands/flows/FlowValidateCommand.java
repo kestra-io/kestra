@@ -13,7 +13,7 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "validate",
-    description = "validate a flow"
+    description = "Validate a flow"
 )
 public class FlowValidateCommand extends AbstractValidateCommand {
     @Inject

@@ -1,93 +1,75 @@
 <template>
-    <div class="d-flex w-100 task-array" v-for="(item, index) in values" :key="'array-' + index">
-        <div class="flex-fill flex-grow-1 w-100 me-2">
-            <component
-                :is="`task-${getType(schema.items)}`"
-                :model-value="item"
-                @update:model-value="onInput(index, $event)"
-                :root="getKey(index)"
-                :schema="schema.items"
-                :definitions="definitions"
+    <el-row
+        v-for="(element, index) in items"
+        :key="'array-' + index"
+        :gutter="10"
+        class="w-100"
+    >
+        <el-col :span="2" class="d-flex flex-column mt-1 mb-2 reorder">
+            <ChevronUp @click.prevent.stop="moveItem(index, 'up')" />
+            <ChevronDown @click.prevent.stop="moveItem(index, 'down')" />
+        </el-col>
+        <el-col :span="20">
+            <InputText
+                :model-value="element"
+                @update:model-value="(v) => handleInput(v, index)"
+                :placeholder="$t('value')"
+                class="w-100"
             />
-        </div>
-        <div class="flex-shrink-1">
-            <el-button-group class="d-flex flex-nowrap">
-                <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" :disabled="index === 0 && values.length === 1" />
-            </el-button-group>
-        </div>
-    </div>
+        </el-col>
+        <el-col :span="2" class="col align-self-center delete">
+            <DeleteOutline @click="removeItem(index)" />
+        </el-col>
+    </el-row>
+    <Add @add="addItem()" />
 </template>
 
-<script setup>
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
-</script>
+<script setup lang="ts">
+    import {ref} from "vue";
 
-<script>
-    import {toRaw} from "vue";
-    import Task from "./Task";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
-    export default {
-        mixins: [Task],
-        emits: ["update:modelValue"],
-        created() {
-            if (!Array.isArray(this.modelValue) && this.modelValue !== undefined) {
-                this.$emit("update:modelValue", []);
-            }
-        },
-        computed: {
-            values() {
-                if (this.modelValue === undefined) {
-                    return this.schema.default || [undefined];
-                }
+    import InputText from "../../code/components/inputs/InputText.vue";
+    import Add from "../../code/components/Add.vue";
 
-                return this.modelValue;
-            },
-        },
-        methods: {
-            getPropertiesValue(properties) {
-                return this.modelValue && this.modelValue[properties]
-                    ? this.modelValue[properties]
-                    : undefined;
-            },
-            onInput(index, value) {
-                const local = this.modelValue || [];
-                local[index] = value;
+    defineOptions({inheritAttrs: false});
 
-                this.$emit("update:modelValue", local);
-            },
-            addItem() {
-                let local = this.modelValue || [];
-                local.push(undefined);
+    const emits = defineEmits(["update:modelValue"]);
+    const props = defineProps({modelValue: {type: Array, default: undefined}});
 
-                // click on + when there is no items
-                if (this.modelValue === undefined) {
-                    local.push(undefined);
-                }
+    const items = ref(
+        !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
+    );
 
-                this.$emit("update:modelValue", local);
-            },
-            removeItem(x) {
-                let local = this.modelValue || [];
-                local.splice(x, 1);
+    const handleInput = (value: string, index: number) => {
+        items.value[index] = value;
+        emits("update:modelValue", items.value);
+    };
 
-                if (local.length === 1) {
-                    let raw = toRaw(local[0]);
-
-                    if (raw === null || raw === undefined) {
-                        local = undefined;
-                    }
-                }
-
-                this.$emit("update:modelValue", local);
-            },
-        },
+    const addItem = () => {
+        items.value.push(undefined);
+        emits("update:modelValue", items.value);
+    };
+    const removeItem = (index: number) => {
+        items.value.splice(index, 1);
+        emits("update:modelValue", items.value);
+    };
+    const moveItem = (index: number, direction: "up" | "down") => {
+        if (direction === "up" && index > 0) {
+            [items.value[index - 1], items.value[index]] = [
+                items.value[index],
+                items.value[index - 1],
+            ];
+        } else if (direction === "down" && index < items.value.length - 1) {
+            [items.value[index + 1], items.value[index]] = [
+                items.value[index],
+                items.value[index + 1],
+            ];
+        }
+        emits("update:modelValue", items.value);
     };
 </script>
-<style lang="scss" scoped>
-    .task-array {
-        margin-bottom: 2px;
-    }
 
+<style scoped lang="scss">
+@import "../../code/styles/code.scss";
 </style>

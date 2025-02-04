@@ -1,5 +1,5 @@
 import JsYaml from "js-yaml";
-import yaml, {Document, YAMLMap, isSeq, isMap, Pair, Scalar, YAMLSeq, LineCounter, isPair} from "yaml";
+import yaml, {Document, isMap, isPair, isSeq, LineCounter, Pair, Scalar, YAMLMap, YAMLSeq} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 import {SECTIONS} from "./constants.js";
 
@@ -191,23 +191,26 @@ export default class YamlUtils {
         }
     }
 
-    static extractFieldFromMaps(source, fieldName, yamlDocPredicate = (_) => true) {
+    // Specify a source yaml doc, the field to extract recursively in every map of the doc and optionally a predicate to define which paths should be taken into account
+    // parentPathPredicate will take a single argument which is the path of each parent property starting from the root doc (joined with ".")
+    // "my.parent.task" will mean that the field was retrieved in my -> parent -> task path.
+    static extractFieldFromMaps(source, fieldName, parentPathPredicate = (_, __) => true, valuePredicate = (_) => true) {
         const yamlDoc = yaml.parseDocument(source);
         const maps = [];
-        if (yamlDocPredicate(yamlDoc)) {
-            yaml.visit(yamlDoc, {
-                Map(_, map) {
-                    if (map.items) {
-                        for (const item of map.items) {
-                            if (item.key.value === fieldName) {
-                                const fieldValue = item.value?.value ?? item.value?.items;
+        yaml.visit(yamlDoc, {
+            Map(_, map, parent) {
+                if (parentPathPredicate(parent.filter(p => yaml.isPair(p)).map(p => p.key.value).join(".")) && map.items) {
+                    for (const item of map.items) {
+                        if (item.key.value === fieldName) {
+                            const fieldValue = item.value?.value ?? item.value?.items;
+                            if (valuePredicate(fieldValue)) {
                                 maps.push({[fieldName]: fieldValue, range: map.range});
                             }
                         }
                     }
                 }
-            })
-        }
+            }
+        })
         return maps;
     }
 
@@ -247,16 +250,12 @@ export default class YamlUtils {
         return maps;
     }
 
-    static extractAllTaskIds(source) {
-        return this.extractFieldFromMaps(source, "id", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks"].includes(e.key?.value)))
+    static extractAllTypes(source, validTypes = []) {
+        return this.extractFieldFromMaps(source, "type", undefined, value => validTypes.some(t => t === value));
     }
 
-    static extractAllTypes(source) {
-        return this.extractFieldFromMaps(source, "type", (yamlDoc) => yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["tasks", "triggers", "errors"].includes(e.key?.value)))
-    }
-
-    static getTaskType(source, position) {
-        const types = this.extractAllTypes(source);
+    static getTaskType(source, position, validTypes) {
+        const types = this.extractAllTypes(source, validTypes);
 
         const lineCounter = new LineCounter();
         yaml.parseDocument(source, {lineCounter});
@@ -268,66 +267,6 @@ export default class YamlUtils {
             }
         }
         return null;
-    }
-
-    static extractAllGraphTypes(source) {
-        const yamlDoc = yaml.parseDocument(source);
-        const types = [];
-        if (yamlDoc.contents && yamlDoc.contents.items && yamlDoc.contents.items.find(e => ["charts", "data"].includes(e.key.value))) {
-            yaml.visit(yamlDoc, {
-                Map(_, map) {
-                    if (map.items) {
-                        for (const item of map.items) {
-                            if (item.key.value === "type") {
-                                const type = item.value?.value;
-                                types.push({type, range: map.range});
-                            }
-                        }
-                    }
-                }
-            })
-        }
-        return types;
-    }
-
-    static getGraphType(source, position) {
-        const types = this.extractAllGraphTypes(source)
-        const lineCounter = new LineCounter();
-        yaml.parseDocument(source, {lineCounter});
-        const cursorIndex = lineCounter.lineStarts[position.lineNumber - 1] + position.column;
-
-        for(const type of types.reverse()) {
-            if (cursorIndex > type.range[1]) {
-                return type.type;
-            }
-            if (cursorIndex >= type.range[0] && cursorIndex <= type.range[1]) {
-                return type.type;
-            }
-        }
-        return null;
-    }
-
-    static swapTasks(source, taskId1, taskId2) {
-        const yamlDoc = yaml.parseDocument(source);
-
-        const task1 = YamlUtils._extractTask(yamlDoc, taskId1);
-        const task2 = YamlUtils._extractTask(yamlDoc, taskId2);
-
-        yaml.visit(yamlDoc, {
-            Pair(_, pair) {
-                if (pair.key.value === "dependsOn" && pair.value.items.map(e => e.value).includes(taskId2)) {
-                    throw {
-                        message: "dependency task",
-                        messageOptions: {taskId: taskId2}
-                    };
-                }
-            }
-        });
-
-        YamlUtils._extractTask(yamlDoc, taskId1, () => task2);
-        YamlUtils._extractTask(yamlDoc, taskId2, () => task1);
-
-        return yamlDoc.toString(TOSTRING_OPTIONS);
     }
 
     static insertTask(source, taskId, newTask, insertPosition) {
@@ -421,6 +360,24 @@ export default class YamlUtils {
             errorsSeq.items.push(newErrorNode);
             const newErrors = new yaml.Pair(new yaml.Scalar("errors"), errorsSeq);
             yamlDoc.contents.items.push(newErrors);
+        }
+        return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
+    }
+
+    static insertFinally(source, finallyTask) {
+        const yamlDoc = yaml.parseDocument(source);
+        const newFinallyNode = yamlDoc.createNode(yaml.parseDocument(finallyTask));
+        const items = yamlDoc.contents.items.find(item => item.key.value === "finally");
+        if (items && items.value.items) {
+            yamlDoc.contents.items[yamlDoc.contents.items.indexOf(items)].value.items.push(newFinallyNode);
+        } else {
+            if (items) {
+                yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(items), 1)
+            }
+            const finallySeq = new yaml.YAMLSeq();
+            finallySeq.items.push(newFinallyNode);
+            const newFinally = new yaml.Pair(new yaml.Scalar("finally"), finallySeq);
+            yamlDoc.contents.items.push(newFinally);
         }
         return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
     }
@@ -632,7 +589,7 @@ export default class YamlUtils {
             return source;
         }
 
-        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
+        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "finally", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
         const updatedItems = [];
         for (const prop of order) {
             const item = yamlDoc.contents.items.find(e => e.key.value === prop);

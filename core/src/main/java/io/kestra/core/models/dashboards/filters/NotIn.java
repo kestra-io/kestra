@@ -17,6 +17,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
+@Schema(title = "NOT_IN")
 public class NotIn <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude

@@ -276,7 +276,7 @@ public class ForEachItemCaseTest {
     }
 
     public void restartForEachItem() throws Exception {
-        CountDownLatch countDownLatch = new CountDownLatch(26);
+        CountDownLatch countDownLatch = new CountDownLatch(6);
         Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
@@ -285,7 +285,7 @@ public class ForEachItemCaseTest {
         });
 
         URI file = storageUpload();
-        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 20);
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
@@ -296,7 +296,7 @@ public class ForEachItemCaseTest {
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
         receiveSubflows.blockLast();
 
-        CountDownLatch successLatch = new CountDownLatch(26);
+        CountDownLatch successLatch = new CountDownLatch(6);
         receiveSubflows = TestsUtils.receive(executionQueue, either -> {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isSuccess()) {

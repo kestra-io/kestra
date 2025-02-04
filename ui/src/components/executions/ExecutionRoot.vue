@@ -22,6 +22,7 @@
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     import ExecutionMetric from "./ExecutionMetric.vue";
     import throttle from "lodash/throttle";
@@ -158,7 +159,9 @@
                     },
                     {
                         name: "auditlogs",
+                        component: DemoAuditLogs,
                         title: title("auditlogs"),
+                        maximized: true,
                         locked: true
                     }
                 ];

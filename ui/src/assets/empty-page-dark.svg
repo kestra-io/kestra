@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1262"
+   height="600"
+   viewBox="0 0 1262 280"
+   fill="none"
+   version="1.1"
+   id="svg20"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <g filter="url(#mega-blur)">
+    <rect
+       width="861"
+       height="328"
+       transform="matrix(-1,0,0,1,1060,-420)"
+       fill="url(#purple-linear-grad)"
+       id="rect2"
+       x="0"
+       y="0" />
+  </g>
+  <defs>
+    <filter
+       id="mega-blur"
+       x="0.390625"
+       y="-449.689"
+       width="1261.22"
+       height="728.796"
+       filterUnits="userSpaceOnUse"
+       color-interpolation-filters="sRGB">
+      <feFlood
+         flood-opacity="0"
+         result="BackgroundImageFix"
+         id="feFlood6" />
+      <feBlend
+         mode="normal"
+         in="SourceGraphic"
+         in2="BackgroundImageFix"
+         result="shape"
+         id="feBlend8" />
+      <feGaussianBlur
+         stdDeviation="100"
+         result="effect1_foregroundBlur_5734_48230"
+         id="feGaussianBlur10" />
+    </filter>
+    <linearGradient
+       id="purple-linear-grad"
+       x1="430.61"
+       y1="0"
+       x2="430.61"
+       y2="328.796"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#6218FF"
+         stop-opacity="0"
+         id="stop13" />
+      <stop
+         offset="1"
+         stop-color="#6117FF"
+         id="stop15" />
+    </linearGradient>
+  </defs>
+</svg>

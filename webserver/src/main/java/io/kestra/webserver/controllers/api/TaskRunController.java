@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -18,9 +19,11 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -47,6 +50,10 @@ public class TaskRunController {
         @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
@@ -54,13 +61,15 @@ public class TaskRunController {
     ) {
         validateTimeline(startDate, endDate);
 
+        final ZonedDateTime now = ZonedDateTime.now();
+
         return PagedResults.of(executionRepository.findTaskRun(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             query,
             tenantService.resolveTenant(),
             namespace,
             flowId,
-            startDate,
+            resolveAbsoluteDateTime(startDate, timeRange, now),
             endDate,
             state,
             RequestUtils.toMap(labels),
@@ -69,10 +78,15 @@ public class TaskRunController {
         ));
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/maxTaskRunSetting")
-    @Hidden
-    public Integer maxTaskRunSetting() {
-        return executionRepository.maxTaskRunSetting();
+    @VisibleForTesting
+    ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
+        if (timeRange != null) {
+            if (absoluteDateTime != null) {
+                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
+            }
+            return now.minus(timeRange.abs());
+        }
+
+        return absoluteDateTime;
     }
 }

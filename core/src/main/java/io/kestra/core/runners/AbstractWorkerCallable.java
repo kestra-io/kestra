@@ -2,6 +2,8 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.flows.State;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.slf4j.Logger;
@@ -26,6 +28,9 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     String type;
 
     @Getter
+    String uid;
+
+    @Getter
     Throwable exception;
 
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
@@ -34,10 +39,11 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
     private Thread currentThread;
 
-    AbstractWorkerCallable(RunContext runContext, String type, ClassLoader classLoader) {
+    AbstractWorkerCallable(RunContext runContext, String type, String uid, ClassLoader classLoader) {
         this.logger = runContext.logger();
         this.runContext = runContext;
         this.type = type;
+        this.uid = uid;
         this.classLoader = classLoader;
     }
 
@@ -100,6 +106,7 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
     protected State.Type exceptionHandler(Throwable e) {
         this.exception = e;
+        Span.current().recordException(e).setStatus(StatusCode.ERROR);
 
         if (this.killed) {
             return KILLED;

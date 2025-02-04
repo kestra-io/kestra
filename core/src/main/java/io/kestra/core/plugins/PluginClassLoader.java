@@ -102,6 +102,13 @@ public class PluginClassLoader extends URLClassLoader {
                         pluginLocation,
                         this.parent.getName()
                     );
+                } catch (LinkageError e){
+                    log.debug(
+                        "Class '{}'already in classpath for plugin '{}', delegating to parent '{}'",
+                        name,
+                        pluginLocation,
+                        this.parent.getName()
+                    );
                 }
             }
 

@@ -11,7 +11,10 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -50,6 +53,10 @@ public class Property<T> {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    String getExpression() {
+        return expression;
     }
 
     /**
@@ -92,13 +99,7 @@ public class Property<T> {
      * @see io.kestra.core.runners.RunContextProperty#as(Class)
      */
     public static <T> T as(Property<T> property, RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
-            String rendered =  runContext.render(property.expression);
-            // special case for duration as they should be serialized as double but are not always
-            property.value = MAPPER.convertValue(rendered, clazz);
-        }
-
-        return property.value;
+        return as(property, runContext, clazz, Map.of());
     }
 
     /**
@@ -125,17 +126,7 @@ public class Property<T> {
      * @see io.kestra.core.runners.RunContextProperty#asList(Class)
      */
     public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
-            String rendered =  runContext.render(property.expression);
-            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
-            try {
-                property.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return property.value;
+        return asList(property, runContext, itemClazz, Map.of());
     }
 
     /**
@@ -167,17 +158,7 @@ public class Property<T> {
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class)
      */
     public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
-            String rendered =  runContext.render(property.expression);
-            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
-            try {
-                property.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return property.value;
+        return asMap(property, runContext, keyClass, valueClass, Map.of());
     }
 
     /**
@@ -190,144 +171,26 @@ public class Property<T> {
      */
     public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
-            String rendered =  runContext.render(property.expression, variables);
-            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+            JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
+
             try {
-                property.value = MAPPER.readValue(rendered, type);
+                String trimmedExpression = property.expression.trim();
+                // We need to detect if the expression is already a map or if it's a pebble expression (for eg. referencing a variable containing a map).
+                // Doing that allows us to, if it's an expression, first render then read it as a map.
+                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                    property.value = MAPPER.readValue(runContext.render(property.expression, variables), targetMapType);
+                }
+                // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)
+                else {
+                    Map asRawMap = MAPPER.readValue(property.expression, Map.class);
+                    property.value = MAPPER.convertValue(runContext.render(asRawMap, variables), targetMapType);
+                }
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
         }
 
         return property.value;
-    }
-
-    /**
-     * Render a property then convert it to its target type.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public T as(RunContext runContext, Class<T> clazz) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression);
-            this.value = MAPPER.convertValue(rendered, clazz);
-        }
-
-        return this.value;
-    }
-
-    /**
-     * Render a property with additional variables, then convert it to its target type.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public T as(RunContext runContext, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression, variables);
-            this.value = MAPPER.convertValue(rendered, clazz);
-        }
-
-        return this.value;
-    }
-
-    /**
-     * Render a property then convert it as a list of target type.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public <I> T asList(RunContext runContext, Class<I> itemClazz) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression);
-            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
-            try {
-                this.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return this.value;
-    }
-
-    /**
-     * Render a property with additional variables, then convert it as a list of target type.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public <I> T asList(RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression, variables);
-            JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
-            try {
-                this.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return this.value;
-    }
-
-    /**
-     * Render a property then convert it as a map of target types.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public <K,V> T asMap(RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression);
-            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
-            try {
-                this.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return this.value;
-    }
-
-    /**
-     * Render a property with additional variables, then convert it as a map of target types.<br>
-     *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
-     *
-     * @deprecated use RunContext.render(Property) instead.
-     */
-    @Deprecated(forRemoval = true)
-    public <K,V> T asMap(RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (this.value == null) {
-            String rendered =  runContext.render(expression, variables);
-            JavaType type = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
-            try {
-                this.value = MAPPER.readValue(rendered, type);
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
-            }
-        }
-
-        return this.value;
     }
 
     @Override
@@ -345,11 +208,6 @@ public class Property<T> {
     @Override
     public int hashCode() {
         return Objects.hash(expression);
-    }
-
-    // used only by the serializer
-    String getExpression() {
-        return this.expression;
     }
 
     // used only by the value extractor

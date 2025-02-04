@@ -275,6 +275,29 @@ class PropertyTest {
         assertThat(prop, notNullValue());
     }
 
+    @Test
+    void arrayAndMapToRender() throws Exception {
+        var task = DynamicPropertyExampleTask.builder()
+            .items(new Property<>("{{renderOnce(listToRender)}}"))
+            .properties(new Property<>("{{renderOnce(mapToRender)}}"))
+            .build();
+        var runContext = runContextFactory.of(Map.ofEntries(
+            entry("arrayValueToRender", "arrayValue1"),
+            entry("listToRender", List.of("{{arrayValueToRender}}", "arrayValue2")),
+            entry("mapKeyToRender", "mapKey1"),
+            entry("mapValueToRender", "mapValue1"),
+            entry("mapToRender", Map.of("{{mapKeyToRender}}", "{{mapValueToRender}}", "mapKey2", "mapValue2"))
+        ));
+
+        var output = task.run(runContext);
+
+        assertThat(output, notNullValue());
+        assertThat(output.getList(), containsInAnyOrder("arrayValue1", "arrayValue2"));
+        assertThat(output.getMap(), aMapWithSize(2));
+        assertThat(output.getMap().get("mapKey1"), is("mapValue1"));
+        assertThat(output.getMap().get("mapKey2"), is("mapValue2"));
+    }
+
     @Builder
     @Getter
     private static class TestObj {

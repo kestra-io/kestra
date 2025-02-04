@@ -1,13 +1,11 @@
 package io.kestra.core.models.dashboards;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
 @Getter

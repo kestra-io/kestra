@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.plugins;
 
-import io.micronaut.http.uri.UriBuilder;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.plugins.PluginDownloader;
@@ -17,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import jakarta.inject.Inject;
 
@@ -25,13 +23,13 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @CommandLine.Command(
     name = "install",
-    description = "install a plugin"
+    description = "Install plugins"
 )
 public class PluginInstallCommand extends AbstractCommand {
-    @CommandLine.Parameters(index = "0..*", description = "the plugins to install")
+    @CommandLine.Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates.")
     List<String> dependencies = new ArrayList<>();
 
-    @CommandLine.Option(names = {"--repositories"}, description = "url to additional maven repositories")
+    @CommandLine.Option(names = {"--repositories"}, description = "URL to additional Maven repositories")
     private URI[] repositories;
 
     @CommandLine.Spec

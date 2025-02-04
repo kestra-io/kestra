@@ -35,6 +35,7 @@ type EditorField = Field & {
     navbar: boolean;
     input: boolean;
     lang: string;
+    shouldFocus: boolean;
     style: {
         height: string;
     };
@@ -49,20 +50,24 @@ export type Fields = {
     inputs: InputField;
     outputs: EditorField;
     variables: PairField;
-    concurrency?: ConcurrencyField; // TODO: Make it not optional
+    concurrency: ConcurrencyField;
     pluginDefaults: EditorField;
     disabled: Field;
-};
-
-export type Breadcrumb = {
-    label: string;
-    to: {
-        name: RouteRecordName;
-        params: RouteParams;
-    };
 };
 
 export type CollapseItem = {
     title: string;
     elements?: Record<string, any>[];
 };
+
+export type Breadcrumb = {
+    label: string;
+    to: {
+        name?: RouteRecordName;
+        params?: RouteParams;
+    };
+    component?: ReturnType<typeof defineComponent>;
+    panel?: boolean;
+};
+
+export type Component = ReturnType<typeof defineComponent>;

@@ -44,9 +44,9 @@
                                         <template #content>
                                             <span>This task has {{ item.attempts }} attempts.</span>
                                         </template>
-                                        <Warning 
-                                            v-if="item.attempts > 1" 
-                                            class="attempt_warn me-3" 
+                                        <Warning
+                                            v-if="item.attempts > 1"
+                                            class="attempt_warn me-3"
                                         />
                                     </el-tooltip>
                                 </div>
@@ -103,34 +103,35 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import Warning from "vue-material-design-icons/Alert.vue"
-
+    import Warning from "vue-material-design-icons/Alert.vue";
 
     const ts = date => new Date(date).getTime();
-    const TASKRUN_THRESHOLD = 50
+    const TASKRUN_THRESHOLD = 50;
     export default {
         components: {DynamicScroller,Warning, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
         data() {
             return {
                 colors: State.colorClass(),
                 series: [],
-                realTime: true,
                 dates: [],
                 duration: undefined,
                 selectedTaskRuns: [],
+                regularPaintingInterval: undefined,
                 taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
             };
         },
         watch: {
-            execution(newValue, oldValue) {
-                if (oldValue.id !== newValue.id && !this.realTime) {
-                    this.realTime = true;
-                    this.selectedTaskRuns = [];
-                    this.paint();
-                }
-                if(newValue.state?.current === State.SUCCESS){
-                    this.compute()
-                }
+            execution: {
+                handler(newValue) {
+                    if (!State.isRunning(newValue.state?.current)) {
+                        clearInterval(this.regularPaintingInterval);
+                        this.regularPaintingInterval = undefined;
+                        this.compute();
+                    } else if (this.regularPaintingInterval === undefined) {
+                        this.regularPaintingInterval = setInterval(this.compute, this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500);
+                    }
+                },
+                immediate: true
             },
             forEachItemsTaskRunIds: {
                 handler(newValue, oldValue) {
@@ -143,9 +144,6 @@
                 },
                 immediate: true
             }
-        },
-        mounted() {
-            this.paint();
         },
         computed: {
             ...mapState("execution", ["flow", "execution"]),
@@ -217,17 +215,6 @@
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
-            paint() {
-                const repaint = () => {
-                    this.compute()
-                    if (this.realTime) {
-                        const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
-                        setTimeout(repaint, delay);
-                    }
-                }
-
-                repaint();
-            },
             compute() {
                 this.computeSeries();
                 this.computeDates();
@@ -248,10 +235,6 @@
             computeSeries() {
                 if (!this.execution) {
                     return;
-                }
-
-                if (!State.isRunning(this.execution.state.current)) {
-                    this.stopRealTime();
                 }
 
                 const series = [];
@@ -325,16 +308,13 @@
 
                 this.selectedTaskRuns.push(taskRunId);
             },
-            stopRealTime() {
-                this.realTime = false
-            },
             taskType(taskRun) {
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
                 return task?.type;
             }
         },
         unmounted() {
-            this.stopRealTime();
+            clearInterval(this.regularPaintingInterval);
         }
     };
 </script>
@@ -410,7 +390,7 @@
                         color: var(--ks-content-primary);
                     }
                 }
-                
+
                 .attempt_warn{
                     color: var(--el-color-warning);
                     vertical-align: middle;

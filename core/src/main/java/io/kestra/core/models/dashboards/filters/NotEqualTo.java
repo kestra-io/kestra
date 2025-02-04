@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
+@Schema(title = "NOT_EQUAL_TO")
 public class NotEqualTo <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude

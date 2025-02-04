@@ -7,6 +7,7 @@
             :content="card.content"
             :category="card.category"
             :link="card.link"
+            @click="handleCardClick(card)"
         />
     </div>
 </template>
@@ -39,6 +40,20 @@
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"])
+        },
+        methods: {
+            startTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$tours["guidedTour"]?.start();
+            },
+            handleCardClick(card) {
+                if (card.category === "tour") {
+                    this.startTour();
+                } else if (card.category === "help") {
+                    window.open("https://kestra.io/slack", "_blank");
+                }
+            }
         }
     }
 </script>

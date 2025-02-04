@@ -15,6 +15,9 @@ export default {
         toggleExplorerVisibility(state, isVisible) {
             state.explorerVisible = isVisible ?? !state.explorerVisible;
         },
+        closeExplorer(state) {
+            state.explorerVisible = false;
+        },
         changeExplorerWidth(state, width) {
             state.explorerWidth = width > 40 ? 40 : width < 20 ? 20 : width;
         },

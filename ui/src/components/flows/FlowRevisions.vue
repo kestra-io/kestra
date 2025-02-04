@@ -9,64 +9,55 @@
             />
         </el-select>
         <el-row :gutter="15">
-            <el-col :span="12" v-if="revisionLeft !== undefined">
+            <el-col :span="12" v-if="revisionLeftIndex !== undefined">
                 <div class="revision-select mb-3">
-                    <el-select v-model="revisionLeft">
+                    <el-select v-model="revisionLeftIndex" @change="addQuery">
                         <el-option
-                            v-for="item in options"
+                            v-for="item in options(revisionRightIndex)"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button :icon="FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
+                        <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <el-alert v-if="revisionLeftError" type="warning" show-icon :closable="false" class="mb-0 mt-3">
-                    <strong>{{ $t('invalid source') }}</strong><br>
-                    {{ revisionLeftError }}
-                </el-alert>
-
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeft)}" />
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
             </el-col>
-            <el-col :span="12" v-if="revisionRight !== undefined">
+            <el-col :span="12" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select mb-3">
-                    <el-select v-model="revisionRight">
+                    <el-select v-model="revisionRightIndex" @change="addQuery">
                         <el-option
-                            v-for="item in options"
+                            v-for="item in options(revisionLeftIndex)"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button :icon="FileCode" @click="seeRevision(revisionRight, revisionRightText)">
+                        <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <el-alert v-if="revisionRightError" type="warning" show-icon :closable="false" class="mb-0 mt-3">
-                    <strong>{{ $t('invalid source') }}</strong><br>
-                    {{ revisionRightError }}
-                </el-alert>
-
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRight)}" />
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRightIndex)}" />
             </el-col>
         </el-row>
 
         <editor
             class="mt-1"
+            v-if="revisionLeftText && revisionRightText"
             :diff-side-by-side="sideBySide"
             :model-value="revisionRightText"
             :original="revisionLeftText"
@@ -96,7 +87,6 @@
 
 <script>
     import {mapState} from "vuex";
-    import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../../components/inputs/Editor.vue";
     import Crud from "override/components/auth/Crud.vue";
     import Drawer from "../Drawer.vue";
@@ -109,44 +99,48 @@
         },
         methods: {
             load() {
-                this.$store
-                    .dispatch("flow/loadRevisions", this.$route.params)
-                    .then(() => {
-                        const revisionLength = this.revisions.length;
-                        if (revisionLength > 0) {
-                            this.revisionRight = revisionLength - 1;
-                        }
-                        if (revisionLength > 1) {
-                            this.revisionLeft = revisionLength - 2;
-                        }
-                        if (this.$route.query.revisionRight) {
-                            this.revisionRight = this.revisionIndex(
-                                this.$route.query.revisionRight
-                            );
-                            if (
-                                !this.$route.query.revisionLeft &&
-                                this.revisionRight > 0
-                            ) {
-                                this.revisionLeft = this.revisions.length - 1;
-                            }
-                        }
-                        if (this.$route.query.revisionLeft) {
-                            this.revisionLeft = this.revisionIndex(
-                                this.$route.query.revisionLeft
-                            );
-                        }
-                    });
-            },
-            revisionIndex(revision) {
-                const rev = parseInt(revision);
-                for (let i = 0; i < this.revisions.length; i++) {
-                    if (rev === this.revisions[i].revision) {
-                        return i;
+                const currentRevision = this.flow.revision;
+
+                this.revisions = [...Array(currentRevision).keys()].map(((k, i) => {
+                    if (currentRevision === this.revisionNumber(i)) {
+                        return this.flow;
                     }
+                    return {revision: i + 1};
+                }));
+
+                if (this.$route.query.revisionRight) {
+                    this.revisionRightIndex = this.revisionIndex(
+                        this.$route.query.revisionRight
+                    );
+                    if (
+                        !this.$route.query.revisionLeft &&
+                        this.revisionRightIndex > 0
+                    ) {
+                        this.revisionLeftIndex = this.revisionRightIndex - 1;
+                    }
+                } else if (currentRevision > 0) {
+                    this.revisionRightIndex = currentRevision - 1;
+                }
+
+                if (this.$route.query.revisionLeft) {
+                    this.revisionLeftIndex = this.revisionIndex(
+                        this.$route.query.revisionLeft
+                    );
+                } else if (currentRevision > 1) {
+                    this.revisionLeftIndex = currentRevision - 2;
                 }
             },
+            revisionIndex(revision) {
+                const revisionInt = parseInt(revision);
+
+                if (revisionInt < 1 || revisionInt > this.revisions.length) {
+                    return undefined;
+                }
+
+                return revisionInt - 1;
+            },
             revisionNumber(index) {
-                return this.revisions[index].revision;
+                return index + 1;
             },
             seeRevision(index, revision) {
                 this.revisionId = index
@@ -167,61 +161,74 @@
             addQuery() {
                 this.$router.push({query: {
                     ...this.$route.query,
-                    ...{revisionLeft:this.revisionLeft + 1, revisionRight: this.revisionRight + 1}}
+                    ...{revisionLeft:this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1}}
                 });
             },
-            transformRevision(source) {
-                if (source.exception) {
-                    return YamlUtils.stringify(YamlUtils.parse(source.source));
-                }
+            async fetchRevision(revision) {
+                const revisionFetched = await this.$store.dispatch("flow/loadFlow", {
+                    namespace: this.flow.namespace,
+                    id: this.flow.id,
+                    revision,
+                    allowDeleted: true,
+                    store: false
+                });
+                this.revisions[this.revisionIndex(revision)] = revisionFetched;
 
-                return source.source ? source.source : YamlUtils.stringify(source);
+                return revisionFetched;
+            },
+            options(excludeRevisionIndex) {
+                return this.revisions
+                    .filter((_, index) => index !== excludeRevisionIndex)
+                    .map(({revision}) => ({value: this.revisionIndex(revision), text: revision}));
             }
         },
         computed: {
-            ...mapState("flow", ["flow", "revisions"]),
-            options() {
-                return (this.revisions || []).map((revision, x) => {
-                    return {
-                        value: x,
-                        text: revision.revision,
-                    };
-                });
-            },
-            revisionLeftError() {
-                if (this.revisionLeft === undefined) {
-                    return "";
+            ...mapState("flow", ["flow"])
+        },
+        watch: {
+            revisionLeftIndex: async function (newValue, oldValue) {
+                if (newValue === oldValue) {
+                    return;
                 }
 
-                return this.revisions[this.revisionLeft].exception
-            },
-            revisionRightError() {
-                if (this.revisionRight === undefined) {
-                    return "";
+                if (newValue === undefined) {
+                    this.revisionLeftText = undefined;
                 }
 
-                return this.revisions[this.revisionRight].exception
-            },
-            revisionLeftText() {
-                if (this.revisionLeft === undefined) {
-                    return "";
+                const leftRevision = this.revisions[newValue];
+                let source = leftRevision.source;
+                if (!source) {
+                    source = (await this.fetchRevision(leftRevision.revision)).source;
                 }
 
-                return this.transformRevision(this.revisions[this.revisionLeft]);
+                this.revisionLeftText = source;
             },
-            revisionRightText() {
-                if (this.revisionRight === undefined) {
-                    return "";
+            revisionRightIndex: async function (newValue, oldValue) {
+                if (newValue === oldValue) {
+                    return;
                 }
 
-                return this.transformRevision(this.revisions[this.revisionRight]);
-            },
+                if (newValue === undefined) {
+                    this.revisionRightText = undefined;
+                }
+
+                const rightRevision = this.revisions[newValue];
+                let source = rightRevision.source;
+                if (!source) {
+                    source = (await this.fetchRevision(rightRevision.revision)).source;
+                }
+
+                this.revisionRightText = source;
+            }
         },
         data() {
             return {
-                revisionLeft: undefined,
-                revisionRight: undefined,
+                revisionLeftIndex: undefined,
+                revisionRightIndex: undefined,
+                revisionLeftText: undefined,
+                revisionRightText: undefined,
                 revision: undefined,
+                revisions: [],
                 revisionId: undefined,
                 revisionYaml: undefined,
                 sideBySide: true,

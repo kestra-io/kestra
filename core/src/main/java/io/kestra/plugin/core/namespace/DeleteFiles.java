@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -75,8 +76,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
     @Schema(
         title = "The namespace from which the files should be deleted."
     )
-    @PluginProperty(dynamic = true)
-    private String namespace;
+    private Property<String> namespace;
 
     @NotNull
     @Schema(
@@ -92,15 +92,14 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         description = "If true, parent folders that become empty after file deletion will also be removed.",
         defaultValue = "false"
     )
-    @PluginProperty(dynamic = false)
     @Builder.Default
-    private Boolean deleteParentFolder = false;
+    private Property<Boolean> deleteParentFolder = Property.of(false);
 
     @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
-        String renderedNamespace = runContext.render(this.namespace);
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
 
         final Namespace namespace = runContext.storage().namespace(renderedNamespace);
 
@@ -113,15 +112,17 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
             throw new IllegalArgumentException("Files must be a String or a list of String");
         }
 
+        var deleteParent = runContext.render(this.deleteParentFolder).as(Boolean.class).orElseThrow();
+
         List<NamespaceFile> matched = namespace.findAllFilesMatching(PathMatcherPredicate.matches(renderedFiles));
-        Set<String> parentFolders = Boolean.TRUE.equals(deleteParentFolder) ? new TreeSet<>() : null;
+        Set<String> parentFolders = Boolean.TRUE.equals(deleteParent) ? new TreeSet<>() : null;
         long count = matched
             .stream()
             .map(Rethrow.throwFunction(file -> {
                 if (namespace.delete(NamespaceFile.of(renderedNamespace, Path.of(file.path().replace("\\","/"))).storagePath())) {
                     logger.debug(String.format("Deleted %s", (file.path())));
 
-                    if (Boolean.TRUE.equals(deleteParentFolder)) {
+                    if (Boolean.TRUE.equals(deleteParent)) {
                         trackParentFolder(file, parentFolders);
                     }
                     return true;

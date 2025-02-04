@@ -11,7 +11,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "template",
-    description = "handle templates",
+    description = "Manage templates",
     mixinStandardHelpOptions = true,
     subcommands = {
         TemplateNamespaceCommand.class,

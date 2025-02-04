@@ -605,7 +605,8 @@
     };
 </script>
 <style>
-    .el-input-number {
+
+    .settings-wrapper .el-input-number {
         max-width: 20vw;
     }
 

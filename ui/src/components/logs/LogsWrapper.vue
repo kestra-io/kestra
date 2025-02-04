@@ -28,14 +28,14 @@
                 <template #table v-if="logs !== undefined && logs.length > 0">
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
-                            <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
-                                <log-line
-                                    level="TRACE"
-                                    filter=""
-                                    :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
-                                    :log="log"
-                                />
-                            </template>
+                            <log-line
+                                v-for="(log, i) in logs"
+                                :key="`${log.taskRunId}-${i}`"
+                                level="TRACE"
+                                filter=""
+                                :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                :log="log"
+                            />
                         </div>
                     </div>
                 </template>

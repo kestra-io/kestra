@@ -14,7 +14,7 @@ import java.util.Map;
 
 @CommandLine.Command(
     name = "scheduler",
-    description = "start an scheduler"
+    description = "Start the Kestra scheduler"
 )
 @Slf4j
 public class SchedulerCommand extends AbstractServerCommand {

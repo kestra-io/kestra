@@ -60,11 +60,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     protected HttpConfiguration options;
 
     @Deprecated
-    @Builder.Default
     @Schema(
-        title = "If true, allow a failed response code (response code >= 400)"
+        title = "If true, allow a failed response code (response code >= 400)",
+        description = "Deprecated, use `options.allowFailed` instead."
     )
-    private Property<Boolean> allowFailed = Property.of(false);
+    private Property<Boolean> allowFailed;
 
     @Deprecated
     public void setAllowFailed(Property<Boolean> allowFailed) {

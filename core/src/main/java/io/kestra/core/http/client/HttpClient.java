@@ -248,7 +248,7 @@ public class HttpClient implements Closeable {
         HttpClientResponseHandler<HttpResponse<T>> responseHandler
     ) throws HttpClientException {
         try {
-            return this.client.execute(request.to(), httpClientContext, responseHandler);
+            return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
         } catch (SocketException e) {
             throw new HttpClientRequestException(e.getMessage(), request, e);
         } catch (IOException e) {

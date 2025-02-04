@@ -35,6 +35,8 @@ public class Executor {
     private final List<WorkerTrigger> workerTriggers = new ArrayList<>();
     private WorkerJob workerJobToResubmit;
     private State.Type originalState;
+    private SubflowExecutionEnd subflowExecutionEnd;
+    private SubflowExecutionEnd joinedSubflowExecutionEnd;
 
     /**
      * The sequence id should be incremented each time the execution is persisted after mutation.
@@ -65,6 +67,10 @@ public class Executor {
 
     public Executor(SubflowExecutionResult subflowExecutionResult) {
         this.joinedSubflowExecutionResult = subflowExecutionResult;
+    }
+
+    public Executor(SubflowExecutionEnd subflowExecutionEnd) {
+        this.joinedSubflowExecutionEnd = subflowExecutionEnd;
     }
 
     public Executor(WorkerJob workerJob) {
@@ -166,6 +172,11 @@ public class Executor {
 
     public Executor withExecutionKilled(final List<ExecutionKilledExecution> executionKilled) {
         this.executionKilled = executionKilled;
+        return this;
+    }
+
+    public Executor withSubflowExecutionEnd(SubflowExecutionEnd subflowExecutionEnd) {
+        this.subflowExecutionEnd = subflowExecutionEnd;
         return this;
     }
 

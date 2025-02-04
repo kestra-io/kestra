@@ -23,12 +23,38 @@ $code-font-sm: var(--el-font-size-small);
     }
 }
 
+.collapse {
+    & * {
+        font-size: $code-font-sm;
+    }
+
+    :deep(*) {
+        --el-collapse-header-bg-color: initial;
+        --el-collapse-header-text-color: #{$code-gray-700};
+        --el-collapse-content-bg-color: initial;
+
+        .el-collapse-item__header,
+        .el-collapse-item__content {
+            padding: 0.5rem 0;
+        }
+
+        .el-collapse-item__header {
+            justify-content: space-between;
+
+            &.is-active {
+                color: $code-primary;
+            }
+        }
+    }
+}
+
 .label {
     color: $code-gray-700;
     font-size: $code-font-sm;
 }
 
-.delete {
+.delete,
+.reorder {
     cursor: pointer;
     padding-left: 0;
     color: $code-gray-700;
@@ -39,7 +65,8 @@ $code-font-sm: var(--el-font-size-small);
     :deep(*) {
         --el-disabled-text-color: #{$code-gray-700};
 
-        .el-input__inner {
+        .el-input__inner,
+        .el-textarea__inner {
             color: $code-gray-700;
             font-size: $code-font-sm;
         }

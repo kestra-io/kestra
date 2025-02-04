@@ -3,7 +3,8 @@ import {apiUrl} from "override/utils/route";
 export default {
     namespaced: true,
     state: {
-        configs: undefined
+        configs: undefined,
+        contextInfoBarOpenTab: "",
     },
     actions: {
         loadConfigs({commit}) {
@@ -40,11 +41,17 @@ export default {
     mutations: {
         setConfigs(state, configs) {
             state.configs = configs
+        },
+        setContextInfoBarOpenTab(state, value) {
+            state.contextInfoBarOpenTab = value
         }
     },
     getters: {
         configs(state) {
             return state.configs;
+        },
+        contextInfoBarOpenTab(state) {
+            return state.contextInfoBarOpenTab;
         }
     }
 }

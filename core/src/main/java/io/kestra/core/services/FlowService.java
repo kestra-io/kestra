@@ -172,13 +172,15 @@ public class FlowService {
         subFlows.forEach(subflow -> {
             Optional<Flow> optional = findById(flow.getTenantId(), subflow.getNamespace(), subflow.getFlowId());
 
-            violations.add(ManualConstraintViolation.of(
-                "The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.",
-                flow,
-                Flow.class,
-                "flow.tasks",
-                flow.getNamespace()
-            ));
+            if (optional.isEmpty()) {
+                violations.add(ManualConstraintViolation.of(
+                    "The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.",
+                    flow,
+                    Flow.class,
+                    "flow.tasks",
+                    flow.getNamespace()
+                ));
+            }
         });
 
         if (!violations.isEmpty()) {

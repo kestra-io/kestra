@@ -266,7 +266,9 @@
         },
         "alt": "Icône des Blueprints"
       },
-      "empty": "Aucun blueprint à afficher."
+      "empty": "Aucun blueprint à afficher.",
+      "custom": "Plans personnalisés",
+      "community": "Communauté"
     },
     "use": "Utiliser",
     "plugins": {
@@ -524,7 +526,6 @@
     "worker group": "Worker Group",
     "version": "Version",
     "services": "Services",
-    "cluster": "Cluster",
     "server type": "Type de serveur",
     "hostname": "Nom d'hôte",
     "port": "Port",
@@ -870,7 +871,8 @@
       "see_all": "Voir tout",
       "success_ratio_tooltip": "Le ratio de succès est la somme des exécutions en état SUCCESS, CANCELLED et WARNING divisée par le nombre total d'exécutions dans un état terminé.",
       "failure_ratio_tooltip": "Le ratio d'échec est la somme des exécutions en état FAILED, KILLED et RETRIED divisée par le nombre total d'exécutions dans un état terminé.",
-      "preview": "Aperçu du tableau de bord"
+      "preview": "Aperçu du tableau de bord",
+      "click_chart_preview": "Cliquez sur un code source de graphique pour voir l'aperçu"
     },
     "delete_log": "Êtes-vous sûr de vouloir supprimer le log ?",
     "docs": "Documentation",
@@ -1065,19 +1067,23 @@
         "triggers": "Déclencheurs",
         "main": "Principales propriétés",
         "error_handlers": "Gestionnaires d'erreurs",
-        "tasks": "Tâches"
+        "tasks": "Tâches",
+        "advanced": "Configuration avancée",
+        "finally": "Enfin"
       },
       "creation": {
         "select": "Sélectionnez une {section}",
         "tasks": "Ajouter une tâche",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
-        "triggers": "Ajouter un trigger"
+        "triggers": "Ajouter un trigger",
+        "finally": "Ajouter un bloc finally"
       },
       "save": {
         "tasks": "Enregistrer la tâche",
         "triggers": "Enregistrer le trigger",
         "error handlers": "Enregistrer le gestionnaire d'erreurs",
-        "input": "Enregistrer l'input"
+        "input": "Enregistrer l'input",
+        "finally": "Enregistrer la task"
       },
       "labels": {
         "no_code": "Éditeur sans code",
@@ -1089,6 +1095,70 @@
       "adding_default": "+ Ajouter une nouvelle valeur"
     },
     "export_to_file": "Exporter vers un fichier",
-    "change state current state": "Statut actuel :"
+    "change state current state": "Statut actuel :",
+    "create_dashboard": "Créer un tableau de bord",
+    "instance": "Instance",
+    "demos": {
+      "namespace": {
+        "plugin-defaults": {
+          "title": "Standardiser la Configuration avec les Valeurs par Défaut du Plugin",
+          "message": "Dans Kestra Enterprise Edition, vous pouvez définir des paramètres par défaut spécifiques au namespace pour les plugins, réduisant ainsi le besoin de configurations dupliquées dans chaque flow. Cette gouvernance centrale des plugins impose des configurations cohérentes, permet une référence sécurisée des secrets ou des variables, et simplifie la maintenance de vos workflows."
+        },
+        "audit-logs": {
+          "message": "Dans Kestra Enterprise Edition, vous pouvez consulter les logs d'audit au niveau du namespace avec des différences détaillées, vous offrant un historique clair de qui a modifié quoi et quand à travers toutes les ressources.",
+          "title": "Suivez tous les changements en un seul endroit"
+        },
+        "secrets": {
+          "title": "Gérer les secrets de manière sécurisée",
+          "message": "Dans Kestra Enterprise Edition, vous pouvez stocker et contrôler les secrets au niveau du namespace, minimisant ainsi les risques et garantissant que les identifiants de chaque équipe restent isolés. Grâce à la hiérarchie imbriquée, vous pouvez également configurer des identifiants dans un namespace parent et ils seront hérités par tous les namespaces enfants. Le support pour les gestionnaires de secrets dédiés et les paramètres de permission au niveau du namespace renforcent encore la sécurité et la conformité."
+        },
+        "variables": {
+          "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir.",
+          "title": "Gérez vos Variables de manière centralisée"
+        },
+        "edit": {
+          "message": "Dans l'édition Kestra Enterprise, les namespaces offrent une isolation avancée et une gouvernance des secrets, variables et paramètres par défaut des plugins à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des stockages backends isolés, des groupes de workers dédiés, et des permissions fines par namespace. Cela garantit que les secrets, variables et configurations de plugins restent sécurisés et faciles à maintenir à travers différentes équipes et projets.",
+          "title": "Améliorez la Gestion de votre Namespace"
+        }
+      },
+      "instance": {
+        "title": "Gérer l'infrastructure sur votre instance",
+        "message": "L'édition Enterprise de Kestra fournit un tableau de bord opérationnel pour vous aider à observer la santé de votre plateforme et à suivre les métriques de disponibilité de tous les services tels que, entre autres, les Workers, les Schedulers et les Executors. Depuis la même page, vous pouvez également créer des annonces pour informer vos utilisateurs des interruptions planifiées, et vous pouvez entrer en mode maintenance, ce qui met temporairement tous les services et les exécutions de workflow dans un état PAUSED pour effectuer une mise à niveau."
+      },
+      "audit-logs": {
+        "message": "L'édition Kestra Enterprise enregistre chaque activité avec des enregistrements robustes et immuables, ce qui facilite le suivi des modifications, le maintien de la conformité et la résolution des problèmes.",
+        "title": "Suivre les modifications avec les Audit Logs"
+      },
+      "blueprints": {
+        "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe.",
+        "title": "Ajouter des Blueprints Personnalisés"
+      },
+      "enterprise_edition": "Édition Enterprise",
+      "IAM": {
+        "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",
+        "message": "L'édition Kestra Enterprise dispose de capacités IAM intégrées avec une authentification unique (SSO), une synchronisation de répertoire SCIM et un contrôle d'accès basé sur les rôles (RBAC), s'intégrant avec plusieurs fournisseurs d'identité et vous permettant d'attribuer des permissions détaillées aux utilisateurs et aux comptes de service."
+      },
+      "tenants": {
+        "title": "Gérer les flux de travail dans des tenants isolés",
+        "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes."
+      },
+      "get_a_demo_button": "Obtenir une démo",
+      "apps": {
+        "title": "Créez des applications personnalisées avec Kestra",
+        "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation."
+      }
+    },
+    "apps": "Applications",
+    "editor_shortcuts": {
+      "save_flow": "Enregistrer le flow",
+      "comment_uncomment": "Commenter/Décommenter",
+      "duplicate_cursor": "Dupliquer le curseur",
+      "uncomment": "Décommenter",
+      "label": "Raccourcis clavier",
+      "fold_unfold": "Plier/Déplier le code",
+      "comment": "Commentaire",
+      "move_line": "Déplacer la ligne",
+      "command_palette": "Afficher la palette de commandes"
+    }
   }
 }

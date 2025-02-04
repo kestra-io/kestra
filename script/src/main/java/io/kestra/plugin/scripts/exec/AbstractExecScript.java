@@ -15,7 +15,6 @@ import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -106,6 +105,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         title = "The target operating system where the script will run."
     )
     @Builder.Default
+    @NotNull
     protected Property<TargetOS> targetOS = Property.of(TargetOS.AUTO);
 
     @Schema(
@@ -122,6 +122,14 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     public abstract Property<String> getContainerImage();
 
     /**
+     * @deprecated use {@link #injectDefaults(RunContext, DockerOptions)}
+     */
+    @Deprecated(forRemoval = true, since = "0.21")
+    protected DockerOptions injectDefaults(@NotNull DockerOptions original) {
+        return original;
+    }
+
+    /**
      * Allow setting Docker options defaults values.
      * To make it work, it is advised to set the 'docker' field like:
      *
@@ -135,8 +143,9 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
      *     protected DockerOptions docker = DockerOptions.builder().build();
      * }</pre>
      */
-    protected DockerOptions injectDefaults(@NotNull DockerOptions original) {
-        return original;
+    protected DockerOptions injectDefaults(RunContext runContext, @NotNull DockerOptions original) throws IllegalVariableEvaluationException {
+        // FIXME to keep backward compatibility, we call the old method from the new one by default
+        return injectDefaults(original);
     }
 
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
@@ -151,7 +160,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
             .withTaskRunner(this.getTaskRunner())
-            .withDockerOptions(this.getDocker() != null ? this.injectDefaults(this.getDocker()) : null)
+            .withDockerOptions(this.getDocker() != null ? this.injectDefaults(runContext, this.getDocker()) : null)
             .withNamespaceFiles(this.getNamespaceFiles())
             .withInputFiles(this.getInputFiles())
             .withOutputFiles(runContext.render(this.getOutputFiles()).asList(String.class))
@@ -170,11 +179,11 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         }
 
         if (commands == null || commands.isEmpty()) {
-            return getExitOnErrorCommands();
+            return getExitOnErrorCommands(runContext);
         }
 
         ArrayList<String> newCommands = new ArrayList<>(commands.size() + 1);
-        newCommands.addAll(getExitOnErrorCommands());
+        newCommands.addAll(getExitOnErrorCommands(runContext));
         newCommands.addAll(commands);
         return newCommands;
     }
@@ -183,9 +192,12 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
      * Gets the list of additional commands to be used for defining interpreter errors handling.
      * @return   list of commands;
      */
-    protected List<String> getExitOnErrorCommands() {
+    protected List<String> getExitOnErrorCommands(RunContext runContext) throws IllegalVariableEvaluationException {
+        TargetOS rendered = runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow();
+
         // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
-        if (this.getTargetOS().equals(TargetOS.WINDOWS) || this.getTargetOS().equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process) {
+        if (rendered == TargetOS.WINDOWS ||
+            (rendered == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)) {
             return List.of("");
         }
         // errexit option may be unsupported by non-shell interpreter.

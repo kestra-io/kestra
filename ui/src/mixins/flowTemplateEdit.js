@@ -262,8 +262,8 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
-            if (taskType && this.pluginSingleList.includes(taskType)) {
+            const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
+            if (taskType) {
                 this.$store.dispatch("plugin/load", {cls: taskType})
                     .then(plugin => {
                         this.$store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});

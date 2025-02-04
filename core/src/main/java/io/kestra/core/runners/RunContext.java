@@ -126,6 +126,7 @@ public abstract class RunContext {
 
     /**
      * Cleanup any temporary resources, files created through this context.
+     * Also reset logs MDC so the logger should not be used after this point.
      */
     public abstract void cleanup();
 

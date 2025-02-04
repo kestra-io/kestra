@@ -51,10 +51,7 @@
             ...mapState("plugin", ["inputSchema", "inputsType"]),
         },
         mounted() {
-            if (this.inputs && this.inputs.length > 0) {
-                if (this.inputs.at(-1).length) this.newInputs = this.inputs.at(-1);
-                else this.newInputs = this.inputs;
-            }
+            this.newInputs = this.inputs;
 
             this.$store
                 .dispatch("plugin/loadInputsType")
@@ -62,7 +59,7 @@
         },
         data() {
             return {
-                newInputs: [{type: "STRING"}],
+                newInputs: [],
                 selectedInput: undefined,
                 selectedIndex: undefined,
                 isEditOpen: false,
@@ -122,10 +119,11 @@
                 }
             },
             updateSelected(value) {
-                this.newInputs[this.selectedIndex] = value;
+                this.newInputs = value;
             },
             deleteInput(index) {
                 this.newInputs.splice(index, 1);
+                this.$emit("update:modelValue", this.newInputs);
             },
             addInput() {
                 this.newInputs.push({type: "STRING"});

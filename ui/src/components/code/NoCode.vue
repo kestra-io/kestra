@@ -13,6 +13,8 @@
             :metadata
             @update-metadata="(k, v) => emits('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emits('updateTask', yaml)"
+            @reorder="(yaml) => emits('reorder', yaml)"
+            @update-documentation="(task) => emits('updateDocumentation', task)"
         />
     </div>
 </template>
@@ -25,7 +27,12 @@
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
 
-    const emits = defineEmits(["updateTask", "updateMetadata"]);
+    const emits = defineEmits([
+        "updateTask",
+        "updateMetadata",
+        "updateDocumentation",
+        "reorder",
+    ]);
     const props = defineProps({
         flow: {type: String, required: true},
     });

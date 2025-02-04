@@ -266,7 +266,9 @@
         },
         "alt": "ブループリントアイコン"
       },
-      "empty": "設計図が表示されていません。"
+      "empty": "設計図が表示されていません。",
+      "custom": "カスタムblueprint",
+      "community": "コミュニティ"
     },
     "use": "使用",
     "plugins": {
@@ -524,7 +526,6 @@
     "worker group": "Workerグループ",
     "version": "バージョン",
     "services": "サービス",
-    "cluster": "クラスター",
     "server type": "サーバータイプ",
     "hostname": "ホスト名",
     "port": "ポート",
@@ -870,7 +871,8 @@
       "see_all": "すべて表示",
       "success_ratio_tooltip": "成功率は、SUCCESS、CANCELLED、WARNINGの実行の合計を、終了状態にある実行の総数で割ったものです。",
       "failure_ratio_tooltip": "失敗率は、FAILED、KILLED、および RETRIED の実行の合計を、終了状態にある実行の総数で割ったものです。",
-      "preview": "ダッシュボードプレビュー"
+      "preview": "ダッシュボードプレビュー",
+      "click_chart_preview": "チャートのソースコードをクリックしてプレビューを表示"
     },
     "delete_log": "ログを削除してもよろしいですか？",
     "docs": "ドキュメント",
@@ -1065,19 +1067,23 @@
         "triggers": "トリガー",
         "main": "メインプロパティ",
         "error_handlers": "エラーハンドラー",
-        "tasks": "タスク"
+        "tasks": "タスク",
+        "advanced": "高度な設定",
+        "finally": "最後に"
       },
       "creation": {
         "select": "{section}を選択してください",
         "tasks": "タスクを追加",
         "error handlers": "エラーハンドラーを追加",
-        "triggers": "トリガーを追加"
+        "triggers": "トリガーを追加",
+        "finally": "finally ブロックを追加"
       },
       "save": {
         "tasks": "タスクを保存",
         "triggers": "トリガーを保存",
         "error handlers": "エラーハンドラーを保存",
-        "input": "入力を保存"
+        "input": "入力を保存",
+        "finally": "タスクを保存"
       },
       "labels": {
         "no_code": "コードエディタなし",
@@ -1089,6 +1095,70 @@
       "adding_default": "+ 新しいvalueを追加"
     },
     "export_to_file": "ファイルにエクスポート",
-    "change state current state": "現在のステータスは:"
+    "change state current state": "現在のステータスは:",
+    "create_dashboard": "ダッシュボードを作成",
+    "instance": "インスタンス",
+    "demos": {
+      "namespace": {
+        "plugin-defaults": {
+          "title": "プラグインのデフォルトで設定を標準化する",
+          "message": "Kestra Enterprise Editionでは、namespace固有のプラグインデフォルトを設定でき、各flowでの重複した設定の必要性を減らします。この中央プラグインガバナンスは、一貫した設定を強制し、秘密情報や変数の安全な参照を可能にし、ワークフローのメンテナンスを簡素化します。"
+        },
+        "audit-logs": {
+          "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。",
+          "title": "すべての変更を一箇所で追跡"
+        },
+        "secrets": {
+          "title": "秘密を安全に管理する方法",
+          "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および管理することができ、リスクを最小限に抑え、各チームの認証情報を分離して保持します。ネストされた階層のおかげで、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーのサポートと詳細なnamespaceレベルの権限設定により、セキュリティとコンプライアンスがさらに強化されます。"
+        },
+        "variables": {
+          "message": "Kestra Enterprise Editionでは、namespaceレベルの変数を定義および管理することで、flow全体での繰り返しの設定を排除できます。これらの変数は一貫性を確保し、設定の更新を簡素化し、どのtaskやtriggerからも簡単に参照できるため、よりクリーンで保守しやすいワークフローを実現します。",
+          "title": "変数を中央で管理する"
+        },
+        "edit": {
+          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。",
+          "title": "名前空間管理をアップグレードする"
+        }
+      },
+      "instance": {
+        "title": "インスタンス全体のインフラストラクチャを管理する",
+        "message": "Kestra Enterprise Editionは、プラットフォームの健康状態を観察し、Workers、Schedulers、Executorsなどのすべてのサービスの稼働時間メトリクスを追跡するための運用ダッシュボードを提供します。同じページから、計画されたダウンタイムについてユーザーに通知するためのアナウンスを作成することもでき、アップグレードを実行するためにすべてのサービスとワークフローの実行を一時的にPAUSED状態にするメンテナンスモードに入ることもできます。"
+      },
+      "audit-logs": {
+        "message": "Kestra Enterprise Editionは、すべてのアクティビティを堅牢で不変の記録としてログに記録し、変更の追跡、コンプライアンスの維持、問題のトラブルシューティングを容易にします。",
+        "title": "監査Logで変更を追跡"
+      },
+      "blueprints": {
+        "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。",
+        "title": "カスタムBlueprintの追加"
+      },
+      "enterprise_edition": "エンタープライズエディション",
+      "IAM": {
+        "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
+        "message": "Kestra Enterprise Editionには、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースのアクセス制御（RBAC）を備えた組み込みのIAM機能があり、複数のアイデンティティプロバイダーと統合し、ユーザーおよびサービスアカウントに対して詳細な権限を割り当てることができます。"
+      },
+      "tenants": {
+        "title": "隔離されたTenantでWorkflowを管理する",
+        "message": "Kestra Enterprise Editionはマルチテナンシーをサポートしており、異なるチームやプロジェクトごとに完全に分離された環境を提供します。それぞれの環境には、専用のworkerグループやシークレット、内部ストレージバックエンドなどのリソースが含まれます。"
+      },
+      "get_a_demo_button": "デモを取得",
+      "apps": {
+        "title": "Kestraでカスタムアプリを構築する",
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+      }
+    },
+    "apps": "アプリケーション",
+    "editor_shortcuts": {
+      "save_flow": "フローを保存",
+      "comment_uncomment": "コメント/コメント解除",
+      "duplicate_cursor": "カーソルを複製",
+      "uncomment": "コメント解除",
+      "label": "キーボードショートカット",
+      "fold_unfold": "コードを折りたたむ/展開する",
+      "comment": "コメント",
+      "move_line": "行を移動",
+      "command_palette": "コマンドパレットを表示"
+    }
   }
 }

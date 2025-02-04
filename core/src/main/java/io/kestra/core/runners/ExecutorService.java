@@ -407,7 +407,7 @@ public class ExecutorService {
 
         logService.logExecution(
             newExecution,
-            flow.logger(),
+            logger,
             Level.INFO,
             "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),

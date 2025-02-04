@@ -398,8 +398,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     }
                 }
             } finally {
-                runContext.cleanup();
                 this.logTerminated(workerTask);
+                runContext.cleanup();
             }
         } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
@@ -570,8 +570,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } catch (Exception e) {
                         this.handleTriggerError(workerTrigger, e);
                     } finally {
-                        workerTrigger.getConditionContext().getRunContext().cleanup();
-
                         logService.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
@@ -580,6 +578,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTrigger.getTrigger().getType(),
                             DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
                         );
+
+                        workerTrigger.getConditionContext().getRunContext().cleanup();
                     }
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
@@ -691,12 +691,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
             }
             return workerTaskResult;
         } finally {
+            this.logTerminated(workerTask);
+
             // remove tmp directory
             if (cleanUp) {
                 workerTask.getRunContext().cleanup();
             }
-
-            this.logTerminated(workerTask);
         }
     }
 

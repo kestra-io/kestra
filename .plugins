@@ -99,9 +99,6 @@
 #plugin-weaviate:io.kestra.plugin:plugin-weaviate:LATEST
 #plugin-zendesk:io.kestra.plugin:plugin-zendesk:LATEST
 #plugin-typesense:io.kestra.plugin:plugin-typesense:LATEST
-#plugin-langchain:io.kestra.plugin:plugin-langchain4j-openai:LATEST
-#plugin-langchain:io.kestra.plugin:plugin-langchain4j-gemini:LATEST
-#plugin-langchain:io.kestra.plugin:plugin-langchain4j-ollama:LATEST
 #storage-azure:io.kestra.storage:storage-azure:LATEST
 #storage-gcs:io.kestra.storage:storage-gcs:LATEST
 #storage-minio:io.kestra.storage:storage-minio:LATEST

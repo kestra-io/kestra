@@ -130,6 +130,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <editor
+                    class="position-relative"
                     v-if="isCreating || openedTabs.length"
                     ref="editorDomElement"
                     @save="save"
@@ -144,7 +145,11 @@
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                     :read-only="isReadOnly"
                     :navbar="false"
-                />
+                >
+                    <template #absolute>
+                        <KeyShortcuts />
+                    </template>
+                </editor>
                 <section v-else class="no-tabs-opened">
                     <div class="img" />
 
@@ -166,6 +171,8 @@
                 :flow="flowYaml"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
+                @reorder="(yaml) => handleReorder(yaml)"
+                @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
         <div class="slider" @mousedown.prevent.stop="dragEditor" v-if="combinedEditor" />
@@ -328,6 +335,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
+    import KeyShortcuts from "./KeyShortcuts.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -497,9 +505,16 @@
     const editorViewType = ref("YAML");
     const changeEditorViewType = (value) => {
         localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+
+        if(value === "NO_CODE") {
+            editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
+        }
     }
 
     const handleTopologyEditClick = (params) => {
+        if (viewType.value === editorViewTypes.TOPOLOGY) {
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
+        }
         editorViewType.value = "NO_CODE";
         nextTick(() => router.replace({query: {...route.query, ...params}}))
     }
@@ -733,13 +748,14 @@
         emit(type, event);
     };
 
-    const updatePluginDocumentation = (event) => {
-        const taskType = YamlUtils.getTaskType(
-            event.model.getValue(),
-            event.position
-        );
+    const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        if (taskType && pluginSingleList && pluginSingleList.includes(taskType)) {
+        const taskType = task !== undefined ? task : YamlUtils.getTaskType(
+            event.model.getValue(),
+            event.position,
+            pluginSingleList
+        );
+        if (taskType) {
             store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
                 store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
             });
@@ -790,8 +806,8 @@
         }
 
         haveChange.value = true;
-        store.dispatch("core/isUnsaved", true);
-
+        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+        
         if(!props.isCreating){
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
@@ -915,7 +931,7 @@
 
     const validateFlow = (flow) => {
         if(!flow) return;
-        
+
         return store
             .dispatch("flow/validateFlow", {flow})
             .then((value) => {
@@ -930,15 +946,13 @@
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
-        metadata.value = event;
-
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...event};
+            metadata.value = {...metadata.value, ...(event.concurrency.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
             validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event;
+            metadata.value = event.concurrency.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
@@ -948,6 +962,12 @@
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
+    };
+
+    const handleReorder = (yaml) => {
+        flowYaml.value = yaml;
+        haveChange.value = true;
+        save()
     };
 
     const editorUpdate = (event) => {
@@ -1199,10 +1219,13 @@
         const {offsetWidth, parentNode} = document.getElementById("editorWrapper");
         let blockWidthPercent = (offsetWidth / parentNode.offsetWidth) * 100;
 
+        const isNoCode = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
+        const maxWidth = isNoCode ? 33.3 : 75;
+
         document.onmousemove = function onMouseMove(e) {
             let percent = blockWidthPercent + ((e.clientX - dragX) / parentNode.offsetWidth) * 100;
 
-            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent;
+            editorWidth.value = percent > maxWidth ? maxWidth : percent < 25 ? 25 : percent;
             validationDomElement.value.onResize((percent * parentNode.offsetWidth) / 100);
         };
 

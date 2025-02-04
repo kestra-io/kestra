@@ -178,7 +178,7 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartMultiple();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/restart_always_failed.yaml"})
     void restartFailedThenFailureWithGlobalErrors() throws Exception {
         restartCaseTest.restartFailedThenFailureWithGlobalErrors();
@@ -220,7 +220,7 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/trigger-flow-listener-namespace-condition.yaml",
         "flows/valids/trigger-multiplecondition-flow-c.yaml",
         "flows/valids/trigger-multiplecondition-flow-d.yaml"})
@@ -383,7 +383,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
     void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();

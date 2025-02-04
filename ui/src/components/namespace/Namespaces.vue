@@ -159,6 +159,7 @@
 .namespaces {
     border-radius: var(--bs-border-radius-lg);
     border: 1px solid var(--ks-border-primary);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     &.system {
         border-color: $base-blue-300;
@@ -170,6 +171,7 @@
 
     .tree {
         --el-tree-node-hover-bg-color: transparent;
+        --el-fill-color-blank: var(--ks-background-card);
     }
 
     .rounded-full {

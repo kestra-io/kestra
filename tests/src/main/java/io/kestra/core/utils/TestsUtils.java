@@ -1,7 +1,6 @@
 package io.kestra.core.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -13,7 +12,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.DefaultRunContext;
@@ -26,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -44,7 +43,7 @@ abstract public class TestsUtils {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;
 
-        String read = Files.asCharSource(new File(resource.getFile()), Charsets.UTF_8).read();
+        String read = Files.asCharSource(new File(resource.getFile()), StandardCharsets.UTF_8).read();
 
         return mapper.readValue(read, cls);
     }

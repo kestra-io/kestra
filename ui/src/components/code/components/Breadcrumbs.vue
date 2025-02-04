@@ -6,7 +6,7 @@
             class="item"
             @click="
                 (store.commit('code/removeBreadcrumb', {position: index}),
-                 store.commit('code/unsetPanel'))
+                 store.commit('code/unsetPanel', false))
             "
         >
             <router-link :to="breadcrumb.to">

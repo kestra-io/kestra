@@ -42,108 +42,115 @@
             {{ $t("save") }}
         </el-button>
     </div>
-    <el-row>
-        <el-col :span="24">
-            <section class="row h-100">
-                <div class="w-100" v-if="currentView === views.DASHBOARD">
-                    <el-row class="custom">
-                        <el-col
-                            v-for="chart in charts"
-                            :key="JSON.stringify(chart)"
-                            :xs="24"
-                            :sm="12"
-                        >
-                            <div
-                                v-if="chart.data"
-                                class="p-4 d-flex flex-column"
-                            >
-                                <p class="m-0 fs-6 fw-bold">
-                                    {{ chart.data.chartOptions?.displayName ?? chart.id }}
-                                </p>
-                                <p
-                                    v-if="chart.chartOptions?.description"
-                                    class="m-0 fw-light"
-                                >
-                                    <small>{{ chart.data.chartOptions.description }}</small>
-                                </p>
-
-                                <div class="mt-4 flex-grow-1">
-                                    <component
-                                        :is="types[chart.data.type]"
-                                        :source="chart.data.content"
-                                        :chart="chart.data"
-                                        :identifier="chart.data.id"
-                                        is-preview
-                                    />
-                                </div>
-                            </div>
-                            <div v-else class="d-flex justify-content-center align-items-center text-container">
-                                <el-tooltip :content="chart.error">
-                                    {{ chart.error }}
-                                </el-tooltip>
-                            </div>
-                        </el-col>
-                    </el-row>
-                </div>
+    <div class="w-100" v-if="currentView === views.DASHBOARD">
+        <el-row class="custom">
+            <el-col
+                v-for="chart in charts"
+                :key="JSON.stringify(chart)"
+                :xs="24"
+                :sm="12"
+            >
                 <div
-                    id="editorWrapper"
-                    class="editor-combined"
-                    style="flex: 1;"
-                    v-else
+                    v-if="chart.data"
+                    class="p-4 d-flex flex-column"
                 >
-                    <editor
-                        @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
-                        v-model="source"
-                        schema-type="dashboard"
-                        lang="yaml"
-                        @update:model-value="source = $event"
-                        @cursor="updatePluginDocumentation"
-                        :creating="true"
-                        :read-only="false"
-                        :navbar="false"
-                    />
-                </div>
-                <div v-if="displaySide" class="slider" @mousedown.prevent.stop="dragEditor" />
-                <div
-                    v-if="displaySide"
-                    :class="{'d-flex': 'true'}"
-                    :style="`flex: 0 0 calc(${100 - editorWidth}% - 11px)`"
-                >
-                    <PluginDocumentation
-                        v-if="currentView === views.DOC"
-                        class="plugin-doc combined-right-view enhance-readability"
-                        :override-intro="intro"
-                    />
-                    <div class="d-flex justify-content-center align-items-center w-100 p-5" v-else-if="currentView === views.CHART">
-                        <div v-if="selectedChart" class="w-100">
-                            <p class="fs-6 fw-bold">
-                                {{ selectedChart.chartOptions?.displayName ?? selectedChart.id }}
-                            </p>
-                            <p
-                                v-if="selectedChart.chartOptions?.description"
-                            >
-                                <small>{{ selectedChart.chartOptions.description }}</small>
-                            </p>
+                    <p class="m-0 fs-6 fw-bold">
+                        {{ chart.data.chartOptions?.displayName ?? chart.id }}
+                    </p>
+                    <p
+                        v-if="chart.chartOptions?.description"
+                        class="m-0 fw-light"
+                    >
+                        <small>{{ chart.data.chartOptions.description }}</small>
+                    </p>
 
-                            <div class="w-100">
-                                <component
-                                    :key="selectedChart.id"
-                                    :is="types[selectedChart.type]"
-                                    :source="selectedChart.content"
-                                    :chart="selectedChart"
-                                    :identifier="selectedChart.id"
-                                    is-preview
-                                />
-                            </div>
-                        </div>
-                        <div v-else-if="chartError" class="text-container">
-                            <span>{{ chartError }}</span>
-                        </div>
+                    <div class="mt-4 flex-grow-1">
+                        <component
+                            :is="types[chart.data.type]"
+                            :source="chart.data.content"
+                            :chart="chart.data"
+                            :identifier="chart.data.id"
+                            is-preview
+                        />
                     </div>
                 </div>
-            </section>
-        </el-col>
-    </el-row>
+                <div v-else class="d-flex justify-content-center align-items-center text-container">
+                    <el-tooltip :content="chart.error">
+                        {{ chart.error }}
+                    </el-tooltip>
+                </div>
+            </el-col>
+        </el-row>
+    </div>
+    <div class="main-editor" v-else>
+        <div
+            id="editorWrapper"
+            class="editor-combined"
+            style="flex: 1;"
+        >
+            <editor
+                @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
+                v-model="source"
+                schema-type="dashboard"
+                lang="yaml"
+                @update:model-value="source = $event"
+                @cursor="updatePluginDocumentation"
+                :creating="true"
+                :read-only="false"
+                :navbar="false"
+            />
+        </div>
+        <div v-if="displaySide" class="slider" @mousedown.prevent.stop="dragEditor" />
+        <div
+            v-if="displaySide"
+            :class="{'d-flex': displaySide}"
+            :style="displaySide ? `flex: 0 0 calc(${100 - editorWidth}% - 11px)` : 'flex: 1 0 0%'"
+        >
+            <PluginDocumentation
+                v-if="currentView === views.DOC"
+                class="plugin-doc combined-right-view enhance-readability"
+                :override-intro="intro"
+            />
+            <div
+                class="d-flex justify-content-center align-items-center w-100 p-5"
+                v-else-if="currentView === views.CHART"
+            >
+                <div v-if="selectedChart" class="w-100">
+                    <p class="fs-6 fw-bold">
+                        {{ selectedChart.chartOptions?.displayName ?? selectedChart.id }}
+                    </p>
+                    <p
+                        v-if="selectedChart.chartOptions?.description"
+                    >
+                        <small>{{ selectedChart.chartOptions.description }}</small>
+                    </p>
+
+                    <div class="w-100">
+                        <component
+                            :key="selectedChart.id"
+                            :is="types[selectedChart.type]"
+                            :source="selectedChart.content"
+                            :chart="selectedChart"
+                            :identifier="selectedChart.id"
+                            is-preview
+                        />
+                    </div>
+                </div>
+                <div v-else-if="chartError" class="text-container">
+                    <span>{{ chartError }}</span>
+                </div>
+                <div v-else>
+                    <el-empty :image="EmptyVisualDashboard" :image-size="200">
+                        <template #description>
+                            <h5>
+                                {{ $t("dashboard.click_chart_preview") }}
+                            </h5>
+                        </template>
+                    </el-empty>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 <script setup>
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
@@ -152,6 +159,7 @@
     import ChartBar from "vue-material-design-icons/ChartBar.vue";
     import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
     import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue";
+    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
 
     // avoid an eslint warning about missing declaration
     defineEmits(["save"])
@@ -208,8 +216,8 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YamlUtils.getGraphType(event.model.getValue(), event.position)
-                    if (type && this.plugins.includes(type)) {
+                    const type = YamlUtils.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    if (type) {
                         this.$store.dispatch("plugin/load", {cls: type})
                             .then(plugin => {
                                 this.$store.commit("plugin/setEditorPlugin", {cls: type, ...plugin});
@@ -294,7 +302,7 @@
                     NONE: "none",
                     DASHBOARD: "dashboard"
                 },
-                currentView: "chart",
+                currentView: "documentation",
                 selectedChart: null,
                 charts: [],
                 chartError: null,
@@ -324,7 +332,34 @@
 </script>
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
+
     $spacing: 20px;
+
+
+    .main-editor {
+        padding: .5rem 0px;
+        background: var(--ks-background-body);
+        display: flex;
+        height: calc(100% - 49px);
+        min-height: 0;
+        max-height: 100%;
+
+        > * {
+            flex: 1;
+        }
+
+        html.dark & {
+            background-color: var(--bs-gray-100);
+        }
+    }
+
+    .el-empty {
+        background-color: transparent;
+
+        .el-empty__description {
+            font-size: var(--el-font-size-small);
+        }
+    }
 
     .custom {
         padding: 24px 32px;

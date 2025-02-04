@@ -93,7 +93,7 @@
     import {mapState} from "vuex";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
-    
+
     export default {
         components: {Markdown, CopyToClipboard},
         emits: ["back"],
@@ -101,6 +101,7 @@
             return {
                 flowGraph: undefined,
                 blueprint: undefined,
+                tab: "",
                 breadcrumb: [
                     {
                         label: this.$t("blueprints.title"),
@@ -121,13 +122,9 @@
                 type: Boolean,
                 default: false
             },
-            tab: {
+            blueprintType: {
                 type: String,
                 default: "community"
-            },
-            blueprintBaseUri: {
-                type: String,
-                default: undefined,
             },
             kind: {
                 type: String,
@@ -195,7 +192,6 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["icons"]),
-            ...mapState("blueprints", ["blueprint"]),
             userCanCreateFlow() {
                 return this.user.hasAnyAction(permission.FLOW, action.CREATE);
             },
@@ -204,9 +200,6 @@
                     ...YamlUtils.parse(this.blueprint.source),
                     source: this.blueprint.source
                 }
-            },
-            blueprintType() {
-                return this.tab ?? this?.$route?.params?.tab ?? "community";
             },
             blueprintKind() {
                 return this.blueprintType === "community" ? this.kind : undefined;

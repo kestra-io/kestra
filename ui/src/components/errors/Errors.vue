@@ -1,7 +1,7 @@
 <template>
     <top-nav-bar :title="routeInfo.title" v-if="!isFullScreen()" />
-    <section data-component="FILENAME_PLACEHOLDER" class="container errors">
-        <div class="img" />
+    <EmptyTemplate>
+        <img :src="sourceImg" :alt="$t('errors.' + code + '.title')" class="img">
         <h2>{{ $t("errors." + code + ".title") }}</h2>
 
         <p>
@@ -11,16 +11,18 @@
         <el-button v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
             {{ $t("back_to_dashboard") }}
         </el-button>
-    </section>
+    </EmptyTemplate>
 </template>
 
 <script>
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import EmptyTemplate from "../../components/layout/EmptyTemplate.vue";
+    import sourceImg from "../../assets/errors/kestra-error.png";
 
     export default {
         mixins: [RouteContext],
-        components: {TopNavBar},
+        components: {TopNavBar, EmptyTemplate},
         props: {
             code: {
                 type: Number,
@@ -33,6 +35,9 @@
                     title: this.$t("errors." + this.code + ".title"),
                 };
             },
+            sourceImg() {
+                return sourceImg;
+            }
         },
         methods: {
             isFullScreen() {
@@ -50,28 +55,21 @@
 
 
 <style lang="scss" scoped>
-    .errors {
-        margin-top: 0;
-        padding-top: 10rem;
-        padding-bottom: 3rem;
-        text-align: center;
-        background: url("../../assets/empty-page.svg") no-repeat top center;
 
-        .img {
-            background: url("../../assets/errors/kestra-error.png") no-repeat center;
-            background-size: contain;
-            max-height: 156px;
-        }
-
-        h2 {
-            line-height: 30px;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        p {
-            line-height: 22px;
-            font-size: 14px;
-        }
+    .img {
+        margin-top: 7rem;
+        max-height: 156px;
     }
+
+    h2 {
+        line-height: 30px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    p {
+        line-height: 22px;
+        font-size: 14px;
+    }
+
 </style>

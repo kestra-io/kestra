@@ -139,16 +139,14 @@
             />
         </el-select>
 
-        <div class="flex-grow-1" />
+        <div class="task-status">
+            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+        </div>
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
                 <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
             </small>
-        </div>
-
-        <div class="task-status">
-            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
     </div>
 </template>

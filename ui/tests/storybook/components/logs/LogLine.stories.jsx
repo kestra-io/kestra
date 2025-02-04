@@ -157,7 +157,7 @@ WithRouterLinkInMarkdown.play = async ({canvasElement}) => {
     const links = can.getAllByRole("link");
     expect(links[3]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
     expect(links[4]).toHaveTextContent("company.team.child");
-} 
+}
 
 export const WithExcludedMetas = Template.bind({});
 WithExcludedMetas.args = {
@@ -174,7 +174,7 @@ WithExcludedMetas.args = {
     filter: "",
     excludeMetas: ["namespace", "flowId"],
     title: false
-}; 
+};
 
 export const MultipleLogLinesWithAllLevels = () => {
     return (
@@ -187,3 +187,12 @@ export const MultipleLogLinesWithAllLevels = () => {
         </ElCard>
     );
 };
+
+// reproduction of https://github.com/kestra-io/kestra/pull/7133
+export const ShortLogWithoutContext = () => {
+    return (
+        <ElCard>
+            <LogLine log={{level: "INFO", message: "test"}} />
+        </ElCard>
+    );
+}

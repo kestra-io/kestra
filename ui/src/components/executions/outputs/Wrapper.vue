@@ -215,7 +215,7 @@
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find((e) => e.taskId === filter);
     };
-    const onDebugExpression = (expression) => {
+    const onDebugExpression = (expression: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
@@ -236,7 +236,7 @@
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200)
+                    if (response.status === 200 && response.data.result)
                         selected.value.push(response.data.result);
                 }
 

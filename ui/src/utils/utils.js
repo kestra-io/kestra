@@ -286,4 +286,24 @@ export default class Utils {
         }
         return obj;
     }
+
+    static getDateFormat(startDate, endDate) {
+        if (!startDate || !endDate) {
+            return "yyyy-MM-DD";
+        }
+
+        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+
+        if (duration.asDays() > 365) {
+            return "yyyy-MM";
+        } else if (duration.asDays() > 180) {
+            return "yyyy-'W'ww";
+        } else if (duration.asDays() > 1) {
+            return "yyyy-MM-DD";
+        } else if (duration.asHours() > 1) {
+            return "yyyy-MM-DD:HH:00";
+        } else {
+            return "yyyy-MM-DD:HH:mm";
+        }
+    }
 }

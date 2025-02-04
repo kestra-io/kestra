@@ -35,8 +35,8 @@
         emits: ["update:modelValue"],
         props: {
             modelValue: {
-                type: Array,
-                default: () => [],
+                type: Object,
+                default: () => {},
             },
             inputs: {
                 type: Array,

@@ -46,13 +46,14 @@ public class Executions<C extends ColumnDescriptor<Executions.Fields>> extends D
             where.removeIf(f -> f.getField().equals(Fields.LABELS));
             where.add(Contains.<Executions.Fields>builder().field(Fields.LABELS).value(globalFilter.getLabels()).build());
         }
-        if (globalFilter.getStartDate() != null) {
+        if (globalFilter.getStartDate() != null || globalFilter.getEndDate() != null) {
             where.removeIf(f -> f.getField().equals(Fields.START_DATE));
-            where.add(GreaterThanOrEqualTo.<Executions.Fields>builder().field(Fields.START_DATE).value(globalFilter.getStartDate().toOffsetDateTime()).build());
-        }
-        if (globalFilter.getEndDate() != null) {
-            where.removeIf(f -> f.getField().equals(Fields.END_DATE));
-            where.add(LessThanOrEqualTo.<Executions.Fields>builder().field(Fields.END_DATE).value(globalFilter.getEndDate().toOffsetDateTime()).build());
+            if (globalFilter.getStartDate() != null) {
+                where.add(GreaterThanOrEqualTo.<Executions.Fields>builder().field(Fields.START_DATE).value(globalFilter.getStartDate().toOffsetDateTime()).build());
+            }
+            if (globalFilter.getEndDate() != null) {
+                where.add(LessThanOrEqualTo.<Executions.Fields>builder().field(Fields.START_DATE).value(globalFilter.getEndDate().toOffsetDateTime()).build());
+            }
         }
 
         this.setWhere(where);

@@ -1,8 +1,8 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
-            <el-button :icon="ViewDashboardEdit">
-                {{ selectedDashboard ?? $t('default_dashboard') }}
+            <el-button :icon="Menu" class="main-button d-inline">
+                <span class="text-truncate">{{ selectedDashboard ?? $t('default_dashboard') }}</span>
             </el-button>
         </KestraIcon>
 
@@ -73,7 +73,7 @@
 <script setup lang="ts">
     import {onBeforeMount, ref, computed, getCurrentInstance} from "vue";
     import KestraIcon from "../../Kicon.vue";
-    import {ViewDashboardEdit, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
+    import {Menu, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
@@ -140,5 +140,13 @@
 
 .items {
     max-height: 160px !important; // 5 visible items
+}
+
+.main-button {
+    max-width: 300px;
+
+    span {
+        max-width: 250px;
+    }
 }
 </style>

@@ -263,11 +263,13 @@
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
+                debouncedValidation: () => {}
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
+            this.debouncedValidation = debounce(this.validateInputs, 500)
 
             this.validateInputs().then(() => {
                 this.$watch("inputsValues", {
@@ -276,7 +278,7 @@
                         if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
                             // only revalidate if values are stable for more than 500ms
                             // to avoid too many calls to the server
-                            debounce(this.validateInputs, 500)();
+                            this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))

@@ -370,9 +370,10 @@ form.ks-horizontal {
     --el-table-border: 1px solid var(--ks-border-primary);
 
     --el-table-header-text-color: var(--ks-content-primary);
-    --el-table-row-hover-bg-color: var(--bs-gray-200);
     --el-table-header-bg-color: var(--ks-background-table-header);
-    --el-table-tr-bg-color: var(--ks-background-card);
+    --el-table-row-hover-bg-color: var(--ks-background-table-row-hover);
+    --el-table-header-bg-color: var(--ks-background-table-header);
+    --el-table-tr-bg-color: var(--ks-background-table-row);
 
     outline: 1px solid var(--ks-border-primary);
     border-radius: var(--bs-border-radius-lg);
@@ -433,7 +434,6 @@ form.ks-horizontal {
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: var(--bs-gray-400);
 
             .material-design-icon__svg {
                 bottom: -0.125rem;
@@ -468,6 +468,19 @@ form.ks-horizontal {
     tr.disabled {
         td {
             opacity: 0.5;
+        }
+    }
+
+    td {
+        .el-tag {
+            margin-right: .3rem;
+        }
+
+        a {
+            color: var(--ks-content-primary);
+            &:hover{
+                text-decoration: underline;
+            }
         }
     }
 }
@@ -975,9 +988,12 @@ form.ks-horizontal {
 // tags
 .el-tag {
     --el-tag-bg-color: var(--ks-tag-background);
-    --el-tag-hover-color: var(--bs-gray-600-darken-2);
     --el-tag-text-color: var(--ks-tag-content);
     border: 0;
+
+    a{
+        color: var(--ks-tag-content);
+    }
 
     @each $i in ($types) {
         &.el-tag--#{$i} {

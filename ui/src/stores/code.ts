@@ -41,9 +41,9 @@ export default {
             state.panel = panel;
             state.breadcrumbs[1] = {...breadcrumb, panel: true};
         },
-        unsetPanel(state: State) {
+        unsetPanel(state: State, shouldSplice = true) {
             state.panel = undefined;
-            state.breadcrumbs.splice(1);
+            if (shouldSplice) state.breadcrumbs.splice(1);
         },
     },
 };

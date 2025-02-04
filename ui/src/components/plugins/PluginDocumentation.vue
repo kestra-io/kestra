@@ -13,7 +13,7 @@
                 </h4>
             </div>
             <Suspense>
-                <schema-to-html class="plugin-schema" :schema="editorPlugin.schema" :plugin-type="editorPlugin.cls">
+                <schema-to-html class="plugin-schema" :dark-mode="themeComputed === 'dark'" :schema="editorPlugin.schema" :plugin-type="editorPlugin.cls">
                     <template #markdown="{content}">
                         <markdown font-size-var="font-size-base" :source="content" />
                     </template>
@@ -46,6 +46,16 @@
             pluginName() {
                 const split = this.editorPlugin.cls.split(".");
                 return split[split.length - 1];
+            },
+            themeComputed() {
+                const savedEditorTheme = localStorage.getItem("editorTheme");
+                return savedEditorTheme === "syncWithSystem"
+                    ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                        ? "dark"
+                        : "light"
+                    : savedEditorTheme === "light"
+                        ? "light"
+                        : "dark";
             }
         },
         created() {
@@ -70,6 +80,10 @@
         }
 
         .plugin-schema {
+            :deep(button) {
+                color: var(--ks-content-primary);
+            }
+
             :deep(.code-block) {
                 background-color: var(--ks-background-card);
                 border: 1px solid var(--ks-border-primary)
@@ -90,11 +104,17 @@
                 }
 
                 > .collapse-button:not(.collapsed) {
-                    color: color-palette.$base-purple-200;
+                    color: var(--ks-content-link);
                 }
 
-                .property:not(:has(.collapsed)) {
-                    background-color: color-palette.$base-gray-900;
+                .property {
+                    &:has(.collapsed):hover {
+                        background-color: var(--ks-dropdown-background-hover);
+                    }
+
+                    &:not(:has(.collapsed)) {
+                        background-color: var(--ks-dropdown-background-active);
+                    }
                 }
 
                 .type-box{

@@ -13,6 +13,9 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -52,21 +55,21 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
     public Output run(RunContext runContext) throws Exception {
         String value = String.format(
             "%s - %s - %s - %s",
-            runContext.render(string).as(String.class).orElseThrow(),
-            runContext.render(number).as(Integer.class).orElseThrow(),
-            runContext.render(withDefault).as(String.class).orElseThrow(),
-            runContext.render(someDuration).as(Duration.class).orElseThrow()
+            runContext.render(string).as(String.class).orElse(null),
+            runContext.render(number).as(Integer.class).orElse(null),
+            runContext.render(withDefault).as(String.class).orElse(null),
+            runContext.render(someDuration).as(Duration.class).orElse(null)
         );
 
-        Level level =runContext.render(this.level).as(Level.class).orElseThrow();
+        Level level = runContext.render(this.level).as(Level.class).orElse(null);
 
         List<String> list = runContext.render(items).asList(String.class);
 
         Map<String, String> map = runContext.render(properties).asMap(String.class, String.class);
 
-        List<Message> outputMessages = data.flux(runContext, Message.class, message -> Message.fromMap(message))
+        List<Message> outputMessages = Optional.ofNullable(data).map(throwFunction(d -> d.flux(runContext, Message.class, message -> Message.fromMap(message))
             .collectList()
-            .block();
+            .block())).orElse(null);
 
         return Output.builder()
             .value(value)

@@ -58,7 +58,7 @@
                         <span v-for="(warning, index) in warnings" :key="index">
                             {{ warning }}<br v-if="index < warnings.length - 1">
                         </span>
-                        <br v-if="infos && warnings.length > 0">
+                        <br v-if="infos && infos.length > 0">
                         <span v-for="(info, index) in infos" :key="index">
                             {{ info }}<br v-if="index < infos.length - 1">
                         </span>

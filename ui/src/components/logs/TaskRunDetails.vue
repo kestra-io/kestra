@@ -503,6 +503,7 @@
                         this.logsSSE = sse;
 
                         this.logsSSE.onmessage = event => {
+
                             // we are receiving a first "fake" event to force initializing the connection: ignoring it
                             if (event.lastEventId !== "start") {
                                 this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
@@ -525,7 +526,16 @@
                                 this.scrollToBottomFailedTask();
                             }
                         }
+
+                        this.logsSSE.onerror = _ => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("something_went_wrong.loading_execution"),
+                            });
+                        }
                     })
+
             },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;

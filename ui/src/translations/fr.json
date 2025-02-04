@@ -290,7 +290,7 @@
     "template creation": "Création de template",
     "templates": "Templates",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
-    "no result": "Aucun log émis jusqu'à présent",
+    "no result": "Il n'y a aucun résultat à afficher.",
     "trigger": "Déclencheur",
     "triggers": "Déclencheurs",
     "trigger details": "Détails du déclencheur",

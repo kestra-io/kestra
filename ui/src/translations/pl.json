@@ -290,7 +290,7 @@
     "template creation": "Utworzenie szablonu",
     "templates": "Szablony",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
-    "no result": "Brak logów do tej pory",
+    "no result": "Nie ma wyników do wyświetlenia.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Szczegóły trigger",

@@ -1,7 +1,7 @@
 <template>
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
-            <el-button :icon="Menu" class="main-button d-inline">
+            <el-button :icon="Menu" class="main-button">
                 <span class="text-truncate">{{ selectedDashboard ?? $t('default_dashboard') }}</span>
             </el-button>
         </KestraIcon>

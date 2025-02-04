@@ -152,6 +152,8 @@ public class Extension extends AbstractExtension {
         }
         functions.put("randomInt", new RandomIntFunction());
         functions.put("randomPort", new RandomPortFunction());
+        functions.put("fileExists", new FileExistsFunction());
+        functions.put("fileEmpty", new FileEmptyFunction());
         return functions;
     }
 

@@ -24,7 +24,6 @@ jobs:
     steps:
       - uses: dorny/paths-filter@v3
         id: changes
-        token: ${{ secrets.GITHUB_TOKEN }}
         with:
           filters: |
             ui:
@@ -35,17 +34,18 @@ jobs:
             - '!ui/**'
             - '**'
             - '!.github/**'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
     name: 'Check Frontend'
     needs: file-changes
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: steps.file-changes.outputs.changes.ui == 'true'
+    if: "needs.file-changes.outputs.changes.ui == 'true'"
     steps:
       - id: generate-translations
         name: Generate translations
-        if: steps.file-changes.outputs.changes.translations == 'true'
+        if: "needs.file-changes.outputs.changes.translations == 'true'"
         uses: ./.github/actions/action-generate-translations
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -59,13 +59,13 @@ jobs:
     needs: file-changes
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: steps.file-changes.outputs.changes.backend == 'true'
+    if: needs.file-changes.outputs.changes.backend == 'true'
     steps:
       - name: Backend test
         uses: ./.github/actions/action-backend-test
 
   build-artifacts:
-    if: steps.file-changes.outputs.changes.backend == 'true' || steps.file-changes.outputs.changes.ui == 'true'
+    if: "needs.file-changes.outputs.changes.backend == 'true' || needs.file-changes.outputs.changes.ui == 'true'"
     name: Build artifacts
     runs-on: ubuntu-latest
     steps:

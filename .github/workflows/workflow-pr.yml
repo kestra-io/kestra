@@ -1,0 +1,106 @@
+name: Pull Request Workflow
+
+on:
+  pull_request:
+    branches:
+      - develop
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "21"
+  DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+  DOCKER_PYTHON_LIBRARIES: kestra
+  PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+  # to save corepack from itself
+  COREPACK_INTEGRITY_KEYS: 0
+
+jobs:
+  file-changes:
+    name: File changes detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: changes
+        token: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filters: |
+            ui:
+              - 'ui/**'
+            translations:
+              - 'ui/src/translations/**'
+            backend:
+            - '!ui/**'
+            - '**'
+            - '!.github/**'
+
+  frontend:
+    name: 'Check Frontend'
+    needs: file-changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: steps.file-changes.outputs.changes.ui == 'true'
+    steps:
+      - id: generate-translations
+        name: Generate translations
+        if: steps.file-changes.outputs.changes.translations == 'true'
+        uses: ./.github/actions/action-generate-translations
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - id: frontend-test
+        name: Frontend test
+        uses: ./.github/actions/action-frontend-test
+
+  backend:
+    name: 'Check Backend'
+    needs: file-changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: steps.file-changes.outputs.changes.backend == 'true'
+    steps:
+      - name: Backend test
+        uses: ./.github/actions/action-backend-test
+
+  build-artifacts:
+    if: steps.file-changes.outputs.changes.backend == 'true' || steps.file-changes.outputs.changes.ui == 'true'
+    name: Build artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/action-build-artifacts
+        id: build-artifacts
+
+  e2e:
+    name: Check E2E
+    needs: [build-artifacts]
+    uses: ./.github/workflows/e2e.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        backends: [ "postgres" ]
+    with:
+      tags: oss
+      backend: ${{ matrix.backends }}
+      docker-artifact-name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
+      docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
+  end:
+    name: End
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      # Slack
+      - name: Slack notification
+        uses: Gamesight/slack-workflow-status@master
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: GitHub Actions
+          icon_emoji: ":github-actions:"
+          channel: "C02DQ1A7JLR"

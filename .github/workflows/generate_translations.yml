@@ -1,10 +1,10 @@
 name: Generate Translations
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - "ui/src/translations/en.json"
+#  pull_request:
+#    types: [opened, synchronize]
+#    paths:
+#      - "ui/src/translations/en.json"
 
   push:
     branches:

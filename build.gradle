@@ -28,7 +28,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.52.0"
 
     // front
-    id 'org.siouan.frontend-jdk21' version '10.0.0' apply false
+    id 'com.github.node-gradle.node' version '7.1.0'
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"

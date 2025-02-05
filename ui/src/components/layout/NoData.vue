@@ -8,20 +8,14 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useStore} from "vuex";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const store = useStore();
-    
     import noData from "../../assets/no_data.png";
-
-    import Dark from "../../assets/dark.png";
-    import Light from "../../assets/light.png";
 
     const props = defineProps({text: {type: String, default: undefined}});
 
-    const image = computed(() => (store.getters["misc/theme"] === "light" ? Light : Dark));
     const description = computed(() => props.text ?? t("no_data"));
 </script>
 
